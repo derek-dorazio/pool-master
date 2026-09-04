@@ -246,11 +246,15 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8)
 
     let field = await adminGetGolfTournamentField({ client: c, path: { eventId } });
     expect(field.data!.entries.length).toBe(20);
-    const seeds = field.data!.entries.map((e) => e.seedNumber).sort((a, b) => a - b);
+    const seeds = field.data!.entries
+      .map((e) => e.seedNumber)
+      .sort((a, b) => (a ?? 0) - (b ?? 0));
     expect(new Set(seeds).size).toBe(20); // unique seed numbers
     // Odds ordering tracks rank ordering: the rank-1 golfer has the shortest odds.
-    const byRank = [...field.data!.entries].sort((a, b) => a.worldRanking - b.worldRanking);
-    expect(byRank[0].oddsToWin).toBeLessThanOrEqual(byRank[byRank.length - 1].oddsToWin);
+    const byRank = [...field.data!.entries].sort(
+      (a, b) => (a.worldRanking ?? 0) - (b.worldRanking ?? 0),
+    );
+    expect(byRank[0].oddsToWin!).toBeLessThanOrEqual(byRank[byRank.length - 1].oddsToWin!);
 
     // --- Withdraw two golfers --------------------------------------------------
     const withdraw = field.data!.entries.slice(0, 2);
@@ -354,7 +358,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8)
 
     // --- "Drag" one golfer to another tier via the assignments PUT -------
     const flat = tiersAfterPrices.data!.tiers.flatMap((t) =>
-      t.assignments.map((a) => ({ sep: a.sportEventParticipantId, tierKey: t.tierKey, idx: a.tierOrderIndex })),
+      t.assignments.map((a) => ({ sep: a.sportEventParticipantId, tierKey: t.tierKey, idx: a.tierOrderIndex ?? 0 })),
     );
     const mover = flat.find((x) => x.tierKey === 'tier-1')!;
     const desired = flat.map((x) =>

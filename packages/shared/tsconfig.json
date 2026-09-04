@@ -17,6 +17,7 @@
     "api-routes.ts",
     "index.ts",
     "dto/**/*",
+    "openapi/**/*",
     "generated/**/*"
   ]
 }

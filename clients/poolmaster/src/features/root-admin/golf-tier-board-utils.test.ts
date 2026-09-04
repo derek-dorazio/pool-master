@@ -98,7 +98,7 @@ describe('pool-master-dyb golf-tier-board-utils', () => {
 
   it('pool-master-dyb assignmentsEqual ignores price but not tier/order', () => {
     const a = buildTierBoard(tiers, field);
-    const b = buildTierBoard(tiers, field.map((e) => ({ ...e, price: e.price + 1 })));
+    const b = buildTierBoard(tiers, field.map((e) => ({ ...e, price: (e.price ?? 0) + 1 })));
     expect(assignmentsEqual(a, b)).toBe(true);
     expect(assignmentsEqual(a, moveCard(a, 'sep-1', 'tier-2'))).toBe(false);
   });

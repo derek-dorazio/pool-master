@@ -117,7 +117,7 @@ export function GolfTournamentScoreSourceCard({
           {golfSyncScopeLabel(tournament.syncScope)}
         </StatusBadge>
         <p className="text-sm text-muted-foreground">
-          {tournament.syncScope === 'NONE'
+          {tournament.syncScope === 'NONE' || !tournament.scoreSource
             ? 'Not linked — scores must be entered manually.'
             : `Linked to ${tournament.scoreSource.providerId} event ${tournament.scoreSource.externalId} — polled on the live-scores sync cadence.`}
         </p>

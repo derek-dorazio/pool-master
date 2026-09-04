@@ -136,7 +136,7 @@ export async function buildLeagueWithCommissioner(overrides?: {
     iconKey: string;
     joinPolicy: string;
     createdAt?: string;
-    description?: string;
+    description?: string | null;
     role?: string;
   };
   commissioner: RegisteredUserContext;

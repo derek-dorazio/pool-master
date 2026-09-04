@@ -45,6 +45,14 @@
       "types": "./dto/*.ts",
       "default": "./dist/dto/*.js"
     },
+    "./openapi": {
+      "types": "./openapi/index.ts",
+      "default": "./dist/openapi/index.js"
+    },
+    "./openapi/*": {
+      "types": "./openapi/*.ts",
+      "default": "./dist/openapi/*.js"
+    },
     "./generated": {
       "types": "./generated/api-types.ts",
       "default": "./generated/api-types.ts"

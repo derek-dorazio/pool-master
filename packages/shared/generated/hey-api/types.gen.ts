@@ -41,11 +41,11 @@ export type GetRootVersionResponses = {
         /**
          * UTC build timestamp supplied by CI, when available.
          */
-        buildTimeUtc: string;
+        buildTimeUtc: string | null;
         /**
          * Git branch or ref name supplied by CI, when available.
          */
-        gitRef: string;
+        gitRef: string | null;
         /**
          * Core API service version metadata.
          */
@@ -61,11 +61,11 @@ export type GetRootVersionResponses = {
             /**
              * Git SHA for this component build, when supplied by CI.
              */
-            gitSha: string;
+            gitSha: string | null;
             /**
              * CI build or run number for this component build, when supplied by CI.
              */
-            buildNumber: string;
+            buildNumber: string | null;
         };
         /**
          * Non-secret runtime metadata useful during operational debugging.
@@ -225,7 +225,7 @@ export type RegisterUserResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
         /**
          * Authentication token bundle returned after login or registration.
@@ -385,7 +385,7 @@ export type LoginUserResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
         /**
          * Authentication token bundle returned after login or registration.
@@ -623,7 +623,7 @@ export type GetCurrentUserResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -653,11 +653,11 @@ export type GetVersionResponses = {
         /**
          * UTC build timestamp supplied by CI, when available.
          */
-        buildTimeUtc: string;
+        buildTimeUtc: string | null;
         /**
          * Git branch or ref name supplied by CI, when available.
          */
-        gitRef: string;
+        gitRef: string | null;
         /**
          * Core API service version metadata.
          */
@@ -673,11 +673,11 @@ export type GetVersionResponses = {
             /**
              * Git SHA for this component build, when supplied by CI.
              */
-            gitSha: string;
+            gitSha: string | null;
             /**
              * CI build or run number for this component build, when supplied by CI.
              */
-            buildNumber: string;
+            buildNumber: string | null;
         };
         /**
          * Non-secret runtime metadata useful during operational debugging.
@@ -748,7 +748,7 @@ export type ListLeaguesResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -768,7 +768,7 @@ export type ListLeaguesResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -892,7 +892,7 @@ export type CreateLeagueResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -912,7 +912,7 @@ export type CreateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1084,7 +1084,7 @@ export type GetLeagueResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1104,7 +1104,7 @@ export type GetLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1196,7 +1196,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1216,7 +1216,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1342,7 +1342,7 @@ export type UpdateLeagueDetailsResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1362,7 +1362,7 @@ export type UpdateLeagueDetailsResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1484,7 +1484,7 @@ export type UpdateLeagueIconResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1504,7 +1504,7 @@ export type UpdateLeagueIconResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1618,7 +1618,7 @@ export type InactivateLeagueResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1638,7 +1638,7 @@ export type InactivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1752,7 +1752,7 @@ export type ActivateLeagueResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -1772,7 +1772,7 @@ export type ActivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1894,7 +1894,7 @@ export type SendLeagueInvitationsResponses = {
             /**
              * Email recipient for direct email invites. Link invites omit this field.
              */
-            email?: string;
+            email?: string | null;
             /**
              * Shareable invitation code used in URLs and acceptance requests.
              */
@@ -1922,15 +1922,15 @@ export type SendLeagueInvitationsResponses = {
             /**
              * When the invite stops being valid, if it expires.
              */
-            expiresAt?: string;
+            expiresAt?: string | null;
             /**
-             * When the invite stops being valid, if it expires.
+             * When the invitation was accepted, if applicable.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * User ID that accepted the invite, when known.
              */
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * Invitation creation timestamp.
              */
@@ -2021,7 +2021,7 @@ export type GenerateInviteLinkResponses = {
             /**
              * Email recipient for direct email invites. Link invites omit this field.
              */
-            email?: string;
+            email?: string | null;
             /**
              * Shareable invitation code used in URLs and acceptance requests.
              */
@@ -2049,15 +2049,15 @@ export type GenerateInviteLinkResponses = {
             /**
              * When the invite stops being valid, if it expires.
              */
-            expiresAt?: string;
+            expiresAt?: string | null;
             /**
-             * When the invite stops being valid, if it expires.
+             * When the invitation was accepted, if applicable.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * User ID that accepted the invite, when known.
              */
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * Invitation creation timestamp.
              */
@@ -2650,7 +2650,7 @@ export type GetLeagueDashboardResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -2670,7 +2670,7 @@ export type GetLeagueDashboardResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -2699,10 +2699,10 @@ export type GetLeagueDashboardResponses = {
         actionItems: Array<{
             id: string;
             leagueId: string;
-            contestId?: string;
+            contestId?: string | null;
             title: string;
             description: string;
-            actionUrl?: string;
+            actionUrl?: string | null;
             resolved: boolean;
             /**
              * When the action item was created.
@@ -2724,14 +2724,14 @@ export type GetLeagueDashboardResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
         }>;
@@ -2836,10 +2836,10 @@ export type ResolveActionItemResponses = {
         actionItem: {
             id: string;
             leagueId: string;
-            contestId?: string;
+            contestId?: string | null;
             title: string;
             description: string;
-            actionUrl?: string;
+            actionUrl?: string | null;
             resolved: boolean;
             /**
              * When the action item was created.
@@ -4597,24 +4597,24 @@ export type ListSquadOwnerInvitationsResponses = {
             inviteCode: string;
             status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             invitedBy: string;
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            expiresAt?: string;
-            replacementForUserId?: string;
+            expiresAt?: string | null;
+            replacementForUserId?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            createdAt: string;
+            createdAt: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            updatedAt: string;
+            updatedAt: string | null;
             team: {
                 id: string;
                 name: string;
@@ -4731,24 +4731,24 @@ export type CreateSquadOwnerInvitationResponses = {
             inviteCode: string;
             status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             invitedBy: string;
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            expiresAt?: string;
-            replacementForUserId?: string;
+            expiresAt?: string | null;
+            replacementForUserId?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            createdAt: string;
+            createdAt: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            updatedAt: string;
+            updatedAt: string | null;
             team: {
                 id: string;
                 name: string;
@@ -4866,24 +4866,24 @@ export type ReplaceSquadOwnerResponses = {
             inviteCode: string;
             status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             invitedBy: string;
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            expiresAt?: string;
-            replacementForUserId?: string;
+            expiresAt?: string | null;
+            replacementForUserId?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            createdAt: string;
+            createdAt: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            updatedAt: string;
+            updatedAt: string | null;
             team: {
                 id: string;
                 name: string;
@@ -4992,24 +4992,24 @@ export type RevokeSquadOwnerInvitationResponses = {
             inviteCode: string;
             status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             invitedBy: string;
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            expiresAt?: string;
-            replacementForUserId?: string;
+            expiresAt?: string | null;
+            replacementForUserId?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            createdAt: string;
+            createdAt: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            updatedAt: string;
+            updatedAt: string | null;
             team: {
                 id: string;
                 name: string;
@@ -5440,24 +5440,24 @@ export type AcceptTeamOwnerInvitationResponses = {
             inviteCode: string;
             status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
             invitedBy: string;
-            acceptedBy?: string;
+            acceptedBy?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            acceptedAt?: string;
+            acceptedAt?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            expiresAt?: string;
-            replacementForUserId?: string;
+            expiresAt?: string | null;
+            replacementForUserId?: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            createdAt: string;
+            createdAt: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            updatedAt: string;
+            updatedAt: string | null;
             team: {
                 id: string;
                 name: string;
@@ -5491,14 +5491,14 @@ export type ListContestsResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
         }>;
@@ -5663,17 +5663,17 @@ export type CreateContestResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -5744,11 +5744,11 @@ export type CreateContestResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -5786,7 +5786,7 @@ export type CreateContestResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -5826,7 +5826,7 @@ export type CreateContestResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -5942,7 +5942,7 @@ export type ListManagedContestTemplatesResponses = {
             /**
              * Optional event-type scope for the template.
              */
-            eventType?: string;
+            eventType?: string | null;
             /**
              * Contest type that may use the template.
              */
@@ -5987,11 +5987,11 @@ export type ListManagedContestTemplatesResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -6032,11 +6032,11 @@ export type CreateManagedContestData = {
             /**
              * Contest entry lock timestamp.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many golfers each Team entry must pick.
              */
@@ -6071,11 +6071,11 @@ export type CreateManagedContestData = {
             /**
              * Contest entry lock timestamp.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many golfers each Team entry must pick.
              */
@@ -6220,11 +6220,11 @@ export type CreateManagedContestResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -6277,11 +6277,11 @@ export type CreateManagedContestResponses = {
                     /**
                      * Within-tier ordering position; null when the golfer has no explicit order.
                      */
-                    tierOrderIndex: number;
+                    tierOrderIndex: number | null;
                     /**
                      * Per-golfer budget price when the event defines one; null otherwise.
                      */
-                    price: number;
+                    price: number | null;
                 }>;
             }>;
             /**
@@ -6295,11 +6295,11 @@ export type CreateManagedContestResponses = {
             /**
              * Seeded template chosen when the contest was created, if any.
              */
-            templateId?: string;
+            templateId?: string | null;
             /**
              * Schema/template version captured when the contest was created, if any.
              */
-            templateVersion?: number;
+            templateVersion?: number | null;
         };
     };
 };
@@ -6443,11 +6443,11 @@ export type GetManagedContestResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -6500,11 +6500,11 @@ export type GetManagedContestResponses = {
                     /**
                      * Within-tier ordering position; null when the golfer has no explicit order.
                      */
-                    tierOrderIndex: number;
+                    tierOrderIndex: number | null;
                     /**
                      * Per-golfer budget price when the event defines one; null otherwise.
                      */
-                    price: number;
+                    price: number | null;
                 }>;
             }>;
             /**
@@ -6518,11 +6518,11 @@ export type GetManagedContestResponses = {
             /**
              * Seeded template chosen when the contest was created, if any.
              */
-            templateId?: string;
+            templateId?: string | null;
             /**
              * Schema/template version captured when the contest was created, if any.
              */
-            templateVersion?: number;
+            templateVersion?: number | null;
         };
     };
 };
@@ -6538,11 +6538,11 @@ export type UpdateManagedContestConfigurationData = {
         /**
          * Contest entry lock timestamp.
          */
-        locksAt?: string;
+        locksAt?: string | null;
         /**
          * Maximum entries a Team may create. Null means unlimited.
          */
-        maxEntriesPerSquad?: number;
+        maxEntriesPerSquad?: number | null;
         /**
          * How many golfers each Team entry must pick.
          */
@@ -6709,11 +6709,11 @@ export type UpdateManagedContestConfigurationResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -6766,11 +6766,11 @@ export type UpdateManagedContestConfigurationResponses = {
                     /**
                      * Within-tier ordering position; null when the golfer has no explicit order.
                      */
-                    tierOrderIndex: number;
+                    tierOrderIndex: number | null;
                     /**
                      * Per-golfer budget price when the event defines one; null otherwise.
                      */
-                    price: number;
+                    price: number | null;
                 }>;
             }>;
             /**
@@ -6784,11 +6784,11 @@ export type UpdateManagedContestConfigurationResponses = {
             /**
              * Seeded template chosen when the contest was created, if any.
              */
-            templateId?: string;
+            templateId?: string | null;
             /**
              * Schema/template version captured when the contest was created, if any.
              */
-            templateVersion?: number;
+            templateVersion?: number | null;
         };
     };
 };
@@ -6919,17 +6919,17 @@ export type GetContestResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -7000,11 +7000,11 @@ export type GetContestResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -7042,7 +7042,7 @@ export type GetContestResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -7082,7 +7082,7 @@ export type GetContestResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -7174,17 +7174,17 @@ export type UpdateContestResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -7255,11 +7255,11 @@ export type UpdateContestResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -7297,7 +7297,7 @@ export type UpdateContestResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -7337,7 +7337,7 @@ export type UpdateContestResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -7421,7 +7421,7 @@ export type ListContestEntriesResponses = {
         /**
          * Primary current-user entry when the contest allows a single active entry.
          */
-        myEntryId: string;
+        myEntryId: string | null;
         /**
          * All current-user entry identifiers when multiple entries are allowed.
          */
@@ -7441,7 +7441,7 @@ export type ListContestEntriesResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
+            tiebreakerValue?: number | null;
             isEliminated: boolean;
             /**
              * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -7463,9 +7463,9 @@ export type ListContestEntriesResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                participantStatus?: string;
-                position?: string;
-                teamAffiliation?: string;
+                participantStatus?: string | null;
+                position?: string | null;
+                teamAffiliation?: string | null;
                 /**
                  * When the participant was added to the contest entry.
                  */
@@ -7560,7 +7560,7 @@ export type GetContestEntryResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
+            tiebreakerValue?: number | null;
             isEliminated: boolean;
             /**
              * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -7582,9 +7582,9 @@ export type GetContestEntryResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                participantStatus?: string;
-                position?: string;
-                teamAffiliation?: string;
+                participantStatus?: string | null;
+                position?: string | null;
+                teamAffiliation?: string | null;
                 /**
                  * When the participant was added to the contest entry.
                  */
@@ -7608,7 +7608,7 @@ export type UpdateContestEntryData = {
         /**
          * Optional tiebreaker prediction saved on the contest entry.
          */
-        tiebreakerValue?: number;
+        tiebreakerValue?: number | null;
     };
     path: {
         contestId: string;
@@ -7687,7 +7687,7 @@ export type UpdateContestEntryResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
+            tiebreakerValue?: number | null;
             isEliminated: boolean;
             /**
              * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -7814,7 +7814,7 @@ export type GetGolfContestLeaderboardResponses = {
             /**
              * Optional shorter golfer display name.
              */
-            shortName: string;
+            shortName: string | null;
             /**
              * Whether this golfer is currently eligible/available for this tournament.
              */
@@ -7822,35 +7822,35 @@ export type GetGolfContestLeaderboardResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
             /**
              * Latest copied global world ranking on this event participant.
              */
-            worldRanking: number;
+            worldRanking: number | null;
             /**
              * Event-scoped odds-to-win for this golfer.
              */
-            oddsToWin: number;
+            oddsToWin: number | null;
             /**
              * Event seed/order when supplied by the provider.
              */
-            seedNumber: number;
+            seedNumber: number | null;
             /**
              * TOT column value: current event total relative to par. Lower is better.
              */
-            totalScoreToPar: number;
+            totalScoreToPar: number | null;
             /**
              * Current event total strokes across persisted Golf rounds.
              */
-            totalStrokes: number;
+            totalStrokes: number | null;
             /**
              * THR column value while the golfer is currently on course; null after round completion or before play.
              */
-            thru: number;
+            thru: number | null;
             /**
              * Current or latest round represented by the standing.
              */
-            currentRound: number;
+            currentRound: number | null;
             /**
              * Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
              */
@@ -7858,15 +7858,15 @@ export type GetGolfContestLeaderboardResponses = {
             /**
              * Event leaderboard position for this golfer when available.
              */
-            position: number;
+            position: number | null;
             /**
              * Provider/display position such as T2 when available.
              */
-            displayPosition: string;
+            displayPosition: string | null;
             /**
              * Provider timestamp for the current Golf standing.
              */
-            asOf: string;
+            asOf: string | null;
             /**
              * R1 through R4 detail for expanded member leaderboard rows.
              */
@@ -7886,15 +7886,15 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                      */
-                    strokes: number;
+                    strokes: number | null;
                     /**
                      * Round score relative to par. Used as the visible round value while the round is in progress.
                      */
-                    scoreToPar: number;
+                    scoreToPar: number | null;
                     /**
                      * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                      */
-                    thru: number;
+                    thru: number | null;
                     /**
                      * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                      */
@@ -7902,10 +7902,10 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Preformatted member-facing value for this round column using Golf display rules.
                      */
-                    displayValue: string;
-                };
+                    displayValue: string | null;
+                } | null;
                 /**
-                 * Round 1 leaderboard column.
+                 * Round 2 leaderboard column.
                  */
                 r2: {
                     /**
@@ -7919,15 +7919,15 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                      */
-                    strokes: number;
+                    strokes: number | null;
                     /**
                      * Round score relative to par. Used as the visible round value while the round is in progress.
                      */
-                    scoreToPar: number;
+                    scoreToPar: number | null;
                     /**
                      * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                      */
-                    thru: number;
+                    thru: number | null;
                     /**
                      * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                      */
@@ -7935,10 +7935,10 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Preformatted member-facing value for this round column using Golf display rules.
                      */
-                    displayValue: string;
-                };
+                    displayValue: string | null;
+                } | null;
                 /**
-                 * Round 1 leaderboard column.
+                 * Round 3 leaderboard column.
                  */
                 r3: {
                     /**
@@ -7952,15 +7952,15 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                      */
-                    strokes: number;
+                    strokes: number | null;
                     /**
                      * Round score relative to par. Used as the visible round value while the round is in progress.
                      */
-                    scoreToPar: number;
+                    scoreToPar: number | null;
                     /**
                      * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                      */
-                    thru: number;
+                    thru: number | null;
                     /**
                      * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                      */
@@ -7968,10 +7968,10 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Preformatted member-facing value for this round column using Golf display rules.
                      */
-                    displayValue: string;
-                };
+                    displayValue: string | null;
+                } | null;
                 /**
-                 * Round 1 leaderboard column.
+                 * Round 4 leaderboard column.
                  */
                 r4: {
                     /**
@@ -7985,15 +7985,15 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                      */
-                    strokes: number;
+                    strokes: number | null;
                     /**
                      * Round score relative to par. Used as the visible round value while the round is in progress.
                      */
-                    scoreToPar: number;
+                    scoreToPar: number | null;
                     /**
                      * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                      */
-                    thru: number;
+                    thru: number | null;
                     /**
                      * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                      */
@@ -8001,8 +8001,8 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Preformatted member-facing value for this round column using Golf display rules.
                      */
-                    displayValue: string;
-                };
+                    displayValue: string | null;
+                } | null;
             };
         }>;
         /**
@@ -8036,15 +8036,15 @@ export type GetGolfContestLeaderboardResponses = {
             /**
              * Entry leaderboard total computed from currently counting golfer TOT values. Lower is better.
              */
-            totalScoreToPar: number;
+            totalScoreToPar: number | null;
             /**
              * Computed contest leaderboard rank for this entry.
              */
-            position: number;
+            position: number | null;
             /**
              * Computed display rank, including T-prefix for ties.
              */
-            displayPosition: string;
+            displayPosition: string | null;
             /**
              * How many selected golfers count toward this entry under the contest configuration.
              */
@@ -8072,11 +8072,11 @@ export type GetGolfContestLeaderboardResponses = {
                 /**
                  * Optional roster slot from the pick row.
                  */
-                slot: number;
+                slot: number | null;
                 /**
                  * Optional tier/category from the pick row.
                  */
-                tier: string;
+                tier: string | null;
                 /**
                  * Whether this pick currently counts toward the entry score under the contest configuration.
                  */
@@ -8104,7 +8104,7 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Optional shorter golfer display name.
                      */
-                    shortName: string;
+                    shortName: string | null;
                     /**
                      * Whether this golfer is currently eligible/available for this tournament.
                      */
@@ -8112,35 +8112,35 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                      */
-                    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+                    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
                     /**
                      * Latest copied global world ranking on this event participant.
                      */
-                    worldRanking: number;
+                    worldRanking: number | null;
                     /**
                      * Event-scoped odds-to-win for this golfer.
                      */
-                    oddsToWin: number;
+                    oddsToWin: number | null;
                     /**
                      * Event seed/order when supplied by the provider.
                      */
-                    seedNumber: number;
+                    seedNumber: number | null;
                     /**
                      * TOT column value: current event total relative to par. Lower is better.
                      */
-                    totalScoreToPar: number;
+                    totalScoreToPar: number | null;
                     /**
                      * Current event total strokes across persisted Golf rounds.
                      */
-                    totalStrokes: number;
+                    totalStrokes: number | null;
                     /**
                      * THR column value while the golfer is currently on course; null after round completion or before play.
                      */
-                    thru: number;
+                    thru: number | null;
                     /**
                      * Current or latest round represented by the standing.
                      */
-                    currentRound: number;
+                    currentRound: number | null;
                     /**
                      * Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
                      */
@@ -8148,15 +8148,15 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Event leaderboard position for this golfer when available.
                      */
-                    position: number;
+                    position: number | null;
                     /**
                      * Provider/display position such as T2 when available.
                      */
-                    displayPosition: string;
+                    displayPosition: string | null;
                     /**
                      * Provider timestamp for the current Golf standing.
                      */
-                    asOf: string;
+                    asOf: string | null;
                     /**
                      * R1 through R4 detail for expanded member leaderboard rows.
                      */
@@ -8176,15 +8176,15 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                              */
-                            strokes: number;
+                            strokes: number | null;
                             /**
                              * Round score relative to par. Used as the visible round value while the round is in progress.
                              */
-                            scoreToPar: number;
+                            scoreToPar: number | null;
                             /**
                              * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                              */
-                            thru: number;
+                            thru: number | null;
                             /**
                              * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                              */
@@ -8192,10 +8192,10 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Preformatted member-facing value for this round column using Golf display rules.
                              */
-                            displayValue: string;
-                        };
+                            displayValue: string | null;
+                        } | null;
                         /**
-                         * Round 1 leaderboard column.
+                         * Round 2 leaderboard column.
                          */
                         r2: {
                             /**
@@ -8209,15 +8209,15 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                              */
-                            strokes: number;
+                            strokes: number | null;
                             /**
                              * Round score relative to par. Used as the visible round value while the round is in progress.
                              */
-                            scoreToPar: number;
+                            scoreToPar: number | null;
                             /**
                              * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                              */
-                            thru: number;
+                            thru: number | null;
                             /**
                              * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                              */
@@ -8225,10 +8225,10 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Preformatted member-facing value for this round column using Golf display rules.
                              */
-                            displayValue: string;
-                        };
+                            displayValue: string | null;
+                        } | null;
                         /**
-                         * Round 1 leaderboard column.
+                         * Round 3 leaderboard column.
                          */
                         r3: {
                             /**
@@ -8242,15 +8242,15 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                              */
-                            strokes: number;
+                            strokes: number | null;
                             /**
                              * Round score relative to par. Used as the visible round value while the round is in progress.
                              */
-                            scoreToPar: number;
+                            scoreToPar: number | null;
                             /**
                              * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                              */
-                            thru: number;
+                            thru: number | null;
                             /**
                              * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                              */
@@ -8258,10 +8258,10 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Preformatted member-facing value for this round column using Golf display rules.
                              */
-                            displayValue: string;
-                        };
+                            displayValue: string | null;
+                        } | null;
                         /**
-                         * Round 1 leaderboard column.
+                         * Round 4 leaderboard column.
                          */
                         r4: {
                             /**
@@ -8275,15 +8275,15 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
                              */
-                            strokes: number;
+                            strokes: number | null;
                             /**
                              * Round score relative to par. Used as the visible round value while the round is in progress.
                              */
-                            scoreToPar: number;
+                            scoreToPar: number | null;
                             /**
                              * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
                              */
-                            thru: number;
+                            thru: number | null;
                             /**
                              * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
                              */
@@ -8291,8 +8291,8 @@ export type GetGolfContestLeaderboardResponses = {
                             /**
                              * Preformatted member-facing value for this round column using Golf display rules.
                              */
-                            displayValue: string;
-                        };
+                            displayValue: string | null;
+                        } | null;
                     };
                 };
             }>;
@@ -8300,7 +8300,7 @@ export type GetGolfContestLeaderboardResponses = {
         /**
          * Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
          */
-        asOf: string;
+        asOf: string | null;
     };
 };
 
@@ -8460,7 +8460,7 @@ export type GetMyContestEntryResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
+            tiebreakerValue?: number | null;
             isEliminated: boolean;
             /**
              * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -8474,7 +8474,7 @@ export type GetMyContestEntryResponses = {
              * When the contest entry was last updated.
              */
             updatedAt: string;
-        };
+        } | null;
     };
 };
 
@@ -8580,7 +8580,7 @@ export type EnterContestResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
+            tiebreakerValue?: number | null;
             isEliminated: boolean;
             /**
              * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
@@ -8753,17 +8753,17 @@ export type ReopenContestResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -8834,11 +8834,11 @@ export type ReopenContestResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -8876,7 +8876,7 @@ export type ReopenContestResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -8916,7 +8916,7 @@ export type ReopenContestResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -8955,17 +8955,17 @@ export type CloseContestResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -9036,11 +9036,11 @@ export type CloseContestResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -9078,7 +9078,7 @@ export type CloseContestResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -9118,7 +9118,7 @@ export type CloseContestResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -9161,17 +9161,17 @@ export type ExtendContestDeadlineResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -9242,11 +9242,11 @@ export type ExtendContestDeadlineResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -9284,7 +9284,7 @@ export type ExtendContestDeadlineResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -9324,7 +9324,7 @@ export type ExtendContestDeadlineResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -9367,17 +9367,17 @@ export type UpdateContestLockTimeResponses = {
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
-            sportEventId?: string;
-            sport?: string;
+            sportEventId?: string | null;
+            sport?: string | null;
             /**
              * Number of entries currently in the contest.
              */
             entryCount?: number;
-            startsAt?: string;
-            endsAt?: string;
+            startsAt?: string | null;
+            endsAt?: string | null;
             createdAt?: string;
             updatedAt?: string;
-            lockAt?: string;
+            lockAt?: string | null;
             isExclusive?: boolean;
         };
         /**
@@ -9448,11 +9448,11 @@ export type UpdateContestLockTimeResponses = {
             /**
              * Contest entry lock timestamp stored on the contest configuration record.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many roster scores count toward the entry total in managed golf contests.
              */
@@ -9490,7 +9490,7 @@ export type UpdateContestLockTimeResponses = {
                 /**
                  * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                endPosition: number;
+                endPosition: number | null;
             }>;
             /**
              * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
@@ -9530,7 +9530,7 @@ export type UpdateContestLockTimeResponses = {
                  */
                 pickCount: number;
             }>;
-        };
+        } | null;
     };
 };
 
@@ -9654,11 +9654,11 @@ export type ListEventsResponses = {
             /**
              * Venue name for the event, when known.
              */
-            venue?: string;
+            venue?: string | null;
             /**
              * Human-readable event location, when known.
              */
-            location?: string;
+            location?: string | null;
             /**
              * Provider-normalized event status.
              */
@@ -9670,7 +9670,7 @@ export type ListEventsResponses = {
             /**
              * Scheduled or actual event end time, when known.
              */
-            endDate?: string;
+            endDate?: string | null;
             /**
              * PoolMaster operational datetime when the event becomes available for contest setup.
              */
@@ -9682,7 +9682,7 @@ export type ListEventsResponses = {
             /**
              * Participant count when the provider exposes field size.
              */
-            participantCount?: number;
+            participantCount?: number | null;
             /**
              * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
              */
@@ -9769,11 +9769,11 @@ export type ListParticipantsResponses = {
             /**
              * Position, role, or event classification when known.
              */
-            position?: string;
+            position?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
-            teamAffiliation?: string;
+            teamAffiliation?: string | null;
             /**
              * Current participant lifecycle or availability status.
              */
@@ -9806,7 +9806,7 @@ export type ListParticipantsResponses = {
             /**
              * Optional participant image URL.
              */
-            photoUrl?: string;
+            photoUrl?: string | null;
             /**
              * Expected return timestamp when known.
              */
@@ -9904,11 +9904,11 @@ export type CreateParticipantResponses = {
             /**
              * Position, role, or event classification when known.
              */
-            position?: string;
+            position?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
-            teamAffiliation?: string;
+            teamAffiliation?: string | null;
             /**
              * Current participant lifecycle or availability status.
              */
@@ -9941,7 +9941,7 @@ export type CreateParticipantResponses = {
             /**
              * Optional participant image URL.
              */
-            photoUrl?: string;
+            photoUrl?: string | null;
             /**
              * Expected return timestamp when known.
              */
@@ -10050,11 +10050,11 @@ export type GetParticipantResponses = {
             /**
              * Position, role, or event classification when known.
              */
-            position?: string;
+            position?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
-            teamAffiliation?: string;
+            teamAffiliation?: string | null;
             /**
              * Current participant lifecycle or availability status.
              */
@@ -10087,7 +10087,7 @@ export type GetParticipantResponses = {
             /**
              * Optional participant image URL.
              */
-            photoUrl?: string;
+            photoUrl?: string | null;
             /**
              * Expected return timestamp when known.
              */
@@ -10212,11 +10212,11 @@ export type UpdateParticipantResponses = {
             /**
              * Position, role, or event classification when known.
              */
-            position?: string;
+            position?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
-            teamAffiliation?: string;
+            teamAffiliation?: string | null;
             /**
              * Current participant lifecycle or availability status.
              */
@@ -10249,7 +10249,7 @@ export type UpdateParticipantResponses = {
             /**
              * Optional participant image URL.
              */
-            photoUrl?: string;
+            photoUrl?: string | null;
             /**
              * Expected return timestamp when known.
              */
@@ -10600,7 +10600,7 @@ export type ReactivateAccountResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -10787,7 +10787,7 @@ export type UpdateAccountProfileResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -10966,7 +10966,7 @@ export type UpdateAccountUsernameResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -10981,19 +10981,19 @@ export type UpdateAccountPreferencesData = {
         /**
          * Preferred IANA timezone, or null to clear it.
          */
-        timezone?: string;
+        timezone?: string | null;
         /**
          * Preferred locale, or null to clear it.
          */
-        locale?: string;
+        locale?: string | null;
         /**
          * Preferred clock display format, or null to clear it.
          */
-        timeFormat?: '12H' | '24H';
+        timeFormat?: '12H' | '24H' | null;
         /**
          * Preferred date display format, or null to clear it.
          */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        dateFormat?: 'MDY' | 'DMY' | 'YMD' | null;
     };
     path?: never;
     query?: never;
@@ -11135,7 +11135,7 @@ export type UpdateAccountPreferencesResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -11414,7 +11414,7 @@ export type InactivateAccountResponses = {
             /**
              * Safe non-secret session correlation identifier for the authenticated browser session.
              */
-            sessionId: string;
+            sessionId: string | null;
         };
     };
 };
@@ -11579,19 +11579,19 @@ export type GetConsentHistoryResponses = {
             /**
              * Minimum age that had to be affirmed when the consent required an age gate.
              */
-            minimumAgeThreshold?: number;
+            minimumAgeThreshold?: number | null;
             /**
              * Whether the user affirmed they met the required age threshold.
              */
-            ageAffirmed?: boolean;
+            ageAffirmed?: boolean | null;
             /**
              * Captured request IP when the consent was recorded, if retained.
              */
-            ipAddress?: string;
+            ipAddress?: string | null;
             /**
              * Captured client user agent when the consent was recorded, if retained.
              */
-            userAgent?: string;
+            userAgent?: string | null;
             /**
              * When the consent decision was recorded.
              */
@@ -11622,11 +11622,11 @@ export type RecordConsentData = {
         /**
          * Optional age-gate threshold that the user was asked to affirm.
          */
-        minimumAgeThreshold?: number;
+        minimumAgeThreshold?: number | null;
         /**
          * Optional age affirmation captured alongside the consent.
          */
-        ageAffirmed?: boolean;
+        ageAffirmed?: boolean | null;
     };
     path?: never;
     query?: never;
@@ -11665,19 +11665,19 @@ export type RecordConsentResponses = {
             /**
              * Minimum age that had to be affirmed when the consent required an age gate.
              */
-            minimumAgeThreshold?: number;
+            minimumAgeThreshold?: number | null;
             /**
              * Whether the user affirmed they met the required age threshold.
              */
-            ageAffirmed?: boolean;
+            ageAffirmed?: boolean | null;
             /**
              * Captured request IP when the consent was recorded, if retained.
              */
-            ipAddress?: string;
+            ipAddress?: string | null;
             /**
              * Captured client user agent when the consent was recorded, if retained.
              */
-            userAgent?: string;
+            userAgent?: string | null;
             /**
              * When the consent decision was recorded.
              */
@@ -13002,7 +13002,7 @@ export type AdminListLeaguesResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -13022,7 +13022,7 @@ export type AdminListLeaguesResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -13261,7 +13261,7 @@ export type AdminInactivateLeagueResponses = {
             /**
              * Optional short league description.
              */
-            description?: string;
+            description?: string | null;
             /**
              * Whether the league is currently active for normal write interactions.
              */
@@ -13281,7 +13281,7 @@ export type AdminInactivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -13460,7 +13460,7 @@ export type AdminListProvidersResponses = {
             status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
             errorRate: number;
             latencyMs: number;
-            lastEventAt: string;
+            lastEventAt: string | null;
             sportsCovered: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
             activeEventCount: number;
         }>;
@@ -13517,10 +13517,10 @@ export type AdminListProviderSyncRunsResponses = {
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             createdAt: string;
             /**
              * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
@@ -13823,17 +13823,17 @@ export type AdminPrepareSportSyncResponses = {
      */
     202: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        eventId: string;
+        eventId: string | null;
         requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
         submittedAt: string;
         syncRuns: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             createdAt: string;
             /**
              * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
@@ -14155,17 +14155,17 @@ export type AdminSyncProviderEventDataResponses = {
      */
     202: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        eventId: string;
+        eventId: string | null;
         requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
         submittedAt: string;
         syncRuns: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             createdAt: string;
             /**
              * Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.
@@ -14430,7 +14430,7 @@ export type AdminListContestConfigTemplatesResponses = {
             /**
              * Optional event-type scope for the template.
              */
-            eventType?: string;
+            eventType?: string | null;
             /**
              * Contest type that may use the template.
              */
@@ -14475,11 +14475,11 @@ export type AdminListContestConfigTemplatesResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -14528,11 +14528,11 @@ export type AdminUpdateContestConfigTemplateData = {
             /**
              * Contest entry lock timestamp.
              */
-            locksAt?: string;
+            locksAt?: string | null;
             /**
              * Maximum entries a Team may create. Null means unlimited.
              */
-            maxEntriesPerSquad?: number;
+            maxEntriesPerSquad?: number | null;
             /**
              * How many golfers each Team entry must pick.
              */
@@ -14641,7 +14641,7 @@ export type AdminUpdateContestConfigTemplateResponses = {
             /**
              * Optional event-type scope for the template.
              */
-            eventType?: string;
+            eventType?: string | null;
             /**
              * Contest type that may use the template.
              */
@@ -14686,11 +14686,11 @@ export type AdminUpdateContestConfigTemplateResponses = {
                 /**
                  * Contest entry lock timestamp.
                  */
-                locksAt?: string;
+                locksAt?: string | null;
                 /**
                  * Maximum entries a Team may create. Null means unlimited.
                  */
-                maxEntriesPerSquad?: number;
+                maxEntriesPerSquad?: number | null;
                 /**
                  * How many golfers each Team entry must pick.
                  */
@@ -14748,8 +14748,8 @@ export type AdminGetIngestionDashboardResponses = {
         sportProviderStatus: Array<{
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             providerId: string;
-            lastPollAt: string;
-            lastEventReceivedAt: string;
+            lastPollAt: string | null;
+            lastEventReceivedAt: string | null;
             eventsToday: number;
             errorsToday: number;
             activeEventCount: number;
@@ -14760,16 +14760,16 @@ export type AdminGetIngestionDashboardResponses = {
             errorType: string;
             message: string;
             occurredAt: string;
-            eventId?: string;
+            eventId?: string | null;
         }>;
         activeJobs: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             recordsProcessed: number;
             errors: number;
         }>;
@@ -14777,10 +14777,10 @@ export type AdminGetIngestionDashboardResponses = {
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             recordsProcessed: number;
             errors: number;
         }>;
@@ -15085,7 +15085,7 @@ export type AdminCleanupStaleProviderEventsResponses = {
             /**
              * Persisted event end date, when known.
              */
-            endDate: string;
+            endDate: string | null;
             /**
              * Cleanup rule that selected this stale event for inventory.
              */
@@ -15196,7 +15196,7 @@ export type AdminGetProviderDetailResponses = {
         status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
         errorRate: number;
         latencyMs: number;
-        lastEventAt: string;
+        lastEventAt: string | null;
         sportsCovered: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
         activeEventCount: number;
         recentHealthChecks: Array<{
@@ -15211,8 +15211,8 @@ export type AdminGetProviderDetailResponses = {
         ingestionStats: Array<{
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             providerId: string;
-            lastPollAt: string;
-            lastEventReceivedAt: string;
+            lastPollAt: string | null;
+            lastEventReceivedAt: string | null;
             eventsToday: number;
             errorsToday: number;
             activeEventCount: number;
@@ -15223,16 +15223,16 @@ export type AdminGetProviderDetailResponses = {
             errorType: string;
             message: string;
             occurredAt: string;
-            eventId?: string;
+            eventId?: string | null;
         }>;
         recentJobs: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            eventId: string;
+            eventId: string | null;
             status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-            startedAt: string;
-            completedAt: string;
+            startedAt: string | null;
+            completedAt: string | null;
             recordsProcessed: number;
             errors: number;
         }>;
@@ -15518,10 +15518,10 @@ export type AdminReIngestEventResponses = {
         id: string;
         providerId: string;
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        eventId: string;
+        eventId: string | null;
         status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-        startedAt: string;
-        completedAt: string;
+        startedAt: string | null;
+        completedAt: string | null;
         recordsProcessed: number;
         errors: number;
     };
@@ -15605,7 +15605,7 @@ export type AdminListProviderCatalogEventsResponses = {
             externalId: string;
             name: string;
             startDate: string;
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         }>;
     };
@@ -16591,11 +16591,11 @@ export type AdminListGolfLeaguesResponses = {
             /**
              * Plain catalog-browse filter keyword, e.g. "PGA".
              */
-            matchKeyword: string;
+            matchKeyword: string | null;
             /**
              * The season currently designated as this league's active one, if any.
              */
-            currentSeasonId: string;
+            currentSeasonId: string | null;
             isActive: boolean;
             /**
              * ISO 8601 datetime string.
@@ -16702,11 +16702,11 @@ export type AdminCreateGolfLeagueResponses = {
             /**
              * Plain catalog-browse filter keyword, e.g. "PGA".
              */
-            matchKeyword: string;
+            matchKeyword: string | null;
             /**
              * The season currently designated as this league's active one, if any.
              */
-            currentSeasonId: string;
+            currentSeasonId: string | null;
             isActive: boolean;
             /**
              * ISO 8601 datetime string.
@@ -16725,7 +16725,7 @@ export type AdminCreateGolfLeagueResponse = AdminCreateGolfLeagueResponses[keyof
 export type AdminUpdateGolfLeagueData = {
     body: {
         name?: string;
-        matchKeyword?: string;
+        matchKeyword?: string | null;
         isActive?: boolean;
     };
     path: {
@@ -16808,11 +16808,11 @@ export type AdminUpdateGolfLeagueResponses = {
             /**
              * Plain catalog-browse filter keyword, e.g. "PGA".
              */
-            matchKeyword: string;
+            matchKeyword: string | null;
             /**
              * The season currently designated as this league's active one, if any.
              */
-            currentSeasonId: string;
+            currentSeasonId: string | null;
             isActive: boolean;
             /**
              * ISO 8601 datetime string.
@@ -16872,13 +16872,13 @@ export type AdminGetGolfLeagueRosterResponses = {
         entries: Array<{
             participantId: string;
             name: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             /**
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number;
+            worldRanking: number | null;
         }>;
     };
 };
@@ -16889,7 +16889,7 @@ export type AdminUpdateGolfLeagueRosterData = {
     body: {
         entries: Array<{
             participantId: string;
-            worldRanking: number;
+            worldRanking: number | null;
         }>;
     };
     path: {
@@ -16934,13 +16934,13 @@ export type AdminUpdateGolfLeagueRosterResponses = {
         entries: Array<{
             participantId: string;
             name: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             /**
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number;
+            worldRanking: number | null;
         }>;
     };
 };
@@ -17018,13 +17018,13 @@ export type AdminAddGolfLeagueRosterEntryResponses = {
         entry: {
             participantId: string;
             name: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             /**
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number;
+            worldRanking: number | null;
         };
     };
 };
@@ -17136,8 +17136,8 @@ export type AdminPreviewGolfLeagueRosterUploadResponses = {
                 worldRanking?: number;
             };
             resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
         }>;
     };
 };
@@ -17217,13 +17217,13 @@ export type AdminApplyGolfLeagueRosterUploadResponses = {
         entries: Array<{
             participantId: string;
             name: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             /**
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number;
+            worldRanking: number | null;
         }>;
     };
 };
@@ -17871,7 +17871,7 @@ export type AdminGetGolfTournamentRoundsResponses = {
              * ISO 8601 datetime string.
              */
             scheduledDate: string;
-            scheduledEndAt: string;
+            scheduledEndAt: string | null;
         }>;
     };
 };
@@ -17889,7 +17889,7 @@ export type AdminUpdateGolfTournamentRoundsData = {
              * ISO 8601 datetime string.
              */
             scheduledDate: string;
-            scheduledEndAt?: string;
+            scheduledEndAt?: string | null;
         }>;
     };
     path: {
@@ -17965,7 +17965,7 @@ export type AdminUpdateGolfTournamentRoundsResponses = {
              * ISO 8601 datetime string.
              */
             scheduledDate: string;
-            scheduledEndAt: string;
+            scheduledEndAt: string | null;
         }>;
     };
 };
@@ -18017,8 +18017,8 @@ export type AdminListGolfTournamentsResponses = {
         tournaments: Array<{
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18026,9 +18026,9 @@ export type AdminListGolfTournamentsResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18038,11 +18038,11 @@ export type AdminListGolfTournamentsResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -18054,7 +18054,7 @@ export type AdminListGolfTournamentsResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18185,8 +18185,8 @@ export type AdminCreateGolfTournamentResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18194,9 +18194,9 @@ export type AdminCreateGolfTournamentResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18206,11 +18206,11 @@ export type AdminCreateGolfTournamentResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -18222,7 +18222,7 @@ export type AdminCreateGolfTournamentResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18367,8 +18367,8 @@ export type AdminCreateGolfTournamentFromProviderEventResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18376,9 +18376,9 @@ export type AdminCreateGolfTournamentFromProviderEventResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18388,11 +18388,11 @@ export type AdminCreateGolfTournamentFromProviderEventResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -18404,7 +18404,7 @@ export type AdminCreateGolfTournamentFromProviderEventResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18704,8 +18704,8 @@ export type AdminGetGolfTournamentResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18713,9 +18713,9 @@ export type AdminGetGolfTournamentResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18725,11 +18725,11 @@ export type AdminGetGolfTournamentResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -18741,7 +18741,7 @@ export type AdminGetGolfTournamentResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18880,8 +18880,8 @@ export type AdminUpdateGolfTournamentResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18889,9 +18889,9 @@ export type AdminUpdateGolfTournamentResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -18901,11 +18901,11 @@ export type AdminUpdateGolfTournamentResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -18917,7 +18917,7 @@ export type AdminUpdateGolfTournamentResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -19036,8 +19036,8 @@ export type AdminTransitionGolfTournamentResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19045,9 +19045,9 @@ export type AdminTransitionGolfTournamentResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19057,11 +19057,11 @@ export type AdminTransitionGolfTournamentResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -19073,7 +19073,7 @@ export type AdminTransitionGolfTournamentResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -19190,8 +19190,8 @@ export type AdminUnlinkGolfTournamentScoreSourceResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19199,9 +19199,9 @@ export type AdminUnlinkGolfTournamentScoreSourceResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19211,11 +19211,11 @@ export type AdminUnlinkGolfTournamentScoreSourceResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -19227,7 +19227,7 @@ export type AdminUnlinkGolfTournamentScoreSourceResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -19350,8 +19350,8 @@ export type AdminLinkGolfTournamentScoreSourceResponses = {
         tournament: {
             id: string;
             name: string;
-            venue: string;
-            location: string;
+            venue: string | null;
+            location: string | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19359,9 +19359,9 @@ export type AdminLinkGolfTournamentScoreSourceResponses = {
             /**
              * ISO 8601 datetime string.
              */
-            endDate: string;
+            endDate: string | null;
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            rounds: number;
+            rounds: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -19371,11 +19371,11 @@ export type AdminLinkGolfTournamentScoreSourceResponses = {
              */
             fieldLocksAt: string;
             fieldLocked: boolean;
-            seasonId: string;
+            seasonId: string | null;
             /**
              * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
              */
-            leagueEventId: string;
+            leagueEventId: string | null;
             /**
              * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
              */
@@ -19387,7 +19387,7 @@ export type AdminLinkGolfTournamentScoreSourceResponses = {
             scoreSource: {
                 providerId: string;
                 externalId: string;
-            };
+            } | null;
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -19458,20 +19458,20 @@ export type AdminGetGolfTournamentFieldResponses = {
             sportEventParticipantId: string;
             participantId: string;
             participantName: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             isActive: boolean;
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
-            worldRanking: number;
-            oddsToWin: number;
-            seedNumber: number;
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+            worldRanking: number | null;
+            oddsToWin: number | null;
+            seedNumber: number | null;
             /**
              * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
-            price: number;
+            price: number | null;
             /**
              * Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite.
              */
@@ -19487,11 +19487,11 @@ export type AdminUpdateGolfFieldEntriesData = {
         entries: Array<{
             sportEventParticipantId: string;
             isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
-            worldRanking?: number;
-            oddsToWin?: number;
-            seedNumber?: number;
-            price?: number;
+            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+            worldRanking?: number | null;
+            oddsToWin?: number | null;
+            seedNumber?: number | null;
+            price?: number | null;
         }>;
     };
     path: {
@@ -19559,20 +19559,20 @@ export type AdminUpdateGolfFieldEntriesResponses = {
             sportEventParticipantId: string;
             participantId: string;
             participantName: string;
-            shortName: string;
-            nationality: string;
+            shortName: string | null;
+            nationality: string | null;
             isActive: boolean;
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
-            worldRanking: number;
-            oddsToWin: number;
-            seedNumber: number;
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+            worldRanking: number | null;
+            oddsToWin: number | null;
+            seedNumber: number | null;
             /**
              * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
-            price: number;
+            price: number | null;
             /**
              * Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite.
              */
@@ -19849,8 +19849,8 @@ export type AdminGetGolfTournamentTiersResponses = {
             assignments: Array<{
                 sportEventParticipantId: string;
                 participantId: string;
-                tierOrderIndex: number;
-                price: number;
+                tierOrderIndex: number | null;
+                price: number | null;
             }>;
         }>;
     };
@@ -19965,8 +19965,8 @@ export type AdminReplaceGolfTournamentTiersResponses = {
             assignments: Array<{
                 sportEventParticipantId: string;
                 participantId: string;
-                tierOrderIndex: number;
-                price: number;
+                tierOrderIndex: number | null;
+                price: number | null;
             }>;
         }>;
     };
@@ -20029,8 +20029,8 @@ export type AdminAutoAssignGolfTiersResponses = {
             assignments: Array<{
                 sportEventParticipantId: string;
                 participantId: string;
-                tierOrderIndex: number;
-                price: number;
+                tierOrderIndex: number | null;
+                price: number | null;
             }>;
         }>;
     };
@@ -20143,8 +20143,8 @@ export type AdminReplaceGolfTierAssignmentsResponses = {
             assignments: Array<{
                 sportEventParticipantId: string;
                 participantId: string;
-                tierOrderIndex: number;
-                price: number;
+                tierOrderIndex: number | null;
+                price: number | null;
             }>;
         }>;
     };
@@ -20207,8 +20207,8 @@ export type AdminAutoAssignGolfPricesResponses = {
             assignments: Array<{
                 sportEventParticipantId: string;
                 participantId: string;
-                tierOrderIndex: number;
-                price: number;
+                tierOrderIndex: number | null;
+                price: number | null;
             }>;
         }>;
     };
@@ -20264,13 +20264,13 @@ export type AdminListGolfPlayersResponses = {
         players: Array<{
             id: string;
             name: string;
-            firstName: string;
-            lastName: string;
-            shortName: string;
-            nationality: string;
-            position: string;
-            teamAffiliation: string;
-            externalId: string;
+            firstName: string | null;
+            lastName: string | null;
+            shortName: string | null;
+            nationality: string | null;
+            position: string | null;
+            teamAffiliation: string | null;
+            externalId: string | null;
             status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             providerMappingCount: number;
             /**
@@ -20338,13 +20338,13 @@ export type AdminCreateGolfPlayerResponses = {
         player: {
             id: string;
             name: string;
-            firstName: string;
-            lastName: string;
-            shortName: string;
-            nationality: string;
-            position: string;
-            teamAffiliation: string;
-            externalId: string;
+            firstName: string | null;
+            lastName: string | null;
+            shortName: string | null;
+            nationality: string | null;
+            position: string | null;
+            teamAffiliation: string | null;
+            externalId: string | null;
             status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             providerMappingCount: number;
             /**
@@ -20432,13 +20432,13 @@ export type AdminGetGolfPlayerResponses = {
         player: {
             id: string;
             name: string;
-            firstName: string;
-            lastName: string;
-            shortName: string;
-            nationality: string;
-            position: string;
-            teamAffiliation: string;
-            externalId: string;
+            firstName: string | null;
+            lastName: string | null;
+            shortName: string | null;
+            nationality: string | null;
+            position: string | null;
+            teamAffiliation: string | null;
+            externalId: string | null;
             status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             providerMappingCount: number;
             /**
@@ -20539,13 +20539,13 @@ export type AdminUpdateGolfPlayerResponses = {
         player: {
             id: string;
             name: string;
-            firstName: string;
-            lastName: string;
-            shortName: string;
-            nationality: string;
-            position: string;
-            teamAffiliation: string;
-            externalId: string;
+            firstName: string | null;
+            lastName: string | null;
+            shortName: string | null;
+            nationality: string | null;
+            position: string | null;
+            teamAffiliation: string | null;
+            externalId: string | null;
             status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
             providerMappingCount: number;
             /**
@@ -20613,24 +20613,24 @@ export type AdminGetGolfRoundScoresResponses = {
             sportEventParticipantId: string;
             participantId: string;
             participantName: string;
-            strokes: number;
-            scoreToPar: number;
-            thru: number;
+            strokes: number | null;
+            scoreToPar: number | null;
+            thru: number | null;
             /**
              * Null when this round has no result recorded yet for this golfer.
              */
-            status: string;
+            status: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            completedAt: string;
+            completedAt: string | null;
             standing: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                currentRound: number;
-                currentRoundThru: number;
+                currentRound: number | null;
+                currentRoundThru: number | null;
                 status: string;
-            };
+            } | null;
         }>;
     };
 };
@@ -20646,7 +20646,7 @@ export type AdminApplyGolfRoundScoresData = {
             /**
              * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
              */
-            strokes: number;
+            strokes: number | null;
             scoreToPar: number;
             thru?: number;
             status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
@@ -20719,24 +20719,24 @@ export type AdminApplyGolfRoundScoresResponses = {
             sportEventParticipantId: string;
             participantId: string;
             participantName: string;
-            strokes: number;
-            scoreToPar: number;
-            thru: number;
+            strokes: number | null;
+            scoreToPar: number | null;
+            thru: number | null;
             /**
              * Null when this round has no result recorded yet for this golfer.
              */
-            status: string;
+            status: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            completedAt: string;
+            completedAt: string | null;
             standing: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                currentRound: number;
-                currentRoundThru: number;
+                currentRound: number | null;
+                currentRoundThru: number | null;
                 status: string;
-            };
+            } | null;
         }>;
     };
 };
@@ -20752,7 +20752,7 @@ export type AdminPreviewGolfRoundScoresData = {
             /**
              * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
              */
-            strokes: number;
+            strokes: number | null;
             scoreToPar: number;
             thru?: number;
             status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
@@ -20810,28 +20810,28 @@ export type AdminPreviewGolfRoundScoresResponses = {
                 /**
                  * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
                  */
-                strokes: number;
+                strokes: number | null;
                 scoreToPar: number;
                 thru?: number;
                 status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
                 completedAt?: string;
             };
             resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-            sportEventParticipantId: string;
-            participantName: string;
+            sportEventParticipantId: string | null;
+            participantName: string | null;
             change: 'CREATE' | 'UPDATE' | 'UNCHANGED';
             before: {
-                strokes: number;
+                strokes: number | null;
                 scoreToPar: number;
-                thru: number;
+                thru: number | null;
                 status: string;
-            };
+            } | null;
             after: {
-                strokes: number;
+                strokes: number | null;
                 scoreToPar: number;
-                thru: number;
+                thru: number | null;
                 status: string;
-            };
+            } | null;
         }>;
         rollup: {
             total: number;
@@ -20922,24 +20922,24 @@ export type AdminUpdateGolfRoundScoreResponses = {
             sportEventParticipantId: string;
             participantId: string;
             participantName: string;
-            strokes: number;
-            scoreToPar: number;
-            thru: number;
+            strokes: number | null;
+            scoreToPar: number | null;
+            thru: number | null;
             /**
              * Null when this round has no result recorded yet for this golfer.
              */
-            status: string;
+            status: string | null;
             /**
              * ISO 8601 datetime string.
              */
-            completedAt: string;
+            completedAt: string | null;
             standing: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                currentRound: number;
-                currentRoundThru: number;
+                currentRound: number | null;
+                currentRoundThru: number | null;
                 status: string;
-            };
+            } | null;
         };
     };
 };
@@ -22990,9 +22990,9 @@ export type IngestClientLogsData = {
             msg?: string;
             ts: string;
             route?: string;
-            sessionId?: string;
-            userId?: string;
-            clientRequestId?: string;
+            sessionId?: string | null;
+            userId?: string | null;
+            clientRequestId?: string | null;
             data?: {
                 [key: string]: unknown;
             };
@@ -23181,18 +23181,18 @@ export type GetDraftStateResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -23217,8 +23217,8 @@ export type GetDraftStateResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -23232,9 +23232,9 @@ export type GetDraftStateResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -23251,14 +23251,14 @@ export type GetDraftStateResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -23268,22 +23268,22 @@ export type GetDraftStateResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -23292,7 +23292,7 @@ export type GetDraftStateResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -23300,20 +23300,20 @@ export type GetDraftStateResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -23436,18 +23436,18 @@ export type StartDraftResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -23472,8 +23472,8 @@ export type StartDraftResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -23487,9 +23487,9 @@ export type StartDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -23506,14 +23506,14 @@ export type StartDraftResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -23523,22 +23523,22 @@ export type StartDraftResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -23547,7 +23547,7 @@ export type StartDraftResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -23555,20 +23555,20 @@ export type StartDraftResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -23745,18 +23745,18 @@ export type SubmitContestSelectionResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -23781,8 +23781,8 @@ export type SubmitContestSelectionResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -23796,9 +23796,9 @@ export type SubmitContestSelectionResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -23815,14 +23815,14 @@ export type SubmitContestSelectionResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -23832,22 +23832,22 @@ export type SubmitContestSelectionResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -23856,7 +23856,7 @@ export type SubmitContestSelectionResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -23864,20 +23864,20 @@ export type SubmitContestSelectionResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -24020,18 +24020,18 @@ export type PauseDraftResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -24056,8 +24056,8 @@ export type PauseDraftResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -24071,9 +24071,9 @@ export type PauseDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -24090,14 +24090,14 @@ export type PauseDraftResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -24107,22 +24107,22 @@ export type PauseDraftResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -24131,7 +24131,7 @@ export type PauseDraftResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -24139,20 +24139,20 @@ export type PauseDraftResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -24295,18 +24295,18 @@ export type ResumeDraftResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -24331,8 +24331,8 @@ export type ResumeDraftResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -24346,9 +24346,9 @@ export type ResumeDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -24365,14 +24365,14 @@ export type ResumeDraftResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -24382,22 +24382,22 @@ export type ResumeDraftResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -24406,7 +24406,7 @@ export type ResumeDraftResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -24414,20 +24414,20 @@ export type ResumeDraftResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -24578,18 +24578,18 @@ export type ExtendCurrentTurnResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -24614,8 +24614,8 @@ export type ExtendCurrentTurnResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -24629,9 +24629,9 @@ export type ExtendCurrentTurnResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -24648,14 +24648,14 @@ export type ExtendCurrentTurnResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -24665,22 +24665,22 @@ export type ExtendCurrentTurnResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -24689,7 +24689,7 @@ export type ExtendCurrentTurnResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -24697,20 +24697,20 @@ export type ExtendCurrentTurnResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -24853,18 +24853,18 @@ export type UndoSnakeDraftSelectionResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -24889,8 +24889,8 @@ export type UndoSnakeDraftSelectionResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -24904,9 +24904,9 @@ export type UndoSnakeDraftSelectionResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -24923,14 +24923,14 @@ export type UndoSnakeDraftSelectionResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -24940,22 +24940,22 @@ export type UndoSnakeDraftSelectionResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -24964,7 +24964,7 @@ export type UndoSnakeDraftSelectionResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -24972,20 +24972,20 @@ export type UndoSnakeDraftSelectionResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -25128,18 +25128,18 @@ export type SkipSnakeDraftTurnResponses = {
                 tierNumber: number;
                 picksFromTier: number;
             }>;
-        };
+        } | null;
         status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
         currentPickNumber: number;
         currentRound: number;
         totalPicks: number;
         totalRounds: number;
-        currentEntryId: string;
-        currentEntryName: string;
-        myEntryId: string;
+        currentEntryId: string | null;
+        currentEntryName: string | null;
+        myEntryId: string | null;
         isMyPick: boolean;
         timePerPickSeconds: number;
-        currentTurnStartedAt: string;
+        currentTurnStartedAt: string | null;
         entries: Array<{
             /**
              * Entry identifier.
@@ -25164,8 +25164,8 @@ export type SkipSnakeDraftTurnResponses = {
             pickInRound: number;
             entryId: string;
             entryName: string;
-            participantId: string;
-            participantName: string;
+            participantId: string | null;
+            participantName: string | null;
             position?: string;
             team?: string;
             price?: number;
@@ -25179,9 +25179,9 @@ export type SkipSnakeDraftTurnResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
-        selectedEntryId?: string;
-        selectedEntryName?: string;
-        tiebreakerValue?: number;
+        selectedEntryId?: string | null;
+        selectedEntryName?: string | null;
+        tiebreakerValue?: number | null;
         selectionGroups?: Array<{
             groupId: string;
             groupName: string;
@@ -25198,14 +25198,14 @@ export type SkipSnakeDraftTurnResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string;
-                team?: string;
-                status?: string;
-                price?: number;
-                ranking?: number;
-                orderIndex?: number;
+                position?: string | null;
+                team?: string | null;
+                status?: string | null;
+                price?: number | null;
+                ranking?: number | null;
+                orderIndex?: number | null;
                 isAvailable: boolean;
-                unavailableReason?: string;
+                unavailableReason?: string | null;
                 /**
                  * Whether the currently selected entry has this participant selected.
                  */
@@ -25215,22 +25215,22 @@ export type SkipSnakeDraftTurnResponses = {
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
-            eventId: string;
+            eventId: string | null;
             period: number;
             matchupIndex: number;
-            homeParticipantId: string;
-            homeParticipantName: string;
-            awayParticipantId: string;
-            awayParticipantName: string;
-            eventTime: string;
-            deadline: string;
+            homeParticipantId: string | null;
+            homeParticipantName: string | null;
+            awayParticipantId: string | null;
+            awayParticipantName: string | null;
+            eventTime: string | null;
+            deadline: string | null;
             isLocked: boolean;
-            myPickParticipantId: string;
-            confidenceWeight: number;
+            myPickParticipantId: string | null;
+            confidenceWeight: number | null;
             /**
              * Optional label used for compact pick-em presentation.
              */
-            label: string;
+            label: string | null;
         }>;
         /**
          * Bracket pick data when relevant to the draft.
@@ -25239,7 +25239,7 @@ export type SkipSnakeDraftTurnResponses = {
             id: string;
             roundNumber: number;
             matchNumber: number;
-            label: string;
+            label: string | null;
             isLocked: boolean;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
@@ -25247,20 +25247,20 @@ export type SkipSnakeDraftTurnResponses = {
             topTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Minimal team identity used in bracket pick-em draft payloads.
              */
             bottomTeam: {
                 id: string;
                 name: string;
-                seed: number;
-            };
+                seed: number | null;
+            } | null;
             /**
              * Winning team identifier when the matchup has been decided.
              */
-            winnerId: string;
+            winnerId: string | null;
         }>;
     };
 };
@@ -25310,7 +25310,7 @@ export type ListNotificationsResponses = {
             /**
              * When the notification was marked as read, if applicable.
              */
-            readAt?: string;
+            readAt?: string | null;
             /**
              * Whether the notification has been dismissed from the feed.
              */
@@ -25318,11 +25318,11 @@ export type ListNotificationsResponses = {
             /**
              * Optional image shown alongside the notification.
              */
-            imageUrl?: string;
+            imageUrl?: string | null;
             /**
              * Optional client route or screen hint for notification deep linking.
              */
-            actionScreen?: string;
+            actionScreen?: string | null;
             /**
              * Optional routing parameters for the notification action target.
              */
@@ -25332,7 +25332,7 @@ export type ListNotificationsResponses = {
             /**
              * Optional grouping key for bundling related notifications.
              */
-            groupKey?: string;
+            groupKey?: string | null;
             /**
              * When the notification was created.
              */

@@ -158,9 +158,14 @@ export function GolfRoundScoreUploadCard({
                       </td>
                       <td className="px-4 py-2">{entry.participantName || '—'}</td>
                       <td className="px-4 py-2 text-muted-foreground">
-                        {entry.before.strokes}·{formatGolfRoundStatus(entry.before.status)} →{' '}
+                        {entry.before
+                          ? `${entry.before.strokes}·${formatGolfRoundStatus(entry.before.status)}`
+                          : '—'}{' '}
+                        →{' '}
                         <span className="text-foreground">
-                          {entry.after.strokes}·{formatGolfRoundStatus(entry.after.status)}
+                          {entry.after
+                            ? `${entry.after.strokes}·${formatGolfRoundStatus(entry.after.status)}`
+                            : '—'}
                         </span>
                       </td>
                       <td className="px-4 py-2">

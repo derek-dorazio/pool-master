@@ -16,8 +16,10 @@ export type TierCard = {
   sportEventParticipantId: string;
   participantId: string;
   name: string;
-  worldRanking: number;
-  oddsToWin: number;
+  /** Null when the golfer has no world ranking on record. */
+  worldRanking: number | null;
+  /** Null when no odds have been ingested for the golfer. */
+  oddsToWin: number | null;
   /** Null until a price is assigned (auto-assign prices, or a manual edit). */
   price: number | null;
 };
@@ -64,7 +66,7 @@ export function buildTierBoard(
     .sort((a, b) => a.tierNumber - b.tierNumber)
     .map((tier) => {
       const cards = [...tier.assignments]
-        .sort((a, b) => a.tierOrderIndex - b.tierOrderIndex)
+        .sort((a, b) => (a.tierOrderIndex ?? 0) - (b.tierOrderIndex ?? 0))
         .map((assignment) => {
           assigned.add(assignment.sportEventParticipantId);
           return cardFor(assignment.sportEventParticipantId, assignment.price);
