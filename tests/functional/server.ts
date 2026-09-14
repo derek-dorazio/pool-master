@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
+import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../packages/core-api/src/index';
+import { buildApp as buildMockContestFeedProvider } from '../../packages/mock-contest-feed-provider/src/app';
 import { startSmtpSinkServer, type SmtpSinkServer } from '../support/smtp-sink';
 
 const stateFilePath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
@@ -12,6 +14,26 @@ if (!stateFilePath) {
 }
 
 let smtpSink: SmtpSinkServer | undefined;
+// pool-master-cs8 — the FAPI daemon runs a real mock-contest-feed provider so
+// provider-linked golf scenarios (catalog browse, score-source link, sync-driven
+// live scores) can be driven end to end through the generated SDK, the same way
+// the deployed QA stack runs poolmaster-qa-mock-contest-feed-provider alongside
+// core-api. It is registered for GOLF/TENNIS/NCAA_BASKETBALL but only ever
+// touched by requests that explicitly hit the provider/sync surface, so it is
+// inert for every other functional test.
+let mockContestFeedProvider: FastifyInstance | undefined;
+
+async function startMockContestFeedProviderForDaemon(): Promise<string> {
+  const provider = buildMockContestFeedProvider();
+  await provider.listen({ host: '127.0.0.1', port: 0 });
+  const address = provider.server.address();
+  if (!address || typeof address === 'string') {
+    await provider.close();
+    throw new Error('Mock contest feed provider failed to bind to a TCP port');
+  }
+  mockContestFeedProvider = provider;
+  return `http://127.0.0.1:${address.port}`;
+}
 
 // Daemon's state file lives at `<coverage>/service-functional-api/daemon/server-state.json`.
 // Per-run state files live at `<coverage>/service-functional-api/runs/<id>/server-state.json`.
@@ -83,6 +105,14 @@ async function main(): Promise<void> {
   delete process.env.SMTP_USERNAME;
   delete process.env.SMTP_PASSWORD;
 
+  // Register the mock provider before buildApp() — registerConfiguredProviders
+  // reads these env vars once, at construction time (pool-master-cs8).
+  const mockProviderBaseUrl = await startMockContestFeedProviderForDaemon();
+  process.env.SPORT_DATA_DEFAULT_PROVIDER = 'mock-contest-feed';
+  process.env.SPORT_DATA_PROVIDER_BINDINGS_JSON = JSON.stringify({
+    providers: { 'mock-contest-feed': { baseUrl: mockProviderBaseUrl } },
+  });
+
   const app = buildApp();
 
   await app.ready();
@@ -106,6 +136,7 @@ async function main(): Promise<void> {
     try {
       await app.close();
     } finally {
+      await mockContestFeedProvider?.close().catch(() => undefined);
       await smtpSink?.close().catch(() => undefined);
       process.exit(0);
     }
@@ -165,6 +196,7 @@ async function main(): Promise<void> {
 
 main().catch(async (error) => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
+  await mockContestFeedProvider?.close().catch(() => undefined);
   await smtpSink?.close().catch(() => undefined);
   if (stateFilePath) {
     await fs.rm(stateFilePath, { force: true }).catch(() => undefined);

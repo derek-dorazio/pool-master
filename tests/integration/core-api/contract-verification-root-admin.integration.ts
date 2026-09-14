@@ -19,6 +19,7 @@ import {
   AdminGolfTournamentListResponseSchema,
   AdminGolfTournamentRoundsResponseSchema,
   AdminGolfTournamentTiersResponseSchema,
+  AdminListProviderCatalogEventsResponseSchema,
   AdminSetCurrentGolfSeasonResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
@@ -232,7 +233,15 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
   }
 }
 
-async function buildOperationalAdminApp(): Promise<FastifyInstance> {
+/**
+ * `exposeRegistry` also hands the admin module the provider registry, so the
+ * golf score-source lane's EventScoreSourceService can resolve the registered
+ * provider for adminListProviderCatalogEvents (pool-master-cs8). Off by default
+ * — the operational-sync cases only exercise providerService.
+ */
+async function buildOperationalAdminApp(
+  { exposeRegistry = false }: { exposeRegistry?: boolean } = {},
+): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
   registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
@@ -252,6 +261,7 @@ async function buildOperationalAdminApp(): Promise<FastifyInstance> {
   await app.register(adminModule, {
     prefix: '/api/v1/admin',
     providerService,
+    ...(exposeRegistry ? { providerRegistry: registry } : {}),
   });
   await app.ready();
 
@@ -1359,6 +1369,152 @@ describe('Contract verification (root admin)', () => {
       if (created.sportLeagueId) {
         await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
       }
+    }
+  });
+
+  it('pool-master-cs8: root-admin golf score-source + provider-catalog routes match their DTOs on happy paths', async () => {
+    // plans/124 §8 — a happy-path contract case for the three provider-linked
+    // operations the epic's flagship FAPI scenario left uncovered:
+    // adminListProviderCatalogEvents, adminLinkGolfTournamentScoreSource,
+    // adminUnlinkGolfTournamentScoreSource. Drives one coherent flow through a
+    // dedicated admin app with a registered provider and safeParses every
+    // response against its published schema. Golf admin rows are not covered by
+    // cleanupTestData(), so this test tears down child-first in a finally block.
+    const app = await buildOperationalAdminApp({ exposeRegistry: true });
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Golf Score Source Contract User',
+      isRootAdmin: true,
+    });
+    const stamp = Date.now().toString().slice(-8);
+
+    await getPrisma().sport.upsert({
+      where: { name: 'GOLF' },
+      create: {
+        name: 'GOLF',
+        participantType: 'INDIVIDUAL',
+        category: 'GOLF',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
+      },
+      update: {},
+    });
+
+    const created = {
+      sportLeagueId: '',
+      seasonId: '',
+      eventIds: [] as string[],
+    };
+
+    try {
+      // --- adminListProviderCatalogEvents (200) --------------------------
+      const catalogRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/admin/providers/contract-provider/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
+        headers: rootAdmin.headers,
+      });
+      expect(catalogRes.statusCode).toBe(200);
+      expect(AdminListProviderCatalogEventsResponseSchema.safeParse(catalogRes.json()).success).toBe(true);
+      expect(
+        catalogRes.json().events.some((e: { externalId: string }) => e.externalId === 'event-1'),
+      ).toBe(true);
+
+      // --- tour -> season -> manual-admin tournament (syncScope NONE) ----
+      const leagueRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/leagues',
+        headers: rootAdmin.headers,
+        payload: { name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
+      });
+      expect(leagueRes.statusCode).toBe(201);
+      created.sportLeagueId = leagueRes.json().league.id as string;
+
+      const seasonRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/seasons',
+        headers: rootAdmin.headers,
+        payload: {
+          sportLeagueId: created.sportLeagueId,
+          name: `CS8 Contract Season ${stamp} 2083`,
+          year: 2083,
+          startDate: '2083-01-05T00:00:00.000Z',
+          endDate: '2083-11-30T00:00:00.000Z',
+        },
+      });
+      expect(seasonRes.statusCode).toBe(201);
+      created.seasonId = seasonRes.json().season.id as string;
+
+      const tournamentRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/tournaments',
+        headers: rootAdmin.headers,
+        payload: {
+          name: `CS8 Contract Open ${stamp}`,
+          startDate: '2083-06-16T08:00:00.000Z',
+          endDate: '2083-06-19T20:00:00.000Z',
+          rounds: 4,
+          releaseAt: '2083-06-01T00:00:00.000Z',
+          fieldLocksAt: '2083-06-15T00:00:00.000Z',
+          seasonId: created.seasonId,
+          autoLifecycleEnabled: false,
+        },
+      });
+      expect(tournamentRes.statusCode).toBe(201);
+      const eventId = tournamentRes.json().tournament.id as string;
+      created.eventIds.push(eventId);
+      expect(tournamentRes.json().tournament.syncScope).toBe('NONE');
+
+      // --- adminLinkGolfTournamentScoreSource (200) --------------------
+      // A shape test: linkScoreSource only guards against an externalId already
+      // held by another SportEvent (409 EXTERNAL_EVENT_ALREADY_LINKED), not
+      // against provider-event existence — so a synthetic externalId links fine.
+      const linkRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/score-source`,
+        headers: rootAdmin.headers,
+        payload: { providerId: 'contract-provider', externalId: `contract-cs8-${stamp}` },
+      });
+      expect(linkRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentDetailResponseSchema.safeParse(linkRes.json()).success).toBe(true);
+      expect(linkRes.json().tournament.syncScope).toBe('SCORES_ONLY');
+      expect(linkRes.json().tournament.source).toBe('PROVIDER');
+      expect(linkRes.json().tournament.scoreSource).toEqual({
+        providerId: 'contract-provider',
+        externalId: `contract-cs8-${stamp}`,
+      });
+
+      // --- adminUnlinkGolfTournamentScoreSource (200) -----------------
+      const unlinkRes = await app.inject({
+        method: 'DELETE',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/score-source`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(unlinkRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentDetailResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
+      expect(unlinkRes.json().tournament.syncScope).toBe('NONE');
+      expect(unlinkRes.json().tournament.source).toBe('MANUAL');
+      expect(unlinkRes.json().tournament.scoreSource).toBeNull();
+    } finally {
+      const prisma = getPrisma();
+      if (created.eventIds.length) {
+        await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
+      }
+      if (created.sportLeagueId) {
+        await prisma.sportLeague.updateMany({
+          where: { id: created.sportLeagueId },
+          data: { currentSeasonId: null },
+        });
+        await prisma.leagueEvent.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
+      }
+      if (created.seasonId || created.sportLeagueId) {
+        await prisma.season.deleteMany({
+          where: created.sportLeagueId ? { sportLeagueId: created.sportLeagueId } : { id: created.seasonId },
+        });
+      }
+      if (created.sportLeagueId) {
+        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
+      }
+      await app.close();
     }
   });
 });
