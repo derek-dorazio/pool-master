@@ -109,13 +109,49 @@ verification too.
    Expect zero meaningful differences (ordering/comment noise aside) — any
    real diff means the squash dropped or changed something and needs
    investigation before proceeding.
-7. Run the full gate suite (`npx jest --config tests/jest.config.js`,
+7. **Re-append required definitional data — `prisma migrate dev --name init`
+   does not carry this forward on its own.** Audited 2026-09-19: of ~65
+   migrations, exactly two contain hand-written `INSERT` data that the app
+   actually needs at runtime (confirmed clean of any test/fixture data
+   otherwise — no fake events/participants/contests/leagues anywhere in
+   migration history):
+   - `20260419213000_add_contest_config_templates` — 3 rows in
+     `contest_config_templates` (the golf contest-creation template picker:
+     `golf-tiered-pick-6`, `golf-tiered-pick-12`, `golf-category-picks`).
+   - `20260902150000_add_sport_event_round_schedule` — 1 row: the
+     `system@poolmaster.internal` user that `AdminAuditEntry.actorId`
+     (a required FK) attributes scheduler-driven audit writes to.
+   (A third migration, `20260408113000_expand_contest_configuration_from_selection_config`,
+   has an `INSERT ... SELECT` but it backfills from `selection_configs`, a
+   table a later migration already dropped — moot on a fresh DB, nothing to
+   preserve.)
+
+   Since squashing regenerates the migration purely from `schema.prisma`'s
+   structure, these two `INSERT` blocks are silently lost unless something
+   re-appends them to the freshly generated `migration.sql` every time —
+   this squash is now repeatable, so a one-time manual copy-paste would only
+   survive the first run; the second squash's `rm -rf migrations/*` would
+   delete last time's re-appended `INSERT`s right along with everything else,
+   with nothing left to re-derive them from.
+
+   Concretely: `packages/core-api/prisma/required-seed-data.sql` — a small,
+   permanent, checked-in file living *outside* `prisma/migrations/` (so
+   `rm -rf migrations/*` never touches it) — holds exactly these two blocks'
+   literal SQL. After step 5 generates the new `migration.sql`,
+   `squash-migrations.mjs` appends `required-seed-data.sql`'s contents onto
+   it. The result is one ordinary migration file — DDL followed by these two
+   `INSERT`s — applied together by `prisma migrate deploy` like any other
+   migration, exactly matching how this repo already did it three times in
+   history (no new runtime seed mechanism, nothing to run separately after
+   migrate deploy). Any future required-data need gets added to that one
+   `.sql` fragment file, not hand-typed into the script.
+8. Run the full gate suite (`npx jest --config tests/jest.config.js`,
    `npm run test:service:integration:fresh`, `npm run test:service:functional-api:fresh`)
    against the new single-migration path to confirm nothing behavioral moved.
    Also run `npm run db:reset` itself against a local Postgres and confirm it
    completes cleanly against the squashed baseline — this is local dev's
    entire reset story, and it should need zero changes, just confirmation.
-8. Commit the new single migration file and the deleted old ones together, in
+9. Commit the new single migration file and the deleted old ones together, in
    one commit, with a clear message explaining what was squashed and why, and
    a pointer to the pre-squash commit SHA for anyone who needs the old history
    (`git log` already preserves it; the commit message just makes it
@@ -168,7 +204,11 @@ Single job, run start to finish on every dispatch:
 2. **Squash** — run `scripts/squash-migrations.mjs` (slice 1, now scripted)
    against a disposable Postgres service container in the runner (not QA, not
    local dev). Includes the before/after schema-equivalence diff from slice 1
-   step 6; fail the run on any real diff rather than proceeding.
+   step 6 (fail the run on any real diff) and appending
+   `required-seed-data.sql` from slice 1 step 7 (contest config templates,
+   the system audit-actor user) onto the freshly generated migration, since
+   `prisma migrate dev` doesn't carry hand-written `INSERT`s forward on its
+   own.
 3. **Verify** — run the full gate suite (`jest`, `test:service:integration:fresh`,
    `test:service:functional-api:fresh`) against the freshly-squashed baseline.
    Fail the run here rather than pushing a squash that breaks anything.
@@ -261,12 +301,14 @@ CI workflow leaves QA reset *and* usable, not just reset.
    doesn't change any design decision here, just a correction.
 2. ~~Manual `aws ecs run-task` vs. a `workflow_dispatch` CI job?~~ **Resolved
    2026-09-14: CI job.** See slice 3 and the decisions table above.
-3. **Does QA hold anything beyond the bootstrap-user fixtures that the team
-   would miss** — demo leagues/contests set up for stakeholder walkthroughs,
-   anything like that? Still open. Lower stakes now that this becomes a
-   repeatable "start clean" pipeline rather than a single irreversible event —
-   but still worth a beat of thought before the first dispatch, since every
-   run wipes whatever's there at the time.
+3. ~~Does QA hold anything beyond the bootstrap-user fixtures that the team
+   would miss?~~ **Resolved 2026-09-19: no.** This was framed around a shared
+   team environment; there are no other developers or stakeholders on this
+   project with state in QA to check with. The user has separately confirmed
+   directly: "we are still in development, so there is nothing valuable in
+   this QA database to migrate" — the explicit premise behind wanting a
+   repeatable "start clean" pipeline in the first place. Nothing further to
+   check before the first dispatch.
 4. ~~Timing relative to epic 476~~ **Superseded by the "repeatable operation"
    decision above** — epic 476 is closed anyway (verified in the sequencing
    precondition section), and since this is now an on-demand pipeline rather
