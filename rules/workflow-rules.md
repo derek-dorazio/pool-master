@@ -11,6 +11,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 | Tier | Artifact | Lifetime | Purpose |
 |---|---|---|---|
 | Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
+| Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
 | Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a Beads epic; **deleted** when the parent epic closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
@@ -28,6 +29,29 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
    source in the same slice unless a Beads follow-up explicitly owns the
    retirement. Dead source files are not harmless; future agents read and copy
    them.
+7. **Route knowledge to where its reader will already be standing.** Code
+   comments are a first-class layer of this model, not an afterthought below
+   `rules/` and `docs/adr/`. Each layer answers a different question for a
+   different reader:
+   - **Code comment** — *why is this code like this?* Read by whoever opens the
+     file, which is exactly the person positioned to break it.
+   - **`rules/*.md`** — *what do I do?* Read by someone doing work in this area,
+     and only if they remember the rule exists.
+   - **`docs/adr/*.md`** — *why is the system like this?* Read by someone
+     questioning the approach, including the alternatives that were rejected.
+
+   The cut between a comment and a rule is whether the knowledge constrains code
+   that **exists** or code that **has not been written yet**. A comment can only
+   reach the former. "Always use the shared logger" is a rule — it governs files
+   not yet created. "This interceptor must run before X because Y" is a comment —
+   it governs this file.
+
+   Prefer a comment when the constraint is bounded by specific files someone must
+   open to break it, and tests catch violation. Prose in `rules/` that describes
+   one mechanism in one place is the weakest option available: nobody doing
+   feature work will read it, and it drifts silently because nothing forces a
+   revisit. A comment versions with the code and appears in every diff that
+   touches it.
 
 ---
 
@@ -86,7 +110,8 @@ What a plan file does **not** contain:
 ### When a plan dies
 
 - When the parent Beads epic closes (all child stories closed or deferred), the plan file is **deleted** in a cleanup commit.
-- Durable patterns/decisions the plan established must be codified in `rules/` or `docs/adr/` before deletion. A plan that introduced a new convention without updating rules/ADRs is not ready to be deleted.
+- Durable patterns/decisions the plan established must be codified before deletion, in whichever layer fits per `§0` governing rule 7: `rules/` for conventions that constrain code not yet written, `docs/adr/` for decisions with rejected alternatives, or a **code comment at the canonical implementation site** for a mechanism that is fully encapsulated and test-guarded. A plan that introduced a new convention without codifying it somewhere is not ready to be deleted.
+- A well-placed code comment satisfies this requirement. It is often the *better* choice for a self-contained mechanism: `rules/` prose describing one implementation in one place is read by nobody doing feature work and drifts silently, while a comment is read by whoever opens the file and moves with the code. See `packages/shared/openapi/nullable-to-3-1.ts` for the reference example.
 - git preserves the deleted file; it can be retrieved via `git log` / `git show` if historical context is needed.
 - Do **not** move completed plans to `plans/archive/`. Archive directories grow and get read; deletion is the enforcement mechanism.
 

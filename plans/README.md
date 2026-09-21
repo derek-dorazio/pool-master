@@ -12,7 +12,7 @@
 ## When a plan dies
 
 - When the parent Beads epic closes (all child stories resolved), the plan file is **deleted** in the same commit or an immediately following cleanup commit.
-- Before deletion, any durable patterns or decisions the plan introduced must be codified in `rules/*.md` or as an ADR in `docs/adr/`.
+- Before deletion, any durable patterns or decisions the plan introduced must be codified — in `rules/*.md`, as an ADR in `docs/adr/`, or as a code comment at the canonical implementation site. See `rules/workflow-rules.md §0` governing rule 7 for which layer fits.
 - Git history preserves the deleted file. `git log -- plans/NN-*.md` and `git show <sha>:plans/NN-*.md` retrieve any prior version.
 - This directory does **not** use an `archive/` subdirectory. Archive directories accumulate the same problem under a different path; deletion is the enforcement mechanism.
 

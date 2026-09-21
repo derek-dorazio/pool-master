@@ -2,12 +2,15 @@
 
 An ADR captures a single durable decision that outlasts any individual feature slice — cross-cutting architectural or workflow choices that future contributors and agents need to understand the "why" behind.
 
-ADRs complement the `rules/` layer:
+ADRs are one of three durable documentation layers:
 
-- **`rules/*.md`** — *how* we build here (current conventions, checklists, requirements).
-- **`docs/adr/*.md`** — *why* we chose the approach behind those rules (historical decision record).
+- **Code comments at the implementation site** — *why is this code like this?* Hidden constraints, non-obvious invariants, mechanisms that would surprise a reader. Read by whoever opens the file.
+- **`rules/*.md`** — *how* we build here (current conventions, checklists, requirements). Read by someone working in the area, if they remember the rule exists.
+- **`docs/adr/*.md`** — *why* we chose the approach behind those rules (historical decision record), including the alternatives that were rejected.
 
 An ADR and a rule may describe two sides of the same decision — that is fine.
+
+Choosing between them: a comment can only constrain code that already exists, so knowledge that governs code not yet written belongs in `rules/`. Knowledge that only makes sense as "we considered X and chose Y" belongs in an ADR — a rule has nowhere to put the rejected alternative. See `rules/workflow-rules.md §0` governing rule 7.
 
 ## Properties
 
