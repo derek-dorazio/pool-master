@@ -10,6 +10,9 @@ Important constraints:
 - does not normally operate live scoring manually
 - should be able to use commissioner/member flows directly in league context
   when exceptional intervention is needed
+- is the only actor besides a user's own self-service who may act on that
+  user's platform account (toggle root admin, reset password,
+  inactivate/delete account)
 
 ## Commissioner
 
@@ -22,6 +25,13 @@ Important constraints:
 - uses the same team and entry tools as members
 - may use those tools across league teams when administrative intervention is
   needed
+- never touches a user's platform account (profile, password,
+  inactivate/delete, root-admin toggle) — commissioner authority is strictly
+  league-scoped
+- role changes for a user within a league (promote to commissioner, demote to
+  member, remove as team owner) are actions on that user's team relationship,
+  not on their account — see `domain-concepts.md`'s League Membership
+  invariant
 
 ## Member / Team Owner
 
@@ -33,6 +43,8 @@ Important constraints:
 - members create and edit entries until contest lock
 - member experience should not depend on manual commissioner/admin release
   steps after contest creation
+- account lifecycle (profile, preferences, password, inactivate/delete) is
+  entirely self-service; no commissioner or other member can act on it
 
 ## System
 

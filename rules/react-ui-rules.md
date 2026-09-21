@@ -268,6 +268,53 @@ modal bodies, form objects, and pure helpers. Do not leave a large page intact
 because the feature "still works"; oversized page files are where duplicated
 state, stale actions, and unthemeable markup accumulate.
 
+### Single-Purpose Page Default
+
+- Default page shape: one purpose, one title, one primary save/commit
+  boundary, and one (or at most two tightly related) content containers.
+- Two containers are acceptable only when they serve one mental task (e.g.
+  "league invite settings" plus "pending invites" on one Invitations page).
+  Not acceptable when they are merely adjacent, distinct concerns.
+- Prefer adding a new page and menu item over adding another tile to an
+  existing page. A larger menu is an acceptable, expected outcome of this
+  default.
+- A multi-tile page is still single-purpose when every tile shares one
+  concern grouped for scan-ability (e.g. one tile per active contest on an
+  Entries page). That is one purpose, visually grouped — not multiple
+  purposes sharing a page.
+- Sensitive/destructive actions (password change, account delete/inactivate)
+  need focused UX with instructions, warnings, and confirmation. A dedicated
+  page is the default way to deliver that focus, but a focused modal on a
+  canonical authority-gated page (see List → Home pattern below) satisfies
+  the same intent and is preferred when the entity already has one canonical
+  page.
+- This is a first-draft default, not a hard rule; a reviewed product
+  requirement can override it, but the burden is on the requirement, not on
+  the page.
+
+### List → Home Pages With Authority-Gated Editing
+
+- A list page's row destination is the entity's one canonical "Home" page —
+  never a separate View route and a separate Manage/Edit route for the same
+  entity.
+- The Home page toggles between edit and read-only UI using a shared
+  authority hook (e.g. `useTeamAuthority(teamId)` returning
+  `owner | commissioner | viewer`), not by branching the route or the URL.
+- Do not scatter inline `role === 'COMMISSIONER'`-style checks across
+  subcomponents. The authority hook is the single shared primitive; every
+  consumer of that entity's permissions reads through it.
+- Applies to rich, daily-use entity surfaces where users spend time (Team
+  Home, Contest Home, Entry page) and to platform-admin detail pages that
+  reuse the same canonical Home (e.g. a root-admin list linking into the same
+  Team Home).
+- Does not apply to quick transactional admin actions on platform-admin list
+  pages, where the workflow is search → act → done → next entity. Those use
+  modals on the list page instead of a per-entity detail page. Reserve a
+  dedicated admin detail page for content that genuinely needs a rich,
+  multi-field edit form.
+- When proposing any new list page, plan the per-row destination as the
+  entity's canonical Home page before considering a separate Manage page.
+
 ### URL, Cookie, And Store Ownership
 
 - Shareable navigation state belongs in the URL:
