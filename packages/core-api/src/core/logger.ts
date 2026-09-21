@@ -88,6 +88,12 @@ export function createFastifyLoggerOptions(
   };
 }
 
+// clientTraceId/clientRequestId join backend log lines to their originating
+// browser tab/call (ADR-0005: docs/adr/0005-cross-tier-log-correlation.md).
+// Headers are set once, webapp-side, by the interceptor in
+// clients/poolmaster/src/lib/api.ts. Client-originated log entries flow
+// through the same binding via packages/core-api/src/modules/client-logs/,
+// tagged data.source: 'client', into this same CloudWatch log group.
 export function buildRequestLogBindings(request: FastifyRequest): RequestLogBindings {
   const authUser = request.authUser;
   const rootAdminUser = request.rootAdminContext?.rootAdminUser;

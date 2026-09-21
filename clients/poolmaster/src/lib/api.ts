@@ -129,6 +129,11 @@ client.setConfig(
   }),
 );
 
+// Cross-tier log correlation (ADR-0005): every outbound call gets a
+// tab-scoped trace ID and a per-call request ID, picked up backend-side by
+// buildRequestLogBindings (packages/core-api/src/core/logger.ts). This is
+// the only place these headers are set — feature code never needs to know
+// they exist.
 client.interceptors.request.use((request: Request) => {
   request.headers.set('X-Client-Trace-Id', getOrCreateClientTraceId());
   request.headers.set('X-Client-Request-Id', createClientRequestId());

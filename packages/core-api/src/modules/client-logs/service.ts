@@ -68,6 +68,12 @@ export class ClientLogService {
     this.assertBatchWithinLimits(params.batch);
     this.assertRateLimit(params.ip);
 
+    // Re-emit each client-originated entry through the request-scoped
+    // logger, tagged data.source: 'client', into the same core-api
+    // CloudWatch log group as backend logs — not a separate frontend log
+    // group. See ADR-0005 (docs/adr/0005-cross-tier-log-correlation.md) for
+    // why one shared group and why clientTraceId/clientRequestId are the
+    // join keys.
     for (const entry of params.batch.entries) {
       const payload = {
         action: entry.action,
