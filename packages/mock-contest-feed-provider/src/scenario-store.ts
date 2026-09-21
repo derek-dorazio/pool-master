@@ -666,6 +666,15 @@ function scoreRelativeToPar(input: {
   return clamp(Math.round(baseline + fieldDrift + playerNoise), -20, 20);
 }
 
+// This file owns all deterministic Golf live-scoring content: which round
+// a contestant is on, their scores, thru, and status transitions for every
+// supported `mockEventState` token. PoolMaster's adapter
+// (`MockContestFeedAdapter.getLiveScores`) is a thin mapper over whatever
+// this returns — it must not fork on the state token or invent scores
+// itself. See "PoolMaster Integrates; It Does Not Invent" in
+// requirements/product-requirements/features/contest-event-feed-integration/overview.md.
+// A direct request to this package's `/scores` endpoint with a given token
+// must return the same deterministic shape the adapter consumes.
 type GolfLiveState =
   | 'pre-live'
   | 'r1-in-progress'

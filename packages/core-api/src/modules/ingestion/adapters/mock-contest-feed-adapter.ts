@@ -159,6 +159,15 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return Array.from(rankings.values()).sort((left, right) => left.rank - right.rank);
   }
 
+  // Thin mapper only — no branching on `options.mockEventState`, no score
+  // math, no fallback for a missing/malformed field. The mock provider (see
+  // `GolfLiveState` in scenario-store.ts) owns all deterministic scenario
+  // content; this method reshapes whatever it returns, verbatim, into the
+  // GolfRoundUpdate[] shape. See "PoolMaster Integrates; It Does Not
+  // Invent" in
+  // requirements/product-requirements/features/contest-event-feed-integration/overview.md
+  // — an earlier attempt put per-state scoring logic here and got it
+  // backwards.
   async getLiveScores(
     eventId: string,
     options?: ProviderEventSyncOptions,
