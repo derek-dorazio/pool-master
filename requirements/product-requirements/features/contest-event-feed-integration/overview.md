@@ -111,6 +111,26 @@ Concretely, for every adapter (mock or real):
   contract defect, surfaced as a validation failure. It is not something the
   adapter fills in with a fallback or a derived guess.
 
+**The mock provider's shape is a testing convenience, not a preview of any
+real provider.** Its field richness, its response shape, and even which
+routes it splits data across exist to make PoolMaster testable — they are
+not evidence of what a real provider looks like. Do not assume a future real
+adapter will be sparser than the mock, will shape its payload the same way,
+or will fetch the same data through the same combination of endpoint calls.
+Two concrete consequences:
+
+- Derivation code that consumes provider data should defensively prefer a
+  richer provider-supplied field when one is present, and fall back to a
+  PoolMaster-computed default only when the provider genuinely has nothing
+  better — never hard-code an assumption that the mock's sparseness is the
+  ceiling of what any provider will ever send.
+- The actual contract an adapter must satisfy is the `SportDataProvider`
+  port interface (`packages/core-api/src/modules/ingestion/core/provider-interface.ts`),
+  not the mock's specific HTTP route layout. A real provider may need
+  several calls to satisfy one port method, or one call to satisfy several —
+  that's the adapter's job to reconcile, and the port is deliberately silent
+  about how many requests it takes.
+
 A first implementation attempt for the mock golf live-scoring contract got
 this backwards: multi-round score generation, per-state branching, and a
 withdrawn-status override all lived in PoolMaster's adapter instead of the

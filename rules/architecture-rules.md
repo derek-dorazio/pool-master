@@ -213,6 +213,22 @@ All backend services are TypeScript services with explicit module boundaries.
 - Database access stays behind service/repository boundaries.
 - Cross-service/module communication uses shared events and typed contracts.
 - League isolation must remain explicit in request context and persistence boundaries.
+- **One code path per piece of business logic, however many callers reach it.**
+  When the same behavior must be triggered from more than one caller — two
+  route lanes (admin vs. sync), an admin-initiated action and a
+  system/scheduler-initiated one, a manual trigger and a scheduled one — the
+  behavior lives in one shared function/service, and every caller invokes
+  that same function. Do not give each caller its own copy of the logic,
+  even a thin one; copies drift silently, and a fix or a new branch applied
+  to only one copy is a defect the moment a second path exists. This is the
+  backend mirror of `rules/react-ui-rules.md`'s Component Reuse Threshold
+  ("the rule of two") — apply it the first time a second caller needs
+  behavior a first caller already has, not after it has drifted twice.
+  Example: `EventLifecycleService.applySportEventStatusTransition` is the
+  one place `SportEvent.status` is ever written, called identically by
+  provider-driven ingestion, admin-triggered transitions, and the automatic
+  lifecycle scheduler — each caller supplies a different `actor`, not a
+  different implementation.
 
 ### Domain Event Bus
 
