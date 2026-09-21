@@ -81,7 +81,7 @@ becomes canonical. `architecture-rules.md §3` collapses to a cross-reference, r
 only the *Provider and Adapter Registry Discipline* subsection, which is genuinely
 architectural and not covered by §1B.
 
-### 4. Validity matrix becomes ADR-0006
+### 4. Validity matrix becomes an ADR
 
 The code-vs-DB matrix guidance moves out of `architecture-rules.md §2` into an ADR, with
 its criteria and tradeoffs intact. It is a decision with rationale, not a rule.
@@ -123,8 +123,8 @@ Low risk, immediately reduces the reading surface.
 **Second — DEVELOPER-SETUP drift fix and audit.** Independent, and worth doing early since
 it is actively misleading.
 
-**Third — dedupe and relocate.** `§3` collapse to cross-reference; validity matrix to
-ADR-0006.
+**Third — dedupe and relocate.** `§3` collapse to cross-reference; validity matrix to its
+own ADR, taking whatever number is next when it is written.
 
 **Fourth — `workflow-rules.md` decomposition.** After Plan 132 and ideally after 139, so
 each removed section is removed once.

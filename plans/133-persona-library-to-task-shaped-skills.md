@@ -83,9 +83,14 @@ stated reason: portability across Claude Code and Codex. That rationale no longe
 Skill content moves into `.claude/skills/<name>/SKILL.md` directly. `personas/`,
 `.agents/`, and `.codex/` are deleted.
 
-This reverses a durable structural decision and warrants **ADR-0005**, recording both the
+This reverses a durable structural decision and warrants **a new ADR** — referred to
+throughout this plan set as the *single-tool persona layout* ADR — recording both the
 single-tool collapse and the role-to-task shift. Plan 111 is deleted when its epic closes,
 so the reasoning needs a permanent home.
+
+**Its number is assigned when it is authored, not here.** ADR numbers are sequential and
+claimed at creation; any ADR written between now and this slice takes the next one. A plan
+that hard-codes a number is stale the moment that happens. Refer to proposed ADRs by name.
 
 Accepted tradeoff: reintroducing a second runtime later means re-extracting content. Real
 but deferred, and the pattern is cheap to reinstate from git history.
@@ -129,7 +134,8 @@ persona files carry nuance worth preserving, and the extraction is a rewrite, no
 `.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md` and
 `workflow-rules.md` roster tables and the `§2` lifecycle section.
 
-**Fourth — ADR-0005.**
+**Fourth — write the single-tool persona layout ADR**, taking whatever number is next at
+that point.
 
 ## Open Questions
 

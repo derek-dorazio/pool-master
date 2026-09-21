@@ -84,8 +84,10 @@ better left in history.
 - The `Bash(bd *)` permission block in `.claude/settings.json` (~20 entries)
 - `§5` *Finding Tasks*, which becomes "use `gh issue list` or the GitHub tools"
 
-**ADR-0007 supersedes ADR-0001.** ADR-0001 is not edited — ADRs are immutable once
-accepted; the new one records what changed and why.
+**A new ADR supersedes ADR-0001.** ADR-0001 is not edited — ADRs are immutable once
+accepted; the new one records what changed and why, and 0001's status line becomes
+`Superseded by ADR-NNNN` (the one sanctioned edit to an accepted ADR). The superseding
+ADR's number is assigned when it is written, not reserved here.
 
 ### 5. Tracker reconciliation moves to a hook
 
@@ -141,7 +143,7 @@ sub-issues, verify counts, and map old IDs to new ones for reference from existi
 files.
 
 **Fourth — rewrite the rules.** `workflow-rules.md §1` and `§5`, the slice-completion
-checklist, the commit-footer convention, and ADR-0007.
+checklist, the commit-footer convention, and the ADR superseding ADR-0001.
 
 **Fifth — remove `.beads/` and the permission block, and add the `Stop` hook.**
 
@@ -161,7 +163,7 @@ checklist, the commit-footer convention, and ADR-0007.
 
 ## Sources / Prior Decisions
 
-- ADR-0001 — Beads as live task tracker (superseded by this plan's ADR-0007)
+- ADR-0001 — Beads as live task tracker (superseded by this plan's new ADR)
 - ADR-0002 — Plans are narrative; deleted after parent epic closes (unaffected)
 - Plan 133 — Persona library to task-shaped skills (drops `persona/*` labels)
 - Plan 134 — Rules consolidation (rebase recipe disposition)

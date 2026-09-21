@@ -33,7 +33,7 @@ Extracting each plan's tracker reference and checking it against `.beads/issues.
 
 | Plan | Disposition |
 |---|---|
-| 111 persona-library-restructure | `7p5` closed, but deletion **must ride with Plan 133's ADR-0005 slice** — see *Sequencing trap* |
+| 111 persona-library-restructure | `7p5` closed, but deletion **must ride with Plan 133's ADR slice** — see *Sequencing trap* |
 | 123 workflow-gate-hardening | Open, but fully dispositioned by Plan 135 slice four |
 
 **Contradictions to resolve:**
@@ -130,7 +130,7 @@ None.
 
 ## Dependencies
 
-- **Plan 133** owns Plan 111's deletion via its ADR-0005 slice. This plan does not touch
+- **Plan 133** owns Plan 111's deletion via its persona-layout ADR slice. This plan does not touch
   111.
 - **Plan 135** owns Plan 123's disposition. This plan does not touch 123.
 - **Plan 139** determines the tracker substrate. If it lands first, decisions 2 and 3
@@ -141,9 +141,9 @@ None.
 
 **Do not delete `plans/111` in a general cleanup sweep.** Its epic is closed, so a naive
 pass would take it. But Plan 133 cites it as the source of the thin-pointer pattern it
-reverses, and ADR-0002 requires the durable reasoning be codified first. ADR-0005 is where
-that lands. Deleting 111 before ADR-0005 exists orphans the rationale at exactly the
-moment Plan 133 needs it.
+reverses, and ADR-0002 requires the durable reasoning be codified first. Plan 133's
+single-tool persona layout ADR is where that lands. Deleting 111 before that ADR exists
+orphans the rationale at exactly the moment Plan 133 needs it.
 
 ## Execution Sequence
 
@@ -179,6 +179,6 @@ halves of this step happen in the same local session; neither is safe alone.
 ## Sources / Prior Decisions
 
 - ADR-0002 — Plans are narrative; deleted after parent epic closes (the rule being enforced)
-- Plan 133 — owns 111's deletion via ADR-0005
+- Plan 133 — owns 111's deletion via its persona-layout ADR
 - Plan 135 — owns 123's disposition
 - Plan 139 — determines the tracker substrate and hosts the drift check
