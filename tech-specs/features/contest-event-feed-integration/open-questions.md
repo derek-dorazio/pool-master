@@ -1,5 +1,13 @@
 # Contest Event Feed Integration Technical Open Questions
 
+> **Staleness warning.** This spec was written before plans 117, 119, 121,
+> and 124 shipped. "Resolved" items below may have been resolved
+> differently than recorded here during implementation — verify against
+> current code before relying on this file. See `domain-model.md` in this
+> same directory for a concrete known divergence (`ProviderSyncRun`). Epic
+> `pool-master-33l` is open, so this spec has not been deleted per
+> ADR-0003.
+
 ## Resolved
 
 - `CEFI-001`
