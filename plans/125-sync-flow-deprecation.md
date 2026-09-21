@@ -1,9 +1,31 @@
 # Sync Flow Deprecation — Admin-Authored Events, Optional Field/Odds Complement
 
-> **Status:** Draft for user review. No Beads epic opened yet. Depends on
-> `plans/124-golf-admin-tournament-management.md` (the admin-authoring + score-linking
-> pattern this plan reduces sync's role around). Cross-sport, not golf-specific — same
-> relationship `plans/124`'s `modules/sport-catalog/` has to golf.
+> **TODO — create the GitHub issue for this plan once `plans/139-beads-to-github-issues.md`
+> is complete.** Deliberately not tracked in Beads: creating an epic now means migrating it
+> days later. Until that issue exists this plan is untracked, which is the one thing
+> standing between it and execution.
+>
+> When the issue is created:
+> - Move `§5 Slice sequence` into the issue as child issues. Task state does not belong in
+>   a plan file (ADR-0002); the table is a pre-tracker drafting artifact.
+> - Fix the `§4` cross-reference to `plans/123` — it says "unaffected; its shared-enum work
+>   is orthogonal," but `plans/135-rule-scanners-to-eslint.md` now supersedes most of 123.
+>
+> **Status:** Reviewed and ready to execute. Not started — every deletion target
+> (`runScheduleSync`, `ParticipantRankingSnapshot`, `getEventResults`, `EVENTSCHEDULE`) is
+> still present in the tree.
+>
+> **Dependency satisfied.** `plans/124-golf-admin-tournament-management.md` shipped
+> (`pool-master-476` closed 2026-09-03, "all steps complete"); its
+> admin-authoring + score-linking pattern is live in the codebase. This plan is cross-sport,
+> not golf-specific — same relationship `plans/124`'s `modules/sport-catalog/` has to golf.
+>
+> **Blocked on one prerequisite:** `§3.3a` deletes `EVENTRESULTS` on the grounds that
+> `plans/122` — its only consumer — is dropped. `plans/124 §1` and `§4` below both record
+> that drop, but the tracker was never updated: `pool-master-q68` is still open with four
+> open children. Close `q68` and its children as deferred (pointing at `plans/124 §1`) and
+> delete `plans/122` before this plan's slice 5 runs. See
+> `plans/141-plan-directory-reconciliation.md`.
 
 ---
 
