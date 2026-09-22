@@ -28,7 +28,13 @@
  * environment's egress goes through an agent proxy. curl honors the proxy with
  * no flag. See sendsAuth() for why the token is usually NOT forwarded.
  *
- * Degrades silently: no transport, no network, not a repo -> no output.
+ * IT DOES NOT FAIL SILENTLY. When the check cannot run -- no transport, no
+ * network, unreadable remote -- it says so and names the reason. Silence is
+ * reserved for exactly one case: the check ran and found nothing. That
+ * distinction is the point. An earlier version treated "could not check" and
+ * "nothing to report" as the same empty output, so a missing `gh` binary
+ * rendered the hook inert for weeks without a single visible symptom.
+ *
  * Cost is one issue listing per session Stop, regardless of how many plans exist.
  */
 
@@ -131,8 +137,22 @@ function loadViaApi() {
   return toIssueMap(records);
 }
 
+/** -> { issues: Map } on success, { error: '<reason>' } when the check cannot run. */
 function loadIssues() {
-  return loadViaGh() ?? loadViaApi();
+  const viaGh = loadViaGh();
+  if (viaGh) return { issues: viaGh };
+
+  if (!repoSlug()) {
+    return { error: 'could not derive owner/repo from the `origin` remote' };
+  }
+  const viaApi = loadViaApi();
+  if (viaApi) return { issues: viaApi };
+
+  return {
+    error:
+      '`gh` is unavailable or failed, and the curl call to api.github.com returned nothing usable '
+      + '(no curl, no network, auth rejected, or malformed JSON)',
+  };
 }
 
 function issuesReferencedByBranchCommits() {
@@ -166,11 +186,32 @@ function plansWithTrackingIssues() {
   return out;
 }
 
-function main() {
-  if (!run('git', ['rev-parse', '--git-dir'])) return;
+/** The hook's only output channel. Always exits 0 -- this reports, never gates. */
+function emit(text) {
+  process.stdout.write(JSON.stringify({ systemMessage: text }));
+}
 
-  const issues = loadIssues();
-  if (!issues) return;
+function skip(reason) {
+  emit(
+    'Tracker reconciliation DID NOT RUN.\n'
+    + `  Reason: ${reason}\n`
+    + '  This check reports drift between plans/ and the issue tracker '
+    + '(workflow-rules.md §1, §5). While it is skipped, that drift is unchecked — '
+    + 'a silent skip is what let this hook sit inert once already (#143).',
+  );
+}
+
+function main() {
+  if (!run('git', ['rev-parse', '--git-dir'])) {
+    skip('not inside a git repository');
+    return;
+  }
+
+  const { issues, error } = loadIssues();
+  if (error) {
+    skip(error);
+    return;
+  }
 
   const lines = [];
 
@@ -192,15 +233,13 @@ function main() {
     }
   }
 
+  // The one silent case: the check ran and there is nothing to say.
   if (lines.length === 0) return;
 
-  process.stdout.write(
-    JSON.stringify({
-      systemMessage:
-        'Tracker reconciliation (reminder, not a gate):\n' +
-        lines.join('\n') +
-        '\nAn issue a PR will close via `Closes #NN` on merge is expected to read open here.',
-    }),
+  emit(
+    'Tracker reconciliation (reminder, not a gate):\n'
+    + lines.join('\n')
+    + '\nAn issue a PR will close via `Closes #NN` on merge is expected to read open here.',
   );
 }
 
