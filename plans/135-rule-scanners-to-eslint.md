@@ -28,11 +28,28 @@ per-line escape hatch with a recorded justification.
 
 **Already covered by existing plugins — near-free:**
 
+> **Standing correction from slice 1: verify every proposed replacement against the
+> real tree before trusting this table.** Two of the three rows below were wrong, and
+> the first was wrong in the worst possible way — a replacement that looked obviously
+> equivalent and would have caught *nothing*. The table was written from what the rules
+> are named, not from what the scanners actually matched. Assume the remaining rows
+> carry the same defect until each is diffed.
+>
+> The verification that works: run the scanner, run the candidate ESLint rule over the
+> same tree, and diff the two result sets. A rule is a faithful port only if it is a
+> superset of the scanner's findings *and* every extra is explainable.
+>
+> Two traps that produce a confident, wrong "0 findings" during that check — both hit
+> in slice 1: an ESLint config outside the repo cannot resolve `typescript-eslint` and
+> fails to load, and `--format compact` no longer ships with ESLint core. Either
+> swallows all output. Never read a bare 0 as "the rule found nothing" without
+> confirming the run happened.
+
 | Scanner | Replacement |
 |---|---|
-| `check-unsafe-casts` | `@typescript-eslint/no-explicit-any` and the `no-unsafe-*` family |
-| `check-no-non-sdk-fetch` | `no-restricted-globals` for `fetch`, `no-restricted-imports` for `axios`, scoped to `clients/poolmaster/src` via overrides |
-| `check-test-disable-discipline` (detection half) | `eslint-plugin-vitest` / `eslint-plugin-jest` `no-disabled-tests`; the adjacent-`SKIP:`-comment requirement needs a small custom rule |
+| ~~`check-unsafe-casts`~~ | **Migrated and deleted (slice 1)** — but *not* by the rules originally proposed here. The proposal was `@typescript-eslint/no-explicit-any` and the `no-unsafe-*` family; measured against the tree, that would have caught **0 of 20** findings. Every one was `as unknown as`, which involves no `any` at all, and the `no-unsafe-*` family needs type information and catches *consequences* of `any` values rather than double assertions. What works is `no-restricted-syntax` with `TSAsExpression > TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]`, plus a second selector on `TSAnyKeyword` for the `as any` half. |
+| ~~`check-no-non-sdk-fetch`~~ | **Migrated and deleted (slice 1).** `no-restricted-globals` / `no-restricted-imports` as proposed, and this row was correct — with one caveat found by testing: `no-restricted-globals` flags *any reference* to the global, including `fetchImpl: typeof fetch = fetch`, a dependency-injection test seam that the scanner's `fetch\s*\(` correctly ignored. Ported rules can be *less* precise, not only more. |
+| `check-test-disable-discipline` (detection half) | `eslint-plugin-vitest` / `eslint-plugin-jest` `no-disabled-tests`; the adjacent-`SKIP:`-comment requirement needs a small custom rule. **Unverified** — diff it before trusting it. |
 
 **Custom ESLint rules — good fit:**
 
@@ -69,10 +86,28 @@ Seven scanners currently run `--warn-only` with an acknowledged backlog, which m
 passes while reporting known violations. ESLint has a native, better-understood version of
 the same idea:
 
-- `"warn"` for rules with an existing backlog, surfaced in the editor without failing CI
+- ~~`"warn"` for rules with an existing backlog, surfaced in the editor without failing CI~~
 - `"error"` for rules with a clean baseline
-- `--max-warnings 0` on a per-directory basis as areas get cleaned
+- ~~`--max-warnings 0` on a per-directory basis as areas get cleaned~~
 - `eslint-disable-next-line` with a required description for genuine exceptions
+
+**Corrected in slice 1.** The first and third bullets assumed a lint invocation this repo
+does not have. `npm run lint` already runs a global `--max-warnings 0`, and the tree sits
+at exactly zero warnings, so a `warn`-severity rule with any backlog fails CI on its first
+run — "surfaced without failing CI" is not achievable as written.
+
+The repo owner chose to **clear the backlogs rather than tolerate them**, so every migrated
+rule lands as `error`. `@typescript-eslint/no-unused-vars` was promoted `warn` → `error` in
+the same slice (baseline was 0, so it cost nothing) to keep the strictness uniform.
+
+That makes the escape-hatch bullet load-bearing rather than incidental: with no warn tier,
+a genuine exception has nowhere to go except an `eslint-disable-next-line` carrying its
+reason. Slice 1 produced three, each with an inline justification — TanStack's invariant
+`ColumnDef` (#150), a `fetch` DI seam reading a static asset, and a zod-to-json-schema
+retype without which ts-jest fails `TS2589`.
+
+**Consequence for later slices:** a scanner cannot be migrated until its findings are at
+zero. Budget the cleanup as part of each slice, not as a follow-up.
 
 This subsumes the baseline strategy Plan 123 was going to design.
 
@@ -118,9 +153,14 @@ None.
 
 ## Execution Sequence
 
-**First — the near-free migrations.** `unsafe-casts`, `no-non-sdk-fetch`, and the
-detection half of test-disable. These need configuration, not rule authoring, and
-immediately prove the approach on real violations.
+~~**First — the near-free migrations.**~~ **Partly done (slice 1).** `unsafe-casts` and
+`no-non-sdk-fetch` are migrated and their scripts deleted; all 20 `as unknown as` findings
+were fixed at the root first, which turned out to be four causes rather than twenty
+problems — 17 of them one audit-log signature. The detection half of `test-disable`
+remains, and is unverified against the tree.
+
+The slice did "prove the approach on real violations" — including proving that the table
+above could not be trusted without measuring.
 
 **Second — custom rules, highest-traffic first.** Route discipline and the frontend rules
 fire most and benefit most from editor feedback.

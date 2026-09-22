@@ -49,7 +49,7 @@ export async function notificationsModule(
       logger.info({ userId, count: result.notifications.length, total: result.total }, 'Listed in-app notifications');
       return {
         notifications: result.notifications.map((notification) =>
-          mapNotificationToDto(notification as unknown as Record<string, unknown>),
+          mapNotificationToDto(notification),
         ),
         total: result.total,
       };

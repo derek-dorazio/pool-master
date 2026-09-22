@@ -40,6 +40,10 @@ function buildVersionInfoUrl(): string {
 }
 
 export async function getVersionInfo(
+  // This reads a static asset (version-info.json), not an API endpoint, so there is
+  // no generated SDK operation for it. The injectable default is the test seam --
+  // callers pass a stub rather than patching the global.
+  // eslint-disable-next-line no-restricted-globals -- static asset, not an API call
   fetchImpl: typeof fetch = fetch,
 ): Promise<PoolMasterVersionInfo> {
   try {

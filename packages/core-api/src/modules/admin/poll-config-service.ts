@@ -109,8 +109,8 @@ export class PollConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'poll-intervals',
       description: 'Updated poll interval configuration',
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({
@@ -144,8 +144,8 @@ export class PollConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'poll-intervals',
       description: 'Reset poll interval configuration to defaults',
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({

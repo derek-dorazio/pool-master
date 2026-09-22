@@ -112,8 +112,8 @@ export class IngestionConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'ingestion-schedule',
       description: 'Updated ingestion schedule configuration',
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({
@@ -186,8 +186,8 @@ export class IngestionConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: `ingestion-schedule:${sport}`,
       description: `Set ingestion schedule override for sport: ${sport}`,
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({
@@ -227,8 +227,8 @@ export class IngestionConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: `ingestion-schedule:${sport}`,
       description: `Cleared ingestion schedule override for sport: ${sport}`,
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({
@@ -258,8 +258,8 @@ export class IngestionConfigService {
       resourceType: 'PLATFORM_CONFIG',
       resourceId: 'ingestion-schedule',
       description: 'Reset ingestion schedule configuration to defaults',
-      beforeState: before as unknown as Record<string, unknown>,
-      afterState: currentConfig as unknown as Record<string, unknown>,
+      beforeState: before,
+      afterState: currentConfig,
     });
 
     this.logger?.info({

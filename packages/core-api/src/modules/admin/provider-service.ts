@@ -798,7 +798,7 @@ export class ProviderService {
       resourceType: 'PROVIDER',
       resourceId: providerId,
       description: `Manual health check for ${provider.providerName} — status: ${result.status}`,
-      afterState: result as unknown as Record<string, unknown>,
+      afterState: result,
     });
 
     this.logger?.info({

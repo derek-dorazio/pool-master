@@ -119,8 +119,8 @@ export class ContestTemplateAdminService {
       resourceType: 'CONTEST_CONFIG_TEMPLATE',
       resourceId: templateId,
       description: `Updated contest config template ${existing.templateKey}`,
-      beforeState: mapContestConfigTemplateDto(existing) as unknown as Record<string, unknown>,
-      afterState: mapContestConfigTemplateDto(updated) as unknown as Record<string, unknown>,
+      beforeState: mapContestConfigTemplateDto(existing),
+      afterState: mapContestConfigTemplateDto(updated),
     });
 
     this.logger.info({

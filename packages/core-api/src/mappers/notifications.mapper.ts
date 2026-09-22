@@ -1,8 +1,17 @@
+import type { Notification } from '@prisma/client';
+
 function toIso(value?: Date | null): string | undefined {
   return value ? value.toISOString() : undefined;
 }
 
-export function mapNotificationToDto(notification: Record<string, unknown>) {
+/**
+ * Takes the Prisma row directly. It previously took `Record<string, unknown>`,
+ * which forced every caller to assert its typed row through `unknown` and made
+ * the defensive `String(...)` coercion below load-bearing rather than belt-and-
+ * braces. With the real type the coercion is redundant, but it is left in place:
+ * narrowing it is a behavior change that belongs in its own slice.
+ */
+export function mapNotificationToDto(notification: Notification) {
   return {
     id: String(notification.id),
     userId: notification.userId == null ? undefined : String(notification.userId),

@@ -67,45 +67,13 @@ describe('pool-master-q8h: frontend rule scanner scripts', () => {
     });
   });
 
-  it('pool-master-q8h: no-non-sdk-fetch flags feature HTTP calls but permits infrastructure exceptions', () => {
-    withTempRepo((tempRoot) => {
-      const featureDir = join(tempRoot, 'clients/poolmaster/src/features/demo');
-      const apiDir = join(tempRoot, 'clients/poolmaster/src/lib');
-      mkdirSync(featureDir, { recursive: true });
-      mkdirSync(apiDir, { recursive: true });
-      writeFileSync(
-        join(featureDir, 'fetch-violation.ts'),
-        'export async function load() { return fetch("/api/demo"); }\n',
-      );
-      writeFileSync(
-        join(apiDir, 'api.ts'),
-        'export async function generatedClient() { return fetch("/api/generated"); }\n',
-      );
-
-      const result = runRuleScript('check-no-non-sdk-fetch.mjs', tempRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toContain('fetch-violation.ts:1');
-      expect(result.stdout).toContain('Non-SDK HTTP call');
-      expect(result.stdout).not.toContain('api.ts');
-    });
-  });
-
-  it('pool-master-q8h: no-non-sdk-fetch passes generated-client-only fixtures', () => {
-    withTempRepo((tempRoot) => {
-      const apiDir = join(tempRoot, 'clients/poolmaster/src/lib');
-      mkdirSync(apiDir, { recursive: true });
-      writeFileSync(
-        join(apiDir, 'api.ts'),
-        'export async function generatedClient() { return fetch("/api/generated"); }\n',
-      );
-
-      const result = runRuleScript('check-no-non-sdk-fetch.mjs', tempRoot);
-
-      expect(result.status).toBe(0);
-      expect(result.stdout).toContain('No non-SDK frontend HTTP calls found.');
-    });
-  });
+  // The two `no-non-sdk-fetch` cases that lived here were removed with the scanner
+  // itself (#134): that rule is now `no-restricted-globals` / `no-restricted-imports`
+  // in eslint.config.js. They are not replaced in kind -- the ESLint rule is scoped by
+  // a `clients/poolmaster/src/**` path glob, so a temp-directory fixture never matches
+  // it, and testing it would need fixture files inside the real linted tree. The
+  // migration was verified by planting a violation in place and confirming the scanner
+  // and the ESLint rule flagged identical lines.
 
   it('pool-master-q8h: no-parallel-api-types flags local duplicates of generated types', () => {
     withTempRepo((tempRoot) => {
