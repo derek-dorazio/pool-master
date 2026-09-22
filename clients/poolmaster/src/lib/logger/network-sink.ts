@@ -63,6 +63,11 @@ function createDefaultTransport(options: {
         keepalive: true,
         headers: {
           'Content-Type': 'application/json',
+          // Deliberately body.clientTraceId (captured per-entry at log time
+          // in logger.ts, then copied onto the batch from its first entry in
+          // buildBatch below), not a fresh getOrCreateClientTraceId() call
+          // here: this tags the upload with the trace of the events it's
+          // reporting, not a new trace for the upload call itself.
           'X-Client-Trace-Id': body.clientTraceId,
           'X-Client-Request-Id': randomRequestId(),
         },

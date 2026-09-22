@@ -1,5 +1,16 @@
 # Contest Event Feed Integration Domain Model
 
+> **Staleness warning.** This spec was written before plans 117, 119, 121,
+> and 124 shipped. Sections marked `(Proposed)` may describe concepts that
+> were superseded during implementation — verify against code before
+> relying on them. Known example: the `ProviderSyncRun` concept below
+> shipped as `ProviderSyncRunLedger`
+> (`packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger.ts`),
+> not as described here. Epic `pool-master-33l` is open, so this spec has
+> not been deleted per ADR-0003 — reconciling it against shipped reality is
+> work for whoever resumes that epic, not a general invitation to trust it
+> as-is.
+
 ## Purpose
 
 Describe the target ownership boundaries for the event/feed -> contest ->

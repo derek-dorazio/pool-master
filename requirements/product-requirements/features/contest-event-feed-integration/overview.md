@@ -89,6 +89,62 @@ durable non-production feed infrastructure that allows the deployed product to
 work end to end with named fake tournaments and participants before a real
 provider is integrated.
 
+### 5. PoolMaster Integrates; It Does Not Invent `(Confirmed)`
+
+This module's job is to sync with external systems: connect to a provider,
+import what it returns, and transform/normalize that payload into PoolMaster's
+canonical shape. It follows directly from that job description that PoolMaster
+does not fabricate the data it's importing — a sync/import module that invents
+scenario content isn't integrating with anything, it's a second, competing
+source of truth.
+
+Concretely, for every adapter (mock or real):
+
+- The provider (mock or real) owns the full content of whatever it returns —
+  every score, status, and state transition. PoolMaster's adapter reshapes
+  that response into the canonical DTO shape; it does not decide what the
+  data *is*.
+- The adapter must produce the same output whether the request came from a
+  scheduled poll, a manual admin sync, or a QA scenario token — it has no
+  knowledge of *why* it was called, only *what* it received.
+- A missing or malformed field in the provider's response is a provider
+  contract defect, surfaced as a validation failure. It is not something the
+  adapter fills in with a fallback or a derived guess.
+
+**The mock provider's shape is a testing convenience, not a preview of any
+real provider.** Its field richness, its response shape, and even which
+routes it splits data across exist to make PoolMaster testable — they are
+not evidence of what a real provider looks like. Do not assume a future real
+adapter will be sparser than the mock, will shape its payload the same way,
+or will fetch the same data through the same combination of endpoint calls.
+Two concrete consequences:
+
+- Derivation code that consumes provider data should defensively prefer a
+  richer provider-supplied field when one is present, and fall back to a
+  PoolMaster-computed default only when the provider genuinely has nothing
+  better — never hard-code an assumption that the mock's sparseness is the
+  ceiling of what any provider will ever send.
+- The actual contract an adapter must satisfy is the `SportDataProvider`
+  port interface (`packages/core-api/src/modules/ingestion/core/provider-interface.ts`),
+  not the mock's specific HTTP route layout. A real provider may need
+  several calls to satisfy one port method, or one call to satisfy several —
+  that's the adapter's job to reconcile, and the port is deliberately silent
+  about how many requests it takes.
+
+A first implementation attempt for the mock golf live-scoring contract got
+this backwards: multi-round score generation, per-state branching, and a
+withdrawn-status override all lived in PoolMaster's adapter instead of the
+mock provider, keyed off the QA-only `mockEventState` request token. That
+made the "deterministic" scenario data PoolMaster's own invention rather than
+the provider's, and meant a direct request to the provider's own endpoint
+returned different data than what PoolMaster actually consumed — the opposite
+of what an integration adapter is for. See the code comments on
+`MockContestFeedAdapter.getLiveScores`
+(`packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter.ts`)
+and `GolfLiveState`
+(`packages/mock-contest-feed-provider/src/scenario-store.ts`) for where this
+boundary is enforced today.
+
 ## Major Modules
 
 ### Admin Event Operations

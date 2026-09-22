@@ -1,5 +1,12 @@
 # Contest Event Feed Integration Flows
 
+> **Staleness warning.** This spec was written before plans 117, 119, 121,
+> and 124 shipped. Flow steps may describe an ownership/sequencing model
+> that was superseded during implementation — verify against current code
+> before relying on it. See `domain-model.md` in this same directory for a
+> concrete known divergence (`ProviderSyncRun`). Epic `pool-master-33l` is
+> open, so this spec has not been deleted per ADR-0003.
+
 ## End-To-End Flow
 
 ### Flow 1: Event Import Resolves Operational Timing

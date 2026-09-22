@@ -53,3 +53,4 @@ Not ADR candidates:
 - [ADR-0002 — Plans are narrative; deleted after their Beads epic closes](./0002-plans-as-narrative-delete-after-epic-closes.md)
 - [ADR-0003 — Tech specs are pre-implementation only; deleted after ship](./0003-tech-specs-pre-implementation-only.md)
 - [ADR-0004 — Team is the league-facing entity; User page is account-scope only](./0004-team-centric-league-account-scope-boundary.md)
+- [ADR-0005 — Cross-tier log correlation via client trace/request IDs](./0005-cross-tier-log-correlation.md)

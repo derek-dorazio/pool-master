@@ -129,6 +129,17 @@ client.setConfig(
   }),
 );
 
+// Cross-tier log correlation (ADR-0005): every outbound SDK call gets a
+// tab-scoped trace ID and a per-call request ID, picked up backend-side by
+// buildRequestLogBindings (packages/core-api/src/core/logger.ts).
+//
+// Set at four sites, not just here: this interceptor; withRetryHeaders
+// (new request ID, inherited trace ID); refreshAccessSession, which
+// bypasses this interceptor and sets both itself; and
+// lib/logger/network-sink.ts for log uploads. Changing the header names or
+// ID scheme means changing all four.
+//
+// Feature code never needs to know these exist.
 client.interceptors.request.use((request: Request) => {
   request.headers.set('X-Client-Trace-Id', getOrCreateClientTraceId());
   request.headers.set('X-Client-Request-Id', createClientRequestId());

@@ -158,22 +158,20 @@ Use those conventions as the starting point, but bias toward a consumer app:
 
 ## 9. PoolMaster-Specific UX Guidance So Far
 
-- League selector in the header must stay compact.
-- League selector rows should prioritize:
+- The header league switcher is the only way to move between leagues — there
+  is no separate "My Leagues" grid/list page. Keep the switcher compact:
   - league avatar/icon
   - league name
-- If commissioner-visible inactive leagues need special treatment in the compact
-  selector, start with subtle row styling rather than another status icon.
-- If a grid or tile view exists for leagues, that larger surface can carry
-  clearer active/inactive indicators and explicit manage-league actions.
-- If a full “My Leagues” page exists later, each league tile may show richer
-  read-only properties and active/inactive state there.
-- Grid/list/tile-based league management pages may use fuller status
-  presentation:
-  - active/inactive indicator
-  - manage league action
-  - read-only property display
-- Member inactive-league experience should emphasize:
+- If commissioner-visible inactive leagues need special treatment in the
+  compact selector, start with subtle row styling rather than another status
+  icon.
+- Richer per-league status (active/inactive indicator, commissioner actions,
+  read-only property display) belongs on **League Home**
+  (`/league/:leagueCode`), the single canonical page per league — not on a
+  separate leagues grid/list surface. See
+  `requirements/product-requirements/navigation-and-entry-points.md` for the
+  full League Home / MY-vs-LEAGUE navigation model.
+- Member inactive-league experience should emphasize, on League Home itself:
   - same league home
   - read-only state
   - clear explanation

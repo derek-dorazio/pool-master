@@ -1,5 +1,13 @@
 # Contest Event Feed Integration API Surface
 
+> **Staleness warning.** This spec was written before plans 117, 119, 121,
+> and 124 shipped. It may describe endpoints, shapes, or ownership
+> boundaries that were superseded during implementation — verify against
+> the current OpenAPI/generated SDK before relying on it. See
+> `domain-model.md` in this same directory for a concrete known
+> divergence (`ProviderSyncRun`). Epic `pool-master-33l` is open, so this
+> spec has not been deleted per ADR-0003.
+
 ## Purpose
 
 Describe the target contract surface for the four-module integration lane and

@@ -154,6 +154,13 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * richer: assume 4 rounds — Round 1 on startDate, Round 2/3 the following
  * days, and Round 4 on endDate when the provider supplies one (falling back
  * to startDate + 3 days only when endDate is absent too).
+ *
+ * The mock's sparseness here is a testing convenience, not evidence of what
+ * any real provider sends — see "PoolMaster Integrates; It Does Not Invent"
+ * in requirements/product-requirements/features/contest-event-feed-integration/overview.md.
+ * Do not harden this function's assumptions against the mock's specific
+ * shape; keep preferring `providerRounds` whenever a future adapter
+ * supplies it.
  */
 export function deriveGolfTournamentRounds(
   startDate: Date,

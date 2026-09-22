@@ -38,6 +38,38 @@ whether the office-pool framing applies — not whether today's substrate
 already supports it. Squares are office pools and may eventually ship;
 sportsbook bets are not office pools and will not.
 
+## League
+
+A commissioner-organized office pool. A league contains contests; its teams'
+entries compete in those contests. League identity (name, icon) is carried by
+the header league switcher and by League Home, the single canonical page per
+league.
+
+## Team
+
+The league-facing entity. All league-scoped surfaces (team lists, contests,
+entries) are organized around teams, not around users directly — there is no
+league-level "Members" or "Users" list. A team may have one owner or multiple
+co-owners.
+
+## League Membership
+
+**Invariant:** a user belongs to a league if and only if they own (solely or
+jointly) at least one team in that league. Removing a user's last team in a
+league removes their membership in that league automatically; there is no
+separate "remove from league" operation. A user appearing in a league without
+owning a team there is a data defect, not a supported state.
+
+**Corollary:** a regular (non-root-admin) user must belong to at least one
+league at all times — arriving via invitation, registration-and-join, or
+invite acceptance. A zero-league regular user is a transitional/defensive
+state only (e.g. mid-onboarding), never a normal steady state. Root admin is
+the sole exception: it can exist without any league membership.
+
+Owner identity surfaces only as a column on a league's team list; drilling
+into a team or a specific owner name is how a commissioner finds "the person
+behind the team."
+
 ## Sporting Event
 
 A real-world scheduled competition imported from provider data. PoolMaster does
