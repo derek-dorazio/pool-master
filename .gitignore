@@ -53,3 +53,6 @@ clients/mobile/.expo/
 # Docker
 docker-compose.override.yml
 
+
+# SQLite / local database files
+*.db

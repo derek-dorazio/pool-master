@@ -16,6 +16,7 @@
  * only ever prints.
  *
  * Degrades silently: no `gh`, no auth, no network, not a repo -> no output.
+ * Cost is one `gh issue list` per session Stop, regardless of how many plans exist.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -36,13 +37,24 @@ function run(cmd, args) {
   }
 }
 
-/** number -> { state, title }, or null if the issue could not be read. */
-function readIssue(number) {
-  const out = run('gh', ['issue', 'view', String(number), '--json', 'number,state,title']);
+/**
+ * One `gh issue list` for the whole repo instead of one `gh issue view` per issue.
+ * The per-issue version cost ~0.6s a call and this hook looks up every plan's
+ * tracking issue on every Stop, so it grew a multi-second tax as plans accumulated.
+ * Returns Map<number, {state, title}>, or null if the tracker could not be read.
+ */
+function loadIssues() {
+  const out = run('gh', [
+    'issue', 'list',
+    '--state', 'all',
+    '--limit', '500',
+    '--json', 'number,state,title',
+  ]);
   if (!out) return null;
   try {
-    const parsed = JSON.parse(out);
-    return { state: String(parsed.state).toUpperCase(), title: parsed.title };
+    return new Map(
+      JSON.parse(out).map((i) => [i.number, { state: String(i.state).toUpperCase(), title: i.title }]),
+    );
   } catch {
     return null;
   }
@@ -81,12 +93,14 @@ function plansWithTrackingIssues() {
 
 function main() {
   if (!run('git', ['rev-parse', '--git-dir'])) return;
-  if (!run('gh', ['auth', 'status'])) return;
+
+  const issues = loadIssues();
+  if (!issues) return;
 
   const lines = [];
 
   for (const number of issuesReferencedByBranchCommits()) {
-    const issue = readIssue(number);
+    const issue = issues.get(number);
     if (issue?.state === 'OPEN') {
       lines.push(`  #${number} is still open — "${issue.title}"`);
     }
@@ -97,7 +111,7 @@ function main() {
       lines.push(`  plans/${file} declares no tracking issue (workflow-rules.md §5)`);
       continue;
     }
-    const state = readIssue(issue);
+    const state = issues.get(issue);
     if (state && state.state !== 'OPEN') {
       lines.push(`  plans/${file} tracks #${issue}, which is closed — delete the plan (ADR-0002)`);
     }

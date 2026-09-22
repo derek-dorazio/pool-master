@@ -46,8 +46,8 @@ all go.
 - Slice commits carry `#NN` in the footer; the PR body carries `Closes #NN`.
 
 **Only open and in-progress items were migrated** — 43 issues, covering 104 live Beads
-records after epics were collapsed. The 439 closed records were not migrated: recreating them
-would produce issues nobody reads, with wrong timestamps and no author fidelity. The 4
+records after epics were collapsed. The 443 closed records were not migrated: recreating them
+would produce issues nobody reads, with wrong timestamps and no author fidelity. The 9
 `deferred` records were not migrated either — deferred scope is a decision already made and
 documented in the plan that dropped it, so an issue adds a second place to read it from. All
 of it remains recoverable via `git show <sha>:.beads/issues.jsonl`, which is the same
@@ -82,4 +82,4 @@ was decided when it was decided. The operational instruction lives in
 - **Stay on Beads and fix the conflict problem.** Rejected: the conflict is structural, not incidental — it follows from committing shared mutable state. The only fix is to stop committing it, at which point the local-first argument for Beads collapses.
 - **Beads for slices, GitHub Issues for anything cross-cutting.** Rejected: two trackers is strictly worse than either one. The whole cost of ADR-0001's arrangement was having task state in a different place from the review.
 - **Adopt a GitHub Project immediately.** Deferred, not rejected. Projects would restore queryable dependencies, at the cost of a second surface to maintain. Plain issues plus prose is the smaller step; the Project is available if dependency ordering proves load-bearing.
-- **Migrate the closed history too.** Rejected: 439 issues nobody will read, with wrong timestamps and no author fidelity. Git history is the archive.
+- **Migrate the closed history too.** Rejected: 443 issues nobody will read, with wrong timestamps and no author fidelity. Git history is the archive.

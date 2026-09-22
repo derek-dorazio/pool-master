@@ -9,7 +9,7 @@
 >
 > **Coordination warning: shares a touchpoint with `plans/127`.** This epic's slice 4
 > (#95) and `plans/127`'s epic (#99) slice 5
-> (#105) both extend `contest-entry-page.tsx:578`'s `selectionType !== 'TIERED'`
+> (#105) both extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'`
 > gate. Do not let both land independently — whichever lands first should extend the gate to
 > admit **both** `BUDGET_PICK` and `CATEGORY_PICK` in one small commit, and the other rebases
 > onto it rather than re-editing the same line.
@@ -104,7 +104,7 @@ every `getDraftState` call — not a stored value, nothing to keep in sync.
 Investigated the actual frontend submit flow (`contest-entry-page.tsx`) to find where a budget
 gate would attach, and found two things worth recording precisely:
 
-1. **`contest-entry-page.tsx:578` hard-blocks every non-`TIERED` contest today**: `if
+1. **`contest-entry-page.tsx` hard-blocks every non-`TIERED` contest today**: `if
    (contest.selectionType !== 'TIERED') { return <ErrorState .../> }` — "The first-pass entry
    builder currently supports tiered contest selections only." This means the earlier claim
    that the pick/entry UI needs "no frontend change" for budget mode (from the audit that
@@ -190,7 +190,7 @@ epic.
 | 1 | `ContestConfigTemplate` seed migration: `GolfContestConfigMode.GOLF_BUDGET` + the two presets, All Count and Top 4, $1000/roster-6 (§4) | `plans/124` slice 9 |
 | 2 | `totalSpent`/`isOverBudget` computed field in `buildRosterSelectionResponse` for `BUDGET_PICK` (§3.2); delete the dead `BudgetPickEngine` class and its orphaned unit test, reimplement the sum inline (§3.3, confirmed) | 1 |
 | 3 | New `POST /contests/:contestId/entries/:entryId/submit` (`submitContestEntry`) route: recomputes `isOverBudget` server-side, rejects with `422 CONTEST_ENTRY_OVER_BUDGET` (§3.3) | 2 |
-| 4 | Frontend: extend `contest-entry-page.tsx:578`'s `selectionType !== 'TIERED'` gate to admit `BUDGET_PICK` (§3.3) — coordinate with `plans/127`'s epic if both are open at once, see this plan's header | 3 |
+| 4 | Frontend: extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate to admit `BUDGET_PICK` (§3.3) — coordinate with `plans/127`'s epic if both are open at once, see this plan's header | 3 |
 | 5 | Frontend: budget draft-room UI — running-total/over-budget indicator in the pick UI, wire `submitEntry()` to the new endpoint, surface its `422` as a clear error (§3.3) | 4 |
 | 6 | Commissioner contest-config: read-only budget/roster-size display for a `GOLF_BUDGET` contest (mirrors `plans/124`'s tier display and `plans/127`'s category display) | 1 |
 | 7 | FAPI scenario: budget contest end to end — create a tournament (via `plans/124`), create a budget contest, pick over budget and confirm submission is rejected, correct back under budget and confirm it succeeds, confirm the leaderboard renders with no code changes (format-agnostic, per `plans/126`) | 3, 5, 6 |

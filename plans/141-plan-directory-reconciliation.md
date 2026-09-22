@@ -73,21 +73,23 @@ first orphans the rationale at exactly the moment Plan 133 needs it.
 
 111's deletion rides with that ADR, in Plan 133's final slice — not in a general sweep.
 
-### 2. Resolve the Plan 122 contradiction
+### 2. ~~Resolve the Plan 122 contradiction~~ — done
 
-`pool-master-q68` is **open with 4 open children**, but `plans/124 §1` and `plans/125 §4`
-both record that Plan 122 was dropped — the admin-authored tournament model removed its
-premise (provider-corrected results arriving after completion). The tracker was never
+`pool-master-q68` was **open with 4 open children**, while `plans/124 §1` and `plans/125 §4`
+both recorded that Plan 122 had been dropped — the admin-authored tournament model removed
+its premise (provider-corrected results arriving after completion). The tracker was never
 updated.
 
-This blocks Plan 125, whose `§3.3a` deletes the `EVENTRESULTS` feed *specifically because*
+That blocked Plan 125, whose `§3.3a` deletes the `EVENTRESULTS` feed *specifically because*
 122 — its only stated consumer — is gone.
 
-**Resolution:** close `q68` and its four children as `deferred` with a note pointing at
-`plans/124 §1`, **then** delete `plans/122`. The order is load-bearing: ADR-0002's invariant
-is *tracker closes → plan file deleted*. Deleting first leaves four open children
-referencing a file that no longer exists, which is worse drift than the current mismatch.
-Both halves need the `bd` CLI, so they happen in one local session.
+**Resolved before the tracker migration**, in the order ADR-0002's invariant requires
+(*tracker closes → plan file deleted*): `q68` and its four children were closed as
+`deferred`, then `plans/122` was deleted. Deleting first would have left four open children
+referencing a file that no longer existed, which is worse drift than the original mismatch.
+
+All five records are among the 9 `deferred` ones left in git history rather than migrated —
+`git show <sha>:.beads/issues.jsonl | grep q68` recovers them.
 
 ### 3. ~~Plan 125 needs a tracker item~~ — done
 
