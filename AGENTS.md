@@ -19,41 +19,36 @@ All agents working in this repo should:
 - Update Beads state (status, notes) when working against an existing epic or story. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1 and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
 - Keep documentation and rules in sync when architecture, workflow, or testing patterns change.
 
-## Read These Files Before Implementing
+## Read the Rules Your Task Touches
 
-- `rules/workflow-rules.md`
-- `rules/working-style.md`
-- `rules/product-discovery-rules.md`
-- `rules/architecture-rules.md`
-- `rules/product-requirements-rules.md`
-- `rules/technical-specification-rules.md`
-- `rules/poolmaster-webapp-rules.md`
-- `rules/domain-model-conventions-rules.md`
-- `rules/service-rules.md`
-- `rules/react-ui-rules.md`
-- `rules/ux-rules.md`
-- `rules/testing-rules.md`
-- `rules/model-change-rules.md`
-- `rules/swift-rules.md`
-- `rules/android-rules.md`
+`rules/` is roughly 280KB. Reading it end to end before a slice is neither possible nor
+useful — attention spent there is attention not spent on the change, and a directive nobody
+can follow is one that gets ignored wholesale. Read by task shape instead.
 
-## Purpose of the Rules Files
+The **Non-Negotiables** above apply to every slice regardless of what it touches.
 
-- `rules/workflow-rules.md`: Beads/plan workflow, execution protocol, and how to keep active slice tracking in sync.
-- `rules/working-style.md`: collaboration defaults, communication preferences, and working-session continuity guidance.
-- `rules/product-discovery-rules.md`: high-level product-discovery artifacts, Piper's discovery scope, and discovery handoff expectations.
-- `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
-- `rules/product-requirements-rules.md`: product requirement artifacts, use-case structure, confidence labels, and handoff floor for requirement work.
-- `rules/technical-specification-rules.md`: technical-spec artifact structure, domain/API/flow spec expectations, and handoff floor for technical design work.
-- `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
-- `rules/domain-model-conventions-rules.md`: lifecycle naming, soft-delete vs hard-delete semantics, `status` vs `isActive`, and domain-model consistency conventions.
-- `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
-- `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
-- `rules/ux-rules.md`: standard UX conventions, state communication defaults, and PoolMaster-specific interaction guidance for first-draft web implementation.
-- `rules/testing-rules.md`: unit, data integration, contract verification, functional API, frontend-layer, and CI expectations.
-- `rules/model-change-rules.md`: required checklist for schema/model changes across persistence, DTOs, services, routes, clients, and tests.
-- `rules/swift-rules.md`: iOS guidance.
-- `rules/android-rules.md`: Android guidance.
+| If the slice… | Read |
+|---|---|
+| Adds or changes a backend route, service, DTO, or mapper | `service-rules.md` — §4 *DTOs, Mappers, OpenAPI*, §7 *Error Handling*, §11 *Backend Logging*; `architecture-rules.md` §2 *Contract-First API Architecture* |
+| Changes the Prisma schema, a domain type, or an enum | `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
+| Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
+| Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
+| Emits or consumes a domain event | `architecture-rules.md` §4 *Service Topology* (event-bus and idempotency discipline), `testing-rules.md` §8 |
+| Defines product behavior, use cases, or screens | `product-requirements-rules.md`, `poolmaster-webapp-rules.md`, `ux-rules.md` |
+| Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
+| Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push* |
+| Is iOS or Android work | `swift-rules.md` / `android-rules.md` — both clients are planned, not built |
+
+**Before any push**, `workflow-rules.md` §3 and `testing-rules.md` §3 define the required
+gate set. Those are not optional regardless of task shape.
+
+**If your task isn't on this list**, route by the same principle: read the rules governing
+the layer you are changing, plus `testing-rules.md` for whatever you are testing. When a
+rule scanner fails, read the section it names — the scanner output *is* the routing hint.
+
+**Rarely needed:** `product-discovery-rules.md` and `technical-specification-rules.md`
+govern greenfield discovery and pre-implementation tech-spec artifacts, both dormant in a
+mature codebase. Reach for them only when explicitly framing a new product surface.
 
 ## Persona Playbooks
 
