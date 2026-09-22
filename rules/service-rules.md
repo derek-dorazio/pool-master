@@ -428,3 +428,83 @@ grep -rn "prisma\." packages/core-api/src/modules/*/handler*.ts packages/core-ap
 ```
 
 If any of these patterns appear in your changed files, fix them before committing. Do not defer to a cleanup slice.
+
+## 11. Backend Logging Conventions
+
+Pino's `logger.info({...})` accepts any object — nothing in the type system
+requires an `action` field or a particular shape, so this convention is held
+today only by developers copying nearby code. That drifts the moment
+someone works in a file with no nearby example. This section is the
+enforceable version, for new code as much as existing code.
+
+### Envelope Shape
+
+Pass a payload object as the first argument, a human-readable message string
+as the second:
+
+```ts
+logger.warn({
+  action: 'authService.login.invalidCredentials',
+  data: { identifierType },
+}, 'Rejected login for missing or passwordless user');
+```
+
+- `action` — a stable, dot-separated identifier for what happened, shaped
+  `<domain>.<verb>.<outcome>` (e.g. `authService.login.invalidCredentials`,
+  `ingestion.providers.unconfigured`). This is the primary field CloudWatch
+  queries filter on. Each module names its own actions following this
+  shape — there is no fixed enum to import; enumerating specific action
+  names here would just create a second, drifting list.
+- `data` — event-specific fields (ids, counts, flags). Nest them under
+  `data`; don't spread them across the root of the payload object.
+- `err` — pass the raw error object through this field on a failure log so
+  Pino's serializer captures `type`/`message`/`stack`, rather than manually
+  picking fields off the error into `data`.
+
+Request-scoped logs (`request.log` / `request.contextLogger`) already carry
+`reqId`, `sessionId`, `userId`, `isRootAdmin`, `ip`, `method`, and `route`
+via `buildRequestLogBindings` (`packages/core-api/src/core/logger.ts`) — do
+not re-pass these manually in `data`.
+
+Cross-tier correlation (`clientTraceId`, `clientRequestId`) is a separate,
+already-documented mechanism — see ADR-0005
+(`docs/adr/0005-cross-tier-log-correlation.md`). This section covers the
+shape of one backend log entry, not how it joins to a browser-originated
+event.
+
+### Severity Semantics
+
+- `debug` — verbose trace: parameter bindings, intermediate state,
+  entry/exit points. Useful only during investigation.
+- `info` — meaningful lifecycle milestones and successful major operations:
+  startup, sync/ingestion summaries, admin actions, successful mutations.
+- `warn` — expected negative paths: validation failures, authorization
+  denial, missing-but-expected resources, invalid state transitions. The
+  system is working correctly by rejecting something; `warn` is not a bug
+  signal.
+- `error` — unexpected exceptions, failed background jobs, unhandled
+  request failures, `5xx` conditions. Something went wrong that shouldn't
+  have.
+- `fatal` — unrecoverable process-level failure; the service cannot safely
+  continue. Reserve it for that specific case — it is part of the logger's
+  level set but has no call sites in the backend today, and reaching for it
+  on an ordinary unexpected error would blur the one severity level meant
+  to signal "this process is done."
+
+### Redaction
+
+At minimum, redact authorization headers, cookies, passwords, access
+tokens, refresh tokens, and any other secret-bearing value before it can
+reach a log line. `packages/core-api/src/core/logger.ts`'s `REDACT_PATHS` is
+the enforced list — extend it when a new secret-bearing field enters any
+request/response shape; don't work around it with ad hoc field-stripping at
+the call site.
+
+### Testing
+
+Per `rules/testing-rules.md`'s Logging and Branch-Proof Rule, tests assert
+branch outcomes (typed exceptions, error codes, state transitions), never
+log message strings. That rule depends on this one: branch-outcome
+assertions only make sense as a substitute for log-string assertions when
+logs are actually structured enough to reason about without reading their
+prose.
