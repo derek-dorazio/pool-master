@@ -138,19 +138,23 @@ closed as deferred, and `plans/122` is deleted.
 
 ~~**Third — add the drift check.**~~ Done: the `Stop` hook.
 
-**What is left.** Three plan files are deletion *candidates*, and none is deletable today.
-Each is blocked on a different thing, and ADR-0002's invariant — *tracker closes → plan file
-deleted*, never the reverse — is what makes each blocker binding rather than advisory:
+**One deletion is done.** `plans/132` was deleted once its last outstanding slice — a
+PreToolUse hook requiring the review-triggers section — was dropped by decision rather than
+left open (#145). The reasoning is codified in `rules/review-triggers.md §4`, which is what
+ADR-0002 requires before a plan file goes.
+
+**Two candidates remain, neither deletable today.** Each is blocked on a different thing,
+and ADR-0002's invariant — *tracker closes → plan file deleted*, never the reverse — is what
+makes each blocker binding rather than advisory:
 
 | Plan | Blocked on | Why |
 |---|---|---|
 | `plans/111` | #132 (Plan 133) | Decision 1 above. Plan 133 cites 111 as the source of the thin-pointer pattern it reverses; 111's deletion rides with 133's persona-layout ADR, not a general sweep. |
 | `plans/123` | #82 | Its tracking issue is **open**, with two open sub-issues (#86, #87). Plan 135 owns the disposition; `5xi` stays open until then. |
-| `plans/132` | #145 | Fully executed except one slice — the `gh pr create` PreToolUse hook requiring the review-triggers section, which was never built. #145 holds the build-vs-drop decision. |
 
-So the sweep this plan was written to perform currently has **nothing to sweep**. That is
-not a stall: each blocker is a real dependency, and the drift this plan exists to prevent is
-now reported automatically by the `Stop` hook rather than discovered months later.
+Both remaining blockers are real dependencies rather than a stall, and the drift this plan
+exists to prevent is now reported automatically by the `Stop` hook on every session stop
+rather than discovered months later.
 
 **Also left:** tightening the *Reading the tracker correctly* section per the caveat in
 decision 4 — it still describes the looser scan while the hook anchors on the

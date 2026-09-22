@@ -97,7 +97,7 @@ where one inventory has drifted, others likely have.
 
 - ~~The Beads JSONL rebase recipe moves to `docs/`~~ — **done**: the tracker migration deleted it outright
   along with the tracker it served.
-- ~~The GitHub App setup runbook leaves with Plan 132.~~ — **done**.
+- ~~The GitHub App setup runbook leaves with the review-flow simplification.~~ — **done**.
 - What remains is durable process: document lifecycle, plan/tracker conventions, slice
   completion, branching and merge.
 
@@ -107,8 +107,8 @@ None.
 
 ## Dependencies
 
-- **Plan 132** removes the App runbook; sequencing this after it avoids editing a section
-  that is about to be deleted.
+- ~~**The review-flow simplification** removes the App runbook~~ — landed; the runbook is
+  already gone from `docs/CI-AND-QUALITY-GATES.md`.
 - ~~**Plan 139** determines whether the rebase recipe is relocated or deleted.~~ Settled: it
   was deleted outright with the tracker it served (ADR-0006), so there is nothing here to
   relocate.
@@ -128,7 +128,7 @@ it is actively misleading.
 **Third — dedupe and relocate.** `§3` collapse to cross-reference; validity matrix to its
 own ADR, taking whatever number is next when it is written.
 
-**Fourth — `workflow-rules.md` decomposition.** After Plan 132 and ideally after 139, so
+**Fourth — `workflow-rules.md` decomposition.** Both predecessors have landed, so
 each removed section is removed once.
 
 ## Open Questions
@@ -143,7 +143,7 @@ each removed section is removed once.
 
 ## Sources / Prior Decisions
 
-- Plan 132 — Review flow simplification (removes the App runbook)
+- `rules/workflow-rules.md §6` + `rules/review-triggers.md` — the landed review-flow simplification (removed the App runbook)
 - Plan 133 — Persona to task-shaped skills (salvages invariants into `rules/`)
 - ADR-0006 — GitHub Issues as the live task tracker (**landed**; removed the rebase recipe and the `bd` quick reference)
 - ADR-0002 — Plans are narrative; deleted after parent epic closes
