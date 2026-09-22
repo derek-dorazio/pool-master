@@ -1,6 +1,11 @@
 # Workflow Gate Hardening
 
-**Beads epic:** `pool-master-5xi`
+**Tracking issue:** #82 (migrated from `pool-master-5xi`)
+
+> **Largely superseded.** `plans/135-rule-scanners-to-eslint.md` supersedes most of this
+> plan; #82 records the per-child disposition, including the two children that were
+> dropped rather than migrated. Delete this file once that disposition is acted on
+> (ADR-0002) — `plans/141-plan-directory-reconciliation.md` owns that call.
 
 ## Purpose
 

@@ -1,9 +1,11 @@
 # Golf Contest Leaderboard
 
-> **Status:** In progress. **Beads epic:** `pool-master-jhb`. Its slice 1
-> (`pool-master-eeq`) carries a cross-epic `blocked-by` link against `plans/124`'s slice 1
-> (`pool-master-uvc`) — not the whole `plans/124` epic; slices 2/3 have no other dependency on
-> `plans/124`. `bd show pool-master-jhb` for the live list.
+> **Status:** In progress. **Tracking issue:** #100 (migrated from `pool-master-jhb`).
+> `gh issue view 100` for the live slice list.
+>
+> **The `plans/124` dependency is satisfied.** Slice 1 (#110) was blocked by `plans/124`'s
+> slice 1 (`pool-master-uvc`) — not the whole `plans/124` epic. That epic
+> (`pool-master-476`) closed 2026-09-03, so nothing here is blocked.
 >
 > **Testing policy:** see `plans/124`'s header — it applies to every slice in this epic
 > too. In short: update every existing test the slice touches, give new code/branches

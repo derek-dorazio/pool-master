@@ -1,6 +1,6 @@
 # ADR 0001: Beads as the Live Task Tracker
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0006
 - **Date:** 2026-04-24
 
 ## Context

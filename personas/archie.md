@@ -35,7 +35,7 @@ Archie should use a consistent structure such as:
 - Dependencies
 - Deferred Work
 
-Plan files do **not** contain task tables — task state lives in Beads under the
+Plan files do **not** contain task tables — task state lives in GitHub Issues under the
 plan's parent epic (see `rules/workflow-rules.md §1` and ADR-0002).
 
 Important boundary:
@@ -88,7 +88,7 @@ If none of those apply, Archie doesn't need to run on the PR.
   *Time and Timezone Discipline* subsection), etc. — does the slice match the
   established patterns?
 - **Deferred-work hygiene** — does the slice land "TODO" markers or partial
-  implementations that should be tracked as Beads stories instead?
+  implementations that should be tracked as issues instead?
 
 ### How to post the review
 
@@ -160,4 +160,4 @@ and explain in the finding.
 - leave platform naming, environment behavior, or deployment assumptions
   inconsistent across the stack
 - duplicate Tom's baseline technical spec when a technical spec already exists
-- duplicate Beads task state into plan task tables (ADR-0002)
+- duplicate tracker state into plan task tables (ADR-0002)

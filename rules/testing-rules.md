@@ -175,9 +175,9 @@ See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof R
 
 A skipped, todo'd, or expected-to-fail test is a hole in the suite. The auto-merge gate is meaningless if "all green" is achieved by silently turning off the tests that aren't passing.
 
-### Forbidden without an active Beads story
+### Forbidden without an active tracker issue
 
-The following markers are not allowed in committed code unless they are paired with a referenced Beads story tracking the un-skip:
+The following markers are not allowed in committed code unless they are paired with a referenced GitHub issue tracking the un-skip:
 
 - `it.skip(...)`, `xit(...)`, `test.skip(...)`, `xtest(...)`
 - `describe.skip(...)`, `xdescribe(...)`
@@ -197,31 +197,35 @@ A skip is genuinely necessary only when:
 
 In those cases:
 
-1. Open a Beads story for the un-skip (label `cleanup` and `layer/test-*`).
-2. Add a leading comment immediately above the skip with the story ID and one-line reason:
+1. Open an issue for the un-skip.
+2. Add a leading comment immediately above the skip with the issue number and one-line reason:
    ```typescript
-   // SKIP: pool-master-312 — flaky against ephemeral DB; un-skip after migration to test-containers
+   // SKIP: #312 — flaky against ephemeral DB; un-skip after migration to test-containers
    it.skip('UC-LM-003: rejects DELETE when status=archived', ...)
    ```
-3. Reference the same story ID in the slice's Beads closing note.
+3. Reference the same issue in the slice's closing comment.
+
+Markers written before the tracker migration use the Beads form
+(`SKIP: pool-master-abc.1`). The scanner still accepts them and they are
+deliberately not rewritten — see `docs/adr/0006-github-issues-as-live-task-tracker.md`.
 
 ### Forbidden in all cases
 
-- A skip without a referenced Beads story.
+- A skip without a referenced issue.
 - A skip whose stated reason is "test is wrong" or "behavior changed" — those are deletes, not skips. Delete the test instead.
-- A skip whose stated reason is "intermittently fails" without a Beads story tracking the flake fix.
+- A skip whose stated reason is "intermittently fails" without an issue tracking the flake fix.
 - Re-skipping a test that was un-skipped in a prior slice without surfacing the regression to the user.
 
 ### Repository scan and CI
 
 `npm run rules:check:test-disable` must return zero matches that lack an
-adjacent `SKIP: pool-master-NNN` comment. The same check runs in CI through
-`npm run rules:check`.
+adjacent `SKIP: #NN` comment (or a legacy `SKIP: pool-master-*` marker). The
+same check runs in CI through `npm run rules:check`.
 
 Riley scans for this on every review:
 
-- Any skipped/todo/expected-fail test introduced by the slice without a `SKIP: pool-master-NNN` comment is a **TEST / HIGH** finding and blocks merge.
-- Any skipped test introduced by the slice with a comment but no actual Beads story is a **TEST / HIGH** finding and blocks merge.
+- Any skipped/todo/expected-fail test introduced by the slice without a `SKIP: #NN` comment is a **TEST / HIGH** finding and blocks merge.
+- Any skipped test introduced by the slice with a comment but no actual issue behind it is a **TEST / HIGH** finding and blocks merge.
 
 ---
 
@@ -324,8 +328,8 @@ For any slice whose purpose is to fix a defect (a bug, a regression, a wrong-beh
 
 The slice must make both halves visible in its history:
 
-- **Preferred:** two commits — `commit 1` adds the failing test (and may temporarily mark it `it.skip` only if absolutely required to keep `main` green; this is rare). `commit 2` lands the fix and unmarks the test. Both reference the same defect ID (e.g., `pool-master-NNN`).
-- **Acceptable:** one commit when adding the failing test alone would block other work. The PR description must then explicitly state that the test was written first and observed to fail before the fix landed, and the Beads story closing note must record the failing-then-passing observation.
+- **Preferred:** two commits — `commit 1` adds the failing test (and may temporarily mark it `it.skip` only if absolutely required to keep `main` green; this is rare). `commit 2` lands the fix and unmarks the test. Both reference the same defect ID (e.g., `#NN`).
+- **Acceptable:** one commit when adding the failing test alone would block other work. The PR description must then explicitly state that the test was written first and observed to fail before the fix landed, and the issue's closing comment must record the failing-then-passing observation.
 
 The intent is reviewable proof that the test actually catches the defect — not retrofit confidence after the fact.
 

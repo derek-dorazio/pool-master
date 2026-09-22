@@ -12,7 +12,7 @@ model: sonnet
 **This subagent runs in an isolated context window** and does not see prior conversation. The spawn prompt must include:
 
 - the target scope (slice, files changed, risk profile)
-- the active Beads story or plan reference
+- the active issue or plan reference
 - any known blockers the main conversation already identified
 
 **Before executing any verification work, you MUST Read `personas/quinn.md`** and treat its contents as governing persona guidance for the duration of this spawn. The summary below is for routing only — not authoritative.

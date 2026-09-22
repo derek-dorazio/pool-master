@@ -1,16 +1,7 @@
 # Sync Flow Deprecation — Admin-Authored Events, Optional Field/Odds Complement
 
-> **TODO — create the GitHub issue for this plan once `plans/139-beads-to-github-issues.md`
-> is complete.** Deliberately not tracked in Beads: creating an epic now means migrating it
-> days later. Until that issue exists this plan is untracked, which is the one thing
-> standing between it and execution.
->
-> When the issue is created:
-> - Move `§5 Slice sequence` into the issue as child issues. Task state does not belong in
->   a plan file (ADR-0002); the table is a pre-tracker drafting artifact.
-> - Fix the `§4` cross-reference to `plans/123` — it says "unaffected; its shared-enum work
->   is orthogonal," but `plans/135-rule-scanners-to-eslint.md` now supersedes most of 123.
->
+**Tracking issue:** #122
+
 > **Status:** Reviewed and ready to execute. Not started — every deletion target
 > (`runScheduleSync`, `ParticipantRankingSnapshot`, `getEventResults`, `EVENTSCHEDULE`) is
 > still present in the tree.
@@ -20,12 +11,12 @@
 > admin-authoring + score-linking pattern is live in the codebase. This plan is cross-sport,
 > not golf-specific — same relationship `plans/124`'s `modules/sport-catalog/` has to golf.
 >
-> **Blocked on one prerequisite:** `§3.3a` deletes `EVENTRESULTS` on the grounds that
-> `plans/122` — its only consumer — is dropped. `plans/124 §1` and `§4` below both record
-> that drop, but the tracker was never updated: `pool-master-q68` is still open with four
-> open children. Close `q68` and its children as deferred (pointing at `plans/124 §1`) and
-> delete `plans/122` before this plan's slice 5 runs. See
-> `plans/141-plan-directory-reconciliation.md`.
+> **The `EVENTRESULTS` prerequisite is cleared.** `§3.3a` deletes `EVENTRESULTS` on the
+> grounds that `plans/122` — its only consumer — is dropped. That is now true on both
+> sides: `plans/122` is deleted, and `pool-master-q68` plus its four children were closed
+> as deferred before the tracker migration. They were not migrated to GitHub Issues
+> (deferred scope stays in git history per `docs/adr/0006-github-issues-as-live-task-tracker.md`);
+> `git show <sha>:.beads/issues.jsonl | grep q68` recovers them if the decision is ever revisited.
 
 ---
 
@@ -286,23 +277,21 @@ the user described as "screen-scraped from the event's website."
   §1 — not built, not a dependency of either plan here. `EVENTRESULTS` is deleted entirely
   (§3.3a) as a direct consequence: its only stated purpose was feeding 122, and it duplicated
   a concept ("score") PoolMaster already names and models elsewhere.
-- **`plans/123`** (workflow gate hardening): unaffected; its shared-enum work is orthogonal.
+- **`plans/123`** (workflow gate hardening): mostly superseded by
+  `plans/135-rule-scanners-to-eslint.md`. What survives of it — the shared-lifecycle-enum
+  enforcement, now #86 — is orthogonal to this plan and unaffected by it.
 
 ---
 
 ## 5. Slice sequence
 
-| # | Slice | Depends on |
-|---|---|---|
-| 1 | Flip `IngestionScheduleConfig.eventParticipants` default to `enabled: false` (`eventLiveScores` stays `true`); update any test asserting the old default | — |
-| 2 | Gate `adminSyncProviderEventData`'s `EVENTPARTICIPANTS` action behind `syncScope != 'NONE'` (reuses `plans/124` §4.4's guard) | `plans/124` slice 5 |
-| 3 | Delete `ParticipantRankingSnapshot`, `IngestionPersistence.persistRankingsWithDiagnostics`, `findLatestRankingForEventParticipant`, the `PARTICIPANTRANKINGS` feed type and its `IngestionScheduler`/`sync-orchestrator.ts` handling entirely, plus the mock's `rankings` feedKind/route (§3.2a) | — |
-| 4 | Delete `runScheduleSync`, `IngestionScheduleConfig.eventSchedule`, and its `persistEventsWithDiagnostics` status-driving call entirely; repoint nothing — `getUpcomingEvents` stays on `provider-interface.ts` for `plans/124`'s catalog-browse action and its "browse provider events" tournament-creation flow to call directly (§3.1, `plans/124` §4.4a) | `plans/124` slice 12 (catalog-browse action must exist before the scheduled path it replaces is removed) |
-| 5 | Delete `EVENTRESULTS` entirely: `IngestionScheduleConfig.eventResults`, its `runConfiguredEventSyncSweep` job, `getEventResults`/`ProviderEventResult` on `provider-interface.ts`; delete the mock's `results` feedKind/route plus the two dead routes found in the same audit (`getMockContestFeedScenarioEvent`, `getMockContestFeedEventUpdates`) and their now-unreferenced tests (§3.3a) | — |
-| 6 | `adminPreviewGolfFieldUpload` / `adminApplyGolfFieldUpload` routes + service (extends `golf-field-service.ts`) | `plans/124` slice 8 |
-| 7 | Frontend: Field editor bulk-upload panel (reuses `BulkUploadPanel`, `plans/124` §6.4) | 6, `plans/124` slice 16 |
-| 8 | Delete `root-admin-run-sport-sync-page.tsx` ("Prepare Sport Sync") and its navigation entry entirely; simplify `run-event-sync-page.tsx` to `EVENT_SYNC_FEEDS = ['EVENTPARTICIPANTS', 'EVENTLIVESCORES']` + empty-state handling for leagues with no field feed | 1, 2, 3, 4, 5 |
-| 9 | Docs: note in `rules/architecture-rules.md` or an ADR that admin-authored events + score-only linking is the only pattern; sync-driven event creation and results fetching are removed, not legacy | 1, 3, 4, 5 |
+The slice sequence lives in #122 as sub-issues (#123–#131), in order. Task state does
+not belong in a plan file (ADR-0002) — the table that was here was a pre-tracker
+drafting artifact and moved into the epic when it was opened.
+
+Slice 9 (#131) is this plan's codify-before-delete step: it records the
+admin-authored-events-only pattern in `rules/` or an ADR, which is what makes this
+file deletable when #122 closes.
 
 ---
 

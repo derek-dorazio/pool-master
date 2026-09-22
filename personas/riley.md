@@ -108,7 +108,7 @@ Scan changed test files for any of these markers introduced by the slice:
 - `pending(...)` calls inside a test body
 - Early-`return` from a test body that bypasses assertions
 
-For each match, verify the slice introduced an adjacent `SKIP: pool-master-NNN` comment and that the referenced Beads story actually exists. Any skip without a comment, or with a comment whose story does not exist, is a **TEST / HIGH** finding. Reference `rules/testing-rules.md` §1C in the finding details.
+For each match, verify the slice introduced an adjacent `SKIP: #NN` comment and that the referenced issue actually exists. Any skip without a comment, or with a comment whose issue does not exist, is a **TEST / HIGH** finding. Reference `rules/testing-rules.md` §1C in the finding details.
 
 ## Forbidden-Pattern Scan (always CRITICAL on match)
 

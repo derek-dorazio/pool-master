@@ -1,6 +1,6 @@
 # Plan 137 — Test Selector Strategy by Layer
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #136
 
 ## Purpose
 

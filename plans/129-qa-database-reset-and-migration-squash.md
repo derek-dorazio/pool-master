@@ -1,6 +1,6 @@
 # Database Reset & Migration History Squash (Local Dev + QA)
 
-**Beads epic:** `pool-master-bwl`
+**Tracking issue:** #83 (migrated from `pool-master-bwl`)
 
 ## Purpose
 
@@ -69,10 +69,10 @@ one that was open, #76, has since merged — pure test code, never touched
 `schema.prisma`). So slice 1 can start today.
 
 **Because slice 1 is now a repeatable operation (see the decision table
-above), this precondition can't stay a one-time manual `bd show` check** — the
+above), this precondition can't stay a one-time manual tracker check** — the
 pipeline will run again later, when the epic-476 snapshot above is stale. The
 CI workflow (slice 3) must therefore verify this itself on every run, not rely
-on a human having checked beads beforehand: before squashing, check for any
+on a human having checked the tracker beforehand: before squashing, check for any
 open PR whose diff touches `packages/core-api/prisma/` and fail the run with a
 clear message if one exists, rather than silently squashing out from under
 in-flight schema work.
@@ -199,7 +199,7 @@ Single job, run start to finish on every dispatch:
 
 1. **Precondition check.** Fail fast with a clear message if any open PR's
    diff touches `packages/core-api/prisma/` (see the updated "Sequencing
-   precondition" section above) — this replaces the one-time manual `bd show`
+   precondition" section above) — this replaces the one-time manual tracker
    check now that the pipeline runs repeatedly.
 2. **Squash** — run `scripts/squash-migrations.mjs` (slice 1, now scripted)
    against a disposable Postgres service container in the runner (not QA, not

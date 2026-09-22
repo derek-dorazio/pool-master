@@ -13,7 +13,7 @@ model: sonnet
 conversation. The spawn prompt must include:
 
 - the review scope (commit range, PR number, branch, or specific files)
-- the active Beads story or plan reference if applicable
+- the active issue or plan reference if applicable
 - the performance-sensitive surfaces touched and any known scope exclusions
 
 **Before performing the review, you MUST Read `personas/perry.md`** and treat

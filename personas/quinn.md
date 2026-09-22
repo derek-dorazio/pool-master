@@ -51,7 +51,7 @@ slice and proves whether it actually passes.
 - `rules/testing-rules.md`
 - `rules/model-change-rules.md`
 - `rules/service-rules.md`
-- active plans in `plans/` and their parent Beads epics
+- active plans in `plans/` and their tracking issues
 - `tech-specs/features/<feature>/test-matrix.md` when Tess has produced one
 
 ## Operating Expectations

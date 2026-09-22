@@ -1,6 +1,6 @@
 # Plan 134 — Rules Consolidation: Prohibitions over Inventories
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #133
 
 ## Purpose
 
@@ -42,8 +42,10 @@ both own it, against `§0`'s one-canonical-home rule.
 (code vs DB, with criteria, tradeoffs, and a worked example) is textbook ADR shape sitting
 in a rules file.
 
-**`workflow-rules.md` mixes policy with runbooks.** At 1093 lines it carries a Beads JSONL
-rebase recipe (~50 lines) and a GitHub App setup runbook alongside durable process rules.
+**`workflow-rules.md` mixes policy with runbooks.** This finding was written when the file
+was 1093 lines and carried a Beads JSONL rebase recipe (~50 lines) and a GitHub App setup
+runbook alongside durable process rules. Plans 132 and 139 have since removed both, so
+re-measure before acting on the length argument.
 
 ## Key Decisions
 
@@ -93,9 +95,9 @@ where one inventory has drifted, others likely have.
 
 ### 6. Decompose `workflow-rules.md`
 
-- The Beads JSONL rebase recipe moves to `docs/` — and disappears entirely if Plan 139
-  lands.
-- The GitHub App setup runbook leaves with Plan 132.
+- ~~The Beads JSONL rebase recipe moves to `docs/`~~ — **done**: the tracker migration deleted it outright
+  along with the tracker it served.
+- ~~The GitHub App setup runbook leaves with Plan 132.~~ — **done**.
 - What remains is durable process: document lifecycle, plan/tracker conventions, slice
   completion, branching and merge.
 
@@ -107,9 +109,9 @@ None.
 
 - **Plan 132** removes the App runbook; sequencing this after it avoids editing a section
   that is about to be deleted.
-- **Plan 139** determines whether the rebase recipe is relocated or deleted. Relocating it
-  and then deleting it is wasted motion — prefer 139 first, or leave the recipe in place
-  until 139 resolves.
+- ~~**Plan 139** determines whether the rebase recipe is relocated or deleted.~~ Settled: it
+  was deleted outright with the tracker it served (ADR-0006), so there is nothing here to
+  relocate.
 - **Plan 133** uses `rules/` as the salvage destination for persona invariants. Running
   134 first means that destination is already organized.
 - **Plans 136, 137, 138** all edit `testing-rules.md`. This plan does not restructure that
@@ -143,5 +145,5 @@ each removed section is removed once.
 
 - Plan 132 — Review flow simplification (removes the App runbook)
 - Plan 133 — Persona to task-shaped skills (salvages invariants into `rules/`)
-- Plan 139 — Beads to GitHub Issues (removes the rebase recipe)
+- ADR-0006 — GitHub Issues as the live task tracker (**landed**; removed the rebase recipe and the `bd` quick reference)
 - ADR-0002 — Plans are narrative; deleted after parent epic closes

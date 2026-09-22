@@ -1,12 +1,15 @@
 # Plan 111 — Persona Library Restructure for Claude Code + Codex Portability
 
-**Beads epic:** `pool-master-7p5` — see `bd show pool-master-7p5` for live slice state, child stories, and status. This plan is the narrative companion; task tracking lives in Beads.
+**Tracking issue:** none — its epic (`pool-master-7p5`) closed before the tracker migration, so it was not migrated.
+
+> **This plan should be deleted** (ADR-0002: the plan goes when its parent closes).
+> `plans/141-plan-directory-reconciliation.md` owns that cleanup.
 
 ## Purpose
 
 Reshape the `agents/` persona library so persona content is **portable across Claude Code and Codex** without duplication. Both tools now support skills and subagents as first-class features (see Sources below), but with different directory conventions and (for subagents) different file formats. This plan adopts a thin-pointer pattern that keeps persona content in a single neutral location and puts tool-specific wrappers in each tool's canonical directory.
 
-Secondary goal: retire the Parker (project-manager) persona, whose responsibilities have been fully subsumed by Beads (task state) + the narrative-only plan convention (no plan rows to reconcile) + the delete-on-ship rule for plans (no archival to manage).
+Secondary goal: retire the Parker (project-manager) persona, whose responsibilities have been fully subsumed by the tracker (task state) + the narrative-only plan convention (no plan rows to reconcile) + the delete-on-ship rule for plans (no archival to manage).
 
 ## Governing Principles
 
@@ -111,7 +114,7 @@ description: PoolMaster frontend developer persona. The full playbook lives at p
 | Quinn | `personas/quinn.md` | `.claude/agents/quinn.md` **(subagent)** | `.codex/agents/quinn.toml` **(subagent)** | QA verification pass |
 | Riley | `personas/riley.md` | `.claude/agents/riley.md` **(subagent)** | `.codex/agents/riley.toml` **(subagent)** | Code review pass |
 
-**Parker removed** — responsibilities fully subsumed by Beads (task state tracking), narrative-only plans (no rows to reconcile), workflow-rules.md slice-completion checklist (drift detection), and ADR-0002 deletion rule (no archival to manage).
+**Parker removed** — responsibilities fully subsumed by the tracker (task state tracking), narrative-only plans (no rows to reconcile), workflow-rules.md slice-completion checklist (drift detection), and ADR-0002 deletion rule (no archival to manage).
 
 ## Active vs dormant semantics
 
@@ -123,7 +126,7 @@ description: PoolMaster frontend developer persona. The full playbook lives at p
 
 - **Slice A** (Beads `pool-master-7p5.1`) — remove Parker. Delete `agents/project-manager.md`, update `AGENTS.md` (two references), update `rules/workflow-rules.md` (nickname table row + project-manager paragraph).
 - **Slice B** (Beads `pool-master-7p5.2`) — create `personas/` library with authoritative content for the 10 remaining personas. Create all tool-specific wrappers (`.claude/skills/`, `.agents/skills/`, `.claude/agents/`, `.codex/agents/`). Old `agents/*.md` stays in place during this slice so nothing mid-flight breaks.
-- **Slice C** (Beads `pool-master-7p5.3`) — delete the remaining `agents/*.md` files now that wrappers + `personas/` are live. Update `AGENTS.md` and `rules/workflow-rules.md` references to point to `personas/` and the new wrapper paths. Close the parent epic.
+- **Slice C** (`pool-master-7p5.3`) — delete the remaining `agents/*.md` files now that wrappers + `personas/` are live. Update `AGENTS.md` and `rules/workflow-rules.md` references to point to `personas/` and the new wrapper paths. Close the parent epic.
 
 ## Open questions
 
@@ -134,5 +137,5 @@ None blocking. The thin-pointer reliability tradeoff is accepted; if real-world 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills.md) and [Subagents](https://code.claude.com/docs/en/subagents.md)
 - [Codex Agent Skills](https://developers.openai.com/codex/skills) and [Codex Subagents](https://developers.openai.com/codex/subagents)
 - ADR-0001 — Beads as live task tracker
-- ADR-0002 — Plans are narrative; deleted after parent Beads epic closes
+- ADR-0002 — Plans are narrative; deleted after the parent epic closes
 - ADR-0003 — Tech specs are pre-implementation only

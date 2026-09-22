@@ -1,6 +1,6 @@
 # Plan 138 — Test Traceability Revisit
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #137
 
 ## Purpose
 
@@ -44,7 +44,9 @@ and genuinely valuable, since it links a regression test to the incident that mo
 it, and defect IDs live in the tracker rather than in a delete-on-ship doc.
 
 This keeps roughly 80% of the benefit — tests explain themselves — at close to none of
-the coupling cost. It also survives Plan 133 and Plan 139 unchanged.
+the coupling cost. It also survives Plan 133 unchanged, and survived the tracker migration
+unchanged in substance — `scripts/check-test-traceability.mjs` now accepts `#NN` alongside
+the legacy `pool-master-*` IDs, which is a format change, not a decision.
 
 **Option C — drop entirely.** Simplest, and loses the defect-to-test link that is the most
 defensible part of the current rule.

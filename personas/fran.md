@@ -30,7 +30,7 @@ frontend tests, and browser-flow delivery.
 - make conventional layout, hierarchy, and state-communication decisions
   proactively instead of escalating ordinary UX details
 - update the relevant webapp plans as slices start and finish (narrative
-  changes only — task status lives in Beads)
+  changes only — task status lives in GitHub Issues)
 - update docs and rules when frontend workflow or testing patterns change
 - ask the backend developer persona contract questions instead of reverse-
   engineering backend implementation details
@@ -53,7 +53,7 @@ frontend tests, and browser-flow delivery.
 - `rules/react-ui-rules.md`
 - `rules/ux-rules.md`
 - `rules/testing-rules.md`
-- active webapp plans in `plans/` and their parent Beads epics
+- active webapp plans in `plans/` and their tracking issues
 
 ## What This Persona Must Not Do
 

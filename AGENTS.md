@@ -16,7 +16,7 @@ All agents working in this repo should:
 - **Every test references a use-case, business-rule, or defect ID.** Describe block, test name, or leading comment — see `rules/testing-rules.md` §1A *Test Self-Documentation*.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
-- Update Beads state (status, notes) when working against an existing epic or story. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1 and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
+- Update the GitHub issue (status, comments) when working against an existing epic or slice. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1, `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`, and `docs/adr/0006-github-issues-as-live-task-tracker.md`).
 - Keep documentation and rules in sync when architecture, workflow, or testing patterns change.
 
 ## Read the Rules Your Task Touches
@@ -105,24 +105,24 @@ Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.
 - Persona files in `personas/` and their thin-pointer wrappers must not redefine or contradict repo-wide policy.
-- Cross-cutting workflow requirements such as checking Beads and validating slices remain required for all agents.
+- Cross-cutting workflow requirements such as checking the tracker and validating slices remain required for all agents.
 - Frontend implementation should be driven by reviewed plans, generated SDK/types, and documented API contracts rather than backend implementation details.
 - Contract meaning, API documentation quality, and model-change implementation remain backend-owned responsibilities.
 
 ## Workflow Expectations
 
-- Check whether the work is already tracked in Beads and/or `plans/`, update the relevant Beads items as work starts and finishes. Plans are narrative only — they do not carry task rows.
+- Check whether the work is already tracked in GitHub Issues and/or `plans/`, and update the relevant issues as work starts and finishes. Plans are narrative only — they do not carry task rows.
 - At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, `personas/`, and the tool-specific wrapper directories.
-- Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; Beads is the live execution/refinement tracker and `plans/` remain the narrative execution context.
-- **Not every change needs a PR.** Beads state, narrative plan updates during execution, and trivial doc fixes are direct-push to `main` per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes still go through the branch + PR flow — and when in doubt, the agent asks the user before pushing direct (per *Substantive plan or rule change — ask before pushing*).
+- Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; GitHub Issues is the live execution/refinement tracker and `plans/` remain the narrative execution context.
+- **Not every change needs a PR.** Narrative plan updates during execution and trivial doc fixes are direct-push to `main` per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes still go through the branch + PR flow — and when in doubt, the agent asks the user before pushing direct (per *Substantive plan or rule change — ask before pushing*).
 
 ## Documentation Expectations
 
 - Update `README.md`, `docs/DEVELOPER-SETUP.md`, package READMEs, and feature READMEs when the change affects architecture, setup, scripts, endpoints, or tests.
 - Update service/module docs when adding or materially changing backend endpoints.
-- **Doc updates ride with the code change that triggered them.** When a slice changes user-visible behavior, public API, setup, or tests, the matching doc update lands in the *same* PR — not as a follow-up doc-only PR. The Beads story is not closeable until both are in the same merged commit. See `rules/workflow-rules.md §6` *Docs ride with code (Definition of Done)*.
+- **Doc updates ride with the code change that triggered them.** When a slice changes user-visible behavior, public API, setup, or tests, the matching doc update lands in the *same* PR — not as a follow-up doc-only PR. The issue is not closeable until both are in the same merged commit. See `rules/workflow-rules.md §6` *Docs ride with code (Definition of Done)*.
 
 ## Quality Gates Before Commit
 

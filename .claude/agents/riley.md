@@ -12,7 +12,7 @@ model: sonnet
 **This subagent runs in an isolated context window** and does not see prior conversation. The spawn prompt must include:
 
 - the review scope (commit range, PR number, branch, or specific files)
-- the active Beads story or plan reference if applicable
+- the active issue or plan reference if applicable
 - what to focus on (e.g., contract drift, test presence, regression risk)
 
 **Before performing the review, you MUST Read `personas/riley.md`** and treat its contents as governing persona guidance for the duration of this spawn. The summary below is for routing only — not authoritative.

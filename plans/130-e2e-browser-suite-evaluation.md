@@ -1,6 +1,6 @@
 # Browser E2E Suite — Evaluation, Reset, and Rebuild
 
-**Beads epic:** `pool-master-303`
+**Tracking issue:** #80 (migrated from `pool-master-303`)
 
 ## Decision made
 
@@ -204,6 +204,6 @@ actually watching the ping test run cleanly for a while:
   wired up.
 - Scope: one critical golden-path journey per role, or broader coverage?
 
-No slices are cut for this yet — the Beads epic gets a single placeholder
-child for phase 2 so the intent isn't lost, with no acceptance criteria
-until that design conversation happens.
+No slices are cut for this yet — the epic carries a single placeholder
+sub-issue for phase 2 (#84) so the intent isn't lost, with no acceptance
+criteria until that design conversation happens.

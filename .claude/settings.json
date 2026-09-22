@@ -1,27 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bd create *)",
-      "Bash(bd update *)",
-      "Bash(bd note *)",
-      "Bash(bd query *)",
-      "Bash(bd set-state *)",
-      "Bash(bd close *)",
-      "Bash(bd reopen *)",
-      "Bash(bd link *)",
-      "Bash(bd label *)",
-      "Bash(bd dep *)",
-      "Bash(bd assign *)",
-      "Bash(bd priority *)",
-      "Bash(bd list *)",
-      "Bash(bd show *)",
-      "Bash(bd status *)",
-      "Bash(bd ready *)",
-      "Bash(bd export *)",
-      "Bash(bd import *)",
-      "Bash(bd dolt push *)",
-      "Bash(bd children *)",
-
       "Bash(npm run rules:check)",
       "Bash(npm run rules:check:no-mocked-api)",
       "Bash(npm run rules:check:route-discipline)",
@@ -88,6 +67,14 @@
       "Bash(gh run rerun *)",
       "Bash(gh run download *)",
       "Bash(gh auth status *)",
+      "Bash(gh issue list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue edit *)",
+      "Bash(gh issue close *)",
+      "Bash(gh issue reopen *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh issue develop *)",
       "Bash(gh api repos/derek-dorazio/pool-master/*)",
       "Bash(gh api /installation/repositories)",
       "Bash(gh api /app)",
@@ -126,7 +113,6 @@
       "Bash(git add docs/*)",
       "Bash(git add personas/*)",
       "Bash(git add plans/*)",
-      "Bash(git add .beads/issues.jsonl)",
       "Bash(git add AGENTS.md)",
       "Bash(git add CLAUDE.md)",
       "Bash(git add README.md)",
@@ -147,6 +133,19 @@
       "Bash(git -C * fetch *)",
       "Bash(git -C * stash *)",
       "Bash(git fetch origin *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-tracker-reconciliation.mjs\"",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,6 +1,6 @@
 # Plan 133 — Persona Library to Task-Shaped Skills
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #132
 
 ## Purpose
 

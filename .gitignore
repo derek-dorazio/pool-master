@@ -53,7 +53,3 @@ clients/mobile/.expo/
 # Docker
 docker-compose.override.yml
 
-# Beads / Dolt files (added by bd init)
-.dolt/
-*.db
-.beads-credential-key

@@ -1,6 +1,6 @@
 # Plan 136 — Test Runner and Layer Consolidation
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #135
 
 ## Purpose
 

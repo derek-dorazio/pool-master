@@ -17,7 +17,11 @@ const disabledMarkerPatterns = [
   /^\s*x(?:it|test|describe)\s*\(/,
   /\bpending\s*\(/,
 ];
-const skipStoryPattern = /SKIP:\s*pool-master-[a-z0-9]+(?:\.[0-9]+)?\b/i;
+// Accepts the current form (`SKIP: #123`, a GitHub issue) and the pre-migration
+// Beads form (`SKIP: pool-master-abc.1`). The old markers are not rewritten --
+// they resolve into git history, and rewriting them would touch every test file
+// to change nothing. See docs/adr/0006-github-issues-as-live-task-tracker.md.
+const skipStoryPattern = /SKIP:\s*(?:#[0-9]+|pool-master-[a-z0-9]+(?:\.[0-9]+)*)\b/i;
 const skippedFilePattern = /(?:^|\/)(?:skipped\/|.*\.skip\.(?:test|spec)\.tsx?$)/;
 const findings = [];
 
@@ -25,7 +29,7 @@ for (const filePath of files) {
   if (skippedFilePattern.test(filePath)) {
     findings.push({
       location: formatLocation(filePath),
-      message: 'Skipped test files/directories require a SKIP: pool-master-* story marker.',
+      message: 'Skipped test files/directories require an adjacent SKIP: #<issue> marker.',
     });
     continue;
   }
@@ -38,7 +42,7 @@ for (const filePath of files) {
 
     findings.push({
       location: formatLocation(filePath, index + 1),
-      message: 'Disabled/todo/failing tests require an adjacent SKIP: pool-master-* story marker.',
+      message: 'Disabled/todo/failing tests require an adjacent SKIP: #<issue> marker.',
     });
   });
 }

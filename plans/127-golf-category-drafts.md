@@ -1,11 +1,14 @@
 # Golf Category Drafts
 
-> **Status:** In progress. **Beads epic:** `pool-master-wsu`. Its slice 1
-> (`pool-master-ir1`) carries a cross-epic `blocked-by` link against `plans/124`'s slice 9
-> (`pool-master-piv`) — not `124`'s full epic. `bd show pool-master-wsu` for the live list.
+> **Status:** In progress. **Tracking issue:** #99 (migrated from `pool-master-wsu`).
+> `gh issue view 99` for the live slice list.
+>
+> **The `plans/124` dependency is satisfied.** Slice 1 (#101) was blocked by `plans/124`'s
+> slice 9 (`pool-master-piv`) — not `124`'s full epic. That epic (`pool-master-476`) closed
+> 2026-09-03, so nothing here is blocked.
 >
 > **Coordination warning: shares a touchpoint with `plans/128`.** This epic's slice 5
-> (`pool-master-398`) and `plans/128`'s epic (`pool-master-9oy`) slice 4 (`pool-master-6z6`)
+> (#105) and `plans/128`'s epic (#93) slice 4 (#95)
 > both extend `contest-entry-page.tsx:578`'s `selectionType !== 'TIERED'` gate. Do not let
 > both land independently — whichever lands first should extend the gate to admit **both**
 > `CATEGORY_PICK` and `BUDGET_PICK` in one small commit, and the other rebases onto it rather
