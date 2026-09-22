@@ -12,6 +12,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 |---|---|---|---|
 | Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
+| Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name; `plans/142` relocates them to a home named for what they are |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
 | Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a Beads epic; **deleted** when the parent epic closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
@@ -37,14 +38,31 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
      file, which is exactly the person positioned to break it.
    - **`rules/*.md`** — *what do I do?* Read by someone doing work in this area,
      and only if they remember the rule exists.
+   - **Top-level `requirements/product-requirements/*.md`** — *what is true about
+     the product?* Domain invariants, actors, information architecture. Read by
+     someone who needs to know how the product behaves, independent of how it is
+     built. (These files are durable despite living under a directory named for
+     inputs; `plans/142-durable-product-documentation.md` relocates them.)
    - **`docs/adr/*.md`** — *why is the system like this?* Read by someone
      questioning the approach, including the alternatives that were rejected.
 
-   The cut between a comment and a rule is whether the knowledge constrains code
-   that **exists** or code that **has not been written yet**. A comment can only
-   reach the former. "Always use the shared logger" is a rule — it governs files
-   not yet created. "This interceptor must run before X because Y" is a comment —
-   it governs this file.
+   Three cuts separate these:
+
+   **Comment vs rule** — does the knowledge constrain code that **exists** or code
+   that **has not been written yet**? A comment can only reach the former. "Always
+   use the shared logger" is a rule; it governs files not yet created. "This
+   interceptor must run before X because Y" is a comment; it governs this file.
+
+   **Rule vs product truth** — does it say *how we build* or *what is true*? "Prefer
+   a new page over another tile" is a build convention, so it is a rule. "A user
+   belongs to a league if and only if they own a team in it" is a fact about the
+   product that would hold under any implementation, so it belongs with the
+   product-truth layer. Invariants, actors, and deliberate absences live there;
+   an absence — "there is no league-level Members page" — is invisible in code and
+   has nowhere else to go.
+
+   **Anything vs an ADR** — did you reject a viable alternative? The rejection is
+   the value, and no other layer has somewhere to put it.
 
    Prefer a comment when the constraint is bounded by specific files someone must
    open to break it, and tests catch violation. Prose in `rules/` that describes
