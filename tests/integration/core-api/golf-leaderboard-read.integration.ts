@@ -83,10 +83,28 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         fieldLocked: true,
       },
     });
+    // The rounds belong to the event, not to any one participant, so they are
+    // created once here rather than inside createGolfLeaderboardParticipant.
+    // That helper runs four times concurrently in the Promise.all below, and
+    // Prisma's upsert is a read-then-write, not an atomic INSERT ... ON CONFLICT:
+    // two racing callers both saw "does not exist", both INSERTed, and the loser
+    // failed on sport_event_rounds_sport_event_id_round_number_key. See #142.
+    // `create` rather than `upsert` on purpose -- the event was just created with
+    // a unique suffix, so a pre-existing round is a broken assumption worth failing on.
+    const [round1, round2] = await Promise.all([
+      prisma.sportEventRound.create({
+        data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
+      }),
+      prisma.sportEventRound.create({
+        data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
+      }),
+    ]);
     const participants = await Promise.all([
       createGolfLeaderboardParticipant({
         sportId: sport.id,
         sportEventId: event.id,
+        round1Id: round1.id,
+        round2Id: round2.id,
         name: `Rory ${suffix}`,
         scoreToPar: -5,
         strokes: 139,
@@ -96,6 +114,8 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       createGolfLeaderboardParticipant({
         sportId: sport.id,
         sportEventId: event.id,
+        round1Id: round1.id,
+        round2Id: round2.id,
         name: `Scottie ${suffix}`,
         scoreToPar: -2,
         strokes: 142,
@@ -104,6 +124,8 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       createGolfLeaderboardParticipant({
         sportId: sport.id,
         sportEventId: event.id,
+        round1Id: round1.id,
+        round2Id: round2.id,
         name: `Jordan ${suffix}`,
         scoreToPar: 1,
         strokes: 145,
@@ -112,6 +134,8 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       createGolfLeaderboardParticipant({
         sportId: sport.id,
         sportEventId: event.id,
+        round1Id: round1.id,
+        round2Id: round2.id,
         name: `Ludvig ${suffix}`,
         scoreToPar: -7,
         strokes: 137,
@@ -207,6 +231,8 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
 async function createGolfLeaderboardParticipant(input: {
   sportId: string;
   sportEventId: string;
+  round1Id: string;
+  round2Id: string;
   name: string;
   scoreToPar: number;
   strokes: number;
@@ -229,30 +255,18 @@ async function createGolfLeaderboardParticipant(input: {
       isActive: true,
     },
   });
-  const [round1, round2] = await Promise.all([
-    prisma.sportEventRound.upsert({
-      where: { sportEventId_roundNumber: { sportEventId: input.sportEventId, roundNumber: 1 } },
-      create: { sportEventId: input.sportEventId, roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
-      update: {},
-    }),
-    prisma.sportEventRound.upsert({
-      where: { sportEventId_roundNumber: { sportEventId: input.sportEventId, roundNumber: 2 } },
-      create: { sportEventId: input.sportEventId, roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
-      update: {},
-    }),
-  ]);
   await prisma.sportEventParticipantGolfRound.createMany({
     data: [
       {
         sportEventParticipantId: sportEventParticipant.id,
-        sportEventRoundId: round1.id,
+        sportEventRoundId: input.round1Id,
         strokes: input.strokes - 47,
         scoreToPar: input.scoreToPar + 2,
         status: 'COMPLETED',
       },
       {
         sportEventParticipantId: sportEventParticipant.id,
-        sportEventRoundId: round2.id,
+        sportEventRoundId: input.round2Id,
         strokes: 47,
         scoreToPar: -2,
         thru: input.status === 'IN_PROGRESS' ? input.thru ?? null : null,
