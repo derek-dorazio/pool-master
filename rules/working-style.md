@@ -60,10 +60,10 @@ The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
 
 ## 3. Execution Preferences
 
-- `requirements/`, `tech-specs/`, `plans/`, and Beads should each keep their
+- `requirements/`, `tech-specs/`, `plans/`, and GitHub Issues should each keep their
   own role
-- Beads is the live tracker for active slices and larger-lane refinement
-- use Beads for stable question/decision IDs when a discussion spans multiple
+- GitHub Issues is the live tracker for active slices and larger-lane refinement
+- use issues for stable question/decision IDs when a discussion spans multiple
   modules or more than a few active open questions
 - `requirements/` and `tech-specs/` are handoff artifacts and design inputs,
   not replacements for active plans
@@ -120,8 +120,8 @@ This is a solo + agent-driven workflow. There is no human catching loops in real
 
 ### Do not silently expand scope
 
-- A slice has a stated scope (in the Beads story description and the PR intent). If implementation reveals adjacent work that is genuinely needed, **declare the spillover and ask** before bundling it into the same slice. Do not silently expand the diff to include "while I was here" cleanup or refactors.
-- If the adjacent work is small and unambiguous and the user has previously authorized inline cleanup, mention it explicitly in the PR description and the Beads closing note. The mention itself is the safety net.
+- A slice has a stated scope (in the issue body and the PR intent). If implementation reveals adjacent work that is genuinely needed, **declare the spillover and ask** before bundling it into the same slice. Do not silently expand the diff to include "while I was here" cleanup or refactors.
+- If the adjacent work is small and unambiguous and the user has previously authorized inline cleanup, mention it explicitly in the PR description and the issue's closing comment. The mention itself is the safety net.
 
 ### Do not invent product behavior
 
@@ -135,7 +135,7 @@ This is a solo + agent-driven workflow. There is no human catching loops in real
 
 - when a session discovers a durable workflow preference, prefer capturing it in
   `rules/` or `docs/` rather than relying on conversational memory alone
-- use Beads notes and active plan updates for durable “resume here” context
+- use issue comments and active plan updates for durable “resume here” context
   when a session is intentionally paused or the machine/repo context is about
   to change
 - when product discussions resolve broad goals, actor behavior, or operating

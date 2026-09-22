@@ -49,8 +49,9 @@ Not ADR candidates:
 
 *(Add a one-line summary here when a new ADR lands.)*
 
-- [ADR-0001 — Beads as the live task tracker](./0001-beads-as-live-task-tracker.md)
-- [ADR-0002 — Plans are narrative; deleted after their Beads epic closes](./0002-plans-as-narrative-delete-after-epic-closes.md)
+- [ADR-0001 — Beads as the live task tracker](./0001-beads-as-live-task-tracker.md) *(superseded by ADR-0006)*
+- [ADR-0002 — Plans are narrative; deleted after their tracking epic closes](./0002-plans-as-narrative-delete-after-epic-closes.md)
 - [ADR-0003 — Tech specs are pre-implementation only; deleted after ship](./0003-tech-specs-pre-implementation-only.md)
 - [ADR-0004 — Team is the league-facing entity; User page is account-scope only](./0004-team-centric-league-account-scope-boundary.md)
 - [ADR-0005 — Cross-tier log correlation via client trace/request IDs](./0005-cross-tier-log-correlation.md)
+- [ADR-0006 — GitHub Issues as the live task tracker](./0006-github-issues-as-live-task-tracker.md) *(supersedes ADR-0001)*

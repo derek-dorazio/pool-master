@@ -10,8 +10,8 @@ See rules/workflow-rules.md §6.
 
 ## Tracker linkage
 
-- **Parent epic:** `pool-master-<EPIC>`
-- **Slice story:** `pool-master-<STORY>`
+- **Parent epic:** #<EPIC>
+- **Slice issue:** Closes #<ISSUE>
 
 ## Use-case / business-rule / defect IDs covered
 
@@ -19,7 +19,7 @@ See rules/workflow-rules.md §6.
 
 - `UC-<ID>` — <one-line description>
 - `BR-<ID>` — <one-line description>
-- `pool-master-<DEFECT-ID>` — <description>   <!-- defect-fix slices only -->
+- `#<DEFECT-ISSUE>` — <description>   <!-- defect-fix slices only -->
 
 ## Defect-fix observation
 
@@ -29,7 +29,7 @@ Per rules/testing-rules.md §3, the slice must demonstrate the failing
 test was observed to fail on the broken code BEFORE the fix landed.
 -->
 
-The failing test reproducing `pool-master-<DEFECT-ID>` was observed to fail
+The failing test reproducing #<DEFECT-ISSUE> was observed to fail
 on the broken code before the fix landed. Evidence: <commit SHA / referenced line>.
 
 ## Gates run

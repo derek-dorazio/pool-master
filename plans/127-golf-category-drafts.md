@@ -1,12 +1,15 @@
 # Golf Category Drafts
 
-> **Status:** In progress. **Beads epic:** `pool-master-wsu`. Its slice 1
-> (`pool-master-ir1`) carries a cross-epic `blocked-by` link against `plans/124`'s slice 9
-> (`pool-master-piv`) — not `124`'s full epic. `bd show pool-master-wsu` for the live list.
+> **Status:** In progress. **Tracking issue:** #99 (migrated from `pool-master-wsu`).
+> `gh issue view 99` for the live slice list.
+>
+> **The `plans/124` dependency is satisfied.** Slice 1 (#101) was blocked by `plans/124`'s
+> slice 9 (`pool-master-piv`) — not `124`'s full epic. That epic (`pool-master-476`) closed
+> 2026-09-03, so nothing here is blocked.
 >
 > **Coordination warning: shares a touchpoint with `plans/128`.** This epic's slice 5
-> (`pool-master-398`) and `plans/128`'s epic (`pool-master-9oy`) slice 4 (`pool-master-6z6`)
-> both extend `contest-entry-page.tsx:578`'s `selectionType !== 'TIERED'` gate. Do not let
+> (#105) and `plans/128`'s epic (#93) slice 4 (#95)
+> both extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate. Do not let
 > both land independently — whichever lands first should extend the gate to admit **both**
 > `CATEGORY_PICK` and `BUDGET_PICK` in one small commit, and the other rebases onto it rather
 > than re-editing the same line.
@@ -220,7 +223,7 @@ not identical, category path:
 satisfying "don't implement impediments" for `plans/124`'s tiered work.
 
 **Correction inherited from `plans/128`'s §3.3 investigation, applies identically here**:
-`contest-entry-page.tsx:578` hard-blocks every non-`TIERED` contest today (`if
+`contest-entry-page.tsx` hard-blocks every non-`TIERED` contest today (`if
 (contest.selectionType !== 'TIERED') { return <ErrorState .../> }`). The earlier "no frontend
 change needed" verdict (the audit behind `plans/126`) only checked the draft-room rendering
 layer — this separate gate blocks a member from ever reaching the entry page for a
@@ -316,7 +319,7 @@ Tournament Home) landing first.
 | 2 | `modules/golf/golf-category-rules.ts` — the six pure rule functions, including the `SENIOR_TOUR_LEAGUE_NAME` league-name lookup (§3); unit tests | 1 |
 | 3 | `drafts/routes.ts`: `deriveCategoryConfig` + `CATEGORY_PICK` dispatch branch + the new cross-category pick-uniqueness validation rule (§4) | 2 |
 | 4 | `ContestConfigTemplate` seed migration: `GolfContestConfigMode.GOLF_CATEGORY_PICKS` + the two presets, All Count and Top 4 (§6) | 3 |
-| 5 | Frontend: extend `contest-entry-page.tsx:578`'s `selectionType !== 'TIERED'` gate to admit `CATEGORY_PICK` (§4) — coordinate with `plans/128`'s epic if both are open at once, see this plan's header | 3 |
+| 5 | Frontend: extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate to admit `CATEGORY_PICK` (§4) — coordinate with `plans/128`'s epic if both are open at once, see this plan's header | 3 |
 | 6 | Frontend: `LeagueEventPreviousWinner` bulk-upload panel (paste/upload, "Clear existing history first" checkbox, upsert otherwise, §5), reusing `plans/124`'s shared `BulkUploadPanel` | 1, `plans/124`'s `BulkUploadPanel` slice |
 | 7 | Frontend: "Record champion" action on Tournament Home, appending the position-1 finisher once a tournament completes (§5) | 1, `plans/124`'s Tournament Home slice |
 | 8 | Commissioner contest-config: read-only category list + counting-rule display for a `GOLF_CATEGORY_PICKS` contest (§5) | 4 |

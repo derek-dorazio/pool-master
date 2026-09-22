@@ -13,7 +13,13 @@ const files = walkFiles(['tests', 'packages', 'clients/poolmaster/src'], {
 });
 
 const testCasePattern = /\b(?:it|test)\s*\(\s*['"`]([^'"`]+)['"`]/;
-const traceabilityPattern = /\b(?:UC|BR)-[A-Z0-9-]+|pool-master-[a-z0-9]+(?:\.[0-9]+)?|\brule:\s+/i;
+// A GitHub issue reference is accepted in two unambiguous forms -- `#118:` or
+// `defect #118` -- rather than a bare `#\d+`, which would let an incidental
+// '#1 ranked player' in a test name pass as traceability. Legacy
+// `pool-master-*` IDs stay accepted; they resolve into git history and are not
+// rewritten. Plan 138 revisits this pattern set as a whole.
+const traceabilityPattern =
+  /\b(?:UC|BR)-[A-Z0-9-]+|pool-master-[a-z0-9]+(?:\.[0-9]+)*|#[0-9]{1,6}:|\b(?:defect|issue)\s+#[0-9]{1,6}\b|\brule:\s+/i;
 const findings = [];
 
 for (const filePath of files) {

@@ -32,7 +32,7 @@ experience it**, without collapsing into schema, DTO, route, or architecture
 implementation details.
 
 These artifacts are design inputs for major features (see §0). They are not
-the home of task status — that lives in Beads.
+the home of task status — that lives in GitHub Issues.
 
 ## 2. Output Structure
 
@@ -147,7 +147,7 @@ Before product requirements are handed forward, they must make clear:
 The layered artifact model is owned by `rules/workflow-rules.md §0 Document Lifecycle`. This rule file only adds Pam-specific notes:
 
 - `requirements/product-requirements/` is authoritative for *major-feature* product intent while the feature is active.
-- When requirement changes affect in-flight work, update the relevant plan narrative in the same effort; task state is updated in Beads (not in plan task tables — plan files no longer carry task tables).
+- When requirement changes affect in-flight work, update the relevant plan narrative in the same effort; task state is updated in GitHub Issues (not in plan task tables — plan files no longer carry task tables).
 - If older plan prose contradicts current refined requirements, requirements wins; plan prose should be reconciled or the plan deleted if its epic has closed.
 - Do not surface product questions from older plan prose without first checking current `requirements/product-requirements/` feature files.
 

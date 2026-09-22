@@ -14,20 +14,20 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
 | Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name; `plans/142` relocates them to a home named for what they are |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
-| Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a Beads epic; **deleted** when the parent epic closes |
+| Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a tracking issue; **deleted** when the parent epic issue closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
-| Live | `.beads/issues.jsonl` | Hours–days | Current task state, dependencies, slice list, status |
+| Live | GitHub Issues | Hours–days | Current task state, slice list, status. Not a file in this repo — see `§1` |
 
 ### Governing rules
 
-1. **One canonical home per concept.** If you're writing the same thing in two files, pick one and link from the other. Business rules live in `requirements/.../business-rules.md`. Task status and task lists live in Beads. Architecture decisions live in `rules/` or `docs/adr/`. The generated SDK + domain types are the API contract. The code + tests are the behavioral spec.
-2. **Short-lived artifacts reference long-lived ones, never the reverse.** Plans reference rules, not vice versa. Beads notes reference plans, not vice versa.
-3. **Delete on ship, don't archive.** When a plan's parent Beads epic closes, the plan file is deleted in the same commit (or the next cleanup slice). When a tech spec's implementation lands on main, the spec is deleted. Git preserves history; `git show <sha>:path/to/file` retrieves any prior version. Archival directories are anti-patterns — files in the tree get read.
+1. **One canonical home per concept.** If you're writing the same thing in two files, pick one and link from the other. Business rules live in `requirements/.../business-rules.md`. Task status and task lists live in GitHub Issues. Architecture decisions live in `rules/` or `docs/adr/`. The generated SDK + domain types are the API contract. The code + tests are the behavioral spec.
+2. **Short-lived artifacts reference long-lived ones, never the reverse.** Plans reference rules, not vice versa. Issue comments reference plans, not vice versa.
+3. **Delete on ship, don't archive.** When a plan's parent epic issue closes, the plan file is deleted in the same commit (or the next cleanup slice). When a tech spec's implementation lands on main, the spec is deleted. Git preserves history; `git show <sha>:path/to/file` retrieves any prior version. Archival directories are anti-patterns — files in the tree get read.
 4. **Capture durable decisions as ADRs.** Decisions that outlast a single slice (architectural choices, cross-cutting patterns, hard boundaries) are written as Architecture Decision Records in `docs/adr/`. Once accepted, ADRs are immutable; supersede with a new ADR rather than editing.
 5. **Rules absorb what plans learn.** If a plan introduces a durable pattern (a new convention, a hard boundary, a reusable approach), update `rules/` or write an ADR in the same effort. Don't leave the pattern only in the plan — it will be deleted when the epic closes.
 6. **Delete-on-ship applies to production source too.** When a replacement UI,
    route, service, helper, or workflow ships, remove the superseded production
-   source in the same slice unless a Beads follow-up explicitly owns the
+   source in the same slice unless a follow-up issue explicitly owns the
    retirement. Dead source files are not harmless; future agents read and copy
    them.
 7. **Route knowledge to where its reader will already be standing.** Code
@@ -73,212 +73,163 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 
 ---
 
-## 1. Plans and the Beads Tracker
+## 1. Plans and the Issue Tracker
 
-### Plans are narrative; Beads is live task state
+### Plans are narrative; GitHub Issues is live task state
 
-- **A plan file** (`plans/NN-*.md`), when the effort warrants one, is the narrative companion to a Beads epic: scope, rationale, architecture, site maps, tile mappings, open questions, references. Plans do **not** contain task tables.
-- **The Beads epic** (`pool-master-<suffix>`) owns the task list as child stories, with labels, dependencies, statuses, and notes.
-- When a plan exists, it carries a one-line header at the top referencing its parent Beads epic; the Beads epic links back to its plan in its description or notes.
+- **A plan file** (`plans/NN-*.md`), when the effort warrants one, is the narrative companion to a tracking issue: scope, rationale, architecture, site maps, tile mappings, open questions, references. Plans do **not** contain task tables.
+- **The tracking issue** owns the task list as sub-issues, with statuses and comments.
+- When a plan exists, it carries a one-line header at the top referencing its tracking issue (`#NN`); the issue links back to its plan in its body.
 
-### Pick the right shape: story / epic / plan + epic
+### Pick the right shape: issue / epic / plan + epic
 
 Not every effort needs all three artifacts. Match the shape to the work.
 
-- **One Beads story, no epic, no plan.** Single-slice work: a typo fix, a small bug fix, a one-file refactor, a routine dependency bump, a single follow-up. The story description and notes carry all the context needed.
-- **One Beads epic + child stories, no plan file.** Small efforts (≈2–3 slices) with no architectural narrative: a contained CRUD addition, a small targeted refactor, a couple of related cleanup slices. The epic description carries scope and sequencing; each child story carries its own slice context.
-- **Plan file + Beads epic + child stories.** Major efforts: feature reorgs, new feature areas with site maps, cross-cutting refactors, multi-persona coordination, anything that benefits from diagrams, authority models, tile-to-destination mappings, or a "settled decisions" section.
+- **One issue, no epic, no plan.** Single-slice work: a typo fix, a small bug fix, a one-file refactor, a routine dependency bump, a single follow-up. The issue body and its comments carry all the context needed.
+- **One epic issue + sub-issues, no plan file.** Small efforts (≈2–3 slices) with no architectural narrative: a contained CRUD addition, a small targeted refactor, a couple of related cleanup slices. The epic body carries scope and sequencing; each sub-issue carries its own slice context.
+- **Plan file + epic issue + sub-issues.** Major efforts: feature reorgs, new feature areas with site maps, cross-cutting refactors, anything that benefits from diagrams, authority models, tile-to-destination mappings, or a "settled decisions" section.
 
 Promote a small effort to a plan file when:
 
 - It grows past about three slices.
 - A non-obvious architectural choice is being made.
-- Multiple personas are coordinating (e.g., Pam confirms scope, Dom locks the model, Brad implements, Fran consumes).
 - The narrative would benefit from a Mermaid diagram, site map, or structured pattern explanation.
-- You catch yourself wanting to write more than a couple of paragraphs in a Beads description — that paragraph wants to be a markdown file.
+- You catch yourself wanting to write more than a couple of paragraphs in an issue body — that paragraph wants to be a markdown file.
 
-When in doubt, start small (story-only or epic-only). It's cheaper to add a plan file later than to delete an empty one.
+When in doubt, start small (issue-only or epic-only). It's cheaper to add a plan file later than to delete an empty one.
 
 ### Plan file structure
 
 A plan file typically contains:
 
-- **Beads epic:** link/ID to the parent epic (e.g. `pool-master-upa`)
+- **Tracking issue:** `#NN` — the parent epic issue
 - **Purpose** — why this plan exists
-- **Governing principles** — link to relevant rules/memory/ADRs
+- **Governing principles** — link to relevant rules/ADRs
 - **Site map / structural references** (where applicable)
 - **Architecture or pattern narrative** (authority models, URL structures, etc.)
 - **Tile → destination mapping** (for reorgs; these are structural, not status)
 - **Open questions** (unresolved product/contract calls)
-- **Backend contract questions** (handoff to Brad)
 
 What a plan file does **not** contain:
 
 - Task tables with slice numbers, status columns, or Done markers
-- Duplicated rule text or persona responsibilities
-- Per-slice completion notes (those live in the Beads story closing notes)
+- Duplicated rule text
+- Per-slice completion notes (those live in the issue's closing comment)
 
-### Beads is the canonical task state
+### GitHub Issues is the canonical task state
 
-- Every active slice is a Beads story (child of a plan's epic).
-- Status transitions (open → in_progress → closed/deferred) happen in Beads as work starts and completes.
-- Slice context, scope changes, and closeout notes go in the Beads story's notes field.
-- When a slice closes, the plan file is not edited — the Beads closeout captures the execution record. The plan file is updated only when scope, architecture, or open questions change.
+- Every active slice is a sub-issue of its plan's epic issue.
+- Status transitions happen on the issue as work starts and completes: assign it when starting, close it when done.
+- Slice context, scope changes, and closeout notes go in issue comments.
+- When a slice closes, the plan file is not edited — the issue's closing comment captures the execution record. The plan file is updated only when scope, architecture, or open questions change.
 
 ### When a plan dies
 
-- When the parent Beads epic closes (all child stories closed or deferred), the plan file is **deleted** in a cleanup commit.
+- When the parent epic issue closes (all sub-issues closed), the plan file is **deleted** in a cleanup commit.
 - Durable patterns/decisions the plan established must be codified before deletion, in whichever layer fits per `§0` governing rule 7: `rules/` for conventions that constrain code not yet written, `docs/adr/` for decisions with rejected alternatives, or a **code comment at the canonical implementation site** for a mechanism that is fully encapsulated and test-guarded. A plan that introduced a new convention without codifying it somewhere is not ready to be deleted.
 - A well-placed code comment satisfies this requirement. It is often the *better* choice for a self-contained mechanism: `rules/` prose describing one implementation in one place is read by nobody doing feature work and drifts silently, while a comment is read by whoever opens the file and moves with the code. See `packages/shared/openapi/nullable-to-3-1.ts` for the reference example.
 - git preserves the deleted file; it can be retrieved via `git log` / `git show` if historical context is needed.
 - Do **not** move completed plans to `plans/archive/`. Archive directories grow and get read; deletion is the enforcement mechanism.
 
-### Beads conventions: epics, stories, sizing, naming
+### Tracker conventions: epics, slices, sizing, naming
 
-**Epics vs stories.** A Beads epic represents a major effort (a feature reorg, a new feature area, a cross-cutting refactor). Each child story is a single committable, validatable slice — typically one commit. If a "story" naturally needs more than one commit, it's actually two stories.
+**Epics vs slices.** An epic issue represents a major effort (a feature reorg, a new feature area, a cross-cutting refactor). Each sub-issue is a single committable, validatable slice — typically one commit. If a "slice" naturally needs more than one commit, it's actually two slices.
 
-**Sizing.** Aim for stories that close in 1–3 hours of focused work and produce one coherent commit. Layer-granularity is the default unit (schema + migration is one story; service + repo is another; DTOs are another; mappers are another; route schemas are another; each test layer is a separate story when meaningful coverage is being added). Bundle layers in one story only when the layers are trivially small.
+**Sizing.** Aim for slices that close in 1–3 hours of focused work and produce one coherent commit. Layer-granularity is the default unit (schema + migration is one slice; service + repo is another; DTOs are another; mappers are another; route schemas are another; each test layer is a separate slice when meaningful coverage is being added). Bundle layers in one slice only when the layers are trivially small.
 
 **Naming.**
-- Epics: short imperative noun phrase that names the effort. Examples: "Root admin elevation", "Test data hygiene", "Contest event feed integration". Avoid date prefixes, internal version numbers, or references to the plan file number — Beads IDs are stable and the plan file may be deleted later.
-- Stories: short imperative phrase describing what the slice produces. Each story title should make sense without reading the parent epic.
+- Epics: short imperative noun phrase that names the effort. Examples: "Root admin elevation", "Test data hygiene", "Contest event feed integration". Avoid date prefixes, internal version numbers, or references to the plan file number — issue numbers are stable and the plan file may be deleted later.
+- Slices: short imperative phrase describing what the slice produces. Each title should make sense without reading the parent epic.
 
-### Beads conventions: scope of use
+### Tracker conventions: scope of use
 
-- Use one Beads epic per active feature lane or cross-module initiative.
-- Use child stories for refinement questions, design decisions, implementation slices, and verification/review slices.
-- For multi-question refinement threads, prefer Beads decision/task items with stable IDs over renumbered ad hoc chat bullets.
-- Keep the resolved truth in `requirements/`, `tech-specs/`, or `plans/` as appropriate; do not let Beads become the only durable home for product or technical decisions.
-- When a Beads-tracked question is resolved, update the corresponding document in the same effort or immediately after.
-- When a plan already exists for the lane, keep the plan narrative in sync with the Beads state for material milestones and direction changes.
+- Use one epic issue per active feature lane or cross-module initiative.
+- Use sub-issues for refinement questions, design decisions, implementation slices, and verification/review slices.
+- Keep the resolved truth in `requirements/`, `tech-specs/`, or `plans/` as appropriate; do not let the tracker become the only durable home for product or technical decisions.
+- When a tracked question is resolved, update the corresponding document in the same effort or immediately after.
+- When a plan already exists for the lane, keep the plan narrative in sync with the tracker for material milestones and direction changes.
 
-### Beads conventions: labels
+### Tracker conventions: labels
 
-Apply labels generously — they're how filtered queries (`bd list --label …`) stay useful as the issue list grows.
+**The repo has no label taxonomy yet, on purpose.** The Beads migration created none — the
+original label strings are preserved as plain text inside each migrated issue body, so
+nothing was lost, and a tracker this size does not need filtering to be legible.
 
-Standard label families:
+Create a label the first time a query actually needs one, not in advance. If a family does
+become worth creating, these are the ones the Beads history proved useful:
 
 - **Layer:** `layer/schema`, `layer/service`, `layer/dto`, `layer/mapper`, `layer/route`, `layer/test-unit`, `layer/test-integration`, `layer/test-fapi`, `layer/test-e2e`, `layer/ui`, `layer/infra`, `layer/docs`.
-- **Persona:** `persona/brad`, `persona/fran`, `persona/dom`, `persona/archie`, `persona/tess`, `persona/quinn`, `persona/riley`. Indicates who is best positioned to execute or review.
-- **Risk / scope:** `risk/high` (touches shared contract, schema, infra, auth), `risk/refactor` (no behavior change but broad blast radius), `risk/migration` (data migration / backfill), `cross-cutting` (effects multiple modules).
-- **Workflow:** `blocked/external` (waiting on a third party), `blocked/decision` (waiting on a product call), `cleanup` (debt removal, no new behavior), `defect` (bug-fix story — see Defect Verification Protocol in `rules/testing-rules.md` §3).
+- **Risk / scope:** `risk/high` (touches shared contract, schema, infra, auth), `risk/refactor` (no behavior change but broad blast radius), `risk/migration` (data migration / backfill), `cross-cutting` (affects multiple modules).
+- **Workflow:** `blocked/external` (waiting on a third party), `blocked/decision` (waiting on a product call), `cleanup` (debt removal, no new behavior), `defect` (bug-fix slice — see Defect Verification Protocol in `rules/testing-rules.md` §3), `deferred` (consciously dropped scope).
 
-A story with 0–3 labels is normal. Don't turn labels into a taxonomy exercise; they should help future filtering, not document everything.
+`persona/*` labels are **not** carried forward — they encoded a role-shaped assignment model
+the repo no longer uses.
 
-### Beads conventions: dependencies
+An issue with 0–3 labels is normal. Don't turn labels into a taxonomy exercise; they should help future filtering, not document everything.
 
-Use Beads `blocks` / `blocked_by` to make execution order machine-readable rather than only narrating it in the plan.
+### Tracker conventions: dependencies
 
-- Declare a dependency when a story genuinely cannot start until another closes (e.g., DTO depends on schema; UI depends on regenerated SDK).
-- Do **not** declare a dependency for "should be done in this order for cleanliness" — that's narrative, and belongs in the plan file or in the story description.
-- Cross-epic dependencies are allowed and useful. A slice in Epic A blocked by a slice in Epic B is the right way to model genuine coupling between efforts.
-- Circular dependencies are a smell. If two stories block each other, one of them is sized wrong — split it.
+This is the one place the move off Beads lost capability, and it is worth naming rather
+than papering over. Beads had first-class, queryable `blocks` / `blocked_by`. Plain GitHub
+Issues does not: sub-issues model *parent/child*, not *ordering*.
 
-### Beads conventions: story notes
+So dependencies are prose, written where a reader will hit them:
 
-The Beads notes field is the slice's execution record. Two notes per story is the working norm.
+- State the blocker in the blocked issue's body: `Blocked by #NN — <one line on why>`. GitHub
+  renders the cross-link and shows the blocker's open/closed state inline, which covers the
+  common case of "can I start this yet".
+- Declare a dependency only when a slice genuinely cannot start until another closes (e.g.,
+  DTO depends on schema; UI depends on regenerated SDK). "Should be done in this order for
+  cleanliness" is narrative — that belongs in the plan file.
+- Cross-epic dependencies are allowed and useful. A slice in Epic A blocked by a slice in
+  Epic B is the right way to model genuine coupling between efforts.
+- Circular dependencies are a smell. If two issues block each other, one of them is sized
+  wrong — split it.
 
-**Starting note** (added when status flips to `in_progress`):
+**If dependency order ever becomes load-bearing enough that prose stops working**, that is
+the signal to adopt a GitHub Project with a relationship field — not the signal to build a
+side-file tracker.
+
+### Tracker conventions: issue comments
+
+An issue's comments are the slice's execution record. Two comments per slice is the working norm.
+
+**Starting comment** (added when work begins):
 
 - Planned approach: which files will change, which patterns will be applied, which contract surfaces are touched.
 - Risk callouts: anything the slice is being asked to be careful about.
 - Validation plan: which gates will be run, which test layers will be added or updated, and which use-case / defect IDs the new tests will reference.
 
-**Closing note** (added when status flips to `closed`):
+**Closing comment** (added when the issue is closed):
 
 - Files changed (paths only — diffs live in git).
 - Decisions made: any non-obvious technical call that future readers should understand.
 - Gates run: explicit list of validation commands and their results.
 - For defect-fix slices: an explicit note that the failing test was observed to fail on the broken code before the fix landed (see `rules/testing-rules.md` §3 *Defect Verification Protocol*).
-- Residual risk: anything left for follow-up, ideally with the new story ID that will own it.
+- Residual risk: anything left for follow-up, ideally with the new issue number that will own it.
 - Spillover: if the slice touched files outside its declared scope, name them.
 
-The closing note is the canonical post-ship execution record for the slice. Plan files do not capture this — they're narrative-only.
+The closing comment is the canonical post-ship execution record for the slice. Plan files do not capture this — they're narrative-only.
 
-### Beads conventions: deferred, closed, reopened
+### Tracker conventions: closed, deferred, reopened
 
-- **`closed`** — work done; gates pass; commit landed.
-- **`deferred`** — work was scoped but consciously dropped from this epic. Add a closing note explaining why and pointing at the future story (if any) that picks it up.
-- Reopening a closed story is allowed when the closeout turns out to be wrong (e.g., a hidden regression surfaces). Add a note that says why it's being reopened and what changed in the original validation story.
-- A story that is "blocked, not deferred" stays `in_progress` (or `open`) with a `blocked/*` label and a note explaining what it's waiting on.
+- **Closed as `completed`** — work done; gates pass; commit landed.
+- **Closed as `not planned` + `deferred` label** — work was scoped but consciously dropped. Add a closing comment explaining why and pointing at the future issue (if any) that picks it up.
+- Reopening a closed issue is allowed when the closeout turns out to be wrong (e.g., a hidden regression surfaces). Add a comment saying why it's being reopened and what changed in the original validation.
+- An issue that is "blocked, not deferred" stays open with a `blocked/*` label and a comment explaining what it's waiting on.
 
-### Beads ↔ commit and PR linkage
+### Issue ↔ commit and PR linkage
 
-- Reference the Beads story ID in the commit message footer: `pool-master-NNN`. This makes `git log --grep="pool-master-NNN"` the canonical way to find the slice's commits.
-- Reference the parent epic ID in the PR description.
+- Reference the issue number in the commit message footer: `#NN`. GitHub links the commit onto the issue automatically.
+- Put a closing keyword in the **PR body**, not in individual commits: `Closes #NN`. The issue then closes when the PR merges, which is the point at which the work is actually live.
+- Reference the parent epic in the PR description alongside the slice's own issue.
 - For defect-fix slices, also reference the defect ID in the failing test's traceability comment per `rules/testing-rules.md` §1A.
-- Do not put commit SHAs into Beads notes — `git log --grep` is more durable than a frozen SHA list, especially after rebases or squash merges.
 
-### Concurrent agents and JSONL conflict resolution
-
-`.beads/issues.jsonl` is the canonical shared file (committed to git); each agent has a local Dolt DB in `.beads/embeddeddolt/` that's gitignored. `bd` commands mutate the local DB; the JSONL is a separate export step. When multiple PRs edit Beads state in parallel, the JSONL goes stale on whichever PR doesn't merge first — every sibling Beads change on `main` becomes a rebase conflict for the open PR.
-
-**Never hand-edit `.beads/issues.jsonl` to resolve a conflict.** Beads provides a structured-merge path through the CLI; bypassing it means a future `bd import` could partially overwrite the manual edits.
-
-**Recipe — rebase-and-resync (the canonical conflict resolution):**
-
-When rebasing a feature branch onto a main that has absorbed Beads changes from sibling PRs:
-
-```bash
-# 1. Start the rebase. Conflict on .beads/issues.jsonl is expected if main moved.
-git fetch origin
-git checkout pool-master-NNN-<slice-slug>
-git rebase origin/main
-# → CONFLICT (content): Merge conflict in .beads/issues.jsonl
-
-# 2. Take main's full version of the JSONL — discards the slice's stale snapshot.
-git checkout origin/main -- .beads/issues.jsonl
-
-# 3. Sync the local Dolt DB to main's JSONL (upsert; updates 415 records on
-#    the test repo). After this step the local DB matches main exactly.
-bd import .beads/issues.jsonl
-
-# 4. Re-apply only the slice's transition through the CLI. Examples:
-bd close pool-master-NNN --reason "<your slice's close-reason>"
-# or
-bd update pool-master-NNN --status in_progress
-# or
-bd note pool-master-NNN "<closing note>"
-
-# 5. Re-export the DB to the JSONL on disk. bd does NOT auto-write the file
-#    after a mutation — `bd export -o` is required.
-bd export -o .beads/issues.jsonl
-
-# 6. Stage the resolved file and continue the rebase.
-git add .beads/issues.jsonl
-git rebase --continue
-
-# 7. Force-push the rebased branch.
-git push --force-with-lease origin pool-master-NNN-<slice-slug>
-```
-
-After step 5 the diff vs `origin/main` on `.beads/issues.jsonl` should be exactly the records the slice transitioned. Verify before pushing:
-
-```bash
-git diff origin/main -- .beads/issues.jsonl | grep -E '^[+-]\{' | grep -oE '"id":"[^"]+"' | sort -u
-# → should print only the slice's Beads ID(s)
-```
-
-If the diff shows other IDs, the rebase didn't fully resolve — re-run `bd import .beads/issues.jsonl` to discard the stale state and re-apply the slice's transition.
-
-**Why this works:** `bd import` does an upsert against the local Dolt DB, so the local view becomes structurally identical to main. The subsequent `bd close` / `bd update` / `bd note` then mutates only the targeted record. `bd export -o` writes the full DB back to JSONL, producing a file that differs from main only in the rows the slice touched.
-
-**`updated_at` drift is expected** — every `bd` mutation bumps the `updated_at` timestamp on the target record, so even a no-op transition will show as a one-line diff vs main. That's accurate (the field reflects when bd ran), not a bug.
-
-**Don't commit a partially-resolved JSONL.** If a rebase resolution leaves stray records changed beyond the slice's scope, re-run the recipe from step 2.
-
-### bd CLI quick reference
-
-Routine operations:
-
-- `bd list --status open` — what's available to start.
-- `bd list --status in_progress` — what's currently underway (worth checking before starting a new slice, especially with multiple agents).
-- `bd show pool-master-NNN` — full story detail including notes.
-- `bd note pool-master-NNN "..."` — append a note to a story.
-- `bd start pool-master-NNN` / `bd close pool-master-NNN` — status transitions.
-- `bd dep add pool-master-A blocked-by pool-master-B` — declare a dependency.
-
-See `bd help` for the full surface.
+**Historical `pool-master-<suffix>` IDs.** Commit messages, test traceability comments, and
+`SKIP:` markers written before the migration still carry Beads IDs. They remain valid as
+historical references — `git show <sha>:.beads/issues.jsonl` recovers any record, closed or
+open — and they are deliberately **not** rewritten. Every migrated issue names its original
+ID in its body, so searching the tracker for a `pool-master-` suffix resolves the mapping.
 
 ### Slice Execution Rules
 
@@ -286,8 +237,8 @@ See `bd help` for the full surface.
 - Report every changed file in the final handoff for a slice. Do not summarize a broader file set as if it were narrower.
 - If slice work exposes adjacent-slice files or tasks, stop and report that spillover instead of bundling it into the same commit.
 - Coverage threshold changes are main-thread coordination work. Worker slices must not raise or lower thresholds on their own.
-- Update Beads state only for the exact slice being worked. Do not flip unrelated stories to `in_progress` or `closed`.
-- Close a Beads story only when the exact scoped work is complete and validated. Partial work stays `in_progress`.
+- Update tracker state only for the exact slice being worked. Do not close unrelated issues.
+- Close a slice's issue only when the exact scoped work is complete and validated. Partial work stays open.
 - A slice is not finished while any relevant required local test suite for that
   slice is still failing.
 - "Implementation complete" without green relevant local validation is still
@@ -311,28 +262,33 @@ See `bd help` for the full surface.
 
 ### Slice Completion Checklist (Required Before Marking Done)
 
-Before marking any slice `Done`, reconcile the live Beads tracker so it matches
-the actual repo state. A slice is not complete if the code, tests, and commit
-history say "finished" but the corresponding Beads item still reads like active
-unfinished work.
+Before marking any slice `Done`, reconcile the tracker so it matches the actual
+repo state. A slice is not complete if the code, tests, and commit history say
+"finished" but the corresponding issue still reads like active unfinished work.
 
-**Beads Reconciliation Gate:**
-- [ ] The exact Beads item for the slice has been reviewed at closeout time
-- [ ] The item has been moved to the correct end state:
-  - `closed` if the scoped work is complete
-  - `deferred` if the remaining work is intentionally postponed
-  - `pinned` only if it is a durable ongoing behavior rather than a normal task
-- [ ] If scope changed during implementation, the Beads title/notes were updated
-      before closing or deferring it
-- [ ] Parent epics or umbrella items were reviewed so they do not remain `open`
-      merely because no one reconciled the child status
-- [ ] The final slice handoff explicitly states which Beads moved to `closed`,
-      `deferred`, or remain active and why
+**Tracker Reconciliation Gate:**
+- [ ] The exact issue for the slice has been reviewed at closeout time
+- [ ] The issue has been moved to the correct end state:
+  - closed as `completed` if the scoped work is complete
+  - closed as `not planned` with a `deferred` label if the remaining work is
+    intentionally postponed
+  - left open with a `blocked/*` label if it is waiting on something external
+- [ ] If scope changed during implementation, the issue title/body was updated
+      before closing it
+- [ ] The parent epic was reviewed so it does not remain open merely because no
+      one reconciled the sub-issue status
+- [ ] The final slice handoff explicitly states which issues were closed,
+      deferred, or remain active and why
+
+The `Stop` hook (`.claude/hooks/check-tracker-reconciliation.mjs`) surfaces issue
+numbers referenced by this session's commits that are still open. It is a
+reminder, not a gate — it cannot tell a genuinely-unfinished issue from one the
+PR will close on merge.
 
 Common failure modes to avoid:
 
-- finishing implementation but forgetting to close the corresponding Beads item
-- leaving workflow/process items as plain `open` tasks when they are really
+- finishing implementation but forgetting to close the corresponding issue
+- leaving workflow/process items open as plain tasks when they are really
   ongoing behaviors or already-adopted rules
 - leaving outdated task wording in place after the architecture direction has
   changed
@@ -340,7 +296,7 @@ Common failure modes to avoid:
   reconciliation step
 
 The default rule is simple: if a slice is done enough to commit and announce as
-complete, it is done enough to reconcile in Beads during the same slice.
+complete, it is done enough to reconcile in the tracker during the same slice.
 
 Before marking any backend slice task `Done`, run through this checklist for every domain object or endpoint touched by the slice. This checklist enforces the layer-completeness requirements from `rules/model-change-rules.md` and `rules/service-rules.md` as execution gates, not just reference material.
 
@@ -372,9 +328,9 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Negative/error/permission use cases affected by the slice are covered at
       an appropriate automated layer
 - [ ] Every new test references a use-case ID, business-rule ID, or defect ID per `rules/testing-rules.md` §1A *Test Self-Documentation*
-- [ ] For defect-fix slices: a failing test reproducing the defect was written *before* the fix and observed to fail on the broken code, per `rules/testing-rules.md` §3 *Defect Verification Protocol* (record the observation in the Beads closing note)
+- [ ] For defect-fix slices: a failing test reproducing the defect was written *before* the fix and observed to fail on the broken code, per `rules/testing-rules.md` §3 *Defect Verification Protocol* (record the observation in the issue's closing comment)
 - [ ] No application code was modified to make a test pass — no fakes, fallbacks, hardcoded responses, "test mode" branches, or synthetic defaults were added to production paths, per `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*
-- [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced without a `SKIP: pool-master-NNN` comment and a real Beads story tracking the un-skip, per `rules/testing-rules.md` §1C *Test-Disable Discipline*
+- [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced without a `SKIP: #NN` comment and a real issue tracking the un-skip, per `rules/testing-rules.md` §1C *Test-Disable Discipline*
 - [ ] If the slice instruments logging or branches, each identified positive
       and negative branch is covered by a truthful automated test at the
       appropriate layer
@@ -394,7 +350,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Every doc update triggered by this slice is in *this* PR, not a follow-up. Triggers include: README change, persona checklist update, rule cross-reference, API doc revision, setup-guide line, ADR cross-link.
 - [ ] Standalone doc-only PRs are not used as a workaround for "I forgot to update the README" — the doc update belongs with the code change that triggered it (per `§6 Docs ride with code`).
 - [ ] If the slice changed architecture, testing patterns, or developer workflow, the matching `rules/*.md` files were updated in the same diff (per `§2 Rule and Documentation Maintenance`).
-- [ ] If the slice deviates from an active plan, the plan file was updated in the same diff or the deviation was explicitly noted in the Beads closing note.
+- [ ] If the slice deviates from an active plan, the plan file was updated in the same diff or the deviation was explicitly noted in the issue's closing comment.
 
 A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
 
@@ -436,7 +392,7 @@ test cleanup.
 
 ### Slice Deliverables
 
-When a feature requires coordinated work across multiple layers (schema, service, DTOs, mappers, route schemas, unit tests, integration tests, contract verification), each layer is its own checkbox in the Slice Completion Checklist above. For substantial multi-layer slices, break the work into multiple Beads stories — one per layer — so progress and blockers are visible in the live tracker.
+When a feature requires coordinated work across multiple layers (schema, service, DTOs, mappers, route schemas, unit tests, integration tests, contract verification), each layer is its own checkbox in the Slice Completion Checklist above. For substantial multi-layer slices, break the work into multiple sub-issues — one per layer — so progress and blockers are visible in the tracker.
 
 A slice is only complete when every applicable layer has been validated, not when the "hard part" (schema + service) lands.
 
@@ -472,8 +428,8 @@ Required cadence and triggers:
   violates a rule that already exists, add automation or a tighter checklist
   instead of only fixing the individual occurrence.
 - If a finding exposes a rule gap, update the appropriate `rules/*.md` file or
-  create a Beads story for that rule change.
-- Track thematic cleanup in Beads epics so repeated patterns are remediated in
+  create an issue for that rule change.
+- Track thematic cleanup in epic issues so repeated patterns are remediated in
   batches, not as isolated one-off defects.
 - Review passes are not a substitute for slice-level validation; they are the
   safety net that catches drift across slices.
@@ -502,7 +458,7 @@ Required behavior:
 ### Plan Deletion And Durable-Decision Capture
 
 - Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/` or `docs/adr/`, not in active plans.
-- When the parent Beads epic closes (all child stories closed or deferred), the plan file is **deleted** in the same commit (or an immediately following cleanup commit).
+- When the parent epic issue closes (all sub-issues closed or deferred), the plan file is **deleted** in the same commit (or an immediately following cleanup commit).
 - Before deleting a plan, verify that durable patterns, conventions, or boundaries the plan introduced have been codified in `rules/` (for patterns) or `docs/adr/` (for cross-cutting decisions). A plan that introduced durable guidance without updating those layers is not ready to delete.
 - Do **not** move plans to an archive directory. Git preserves deleted files; archives just replicate the clutter problem under a different name.
 - For historical context, rely on `git log` and `git show`. If a specific decision warrants permanent attention, write an ADR.
@@ -546,13 +502,13 @@ Artifact hierarchy (with lifetimes; see §0 Document Lifecycle):
 - `requirements/product-overview/` = Piper discovery artifacts (feature-life; retire after major feature stabilizes)
 - `requirements/product-requirements/features/<feature>/` = Pam's refined product-requirement bundle for **major** features (feature-life; retire or trim after stabilization)
 - `tech-specs/features/<feature>/` = Tom's pre-implementation technical framing (pre-implementation only; **deleted when implementation ships**)
-- `plans/NN-*.md` = narrative companion to a Beads epic (slice-life; **deleted when parent Beads epic closes**)
-- `.beads/issues.jsonl` = live task state (tasks, dependencies, status, notes)
+- `plans/NN-*.md` = narrative companion to an epic issue (slice-life; **deleted when the parent epic issue closes**)
+- GitHub Issues = live task state (slices, status, execution notes)
 - `docs/adr/` = Architecture Decision Records (permanent; immutable once accepted)
 
 Skip the requirements bundle and tech spec for small/incremental work. Those artifacts are high-leverage for major new features, but they become overhead for work that fits entirely inside an already-documented feature or a narrow improvement. Capture that work's narrative directly in the plan file.
 
-Do not treat `requirements/` or `tech-specs/` as replacements for Beads task state. When implementation is underway, Beads is canonical for status.
+Do not treat `requirements/` or `tech-specs/` as replacements for tracker state. When implementation is underway, GitHub Issues is canonical for status.
 
 ### Webapp Rebuild Direction
 
@@ -681,10 +637,10 @@ Current persona nickname map:
 - Cross-cutting workflow requirements remain mandatory for all personas,
   including:
   - checking for active plans
-  - updating the Beads story state for the exact slice worked
+  - updating the issue state for the exact slice worked
   - validating work before marking slices done
   - updating docs and rules when the change affects them
-- Plan shaping, slice sequencing, and progress reconciliation are responsibilities shared across the active implementation personas and the user. Beads owns live task state; plans own narrative. No single persona owns "project management" as a discrete role — the old project-manager persona was retired because its responsibilities were fully subsumed by Beads (task state) and the narrative-only plan convention (no task tables to reconcile). See Plan 111 for the retirement rationale.
+- Plan shaping, slice sequencing, and progress reconciliation are responsibilities shared across the active implementation personas and the user. The tracker owns live task state; plans own narrative. No single persona owns "project management" as a discrete role — the old project-manager persona was retired because its responsibilities were fully subsumed by the tracker (task state) and the narrative-only plan convention (no task tables to reconcile). See Plan 111 for the retirement rationale.
 
 ### Frontend / Data Model / Backend Handoff Rules
 
@@ -733,8 +689,8 @@ Current persona nickname map:
 ## 2A. Source-Of-Truth Priority
 
 - `rules/` and `docs/adr/` are the authoritative durable guidance.
-- Active `plans/` files are authoritative narrative context for work in flight; they are paired with a Beads epic that owns task state.
-- `.beads/issues.jsonl` is the canonical source for task status, dependencies, and slice lists.
+- Active `plans/` files are authoritative narrative context for work in flight; they are paired with an epic issue that owns task state.
+- GitHub Issues is the canonical source for task status and slice lists.
 - For product intent: `requirements/product-requirements/features/<feature>/` is authoritative for *major* features while they are active; for code/behavioral contract, generated SDK/types + code + tests are authoritative; active plan prose never overrides either.
 - Treat `docs/` as reference material only unless an active rule or ADR explicitly promotes a doc as current source of truth.
 - If any document conflicts with the currently valid `rules/` + ADRs + active plan + generated contract, follow the governing layer and treat the stale doc as pending cleanup.
@@ -805,15 +761,16 @@ Do not protect obsolete architecture with inertia.
 
 ## 5. Finding Tasks
 
-Use Beads directly. The canonical queries:
+Query GitHub Issues. An agent with the GitHub MCP tools uses `list_issues` /
+`issue_read`; from a shell it is `gh`:
 
-- `bd list` — currently open and in-progress issues across all epics
-- `bd show <issue-id>` — full context for one issue, including the parent epic's plan reference
-- `bd show <epic-id>` — an epic's children; use this to see the slice list for a plan
+- `gh issue list` — currently open issues across all epics
+- `gh issue view <NN>` — full context for one issue, including its parent epic's plan reference
+- `gh issue view <NN>` on an epic — its sub-issues; use this to see the slice list for a plan
 
-Do not maintain a list of "active plan prefixes" in this rule file — that list drifts. Active plans are exactly the files currently present in `plans/`. Each of those plans links to its Beads epic in its header; the epic's children are the live tasks.
+Do not maintain a list of "active plan prefixes" in this rule file — that list drifts. Active plans are exactly the files currently present in `plans/`. Each of those plans links to its tracking issue in its header; that issue's sub-issues are the live tasks.
 
-If a plan exists without an associated Beads epic, that is a drift bug to fix: either create the epic or delete the plan.
+If a plan exists without an associated tracking issue, that is a drift bug to fix: either create the issue or delete the plan. The `Stop` hook checks for this.
 
 ---
 
@@ -839,8 +796,6 @@ carve-out does not bypass them; it exists to keep small bookkeeping out of the P
 
 **Direct-push lane (no PR):**
 
-- `.beads/issues.jsonl` — tracker state changes (epic/story creation, status updates, close
-  reasons, dependency edits, label edits).
 - `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes,
   status updates, deferred-section additions, completion notes. New plan files of
   substantial size should land with their first slice (see *Docs ride with code* below);
@@ -862,7 +817,7 @@ Examples that warranted PRs in this repo's history:
 
 Examples that did not warrant PRs:
 
-- Closing a tracker story with a close-reason note.
+- Closing an issue with a closing comment.
 - Updating a plan with a mid-execution status note.
 - Fixing a broken cross-reference in a rule file.
 - Adding a session-handoff "resume here" note.
@@ -894,7 +849,7 @@ reverting them after the fact is awkward.
 
 When a code slice triggers a doc update — README change, rule cross-reference, API doc
 revision, setup-guide line — the doc update lands in the **same PR** as the code change.
-The tracker story for that slice is not closeable until both are in the same merged commit.
+The issue for that slice is not closeable until both are in the same merged commit.
 
 Why this matters:
 
@@ -910,10 +865,10 @@ Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above.
 
 ### Branch convention
 
-- One branch per slice. Name: `pool-master-NNN-<short-slug>` where `NNN` is the tracker
-  story ID and `<short-slug>` is a 2–5 word kebab-case description (e.g.
-  `pool-master-142-contest-archive-validation`).
-- Workflow-infrastructure slices with no tracker story use a descriptive name without the ID
+- One branch per slice. Name: `issue-NNN-<short-slug>` where `NNN` is the issue number and
+  `<short-slug>` is a 2–5 word kebab-case description (e.g.
+  `issue-118-scores-only-header-guard`).
+- Workflow-infrastructure slices with no issue use a descriptive name without the number
   prefix.
 - Branch off the current `main` HEAD at slice start. Do not stack branches unless the
   dependency is genuine.
@@ -958,18 +913,20 @@ When an agent finishes a slice:
 2. **Run all required local gates** (`rules/testing-rules.md` §3). Do not push on a "likely
    green" assumption. CI is now the primary automated merge signal, which raises the cost of
    a red push.
-3. **Commit** with the tracker story ID in the footer. One slice = one commit where
-   practical.
+3. **Commit** with the issue number in the footer (`#NN`). One slice = one commit where
+   practical. Keep closing keywords out of the commit — they belong in the PR body, so the
+   issue closes on merge rather than on push.
 4. **Push the branch.**
-5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: the tracker
-   story, one-paragraph context, the gates that were run, and the
-   `<!-- review:triggers -->` section. For defect-fix slices, state explicitly that the
-   failing test was observed to fail before the fix landed.
+5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: `Closes #NN`
+   for the slice's issue, the parent epic, one-paragraph context, the gates that were run,
+   and the `<!-- review:triggers -->` section. For defect-fix slices, state explicitly that
+   the failing test was observed to fail before the fix landed.
 6. **Report and stop.** Summarize the change and what the triggers flag. Do not merge.
 
 Merge happens when the owner asks. At that point the agent runs
-`gh pr merge --squash --delete-branch` and closes the tracker story with a closing note per
-§1.
+`gh pr merge --squash --delete-branch`. The `Closes #NN` keyword closes the issue on merge;
+the agent still adds the closing comment per §1, since the keyword records *that* it closed,
+not *what happened*.
 
 Running `/code-review` before opening the PR is a good habit rather than a rule: it costs
 one command and puts findings where the owner is already looking.

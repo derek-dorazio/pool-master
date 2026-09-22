@@ -1,6 +1,6 @@
 # Plan 135 — Rule Scanners to ESLint
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #134
 
 ## Purpose
 

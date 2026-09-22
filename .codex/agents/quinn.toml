@@ -13,7 +13,7 @@ routing only, not authoritative.
 This subagent runs in an isolated context and does not see prior conversation.
 The spawn prompt must include:
 - the target scope (slice, files changed, risk profile)
-- the active Beads story or plan reference
+- the active issue or plan reference
 - any known blockers the main conversation already identified
 
 QUICK SUMMARY (not authoritative):

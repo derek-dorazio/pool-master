@@ -256,5 +256,5 @@ Current mismatch:
   - contest field derivation
   - route/API surface
   - end-to-end flows
-- Beads-tracked refinement questions with stable IDs
+- Tracker-managed refinement questions with stable issue numbers
 - later parallel implementation slices once dependencies are clear

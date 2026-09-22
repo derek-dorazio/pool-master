@@ -262,7 +262,7 @@ it.skip('UC-LM-003: ...', ...)
 ```
 
 Without that comment, the gate fails and the build blocks. The remediation
-is either to add the SKIP comment with a real Beads story tracking the
+is either to add the SKIP comment with a real issue tracking the
 un-skip, or to remove the disable and either fix or delete the test.
 
 ## Detail: the review triggers gate
@@ -336,7 +336,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 | `rules:check:no-mocked-api` (warn) | A test added a module-level mock of the generated API. Today does not block, but lands as visible debt. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
 | `rules:check:test-traceability` (warn) | A new or modified test lacks a `UC-`, `BR-`, `pool-master-`, or `rule:` reference. | Add a describe-block prefix or leading comment that references the documented use case, business rule, defect, or rule section. See `rules/testing-rules.md §1A`. |
-| `rules:check:test-disable` (**block**) | A test was disabled without a `SKIP: pool-master-NNN` comment. | Either: (a) add the comment with a real Beads story tracking the un-skip, (b) remove the disable and fix the test, or (c) delete the test. |
+| `rules:check:test-disable` (**block**) | A test was disabled without a `SKIP: #NN` comment (legacy `SKIP: pool-master-*` markers still pass). | Either: (a) add the comment with a real issue tracking the un-skip, (b) remove the disable and fix the test, or (c) delete the test. |
 | `rules:check:unsafe-casts` (warn) | A new `as unknown as` or out-of-test `as any` was introduced. | Replace with a properly typed signature. If a generated SDK type seems wrong, fix the backend DTO/route schema and regenerate — do not cast around it. |
 | `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |

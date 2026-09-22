@@ -1,6 +1,6 @@
 # Plan 141 — Plan Directory Reconciliation
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #139
 
 ## Purpose
 
@@ -73,44 +73,51 @@ first orphans the rationale at exactly the moment Plan 133 needs it.
 
 111's deletion rides with that ADR, in Plan 133's final slice — not in a general sweep.
 
-### 2. Resolve the Plan 122 contradiction
+### 2. ~~Resolve the Plan 122 contradiction~~ — done
 
-`pool-master-q68` is **open with 4 open children**, but `plans/124 §1` and `plans/125 §4`
-both record that Plan 122 was dropped — the admin-authored tournament model removed its
-premise (provider-corrected results arriving after completion). The tracker was never
+`pool-master-q68` was **open with 4 open children**, while `plans/124 §1` and `plans/125 §4`
+both recorded that Plan 122 had been dropped — the admin-authored tournament model removed
+its premise (provider-corrected results arriving after completion). The tracker was never
 updated.
 
-This blocks Plan 125, whose `§3.3a` deletes the `EVENTRESULTS` feed *specifically because*
+That blocked Plan 125, whose `§3.3a` deletes the `EVENTRESULTS` feed *specifically because*
 122 — its only stated consumer — is gone.
 
-**Resolution:** close `q68` and its four children as `deferred` with a note pointing at
-`plans/124 §1`, **then** delete `plans/122`. The order is load-bearing: ADR-0002's invariant
-is *tracker closes → plan file deleted*. Deleting first leaves four open children
-referencing a file that no longer exists, which is worse drift than the current mismatch.
-Both halves need the `bd` CLI, so they happen in one local session.
+**Resolved before the tracker migration**, in the order ADR-0002's invariant requires
+(*tracker closes → plan file deleted*): `q68` and its four children were closed as
+`deferred`, then `plans/122` was deleted. Deleting first would have left four open children
+referencing a file that no longer existed, which is worse drift than the original mismatch.
 
-### 3. Plan 125 needs a tracker item
+All five records are among the 9 `deferred` ones left in git history rather than migrated —
+`git show <sha>:.beads/issues.jsonl | grep q68` recovers them.
 
-`plans/125-sync-flow-deprecation.md` has no tracker item at all. Its dependency (124)
-shipped 2026-09-03 and its deletion targets are all still present, so it is a ready-to-run
+### 3. ~~Plan 125 needs a tracker item~~ — done
+
+`plans/125-sync-flow-deprecation.md` had no tracker item at all. Its dependency (124)
+shipped 2026-09-03 and its deletion targets are all still present, so it was a ready-to-run
 plan that was never opened — not a stale one.
 
-Per the TODO now in its header, its GitHub issue is created after Plan 139 lands rather
-than seeding a Beads epic that gets migrated days later. Two corrections when it opens: its
-`§5 Slice sequence` table moves into the issue (task state does not belong in a plan file),
-and its `§4` reference to Plan 123 needs updating since Plan 135 supersedes most of 123.
+**Delivered with the tracker migration:** epic #122 with sub-issues #123–#131. Both
+corrections landed too — its `§5 Slice sequence` table moved into the epic, and its `§4`
+reference to Plan 123 now says what is actually true (Plan 135 supersedes most of 123; what
+survives is #86).
 
-### 4. Fix the root cause
+### 4. ~~Fix the root cause~~ — done, with one caveat
 
 Nine plans accumulated because deletion is a manual checklist step nobody ran after an epic
 closed. Cleaning up without addressing that means doing this again.
 
-The detection is cheap: extract each plan's declared epic — **with the dotted-ID pattern
-above** — look up its status, report mismatches. That belongs in the `Stop` hook Plan 139
-introduces, or as a small CI check.
-
-The check should report, not delete. As the 117 episode showed, the scan's output is a
+**Delivered with the tracker migration:** `.claude/hooks/check-tracker-reconciliation.mjs`,
+registered as a `Stop` hook. It reports a plan whose tracking issue is closed, a plan that
+declares no tracking issue at all, and an issue referenced by the branch's commits that is
+still open. It reports; it never deletes — as the 117 episode showed, the scan's output is a
 shortlist for a human or agent to verify, not a decision.
+
+**Caveat:** the hook reads a `**Tracking issue:** #NN` line from a plan's first 15 lines.
+That anchors on a declaration rather than on the first ID anywhere in the header, which is
+the fix the *Reading the tracker correctly* section above calls for. The section's own
+guidance still describes the looser scan and should be tightened to match the hook before
+anyone runs the scan by hand again.
 
 ## Data Model / API Surface Implications
 
@@ -120,16 +127,21 @@ None.
 
 - **Plan 133** owns Plan 111's deletion via its persona-layout ADR slice.
 - **Plan 135** owns Plan 123's disposition; `5xi` stays open until then.
-- **Plan 139** determines the tracker substrate for decision 3 and hosts the drift check.
+- ~~**Plan 139** determines the tracker substrate for decision 3 and hosts the drift check.~~ Landed — see `docs/adr/0006-github-issues-as-live-task-tracker.md`.
 
 ## Execution Sequence
 
-**First — resolve 122.** Close `q68` and its four children as deferred, then delete
-`plans/122`. Needs `bd` locally.
+~~**First — resolve 122.**~~ Done before the migration: `q68` and its four children are
+closed as deferred, and `plans/122` is deleted.
 
-**Second — open 125's tracker item**, after Plan 139 lands.
+~~**Second — open 125's tracker item.**~~ Done: #122.
 
-**Third — add the drift check** to the `Stop` hook or CI.
+~~**Third — add the drift check.**~~ Done: the `Stop` hook.
+
+**What is left** is the deletions themselves — `plans/111`, `plans/123`, and now
+`plans/132` (executed on `main`, durable content already in `rules/workflow-rules.md` §6 and
+`rules/review-triggers.md`) — plus tightening the *Reading the tracker correctly* section
+per the caveat in decision 4.
 
 Plan 111's deletion is not sequenced here; it belongs to Plan 133.
 
@@ -137,8 +149,8 @@ Plan 111's deletion is not sequenced here; it belongs to Plan 133.
 
 - **Does the drift check belong in CI as well as the hook?** The hook catches it at session
   end for whoever is working; CI catches it for everyone, including direct pushes. The
-  direct-push lane covers `.beads/` and plan housekeeping, which is exactly where this drift
-  originates — arguing for CI.
+  direct-push lane covers plan housekeeping, which is exactly where this drift originates —
+  arguing for CI. (It no longer covers tracker state: that left the repo with ADR-0006.)
 
 ## Sources / Prior Decisions
 
@@ -146,4 +158,4 @@ Plan 111's deletion is not sequenced here; it belongs to Plan 133.
 - ADR-0003 — Tech specs are pre-implementation only (why the `33l` spec stays, banner or not)
 - Plan 133 — owns 111's deletion
 - Plan 135 — owns 123's disposition
-- Plan 139 — tracker substrate and drift-check home
+- ADR-0006 — GitHub Issues as the live task tracker (the substrate; supersedes ADR-0001)

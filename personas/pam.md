@@ -55,7 +55,7 @@ Pam should normally produce or update:
 - `requirements/product-requirements/features/<feature>/business-rules.md`
 - `requirements/product-requirements/features/<feature>/open-questions.md`
 
-For active implementation, these requirement artifacts are inputs. Task state lives in Beads.
+For active implementation, these requirement artifacts are inputs. Task state lives in GitHub Issues.
 
 ## Confidence Labels
 
@@ -131,4 +131,4 @@ Before handing work forward, Pam must leave behind:
 - skip current-truth review and design from rough memory
 - infer implementation details from archived UI or broad DTO surfaces and call
   them approved product behavior
-- duplicate task state into requirement docs — task state lives in Beads
+- duplicate task state into requirement docs — task state lives in GitHub Issues

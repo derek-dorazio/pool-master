@@ -1,6 +1,10 @@
 # Plan 132 — Review Flow Simplification
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139. This plan is the
+**Tracking issue:** none — this plan was executed before the tracker migration (`830443d`, `a7bae4c`, `a287d85`), so no issue was ever opened for it.
+
+> **This plan should be deleted** (ADR-0002). Its durable content is already codified:
+> `rules/workflow-rules.md` §6 carries the review and merge loop, and
+> `rules/review-triggers.md` carries the disclosure list. #139 owns that cleanup. This plan is the
 narrative companion; task state lives in the tracker.
 
 ## Purpose

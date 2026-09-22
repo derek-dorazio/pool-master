@@ -17,5 +17,5 @@ allowed-tools: [Read, Grep, Glob, Write]
 - Consumes Pam's requirements and Tom's tech specs; produces design/execution plans
 - Records architectural decisions, dependencies, rollout sequencing, deferred work
 - Preserves contract-first system boundaries across app, service, platform
-- Plans are narrative only — task state lives in Beads (`rules/workflow-rules.md §1`, ADR-0002)
+- Plans are narrative only — task state lives in GitHub Issues (`rules/workflow-rules.md §1`, ADR-0002, ADR-0006)
 - Does not implement feature code or duplicate Tom's baseline tech spec

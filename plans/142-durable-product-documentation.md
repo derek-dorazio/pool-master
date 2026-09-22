@@ -1,6 +1,6 @@
 # Plan 142 — Durable Product Documentation
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #140
 
 ## Purpose
 
@@ -207,8 +207,9 @@ None.
 - **Plan 133** retires Pam, who nominally owned the requirements bundle. Ownership of
   `docs/product/` falls to ride-with-code — whoever changes the behavior updates the
   statement. Also retires Piper, which forces the `product-overview/` audit in decision 1.
-- **Plan 139** introduces the `Stop` hook this plan extends for doc staleness. If 139 lands
-  first the hook already exists; otherwise this plan adds the first one.
+- **The `Stop` hook already exists** — `.claude/hooks/check-tracker-reconciliation.mjs`,
+  added with the tracker migration (ADR-0006). This plan extends it for doc staleness rather
+  than adding the first one.
 - **Commit `c2808f3`** should be revisited: the adapter theme moves to
   `rules/architecture-rules.md §3` (it constrains future adapters) or `docs/product/`,
   not a feature bundle. Its code comments stay.

@@ -38,7 +38,7 @@ Perry runs as Pass 6 when a PR touches any of these surfaces:
 - new runtime dependencies or bundle-affecting imports
 - file, network, crypto, or other blocking work on the request path
 
-Perry is conditional. Do not run Perry for small copy-only, Beads-only, or
+Perry is conditional. Do not run Perry for small copy-only, tracker-only, or
 single-component styling changes with no performance surface.
 
 ## Required References

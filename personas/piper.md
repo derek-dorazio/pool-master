@@ -49,7 +49,7 @@ Piper should normally produce or update:
 - `requirements/product-overview/module-overview.md`
 - `requirements/product-overview/open-questions.md`
 
-For active implementation, these artifacts are inputs. Execution tracking lives in Beads (see `rules/workflow-rules.md §1`).
+For active implementation, these artifacts are inputs. Execution tracking lives in GitHub Issues (see `rules/workflow-rules.md §1`).
 
 ## Discovery Modes
 
@@ -104,4 +104,4 @@ Before handing work forward, Piper must leave behind:
 - define business rules exhaustively
 - define schema, DTOs, or API contracts
 - replace Pam's product-requirement ownership
-- replace the live Beads execution tracker
+- replace the live issue tracker

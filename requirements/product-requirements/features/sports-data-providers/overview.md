@@ -16,9 +16,9 @@ priority order:
    `(Inferred)`
 
 Pairs with [`contest-event-feed-integration`](../contest-event-feed-integration/overview.md).
-This brief feeds the active Golf sync and live-scoring Beads epics. Earlier
+This brief feeds the active Golf sync and live-scoring epics. Earlier
 provider-port planning docs were removed once they became stale; current
-execution details live in Beads.
+execution details live in GitHub Issues.
 
 ## Selection Goals
 
@@ -241,7 +241,7 @@ pattern exists to support.
 
 This brief is the input for:
 
-- **Archie + Brad** — active Beads epics: implementation slices layer selected
+- **Archie + Brad** — active epic issues: implementation slices layer selected
   providers behind the existing `SportDataProvider` port, with configuration,
   key management, and per-feed provider switching.
 - **Brad** — active mock-provider slices: mock-provider behavior mirrors the

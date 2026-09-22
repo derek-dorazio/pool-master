@@ -1,6 +1,6 @@
 # Plan 140 — Library and Framework Upgrades
 
-**Tracking epic:** _not yet created_ — substrate depends on Plan 139.
+**Tracking issue:** #138
 
 **Scheduled last.** This plan runs after Plans 132–139 have landed. Upgrading frameworks
 while the test runner, lint configuration, and workflow are all in motion makes every
