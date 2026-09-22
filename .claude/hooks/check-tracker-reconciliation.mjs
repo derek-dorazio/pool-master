@@ -15,8 +15,21 @@
  * a signal that is legitimately noisy trains people to bypass the hook, so it
  * only ever prints.
  *
- * Degrades silently: no `gh`, no auth, no network, not a repo -> no output.
- * Cost is one `gh issue list` per session Stop, regardless of how many plans exist.
+ * TWO TRANSPORTS, because the sessions that matter do not all look alike:
+ *
+ *   - `gh` CLI when it is installed (developer machines).
+ *   - `curl` against the REST API otherwise. Claude Code cloud containers have
+ *     no `gh` binary, so a gh-only version of this hook was silently inert in
+ *     exactly the environment most sessions run in -- it looked like a safety
+ *     net and never fired once.
+ *
+ * `curl` rather than Node's global fetch, deliberately: fetch ignores
+ * HTTPS_PROXY unless started with the experimental NODE_USE_ENV_PROXY, and this
+ * environment's egress goes through an agent proxy. curl honors the proxy with
+ * no flag. See sendsAuth() for why the token is usually NOT forwarded.
+ *
+ * Degrades silently: no transport, no network, not a repo -> no output.
+ * Cost is one issue listing per session Stop, regardless of how many plans exist.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -24,6 +37,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const TIMEOUT_MS = 5000;
+const MAX_PAGES = 5;
+const PER_PAGE = 100;
 
 function run(cmd, args) {
   try {
@@ -37,27 +52,87 @@ function run(cmd, args) {
   }
 }
 
-/**
- * One `gh issue list` for the whole repo instead of one `gh issue view` per issue.
- * The per-issue version cost ~0.6s a call and this hook looks up every plan's
- * tracking issue on every Stop, so it grew a multi-second tax as plans accumulated.
- * Returns Map<number, {state, title}>, or null if the tracker could not be read.
- */
-function loadIssues() {
+function toIssueMap(records) {
+  return new Map(
+    records.map((i) => [i.number, { state: String(i.state).toUpperCase(), title: i.title }]),
+  );
+}
+
+/** Transport 1: the gh CLI. Already filters pull requests out for us. */
+function loadViaGh() {
   const out = run('gh', [
     'issue', 'list',
     '--state', 'all',
-    '--limit', '500',
+    '--limit', String(MAX_PAGES * PER_PAGE),
     '--json', 'number,state,title',
   ]);
   if (!out) return null;
   try {
-    return new Map(
-      JSON.parse(out).map((i) => [i.number, { state: String(i.state).toUpperCase(), title: i.title }]),
-    );
+    return toIssueMap(JSON.parse(out));
   } catch {
     return null;
   }
+}
+
+/** owner/repo from the origin remote, https or ssh form. */
+function repoSlug() {
+  const url = run('git', ['remote', 'get-url', 'origin']);
+  if (!url) return null;
+  const m = url.match(/github\.com[/:]([^/]+)\/(.+?)(?:\.git)?\/?$/);
+  return m ? `${m[1]}/${m[2]}` : null;
+}
+
+/**
+ * Only forward a token that actually looks like a GitHub credential.
+ *
+ * Claude Code cloud containers export GH_TOKEN/GITHUB_TOKEN as a *proxy
+ * sentinel* (it starts with "prox"), not a real token -- the agent proxy
+ * injects the genuine credential on the way out. Forwarding the sentinel as a
+ * bearer token makes GitHub return 401 and the hook go quiet, which is the
+ * failure this whole fallback exists to remove. When the value is not a real
+ * token we send no Authorization header and let the proxy do its job.
+ */
+function authHeaderArgs() {
+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (!token || !/^(gh[pousr]_|github_pat_)/.test(token)) return [];
+  return ['-H', `Authorization: Bearer ${token}`];
+}
+
+/** Transport 2: REST API via curl. Used where `gh` is absent. */
+function loadViaApi() {
+  const slug = repoSlug();
+  if (!slug) return null;
+
+  const records = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const out = run('curl', [
+      '-sS', '--fail', '--max-time', String(TIMEOUT_MS / 1000),
+      ...authHeaderArgs(),
+      '-H', 'Accept: application/vnd.github+json',
+      '-H', 'User-Agent: poolmaster-tracker-reconciliation-hook',
+      `https://api.github.com/repos/${slug}/issues?state=all&per_page=${PER_PAGE}&page=${page}`,
+    ]);
+    if (!out) return null;
+
+    let batch;
+    try {
+      batch = JSON.parse(out);
+    } catch {
+      return null;
+    }
+    if (!Array.isArray(batch)) return null;
+
+    // /issues returns pull requests too -- they carry a `pull_request` key.
+    // Without this filter a plan tracking, say, #141 would resolve against a PR
+    // of that number instead of the issue. `gh issue list` does this for us.
+    records.push(...batch.filter((i) => !i.pull_request));
+    if (batch.length < PER_PAGE) break;
+  }
+  return toIssueMap(records);
+}
+
+function loadIssues() {
+  return loadViaGh() ?? loadViaApi();
 }
 
 function issuesReferencedByBranchCommits() {
