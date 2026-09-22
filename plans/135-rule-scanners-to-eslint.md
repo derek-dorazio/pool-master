@@ -44,7 +44,7 @@ per-line escape hatch with a recorded justification.
 | `check-shared-ui-controls` | `no-restricted-syntax` on bare JSX controls where a shared primitive exists |
 | `check-no-env-fallbacks` | `no-restricted-syntax` on `import.meta.env.X ?? …` and `process.env.X ?? …` |
 | `check-no-duplicate-extract-error-message` | `no-restricted-imports` plus a local-redeclaration rule |
-| `check-test-traceability` | Custom rule on test files — **but see Plan 138**, which may retire this rule entirely |
+| ~~`check-test-traceability`~~ | **Retired, not migrated.** Plan 138 landed Option B: the UC/BR requirement is dropped and the surviving one — defect-fix tests cite their issue number — is not mechanically detectable, since no scanner can tell which tests are defect-fix tests. Nothing to port. |
 
 **Stays a script — correctly so:**
 
@@ -110,7 +110,7 @@ None.
 - **Plan 123** — unstarted; this plan absorbs or supersedes three of its four slices per
   decision 3. Not a blocker, but its disposition should land in the same effort so the
   plan file can be deleted rather than left implying work that has moved.
-- **Plan 138** — if traceability is retired, `check-test-traceability` needs no migration.
+- ~~**The traceability revisit** — if traceability is retired, `check-test-traceability` needs no migration.~~ Settled: it was retired, so one migration target is gone. See `rules/testing-rules.md §1A`.
   Sequencing 138 first avoids building a rule that is then deleted.
 - **Plan 136** — migrating to Vitest changes which test-lint plugin applies
   (`eslint-plugin-vitest` vs `eslint-plugin-jest`). Sequencing 136 first avoids configuring
@@ -145,4 +145,4 @@ plan file per ADR-0002.
 
 - Plan 123 — Workflow Gate Hardening (`pool-master-5xi.2`, overlapping scope)
 - Plan 136 — Test runner consolidation (determines the test-lint plugin)
-- Plan 138 — Test traceability revisit (may retire one migration target)
+- `rules/testing-rules.md §1A` — the landed traceability decision (retired one migration target)

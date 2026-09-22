@@ -327,7 +327,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
       appropriate automated layer
 - [ ] Negative/error/permission use cases affected by the slice are covered at
       an appropriate automated layer
-- [ ] Every new test references a use-case ID, business-rule ID, or defect ID per `rules/testing-rules.md` §1A *Test Self-Documentation*
+- [ ] Every new test's name states the behavior and expected outcome; defect-fix tests reference their issue number, per `rules/testing-rules.md` §1A *Test Self-Documentation*
 - [ ] For defect-fix slices: a failing test reproducing the defect was written *before* the fix and observed to fail on the broken code, per `rules/testing-rules.md` §3 *Defect Verification Protocol* (record the observation in the issue's closing comment)
 - [ ] No application code was modified to make a test pass — no fakes, fallbacks, hardcoded responses, "test mode" branches, or synthetic defaults were added to production paths, per `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*
 - [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced without a `SKIP: #NN` comment and a real issue tracking the un-skip, per `rules/testing-rules.md` §1C *Test-Disable Discipline*
