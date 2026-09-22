@@ -182,7 +182,7 @@ flowchart LR
 
 | Step | Command | Approximate cost | Blocking? |
 |---|---|---|---|
-| 1 | `npm run rules:check` | ~1-2s (regex scan) | One sub-check is blocking; six are warn-only |
+| 1 | `npm run rules:check` | ~1-2s (regex scan) | Two sub-checks are blocking; five are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
 | 3 | review triggers marker | <1s (single API call to GitHub) | Yes (PRs only) |
 | 4 | `npm run lint` | ~10-20s | Yes |
@@ -199,12 +199,11 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 |---|---|---|---|---|---|---|
 | 1 | No mocked API boundary | `rules:check:no-mocked-api` | warn-only | 30 | `vi.mock('@/lib/api')` and `vi.mock('@/lib/api-client')` in `clients/poolmaster/src` | `scripts/check-no-mocked-api.mjs` |
 | 2 | Route discipline | `rules:check:route-discipline` | warn-only | 112 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
-| 3 | Test traceability | `rules:check:test-traceability` | warn-only | 777 | `describe(`/`it(` blocks without a `UC-`, `BR-`, `pool-master-`, or `rule:` reference within the block or two lines above | `scripts/check-test-traceability.mjs` |
-| 4 | Test-disable discipline | `rules:check:test-disable` | **blocking** | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` without a `SKIP: pool-master-NNN` comment within two lines above | `scripts/check-test-disable-discipline.mjs` |
-| 5 | Unsafe casts | `rules:check:unsafe-casts` | warn-only | 38 | `as unknown as` and `as any` in production source (test directories are exempt) | `scripts/check-unsafe-casts.mjs` |
-| 6 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 52 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
-| 7 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 19 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
-| 8 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
+| 3 | Test-disable discipline | `rules:check:test-disable` | **blocking** | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` without a `SKIP: pool-master-NNN` comment within two lines above | `scripts/check-test-disable-discipline.mjs` |
+| 4 | Unsafe casts | `rules:check:unsafe-casts` | warn-only | 38 | `as unknown as` and `as any` in production source (test directories are exempt) | `scripts/check-unsafe-casts.mjs` |
+| 5 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 52 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
+| 6 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 19 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
+| 7 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
 | (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
 
 The six warn-only gates print findings with file:line locations and a `WARN`
@@ -335,7 +334,6 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 |---|---|---|
 | `rules:check:no-mocked-api` (warn) | A test added a module-level mock of the generated API. Today does not block, but lands as visible debt. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
-| `rules:check:test-traceability` (warn) | A new or modified test lacks a `UC-`, `BR-`, `pool-master-`, or `rule:` reference. | Add a describe-block prefix or leading comment that references the documented use case, business rule, defect, or rule section. See `rules/testing-rules.md §1A`. |
 | `rules:check:test-disable` (**block**) | A test was disabled without a `SKIP: #NN` comment (legacy `SKIP: pool-master-*` markers still pass). | Either: (a) add the comment with a real issue tracking the un-skip, (b) remove the disable and fix the test, or (c) delete the test. |
 | `rules:check:unsafe-casts` (warn) | A new `as unknown as` or out-of-test `as any` was introduced. | Replace with a properly typed signature. If a generated SDK type seems wrong, fix the backend DTO/route schema and regenerate — do not cast around it. |
 | `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
@@ -506,12 +504,11 @@ package.json                         — npm script wiring (rules:check chain, a
 scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
 scripts/check-no-mocked-api.mjs      — gate 1
 scripts/check-route-discipline.mjs   — gate 2
-scripts/check-test-traceability.mjs  — gate 3
-scripts/check-test-disable-discipline.mjs — gate 4
-scripts/check-unsafe-casts.mjs       — gate 5
-scripts/check-shared-ui-controls.mjs — gate 6
-scripts/check-form-query-mirror.mjs  — gate 7
-scripts/check-openapi-fresh.mjs      — gate 8
+scripts/check-test-disable-discipline.mjs — gate 3
+scripts/check-unsafe-casts.mjs       — gate 4
+scripts/check-shared-ui-controls.mjs — gate 5
+scripts/check-form-query-mirror.mjs  — gate 6
+scripts/check-openapi-fresh.mjs      — gate 7
 scripts/check-pr-review-triggers.mjs    — review triggers gate (PRs only)
 packages/core-api/scripts/export-openapi.ts — Fastify→OpenAPI export
                                               used by api:check and api:refresh

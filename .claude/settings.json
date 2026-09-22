@@ -4,7 +4,6 @@
       "Bash(npm run rules:check)",
       "Bash(npm run rules:check:no-mocked-api)",
       "Bash(npm run rules:check:route-discipline)",
-      "Bash(npm run rules:check:test-traceability)",
       "Bash(npm run rules:check:test-disable)",
       "Bash(npm run rules:check:unsafe-casts)",
       "Bash(npm run rules:check:shared-ui-controls)",
@@ -35,7 +34,6 @@
 
       "Bash(node scripts/check-no-mocked-api.mjs)",
       "Bash(node scripts/check-route-discipline.mjs)",
-      "Bash(node scripts/check-test-traceability.mjs)",
       "Bash(node scripts/check-test-disable-discipline.mjs)",
       "Bash(node scripts/check-unsafe-casts.mjs)",
       "Bash(node scripts/check-shared-ui-controls.mjs)",

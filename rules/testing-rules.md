@@ -81,60 +81,65 @@ goal is still behavioral proof, not log-string proof.
 
 ## 1A. Test Self-Documentation
 
-Every test must announce *what it is testing* in machine-readable, reviewable form. A test that doesn't explain its purpose is treated as missing for the purposes of the slice-completion checklist and Riley review.
+Every test must announce *what it is testing*. A test that does not explain its purpose is
+hard to maintain and easy to delete for the wrong reason.
 
-### Required for new tests
+### The requirement
 
-For **every new test** added in a slice, the describe block, test name, or a leading comment must reference one of:
+**A test name must state the behavior and its expected outcome, specifically enough that a
+reader knows what breaking it would mean.**
 
-- **A documented use-case ID** (e.g., `UC-LM-003 — Owner cannot delete a league with active members`) drawn from the relevant `requirements/product-requirements/features/<feature>/use-cases.md`.
-- **A documented business rule ID** when no use case applies cleanly (e.g., `BR-AUTH-12 — Sessions expire after 24h`).
-- **A defect ID** for regression tests (e.g., `pool-master-142 — Status field returned as null after archive`).
+```typescript
+// Not enough — names the subject, not the behavior
+it('handles archived leagues', ...)
 
-The reference must be specific. `// covers leagues feature` is not enough; `// UC-LM-003: owner-archive blocks deletion` is.
+// Enough — a reader knows what a failure costs
+it('rejects DELETE on an archived league with 409 LEAGUE_ARCHIVED', ...)
+```
 
-### Required for existing tests touched by a slice
+That is the whole rule for ordinary tests. No ID is required.
 
-If the slice modifies an existing test's behavior (assertion, setup, expected value), update the traceability comment if the use-case or business rule it covers has shifted. Stale references are worse than missing ones.
+### The one exception: defect-fix tests
 
-### Format
+**A regression test written to fix a defect must reference that defect's issue number**, in
+the describe block, the test name, or a leading comment:
 
-Three forms are acceptable; pick the one that fits the test layer:
+```typescript
+it('#142: does not race when two participants upsert the same round', ...)
+```
 
-- **Describe-block prefix** — preferred for grouping related cases:
-  ```typescript
-  describe('UC-LM-003: Owner archive blocks deletion', () => { ... })
-  ```
-- **Test-name prefix** — preferred for one-off cases:
-  ```typescript
-  it('UC-LM-003: rejects DELETE when status=archived', async () => { ... })
-  ```
-- **Leading comment** — acceptable when the test name is already long:
-  ```typescript
-  // UC-LM-003 — owner-archive blocks deletion
-  it('returns 409 with code LEAGUE_ARCHIVED', ...)
-  ```
+This is cheap and genuinely valuable: it links a regression test to the incident that
+motivated it, so a future reader deleting the test can see what it was protecting against.
+It is also the half that survives, because **issue numbers live in the tracker, which is
+permanent** — see `§3` *Defect Verification Protocol*, which carries the same requirement
+from the other direction.
 
-### When use-case-style traceability does not apply
+Tests written before September 2026 carry `pool-master-<suffix>` defect IDs, and tests
+predating that carry `UC-`/`BR-` use-case and business-rule IDs. Both remain valid and
+useful. They are **not** to be retrofitted or stripped — they simply stop being required.
 
-For genuinely infrastructure-only tests (e.g., a utility helper, a serialization edge case with no product-visible flow), reference the rule or pattern it enforces — not just "tests serializeDate." Example: `// rule: ISO 8601 over the wire (service-rules §4)`.
+### Why the use-case/business-rule requirement was dropped
 
-Application-layer tests for product behavior should not use this rule-reference
-fallback. If a backend, frontend, or API test proves user-visible behavior, it
-needs a use-case ID, business-rule ID, or defect ID. If none exists, create or
-update the product/business-rule artifact before expanding the test suite.
+`§1A` used to require every test to cite a `UC-` or `BR-` ID drawn from
+`requirements/product-requirements/features/<feature>/use-cases.md` or `business-rules.md`.
+Three things were wrong with that:
 
-If neither a use case, business rule, defect, nor true infrastructure rule
-reference applies, the test probably should not exist.
+1. **It coupled a permanent test suite to documents designed to be deleted.** Those files
+   are *feature-life* under `workflow-rules.md §0`, retired once a feature stabilizes. A
+   permanent suite referencing IDs in impermanent documents accumulates dangling references
+   by design.
+2. **It taxed exactly the slices where a test matters most.** "If none exists, create or
+   update the product artifact before expanding the test suite" landed hardest on small
+   defect-fix slices.
+3. **It was never real.** At the time of the decision the suite used `UC-` 6 times and
+   `BR-` 4 times, against 985 defect-ID references — and at least one cited ID
+   (`UC-GOLF-ADMIN-03`) resolved to no document at all. The rule was already a defect-ID
+   rule in practice.
 
-### Why
-
-Riley and Quinn rely on these references to audit coverage; future agents rely on them to know which tests to update when a use case changes; reviewers rely on them to confirm the slice tested what it claimed.
-
-`npm run rules:check:test-traceability` records the current repository-wide
-baseline for test cases whose nearby text does not contain a UC, BR, defect, or
-rule reference. It is warn-only until the existing backlog is cleaned up, but
-new slices should reduce that count rather than add to it.
+The scanner that enforced it (`check-test-traceability`) is retired with the requirement.
+What remains — "is this name specific enough" and "is this a defect-fix test" — is a
+judgment call, and per `rules/review-triggers.md §1` judgment belongs in review rather than
+in a scanner that cannot make it.
 
 ---
 
@@ -941,7 +946,7 @@ when you need a clean migrated schema.
 - Do not skip OpenAPI validation after changing route schemas.
 - Do not modify application code to make a test pass — see §1B *Forbidden Application-Code Patterns*. The conclusion is never "add a hardcoded response, fallback, or test-only branch to production code."
 - Do not write a defect-fix slice without first writing a failing test that catches the defect — see §3 *Defect Verification Protocol*.
-- Do not add a new test without a use-case, business-rule, or defect ID reference — see §1A *Test Self-Documentation*.
+- Do not add a test whose name does not say what behavior it proves — see §1A *Test Self-Documentation*. Defect-fix tests additionally reference their issue number.
 
 ---
 

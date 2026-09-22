@@ -5,7 +5,7 @@
 # or arbitrary runtimes such as `node *`.
 
 prefix_rule(
-    pattern = ["npm", "run", ["rules:check", "rules:check:no-mocked-api", "rules:check:route-discipline", "rules:check:test-traceability", "rules:check:test-disable", "rules:check:unsafe-casts", "rules:check:shared-ui-controls", "rules:check:form-query-mirror", "rules:check:no-duplicate-extract-error-message", "rules:check:pr-review-triggers", "typecheck", "lint", "lint:theme-tokens", "api:check", "api:refresh", "api:validate", "test:poolmaster:unit", "test:service:unit", "test:service:integration", "test:service:functional-api", "test:coverage:service:merged", "build", "build:service", "build:poolmaster"]],
+    pattern = ["npm", "run", ["rules:check", "rules:check:no-mocked-api", "rules:check:route-discipline", "rules:check:test-disable", "rules:check:unsafe-casts", "rules:check:shared-ui-controls", "rules:check:form-query-mirror", "rules:check:no-duplicate-extract-error-message", "rules:check:pr-review-triggers", "typecheck", "lint", "lint:theme-tokens", "api:check", "api:refresh", "api:validate", "test:poolmaster:unit", "test:service:unit", "test:service:integration", "test:service:functional-api", "test:coverage:service:merged", "build", "build:service", "build:poolmaster"]],
     decision = "allow",
     justification = "PoolMaster package scripts used for validation and generated API freshness",
 )
@@ -35,7 +35,7 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["node", ["scripts/check-no-mocked-api.mjs", "scripts/check-route-discipline.mjs", "scripts/check-test-traceability.mjs", "scripts/check-test-disable-discipline.mjs", "scripts/check-unsafe-casts.mjs", "scripts/check-shared-ui-controls.mjs", "scripts/check-form-query-mirror.mjs", "scripts/check-no-duplicate-extract-error-message.mjs", "scripts/check-pr-review-triggers.mjs", "scripts/check-feature-theme-tokens.mjs", "scripts/check-openapi-fresh.mjs", "scripts/run-service-functional-api.mjs", "scripts/run-service-functional-api-coverage.mjs", "scripts/run-backend-coverage.mjs"]],
+    pattern = ["node", ["scripts/check-no-mocked-api.mjs", "scripts/check-route-discipline.mjs", "scripts/check-test-disable-discipline.mjs", "scripts/check-unsafe-casts.mjs", "scripts/check-shared-ui-controls.mjs", "scripts/check-form-query-mirror.mjs", "scripts/check-no-duplicate-extract-error-message.mjs", "scripts/check-pr-review-triggers.mjs", "scripts/check-feature-theme-tokens.mjs", "scripts/check-openapi-fresh.mjs", "scripts/run-service-functional-api.mjs", "scripts/run-service-functional-api-coverage.mjs", "scripts/run-backend-coverage.mjs"]],
     decision = "allow",
     justification = "PoolMaster checked Node scripts and test runners",
 )
