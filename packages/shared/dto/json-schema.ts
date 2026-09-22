@@ -11,6 +11,13 @@
 import { zodToJsonSchema as convert } from 'zod-to-json-schema';
 import type { ZodTypeAny } from 'zod';
 
+// zod-to-json-schema's own signature makes TypeScript instantiate a type that is
+// excessively deep, and ts-jest fails compilation with TS2589 at the call site
+// below. `npx turbo typecheck` does NOT surface it -- the package tsconfigs and
+// the ts-jest config resolve it differently -- so removing this assertion looks
+// safe right up until the backend suite fails to compile. It is a third-party
+// type escape hatch, narrowed to the one shape this module actually calls.
+// eslint-disable-next-line no-restricted-syntax -- see above; TS2589 without it
 const convertToJsonSchema = convert as unknown as (
   schema: ZodTypeAny,
   options: { target: 'openApi3' }

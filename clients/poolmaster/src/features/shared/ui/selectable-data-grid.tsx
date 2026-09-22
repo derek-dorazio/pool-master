@@ -5,6 +5,10 @@ import { Checkbox } from "./form-field";
 import { DataGrid } from "./data-grid";
 
 export type SelectableDataGridProps<TData> = {
+  // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
+  // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
+  // TanStack's own documented shape for this position.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   data: TData[];
   emptyMessage: string;
@@ -95,6 +99,10 @@ export function SelectableDataGrid<TData>({
       },
       enableColumnFilter: false,
       enableSorting: false,
+    // TanStack's ColumnDef<TData, TValue> is invariant in TValue, so a heterogeneous column
+    // array cannot name a single TValue -- `unknown` rejects ColumnDef<Row, string>. `any` is
+    // TanStack's own documented shape for this position.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as ColumnDef<TData, any>;
 
     return [selectColumn, ...columns];

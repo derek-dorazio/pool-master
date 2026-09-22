@@ -11,7 +11,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
-import type { PrismaClient } from '@prisma/client';
 import { sendError } from '../core/error-handler';
 import { readJwtSecret } from '../core/config';
 import { readAccessCookie } from '../core/session-cookies';
@@ -83,7 +82,10 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
       );
     }
 
-    const prisma = (fastify as unknown as { prisma: PrismaClient }).prisma;
+    // `prisma` is declared on FastifyInstance by core/prisma-context.ts's module
+    // augmentation, so this needs no assertion. It previously went through a double
+    // assertion via `unknown`, which predated that augmentation existing.
+    const prisma = fastify.prisma;
     const rootAdminUser = await prisma.user.findUnique({
       where: { id: userId },
       select: {

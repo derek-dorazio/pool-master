@@ -1,18 +1,100 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
+/**
+ * Repo conventions live here rather than in `scripts/check-*.mjs` wherever ESLint
+ * can express them, so violations surface in the editor at write time instead of
+ * at push time in CI. See `plans/135-rule-scanners-to-eslint.md`.
+ *
+ * Every migrated rule was verified against the scanner it replaces by diffing
+ * findings across the real tree. A rule that merely looks equivalent is not.
+ *
+ * Severity is `error` throughout: `npm run lint` runs with `--max-warnings 0`,
+ * so a `warn` would fail CI anyway while reading as advisory. The backlogs these
+ * rules would have inherited were cleared first rather than tolerated.
+ */
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.js', '**/*.cjs', '**/*.mjs'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/*.js',
+      '**/*.cjs',
+      '**/*.mjs',
+      // Regenerated from OpenAPI by `npm run api:refresh`. A finding here is not
+      // fixable by hand and would block CI on generated output, so it is excluded
+      // — matching the scanners, which never walked the generated tree.
+      '**/generated/**',
+      // Build/export helpers. Excluded by the scanners this config replaces.
+      '**/scripts/**',
+    ],
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+
+      // Was 'warn'. Baseline is 0, so promoting it costs nothing and stops an
+      // unused symbol from riding in behind --max-warnings 0 being relaxed later.
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+
+      // Replaces scripts/check-unsafe-casts.mjs.
+      //
+      // Deliberately NOT '@typescript-eslint/no-explicit-any' plus the no-unsafe-*
+      // family, which plan 135 proposed: all 20 findings the scanner reported were
+      // `as unknown as`, which involves no `any` at all, so that replacement would
+      // have matched none of them.
+      //
+      // `x as unknown as T` parses as an outer TSAsExpression whose expression is
+      // an inner TSAsExpression annotated `unknown`; the first selector matches
+      // that inner node. The second covers the `as any` half the scanner also
+      // checked. Verified a strict superset of the scanner's findings.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression > TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]',
+          message:
+            'Do not bridge generated/domain contract gaps with "as unknown as"; fix the contract or mapper.',
+        },
+        {
+          selector: 'TSAsExpression[typeAnnotation.type="TSAnyKeyword"]',
+          message:
+            'Avoid "as any" in application code; use a real type, helper, or documented boundary.',
+        },
+      ],
+    },
+  },
+  {
+    // The scanner exempted test files, and that exemption is kept: a cast in a
+    // test is usually building a deliberate partial fixture, which is a different
+    // act from bridging a contract gap in production code.
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/test/**/*.{ts,tsx}', '**/tests/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+  {
+    // Replaces scripts/check-no-non-sdk-fetch.mjs. Frontend HTTP goes through the
+    // generated SDK; these are the two escape hatches the scanner also allowed.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'clients/poolmaster/src/lib/api.ts',
+      'clients/poolmaster/src/lib/logger/network-sink.ts',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/test/**',
+      '**/tests/**',
+    ],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'fetch', message: 'Non-SDK HTTP call — use generated SDK operations from @/lib/api.' },
+        { name: 'XMLHttpRequest', message: 'Non-SDK HTTP call — use generated SDK operations from @/lib/api.' },
+      ],
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'axios', message: 'Non-SDK HTTP call — use generated SDK operations from @/lib/api.' }] },
+      ],
     },
   },
 );
