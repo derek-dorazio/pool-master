@@ -801,317 +801,169 @@ If a plan exists without an associated Beads epic, that is a drift bug to fix: e
 
 ## 6. Branching, Review, and Merge Cadence
 
-This project uses a **branch-per-Beads-story** flow with a **multi-pass review** system: an implementer self-check pass plus one or more cross-model passes from independent agent runtimes. Branch protection on `main` requires `required_approving_review_count: 1`; that approval comes from the cross-model pass, not the implementer.
+This project uses a **branch-per-slice** flow reviewed by a person. The loop is:
+
+> branch → PR → CI → **the repo owner reads the changeset** → the owner asks for the merge
+
+There is no bot approval step. Branch protection on `main` sets
+`required_approving_review_count: 0`; CI and the rule scanners are the automated merge
+signal, and the human read is the judgement one.
+
+**The agent does not merge on its own initiative.** It opens the PR, reports what it did,
+and stops. Merge happens when the owner asks for it, after their own read.
 
 ### What skips the PR flow
 
-Not every commit needs a branch + PR + multi-pass review. The carve-out below covers changes that are pure metadata, narrative, or trivial maintenance — direct-push to `main` is the default for these paths. The CI rule scanners only fire on PRs, so direct pushes bypass them; the carve-out is intentionally narrow to keep the gates meaningful for production code.
+Not every commit needs a branch and PR. The carve-out below covers changes that are pure
+metadata, narrative, or trivial maintenance — direct-push to `main` is the default for
+these paths. The CI rule scanners fire on pushes to `main` as well as on PRs, so the
+carve-out does not bypass them; it exists to keep small bookkeeping out of the PR queue.
 
-**Direct-push lane (no PR, no review):**
+**Direct-push lane (no PR):**
 
-- `.beads/issues.jsonl` — Beads state changes (epic/story creation, status updates, close reasons, dependency edits, label edits).
-- `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes, status updates, deferred-section additions, completion notes. New plan files of substantial size should land with their first slice (see *Docs ride with code* below); trivial plan housekeeping pushes direct.
-- `requirements/` and `tech-specs/` artifacts under active design discussion (before implementation begins).
-- Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change rule meaning.
+- `.beads/issues.jsonl` — tracker state changes (epic/story creation, status updates, close
+  reasons, dependency edits, label edits).
+- `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes,
+  status updates, deferred-section additions, completion notes. New plan files of
+  substantial size should land with their first slice (see *Docs ride with code* below);
+  trivial plan housekeeping pushes direct.
+- `requirements/` and `tech-specs/` artifacts under active design discussion (before
+  implementation begins).
+- Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change
+  rule meaning.
 
-**Optional review for substantive plan/doc changes.** When a plan or doc change is large enough to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a new persona file, a multi-section rule addition, a coordinated cross-doc update — open a PR. The same multi-pass review flow applies if invoked. The cross-model pass on a doc-only PR can lean on Riley alone (Sage and Archie are usually not triggered for doc-only changes unless they touch security or architecture surface explicitly).
+**Optional PR for substantive plan/doc changes.** When a plan or doc change is large enough
+to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a
+multi-section rule addition, a coordinated cross-doc update — open a PR so the diff is
+reviewable in one place.
 
 Examples that warranted PRs in this repo's history:
 
-- The multi-pass review framework (rule rewrite + new personas + new scripts).
-- Workflow-rules additions that introduce new branching/review semantics.
+- Workflow-rules additions that introduce new branching or review semantics.
 - A new ADR with cross-cutting impact.
 
 Examples that did not warrant PRs:
 
-- Adding a Beads defect with a file-anchored fix recommendation.
-- Closing a Beads story with a close-reason note.
+- Closing a tracker story with a close-reason note.
 - Updating a plan with a mid-execution status note.
 - Fixing a broken cross-reference in a rule file.
 - Adding a session-handoff "resume here" note.
 
 ### Substantive plan or rule change — ask before pushing
 
-Before pushing a non-trivial plan, rule, ADR, or persona change directly to `main`, the agent **must ask the user** whether to PR it or push direct. Phrasing:
+Before pushing a non-trivial plan, rule, or ADR change directly to `main`, the agent **must
+ask the user** whether to PR it or push direct. Phrasing:
 
-> "This <plan / rule / ADR / persona> change is substantive enough that you may want it to go through PR review — should I open a branch + PR, or push direct?"
+> "This <plan / rule / ADR> change is substantive enough that you may want it to go through
+> PR review — should I open a branch + PR, or push direct?"
 
 Substantive triggers (any of these → ask):
 
-- Changing the **meaning** of an existing rule (not just refining wording, fixing a typo, or updating a cross-reference).
+- Changing the **meaning** of an existing rule (not just refining wording, fixing a typo, or
+  updating a cross-reference).
 - Adding a **new rule section** that future slices will be audited against.
 - Creating a **new ADR** or modifying a published one.
-- **Rewriting a process** (workflow steps, review flow, branching convention, slice closeout).
-- **Adding, removing, or materially redefining a persona** (`personas/<name>.md`).
-- Any change a **future agent will read as canonical guidance** rather than as ephemeral execution notes.
+- **Rewriting a process** (workflow steps, review flow, branching convention, slice
+  closeout).
+- Any change a **future agent will read as canonical guidance** rather than as ephemeral
+  execution notes.
 
-The cost of asking once is low; the cost of silently pushing a process change that should have been reviewed is high — process changes propagate through every future slice, and reverting them after the fact is awkward.
-
-If the user says "push direct," the agent pushes direct and notes the decision in the commit message. If the user says "PR it," the agent follows the standard branch + PR + multi-pass flow.
+The cost of asking once is low; the cost of silently pushing a process change that should
+have been reviewed is high — process changes propagate through every future slice, and
+reverting them after the fact is awkward.
 
 ### Docs ride with code (Definition of Done)
 
-When a code slice triggers a doc update — README change, persona checklist update, rule cross-reference, API doc revision, setup-guide line — the doc update lands in the **same PR** as the code change. The Beads story for that slice is not closeable until both are in the same merged commit.
+When a code slice triggers a doc update — README change, rule cross-reference, API doc
+revision, setup-guide line — the doc update lands in the **same PR** as the code change.
+The tracker story for that slice is not closeable until both are in the same merged commit.
 
 Why this matters:
 
-- Standalone doc-only PRs add review overhead and break the connection between the change and its rationale.
-- Doc updates filed as separate Beads stories drift — the code merges and the doc-update story sits open until it's stale or forgotten.
-- A reader looking at the PR for a code change should see the doc update next to the code, not have to chase a follow-up PR.
+- Standalone doc-only PRs add overhead and break the connection between the change and its
+  rationale.
+- Doc updates filed as separate stories drift — the code merges and the doc-update story
+  sits open until it is stale or forgotten.
+- A reader looking at the PR for a code change should see the doc update next to the code,
+  not have to chase a follow-up PR.
 
-Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above (new docs, rule rewrites, cross-doc coordination). They are **not** a workaround for "I forgot to update the README in the code slice."
-
-The slice-completion checklist in §1 enforces this — the *Docs and rules* checkbox confirms that any triggered doc update is in the same diff, not deferred.
+Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above. They are
+**not** a workaround for "I forgot to update the README in the code slice."
 
 ### Branch convention
 
-- One branch per Beads child story. Name: `pool-master-NNN-<short-slug>` where `NNN` is the story ID and `<short-slug>` is a 2–5 word kebab-case description (e.g., `pool-master-142-contest-archive-validation`, `pool-master-198-fix-status-null-on-archive`).
-- Branch off the current `main` HEAD at slice start. Do not stack branches unless the dependency is genuine (and modeled in Beads `blocked_by`).
-- Never push directly to `main` **except** for the direct-push lane carve-out above. The branch + PR + multi-pass review + merge loop is the only path for code, tests, contract changes, infrastructure, and substantive plan/rule/ADR/persona changes.
-
-### Multi-pass review flow
-
-Every PR lands via a multi-pass review process. Each pass produces a findings record visible in the PR conversation. Each pass is performed by a **different agent runtime under a different GitHub identity** (a different GitHub App). The persona being applied is encoded in the review-body header, not in the bot identity.
-
-**Pass 1 — Implementer Riley self-check (required, always).**
-- Performed by the implementing agent's runtime against its own diff.
-- The agent spawns Riley as a subagent and pastes the findings table into the **PR body** under the literal HTML comment `<!-- riley:findings -->`.
-- The CI gate `npm run rules:check:pr-riley-marker` enforces marker presence.
-- This pass is **not** a `gh pr review` — it's a body marker. It does **not** satisfy `required_approving_review_count`.
-
-**Pass 2 — Cross-model Riley secondary (required, always).**
-- Performed by a different agent runtime under a different GitHub App identity.
-- The reviewing agent runs the Riley playbook against the diff and posts via `gh pr review --approve` / `--request-changes` / `--comment`.
-- Because the reviewer's GitHub identity is different from the PR author, this approval **does** satisfy `required_approving_review_count: 1`.
-- After Pass 1 lands (and after any fix-up commits), the implementer posts a one-line PR comment naming the head SHA Pass 2 should review and the Pass 1 status — e.g., `Pass 2 head: 0ffeb013. Pass 1: approved.` No focus areas, no scope restatement; the reviewer reads the PR body plus the Pass 1 marker and forms their own framing. The user's prompt to the next agent then collapses to `Pass 2 review PR #N`.
-
-**Pass 3 — Sage security review (conditional).**
-- Invoked when the slice touches auth, validation, secrets, or data exposure (see `personas/sage.md` for the trigger list).
-- Same shape as Pass 2: different agent runtime / GitHub App, formal `gh pr review`.
-- Sage's findings are independent of Riley's; the gate is zero CRITICAL/HIGH per persona.
-
-**Pass 4 — Archie architecture review (conditional).**
-- Invoked when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs (see `personas/archie.md` *PR Architecture Review* section for the trigger list).
-- Same shape as Pass 2/3.
-
-**Pass 5 — Felix frontend discipline review (conditional).**
-- Invoked when the slice touches `clients/poolmaster`, frontend tests, shared
-  UI primitives, frontend rule scanners, or `rules/react-ui-rules.md` (see
-  `personas/felix.md` for the trigger list).
-- Same shape as Pass 2/3/4.
-- Felix's findings are independent of Riley's; the gate is zero CRITICAL/HIGH
-  per persona.
-
-**Pass 6 — Perry performance review (conditional).**
-- Invoked when the slice touches Prisma queries, route/list payloads, ingestion
-  or scoring hot paths, polling/refetch behavior, frontend list rendering, new
-  runtime dependencies, or other performance-sensitive code (see
-  `personas/perry.md` for the trigger list).
-- Same shape as Pass 2/3/4/5.
-- Perry's findings are independent of Riley's; the gate is zero CRITICAL/HIGH
-  per persona.
-
-A PR is merge-ready when:
-- The body has the Riley implementer-self-check marker filled in (Pass 1, CI-enforced).
-- At least one cross-model `gh pr review --approve` is recorded (Pass 2, branch-protection-enforced).
-- Any conditional passes (Sage, Archie, Felix, Perry) requested by the
-  implementer or a reviewer have completed with zero CRITICAL/HIGH findings.
-
-### Review header convention
-
-Every PR review posted by an agent via `gh pr review` (Passes 2 through 6) must begin with a one-line header naming the persona, the pass type, and the model identity:
-
-```
-> _<Persona> review · <pass type> · <model identity>_
-```
-
-Examples:
-
-```
-> _Riley review · cross-model secondary pass · Claude Sonnet 4.6_
-
-> _Sage review · security focus · Claude Sonnet 4.6_
-
-> _Archie review · architecture pattern check · Codex_
-
-> _Felix review · frontend discipline check · Codex_
-
-> _Perry review · performance check · Codex_
-```
-
-The header is the canonical signal of which persona ran which pass. GitHub gives you the bot identity (`@<app-name>[bot]`) and the timestamp; the header gives you the persona+pass context that the bot identity alone doesn't carry, since the same App may post multiple persona reviews on a single PR.
-
-The first content line after the header is the explicit vote, mirrored by the formal `gh pr review` flag:
-
-```
-**Vote: APPROVE** | **Vote: REQUEST CHANGES** | **Vote: COMMENT**
-```
-
-The vote text is for human readers scanning conversation history. The formal flag (`--approve`, `--request-changes`, `--comment`) drives the GitHub review-state badge.
-
-### Identity model — GitHub Apps per runtime
-
-Each agent runtime acts under a distinct GitHub identity, implemented as a GitHub App. Each App provides:
-- A bot identity in the conversation tab (`@<app-name>[bot]`)
-- An installation token used for `gh` API calls
-- Permissions scoped to `pull_requests: write`, `contents: read`, `metadata: read`, `commit_statuses: read`
-
-Current Apps installed on `derek-dorazio/pool-master`:
-
-| App | Used by | Purpose |
-|---|---|---|
-| `derek-dorazio-agent-claude` | Claude runtimes | Cross-model review pass when Codex implements; can also implement |
-| `derek-dorazio-agent-codex` | Codex runtimes | Cross-model review pass when Claude implements; can also implement |
-
-(Adding a new runtime = creating a new App, installing it on the repo, generating a private key.)
-
-The agent's environment must export the App credentials before invoking `gh`:
-
-```bash
-export GH_APP_ID=...                          # numeric App ID
-export GH_APP_INSTALLATION_ID=...             # numeric Installation ID
-export GH_APP_PRIVATE_KEY_PATH=~/.config/github-apps/<app-name>.private-key.pem
-export GH_TOKEN=$(node scripts/get-app-installation-token.mjs)
-```
-
-The helper `scripts/get-app-installation-token.mjs` mints a fresh installation token (~1 hour validity) from the three credentials. Once `GH_TOKEN` is set, `gh` and the rest of the toolchain pick up the App's identity automatically. Verify with:
-
-```bash
-gh api user --jq '.login'   # → <app-slug>[bot]
-```
-
-The credentials and helper invocation are typically owned by each agent harness's session-startup; document the exact integration in your harness setup notes (per-runtime).
-
-### GitHub self-review constraint
-
-GitHub blocks `gh pr review --approve` from any identity that authored the PR. Practical implications:
-
-- The implementing agent cannot satisfy `required_approving_review_count: 1` itself, even if it spawns Riley as a subagent. The marker in the PR body is the implementer's self-check; the formal approval must come from a different identity.
-- A different agent runtime under a different App (Pass 2) supplies the approval.
-- The human merger (you) can also approve via the GitHub UI when needed; that bypasses the bot machinery and is appropriate when bots are unavailable or when the slice has special-pause conditions (see "When the user must be paused for approval" below).
-
-### Implementing-agent slice closeout protocol
-
-When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, the closeout sequence is:
-
-1. **Verify the slice-completion checklist** in §1 — gates run, traceability comments present, defect protocol satisfied (if applicable), no app-code fakes added.
-2. **Run all required local gates** (`rules/testing-rules.md §3`). Do not push on a "likely green" assumption.
-3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
-4. **Push the branch** to origin.
-5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed. The PR body must also include the Riley findings marker section described in step 7 — open the PR with the placeholder text in place; the actual findings table replaces the placeholder once Riley has reviewed.
-
-   **Title convention by slice kind:**
-   - **Defect-fix slice** — `[pool-master-rop.<defect>][pool-master-rop.<epic>] <imperative summary>`. The `[]`-bracketed prefixes encode the defect ID and the parent epic ID for at-a-glance triage in `gh pr list` and the GitHub PR list view.
-   - **Feature slice with a parent epic** — `[pool-master-<epic>] <imperative summary>`. Single bracket since there's no separate defect ID.
-   - **Workflow-infrastructure slice with no parent epic** (rule changes, scripts, persona work, CI changes, doc additions) — no bracket prefix; just a short imperative summary naming the framework or process change. Example: `Add multi-pass review flow with GitHub Apps per agent runtime`.
-6. **Spawn Riley as the implementer self-check (Pass 1)** in your own runtime, using the canonical spawn prompt below — Riley's review quality depends on what you pass.
-7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). CI greps the PR body for the marker on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge.
-8. **Request the cross-model secondary review (Pass 2).** A different agent runtime, operating under a different GitHub App, runs the Riley playbook against the diff and posts via `gh pr review`. If the slice touches security-sensitive code, also request Sage (Pass 3). If it touches shared contracts, infrastructure, or active plans, also request Archie (Pass 4). If it touches `clients/poolmaster` or frontend rules, also request Felix (Pass 5). If it touches performance-sensitive surfaces such as Prisma queries, route/list payloads, ingestion/scoring hot paths, list rendering, or new runtime dependencies, also request Perry (Pass 6). Each conditional pass is its own `gh pr review` from the appropriate App identity.
-9. **Read all review entries** — implementer marker (Pass 1) + each `gh pr review` (Passes 2/3/4/5/6). Then:
-   - **Zero blocker-severity findings across all passes** → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
-   - **Any blocker-severity findings on any pass** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
-
-The implementing agent — not the reviewers — owns the merge decision. Reviewer agents (Passes 2 through 6) stay in the "findings + vote" lane; they recommend `--approve` / `--request-changes` but the implementer (or human merger) clicks merge.
-
-### Riley spawn prompt
-
-Riley runs in isolated context and sees nothing that the implementing agent has not explicitly passed. A sloppy spawn prompt produces a sloppy review and uncalibrated severities — which then defeats the auto-merge gate.
-
-The spawn prompt must include all of the following, in this order:
-
-1. **Slice intent (one paragraph).** What this slice was supposed to do, in product terms. Not "I changed these files" — *why*.
-2. **Parent Beads epic ID and slice's Beads story ID.** Both with a link back. Riley uses these to read the epic and story descriptions and notes.
-3. **Diff scope.** The exact command to read the changes: `git diff origin/main...HEAD` for a branch, or the PR URL when one exists. Mention the file count and rough size so Riley can flag "scope too large to review honestly" instead of pretending.
-4. **Use-case / business-rule / defect IDs covered.** The specific IDs from `requirements/.../use-cases.md`, `requirements/.../business-rules.md`, or the defect Beads story. Riley audits coverage against these IDs, not against a vague feature name.
-5. **For defect-fix slices: an explicit "failing test before fix" claim.** State that the failing test was observed to fail on the broken code before the fix landed, and point to the commit or PR-body line that proves it.
-6. **Rules and specs Riley should audit against.** The relevant `rules/*.md` files, the active plan if one exists, and any tech-spec under `tech-specs/features/<feature>/` that this slice implements. Default set always includes `rules/workflow-rules.md`, `rules/testing-rules.md`, and the layer-specific rules (`rules/service-rules.md` for backend slices, `rules/react-ui-rules.md` for frontend slices).
-7. **Known concerns the implementing agent already identified.** Anything you noticed but consciously chose not to fix in this slice (and why), or anything you're uncertain about. Naming concerns up front prevents Riley from "discovering" them as findings and lets it focus elsewhere.
-8. **Severity calibration reminder.** A one-line pointer to `personas/riley.md §Severity Calibration` so Riley honors the auto-merge gate (zero CRITICAL/HIGH = merge).
-9. **Expected output.** The findings table format, ordered by severity, with categories from `personas/riley.md`. Tell Riley to flag inability-to-evaluate explicitly rather than guessing.
-
-Boilerplate template (copy and fill in):
-
-```text
-You are Riley. Audit this slice for merge readiness per the auto-merge gate
-in rules/workflow-rules.md §6. Read personas/riley.md before starting.
-
-Slice intent:
-  <one paragraph: what this slice was supposed to do and why>
-
-Parent epic: pool-master-<EPIC>
-Slice story: pool-master-<STORY>
-
-Diff scope:
-  git diff origin/main...HEAD
-  (~<N> files, ~<L> lines changed)
-
-Use-case / business-rule / defect IDs covered:
-  - UC-<ID> — <description>
-  - BR-<ID> — <description>
-  - pool-master-<DEFECT-ID> — <description>   (defect-fix slices only)
-
-Defect-fix observation (defect-fix slices only):
-  The failing test reproducing pool-master-<DEFECT-ID> was observed to fail
-  on the broken code before the fix landed. Evidence: <commit SHA / PR body line>.
-
-Rules to audit against:
-  - rules/workflow-rules.md (slice completion checklist, §6)
-  - rules/testing-rules.md (§1A traceability, §3 defect protocol, §1B
-    forbidden patterns, §1C test-disable discipline)
-  - rules/<layer>-rules.md
-  - <plan or tech-spec path if applicable>
-
-Known concerns I (the implementing agent) already identified:
-  - <concern + why I left it / how it's bounded>
-
-Severity calibration reminder:
-  Honor personas/riley.md §Severity Calibration. The auto-merge gate is
-  zero CRITICAL/HIGH = merge; padding severity defeats the gate.
-
-Expected output:
-  Findings table per personas/riley.md, ordered by severity, with
-  categories. Flag inability-to-evaluate explicitly.
-```
-
-If you cannot fill in any of fields 1–6, the slice is not ready for review yet — go back and finish it, or surface the gap to the user.
-
-### Auto-merge gate
-
-The auto-merge rule is binary on Riley's severity output:
-
-- **CRITICAL** or **HIGH** findings → block merge.
-- **MEDIUM** or **LOW** findings → may merge; the implementing agent files follow-up Beads stories for items worth tracking and notes the deferral in the closing note.
-
-Riley's severity calibration (per `personas/riley.md`) is what makes this gate work. If a finding is genuinely a blocker, it must be CRITICAL or HIGH — not MEDIUM with a strong recommendation.
-
-### When the user must be paused for approval
-
-Even on a clean Riley pass, pause and request explicit user approval before merging when:
-
-- The slice contains a **destructive database migration**: `DROP TABLE`, `DROP COLUMN`, `RENAME COLUMN` on a column with existing data, type narrowing on a populated column, adding `NOT NULL` to an existing column without a backfilled default, or any migration that cannot be rolled back without data loss.
-- The slice contains a **data backfill, data migration script, or any one-time data-modifying operation** that runs against production-shaped data.
-- The slice has any other **non-reversible production effect**: deleting production records, retiring an API endpoint with active consumers, removing a feature flag that gated production behavior, deleting a published artifact, or invalidating cached state at scale.
-- The slice changes shared contracts (DTOs, OpenAPI, generated SDK exports).
-- The slice changes infrastructure, CI/CD, deployment, or auth boundaries.
-- The slice deletes a plan file or retires a feature surface.
-- The slice modifies `rules/`, `docs/adr/`, or `personas/`.
-- The user has explicitly asked for a checkpoint.
-
-Auto-merge is a frictionless default for ordinary slice work; cross-cutting, process-affecting, or non-reversible changes still warrant a human read.
-
-For migration / backfill / non-reversible slices specifically, the pause request must include: what the operation does, what data it touches, what the rollback plan is (or "none — this is one-way"), and whether a dry-run was performed. Riley flagging a migration as "looks fine" is **not** a substitute for this pause.
-
-### When the agent must NOT auto-merge regardless of Riley output
-
-- The local gate set was incomplete or any required gate was skipped.
-- The PR description does not include the Beads story ID.
-- For defect-fix slices: the failing-test-before-fix observation is not present in the slice history or PR body.
-- Riley reported any inability to evaluate (e.g., scope too large, missing context, ambiguous spec). Surface to the user instead.
+- One branch per slice. Name: `pool-master-NNN-<short-slug>` where `NNN` is the tracker
+  story ID and `<short-slug>` is a 2–5 word kebab-case description (e.g.
+  `pool-master-142-contest-archive-validation`).
+- Workflow-infrastructure slices with no tracker story use a descriptive name without the ID
+  prefix.
+- Branch off the current `main` HEAD at slice start. Do not stack branches unless the
+  dependency is genuine.
+- Never push directly to `main` except for the direct-push lane carve-out above.
+
+### Review triggers in the PR body
+
+Every PR body carries a **Review triggers** section under the literal HTML comment
+`<!-- review:triggers -->`. CI enforces its presence via
+`npm run rules:check:pr-review-triggers`.
+
+The section names what the slice touched that warrants a closer read. This exists because
+the owner reviews at file-list-and-changeset resolution, and that is exactly the altitude at
+which "this adds a mutating route with no authority preHandler" is most useful — it says
+where to zoom in.
+
+`rules/review-triggers.md` holds the trigger list and the rule for maintaining it. The
+dividing line: **anything a scanner can detect stays a scanner** — self-reporting it would
+be strictly weaker, since the agent attesting is the same context that would have written
+the problem. Triggers cover only what needs judgement.
+
+**Blast-radius disclosure is mandatory, not a trigger.** When a slice carries any of the
+following, the PR body must say so explicitly, with what it touches and whether rollback is
+possible:
+
+- A **destructive database migration**: `DROP TABLE`, `DROP COLUMN`, `RENAME COLUMN` on a
+  populated column, type narrowing, or adding `NOT NULL` without a backfilled default.
+- A **data backfill or one-time data-modifying operation** against production-shaped data.
+- Any other **non-reversible production effect**: deleting production records, retiring an
+  endpoint with active consumers, removing a feature flag gating production behavior.
+
+A reviewer scanning a file list will not infer `DROP COLUMN` from a migration filename. For
+these specifically, state what the operation does, what data it touches, the rollback plan
+(or "none — this is one-way"), and whether a dry-run was performed.
+
+### Slice closeout protocol
+
+When an agent finishes a slice:
+
+1. **Verify the slice-completion checklist** in §1 — gates run, traceability present, defect
+   protocol satisfied if applicable, no app-code fakes added.
+2. **Run all required local gates** (`rules/testing-rules.md` §3). Do not push on a "likely
+   green" assumption. CI is now the primary automated merge signal, which raises the cost of
+   a red push.
+3. **Commit** with the tracker story ID in the footer. One slice = one commit where
+   practical.
+4. **Push the branch.**
+5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: the tracker
+   story, one-paragraph context, the gates that were run, and the
+   `<!-- review:triggers -->` section. For defect-fix slices, state explicitly that the
+   failing test was observed to fail before the fix landed.
+6. **Report and stop.** Summarize the change and what the triggers flag. Do not merge.
+
+Merge happens when the owner asks. At that point the agent runs
+`gh pr merge --squash --delete-branch` and closes the tracker story with a closing note per
+§1.
+
+Running `/code-review` before opening the PR is a good habit rather than a rule: it costs
+one command and puts findings where the owner is already looking.
 
 ### Branch lifecycle
 
-- Open branches stay short-lived (hours to days). A branch that has been open longer than the Beads story has been `in_progress` is a sign the work has stalled — close or split it.
-- **The remote branch is deleted on merge automatically.** The repo has `delete_branch_on_merge: true` set at the repo level, so any merge (UI button, `gh pr merge`, API call) cleans up the head branch. Verify with `gh api repos/derek-dorazio/pool-master --jq '.delete_branch_on_merge'`. If a future repo deviates from this convention, branches will accumulate as cleanup tax.
-- **CLI merges should still pass `--delete-branch` explicitly.** `gh pr merge --squash --delete-branch` is the canonical form (already required by the implementing-agent slice closeout protocol above). The repo-level setting is the safety net for UI merges and any case where the flag is forgotten.
-- The local branch can be deleted with `git branch -d pool-master-NNN-<slug>` once switched back to `main`. Use `-D` only if the branch wasn't fully merged (rare; the merge-and-delete happens atomically when `--delete-branch` is used).
-- Reopened stories spawn a new branch with the same `pool-master-NNN-` prefix and a new slug; do not reuse a merged branch.
+- Open branches stay short-lived (hours to days). A branch open longer than its story has
+  been in progress is a sign the work has stalled — close or split it.
+- **The remote branch is deleted on merge automatically.** The repo has
+  `delete_branch_on_merge: true` set at the repo level, so any merge cleans up the head
+  branch. Verify with `gh api repos/derek-dorazio/pool-master --jq '.delete_branch_on_merge'`.
+- **CLI merges should still pass `--delete-branch` explicitly.** The repo-level setting is
+  the safety net for UI merges and any case where the flag is forgotten.
+- The local branch can be deleted with `git branch -d <branch>` once switched back to `main`.
+- Reopened stories spawn a new branch; do not reuse a merged one.

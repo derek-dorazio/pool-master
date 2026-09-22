@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
-const MARKER = '<!-- riley:findings -->';
+const MARKER = '<!-- review:triggers -->';
 
 const prNumber =
   process.argv[2] ??
@@ -10,7 +10,7 @@ const prNumber =
 
 if (!prNumber) {
   console.log(
-    'Riley findings marker check: not running in a PR context (no PR number provided). Skipping.',
+    'Review triggers check: not running in a PR context (no PR number provided). Skipping.',
   );
   process.exit(0);
 }
@@ -30,22 +30,25 @@ if (result.status !== 0) {
 const body = (result.stdout ?? '').toString();
 
 if (!body.includes(MARKER)) {
-  console.error(`PR #${prNumber} body is missing the Riley findings marker.`);
+  console.error(`PR #${prNumber} body is missing the review triggers marker.`);
   console.error('');
   console.error('Add a section like this to the PR body:');
   console.error('');
-  console.error('    ## Riley findings');
+  console.error('    ## Review triggers');
   console.error('');
   console.error(`    ${MARKER}`);
-  console.error('    No findings.');
+  console.error('    None.');
   console.error('');
   console.error(
-    'Replace "No findings." with the findings table once Riley has reviewed.',
+    'List anything this slice touched that warrants a closer read, or "None."',
   );
   console.error(
-    'See rules/workflow-rules.md §6 and personas/riley.md for the marker format.',
+    'See rules/review-triggers.md for the trigger list and rules/workflow-rules.md §6.',
   );
   process.exit(1);
 }
 
-console.log(`PR #${prNumber} contains the Riley findings marker.`);
+// Presence-enforced only. Whether the listed triggers are accurate and complete
+// is not machine-checkable -- that is the honest limit of this gate, and the
+// reason the mechanically-detectable rules stay as scanners instead.
+console.log(`PR #${prNumber} contains the review triggers marker.`);

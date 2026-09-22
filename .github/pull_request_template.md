@@ -1,14 +1,14 @@
 <!--
-This PR template mirrors the Riley spawn prompt in rules/workflow-rules.md §6.
-Filling in every section is part of the slice-completion checklist —
-Riley reads this body when reviewing.
+Filling in every section is part of the slice-completion checklist.
+The repo owner reads this body plus the changeset before asking for a merge.
+See rules/workflow-rules.md §6.
 -->
 
 ## Slice intent
 
 <!-- One paragraph: what this slice does and why, in product terms. Not "I changed these files." -->
 
-## Beads linkage
+## Tracker linkage
 
 - **Parent epic:** `pool-master-<EPIC>`
 - **Slice story:** `pool-master-<STORY>`
@@ -44,38 +44,32 @@ on the broken code before the fix landed. Evidence: <commit SHA / referenced lin
 - [ ] `npm run test:coverage:service:merged`
 - [ ] `npm run api:refresh` / `npm run api:validate` (if API schemas changed)
 
-## Known concerns
+## Review triggers
+
+<!-- review:triggers -->
+None.
 
 <!--
-Anything you noticed but consciously chose not to fix in this slice
-(and why), or anything you're uncertain about. Naming concerns up
-front prevents Riley from "discovering" them as findings.
-Write "None" if there are none.
+Replace "None." with what this slice touched that warrants a closer read than
+the file list gives. See rules/review-triggers.md for the list and the rule
+that triggers are conditions, not surfaces.
+
+Do NOT list anything a scanner already catches — self-reporting those is weaker
+than the scanner. Cover judgement calls only: authorization boundaries, data
+safety, performance risk, deviations from plan, and anything you considered and
+deliberately did not fix.
+
+Blast-radius disclosure is mandatory, not optional: destructive migrations,
+data backfills, and non-reversible production effects must be stated here with
+what they touch and whether rollback is possible.
+
+The marker line above (the review:triggers HTML comment) MUST remain in the PR
+body — CI greps every PR for it via npm run rules:check:pr-review-triggers.
 -->
 
-## Riley findings
-
-<!-- riley:findings -->
-Pending Riley review.
+## Merge
 
 <!--
-Replace "Pending Riley review." above with the findings table once Riley
-has reviewed. Use "No findings." if Riley reported zero. The marker line
-above (the riley:findings HTML comment) MUST remain in the PR body — CI
-greps every PR for it via npm run rules:check:pr-riley-marker and will
-fail the build if it is missing. See rules/workflow-rules.md §6 and
-personas/riley.md.
+The agent does not merge on its own initiative. Open the PR, report, and stop.
+The repo owner reads the changeset and asks for the merge when ready.
 -->
-
-## Riley auto-merge gate
-
-This PR will be auto-merged if Riley returns zero CRITICAL or HIGH findings.
-Any blocker-severity finding pauses the merge for user review.
-
-Special pause conditions (always require user approval, regardless of Riley):
-
-- [ ] Slice contains a destructive migration, data backfill, or non-reversible production effect → **paused**
-- [ ] Slice changes shared contracts (DTOs, OpenAPI, generated SDK exports) → **paused**
-- [ ] Slice changes infrastructure, CI/CD, deployment, or auth boundaries → **paused**
-- [ ] Slice deletes a plan file or retires a feature surface → **paused**
-- [ ] Slice modifies `rules/`, `docs/adr/`, or `personas/` → **paused**

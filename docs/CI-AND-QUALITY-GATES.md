@@ -25,8 +25,8 @@ through them. This section documents the GitHub branch-protection ruleset that
 backs the workflow.
 
 Without this configuration, direct pushes to `main` bypass every gate:
-the rule-enforcement scanners, `api:check`, the Riley findings marker, and
-the test/build/coverage jobs. The `rules:check:pr-riley-marker` gate
+the rule-enforcement scanners, `api:check`, the review triggers marker, and
+the test/build/coverage jobs. The `rules:check:pr-review-triggers` gate
 specifically becomes meaningless without enforced PR flow.
 
 ### Where to configure
@@ -117,173 +117,11 @@ before treating the configuration as complete.
 
 ### Why the marker gate matters here
 
-`rules:check:pr-riley-marker` (gate 8 below) reads the PR body for a
-literal `<!-- riley:findings -->` marker and fails if missing. If branch
+`rules:check:pr-review-triggers` (gate 8 below) reads the PR body for a
+literal `<!-- review:triggers -->` marker and fails if missing. If branch
 protection does not require PRs, a contributor can bypass the marker by
 direct-pushing to `main`, in which case the gate never runs. The marker
 gate's value depends entirely on PR flow being enforced.
-
-## GitHub App setup runbook (multi-pass review identities)
-
-The multi-pass review flow defined in `rules/workflow-rules.md §6` requires
-each agent runtime to act under a distinct GitHub identity so that:
-
-- Cross-model review approvals satisfy branch protection's
-  `required_approving_review_count: 1` (the implementer cannot self-approve
-  per GitHub's self-review rule).
-- Conversation history visibly distinguishes implementer-time work from
-  review-time work.
-- Different model runtimes (Claude / Codex / future) post under different
-  bot identities even when running under the same operator account.
-
-Identities are implemented as **GitHub Apps**, not bot user accounts.
-Apps are GitHub's first-class automation primitive: they have their own
-identity (`@<app-name>[bot]` in the UI), short-lived auto-rotated tokens,
-and fine-grained per-resource permissions.
-
-### Currently installed Apps on `derek-dorazio/pool-master`
-
-| App | App ID | Used by | Purpose |
-|---|---|---|---|
-| `derek-dorazio-agent-claude` | 3589005 | Claude runtimes | Cross-model review pass when Codex implements; can also implement |
-| `derek-dorazio-agent-codex` | 3589131 | Codex runtimes | Cross-model review pass when Claude implements; can also implement |
-
-Adding a new runtime = creating a new App and following this runbook.
-
-### Creating a new App
-
-While logged in as `derek-dorazio` (or whichever account owns the repo):
-
-1. Go to <https://github.com/settings/apps/new>.
-2. **GitHub App name**: `<owner>-<descriptive-name>` (must be globally unique;
-   appears as `@<name>[bot]` in PR conversations).
-3. **Description**: optional.
-4. **Homepage URL**: required field; the repo URL works
-   (e.g., `https://github.com/derek-dorazio/pool-master`).
-5. **Identifying and authorizing users**: leave defaults (no callback URL).
-6. **Post installation**: leave defaults.
-7. **Webhook**: **uncheck "Active"** — the agent calls the API directly,
-   not via webhook events.
-8. **Permissions** → **Repository permissions** (only these):
-   - **Contents**: Read-only
-   - **Metadata**: Read-only (auto-required)
-   - **Pull requests**: Read and write
-   - **Commit statuses**: Read-only
-   - Everything else: No access.
-9. **Subscribe to events**: none.
-10. **Where can this GitHub App be installed?**: **Only on this account**.
-11. Click **Create GitHub App**.
-
-After creation, GitHub redirects to the App's settings page. Note the
-**App ID** at the top — you'll need it.
-
-### Generating the private key
-
-On the App's settings page, scroll past **Client secrets** (which we don't
-need — that's for OAuth user-authorization flows) to the **Private keys**
-section.
-
-1. Click **Generate a private key**. A `.pem` file downloads.
-2. Move it to a gitignored, owner-only-readable location:
-   ```bash
-   mkdir -p ~/.config/github-apps
-   mv ~/Downloads/<app-name>.<date>.private-key.pem \
-      ~/.config/github-apps/<app-name>.private-key.pem
-   chmod 600 ~/.config/github-apps/<app-name>.private-key.pem
-   ```
-3. The private key is unrecoverable if lost — you would have to generate
-   a new one. Treat it like an SSH key.
-
-### Installing the App on the repo
-
-Still on the App's settings page:
-
-1. Left sidebar → **Install App**.
-2. Click **Install** next to your account.
-3. Select **Only select repositories** → check `pool-master`.
-4. Click **Install**.
-5. After install, GitHub's URL becomes
-   `https://github.com/settings/installations/<INSTALLATION_ID>`. Note the
-   **Installation ID** — it pairs with the App ID for token minting.
-
-You now have three pieces of identifying information per App:
-
-```
-GH_APP_ID=<numeric App ID>
-GH_APP_INSTALLATION_ID=<numeric Installation ID>
-GH_APP_PRIVATE_KEY_PATH=~/.config/github-apps/<app-name>.private-key.pem
-```
-
-### Wiring the App into an agent runtime
-
-The agent's environment must export the three credentials before invoking
-`gh`. The helper `scripts/get-app-installation-token.mjs` mints a fresh
-installation token (~1 hour validity) from the credentials:
-
-```bash
-# At agent session start — typically owned by the harness's launch script:
-export GH_APP_ID=3589005
-export GH_APP_INSTALLATION_ID=129217243
-export GH_APP_PRIVATE_KEY_PATH=~/.config/github-apps/derek-dorazio-agent-claude.private-key.pem
-export GH_TOKEN=$(node scripts/get-app-installation-token.mjs)
-
-# Verify the token landed under the right App identity:
-gh api user --jq '.login'   # → derek-dorazio-agent-claude[bot]
-
-# All subsequent gh / API calls now run as the App.
-gh pr review <PR> --approve --body-file <findings.md>
-```
-
-For each runtime that hosts agents (Claude, Codex, future), point that
-runtime's session-launch at the corresponding App's credentials. The
-helper script is runtime-agnostic — it reads the same three env vars
-regardless of which App they describe.
-
-### Branch protection alignment
-
-`required_approving_review_count: 1` is configured on the `protect-main`
-ruleset. A non-author App approval (Pass 2 in the multi-pass flow)
-satisfies this gate. The implementer (whether running as `derek-dorazio`
-or as one of the Apps) cannot self-approve — GitHub blocks it. The
-multi-App setup is what makes the gate satisfiable.
-
-If the human merger needs to approve directly via the GitHub UI (e.g.,
-the bot machinery is unavailable), admin bypass is enabled on the
-ruleset and the merger can override.
-
-### Verifying an App after setup
-
-Quick smoke test for a new App:
-
-```bash
-GH_APP_ID=<id> \
-GH_APP_INSTALLATION_ID=<id> \
-GH_APP_PRIVATE_KEY_PATH=<path> \
-node scripts/get-app-installation-token.mjs > /tmp/token.txt
-
-GH_TOKEN=$(cat /tmp/token.txt) gh api /installation/repositories --jq '.repositories[].full_name'
-```
-
-Expected output: the list of repos the App is installed on
-(e.g., `derek-dorazio/pool-master`). If the call fails, recheck the App
-ID, Installation ID, private key path, and that the App is actually
-installed on the target repo.
-
-### Runtime credential routing — operator's responsibility
-
-Each agent runtime (Claude Code, Codex CLI, etc.) reads `GH_TOKEN` from
-env. The runbook above gives you the credentials; how they reach the
-runtime is operator-configured per harness:
-
-- Per-runtime shell profile that exports the right App's credentials
-  before launching the agent
-- Direnv `.envrc` keyed off the working directory or runtime
-- Harness setup script that detects which runtime is launching and exports
-  accordingly
-
-This is intentionally not codified in the repo — different operators run
-different harness configurations and the credential-routing strategy is
-local to each one.
 
 ## Job DAG
 
@@ -337,7 +175,7 @@ runtime cost.
 flowchart LR
   I[npm ci + prisma generate + build shared] --> R[npm run rules:check]
   R --> A[npm run api:check]
-  A --> M[Riley marker (PRs only)]
+  A --> M[Review triggers (PRs only)]
   M --> L[npm run lint]
   L --> TC[npm run typecheck]
 ```
@@ -346,14 +184,14 @@ flowchart LR
 |---|---|---|---|
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | One sub-check is blocking; six are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
-| 3 | Riley findings marker | <1s (single API call to GitHub) | Yes (PRs only) |
+| 3 | review triggers marker | <1s (single API call to GitHub) | Yes (PRs only) |
 | 4 | `npm run lint` | ~10-20s | Yes |
 | 5 | `npm run typecheck` | ~30-60s | Yes |
 
 ## The 8 gates
 
 `npm run rules:check` is a sequential `&&` chain of seven sub-scripts.
-`npm run api:check` is its own command. `npm run rules:check:pr-riley-marker`
+`npm run api:check` is its own command. `npm run rules:check:pr-review-triggers`
 is the eighth gate, run only on PRs. Together they are the eight quality
 gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 
@@ -367,14 +205,14 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 6 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 52 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
 | 7 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 19 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 8 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
-| (PR-only) | Riley findings marker | `rules:check:pr-riley-marker` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- riley:findings -->`. Documents that Riley was actually invoked. Skipped on `push` events (no PR context). | `scripts/check-pr-riley-marker.mjs` |
+| (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
 
 The six warn-only gates print findings with file:line locations and a `WARN`
 prefix. They exit 0 regardless of finding count, so they do not fail the
 build today. Their counts are visible in every CI run and are tracked as the
 "size of debt" for the parallel cleanup epics.
 
-The blocking gates (`test-disable`, `api:check`, and the PR-only Riley
+The blocking gates (`test-disable`, `api:check`, and the PR-only review-triggers
 marker) exit non-zero on any finding and fail the lint-typecheck job,
 which blocks the rest of CI and any PR merge.
 
@@ -427,16 +265,17 @@ Without that comment, the gate fails and the build blocks. The remediation
 is either to add the SKIP comment with a real Beads story tracking the
 un-skip, or to remove the disable and either fix or delete the test.
 
-## Detail: the Riley findings marker gate
+## Detail: the review triggers gate
 
 This gate runs only on `pull_request` events. It calls
 `gh pr view <PR_NUMBER> --json body --jq .body` and greps for the literal
-HTML comment `<!-- riley:findings -->`. If the marker is missing, the gate
+HTML comment `<!-- review:triggers -->`. If the marker is missing, the gate
 fails and the PR cannot merge.
 
-The marker is auditable proof that Riley was actually invoked for the slice.
+The marker is presence-enforced only: it proves the section exists, not that its
+contents are accurate or complete. That is the honest limit of this gate.
 The gate does not enforce the *content* under the marker — that's between
-the implementing agent and the Riley review process. The gate just enforces
+the implementing agent's own disclosure. The gate just enforces
 the structural requirement that the marker exists, which means the
 implementing agent at least followed the workflow.
 
@@ -482,12 +321,12 @@ The shell wrappers under `scripts/check-*.sh` exist for environments that
 cannot call `node` directly. They forward arguments to the corresponding
 `.mjs` and are functionally identical.
 
-The Riley marker gate (`rules:check:pr-riley-marker`) skips silently when
+The review-triggers gate (`rules:check:pr-review-triggers`) skips silently when
 no `PR_NUMBER` is provided — it has no useful local invocation outside of
 CI. To test it locally against a real PR:
 
 ```bash
-PR_NUMBER=42 node scripts/check-pr-riley-marker.mjs
+PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 ```
 
 ## Failure remediation
@@ -502,7 +341,7 @@ PR_NUMBER=42 node scripts/check-pr-riley-marker.mjs
 | `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
-| `rules:check:pr-riley-marker` (**block**, PRs only) | The PR body is missing the `<!-- riley:findings -->` marker. | Edit the PR body to include the marker section. The PR template pre-populates it; removing it manually fails the gate. See `rules/workflow-rules.md §6` and `personas/riley.md`. |
+| `rules:check:pr-review-triggers` (**block**, PRs only) | The PR body is missing the `<!-- review:triggers -->` marker. | Edit the PR body to include the marker section. The PR template pre-populates it; removing it manually fails the gate. See `rules/workflow-rules.md §6` and `rules/review-triggers.md`. |
 
 ## Baseline counts and the ramp to fail-on-new
 
@@ -622,7 +461,7 @@ release.
   - `npm run test:coverage:poolmaster:unit` — run with coverage (v8 provider, lcov + json-summary reporters)
 - **CI job:** `poolmaster-unit-tests` (uploads `coverage-webapp-unit` artifact).
 - **Required pre-push gate:** `npm run test:poolmaster:unit` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** **No threshold configured** in `vitest.config.ts`. Coverage is reported but not gated. (Riley flagged this in the rop.19 review; future work to set per-feature thresholds will need to add a `coverage.thresholds` block.)
+- **Coverage policy:** **No threshold configured** in `vitest.config.ts`. Coverage is reported but not gated. (Flagged during the rop.19 review; future work to set per-feature thresholds will need to add a `coverage.thresholds` block.)
 - **Known anti-pattern this suite has accumulated:** `vi.mock('@/lib/api')` at module level in 30+ tests — see `pool-master-rop.4`. The intent is for this suite to use **MSW** for HTTP boundary mocking instead of replacing the SDK; the migration is tracked in epic `pool-master-rop.71`.
 
 ### 5. Webapp browser E2E (`clients/poolmaster/e2e/**/*.e2e.ts`)
@@ -673,7 +512,7 @@ scripts/check-unsafe-casts.mjs       — gate 5
 scripts/check-shared-ui-controls.mjs — gate 6
 scripts/check-form-query-mirror.mjs  — gate 7
 scripts/check-openapi-fresh.mjs      — gate 8
-scripts/check-pr-riley-marker.mjs    — Riley marker gate (PRs only)
+scripts/check-pr-review-triggers.mjs    — review triggers gate (PRs only)
 packages/core-api/scripts/export-openapi.ts — Fastify→OpenAPI export
                                               used by api:check and api:refresh
 ```

@@ -32,12 +32,12 @@ jobs:
         run: npm run api:check
       - name: Generated API spec quality
         run: npm run api:validate
-      - name: Riley findings marker (PRs only)
+      - name: Review triggers marker (PRs only)
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: node scripts/check-pr-riley-marker.mjs
+        run: node scripts/check-pr-review-triggers.mjs
       - name: Lint full repo
         run: npm run lint
       - name: Typecheck full repo
