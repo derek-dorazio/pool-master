@@ -65,12 +65,12 @@ a person actually performs, not a job title.
 | Dom | A decision point inside `model-change`, not a role |
 | Archie | Plan mode plus `workflow-rules §1`, which already specifies plan structure |
 | Quinn | The gate commands and `/run`; failure triage is debugging |
-| Riley, Sage, Felix, Perry | `/code-review`, `/security-review`, scanners, and Plan 132's disclosure triggers |
+| Riley, Sage, Felix, Perry | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
 | Pam, Tess | Retired as personas. Two pieces of content are worth preserving into `rules/`: Pam's `(Confirmed)` / `(Inferred)` / `(Needs Review)` confidence labels, which are genuinely good spec practice, and Tess's layer-selection heuristic for choosing where a test belongs |
 | Piper, Tom | Deleted. Both dormant; `workflow-rules §2` still lists them as lifecycle steps 1 and 3, contradicting the dormancy markers |
 
 **Perry is the one plausible survivor as a subagent.** Its trigger list moves to
-`rules/review-triggers.md` per Plan 132, but a deep performance pass on a genuinely
+`rules/review-triggers.md`, but a deep performance pass on a genuinely
 hot-path slice is work `/code-review` does not do. Keeping it costs one file. Flagged in
 open questions rather than decided.
 
@@ -114,7 +114,7 @@ None.
 
 ## Dependencies
 
-- **Plan 132** — the roster cannot be settled while five personas are defined as review
+- **The review-flow simplification (landed)** — the roster cannot be settled while five personas are defined as review
   passes. 132's disclosure triggers are the destination for Sage's and Perry's content.
 - **Plan 134** — rules files are the salvage destination for persona prohibitions. If 134
   runs first, the destination exists; if this plan runs first, it creates rules content
@@ -152,7 +152,7 @@ that point.
 
 - Plan 111 — Persona Library Restructure (establishes the pattern this plan reverses;
   precedent for outright deletion of a retired persona)
-- Plan 132 — Review flow simplification (retires the five reviewer personas)
+- `rules/workflow-rules.md §6` + `rules/review-triggers.md` — the landed review-flow simplification (retired the five reviewer personas)
 - Plan 134 — Rules consolidation (salvage destination for persona invariants)
 - ADR-0002 — Plans are narrative; deleted after parent epic closes
 - ADR-0003 — Tech specs are pre-implementation only

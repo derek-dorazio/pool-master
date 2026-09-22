@@ -83,7 +83,7 @@ This deletes `§2`'s four-row table, most of `§6`'s placement heuristics, and t
 
 `testing-rules.md §3` currently lists ten commands. Consolidating the runner and removing
 a layer collapses several. The rewritten gate set should be short enough to remember,
-because Plan 132 makes CI the primary merge signal.
+because CI is now the primary merge signal (`rules/workflow-rules.md §6`).
 
 **Add a `git push` PreToolUse hook** verifying the gate set actually ran, rather than
 relying on an agent to remember `§3`. This matters more now that no bot review stands
@@ -100,7 +100,7 @@ None. `api:check` and `api:validate` are unaffected and must stay green througho
 - **Plans 137 and 138** also edit `testing-rules.md`. This plan restructures `§2`, `§3`,
   and `§6`; 137 edits the selector rules in `§6`; 138 edits `§1A`. Sequencing 136 → 137 →
   138 keeps each diff readable; running them concurrently means conflicts.
-- **Plan 132** — the gate set becomes the primary merge signal, which raises the stakes on
+- **The landed review-flow simplification** — the gate set is now the primary merge signal, which raises the stakes on
   getting this right.
 
 ## Execution Sequence
@@ -129,6 +129,6 @@ bundling them makes a failure ambiguous between the two causes.
 
 ## Sources / Prior Decisions
 
-- Plan 132 — Review flow simplification (CI becomes the primary merge signal)
+- `rules/workflow-rules.md §6` — CI is the primary merge signal
 - Plan 135 — Rule scanners to ESLint (depends on the runner choice)
 - Plans 137, 138 — also edit `testing-rules.md`

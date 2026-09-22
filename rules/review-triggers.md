@@ -106,3 +106,24 @@ stays mechanical and why `/code-review` before opening a PR is worth the one com
 
 Self-disclosure catches the case where the agent knows it did something notable. It does
 not catch the case where the agent did not recognise the significance.
+
+### Why this is enforced at CI only
+
+A second gate was once specified: a PreToolUse hook on PR creation that would block a PR
+whose body lacked the section, catching it *before* the PR exists rather than after. It was
+never built, and in September 2026 it was dropped deliberately rather than left outstanding.
+
+The argument for it was that a creation-time prompt produces disclosure while a CI failure
+produces compliance. That does not survive contact with what either gate can actually
+check: **both verify presence, not quality.** A blocking hook is satisfied by typing
+`None.` exactly as easily as CI is. It buys the same check earlier, not a better one.
+
+Against that, the hook would have had to match every surface a PR can be created from —
+`gh pr create` with `--body`, `--body-file`, or a heredoc; the GitHub MCP tool's `body`
+field; a raw `curl` POST. **A matcher that silently fails to match is worse than no gate**,
+because it manufactures confidence in a check that never ran. That exact failure had
+already happened here once, to the tracker reconciliation `Stop` hook, which was keyed to
+the `gh` CLI and was therefore inert in every cloud session.
+
+So enforcement is CI-only, by decision rather than by omission. The cost is one CI cycle on
+the occasions the section is forgotten. Nothing reaches `main` without it either way.
