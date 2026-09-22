@@ -4,125 +4,113 @@
 
 ## Purpose
 
-Reconcile `plans/` against the tracker. Nine plan files have closed tracker items and
-should have been deleted under ADR-0002; two more have status that contradicts what other
-plans assert about them.
+Reconcile `plans/` against the tracker: delete plans whose epics have closed, per ADR-0002,
+after verifying their durable content has been codified somewhere permanent.
 
-This is not a bulk `rm`. ADR-0002 requires that durable patterns a plan introduced be
-codified in `rules/` or `docs/adr/` **before** the plan is deleted. The verification is the
-work; the deletion is the easy part.
+**Most of this plan has now been executed** on `main` (see *Status*). What remains is three
+specific items and the root-cause fix that stops the backlog recurring.
 
-## Triggering Findings
+## Reading the tracker correctly
 
-Extracting each plan's tracker reference and checking it against `.beads/issues.jsonl`:
+**A plan's parent may be a nested ID, and a naive scan will silently truncate it.**
 
-**Closed item, plan still present — delete after the ADR-0002 check:**
+This plan's original scan matched `pool-master-[A-Za-z0-9]+`, which has no `.` in the
+character class. Given a header declaring `pool-master-rop.78` it returned
+`pool-master-rop` — a real but *different* epic — and reported plan 117 as belonging to an
+open epic with 51 open children. `rop.78` was closed with all 13 of its own children closed;
+`pool-master-rop` is the broader "Cross-stack code & architecture review" epic, of which
+`rop.78` is one child among thirteen.
 
-| Plan | Item | Tracker state |
+The same truncation hit plan 121 (`pool-master-eux.7` → `pool-master-eux`). That one was
+caught by reading the file, noted as a curiosity, and the scan was never fixed — so the bug
+produced a second wrong answer immediately afterward.
+
+**Use a pattern that captures dotted IDs:**
+
+```
+pool-master-[A-Za-z0-9]+(?:\.[0-9]+)*
+```
+
+And treat the scan as a *shortlist generator*, never as the decision. Open the plan's
+header and read the declared epic before acting on any deletion. A tracker ID that looks
+like an epic may be a story, and an epic that looks open may be a different epic entirely.
+
+The broader lesson: noting a tool's defect is not fixing it. A one-off correction to one
+result leaves the instrument free to produce the same error on the next input.
+
+## Status
+
+**Complete — eight plans deleted after codification, one after verification:**
+
+| Plan | Epic | Landed in |
 |---|---|---|
-| 102 webapp-logging-observability | `hwt` | closed, 7/7 children closed |
-| 104 ingestion-config-persistence | `lpo` | closed |
-| 107 webapp-navigation-reorganization | `784` | closed, 8/8 children closed |
-| 112 ses-system-email-integration | `gs4` | closed |
-| 119 golf-live-scoring-readiness | `eux` | closed, 8/8 children closed |
-| 121 mock-provider-golf-live-contract | `eux.7` | closed 2026-05-31 |
-| 124 golf-admin-tournament-management | `476` | closed 2026-09-03, "all steps complete" |
-| 131 hey-api-nullable-generation-fix | `m32` | closed |
+| 104, 112 | `lpo`, `gs4` | `5cc824c` — patterns already in code, nothing to codify |
+| 102 | `hwt` | `b6c4087` — ADR for cross-tier log correlation + code comments |
+| 107 | `784` | `67acca5` — IA patterns split between `rules/` and product requirements |
+| 119, 121 | `eux`, `eux.7` | `c2808f3` — integration-adapter boundary codified |
+| 124 | `476` | `d4d665a` — durable patterns codified |
+| 131 | `m32` | `511d8b2` — rationale already in `nullable-to-3-1.ts` comment |
+| 117 | `rop.78` | `c019196` — epic closed, all 13 children closed |
 
-**Handled elsewhere, listed so the accounting is complete:**
+Also `a88cc4c` added staleness banners to the four
+`tech-specs/features/contest-event-feed-integration/` files (epic `33l` still open, so the
+spec stays under ADR-0003), and `0682eea` closed stale bead records folded into shipped
+`rop.78` slices.
 
-| Plan | Disposition |
-|---|---|
-| 111 persona-library-restructure | `7p5` closed, but deletion **must ride with Plan 133's ADR slice** — see *Sequencing trap* |
-| 123 workflow-gate-hardening | Open, but fully dispositioned by Plan 135 slice four |
-
-**Contradictions to resolve:**
-
-| Plan | Problem |
-|---|---|
-| 125 sync-flow-deprecation | No tracker item at all — "Draft for user review. No Beads epic opened yet." Its dependency (124) shipped; its targets are intact. This is drift-to-**track**, not drift-to-delete. See decision 2. |
-| 122 golf-official-results-finalization | `q68` **open** with 4 open children, but Plans 124 §1 and 125 §4 both state it is **dropped**. The tracker and the plans disagree. |
-
-**121 is a story-level plan, not an epic-level one.** Its header anchors to
-`pool-master-eux.7`, a child of 119's epic. Deletable on its own merits; noted because a
-naive scan reads it as a duplicate reference to `eux`.
+**Remaining scope** is decisions 1–3 below.
 
 ## Key Decisions
 
-### 1. Each deletion is gated on an ADR-0002 codification check
+### 1. Plan 111 waits on the persona-layout ADR
 
-For each of the eight plans, before deleting: does the plan introduce a durable pattern,
-convention, or boundary that is *not* already captured in `rules/` or `docs/adr/`?
+`pool-master-7p5` is closed with no open children, so `plans/111-persona-library-restructure.md`
+is deletable on the tracker's terms. **Do not delete it yet.**
 
-- **Yes** → codify it first, in the same slice. Deleting a plan that introduced
-  uncaptured guidance is how conventions get silently lost.
-- **No** → delete.
+Plan 133 cites 111 as the source of the thin-pointer persona pattern it reverses, and
+ADR-0002 requires durable reasoning be codified before deletion. That reasoning's permanent
+home is Plan 133's single-tool persona layout ADR, which does not exist yet. Deleting 111
+first orphans the rationale at exactly the moment Plan 133 needs it.
 
-Two are worth particular attention:
+111's deletion rides with that ADR, in Plan 133's final slice — not in a general sweep.
 
-- **124** is the largest, most recently landed, and the one whose patterns are most likely
-  to be load-bearing for future golf work — the admin-authoring model, score-linking,
-  lane separation, the bulk-upload panel shape. Several of these read like ADR material.
-- **119 and 121** together define the mock-provider live-scoring contract boundary. That
-  boundary outlives both plans.
+### 2. Resolve the Plan 122 contradiction
 
-### 2. Plan 125 gets a tracker item, not deletion
-
-Verified before recommending:
-
-- **Its dependency shipped.** `pool-master-476` closed 2026-09-03 with "all steps
-  complete," and 124's symbols are live in the tree — `adminListProviderCatalogEvents`
-  (12 files), `golf-field-service` (4), `applySportEventStatusTransition` (7),
-  `adminApplyGolfRoundScores` (8), `BulkUploadPanel` (8).
-- **Its targets are untouched.** `runScheduleSync`, `ParticipantRankingSnapshot`,
-  `getEventResults`, and `EVENTSCHEDULE` all still exist. No part of the deprecation has
-  been done.
-
-So 125 is a ready-to-execute plan that was never opened, not a stale one. It is also the
-most rigorously prepared plan in the directory — it verified caller counts before
-proposing deletions, records reversals of its own earlier drafts with the reasoning, and
-carries a file-by-file test inventory including an explicit "zero findings, explicitly
-checked, not just omitted" section.
-
-**Open its tracker item now, in Beads, rather than waiting for Plan 139.** 125 is product
-work and independent of the entire 132–141 workflow effort — it can start before any of
-it, which is precisely why leaving it untracked risks it being forgotten. One more item
-among 113 costs nothing at migration time, since that migration is a single batch pass.
-
-The opposite call applies to Plans 132–141 themselves: Plan 139 sits inside that set and
-its first job is choosing the substrate. Creating ten Beads epics and migrating them days
-later is churn. Those stay untracked until 139 resolves.
-
-Two corrections when 125's item opens:
-
-- Its `§5 Slice sequence` table is task state in a plan file, against ADR-0002. It was
-  written as a pre-epic draft, so this is forgivable — but those rows move to the tracker
-  and the table comes out when the item opens.
-- Its `§4` says "plans/123 (workflow gate hardening): unaffected; its shared-enum work is
-  orthogonal." Plan 135 now supersedes most of 123. Minor cross-reference touch-up.
-
-### 3. Resolve the 122 contradiction before 125 runs
-
-This is a prerequisite, not a parallel task. Plan 125 §3.3a deletes the `EVENTRESULTS`
-feed **specifically because** Plan 122 — its only stated consumer — is dropped. If 122 is
-in fact still live, that deletion removes something a live plan depends on.
-
-The evidence says 122 really is dropped: `plans/124 §1` records the user decision, and
-125 §4 restates it with the reasoning (a corrected-results payload arriving after
-completion does not apply under the admin-managed model). The tracker simply was not
+`pool-master-q68` is **open with 4 open children**, but `plans/124 §1` and `plans/125 §4`
+both record that Plan 122 was dropped — the admin-authored tournament model removed its
+premise (provider-corrected results arriving after completion). The tracker was never
 updated.
 
-**Recommended resolution:** confirm the drop, close `q68` and its 4 children as
-`deferred` with a closing note pointing at `plans/124 §1`, and delete `plans/122`. Then
-125's premise is sound on paper *and* in the tracker.
+This blocks Plan 125, whose `§3.3a` deletes the `EVENTRESULTS` feed *specifically because*
+122 — its only stated consumer — is gone.
 
-### 4. Fix the root cause, not just the backlog
+**Resolution:** close `q68` and its four children as `deferred` with a note pointing at
+`plans/124 §1`, **then** delete `plans/122`. The order is load-bearing: ADR-0002's invariant
+is *tracker closes → plan file deleted*. Deleting first leaves four open children
+referencing a file that no longer exists, which is worse drift than the current mismatch.
+Both halves need the `bd` CLI, so they happen in one local session.
 
-Nine plans accumulated because deletion is a manual checklist step that nobody ran after
-an epic closed. Cleaning up without addressing that means doing this again.
+### 3. Plan 125 needs a tracker item
 
-The detection is cheap — extract each plan's tracker reference, look up its status, report
-mismatches. That belongs in the `Stop` hook Plan 139 introduces, or as a small CI check.
+`plans/125-sync-flow-deprecation.md` has no tracker item at all. Its dependency (124)
+shipped 2026-09-03 and its deletion targets are all still present, so it is a ready-to-run
+plan that was never opened — not a stale one.
+
+Per the TODO now in its header, its GitHub issue is created after Plan 139 lands rather
+than seeding a Beads epic that gets migrated days later. Two corrections when it opens: its
+`§5 Slice sequence` table moves into the issue (task state does not belong in a plan file),
+and its `§4` reference to Plan 123 needs updating since Plan 135 supersedes most of 123.
+
+### 4. Fix the root cause
+
+Nine plans accumulated because deletion is a manual checklist step nobody ran after an epic
+closed. Cleaning up without addressing that means doing this again.
+
+The detection is cheap: extract each plan's declared epic — **with the dotted-ID pattern
+above** — look up its status, report mismatches. That belongs in the `Stop` hook Plan 139
+introduces, or as a small CI check.
+
+The check should report, not delete. As the 117 episode showed, the scan's output is a
+shortlist for a human or agent to verify, not a decision.
 
 ## Data Model / API Surface Implications
 
@@ -130,55 +118,32 @@ None.
 
 ## Dependencies
 
-- **Plan 133** owns Plan 111's deletion via its persona-layout ADR slice. This plan does not touch
-  111.
-- **Plan 135** owns Plan 123's disposition. This plan does not touch 123.
-- **Plan 139** determines the tracker substrate. If it lands first, decisions 2 and 3
-  create GitHub issues rather than Beads items, and there is no point opening a Beads epic
-  for 125 that is migrated days later.
-
-## Sequencing trap
-
-**Do not delete `plans/111` in a general cleanup sweep.** Its epic is closed, so a naive
-pass would take it. But Plan 133 cites it as the source of the thin-pointer pattern it
-reverses, and ADR-0002 requires the durable reasoning be codified first. Plan 133's
-single-tool persona layout ADR is where that lands. Deleting 111 before that ADR exists
-orphans the rationale at exactly the moment Plan 133 needs it.
+- **Plan 133** owns Plan 111's deletion via its persona-layout ADR slice.
+- **Plan 135** owns Plan 123's disposition; `5xi` stays open until then.
+- **Plan 139** determines the tracker substrate for decision 3 and hosts the drift check.
 
 ## Execution Sequence
 
-**First — the ADR-0002 codification audit.** Read each of the eight plans and decide what,
-if anything, needs to reach `rules/` or `docs/adr/` first. This is the slice with real
-judgment in it; the rest is mechanical.
+**First — resolve 122.** Close `q68` and its four children as deferred, then delete
+`plans/122`. Needs `bd` locally.
 
-**Second — codify what the audit found**, then delete the eight plans.
+**Second — open 125's tracker item**, after Plan 139 lands.
 
-**Third — resolve 122.** Close `q68` and its four children as deferred with a note
-pointing at `plans/124 §1`, **then** delete `plans/122`.
+**Third — add the drift check** to the `Stop` hook or CI.
 
-The order is load-bearing and cannot be half-done. ADR-0002's invariant is
-*tracker item closes → plan file is deleted*. Deleting the plan first leaves four open
-children referencing a file that no longer exists — a worse drift state than the current
-one, and harder to diagnose later. Since closing the items requires the `bd` CLI, both
-halves of this step happen in the same local session; neither is safe alone.
-
-**Fourth — open 125's tracker item**, strip its slice table into the tracker, and fix its
-123 cross-reference.
-
-**Fifth — add the drift check** to the `Stop` hook or CI.
+Plan 111's deletion is not sequenced here; it belongs to Plan 133.
 
 ## Open Questions
 
-- **How much of 124 becomes an ADR?** The admin-authoring model and lane-separation
-  architecture are cross-cutting and outlive the plan. Too little and the pattern is lost;
-  too much and the ADR becomes a copy of the plan, which defeats the point.
-- **Does 125 run before or after the 132–140 workflow set?** It is product work and
-  independent of all of it. It can go whenever, and arguably should go first — it is
-  ready, valuable, and its plan will only get staler.
+- **Does the drift check belong in CI as well as the hook?** The hook catches it at session
+  end for whoever is working; CI catches it for everyone, including direct pushes. The
+  direct-push lane covers `.beads/` and plan housekeeping, which is exactly where this drift
+  originates — arguing for CI.
 
 ## Sources / Prior Decisions
 
-- ADR-0002 — Plans are narrative; deleted after parent epic closes (the rule being enforced)
-- Plan 133 — owns 111's deletion via its persona-layout ADR
+- ADR-0002 — Plans are narrative; deleted after the parent epic closes (the rule enforced here)
+- ADR-0003 — Tech specs are pre-implementation only (why the `33l` spec stays, banner or not)
+- Plan 133 — owns 111's deletion
 - Plan 135 — owns 123's disposition
-- Plan 139 — determines the tracker substrate and hosts the drift check
+- Plan 139 — tracker substrate and drift-check home
