@@ -2,6 +2,49 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 /**
+ * Selector sets are hoisted to module scope on purpose.
+ *
+ * ESLint flat config does NOT merge rule OPTIONS across config objects. A later
+ * `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block supplies its
+ * own options array, which REPLACES this one inside that scope rather than adding
+ * to it -- SILENTLY DISABLING every selector below there, while `npm run lint`
+ * stays green and nothing reports the loss.
+ *
+ * The precise rule, measured with `--print-config`, because the sloppy version of
+ * it ("the last matching object always wins") is wrong and leads people to restate
+ * options they did not need to:
+ *
+ *   later entry is a bare severity      -> earlier options are RETAINED
+ *     'rule': 'error'                      => [2, {...inherited options}]
+ *   later entry supplies an options array -> earlier options are DISCARDED
+ *     'rule': ['error', {}]                => [2, {}]
+ *
+ * So severity-only overrides and additive plugin blocks are safe. Only a scoped
+ * re-declaration WITH options is the trap -- and five of the scanners still queued
+ * for migration in plans/135 are proposed exactly that way, so it is a live trap
+ * for the next slice, not a hypothetical.
+ *
+ * Rule: any scoped re-declaration must spread these, e.g.
+ *   'no-restricted-syntax': ['error', ...CAST_SELECTORS, ...YOUR_NEW_SELECTORS]
+ */
+const CAST_SELECTORS = [
+  {
+    // `x as unknown as T` parses as an outer TSAsExpression whose expression is
+    // an inner TSAsExpression annotated `unknown`; this matches the inner node.
+    // Deliberately NOT no-explicit-any + the no-unsafe-* family, which plan 135
+    // proposed: all 20 findings this replaced were `as unknown as`, involving no
+    // `any` at all, so that replacement would have matched none of them.
+    selector: 'TSAsExpression > TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]',
+    message:
+      'Do not bridge generated/domain contract gaps with "as unknown as"; fix the contract or mapper.',
+  },
+  {
+    selector: 'TSAsExpression[typeAnnotation.type="TSAnyKeyword"]',
+    message: 'Avoid "as any" in application code; use a real type, helper, or documented boundary.',
+  },
+];
+
+/**
  * Repo conventions live here rather than in `scripts/check-*.mjs` wherever ESLint
  * can express them, so violations surface in the editor at write time instead of
  * at push time in CI. See `plans/135-rule-scanners-to-eslint.md`.
@@ -51,19 +94,7 @@ export default tseslint.config(
       // an inner TSAsExpression annotated `unknown`; the first selector matches
       // that inner node. The second covers the `as any` half the scanner also
       // checked. Verified a strict superset of the scanner's findings.
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'TSAsExpression > TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]',
-          message:
-            'Do not bridge generated/domain contract gaps with "as unknown as"; fix the contract or mapper.',
-        },
-        {
-          selector: 'TSAsExpression[typeAnnotation.type="TSAnyKeyword"]',
-          message:
-            'Avoid "as any" in application code; use a real type, helper, or documented boundary.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...CAST_SELECTORS],
     },
   },
   {
