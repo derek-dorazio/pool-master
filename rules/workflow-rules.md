@@ -397,64 +397,33 @@ When a feature requires coordinated work across multiple layers (schema, service
 
 A slice is only complete when every applicable layer has been validated, not when the "hard part" (schema + service) lands.
 
-### Slice Retrospective
+### After A Slice: Fix The Rule, Not Just The Occurrence
 
-After each completed feature slice, do a brief retrospective before moving on
-to deeper adjacent work.
+Keep this short — the point is a habit, not a ceremony.
 
-The retrospective should:
+When a slice surfaces friction, avoidable rework, or a defect class:
 
-- identify any workflow friction, coordination overhead, or avoidable rework
-- recommend any process or tooling change that would make future slices more
-  efficient
-- record durable workflow changes in `rules/` or `docs/` when the team agrees
-  they should persist beyond the current session
+- **If it violated a rule that already exists**, the rule is not being enforced. Add
+  automation — a scanner, a lint rule, a tighter checklist — rather than only fixing the
+  one occurrence. A rule nothing checks is a suggestion.
+- **If it exposed a rule gap**, update the matching `rules/*.md` file in the same effort, or
+  open an issue for the rule change. Durable workflow changes belong in `rules/` or
+  `docs/adr/`, not in a slice's closing comment.
+- **If the same pattern keeps appearing across slices**, track the cleanup as an epic so it
+  is remediated in a batch rather than as isolated one-off defects.
 
-Keep the retrospective short and high signal. The goal is to improve the
-project workflow steadily without turning every slice closeout into a long
-ceremony.
+Per-slice validation catches what a slice broke. This catches what the slices are
+collectively drifting toward, and it is worth a deliberate look after a large refactor, a
+batch of features, or any stretch where repeated defects suggest the rules are not holding.
 
-### Periodic Cross-Stack Review
+### Know The CI Baseline Before You Start
 
-Rule drift accumulates when every slice only inspects its own changed files.
-PoolMaster therefore needs a periodic cross-stack review pass that looks across
-frontend, backend, tests, generated contracts, and workflow rules together.
+Check the relevant CI status before starting implementation, so an inherited red build is
+not mistaken for a regression the new slice introduced.
 
-Required cadence and triggers:
-
-- Run a cross-stack review after major refactors, large feature batches,
-  theme/component-system changes, or any period where repeated defects suggest
-  the rules are not being enforced.
-- The review should map findings back to existing rules first. If a finding
-  violates a rule that already exists, add automation or a tighter checklist
-  instead of only fixing the individual occurrence.
-- If a finding exposes a rule gap, update the appropriate `rules/*.md` file or
-  create an issue for that rule change.
-- Track thematic cleanup in epic issues so repeated patterns are remediated in
-  batches, not as isolated one-off defects.
-- Review passes are not a substitute for slice-level validation; they are the
-  safety net that catches drift across slices.
-
-### CI/CD Baseline Check
-
-Before starting a new feature or implementation slice, confirm the current
-CI/CD baseline first.
-
-The goal is to avoid inheriting unrelated red builds or stale failures and then
-mistaking them for regressions introduced by the new slice.
-
-Required behavior:
-
-- check the current relevant CI/CD status before new implementation work begins
-- do not start stacking new feature slices on top of a red `main` baseline
-  unless the active work is explicitly to fix that red baseline
-- if existing failures are already present, call that out explicitly before
-  coding starts
-- distinguish clearly between:
-  - pre-existing failures
-  - failures introduced by the new slice
-- do not let builders or follow-on implementers assume inherited failures came
-  from their work unless the new slice actually caused them
+- Do not stack new slices on a red `main` unless fixing that red is the work.
+- If failures already exist, say so before coding starts, and keep pre-existing failures
+  distinct from ones the slice caused.
 
 ### Plan Deletion And Durable-Decision Capture
 
@@ -519,33 +488,25 @@ Examples that require rule updates:
 
 ### Feature Delivery Lifecycle
 
-PoolMaster's default feature lifecycle is:
+Most work is: **plan narrative → implement → verify → review**. That is the whole lifecycle
+for incremental work, and incremental work is the common case here.
 
-1. Product Discovery
-2. Product Requirements
-3. Technical Specification, including a model-impact classification
-4. Test Planning
-5. Design Plans
-6. Execution Planning
-7. Implementation — backend and frontend
-8. Verification
-9. Code Review
+A *major* new feature — new actors, new domain concepts, a new product surface — adds a
+definition pass in front of it: discovery, refined requirements, and a technical spec. Those
+are governed by `product-requirements-rules.md` §0, which is written to be read as
+skip-by-default, and the authoring workflow is the `define-a-feature` skill.
 
-Steps 1, 3 and 4 are skipped for anything that is not a major new feature; see below.
+Do not run the definition pass on work that fits inside an existing feature. Capture that
+narrative in the plan file.
 
-Artifact hierarchy (with lifetimes; see §0 Document Lifecycle):
+Artifact lifetimes for every layer are in §0 *Document Lifecycle* above. The two that matter
+most often:
 
-- `requirements/reference/` = seed discovery materials (feature-life; delete when obsolete)
-- `requirements/product-overview/` = discovery artifacts (feature-life; retire after major feature stabilizes)
-- `requirements/product-requirements/features/<feature>/` = the refined product-requirement bundle for **major** features (feature-life; retire or trim after stabilization)
-- `tech-specs/features/<feature>/` = pre-implementation technical framing (pre-implementation only; **deleted when implementation ships**)
-- `plans/NN-*.md` = narrative companion to an epic issue (slice-life; **deleted when the parent epic issue closes**)
-- GitHub Issues = live task state (slices, status, execution notes)
-- `docs/adr/` = Architecture Decision Records (permanent; immutable once accepted)
+- `plans/NN-*.md` — narrative companion to an epic issue; **deleted when the epic closes**
+- GitHub Issues — live task state, always
 
-Skip the requirements bundle and tech spec for small/incremental work. Those artifacts are high-leverage for major new features, but they become overhead for work that fits entirely inside an already-documented feature or a narrow improvement. Capture that work's narrative directly in the plan file.
-
-Do not treat `requirements/` or `tech-specs/` as replacements for tracker state. When implementation is underway, GitHub Issues is canonical for status.
+`requirements/` and `tech-specs/` are never a substitute for tracker state. Once
+implementation is underway, GitHub Issues is canonical for status.
 
 ### Webapp Direction
 
@@ -553,78 +514,6 @@ The web frontend is a single role-based application: `clients/poolmaster`. The r
 replaced is finished — `clients/admin` is gone and the old web app is reference material
 under `clients/_archived/`, not a delivery target. Do not split functionality across
 multiple React apps. The full statement is `architecture-rules.md` §1 *One web application*.
-
-### Product Design Workflow For PoolMaster Webapp Planning
-
-When an agent is acting in a product-design or product-manager capacity for the
-PoolMaster web app, the agent must not jump straight from rough ideas into UI
-implementation assumptions.
-
-Required workflow:
-
-1. Capture the product idea in a plan or use-case companion under `plans/`.
-2. Write explicit user/use cases for the flow before implementation begins.
-3. Before proposing fields, steps, or page actions, perform a current-truth
-   review using:
-   - the active product plans for the feature
-   - current shared domain types
-   - current DTO/OpenAPI contract
-   - current implemented routes and role behavior
-   Distinguish clearly between:
-   - active product truth
-   - backend contract surface that is not yet approved product UX
-   - archived or superseded design ideas used only as historical reference.
-4. Include open functional questions, decisions, and assumptions that still need
-   confirmation.
-5. At the end of the design review, explicitly surface any implied backend or
-   model changes required by the proposed webapp behavior, including:
-   - Prisma/model changes
-   - migrations or backfills
-   - new DTOs or API routes
-   - backend auth/session or invitation-flow changes
-   Confirm those backend implications with the user before implementation
-   begins.
-   When those implications suggest a true model change, classify it and check it
-   against [domain-model-conventions-rules.md](./domain-model-conventions-rules.md)
-   before backend implementation begins — see the `model-change` skill.
-6. If the current contract appears to expose retired, stale, or no-longer-valid
-   fields for the feature, do not design around them silently. Call out the
-   mismatch explicitly as:
-   - product scope differs from backend capability, or
-   - backend cleanup/documentation debt still exists.
-   Treat that mismatch as backend work to be scoped, not as approved UX input.
-7. Propose the browser E2E flows that should eventually prove the designed
-   behavior end to end.
-8. Review those use cases, questions, backend implications, and proposed E2E
-   flows with the user
-   before locking the design
-   direction into implementation work.
-9. Once reviewed, treat the agreed E2E flows as planned implementation work for
-   the related webapp plan rather than leaving them as optional follow-up ideas.
-10. Treat the reviewed use-case document as the companion for later UI planning
-   and execution slices.
-11. As new PoolMaster webapp pages or functions are implemented, decide whether
-   the current reviewed Playwright journeys should be extended or whether the
-   new behavior needs a new browser journey. Do not leave newly delivered
-   user-facing webapp behavior outside the browser-journey plan by default.
-12. For browser-E2E planning, prefer commissioner/member/public lifecycle flows
-    over root-admin or test-only shortcuts. If cleanup or setup appears to need
-    privileged APIs, first ask whether the real product lifecycle should own
-    that behavior instead.
-
-This is especially required for:
-
-- landing and onboarding flows
-- route and navigation design
-- league/home context behavior
-- commissioner and member UX entry points
-- invite and join flows
-- modal/wizard workflow design
-- post-deploy browser E2E coverage for the designed flows
-
-Do not assume that an early scaffold or placeholder page defines the final
-product flow. For PoolMaster webapp design, plans should be use-case driven and
-confirmed with the user before implementation expands.
 
 ### Task Skills
 
