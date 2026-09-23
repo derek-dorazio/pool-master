@@ -1,4 +1,3 @@
-import { Sport } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
@@ -186,7 +185,7 @@ export function registerConfiguredProviders(
 
   const provider = providerFactory(binding, env);
   for (const sport of provider.sportsCovered) {
-    registry.register(sport as Sport, provider, 'PRIMARY');
+    registry.register(sport, provider, 'PRIMARY');
   }
 
   logger?.info(

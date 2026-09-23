@@ -62,7 +62,7 @@ import {
   InheritedTiersPanel,
   NoEligibleEventsAlert,
 } from './contest-configuration-sections';
-import { extractErrorMessage } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -279,7 +279,7 @@ export function CreateContestPage() {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -299,7 +299,7 @@ export function CreateContestPage() {
       });
 
       if (!response.data?.events) {
-        throw response.error ?? new Error('Sport event list response is missing data.');
+        throwApiError(response.error, 'Sport event list response is missing data.');
       }
 
       return sortEventsForPicker(response.data.events);
@@ -333,7 +333,7 @@ export function CreateContestPage() {
       });
 
       if (!response.data?.contest) {
-        throw response.error ?? new Error('Managed contest response is missing data.');
+        throwApiError(response.error, 'Managed contest response is missing data.');
       }
 
       return response.data.contest;
@@ -358,7 +358,7 @@ export function CreateContestPage() {
       });
 
       if (!response.data?.templates) {
-        throw response.error ?? new Error('Contest template response is missing data.');
+        throwApiError(response.error, 'Contest template response is missing data.');
       }
 
       return response.data.templates;
@@ -671,7 +671,7 @@ export function CreateContestPage() {
         });
 
         if (!response.data?.contest) {
-          throw response.error ?? new Error('Contest creation response is missing data.');
+          throwApiError(response.error, 'Contest creation response is missing data.');
         }
 
         return response.data.contest.id;
@@ -687,7 +687,7 @@ export function CreateContestPage() {
         body: metadataBody as never,
       });
       if (metadataResponse.error) {
-        throw metadataResponse.error;
+        throwApiError(metadataResponse.error);
       }
 
       const configurationResponse = await updateManagedContestConfiguration({
@@ -696,7 +696,7 @@ export function CreateContestPage() {
       });
 
       if (!configurationResponse.data?.contest) {
-        throw configurationResponse.error ?? new Error('Contest update response is missing data.');
+        throwApiError(configurationResponse.error, 'Contest update response is missing data.');
       }
 
       return configurationResponse.data.contest.id;
@@ -714,7 +714,7 @@ export function CreateContestPage() {
         isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
       );
     },
-    onSuccess: async (savedContestId: string) => {
+    onSuccess: (savedContestId: string) => {
       logger.info(
         {
           action: isEditMode ? 'contest.save.succeeded' : 'contest.create.succeeded',
@@ -746,7 +746,11 @@ export function CreateContestPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(payload, isEditMode ? 'Contest update failed unexpectedly' : 'Contest create failed unexpectedly');
       } else {
         logger.warn(payload, isEditMode ? 'Contest update was rejected' : 'Contest create was rejected');
@@ -766,7 +770,7 @@ export function CreateContestPage() {
       });
 
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
     },
     onMutate: () => {
@@ -781,7 +785,7 @@ export function CreateContestPage() {
         'Starting contest delete flow',
       );
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       logger.info(
         {
           action: 'contest.delete.succeeded',
@@ -805,7 +809,11 @@ export function CreateContestPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(payload, 'Contest delete failed unexpectedly');
       } else {
         logger.warn(payload, 'Contest delete was rejected');

@@ -8,7 +8,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { createEventHandlers } from './handler';
 import { EventService } from './service';
 
-export async function eventsModule(fastify: FastifyInstance): Promise<void> {
+export function eventsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const eventService = new EventService(
     prisma.sportEvent,

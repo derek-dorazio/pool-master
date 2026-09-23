@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { adminSeedGolfTournamentField } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -26,7 +26,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
     mutationFn: async (): Promise<SeedResult> => {
       const response = await adminSeedGolfTournamentField({ path: { eventId } });
       if (!response.data) {
-        throw response.error ?? new Error('Seed response is missing data.');
+        throwApiError(response.error, 'Seed response is missing data.');
       }
       return response.data;
     },

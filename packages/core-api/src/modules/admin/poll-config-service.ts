@@ -63,7 +63,7 @@ export class PollConfigService {
     }
 
     this.repository = undefined;
-    this.logger = repositoryOrLogger as FastifyBaseLogger | undefined;
+    this.logger = repositoryOrLogger;
   }
 
   async bootstrap(): Promise<void> {

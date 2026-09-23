@@ -131,6 +131,6 @@ export function generateDraftOrder(
         { action: 'draftOrder.generateDraftOrder.unknownMethod', data: { method } },
         'Cannot generate draft order for an unknown method',
       );
-      throw new Error(`Unknown draft order method: ${method}`);
+      throw new Error(`Unknown draft order method: ${JSON.stringify(method)}`);
   }
 }

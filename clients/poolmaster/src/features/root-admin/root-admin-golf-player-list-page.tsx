@@ -14,7 +14,7 @@ import {
   Select,
   StatusBadge,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -57,7 +57,7 @@ export function RootAdminGolfPlayerListPage() {
     queryFn: async (): Promise<GolfPlayer[]> => {
       const response = await adminListGolfPlayers({ query: { status } });
       if (!response.data?.players) {
-        throw response.error ?? new Error('Golf player list response is missing data.');
+        throwApiError(response.error, 'Golf player list response is missing data.');
       }
       return response.data.players;
     },
@@ -83,7 +83,7 @@ export function RootAdminGolfPlayerListPage() {
         },
       });
       if (!response.data?.player) {
-        throw response.error ?? new Error('Golf player creation response is missing data.');
+        throwApiError(response.error, 'Golf player creation response is missing data.');
       }
       return response.data.player;
     },
@@ -197,7 +197,7 @@ export function RootAdminGolfPlayerListPage() {
       >
         <form
           className="space-y-3"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+          onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
         >
           <FormField error={form.formState.errors.name?.message} label="Name">
             <Input

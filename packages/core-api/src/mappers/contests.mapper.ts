@@ -259,7 +259,7 @@ export function toContestEntryDto(
     squadName: squad.name,
     entryNumber: entry.entryNumber,
     name: entry.name,
-    status: entry.status as ContestEntryDto['status'],
+    status: entry.status,
     tiebreakerValue: entry.tiebreakerValue ?? null,
     isEliminated: entry.isEliminated,
     picksCount: entry.picksCount,

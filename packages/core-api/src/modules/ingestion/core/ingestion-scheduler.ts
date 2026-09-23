@@ -174,6 +174,7 @@ export class IngestionScheduler {
     this.startRecurringLoop(
       'configured sport loop reconciliation',
       async () => this.reconcileConfiguredSportLoops(),
+      // eslint-disable-next-line @typescript-eslint/require-await -- resolveDelayMs must return Promise<number>; this constant needs the async wrap, not an await.
       async () => CONFIG_RECHECK_MS,
     );
 

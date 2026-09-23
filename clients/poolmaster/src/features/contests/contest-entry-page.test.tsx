@@ -379,6 +379,7 @@ describe('ContestEntryPage', () => {
       if (body.participantId === 'sep-2') {
         selectedParticipantIdsByTier.set('tier-2', ['sep-2']);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- getDraftStateMock is an untyped vi.fn() (bindApiMocks expects a loose mock shape); this just forwards its mocked resolution.
       return getDraftStateMock();
     });
 

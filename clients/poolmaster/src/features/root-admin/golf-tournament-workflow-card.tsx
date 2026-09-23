@@ -12,7 +12,7 @@ import {
   Tile,
   formatDateTimeDisplay,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -58,7 +58,7 @@ export function GolfTournamentWorkflowCard({
         body: { toStatus },
       });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament transition response is missing data.');
+        throwApiError(response.error, 'Golf tournament transition response is missing data.');
       }
       return response.data.tournament;
     },
@@ -82,7 +82,7 @@ export function GolfTournamentWorkflowCard({
         body: { autoLifecycleEnabled },
       });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament update response is missing data.');
+        throwApiError(response.error, 'Golf tournament update response is missing data.');
       }
       return response.data.tournament;
     },

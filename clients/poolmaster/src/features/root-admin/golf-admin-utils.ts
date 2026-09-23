@@ -494,6 +494,7 @@ const golfRoundScoreUploadRowSchema = z
 function hasNoScoreData(record: Record<string, unknown>): boolean {
   return ['strokes', 'scoreToPar', 'thru', 'status'].every((key) => {
     const value = record[key];
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- parsed CSV/JSON cell, genuinely unknown-shaped; stringifying an object here just correctly counts as "has data", not blank.
     return value === undefined || String(value).trim() === '';
   });
 }

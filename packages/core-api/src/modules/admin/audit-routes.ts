@@ -12,7 +12,7 @@ import {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { listAuditLog, getAuditEntry, exportAuditLog } from './audit-handler';
 
-export async function auditRoutes(app: FastifyInstance): Promise<void> {
+export function auditRoutes(app: FastifyInstance): void {
   const querySchema = {
     querystring: {
       type: 'object' as const,

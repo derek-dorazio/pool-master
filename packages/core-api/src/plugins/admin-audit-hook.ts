@@ -71,7 +71,7 @@ function isSuccessStatus(statusCode: number): boolean {
  *
  * Usage: await app.register(adminAuditHook);
  */
-export async function adminAuditHook(app: FastifyInstance): Promise<void> {
+export function adminAuditHook(app: FastifyInstance): void {
   app.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
     if (READ_ONLY_METHODS.has(request.method)) return;
     if (!request.url.startsWith(ADMIN_PREFIX)) return;

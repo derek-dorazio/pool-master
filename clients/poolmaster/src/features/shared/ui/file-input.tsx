@@ -42,7 +42,7 @@ export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
       const reader = new FileReader();
       readerRef.current = reader;
       reader.addEventListener("load", () => {
-        onFileText(String(reader.result ?? ""), file);
+        onFileText(typeof reader.result === "string" ? reader.result : "", file);
       });
       reader.readAsText(file);
     }

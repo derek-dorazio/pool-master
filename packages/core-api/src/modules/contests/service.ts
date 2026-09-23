@@ -1469,7 +1469,9 @@ function readEmailTierDefinitions(tierConfig: unknown): EmailTierDefinition[] {
     .map((tier, index) => {
       const record = tier as Record<string, unknown>;
       return {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
         tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string -- reading legacy/untrusted stored JSON config; the fallback chain is the safety net, not the type.
         tierName: String(record.tierName ?? record.tierId ?? `Tier ${index + 1}`),
         tierNumber: Number(record.tierNumber ?? index + 1),
         picksFromTier: Number(record.picksFromTier ?? record.pickCount ?? 1),

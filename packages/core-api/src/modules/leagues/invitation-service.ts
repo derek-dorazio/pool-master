@@ -258,7 +258,7 @@ export class InvitationService {
     const expiresAt = input.expiresInDays
       ? (() => {
           const d = new Date();
-          d.setDate(d.getDate() + input.expiresInDays!);
+          d.setDate(d.getDate() + input.expiresInDays);
           return d;
         })()
       : undefined;

@@ -177,7 +177,7 @@ describe('pool-master-qqs RootAdminGolfSeasonListPage', () => {
     const modal = screen.getByTestId('root-admin-golf-season-list-new-modal');
     const [startInput, endInput] = Array.from(
       modal.querySelectorAll('input[type="date"]'),
-    ) as HTMLInputElement[];
+    );
     await userEvent.type(startInput, '2028-01-02');
     await userEvent.type(endInput, '2028-11-30');
     await userEvent.click(screen.getByTestId('root-admin-golf-season-list-new-save'));
@@ -185,11 +185,14 @@ describe('pool-master-qqs RootAdminGolfSeasonListPage', () => {
     await waitFor(() =>
       expect(adminCreateGolfSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           body: expect.objectContaining({
             sportLeagueId: 'pga',
             name: 'PGA Tour 2028',
             year: 2028,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             startDate: expect.stringMatching(/^2028-01-02T/),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             endDate: expect.stringMatching(/^2028-11-30T/),
           }),
         }),

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { adminGetGolfLeagueRoster, adminListGolfLeagues } from '@/lib/api';
 import { AsyncPage } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type {
   AdminGetGolfLeagueRosterResponses,
@@ -34,7 +34,7 @@ export function RootAdminGolfLeagueHomePage() {
     queryFn: async (): Promise<GolfLeague[]> => {
       const response = await adminListGolfLeagues();
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('Golf tour list response is missing data.');
+        throwApiError(response.error, 'Golf tour list response is missing data.');
       }
       return response.data.leagues;
     },
@@ -46,7 +46,7 @@ export function RootAdminGolfLeagueHomePage() {
     queryFn: async (): Promise<GolfLeagueRosterEntry[]> => {
       const response = await adminGetGolfLeagueRoster({ path: { leagueId } });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Golf tour roster response is missing data.');
+        throwApiError(response.error, 'Golf tour roster response is missing data.');
       }
       return response.data.entries;
     },

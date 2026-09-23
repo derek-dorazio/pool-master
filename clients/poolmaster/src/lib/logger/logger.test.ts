@@ -79,6 +79,7 @@ describe('logger', () => {
             refreshToken: '[REDACTED]',
           },
         },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         err: expect.objectContaining({
           message: 'failed',
         }),

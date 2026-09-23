@@ -34,7 +34,7 @@ import {
   type ProviderSyncRun,
   formatJsonPayload,
 } from './root-admin-sync-utils';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
@@ -171,7 +171,7 @@ export function RootAdminSyncDashboardPage() {
     queryFn: async (): Promise<ProviderSummary[]> => {
       const response = await adminListProviders();
       if (!response.data?.items) {
-        throw response.error ?? new Error('Provider list response is missing data.');
+        throwApiError(response.error, 'Provider list response is missing data.');
       }
       return response.data.items;
     },
@@ -188,7 +188,7 @@ export function RootAdminSyncDashboardPage() {
       });
 
       if (!response.data?.items) {
-        throw response.error ?? new Error('Provider sync run response is missing data.');
+        throwApiError(response.error, 'Provider sync run response is missing data.');
       }
 
       return response.data.items;

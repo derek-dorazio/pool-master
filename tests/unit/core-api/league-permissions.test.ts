@@ -83,7 +83,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(200);
     expect(reply.payload).toBeUndefined();
@@ -103,7 +102,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
     expectReplyError(
@@ -129,7 +127,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
     expectReplyError(reply, 'LEAGUE_MEMBERSHIP_INACTIVE', 'Your membership in this league is inactive');
@@ -147,7 +144,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(401);
     expectReplyError(reply, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
@@ -165,7 +161,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(400);
     expectReplyError(reply, 'LEAGUE_ID_REQUIRED', 'League id is required');
@@ -188,7 +183,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(200);
     expect(reply.payload).toBeUndefined();
@@ -209,7 +203,6 @@ describe('league permissions', () => {
         log: createLogger(),
       } as never,
       reply as never,
-      jest.fn(),
     );
     expect(reply.statusCode).toBe(403);
     expectReplyError(reply, 'LEAGUE_PERMISSION_DENIED', 'You do not have permission for this action');

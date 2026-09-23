@@ -16,7 +16,7 @@ import {
 } from "@/features/shared/ui";
 import { buildLeaguePath, rememberRecentLeagueCode } from "./league-routing";
 import { syncLeagueCaches } from "./league-cache";
-import { extractErrorMessage } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
@@ -119,10 +119,7 @@ export function CreateLeagueModal({
       });
 
       if (!response.data?.league?.leagueCode) {
-        throw (
-          response.error ??
-          new Error("League creation response is missing data.")
-        );
+        throwApiError(response.error, "League creation response is missing data.");
       }
 
       return response.data.league;
@@ -139,7 +136,7 @@ export function CreateLeagueModal({
         "Starting league creation flow",
       );
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       logger.info(
         {
           action: "league.create.succeeded",
@@ -167,7 +164,11 @@ export function CreateLeagueModal({
         err: error,
       };
 
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(payload, "League creation failed unexpectedly");
       } else {
         logger.warn(payload, "League creation was rejected");
@@ -276,7 +277,7 @@ export function CreateLeagueModal({
 
       <form
         className="mt-6 space-y-5"
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={(e) => void form.handleSubmit(handleSubmit)(e)}
       >
         {step === WIZARD_STEP_DETAILS ? (
           <>
@@ -291,7 +292,7 @@ export function CreateLeagueModal({
                 id="create-league-name"
                 {...registeredName}
                 onBlur={(event) => {
-                  registeredName.onBlur(event);
+                  void registeredName.onBlur(event);
                   seedLeagueCodeFromName(event.target.value);
                 }}
                 placeholder="Big Dawgs"

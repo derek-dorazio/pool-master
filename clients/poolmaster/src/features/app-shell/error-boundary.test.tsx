@@ -31,8 +31,11 @@ describe('ErrorBoundary', () => {
     expect(loggerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'app.errorBoundary.caught',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         err: expect.any(Error),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           componentStack: expect.any(String),
         }),
       }),

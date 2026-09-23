@@ -7,7 +7,7 @@ import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { createClientLogHandlers } from './handler';
 import { ClientLogService } from './service';
 
-export async function clientLogsModule(fastify: FastifyInstance): Promise<void> {
+export function clientLogsModule(fastify: FastifyInstance): void {
   const service = new ClientLogService({
     logger: fastify.log,
   });

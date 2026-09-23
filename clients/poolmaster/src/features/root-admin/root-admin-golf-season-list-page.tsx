@@ -15,7 +15,7 @@ import {
   Select,
   StatusBadge,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -62,7 +62,7 @@ export function RootAdminGolfSeasonListPage() {
     queryFn: async (): Promise<GolfLeague[]> => {
       const response = await adminListGolfLeagues();
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('Golf tour list response is missing data.');
+        throwApiError(response.error, 'Golf tour list response is missing data.');
       }
       return response.data.leagues;
     },
@@ -76,7 +76,7 @@ export function RootAdminGolfSeasonListPage() {
         query: tourFilter ? { sportLeagueId: tourFilter } : {},
       });
       if (!response.data?.seasons) {
-        throw response.error ?? new Error('Golf season list response is missing data.');
+        throwApiError(response.error, 'Golf season list response is missing data.');
       }
       return response.data.seasons;
     },
@@ -121,7 +121,7 @@ export function RootAdminGolfSeasonListPage() {
         },
       });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Golf season creation response is missing data.');
+        throwApiError(response.error, 'Golf season creation response is missing data.');
       }
       return response.data.season;
     },
@@ -265,7 +265,7 @@ export function RootAdminGolfSeasonListPage() {
       >
         <form
           className="space-y-3"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+          onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
         >
           <FormField
             error={form.formState.errors.sportLeagueId?.message}

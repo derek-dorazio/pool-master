@@ -5,6 +5,21 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { buildApp } from './app';
 import { ScenarioStore, buildRelativeTodayGolfScenario } from './scenario-store';
+import type {
+  ContestFeedEventResponse,
+  ContestFeedSnapshotResponse,
+  LiveScoresSnapshotResponse,
+} from './contracts';
+
+/* eslint-disable @typescript-eslint/no-floating-promises --
+ * node:test's test() returns a Promise, but registering each top-level test
+ * unawaited is the standard node:test pattern -- the runner tracks and awaits
+ * them itself. Prefixing every call with `void` here reproduces a real,
+ * reproducible failure ("Promise resolution is still pending but the event
+ * loop has already resolved") in the tests that spin up a real Fastify app
+ * (verified by toggling void on/off against a clean checkout twice each way);
+ * root cause not isolated further. Suppressing is the safe choice over
+ * changing a working test file's call shape for a cosmetic lint fix. */
 
 const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 
@@ -325,7 +340,7 @@ test('pool-master-eux.7: direct /scores requests expose every golf live-state wi
         url: `/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?mockEventState=${token}`,
       });
       assert.equal(response.statusCode, 200);
-      const payload = response.json();
+      const payload = response.json<LiveScoresSnapshotResponse>();
       assert.equal(payload.feedKind, 'results');
       assert.equal(payload.eventId, 'golf-masters-2026');
 
@@ -508,7 +523,7 @@ test('pool-master-33l.8.8: routes expose detail, field, and mock event-state sco
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
     });
     assert.equal(detailResponse.statusCode, 200);
-    const detailJson = detailResponse.json();
+    const detailJson = detailResponse.json<ContestFeedEventResponse>();
     assert.equal(detailJson.season.seasonId, 'golf-2026-majors');
     assert.equal(detailJson.event.schedule.fieldLocksAt, '2026-04-29T16:00:00.000Z');
 
@@ -517,7 +532,7 @@ test('pool-master-33l.8.8: routes expose detail, field, and mock event-state sco
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/field',
     });
     assert.equal(fieldResponse.statusCode, 200);
-    const fieldJson = fieldResponse.json();
+    const fieldJson = fieldResponse.json<ContestFeedSnapshotResponse>();
     assert.equal(fieldJson.feedKind, 'field');
     assert.equal(fieldJson.contestants.length, 80);
 
@@ -526,7 +541,7 @@ test('pool-master-33l.8.8: routes expose detail, field, and mock event-state sco
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2&mockEventState=live',
     });
     assert.equal(liveScoresResponse.statusCode, 200);
-    const liveScoresJson = liveScoresResponse.json();
+    const liveScoresJson = liveScoresResponse.json<LiveScoresSnapshotResponse>();
     assert.equal(liveScoresJson.feedKind, 'results');
     assert.equal(liveScoresJson.contestants.length, 80);
     assert.equal(liveScoresJson.contestants[0]?.rounds.length, 1);

@@ -17,7 +17,7 @@ describe('poolmaster API client correlation headers', () => {
   });
 
   it('rule: client observability attaches stable trace id and unique request id to outbound requests', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue(
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ user: null }), {
         status: 200,
         headers: {
@@ -48,7 +48,7 @@ describe('poolmaster API client correlation headers', () => {
   });
 
   it('pool-master-rop.64 falls back to a client request id when crypto.randomUUID is unavailable', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue(
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ user: null }), {
         status: 200,
         headers: {
@@ -78,7 +78,7 @@ describe('poolmaster API client correlation headers', () => {
   it('rule: SDK API base URL config prefers VITE_API_BASE_URL over the browser origin', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
 
-    const fetchSpy = vi.fn().mockResolvedValue(
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ user: null }), {
         status: 200,
         headers: {
@@ -109,7 +109,7 @@ describe('poolmaster API client correlation headers', () => {
   it('pool-master-dxd.23 normalizes a trailing slash in VITE_API_BASE_URL before configuring the SDK', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test/');
 
-    const fetchSpy = vi.fn().mockResolvedValue(
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ user: null }), {
         status: 200,
         headers: {
@@ -139,7 +139,7 @@ describe('poolmaster API client correlation headers', () => {
 
   it('pool-master-dxd.26 attaches the CSRF token cookie to mutating requests', async () => {
     document.cookie = `poolmaster_csrf=${encodeURIComponent('csrf-token-123')}; path=/`;
-    const fetchSpy = vi.fn().mockResolvedValue(
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ league: { id: 'league-1' } }), {
         status: 201,
         headers: {

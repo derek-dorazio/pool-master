@@ -13,7 +13,7 @@ import {
   LinkButton,
   SplitContentLayout,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type {
   AdminGetGolfTournamentFieldResponses,
@@ -45,7 +45,7 @@ export function RootAdminGolfTournamentTiersPage() {
     queryFn: async (): Promise<AdminGolfTournamentDetail> => {
       const response = await adminGetGolfTournament({ path: { eventId } });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament response is missing data.');
+        throwApiError(response.error, 'Golf tournament response is missing data.');
       }
       return response.data.tournament;
     },
@@ -58,7 +58,7 @@ export function RootAdminGolfTournamentTiersPage() {
     queryFn: async (): Promise<TierDto[]> => {
       const response = await adminGetGolfTournamentTiers({ path: { eventId } });
       if (!response.data?.tiers) {
-        throw response.error ?? new Error('Golf tiers response is missing data.');
+        throwApiError(response.error, 'Golf tiers response is missing data.');
       }
       return response.data.tiers;
     },
@@ -71,7 +71,7 @@ export function RootAdminGolfTournamentTiersPage() {
     queryFn: async (): Promise<FieldEntry[]> => {
       const response = await adminGetGolfTournamentField({ path: { eventId } });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Golf tournament field response is missing data.');
+        throwApiError(response.error, 'Golf tournament field response is missing data.');
       }
       return response.data.entries;
     },

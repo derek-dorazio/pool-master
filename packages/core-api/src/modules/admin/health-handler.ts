@@ -83,7 +83,7 @@ export function createHealthHandlers(healthService: HealthService) {
 
   // --- Search errors ---
 
-  async function searchErrors(
+  function searchErrors(
     request: FastifyRequest<{
       Querystring: {
         service?: string;
@@ -97,7 +97,7 @@ export function createHealthHandlers(healthService: HealthService) {
     _reply: FastifyReply,
   ) {
     const query = request.query;
-    const result = await healthService.searchErrors({
+    const result = healthService.searchErrors({
       service: query.service,
       severity: query.severity,
       startDate: query.dateFrom,
@@ -141,11 +141,11 @@ export function createHealthHandlers(healthService: HealthService) {
 
   // --- Alert rules list ---
 
-  async function getAlertRules(
+  function getAlertRules(
     _request: FastifyRequest,
     _reply: FastifyReply,
   ) {
-    const rules = await healthService.getAlertRules();
+    const rules = healthService.getAlertRules();
     return {
       rules: rules.map((rule) => ({
         ...rule,

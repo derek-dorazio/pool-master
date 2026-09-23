@@ -8,6 +8,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AdminGetGolfSeasonResponses } from '@/lib/api';
 import { localDateTimeInputToIso } from './golf-admin-utils';
+import { throwApiError } from '@/lib/errors';
 
 type GolfSeason = AdminGetGolfSeasonResponses[200]['season'];
 
@@ -64,7 +65,7 @@ export function GolfSeasonEditModal({
         },
       });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Golf season update response is missing data.');
+        throwApiError(response.error, 'Golf season update response is missing data.');
       }
       return response.data.season;
     },
@@ -99,7 +100,7 @@ export function GolfSeasonEditModal({
       testId="root-admin-golf-season-home-edit-modal"
       title="Edit season"
     >
-      <form className="space-y-3" onSubmit={submit}>
+      <form className="space-y-3" onSubmit={(e) => void submit(e)}>
         <FormField
           error={form.formState.errors.name?.message}
           helperText="The year and tour are fixed at creation."

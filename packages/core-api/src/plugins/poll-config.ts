@@ -72,7 +72,7 @@ function matchPattern(pattern: string, path: string): boolean {
   );
 }
 
-export const pollConfigPlugin = fp(async (app) => {
+export const pollConfigPlugin = fp((app) => {
   app.addHook('onSend', async (request, reply, payload) => {
     if (request.method !== 'GET') return payload;
 

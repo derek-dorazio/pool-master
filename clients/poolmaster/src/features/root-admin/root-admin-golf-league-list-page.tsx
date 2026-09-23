@@ -13,7 +13,7 @@ import {
   Input,
   StatusBadge,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -49,7 +49,7 @@ export function RootAdminGolfLeagueListPage() {
     queryFn: async (): Promise<GolfLeague[]> => {
       const response = await adminListGolfLeagues();
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('Golf tour list response is missing data.');
+        throwApiError(response.error, 'Golf tour list response is missing data.');
       }
       return response.data.leagues;
     },
@@ -73,7 +73,7 @@ export function RootAdminGolfLeagueListPage() {
         },
       });
       if (!response.data?.league) {
-        throw response.error ?? new Error('Golf tour creation response is missing data.');
+        throwApiError(response.error, 'Golf tour creation response is missing data.');
       }
       return response.data.league;
     },
@@ -176,7 +176,7 @@ export function RootAdminGolfLeagueListPage() {
       >
         <form
           className="space-y-3"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+          onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
         >
           <FormField error={form.formState.errors.name?.message} label="Tour name">
             <Input

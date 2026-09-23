@@ -9,7 +9,7 @@ import { mapConsentRecordToDto } from '../../mappers';
 import { AccountConsentService } from './account-consent-service';
 import { getAppPrisma } from '../../core/prisma-context';
 
-export async function accountConsentModule(fastify: FastifyInstance): Promise<void> {
+export function accountConsentModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const consentService = new AccountConsentService(prisma, fastify.log);
 
@@ -59,7 +59,7 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
         },
       }, 'Recorded account consent');
       return reply.status(201).send({
-        consent: mapConsentRecordToDto(consent as Record<string, unknown>),
+        consent: mapConsentRecordToDto(consent),
       });
     },
   );
@@ -90,7 +90,7 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
           recordCount: history.length,
         },
       }, 'Loaded account consent history');
-      return { consents: history.map((record) => mapConsentRecordToDto(record as Record<string, unknown>)) };
+      return { consents: history.map((record) => mapConsentRecordToDto(record)) };
     },
   });
 }

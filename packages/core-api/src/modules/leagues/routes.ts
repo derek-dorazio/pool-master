@@ -57,7 +57,7 @@ import {
   readMailDeliveryConfig,
 } from '../email';
 
-export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
+export function leaguesModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);

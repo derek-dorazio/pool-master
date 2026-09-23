@@ -7,7 +7,7 @@ import {
   ManagementListPage,
   StatusBadge,
 } from "@/features/shared/ui";
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
@@ -22,10 +22,7 @@ export function RootAdminManageLeaguesPage() {
       });
 
       if (!response.data?.leagues) {
-        throw (
-          response.error ??
-          new Error("League management response is missing data.")
-        );
+        throwApiError(response.error, "League management response is missing data.");
       }
 
       return response.data.leagues;

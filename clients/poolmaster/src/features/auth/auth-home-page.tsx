@@ -31,7 +31,7 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from "@/features/teams/team-owner-invitation-preview";
 import { parseRouteState } from "@/routes/route-state";
-import { extractErrorMessage } from "@/lib/errors";
+import { ApiError, extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { setAuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-provider";
@@ -99,7 +99,11 @@ export function resolvePostAuthDestination(
 }
 
 function isUnexpectedAuthError(error: unknown): boolean {
-  return error instanceof Error;
+  // ApiError wraps every SDK rejection (see throwApiError) so it is always
+  // `instanceof Error`; a plain `error instanceof Error` check no longer
+  // distinguishes an expected API rejection from a genuine unexpected
+  // exception the way it did when SDK errors were thrown as plain objects.
+  return !(error instanceof ApiError);
 }
 
 export function AuthHomePage() {
@@ -242,7 +246,7 @@ export function AuthHomePage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error("Login response is missing data.");
+        throwApiError(response.error, "Login response is missing data.");
       }
 
       setAuthSessionUser(queryClient, response.data.user);
@@ -307,9 +311,7 @@ export function AuthHomePage() {
       });
 
       if (!response.data) {
-        throw (
-          response.error ?? new Error("Registration response is missing data.")
-        );
+        throwApiError(response.error, "Registration response is missing data.");
       }
 
       setAuthSessionUser(queryClient, response.data.user);
@@ -437,7 +439,7 @@ export function AuthHomePage() {
           {mode === "login" ? (
             <form
               className="mt-6 space-y-4"
-              onSubmit={loginForm.handleSubmit(handleLogin)}
+              onSubmit={(e) => void loginForm.handleSubmit(handleLogin)(e)}
             >
               <FormField
                 error={loginForm.formState.errors.identifier?.message}
@@ -475,7 +477,7 @@ export function AuthHomePage() {
           ) : (
             <form
               className="mt-6 space-y-4"
-              onSubmit={registerForm.handleSubmit(handleRegister)}
+              onSubmit={(e) => void registerForm.handleSubmit(handleRegister)(e)}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField

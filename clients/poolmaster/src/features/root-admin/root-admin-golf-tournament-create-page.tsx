@@ -11,6 +11,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import type { AdminListGolfSeasonsResponses } from '@/lib/api';
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
+import { throwApiError } from '@/lib/errors';
 
 type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
 type CreateMode = 'manual' | 'provider';
@@ -32,7 +33,7 @@ export function RootAdminGolfTournamentCreatePage() {
     queryFn: async (): Promise<GolfSeason[]> => {
       const response = await adminListGolfSeasons({ query: { isActive: true } });
       if (!response.data?.seasons) {
-        throw response.error ?? new Error('Golf season list response is missing data.');
+        throwApiError(response.error, 'Golf season list response is missing data.');
       }
       return response.data.seasons;
     },

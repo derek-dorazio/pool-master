@@ -14,7 +14,7 @@ import {
   SegmentedControl,
   formatDateDisplay,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type {
   AdminGetGolfRoundScoresResponses,
@@ -49,7 +49,7 @@ export function RootAdminGolfTournamentScoresPage() {
     queryFn: async (): Promise<AdminGolfTournamentDetail> => {
       const response = await adminGetGolfTournament({ path: { eventId } });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament response is missing data.');
+        throwApiError(response.error, 'Golf tournament response is missing data.');
       }
       return response.data.tournament;
     },
@@ -62,7 +62,7 @@ export function RootAdminGolfTournamentScoresPage() {
     queryFn: async (): Promise<GolfRound[]> => {
       const response = await adminGetGolfTournamentRounds({ path: { eventId } });
       if (!response.data?.rounds) {
-        throw response.error ?? new Error('Golf tournament rounds response is missing data.');
+        throwApiError(response.error, 'Golf tournament rounds response is missing data.');
       }
       return response.data.rounds;
     },
@@ -75,7 +75,7 @@ export function RootAdminGolfTournamentScoresPage() {
     queryFn: async (): Promise<FieldEntry[]> => {
       const response = await adminGetGolfTournamentField({ path: { eventId } });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Golf tournament field response is missing data.');
+        throwApiError(response.error, 'Golf tournament field response is missing data.');
       }
       return response.data.entries;
     },
@@ -88,7 +88,7 @@ export function RootAdminGolfTournamentScoresPage() {
     queryFn: async (): Promise<ScoreRow[]> => {
       const response = await adminGetGolfRoundScores({ path: { eventId, round } });
       if (!response.data?.rows) {
-        throw response.error ?? new Error('Golf round scores response is missing data.');
+        throwApiError(response.error, 'Golf round scores response is missing data.');
       }
       return response.data.rows;
     },

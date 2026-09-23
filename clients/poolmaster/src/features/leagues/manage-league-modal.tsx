@@ -14,7 +14,7 @@ import { buildLeaguePath } from './league-routing';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { Button, Chip, formatDateDisplay, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -114,7 +114,7 @@ function ManageLeagueModalContent({
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -128,12 +128,12 @@ function ManageLeagueModalContent({
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League inactivation response is missing data.');
+        throwApiError(response.error, 'League inactivation response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
     invalidates: [],
@@ -158,12 +158,12 @@ function ManageLeagueModalContent({
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League details update response is missing data.');
+        throwApiError(response.error, 'League details update response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       setDetailsName(updatedLeague.name);
       setDetailsDescription(updatedLeague.description ?? '');
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
@@ -179,12 +179,12 @@ function ManageLeagueModalContent({
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League icon update response is missing data.');
+        throwApiError(response.error, 'League icon update response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       setSelectedIconKey(updatedLeague.iconKey);
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
@@ -199,12 +199,12 @@ function ManageLeagueModalContent({
       });
 
       if (!response.data?.success) {
-        throw response.error ?? new Error('League delete response is missing data.');
+        throwApiError(response.error, 'League delete response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, league?.id ?? ''),
       );

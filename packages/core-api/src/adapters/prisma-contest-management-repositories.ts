@@ -175,7 +175,7 @@ export class PrismaContestConfigurationRepository
         pickCount: configuration.pickCount,
         isExclusive: configuration.isExclusive ?? false,
         picksPerPeriod: configuration.picksPerPeriod,
-        roundValues: configuration.roundValues as number[] | undefined,
+        roundValues: configuration.roundValues,
         startRound: configuration.startRound,
         locksAt: configuration.locksAt,
         minimumEntries: configuration.minimumEntries,
@@ -231,7 +231,7 @@ export class PrismaContestConfigurationRepository
           picksPerPeriod: updates.picksPerPeriod,
         }),
         ...(updates.roundValues !== undefined && {
-          roundValues: updates.roundValues as number[],
+          roundValues: updates.roundValues,
         }),
         ...(updates.startRound !== undefined && {
           startRound: updates.startRound,

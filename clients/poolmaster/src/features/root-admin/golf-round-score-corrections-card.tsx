@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { adminUpdateGolfRoundScore } from '@/lib/api';
 import { Alert, Button, DataGrid, Input, Select, Tile } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -248,7 +248,7 @@ export function GolfRoundScoreCorrectionsCard({
         body,
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },

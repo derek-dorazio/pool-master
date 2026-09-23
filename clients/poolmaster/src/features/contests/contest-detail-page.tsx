@@ -13,7 +13,7 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
   buildLeagueContestEntryPath,
@@ -132,7 +132,7 @@ export function ContestDetailPage() {
       const response = await getContest({ path: { contestId } });
 
       if (!response.data?.contest) {
-        throw response.error ?? new Error('Contest detail response is missing data.');
+        throwApiError(response.error, 'Contest detail response is missing data.');
       }
 
       return response.data.contest;
@@ -147,7 +147,7 @@ export function ContestDetailPage() {
       const response = await listContestEntries({ path: { contestId } });
 
       if (!response.data) {
-        throw response.error ?? new Error('Contest entries response is missing data.');
+        throwApiError(response.error, 'Contest entries response is missing data.');
       }
 
       return response.data;
@@ -165,7 +165,7 @@ export function ContestDetailPage() {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
       if (!response.data?.squads) {
-        throw response.error ?? new Error('Team list response is missing data.');
+        throwApiError(response.error, 'Team list response is missing data.');
       }
 
       return response.data.squads;
@@ -192,11 +192,11 @@ export function ContestDetailPage() {
     mutationFn: async () => {
       const response = await enterContest({ path: { contestId } });
       if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry creation response is missing data.');
+        throwApiError(response.error, 'Contest entry creation response is missing data.');
       }
       return response.data.entry;
     },
-    onSuccess: async (entry) => {
+    onSuccess: (entry) => {
       navigate(
         hintedLeagueCode
           ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
@@ -216,11 +216,11 @@ export function ContestDetailPage() {
         body: { name },
       });
       if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry rename response is missing data.');
+        throwApiError(response.error, 'Contest entry rename response is missing data.');
       }
       return response.data.entry;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setRenameEntryId(null);
       setRenameDraft('');
     },

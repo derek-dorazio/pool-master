@@ -122,6 +122,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
       expect(adminUpdateGolfPlayerMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { participantId: 'p-rory' },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           body: expect.objectContaining({ name: 'Rory McIlroy', status: 'RETIRED' }),
         }),
       ),
@@ -141,6 +142,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
     await waitFor(() =>
       expect(adminUpdateGolfPlayerMock).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           body: expect.objectContaining({ name: 'Rory McIlroy', status: 'ACTIVE' }),
         }),
       ),

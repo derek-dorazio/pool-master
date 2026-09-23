@@ -21,6 +21,7 @@ import {
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { throwApiError } from '@/lib/errors';
 
 const POLL_INTERVAL_FIELDS = [
   ['standings', 'Standings'],
@@ -40,7 +41,7 @@ export function RootAdminPollIntervalsPage() {
     queryFn: async (): Promise<PollIntervalConfig> => {
       const response = await adminGetPollIntervals();
       if (!response.data) {
-        throw response.error ?? new Error('Poll interval response is missing data.');
+        throwApiError(response.error, 'Poll interval response is missing data.');
       }
       return response.data;
     },
@@ -66,12 +67,12 @@ export function RootAdminPollIntervalsPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Poll interval update response is missing data.');
+        throwApiError(response.error, 'Poll interval update response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.pollConfig],
@@ -81,11 +82,11 @@ export function RootAdminPollIntervalsPage() {
     mutationFn: async () => {
       const response = await adminResetPollIntervals();
       if (!response.data) {
-        throw response.error ?? new Error('Poll interval reset response is missing data.');
+        throwApiError(response.error, 'Poll interval reset response is missing data.');
       }
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.pollConfig],

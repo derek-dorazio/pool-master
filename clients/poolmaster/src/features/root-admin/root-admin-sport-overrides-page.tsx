@@ -26,6 +26,7 @@ import {
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { throwApiError } from '@/lib/errors';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
@@ -40,7 +41,7 @@ export function RootAdminSportOverridesPage() {
     queryFn: async (): Promise<IngestionScheduleConfig> => {
       const response = await adminGetIngestionSchedule();
       if (!response.data) {
-        throw response.error ?? new Error('Ingestion schedule response is missing data.');
+        throwApiError(response.error, 'Ingestion schedule response is missing data.');
       }
       return response.data;
     },
@@ -82,12 +83,12 @@ export function RootAdminSportOverridesPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Sport override update response is missing data.');
+        throwApiError(response.error, 'Sport override update response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
@@ -102,12 +103,12 @@ export function RootAdminSportOverridesPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Sport override reset response is missing data.');
+        throwApiError(response.error, 'Sport override reset response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));

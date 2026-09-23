@@ -50,8 +50,8 @@ export class ContestTemplateAdminService {
     }, 'contest template admin list start');
 
     const templates = await this.repository.list({
-      sport: query.sport as ContestConfigTemplate['sport'] | undefined,
-      contestFormat: query.contestFormat as ContestConfigTemplate['contestFormat'] | undefined,
+      sport: query.sport,
+      contestFormat: query.contestFormat,
       active: query.active,
     });
 

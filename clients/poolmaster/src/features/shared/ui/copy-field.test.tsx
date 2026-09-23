@@ -19,6 +19,7 @@ describe("pool-master-3lo.12: shared CopyField primitive", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy Join URL" }));
 
     await waitFor(() => {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- assertion only, never invoked unbound; navigator.clipboard.writeText is a vi.fn() mock here.
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
         "https://example.test/join",
       );

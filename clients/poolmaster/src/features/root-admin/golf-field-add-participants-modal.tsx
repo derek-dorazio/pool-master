@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { throwApiError } from '@/lib/errors';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import {
@@ -71,7 +72,7 @@ export function GolfFieldAddParticipantsModal({
     queryFn: async (): Promise<GolfLeague[]> => {
       const response = await adminListGolfLeagues();
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('Golf tour list response is missing data.');
+        throwApiError(response.error, 'Golf tour list response is missing data.');
       }
       return response.data.leagues;
     },
@@ -83,7 +84,7 @@ export function GolfFieldAddParticipantsModal({
     queryFn: async (): Promise<RosterEntry[]> => {
       const response = await adminGetGolfLeagueRoster({ path: { leagueId } });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Golf tour roster response is missing data.');
+        throwApiError(response.error, 'Golf tour roster response is missing data.');
       }
       return response.data.entries;
     },
@@ -97,7 +98,7 @@ export function GolfFieldAddParticipantsModal({
     queryFn: async () => {
       const response = await adminListGolfPlayers({ query: { search: searchTerm } });
       if (!response.data?.players) {
-        throw response.error ?? new Error('Golf player search response is missing data.');
+        throwApiError(response.error, 'Golf player search response is missing data.');
       }
       return response.data.players;
     },
@@ -112,7 +113,7 @@ export function GolfFieldAddParticipantsModal({
         body: { participantIds },
       });
       if (!response.data) {
-        throw response.error ?? new Error('Bulk add response is missing data.');
+        throwApiError(response.error, 'Bulk add response is missing data.');
       }
       return response.data;
     },

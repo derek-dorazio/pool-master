@@ -26,9 +26,9 @@ import { ContestManagementService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
 import { GolfTierService } from '../golf/golf-tier-service';
 
-export async function contestManagementModule(
+export function contestManagementModule(
   fastify: FastifyInstance,
-): Promise<void> {
+): void {
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const golfTierService = new GolfTierService(prisma, fastify.log);

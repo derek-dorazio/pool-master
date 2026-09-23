@@ -337,7 +337,9 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     await waitFor(() =>
       expect(adminUpdateGolfTournamentRoundsMock).toHaveBeenCalledTimes(1),
     );
-    const body = adminUpdateGolfTournamentRoundsMock.mock.calls[0][0].body;
+    const body = (adminUpdateGolfTournamentRoundsMock.mock.calls[0][0] as {
+      body: { rounds: Array<Record<string, unknown>> };
+    }).body;
     expect(body.rounds[0]).toMatchObject({ roundNumber: 1 });
     expect(body.rounds[0].scheduledDate).toContain('2026-05-09T');
   });

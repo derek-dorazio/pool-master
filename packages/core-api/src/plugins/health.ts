@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
-export async function healthPlugin(fastify: FastifyInstance): Promise<void> {
-  fastify.get('/health', async () => {
+export function healthPlugin(fastify: FastifyInstance): void {
+  fastify.get('/health', () => {
     return { status: 'ok', service: 'core-api' };
   });
 }

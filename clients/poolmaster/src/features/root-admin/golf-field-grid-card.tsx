@@ -12,7 +12,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -193,7 +193,7 @@ export function GolfFieldGridCard({
         body: { entries: patches },
       });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Field save response is missing data.');
+        throwApiError(response.error, 'Field save response is missing data.');
       }
       return response.data.entries;
     },

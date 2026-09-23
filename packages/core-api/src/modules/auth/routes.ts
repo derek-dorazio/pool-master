@@ -24,7 +24,7 @@ import {
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 
-export async function authModule(fastify: FastifyInstance): Promise<void> {
+export function authModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const authService = new AuthService(prisma, fastify.log);
   const handlers = createAuthHandlers(authService);

@@ -17,7 +17,7 @@ import {
   Tile,
   formatDateDisplay,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -54,7 +54,7 @@ export function RootAdminGolfSeasonHomePage() {
     queryFn: async (): Promise<GolfSeason> => {
       const response = await adminGetGolfSeason({ path: { seasonId } });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Golf season response is missing data.');
+        throwApiError(response.error, 'Golf season response is missing data.');
       }
       return response.data.season;
     },
@@ -69,7 +69,7 @@ export function RootAdminGolfSeasonHomePage() {
     queryFn: async () => {
       const response = await adminListGolfLeagues();
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('Golf tour list response is missing data.');
+        throwApiError(response.error, 'Golf tour list response is missing data.');
       }
       return response.data.leagues;
     },
@@ -81,7 +81,7 @@ export function RootAdminGolfSeasonHomePage() {
     queryFn: async (): Promise<GolfTournament[]> => {
       const response = await adminListGolfTournaments();
       if (!response.data?.tournaments) {
-        throw response.error ?? new Error('Golf tournament list response is missing data.');
+        throwApiError(response.error, 'Golf tournament list response is missing data.');
       }
       return response.data.tournaments;
     },
@@ -111,7 +111,7 @@ export function RootAdminGolfSeasonHomePage() {
     mutationFn: async () => {
       const response = await adminSetCurrentGolfSeason({ path: { seasonId } });
       if (!response.data?.currentSeasonId) {
-        throw response.error ?? new Error('Set-current response is missing data.');
+        throwApiError(response.error, 'Set-current response is missing data.');
       }
       return response.data;
     },

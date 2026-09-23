@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
+import { throwApiError } from "@/lib/errors";
 import {
   getMyContestEntry,
   getLeagueByCode,
@@ -49,9 +50,7 @@ export function LeagueContestsPage() {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
-        throw (
-          response.error ?? new Error("League detail response is missing data.")
-        );
+        throwApiError(response.error, "League detail response is missing data.");
       }
 
       return response.data.league;
@@ -90,9 +89,7 @@ export function LeagueContestsPage() {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {
-        throw (
-          response.error ?? new Error("Contest list response is missing data.")
-        );
+        throwApiError(response.error, "Contest list response is missing data.");
       }
 
       return response.data.contests;

@@ -36,7 +36,7 @@ import {
   Textarea,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
@@ -95,7 +95,7 @@ export function LeagueDetailPage() {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -167,7 +167,7 @@ export function LeagueDetailPage() {
 
       const inviteCode = response.data?.invitation?.inviteCode;
       if (!inviteCode) {
-        throw response.error ?? new Error('Invite link generation did not return an invite code.');
+        throwApiError(response.error, 'Invite link generation did not return an invite code.');
       }
 
       return `${window.location.origin}${buildInvitePath(inviteCode)}`;
@@ -185,7 +185,7 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Invitation send response is missing data.');
+        throwApiError(response.error, 'Invitation send response is missing data.');
       }
 
       return response.data;
@@ -208,12 +208,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League details update response is missing data.');
+        throwApiError(response.error, 'League details update response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       setDetailsName(league.name);
       setDetailsDescription(league.description ?? '');
       syncLeagueCaches(queryClient, league);
@@ -229,12 +229,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League icon update response is missing data.');
+        throwApiError(response.error, 'League icon update response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       setIconDraftKey(league.iconKey);
       setIconModalOpen(false);
       syncLeagueCaches(queryClient, league);
@@ -249,12 +249,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League inactivation response is missing data.');
+        throwApiError(response.error, 'League inactivation response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       if (leagueQuery.data) {
         syncLeagueCaches(
           queryClient,
@@ -276,12 +276,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League activation response is missing data.');
+        throwApiError(response.error, 'League activation response is missing data.');
       }
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       syncLeagueCaches(queryClient, league);
     },
     invalidates: [],
@@ -299,12 +299,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data?.success) {
-        throw response.error ?? new Error('League delete response is missing data.');
+        throwApiError(response.error, 'League delete response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setDeleteModalOpen(false);
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
@@ -321,12 +321,12 @@ export function LeagueDetailPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Leave league response is missing data.');
+        throwApiError(response.error, 'Leave league response is missing data.');
       }
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setLeaveActionError(null);
       setLeaveCompleted(true);
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>

@@ -16,7 +16,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -149,7 +149,7 @@ export function GolfLeagueRosterGridCard({
     queryFn: async (): Promise<GolfPlayer[]> => {
       const response = await adminListGolfPlayers();
       if (!response.data?.players) {
-        throw response.error ?? new Error('Golf player list response is missing data.');
+        throwApiError(response.error, 'Golf player list response is missing data.');
       }
       return response.data.players;
     },
@@ -166,7 +166,7 @@ export function GolfLeagueRosterGridCard({
         body: { entries: rows },
       });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Roster save response is missing data.');
+        throwApiError(response.error, 'Roster save response is missing data.');
       }
       return response.data.entries;
     },
@@ -187,7 +187,7 @@ export function GolfLeagueRosterGridCard({
         body: { participantId },
       });
       if (!response.data?.entry) {
-        throw response.error ?? new Error('Add golfer response is missing data.');
+        throwApiError(response.error, 'Add golfer response is missing data.');
       }
       return response.data.entry;
     },
@@ -216,7 +216,7 @@ export function GolfLeagueRosterGridCard({
         path: { leagueId, participantId },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return participantId;
     },

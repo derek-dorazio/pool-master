@@ -306,7 +306,7 @@ export class HealthService {
     return metrics;
   }
 
-  async searchErrors(_query: ErrorLogQuery): Promise<{ items: ErrorLogEntry[]; total: number }> {
+  searchErrors(_query: ErrorLogQuery): { items: ErrorLogEntry[]; total: number } {
     this.logger?.debug({
       action: 'adminHealthService.searchErrors.start',
     }, 'Searching error logs');
@@ -320,6 +320,7 @@ export class HealthService {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- always throws today (stub); callers and tests rely on Promise-rejection semantics, not a synchronous throw.
   async getErrorDetail(errorId: string): Promise<ErrorLogDetail> {
     this.logger?.warn({
       action: 'adminHealthService.errorDetail.notFound',
@@ -328,7 +329,7 @@ export class HealthService {
     throw new ErrorLogEntryNotFoundError(errorId);
   }
 
-  async getAlertRules(): Promise<AlertRule[]> {
+  getAlertRules(): AlertRule[] {
     this.logger?.debug({
       action: 'adminHealthService.alertRules.start',
     }, 'Loading alert rules');
@@ -339,6 +340,7 @@ export class HealthService {
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- always throws today (stub); callers and tests rely on Promise-rejection semantics, not a synchronous throw.
   async updateAlertRule(alertId: string, _update: AlertRuleUpdate): Promise<AlertRule> {
     this.logger?.warn({
       action: 'adminHealthService.alertRule.update.notFound',
@@ -347,6 +349,7 @@ export class HealthService {
     throw new AlertRuleNotFoundError(alertId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- always throws today (stub); callers and tests rely on Promise-rejection semantics, not a synchronous throw.
   async muteAlert(alertId: string, _durationMinutes: number): Promise<AlertRule> {
     this.logger?.warn({
       action: 'adminHealthService.alertRule.mute.notFound',
@@ -355,6 +358,7 @@ export class HealthService {
     throw new AlertRuleNotFoundError(alertId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- always throws today (stub); callers and tests rely on Promise-rejection semantics, not a synchronous throw.
   async unmuteAlert(alertId: string): Promise<AlertRule> {
     this.logger?.warn({
       action: 'adminHealthService.alertRule.unmute.notFound',

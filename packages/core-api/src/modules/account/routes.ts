@@ -16,7 +16,7 @@ import { createAccountHandlers } from './handler';
 import { AccountService } from './service';
 import { AuthService } from '../auth/auth-service';
 
-export async function accountModule(fastify: FastifyInstance): Promise<void> {
+export function accountModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const service = new AccountService(prisma, fastify.log);
   const authService = new AuthService(prisma, fastify.log);

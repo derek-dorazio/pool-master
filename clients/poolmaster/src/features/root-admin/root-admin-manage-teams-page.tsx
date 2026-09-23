@@ -6,7 +6,7 @@ import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { ManagementListPage, StatusBadge } from '@/features/shared/ui';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 type ManagedTeam = AdminListTeamsResponses[200]['teams'][number];
@@ -36,7 +36,7 @@ export function RootAdminManageTeamsPage() {
       });
 
       if (!response.data?.teams) {
-        throw response.error ?? new Error('Team management response is missing data.');
+        throwApiError(response.error, 'Team management response is missing data.');
       }
 
       return response.data.teams;

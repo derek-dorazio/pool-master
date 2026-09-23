@@ -26,7 +26,7 @@ import { SquadOwnerInvitationService } from './owner-invitation-service';
 import { SquadService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
 
-export async function squadsModule(fastify: FastifyInstance): Promise<void> {
+export function squadsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);

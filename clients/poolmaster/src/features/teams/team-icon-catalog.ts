@@ -64,7 +64,7 @@ export const TEAM_ICON_OPTIONS: Array<{
   themeClass: string;
 }> = TEAM_ICON_BASES.flatMap((base) =>
   TEAM_ICON_THEMES.map((theme) => ({
-    key: TeamIconKeyEnum[`${base.key}_${theme.key}` as keyof typeof TeamIconKeyEnum],
+    key: TeamIconKeyEnum[`${base.key}_${theme.key}`],
     label: `${base.label} ${theme.label}`,
     symbolId: base.symbolId,
     themeClass: theme.themeClass,

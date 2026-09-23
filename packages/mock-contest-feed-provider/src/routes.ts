@@ -16,6 +16,19 @@ import {
 } from './contracts';
 import { ScenarioStore, type ScenarioStoreOptions } from './scenario-store';
 
+/* eslint-disable @typescript-eslint/require-await --
+ * mockContestFeedRoutes and its preHandler/route handlers below have no
+ * internal await, but de-asyncing all of them (plugin registration function
+ * + every hook/handler) reproduces a real, reproducible test failure --
+ * "Promise resolution is still pending but the event loop has already
+ * resolved" -- in every scenario-store.test.ts test that calls buildApp()
+ * and exercises these routes (verified by toggling async on/off against
+ * clean worktree checkouts, isolated to exactly this file across three
+ * bisection steps). Root cause not isolated further (a Fastify/avvio
+ * hook-chaining interaction, matching the same class of issue found and
+ * reverted in core-api's request-logging-context.ts). Keeping this plugin
+ * fully async is the safe choice over a cosmetic lint fix. */
+
 export interface MockContestFeedRouteOptions {
   readonly scenarioStoreOptions?: ScenarioStoreOptions;
 }

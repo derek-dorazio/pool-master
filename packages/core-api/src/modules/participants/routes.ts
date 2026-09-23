@@ -19,7 +19,7 @@ import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
 
-export async function participantsModule(fastify: FastifyInstance): Promise<void> {
+export function participantsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const participantRepo = new PrismaParticipantRepository(prisma);
   const providerMappingRepo = new PrismaParticipantProviderMappingRepository(prisma);

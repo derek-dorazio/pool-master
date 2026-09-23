@@ -64,7 +64,7 @@ app.post<{ Params: { deviceToken: string } }>(
 
 app.post<{ Params: { projectId: string } }>(
   '/fcm/v1/projects/:projectId/messages:send',
-  async (request) => {
+  (request) => {
     const messageId = `projects/${request.params.projectId}/messages/${crypto.randomUUID()}`;
 
     addLogEntry({
@@ -86,7 +86,7 @@ app.post<{ Params: { projectId: string } }>(
 
 // --- Log inspection API ---
 
-app.get('/push-log', async (request) => {
+app.get('/push-log', (request) => {
   const qs = request.query as { platform?: string; limit?: string };
   let entries = pushLog;
 
@@ -98,7 +98,7 @@ app.get('/push-log', async (request) => {
   return { entries: entries.slice(0, limit), total: entries.length };
 });
 
-app.delete('/push-log', async () => {
+app.delete('/push-log', () => {
   const cleared = pushLog.length;
   pushLog.length = 0;
   return { cleared };
@@ -106,7 +106,7 @@ app.delete('/push-log', async () => {
 
 // --- Health ---
 
-app.get('/health', async () => {
+app.get('/health', () => {
   return { status: 'ok', service: 'push-mock-server', logSize: pushLog.length };
 });
 
@@ -122,4 +122,4 @@ async function start(): Promise<void> {
   }
 }
 
-start();
+void start();

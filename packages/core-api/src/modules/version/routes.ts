@@ -10,10 +10,10 @@ export interface VersionModuleOptions {
   readonly operationId?: string;
 }
 
-export async function versionModule(
+export function versionModule(
   fastify: FastifyInstance,
   options: VersionModuleOptions = {},
-): Promise<void> {
+): void {
   const versionService = new VersionService();
   const handler = createVersionHandlers(versionService);
 

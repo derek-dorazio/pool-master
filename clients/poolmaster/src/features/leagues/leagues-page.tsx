@@ -76,7 +76,7 @@ export function WelcomePage() {
   return (
     <Navigate
       replace
-      to={buildLeaguePath(defaultLeagueCode ?? leaguesQuery.data[0]!.leagueCode)}
+      to={buildLeaguePath(defaultLeagueCode ?? leaguesQuery.data[0].leagueCode)}
     />
   );
 }

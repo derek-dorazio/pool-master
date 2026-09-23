@@ -25,7 +25,7 @@ import {
   type ContestConfigTemplate,
   updateTieredTemplateConfiguration,
 } from './content-configuration-utils';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -45,7 +45,7 @@ export function RootAdminContentConfigurationDetailPage() {
       const response = await adminListContestConfigTemplates();
 
       if (!response.data?.templates) {
-        throw response.error ?? new Error('Contest template response is missing data.');
+        throwApiError(response.error, 'Contest template response is missing data.');
       }
 
       return response.data.templates;
@@ -82,12 +82,12 @@ export function RootAdminContentConfigurationDetailPage() {
       });
 
       if (!response.data?.template) {
-        throw response.error ?? new Error('Contest template update response is missing data.');
+        throwApiError(response.error, 'Contest template update response is missing data.');
       }
 
       return response.data.template;
     },
-    onSuccess: async (updatedTemplate) => {
+    onSuccess: (updatedTemplate) => {
       setDraft(cloneContestTemplate(updatedTemplate));
       logger.info(
         {

@@ -4,6 +4,7 @@ import {
   type SendEmailCommandOutput,
 } from '@aws-sdk/client-ses';
 import nodemailer, { type Transporter } from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { FastifyBaseLogger } from 'fastify';
 
 export type MailDeliveryProviderName = 'smtp' | 'ses';
@@ -82,11 +83,11 @@ export class MailDeliveryError extends Error {
 export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
   readonly providerName = 'smtp' as const;
 
-  private readonly transport: Transporter;
+  private readonly transport: Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(
     private readonly config: MailDeliveryConfig,
-    transport?: Transporter,
+    transport?: Transporter<SMTPTransport.SentMessageInfo>,
     private readonly logger?: FastifyBaseLogger,
   ) {
     if (!config.smtp) {

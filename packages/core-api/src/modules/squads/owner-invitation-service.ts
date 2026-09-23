@@ -239,7 +239,7 @@ export class SquadOwnerInvitationService {
     }
     return {
       inviteCode: invitation.inviteCode,
-      status: invitation.status as SquadOwnerInvitationStatus,
+      status: invitation.status,
       league: {
         id: league.id,
         leagueCode: league.leagueCode,
@@ -462,7 +462,7 @@ export class SquadOwnerInvitationService {
       squadId: invitation.squadId,
       email: invitation.email,
       inviteCode: invitation.inviteCode,
-      status: invitation.status as SquadOwnerInvitationStatus,
+      status: invitation.status,
       invitedBy: invitation.invitedBy,
       acceptedBy: invitation.acceptedBy ?? null,
       acceptedAt: invitation.acceptedAt?.toISOString() ?? null,

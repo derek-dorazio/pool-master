@@ -6,7 +6,7 @@ import {
   FormField,
   Input,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -41,7 +41,7 @@ export function GolfTierAutoAssignActions({
         body: { source },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },
@@ -65,7 +65,7 @@ export function GolfTierAutoAssignActions({
         body: { minPrice: Number(minPrice), maxPrice: Number(maxPrice) },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },

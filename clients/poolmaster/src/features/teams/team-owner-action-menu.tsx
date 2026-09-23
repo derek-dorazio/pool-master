@@ -6,6 +6,7 @@ import { Button } from '@/features/shared/ui';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { throwApiError } from '@/lib/errors';
 
 type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
@@ -131,12 +132,12 @@ export function TeamOwnerActionMenu({
       });
 
       if (!response.data?.membership) {
-        throw response.error ?? new Error('League member role response is missing data.');
+        throwApiError(response.error, 'League member role response is missing data.');
       }
 
       return response.data.membership;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveAction(null);
       setMenuOpen(false);
     },
@@ -150,12 +151,12 @@ export function TeamOwnerActionMenu({
       });
 
       if (!response.data?.membership) {
-        throw response.error ?? new Error('Remove owner response is missing data.');
+        throwApiError(response.error, 'Remove owner response is missing data.');
       }
 
       return response.data.membership;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveAction(null);
       setMenuOpen(false);
     },

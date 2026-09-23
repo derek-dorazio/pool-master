@@ -16,7 +16,7 @@ export class DraftStore {
   private availableParticipants: Map<string, string[]> = new Map();
 
   /** Store or update a session for a contest. */
-  async setSession(contestId: string, session: SessionState): Promise<void> {
+  setSession(contestId: string, session: SessionState): void {
     this.sessions.set(contestId, session);
     this.logger?.info(
       { action: 'draftStore.setSession', data: { contestId, sessionId: session.sessionId, status: session.status } },
@@ -25,7 +25,7 @@ export class DraftStore {
   }
 
   /** Retrieve the session for a contest. */
-  async getSession(contestId: string): Promise<SessionState | undefined> {
+  getSession(contestId: string): SessionState | undefined {
     const session = this.sessions.get(contestId);
     this.logger?.debug(
       { action: 'draftStore.getSession', data: { contestId, found: Boolean(session) } },
@@ -35,7 +35,7 @@ export class DraftStore {
   }
 
   /** Store or update draft state for a contest. */
-  async setState(contestId: string, state: DraftState): Promise<void> {
+  setState(contestId: string, state: DraftState): void {
     this.states.set(contestId, state);
     this.logger?.info(
       {
@@ -52,7 +52,7 @@ export class DraftStore {
   }
 
   /** Retrieve draft state for a contest. */
-  async getState(contestId: string): Promise<DraftState | undefined> {
+  getState(contestId: string): DraftState | undefined {
     const state = this.states.get(contestId);
     this.logger?.debug(
       { action: 'draftStore.getState', data: { contestId, found: Boolean(state) } },
@@ -62,7 +62,7 @@ export class DraftStore {
   }
 
   /** Set the available participant pool for a contest. */
-  async setAvailableParticipants(contestId: string, participantIds: string[]): Promise<void> {
+  setAvailableParticipants(contestId: string, participantIds: string[]): void {
     this.availableParticipants.set(contestId, [...participantIds]);
     this.logger?.info(
       { action: 'draftStore.setAvailableParticipants', data: { contestId, participantCount: participantIds.length } },
@@ -71,7 +71,7 @@ export class DraftStore {
   }
 
   /** Get the available participant pool for a contest. */
-  async getAvailableParticipants(contestId: string): Promise<string[]> {
+  getAvailableParticipants(contestId: string): string[] {
     const participantIds = this.availableParticipants.get(contestId) ?? [];
     this.logger?.debug(
       { action: 'draftStore.getAvailableParticipants', data: { contestId, participantCount: participantIds.length } },
@@ -91,7 +91,7 @@ export class DraftStore {
   }
 
   /** Remove all data for a contest. */
-  async remove(contestId: string): Promise<void> {
+  remove(contestId: string): void {
     this.sessions.delete(contestId);
     this.states.delete(contestId);
     this.availableParticipants.delete(contestId);

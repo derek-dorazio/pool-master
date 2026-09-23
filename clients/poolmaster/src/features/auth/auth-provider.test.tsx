@@ -139,6 +139,7 @@ describe('AuthProvider', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.me.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           userId: 'user-1',
         }),
@@ -172,6 +173,7 @@ describe('AuthProvider', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.refresh.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           sessionId: 'session-2',
           userId: 'user-2',
@@ -301,6 +303,7 @@ describe('AuthProvider', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.logout.failed',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         err: expect.objectContaining({
           code: 'AUTH_LOGOUT_FAILED',
           message: 'Logout failed',

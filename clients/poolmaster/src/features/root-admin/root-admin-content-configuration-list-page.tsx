@@ -9,6 +9,7 @@ import {
 import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 import { QueryKeys } from '@/lib/query-keys';
+import { throwApiError } from '@/lib/errors';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
@@ -23,7 +24,7 @@ export function RootAdminContentConfigurationListPage() {
       const response = await adminListContestConfigTemplates();
 
       if (!response.data?.templates) {
-        throw response.error ?? new Error('Contest template response is missing data.');
+        throwApiError(response.error, 'Contest template response is missing data.');
       }
 
       return response.data.templates;

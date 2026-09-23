@@ -6,6 +6,7 @@ import {
 import { QueryKeys } from '@/lib/query-keys';
 import type { AdminListProviderCatalogEventsResponses } from '@/lib/api';
 import { resolveGolfProviderId } from './golf-admin-utils';
+import { throwApiError } from '@/lib/errors';
 
 export type GolfProviderCatalogEvent =
   AdminListProviderCatalogEventsResponses[200]['events'][number];
@@ -33,7 +34,7 @@ export function useGolfProviderCatalog(params: {
     queryFn: async () => {
       const response = await adminListProviders();
       if (!response.data?.items) {
-        throw response.error ?? new Error('Provider list response is missing data.');
+        throwApiError(response.error, 'Provider list response is missing data.');
       }
       return response.data.items;
     },
@@ -66,7 +67,7 @@ export function useGolfProviderCatalog(params: {
         },
       });
       if (!response.data?.events) {
-        throw response.error ?? new Error('Provider catalog response is missing data.');
+        throwApiError(response.error, 'Provider catalog response is missing data.');
       }
       return response.data.events;
     },

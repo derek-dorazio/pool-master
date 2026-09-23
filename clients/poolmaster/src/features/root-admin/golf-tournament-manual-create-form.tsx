@@ -10,7 +10,7 @@ import {
   Input,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -83,7 +83,7 @@ export function GolfTournamentManualCreateForm({
         },
       });
       if (!response.data?.tournament?.id) {
-        throw response.error ?? new Error('Tournament creation response is missing data.');
+        throwApiError(response.error, 'Tournament creation response is missing data.');
       }
       return response.data.tournament;
     },
@@ -108,7 +108,7 @@ export function GolfTournamentManualCreateForm({
       <form
         className="space-y-4"
         data-testid="root-admin-golf-tournament-create-manual-form"
-        onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+        onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
       >
         <FormField error={form.formState.errors.name?.message} label="Name">
           <Input

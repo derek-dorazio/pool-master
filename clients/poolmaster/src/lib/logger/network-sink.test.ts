@@ -49,7 +49,9 @@ describe('network sink', () => {
     expect(transport).toHaveBeenCalledWith(
       expect.objectContaining({
         useBeacon: false,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.arrayContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           entries: expect.arrayContaining([
             expect.objectContaining({ action: 'league.view.loaded' }),
             expect.objectContaining({ action: 'league.view.empty' }),

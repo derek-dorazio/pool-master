@@ -35,6 +35,7 @@ describe('registerGlobalBrowserFailureHandlers', () => {
     expect(logger.fatal).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'app.unhandledError',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.any(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         err: expect.any(Error),
         data: {
           filename: 'app.tsx',
@@ -62,6 +63,7 @@ describe('registerGlobalBrowserFailureHandlers', () => {
     expect(logger.fatal).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'app.unhandledRejection',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.any(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         err: expect.any(Error),
       }),
       'Unhandled promise rejection',

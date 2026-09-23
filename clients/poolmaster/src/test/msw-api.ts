@@ -178,7 +178,7 @@ function queryParamsFor(request: Request) {
   return query;
 }
 
-async function requestBodyFor(request: Request) {
+async function requestBodyFor(request: Request): Promise<unknown> {
   if (request.method === 'GET' || request.method === 'HEAD') {
     return undefined;
   }

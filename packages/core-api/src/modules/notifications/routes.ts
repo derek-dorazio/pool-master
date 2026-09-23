@@ -14,10 +14,10 @@ export interface NotificationModuleOpts {
   prisma: PrismaClient;
 }
 
-export async function notificationsModule(
+export function notificationsModule(
   app: FastifyInstance,
   opts: NotificationModuleOpts,
-): Promise<void> {
+): void {
   const inAppChannel = new InAppChannel(opts.prisma);
 
   app.get<{ Querystring: { limit?: string; offset?: string; unreadOnly?: string } }>(
@@ -48,9 +48,7 @@ export async function notificationsModule(
       });
       logger.info({ userId, count: result.notifications.length, total: result.total }, 'Listed in-app notifications');
       return {
-        notifications: result.notifications.map((notification) =>
-          mapNotificationToDto(notification),
-        ),
+        notifications: result.notifications.map((notification) => mapNotificationToDto(notification)),
         total: result.total,
       };
     },

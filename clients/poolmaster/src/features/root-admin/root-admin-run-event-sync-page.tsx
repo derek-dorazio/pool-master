@@ -26,7 +26,7 @@ import {
   type ProviderSummary,
   type SyncSport,
 } from './root-admin-sync-utils';
-import { extractErrorMessage } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -97,7 +97,7 @@ export function RootAdminRunEventSyncPage() {
     queryFn: async (): Promise<ProviderSummary[]> => {
       const response = await adminListProviders();
       if (!response.data?.items) {
-        throw response.error ?? new Error('Provider list response is missing data.');
+        throwApiError(response.error, 'Provider list response is missing data.');
       }
       return response.data.items;
     },
@@ -143,7 +143,7 @@ export function RootAdminRunEventSyncPage() {
       });
 
       if (!response.data?.events) {
-        throw response.error ?? new Error('Event list response is missing data.');
+        throwApiError(response.error, 'Event list response is missing data.');
       }
 
       return response.data.events;
@@ -195,7 +195,7 @@ export function RootAdminRunEventSyncPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Event sync response is missing the result payload.');
+        throwApiError(response.error, 'Event sync response is missing the result payload.');
       }
 
       return response.data;
@@ -215,7 +215,7 @@ export function RootAdminRunEventSyncPage() {
         'Starting manual provider event sync',
       );
     },
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       logger.info(
         {
           action: 'rootAdmin.eventSync.submitted',
@@ -231,7 +231,11 @@ export function RootAdminRunEventSyncPage() {
     },
     invalidates: [QueryKeys.rootAdmin.providerSyncRuns],
     onError: (error) => {
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(
           {
             action: 'rootAdmin.eventSync.failed',

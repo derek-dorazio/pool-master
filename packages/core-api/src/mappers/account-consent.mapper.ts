@@ -1,14 +1,27 @@
-export function mapConsentRecordToDto(record: Record<string, unknown>) {
+interface ConsentRecordRow {
+  id: string;
+  userId: string;
+  consentType: string;
+  granted: boolean;
+  version: string;
+  minimumAgeThreshold: number | null;
+  ageAffirmed: boolean | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+}
+
+export function mapConsentRecordToDto(record: ConsentRecordRow) {
   return {
-    id: String(record.id),
-    userId: String(record.userId),
-    consentType: String(record.consentType),
-    granted: Boolean(record.granted),
-    version: String(record.version),
-    minimumAgeThreshold: record.minimumAgeThreshold == null ? undefined : Number(record.minimumAgeThreshold),
-    ageAffirmed: record.ageAffirmed == null ? undefined : Boolean(record.ageAffirmed),
-    ipAddress: record.ipAddress == null ? undefined : String(record.ipAddress),
-    userAgent: record.userAgent == null ? undefined : String(record.userAgent),
-    createdAt: record.createdAt instanceof Date ? record.createdAt.toISOString() : String(record.createdAt),
+    id: record.id,
+    userId: record.userId,
+    consentType: record.consentType,
+    granted: record.granted,
+    version: record.version,
+    minimumAgeThreshold: record.minimumAgeThreshold ?? undefined,
+    ageAffirmed: record.ageAffirmed ?? undefined,
+    ipAddress: record.ipAddress ?? undefined,
+    userAgent: record.userAgent ?? undefined,
+    createdAt: record.createdAt.toISOString(),
   };
 }

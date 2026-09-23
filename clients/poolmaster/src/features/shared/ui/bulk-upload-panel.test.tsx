@@ -11,9 +11,11 @@ type Row = { name: string };
 type PreviewRow = { name: string; resolved: boolean };
 
 function setup(overrides: Partial<Parameters<typeof BulkUploadPanel<Row, PreviewRow>>[0]> = {}) {
+  // eslint-disable-next-line @typescript-eslint/require-await -- must return Promise<PreviewRow[]> to match BulkUploadPanel's prop type.
   const preview = vi.fn(async (rows: Row[]): Promise<PreviewRow[]> =>
     rows.map((row) => ({ name: row.name, resolved: row.name !== 'ghost' })),
   );
+  // eslint-disable-next-line @typescript-eslint/require-await -- must return a Promise to match BulkUploadPanel's prop type.
   const apply = vi.fn(async () => undefined);
 
   render(
