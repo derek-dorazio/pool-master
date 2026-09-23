@@ -79,14 +79,26 @@ export class RequiredEnvMissingError extends Error {
  * time — so every log line from a misconfigured production box claimed
  * `env: "development"`, which is both wrong and the exact signal an operator
  * would use to tell those apart.
+ *
+ * The variable is `POOLMASTER_ENVIRONMENT` rather than a new name, deliberately.
+ * The codebase already carries FOUR names for "which environment is this":
+ * `POOLMASTER_ENVIRONMENT` (this, the webapp build, `VersionService`),
+ * `ENVIRONMENT` (ingestion provider selection, `provider-bindings.ts`),
+ * `NODE_ENV` (the secure-cookie flag, default log level), and briefly `APP_ENV`,
+ * which this reader introduced and which is now gone. Consolidating the
+ * remaining three is #180; adding a fourth was not worth the blast radius.
+ *
+ * Note this value drives NO behaviour. Its only consumer is the `env:` field on
+ * log lines. Anything that branches reads `NODE_ENV` or `ENVIRONMENT` instead,
+ * so changing this cannot silently flip a code path.
  */
 export function readAppEnv(): string {
-  const value = process.env.APP_ENV;
+  const value = process.env.POOLMASTER_ENVIRONMENT;
   if (!value || value.trim().length === 0) {
     throw new RequiredEnvMissingError(
-      'APP_ENV',
-      'log lines and health output are labelled with it',
-      'Set it to the deployment environment name (development, test, staging, production).',
+      'POOLMASTER_ENVIRONMENT',
+      'log lines are labelled with it, so an operator can tell environments apart',
+      'Set it to the deployment environment name (development, test, qa, staging, production).',
     );
   }
   return value;
@@ -95,22 +107,32 @@ export function readAppEnv(): string {
 /**
  * Resolve the running service version and throw if no source provides one.
  *
- * Accepts the deployment-injected names first, then npm's own, which is set
- * only when the process was started through an npm script. A container running
- * `node dist/index.js` has none of them unless the deployment supplies one —
- * which is the point: a service that cannot say what version it is running
- * should not start, rather than reporting a number someone hardcoded once.
+ * `POOLMASTER_SERVICE_VERSION` is listed first because it is the name the deploy
+ * pipeline actually sets — `.github/workflows/ci.yml` injects it into the core-api
+ * ECS task definition from the full commit SHA. The rest are accepted aliases for
+ * local runs and other harnesses.
+ *
+ * This chain is NOT a fallback: every entry is an environment variable, and the
+ * function still throws when none is set. A `?? 'literal'` at the end would be the
+ * banned pattern — a name list is not.
+ *
+ * `npm_package_version` is last and is set only when the process was started
+ * through an npm script. A container running `node dist/index.js` has none of
+ * these unless the deployment supplies one — which is the point: a service that
+ * cannot say what version it is running should not start, rather than reporting a
+ * number someone hardcoded once.
  */
 export function readServiceVersion(): string {
-  const value = process.env.RELEASE_VERSION
+  const value = process.env.POOLMASTER_SERVICE_VERSION
+    || process.env.RELEASE_VERSION
     || process.env.APP_VERSION
     || process.env.GIT_SHA
     || process.env.npm_package_version;
   if (!value || value.trim().length === 0) {
     throw new RequiredEnvMissingError(
-      'RELEASE_VERSION',
+      'POOLMASTER_SERVICE_VERSION',
       'health output and log lines report the running version',
-      'Set RELEASE_VERSION, APP_VERSION or GIT_SHA at deploy time.',
+      'Set POOLMASTER_SERVICE_VERSION (or RELEASE_VERSION / APP_VERSION / GIT_SHA) at deploy time.',
     );
   }
   return value;
