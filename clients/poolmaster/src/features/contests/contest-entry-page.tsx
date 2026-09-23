@@ -401,7 +401,7 @@ export function ContestEntryPage() {
         'Starting contest entry detail save',
       );
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       logger.info(
         {
           action: 'contestEntry.saveDetails.succeeded',

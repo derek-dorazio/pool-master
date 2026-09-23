@@ -53,7 +53,7 @@ import {
   readMailDeliveryConfig,
 } from '../email';
 
-export async function contestsModule(fastify: FastifyInstance): Promise<void> {
+export function contestsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
@@ -120,7 +120,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
  * Standalone contest routes — registered at /api/v1/contests for
  * operations that use contestId rather than leagueId.
  */
-export async function contestsByIdModule(fastify: FastifyInstance): Promise<void> {
+export function contestsByIdModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);

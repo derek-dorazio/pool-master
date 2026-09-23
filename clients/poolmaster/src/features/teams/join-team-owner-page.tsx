@@ -117,7 +117,7 @@ export function JoinTeamOwnerPage() {
         'Starting team-owner invitation acceptance',
       );
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       logger.info(
         {
           action: 'teamInvite.accept.succeeded',

@@ -9,7 +9,7 @@ import { mapConsentRecordToDto } from '../../mappers';
 import { AccountConsentService } from './account-consent-service';
 import { getAppPrisma } from '../../core/prisma-context';
 
-export async function accountConsentModule(fastify: FastifyInstance): Promise<void> {
+export function accountConsentModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const consentService = new AccountConsentService(prisma, fastify.log);
 

@@ -87,7 +87,7 @@ export function RootAdminContentConfigurationDetailPage() {
 
       return response.data.template;
     },
-    onSuccess: async (updatedTemplate) => {
+    onSuccess: (updatedTemplate) => {
       setDraft(cloneContestTemplate(updatedTemplate));
       logger.info(
         {

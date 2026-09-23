@@ -71,7 +71,7 @@ function isPublicRoute(method: string, url: string): boolean {
 // Plugin
 // ---------------------------------------------------------------------------
 
-async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
+function authGuardPlugin(fastify: FastifyInstance): void {
   // pool-master-rop.76.1 — single bootstrap source, throws if unset.
   const jwtSecret = readJwtSecret();
 

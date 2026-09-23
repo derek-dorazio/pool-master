@@ -261,7 +261,7 @@ export function MyTeamPage() {
 
       return response.data.squad;
     },
-    onSuccess: async (team) => {
+    onSuccess: (team) => {
       setTeamName(team.name);
       queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current ? [...current.filter((candidate) => candidate.id !== team.id), team] : [team],
@@ -283,7 +283,7 @@ export function MyTeamPage() {
 
       return response.data.squad;
     },
-    onSuccess: async (team) => {
+    onSuccess: (team) => {
       setTeamName(team.name);
       queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
@@ -305,7 +305,7 @@ export function MyTeamPage() {
 
       return response.data.squad;
     },
-    onSuccess: async (team) => {
+    onSuccess: (team) => {
       setIconDraftKey(team.iconKey);
       setIconModalOpen(false);
       queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
@@ -333,7 +333,7 @@ export function MyTeamPage() {
 
       return response.data.invitation;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setCoOwnerEmail('');
     },
     invalidates: [
@@ -360,7 +360,7 @@ export function MyTeamPage() {
 
       return response.data.invitation;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
     },
@@ -401,7 +401,7 @@ export function MyTeamPage() {
 
       return response.data.squad;
     },
-    onSuccess: async (team) => {
+    onSuccess: (team) => {
       setActiveDialog(null);
       setTeamInactivationNotice(
         `${team.name} is now inactive. Its active owners were removed from the league, and any user with no other active leagues was also inactivated.`,
@@ -433,7 +433,7 @@ export function MyTeamPage() {
 
       return selectedTeam.name;
     },
-    onSuccess: async (teamNameDeleted) => {
+    onSuccess: (teamNameDeleted) => {
       setActiveDialog(null);
       setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
       setTeamInactivationNotice(null);

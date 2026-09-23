@@ -77,7 +77,7 @@ export function RootAdminIngestionSchedulePage() {
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(cloneIngestionConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.ingestionConfig],
@@ -91,7 +91,7 @@ export function RootAdminIngestionSchedulePage() {
       }
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(cloneIngestionConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.ingestionConfig],

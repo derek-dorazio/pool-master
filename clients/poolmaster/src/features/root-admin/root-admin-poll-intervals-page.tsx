@@ -71,7 +71,7 @@ export function RootAdminPollIntervalsPage() {
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.pollConfig],
@@ -85,7 +85,7 @@ export function RootAdminPollIntervalsPage() {
       }
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       setDraft(clonePollConfig(data));
     },
     invalidates: [QueryKeys.rootAdmin.pollConfig],

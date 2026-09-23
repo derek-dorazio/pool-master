@@ -9,7 +9,7 @@ import {
 } from "./dropdown-menu";
 
 describe("pool-master-3lo.9: shared dropdown menu and selector primitives", () => {
-  it("rule: renders shared dropdown menu surface and items", async () => {
+  it("rule: renders shared dropdown menu surface and items", () => {
     render(
       <DropdownMenu open>
         <DropdownMenuTrigger>Open</DropdownMenuTrigger>

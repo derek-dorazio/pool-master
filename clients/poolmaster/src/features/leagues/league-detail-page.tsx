@@ -213,7 +213,7 @@ export function LeagueDetailPage() {
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       setDetailsName(league.name);
       setDetailsDescription(league.description ?? '');
       syncLeagueCaches(queryClient, league);
@@ -234,7 +234,7 @@ export function LeagueDetailPage() {
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       setIconDraftKey(league.iconKey);
       setIconModalOpen(false);
       syncLeagueCaches(queryClient, league);
@@ -254,7 +254,7 @@ export function LeagueDetailPage() {
 
       return response.data.league;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       if (leagueQuery.data) {
         syncLeagueCaches(
           queryClient,
@@ -281,7 +281,7 @@ export function LeagueDetailPage() {
 
       return response.data.league;
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       syncLeagueCaches(queryClient, league);
     },
     invalidates: [],
@@ -304,7 +304,7 @@ export function LeagueDetailPage() {
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setDeleteModalOpen(false);
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
@@ -326,7 +326,7 @@ export function LeagueDetailPage() {
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setLeaveActionError(null);
       setLeaveCompleted(true);
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>

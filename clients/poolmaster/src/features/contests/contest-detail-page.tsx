@@ -196,7 +196,7 @@ export function ContestDetailPage() {
       }
       return response.data.entry;
     },
-    onSuccess: async (entry) => {
+    onSuccess: (entry) => {
       navigate(
         hintedLeagueCode
           ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
@@ -220,7 +220,7 @@ export function ContestDetailPage() {
       }
       return response.data.entry;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setRenameEntryId(null);
       setRenameDraft('');
     },

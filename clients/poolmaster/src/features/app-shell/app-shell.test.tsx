@@ -328,7 +328,7 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
   });
 
-  it('pool-master-fo5.5 does not render debug route copy for signed-out users', async () => {
+  it('pool-master-fo5.5 does not render debug route copy for signed-out users', () => {
     authState.isAuthenticated = false;
 
     renderAppShell(['/']);

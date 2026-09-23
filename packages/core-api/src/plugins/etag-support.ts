@@ -9,7 +9,7 @@
 import fp from 'fastify-plugin';
 import crypto from 'node:crypto';
 
-export const etagPlugin = fp(async (app) => {
+export const etagPlugin = fp((app) => {
   app.addHook('onSend', async (request, reply, payload) => {
     // Only for GET requests with JSON responses
     if (request.method !== 'GET') return payload;

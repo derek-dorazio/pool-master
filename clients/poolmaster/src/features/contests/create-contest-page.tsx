@@ -714,7 +714,7 @@ export function CreateContestPage() {
         isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
       );
     },
-    onSuccess: async (savedContestId: string) => {
+    onSuccess: (savedContestId: string) => {
       logger.info(
         {
           action: isEditMode ? 'contest.save.succeeded' : 'contest.create.succeeded',
@@ -781,7 +781,7 @@ export function CreateContestPage() {
         'Starting contest delete flow',
       );
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       logger.info(
         {
           action: 'contest.delete.succeeded',

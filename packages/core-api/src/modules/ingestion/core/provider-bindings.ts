@@ -1,4 +1,3 @@
-import { Sport } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';

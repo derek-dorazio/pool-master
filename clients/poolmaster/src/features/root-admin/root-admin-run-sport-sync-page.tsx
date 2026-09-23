@@ -96,7 +96,7 @@ export function RootAdminRunSportSyncPage() {
         'Starting manual provider sync preparation',
       );
     },
-    onSuccess: async (preparation) => {
+    onSuccess: (preparation) => {
       logger.info(
         {
           action: 'rootAdmin.sync.submitted',

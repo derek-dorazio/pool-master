@@ -12,7 +12,7 @@ import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 
-export async function configModule(fastify: FastifyInstance): Promise<void> {
+export function configModule(fastify: FastifyInstance): void {
   /**
    * GET /api/v1/config/poll-intervals
    *

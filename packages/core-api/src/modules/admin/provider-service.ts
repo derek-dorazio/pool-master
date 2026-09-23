@@ -748,6 +748,7 @@ export class ProviderService {
     return runs.map(mapProviderSyncRunRow);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await -- always throws (unsupported operation); callers rely on Promise-rejection semantics, not a synchronous throw.
   async updateProviderConfig(
     providerId: string,
     _updates: Record<string, unknown>,

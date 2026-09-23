@@ -67,7 +67,7 @@ export class HistoryService {
     }
 
     const first = results[0];
-    const payouts = await this.getContestPayouts(contestId);
+    const payouts = this.getContestPayouts(contestId);
 
     const summary = {
       contestId,
@@ -182,7 +182,7 @@ export class HistoryService {
   }
 
   /** Returns payout history for a contest. */
-  async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
+  getContestPayouts(contestId: string): ContestHistoryPayout[] {
     this.logger.debug({ contestId }, 'history get contest payouts start');
     this.logger.info({ contestId, payoutCount: 0 }, 'history get contest payouts completed without legacy prize awards');
     // pool-master-eux.5 removed legacy prize-award history. Golf standing

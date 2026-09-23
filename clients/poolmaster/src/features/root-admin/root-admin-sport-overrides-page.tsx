@@ -87,7 +87,7 @@ export function RootAdminSportOverridesPage() {
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
@@ -107,7 +107,7 @@ export function RootAdminSportOverridesPage() {
 
       return response.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));

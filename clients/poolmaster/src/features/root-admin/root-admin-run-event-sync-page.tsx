@@ -215,7 +215,7 @@ export function RootAdminRunEventSyncPage() {
         'Starting manual provider event sync',
       );
     },
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       logger.info(
         {
           action: 'rootAdmin.eventSync.submitted',

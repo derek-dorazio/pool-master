@@ -748,17 +748,17 @@ async function buildDraftStateResponse(
   }
 
   if (context.contest.selectionType === SelectionType.SNAKE_DRAFT) {
-    const session = await draftStore.getSession(contestId);
+    const session = draftStore.getSession(contestId);
     if (!session) {
       return { kind: 'error' as const, statusCode: 404, payload: { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` } };
     }
 
-    const state = await draftStore.getState(contestId);
+    const state = draftStore.getState(contestId);
     if (!state) {
       return { kind: 'error' as const, statusCode: 404, payload: { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` } };
     }
 
-    const available = await draftStore.getAvailableParticipants(contestId);
+    const available = draftStore.getAvailableParticipants(contestId);
     return {
       kind: 'success' as const,
       payload: await buildSnakeDraftResponse(prisma, context, session, state, available, requestUserId),
@@ -787,7 +787,7 @@ async function buildDraftStateResponse(
   };
 }
 
-export async function draftsModule(fastify: FastifyInstance): Promise<void> {
+export function draftsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const engine = new SnakeDraftEngine(fastify.log);
   // Module-scoped (one per fastify register) — see plans/117 §7.1; the service
@@ -887,9 +887,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
       liveSession.currentEntryId = engine.getCurrentEntryId(initialState);
 
-      await draftStore.setSession(contestId, liveSession);
-      await draftStore.setState(contestId, initialState);
-      await draftStore.setAvailableParticipants(contestId, availableParticipantIds);
+      draftStore.setSession(contestId, liveSession);
+      draftStore.setState(contestId, initialState);
+      draftStore.setAvailableParticipants(contestId, availableParticipantIds);
 
       const requestUserId = request.authUser?.userId;
       const context = await loadDraftContext(prisma, contestId);
@@ -956,17 +956,17 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
 
       if (context.contest.selectionType === SelectionType.SNAKE_DRAFT) {
-        const session = await draftStore.getSession(contestId);
+        const session = draftStore.getSession(contestId);
         if (!session) {
           return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
         }
 
-        let state = await draftStore.getState(contestId);
+        let state = draftStore.getState(contestId);
         if (!state) {
           return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
         }
 
-        const available = await draftStore.getAvailableParticipants(contestId);
+        const available = draftStore.getAvailableParticipants(contestId);
 
         if (isPickExpired(session, fastify.log)) {
           const currentEntryId = engine.getCurrentEntryId(state);
@@ -989,8 +989,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
               session.currentEntryId = null;
             }
 
-            await draftStore.setSession(contestId, session);
-            await draftStore.setState(contestId, state);
+            draftStore.setSession(contestId, session);
+            draftStore.setState(contestId, state);
           }
         }
 
@@ -1012,8 +1012,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           session.currentTurnStartedAt = null;
         }
 
-        await draftStore.setSession(contestId, session);
-        await draftStore.setState(contestId, state);
+        draftStore.setSession(contestId, session);
+        draftStore.setState(contestId, state);
 
         return buildSnakeDraftResponse(prisma, context, session, state, available, requestUserId);
       }
@@ -1222,20 +1222,20 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const session = await draftStore.getSession(contestId);
+      const session = draftStore.getSession(contestId);
       if (!session) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
-      const state = await draftStore.getState(contestId);
+      const state = draftStore.getState(contestId);
       if (!state) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
-      const available = await draftStore.getAvailableParticipants(contestId);
+      const available = draftStore.getAvailableParticipants(contestId);
 
       const pausedSession = pauseSession(session, fastify.log);
       const pausedState = { ...state, status: DraftStatus.PAUSED };
-      await draftStore.setSession(contestId, pausedSession);
-      await draftStore.setState(contestId, pausedState);
+      draftStore.setSession(contestId, pausedSession);
+      draftStore.setState(contestId, pausedState);
 
       return buildSnakeDraftResponse(prisma, context, pausedSession, pausedState, available, requestUserId);
     },
@@ -1279,20 +1279,20 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const session = await draftStore.getSession(contestId);
+      const session = draftStore.getSession(contestId);
       if (!session) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
-      const state = await draftStore.getState(contestId);
+      const state = draftStore.getState(contestId);
       if (!state) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
-      const available = await draftStore.getAvailableParticipants(contestId);
+      const available = draftStore.getAvailableParticipants(contestId);
 
       const resumedSession = resumeSession(session, fastify.log);
       const resumedState = { ...state, status: DraftStatus.LIVE };
-      await draftStore.setSession(contestId, resumedSession);
-      await draftStore.setState(contestId, resumedState);
+      draftStore.setSession(contestId, resumedSession);
+      draftStore.setState(contestId, resumedState);
 
       return buildSnakeDraftResponse(prisma, context, resumedSession, resumedState, available, requestUserId);
     },
@@ -1338,18 +1338,18 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const session = await draftStore.getSession(contestId);
+      const session = draftStore.getSession(contestId);
       if (!session) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
-      const state = await draftStore.getState(contestId);
+      const state = draftStore.getState(contestId);
       if (!state) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
-      const available = await draftStore.getAvailableParticipants(contestId);
+      const available = draftStore.getAvailableParticipants(contestId);
 
       const extendedSession = extendCurrentTurn(session, additionalSeconds, fastify.log);
-      await draftStore.setSession(contestId, extendedSession);
+      draftStore.setSession(contestId, extendedSession);
 
       return buildSnakeDraftResponse(prisma, context, extendedSession, state, available, requestUserId);
     },
@@ -1393,11 +1393,11 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const session = await draftStore.getSession(contestId);
+      const session = draftStore.getSession(contestId);
       if (!session) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
-      const state = await draftStore.getState(contestId);
+      const state = draftStore.getState(contestId);
       if (!state) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
@@ -1405,7 +1405,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'NO_PICKS_TO_UNDO', message: 'This draft has no picks to undo' });
       }
 
-      const available = await draftStore.getAvailableParticipants(contestId);
+      const available = draftStore.getAvailableParticipants(contestId);
       const rewoundState = rewindSnakeDraftState(state);
       const rewoundEntryId = engine.getCurrentEntryId(rewoundState);
       const rewoundSession = {
@@ -1416,8 +1416,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         currentTurnStartedAt: new Date(),
       };
 
-      await draftStore.setState(contestId, rewoundState);
-      await draftStore.setSession(contestId, rewoundSession);
+      draftStore.setState(contestId, rewoundState);
+      draftStore.setSession(contestId, rewoundSession);
 
       return buildSnakeDraftResponse(prisma, context, rewoundSession, rewoundState, available, requestUserId);
     },
@@ -1461,11 +1461,11 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const session = await draftStore.getSession(contestId);
+      const session = draftStore.getSession(contestId);
       if (!session) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
       }
-      const state = await draftStore.getState(contestId);
+      const state = draftStore.getState(contestId);
       if (!state) {
         return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
       }
@@ -1473,7 +1473,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         return sendWithStatus(reply, 400, { error: 'DRAFT_NOT_LIVE', message: 'Only live drafts can skip the current pick' });
       }
 
-      const available = await draftStore.getAvailableParticipants(contestId);
+      const available = draftStore.getAvailableParticipants(contestId);
       const skippedState = skipSnakeDraftPick(state);
       const isComplete = engine.isComplete(skippedState);
       const skippedSession = {
@@ -1484,8 +1484,8 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         currentTurnStartedAt: isComplete ? null : new Date(),
       };
 
-      await draftStore.setState(contestId, skippedState);
-      await draftStore.setSession(contestId, skippedSession);
+      draftStore.setState(contestId, skippedState);
+      draftStore.setSession(contestId, skippedSession);
 
       return buildSnakeDraftResponse(prisma, context, skippedSession, skippedState, available, requestUserId);
     },

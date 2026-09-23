@@ -147,7 +147,7 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
+      ...deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
     });
 
     await syncDerivedScoring(
@@ -293,7 +293,7 @@ export class ContestManagementService {
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(input),
+      ...deriveLegacyPersistenceFields(input),
     });
 
     const refreshedConfiguration =
@@ -474,9 +474,9 @@ function assertRosterSizeFitsTierCount(
   }
 }
 
-async function deriveLegacyPersistenceFields(
+function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
-): Promise<Partial<ContestConfiguration>> {
+): Partial<ContestConfiguration> {
   // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
   // golf-tier-service.getEffectiveTiersForContest is the one path to a
   // contest's effective tiers now; this function no longer computes or

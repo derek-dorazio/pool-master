@@ -212,7 +212,7 @@ export function UserPage() {
       }
       return response.data.user;
     },
-    onSuccess: async (updatedUser) => {
+    onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
@@ -230,7 +230,7 @@ export function UserPage() {
       }
       return response.data.user;
     },
-    onSuccess: async (updatedUser) => {
+    onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
@@ -251,7 +251,7 @@ export function UserPage() {
       }
       return response.data.user;
     },
-    onSuccess: async (updatedUser) => {
+    onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
@@ -289,7 +289,7 @@ export function UserPage() {
       }
       return response.data.user;
     },
-    onSuccess: async (updatedUser) => {
+    onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],
@@ -309,7 +309,7 @@ export function UserPage() {
       }
       return response.data.user;
     },
-    onSuccess: async (updatedUser) => {
+    onSuccess: (updatedUser) => {
       setAuthSessionUser(queryClient, updatedUser);
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],

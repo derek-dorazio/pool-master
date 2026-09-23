@@ -7,7 +7,7 @@ export function createVersionHandlers(versionService: VersionService) {
     getVersion,
   };
 
-  async function getVersion(
+  function getVersion(
     request: FastifyRequest,
     _reply: FastifyReply,
   ) {

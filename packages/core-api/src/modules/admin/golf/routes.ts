@@ -110,10 +110,10 @@ export interface GolfAdminRoutesOptions {
   golfScoreService: GolfScoreService;
 }
 
-export async function golfAdminRoutes(
+export function golfAdminRoutes(
   fastify: FastifyInstance,
   opts: GolfAdminRoutesOptions,
-): Promise<void> {
+): void {
   const handlers = createGolfAdminHandlers(
     opts.sportLeagueService,
     opts.seasonService,

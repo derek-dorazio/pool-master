@@ -139,7 +139,7 @@ export function CreateLeagueModal({
         "Starting league creation flow",
       );
     },
-    onSuccess: async (league) => {
+    onSuccess: (league) => {
       logger.info(
         {
           action: "league.create.succeeded",

@@ -293,7 +293,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         throw response.error ?? new Error('Root-admin role change response is missing success confirmation.');
       }
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveDialog(null);
       setReason('');
     },
@@ -340,7 +340,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         path: { userId: targetUser.id },
       });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveDialog(null);
       setReason('');
     },
@@ -364,7 +364,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         throw response.error ?? new Error('Delete-user response is missing success confirmation.');
       }
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveDialog(null);
       setReason('');
       setDeleteEmailConfirmation('');

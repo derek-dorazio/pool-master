@@ -133,7 +133,7 @@ function ManageLeagueModalContent({
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
     invalidates: [],
@@ -163,7 +163,7 @@ function ManageLeagueModalContent({
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       setDetailsName(updatedLeague.name);
       setDetailsDescription(updatedLeague.description ?? '');
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
@@ -184,7 +184,7 @@ function ManageLeagueModalContent({
 
       return response.data.league;
     },
-    onSuccess: async (updatedLeague) => {
+    onSuccess: (updatedLeague) => {
       setSelectedIconKey(updatedLeague.iconKey);
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
@@ -204,7 +204,7 @@ function ManageLeagueModalContent({
 
       return response.data;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, league?.id ?? ''),
       );

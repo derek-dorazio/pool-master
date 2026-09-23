@@ -298,7 +298,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
     ]);
   });
 
-  it('pool-master-rop.23: shows details as read-only when the league is inactive', async () => {
+  it('pool-master-rop.23: shows details as read-only when the league is inactive', () => {
     getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail({
       ...commissionerLeague,
       isActive: false,

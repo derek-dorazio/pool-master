@@ -136,7 +136,7 @@ export function TeamOwnerActionMenu({
 
       return response.data.membership;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveAction(null);
       setMenuOpen(false);
     },
@@ -155,7 +155,7 @@ export function TeamOwnerActionMenu({
 
       return response.data.membership;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setActiveAction(null);
       setMenuOpen(false);
     },

@@ -43,7 +43,7 @@ declare module 'fastify' {
 // Plugin implementation
 // ---------------------------------------------------------------------------
 
-async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
+function adminAuthPlugin(fastify: FastifyInstance): void {
   // pool-master-rop.76.1 — read JWT_SECRET at plugin registration time
   // (not at module import). Bootstrap throws if unset; tests inject the
   // env var before registering the plugin.

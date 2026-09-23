@@ -16,7 +16,7 @@ import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 
-export async function historyModule(fastify: FastifyInstance): Promise<void> {
+export function historyModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
   const historyService = new HistoryService(prisma, fastify.log);
 
@@ -120,7 +120,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
     async (request) => {
       const logger = createRequestContextLogger(request);
       logger.debug({ contestId: request.params.id }, 'history payouts route start');
-      const payouts = await historyService.getContestPayouts(request.params.id);
+      const payouts = historyService.getContestPayouts(request.params.id);
       logger.info({ contestId: request.params.id, payoutCount: payouts.length }, 'history payouts route completed');
       return { payouts };
     },

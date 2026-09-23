@@ -47,13 +47,13 @@ const eventStateQuerySchema = {
   },
 } as const;
 
-export async function mockContestFeedRoutes(
+export function mockContestFeedRoutes(
   fastify: FastifyInstance,
   options: MockContestFeedRouteOptions = {},
-): Promise<void> {
+): void {
   const store = buildScenarioStore(fastify, options);
 
-  fastify.addHook('preHandler', async (request) => {
+  fastify.addHook('preHandler', (request) => {
     request.log.debug(
       {
         action: 'mockFeedRoute.request.start',
@@ -123,7 +123,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async () => {
+    () => {
       const payload = {
         status: 'ok',
         service: mockFeedProviderId,
@@ -162,7 +162,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async () => {
+    () => {
       const scenarios = store.listScenarios();
       const payload = { scenarios };
       logRoutePayload(
@@ -202,7 +202,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async (request) => {
+    (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getScenario.start', data: request.params },
         'Serving mock contest-feed scenario detail',
@@ -251,7 +251,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async (request) => {
+    (request) => {
       const events = store.listEvents(request.params.scenarioId);
       const payload = {
         scenarioId: request.params.scenarioId,
@@ -295,7 +295,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async (request) => {
+    (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getEvent.start', data: request.params },
         'Serving mock contest-feed event detail',
@@ -338,7 +338,7 @@ export async function mockContestFeedRoutes(
         querystring: eventStateQuerySchema,
       },
     },
-    async (request) => {
+    (request) => {
       fastify.log.debug(
         {
           action: 'mockFeedRoute.getEventDetail.start',
@@ -406,7 +406,7 @@ export async function mockContestFeedRoutes(
           querystring: eventStateQuerySchema,
         },
       },
-      async (request) => {
+      (request) => {
         fastify.log.debug(
           {
             action: 'mockFeedRoute.getSnapshot.start',
@@ -473,7 +473,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async (request) => {
+    (request) => {
       fastify.log.debug(
         {
           action: 'mockFeedRoute.getScoresSnapshot.start',
@@ -528,7 +528,7 @@ export async function mockContestFeedRoutes(
         },
       },
     },
-    async (request) => {
+    (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getUpdates.start', data: request.params },
         'Serving mock contest-feed event updates',

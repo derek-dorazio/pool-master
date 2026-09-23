@@ -29,6 +29,7 @@ describe('pool-master-rop.78.10: useInvalidatingMutation invalidation contract',
     const { result } = renderHook(
       () =>
         useInvalidatingMutation({
+          // eslint-disable-next-line @typescript-eslint/require-await -- mutationFn must return a Promise per MutationFunction's type.
           mutationFn: async (variables: { contestId: string }) => ({
             saved: true,
             contestId: variables.contestId,
@@ -59,6 +60,7 @@ describe('pool-master-rop.78.10: useInvalidatingMutation invalidation contract',
     const { result } = renderHook(
       () =>
         useInvalidatingMutation({
+          // eslint-disable-next-line @typescript-eslint/require-await -- mutationFn must return a Promise per MutationFunction's type.
           mutationFn: async () => ({ updated: true }),
           invalidates: [],
         }),
