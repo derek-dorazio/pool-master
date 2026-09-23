@@ -1,6 +1,4 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { QueryKeys } from '../../../clients/poolmaster/src/lib/query-keys';
 
@@ -81,39 +79,24 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
     ]);
   });
 
-  it('pool-master-rop.78.9: rules check flags synthetic inline queryKey arrays', () => {
+  it('#134: the inline-queryKey rule is on for feature code and off for the factory itself', () => {
+    // The rule's own logic is covered by RuleTester in eslint-rules/__tests__/.
+    // What only the config can express is the scope: lib/query-keys.ts is where
+    // key arrays are supposed to live, so the rule must be off exactly there.
     const repoRoot = join(__dirname, '../../..');
-    const tempRoot = mkdtempSync(join(tmpdir(), 'poolmaster-query-keys-'));
-    const featureDir = join(tempRoot, 'clients/poolmaster/src/features/demo');
-    const libDir = join(tempRoot, 'clients/poolmaster/src/lib');
 
-    try {
-      mkdirSync(featureDir, { recursive: true });
-      mkdirSync(libDir, { recursive: true });
-      writeFileSync(
-        join(featureDir, 'inline-query-key.tsx'),
-        "export const violation = { queryKey: ['poolmaster', 'inline'] };\n",
-      );
-      writeFileSync(
-        join(libDir, 'query-keys.ts'),
-        "export const allowed = { queryKey: ['poolmaster', 'allowed'] };\n",
-      );
-
+    function severityFor(relativePath: string): unknown {
       const result = spawnSync(
-        process.execPath,
-        [join(repoRoot, 'scripts/check-no-inline-query-keys.mjs')],
-        {
-          cwd: tempRoot,
-          encoding: 'utf8',
-        },
+        'npx',
+        ['eslint', '--print-config', relativePath],
+        { cwd: repoRoot, encoding: 'utf8' },
       );
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toContain('inline-query-key.tsx:1');
-      expect(result.stdout).toContain('Inline queryKey array');
-      expect(result.stdout).not.toContain('allowed');
-    } finally {
-      rmSync(tempRoot, { force: true, recursive: true });
+      expect(result.status).toBe(0);
+      const config = JSON.parse(result.stdout) as { rules: Record<string, unknown> };
+      return config.rules['poolmaster/no-inline-query-keys'];
     }
+
+    expect(severityFor('clients/poolmaster/src/lib/query-keys.ts')).toBeUndefined();
+    expect(severityFor('clients/poolmaster/src/lib/api.ts')).toEqual([2]);
   });
 });

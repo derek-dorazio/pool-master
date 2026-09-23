@@ -106,6 +106,39 @@ per-line escape hatch with a recorded justification.
 | `check-no-duplicate-extract-error-message` | `no-restricted-imports` plus a local-redeclaration rule |
 | ~~`check-test-traceability`~~ | **Retired, not migrated.** Plan 138 landed Option B: the UC/BR requirement is dropped and the surviving one — defect-fix tests cite their issue number — is not mechanically detectable, since no scanner can tell which tests are defect-fix tests. Nothing to port. |
 
+### 1v. Slice 2 landed: the plugin exists, two rules migrated
+
+`eslint-rules/` holds the local plugin. Two scanners are deleted and replaced by named
+rules, each with its own `files`/`ignores` transcribed from that scanner's exclusion list —
+which is the whole reason for §1z's plugin decision, since distinct rule ids compose where a
+second `no-restricted-syntax` block would have replaced the first.
+
+| Rule | Replaces | Verification |
+|---|---|---|
+| `poolmaster/no-inline-query-keys` | `check-no-inline-query-keys` | **Exact match, line for line.** Four planted shapes — plain, `as const`, quoted key, parenthesized — scanner reported `:4 :7 :10 :13`, rule reported the same. |
+| `poolmaster/no-mocked-api` | `check-no-mocked-api` | **Strict superset.** Scanner 1, rule 2 on the same fixture: the rule also catches `jest.mock`, which the scanner never matched despite the backend running Jest. |
+
+A green `npm run lint` after wiring proved nothing on its own — both scanners were already at
+zero, and "both report 0" is exactly the false signal §1y warns about. The verification above
+is planted violations, which is the only way a zero-finding scanner can be checked.
+
+**RuleTester tests** live in `eslint-rules/__tests__/run-rule-tests.mjs`, spawned by a Jest
+wrapper because the rules are ESM and the backend suite transpiles to CommonJS — the same
+reason the scanner tests spawn their scripts.
+
+**A test spawned a deleted scanner**, exactly as in slice 1. `query-keys-factory.test.ts`
+ran `check-no-inline-query-keys.mjs` against a temp tree. Its rule-logic half is now
+RuleTester's; its *scope* half — that `lib/query-keys.ts` is exempt — is config, not rule
+logic, so it is now a `--print-config` assertion that the rule is `off` there and `error`
+elsewhere. Worth keeping the pattern: when a scanner becomes a rule, its test usually splits
+into a logic half and a config half.
+
+**Still to migrate:** `no-inline-theme-styles` and `feature-theme-tokens` (paired, per §1b),
+`shared-ui-controls`, `no-duplicate-extract-error-message`, `no-parallel-api-types`.
+`check-test-disable-discipline` is blocked on the policy question in #158, and
+`check-no-env-fallbacks` needs its two failing-open violations fixed at the source first
+(§1x).
+
 ### 1z. The vehicle is wrong: use a local plugin, not `no-restricted-syntax`
 
 **This supersedes the `no-restricted-syntax` proposal in every row below.** Measured against

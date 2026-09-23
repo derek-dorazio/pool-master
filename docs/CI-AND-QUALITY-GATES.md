@@ -197,7 +197,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 
 | # | Gate | Command | Mode | Baseline | What it catches | Source |
 |---|---|---|---|---|---|---|
-| 1 | No mocked API boundary | `rules:check:no-mocked-api` | warn-only | 0 | `vi.mock('@/lib/api')` and `vi.mock('@/lib/api-client')` in `clients/poolmaster/src` | `scripts/check-no-mocked-api.mjs` |
+| 1 | ~~No mocked API boundary~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `vi.mock` / `jest.mock` of `@/lib/api` or `@/lib/api-client`. Widened past the scanner, which matched `vi` only. | `eslint-rules/no-mocked-api.mjs` |
 | 2 | Route discipline | `rules:check:route-discipline` | warn-only | 95 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
 | 3 | Test-disable discipline | `rules:check:test-disable` | **blocking** | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` without a `SKIP: pool-master-NNN` comment within two lines above | `scripts/check-test-disable-discipline.mjs` |
 | 4 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 0 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
@@ -505,7 +505,7 @@ The single configured threshold is intentionally a **regression floor**, not a t
 .github/workflows/ci.yml             — workflow definition
 package.json                         — npm script wiring (rules:check chain, api:check)
 scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
-scripts/check-no-mocked-api.mjs      — gate 1
+eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
 scripts/check-route-discipline.mjs   — gate 2
 scripts/check-test-disable-discipline.mjs — gate 3
 scripts/check-shared-ui-controls.mjs — gate 4

@@ -28,7 +28,7 @@ Already enforced mechanically, and therefore **not** triggers:
 
 | Concern | Enforced by |
 |---|---|
-| Fake/mock data in application code | `check-no-mocked-api` |
+| Fake/mock data in application code | `poolmaster/no-mocked-api` (ESLint) |
 | Skipped or disabled tests | `check-test-disable-discipline` |
 | Env-var fallbacks | `check-no-env-fallbacks` |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |

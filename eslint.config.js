@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import poolmaster from './eslint-rules/index.mjs';
 
 /**
  * Selector sets are hoisted to module scope on purpose.
@@ -141,5 +142,29 @@ export default tseslint.config(
         { paths: [{ name: 'axios', message: 'Non-SDK HTTP call — use generated SDK operations from @/lib/api.' }] },
       ],
     },
+  },
+
+  // ---------------------------------------------------------------------------
+  // Local rules — see eslint-rules/index.mjs for why these are named rules
+  // rather than more `no-restricted-syntax` selectors.
+  //
+  // Each block carries its own `files`/`ignores`, transcribed from the exclusion
+  // list of the scanner it replaces. That is the whole reason for the plugin:
+  // distinct rule ids compose, where a second `no-restricted-syntax` block would
+  // have replaced the first.
+  // ---------------------------------------------------------------------------
+  {
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    // The factory itself is where the key arrays are supposed to live.
+    ignores: ['clients/poolmaster/src/lib/query-keys.ts'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-inline-query-keys': 'error' },
+  },
+  {
+    // Tests included deliberately: the scanner walked them, and a mocked API
+    // boundary in a test is the only place this pattern ever appears.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-mocked-api': 'error' },
   },
 );

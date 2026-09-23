@@ -31,7 +31,6 @@
       "Bash(npx prisma generate --schema=packages/core-api/prisma/schema.prisma)",
       "Bash(npx tsc --noEmit *)",
 
-      "Bash(node scripts/check-no-mocked-api.mjs)",
       "Bash(node scripts/check-route-discipline.mjs)",
       "Bash(node scripts/check-test-disable-discipline.mjs)",
       "Bash(node scripts/check-shared-ui-controls.mjs)",
