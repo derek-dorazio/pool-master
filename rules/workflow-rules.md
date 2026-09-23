@@ -12,7 +12,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 |---|---|---|---|
 | Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
-| Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name; `plans/142` relocates them to a home named for what they are |
+| Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name — a relocation to a home named for what they are is tracked, not yet done |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
 | Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a tracking issue; **deleted** when the parent epic issue closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
@@ -42,7 +42,8 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
      the product?* Domain invariants, actors, information architecture. Read by
      someone who needs to know how the product behaves, independent of how it is
      built. (These files are durable despite living under a directory named for
-     inputs; `plans/142-durable-product-documentation.md` relocates them.)
+     inputs. Relocating them to a directory named for what they are is tracked
+     separately and does not change their durability.)
    - **`docs/adr/*.md`** — *why is the system like this?* Read by someone
      questioning the approach, including the alternatives that were rejected.
 
