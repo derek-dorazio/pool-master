@@ -3,10 +3,11 @@
 Every PR body carries a **Review triggers** section under `<!-- review:triggers -->`. It
 names what this slice touched that warrants a closer read than a file list gives.
 
-This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5 is
-what a reviewer looks for** on the one axis where a checklist genuinely helps. Performance
-review is not a separate pass with its own vote — it is part of the ordinary review, run
-when the diff has a performance surface and skipped when it does not.
+This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5–§7
+are what a reviewer looks for** on the three axes where a repo-specific checklist beats
+general judgement. None of them is a separate pass with its own vote — each is a lens
+applied during the ordinary review, used when the diff has that surface and skipped when it
+does not. Skipping is the common case and is not a gap.
 
 This exists because the repo owner reviews at file-list-and-changeset resolution. That
 altitude reliably catches scope creep, unexpected files, and structurally wrong changes. It
@@ -191,3 +192,88 @@ in which case say that rather than implying a measurement that did not happen.
 - **Never propose optimizing by weakening correctness, authorization, validation, or
   generated-contract discipline.** A faster wrong answer is not a tradeoff, and those rules
   exist for reasons a performance read cannot see.
+
+---
+
+## 6. Reviewing for security
+
+Apply when the diff touches auth, session handling, input validation, secret handling, or
+anything that changes what data a caller can reach. `/security-review` covers the general
+classes; this is what is specific to *this* codebase.
+
+### Auth and permission boundaries
+
+- Is every new mutating route guarded by the right authority preHandler — `adminAuth`,
+  `requireCommissioner`, `requireLeagueMembership`?
+- Are the checks at the **route boundary**, not scattered as inline
+  `if (request.authUser?.isRootAdmin)` inside handlers? Inline checks are how a route ends
+  up with none.
+- Are role-elevation paths — admin, root-admin, impersonation — gated and audit-logged?
+- Does the JWT secret come from a single bootstrap read, with no per-site `??` fallback
+  (`service-rules.md` §1 *Banned Backend Patterns*)?
+
+### Input validation
+
+- Does every new request schema validate body, params, **and** querystring?
+- Are `where` clauses, regex inputs and path inputs parameterized rather than concatenated?
+- Are uploads validated for type, size and content?
+- Are date and numeric ranges bounded, so a caller cannot force an unbounded scan?
+
+### Secrets
+
+- Any secret committed in this diff — `.env`, API keys, JWTs, private keys?
+- Are secret env vars read from real config sources with no hardcoded fallback?
+- Are keys, tokens or passwords logged, or interpolated into error messages?
+- Does new logging emit raw bodies, headers or query strings without redaction?
+
+### Data exposure
+
+- Do responses carry only intended DTO fields? Watch for raw Prisma rows reaching the wire,
+  a missing mapper, or a passthrough JSON schema.
+- Do error envelopes leak stack traces, internal IDs, file paths or SQL fragments?
+- Are user IDs or session IDs placed in URLs or query strings, where a referer header can
+  carry them off-site?
+- **Do list endpoints respect league isolation?** Could a member of one league reach
+  another's rows through a filter that omits the scope? This is the highest-value question
+  on this list for this product.
+
+### Injection, CSRF, SSRF
+
+- Do cookie-session mutations validate a CSRF token?
+- Are URLs, hostnames or file paths built from user input before an outbound HTTP, DNS or
+  filesystem call?
+- Is user input interpolated into SQL, shell, or rendered HTML without escaping?
+
+### Provider discipline
+
+- Per `architecture-rules.md` §3 *Provider and Adapter Registry Discipline*: are mock
+  providers gated by `ALLOW_MOCK_PROVIDERS`? A misconfiguration here silently downgrades a
+  real environment to fabricated data, which looks like working software.
+
+---
+
+## 7. Reviewing for architectural fit
+
+Apply when the diff touches shared contracts, crosses a module boundary, changes
+infrastructure, or departs from an active plan. Skip it otherwise — most slices sit inside
+one module and need none of this.
+
+- **Plan alignment** — does the slice implement the decision its plan records, or has it
+  quietly broadened? Scope creep is easiest to see against the plan, not the diff.
+- **Contract integrity** — do DTO, SDK and OpenAPI changes preserve the contract-first chain
+  (`architecture-rules.md` §2)? Is a mapper applied at every route boundary
+  (`service-rules.md` §4 *Mapper File Requirement*)?
+- **Dependency direction** — does the slice respect one-way package direction, and introduce
+  no cycle? See `architecture-rules.md` §4 *Architectural Rules*.
+- **Rollout sequencing** — did prerequisites land first: schema → service → DTO → mapper →
+  route → SDK → frontend? A skipped layer usually means the contract was not regenerated.
+- **Cross-cutting consistency** — error envelope shape, lifecycle naming, list-envelope
+  policy, timezone handling. A slice that invents a local variant of an established pattern
+  costs more later than it saved.
+- **Deferred-work hygiene** — does the slice land `TODO` markers or partial implementations
+  that should be tracked issues? See `architecture-rules.md` §4.
+
+The failure mode worth naming: an architectural finding is usually not *wrong code*, it is
+code that is right locally and inconsistent globally. That makes it easy to wave through in
+a diff review and expensive to unpick later — which is the whole reason for reading at this
+altitude at all.

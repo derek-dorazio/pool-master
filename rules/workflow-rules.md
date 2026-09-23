@@ -10,7 +10,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 
 | Tier | Artifact | Lifetime | Purpose |
 |---|---|---|---|
-| Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
+| Permanent | `rules/*.md`, `.claude/skills/**/SKILL.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
 | Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name — a relocation to a home named for what they are is tracked, not yet done |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
@@ -521,22 +521,24 @@ Examples that require rule updates:
 
 PoolMaster's default feature lifecycle is:
 
-1. Product Discovery — `Piper`
-2. Product Requirements — `Pam`
-3. Technical Specification — `Tom` with `Dom`
-4. Test Planning — `Tess`
-5. Design Plans — `Archie`
-6. Execution Planning — `Archie`
-7. Implementation — `Brad`, `Fran`, and supporting personas
-8. QA Verification — `Quinn`
-9. Code Review — `Riley`
+1. Product Discovery
+2. Product Requirements
+3. Technical Specification, including a model-impact classification
+4. Test Planning
+5. Design Plans
+6. Execution Planning
+7. Implementation — backend and frontend
+8. Verification
+9. Code Review
+
+Steps 1, 3 and 4 are skipped for anything that is not a major new feature; see below.
 
 Artifact hierarchy (with lifetimes; see §0 Document Lifecycle):
 
 - `requirements/reference/` = seed discovery materials (feature-life; delete when obsolete)
-- `requirements/product-overview/` = Piper discovery artifacts (feature-life; retire after major feature stabilizes)
-- `requirements/product-requirements/features/<feature>/` = Pam's refined product-requirement bundle for **major** features (feature-life; retire or trim after stabilization)
-- `tech-specs/features/<feature>/` = Tom's pre-implementation technical framing (pre-implementation only; **deleted when implementation ships**)
+- `requirements/product-overview/` = discovery artifacts (feature-life; retire after major feature stabilizes)
+- `requirements/product-requirements/features/<feature>/` = the refined product-requirement bundle for **major** features (feature-life; retire or trim after stabilization)
+- `tech-specs/features/<feature>/` = pre-implementation technical framing (pre-implementation only; **deleted when implementation ships**)
 - `plans/NN-*.md` = narrative companion to an epic issue (slice-life; **deleted when the parent epic issue closes**)
 - GitHub Issues = live task state (slices, status, execution notes)
 - `docs/adr/` = Architecture Decision Records (permanent; immutable once accepted)
@@ -629,53 +631,39 @@ Do not assume that an early scaffold or placeholder page defines the final
 product flow. For PoolMaster webapp design, plans should be use-case driven and
 confirmed with the user before implementation expands.
 
-### Persona Playbooks
+### Task Skills
 
-- Persona playbooks live under `personas/<name>.md` as the single authoritative source of persona content, with tool-specific thin-pointer wrappers under `.claude/skills/`, `.claude/agents/`, `.agents/skills/` (Codex), and `.codex/agents/`. See Plan 111 for the full layout and the thin-pointer pattern (no symlinks, no build step — each wrapper carries minimal frontmatter + a MUST-Read instruction pointing at `personas/<name>.md`).
-- Personas scope role-specific workflows: product management, backend implementation, data modeling, frontend implementation, test planning, architecture/platform work, and code review. Piper (product discovery) and Tom (technical specification) are dormant — only invoked explicitly for greenfield / major-feature framing.
-- These playbooks are execution aids, not replacement policy sources.
-- `AGENTS.md` and `rules/` remain canonical.
-- Formal persona names remain the canonical workflow language in plans, rules,
-  and handoffs. Nicknames are optional shorthand for prompts, logs, worker
-  updates, and conversational references.
-- When a nickname is used, it must map to exactly one formal persona and must
-  not replace the formal responsibility definition.
-- If a new persona is added later, assign a unique nickname in the persona file
-  and add it to the table below rather than inventing ad hoc shorthand in
-  worker prompts.
-- When persona framing is helpful for user clarity, progress updates and final
-  handoffs should identify the primary persona(s) responsible for the current
-  slice using formal persona names or approved nicknames.
-- Persona tags are workflow framing, not proof that separate delegated agents
-  actually ran. Do not imply independent execution that did not happen.
-- Use persona labeling as an aid for substantial work, design reviews, or
-  multi-role slices. It is optional for tiny or purely conversational replies.
+Guidance is organised by the **task being performed**, not by a role performing it. The
+distinction matters: a role tells an agent what it is not allowed to know, and a task tells
+it what order to do things in. Role scaffolding was a reasonable answer to models that
+drifted off-task and cargo-culted implementation details across boundaries; it costs more
+than it protects now, because partitioning knowledge across roles prevents a model from
+noticing the contradiction between two layers it can see at once.
 
-Current persona nickname map:
+- Task skills live in `.claude/skills/<name>/SKILL.md` — one copy, no wrappers. There is no
+  `personas/` tree, no `.agents/`, and no `.codex/`; the multi-runtime thin-pointer layout
+  was retired along with the personas it carried.
+- A skill sequences work and names the traps. It cites policy as
+  `rules/<file>.md §N *Section Name*` rather than restating it, so there is one canonical
+  home per rule. See §2 *Skills cite rules, and nothing that can disappear*.
+- `AGENTS.md` and `rules/` remain canonical. A skill that contradicts a rule is a bug in the
+  skill.
 
-| Formal Persona | Nickname | Notes |
-|---|---|---|
-| Product Discovery | Piper | High-level product framing, PRD shaping, and discovery handoff |
-| Product Manager | Pam | Product/use-case clarification and review |
-| Technical Specification Creator | Tom | Technical spec baseline and feature handoff |
-| Data Modeler | Dom | Model and contract impact classification |
-| Test Planner | Tess | Coverage planning and test-matrix authorship |
-| Backend Developer | Brad | Service, DTO, OpenAPI, and test implementation |
-| Frontend Developer | Fran | PoolMaster web UI and browser-flow delivery |
-| QA/Test Engineer | Quinn | Verification strategy, regression detection, and test-lane ownership |
-| Architect | Archie | Design plans, execution planning, and platform work |
-| Code Reviewer | Riley | Findings-first review and risk detection |
-| Security Reviewer | Sage | Security focus for auth, validation, secrets, and data exposure |
-| Frontend Discipline Reviewer | Felix | Frontend-specific review for React, SDK/types, state, forms, theme, and a11y |
-| Performance Reviewer | Perry | Performance review for data access, hot paths, payloads, bundle, and rendering |
+Review is one pass with up to three lenses, applied only when the diff has the matching
+surface: `/code-review` for correctness, and `rules/review-triggers.md` §5, §6 and §7 for
+performance, security and architectural fit. Skipping a lens is the common case.
 
-- Cross-cutting workflow requirements remain mandatory for all personas,
-  including:
-  - checking for active plans
-  - updating the issue state for the exact slice worked
-  - validating work before marking slices done
-  - updating docs and rules when the change affects them
-- Plan shaping, slice sequencing, and progress reconciliation are responsibilities shared across the active implementation personas and the user. The tracker owns live task state; plans own narrative. No single persona owns "project management" as a discrete role — the old project-manager persona was retired because its responsibilities were fully subsumed by the tracker (task state) and the narrative-only plan convention (no task tables to reconcile). See Plan 111 for the retirement rationale.
+Cross-cutting workflow requirements remain mandatory regardless of which skill is in play:
+
+- checking for active plans
+- updating the issue state for the exact slice worked
+- validating work before marking slices done
+- updating docs and rules when the change affects them
+
+Plan shaping, slice sequencing, and progress reconciliation are shared between the agent and
+the user. The tracker owns live task state; plans own narrative. Nothing owns "project
+management" as a discrete role — that responsibility is fully subsumed by the tracker and by
+the narrative-only plan convention, which leaves no task tables to reconcile.
 
 ### Frontend / Data Model / Backend Handoff Rules
 

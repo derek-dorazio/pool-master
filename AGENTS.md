@@ -6,7 +6,7 @@ All agents working in this repo should:
 
 1. Read this file first.
 2. Treat the files in `rules/` as the detailed source of truth for architecture, implementation, testing, and workflow requirements.
-3. Treat persona playbooks in `personas/` as role-specific execution guides layered on top of the shared rules, not as competing policy sources. Tool-specific wrappers under `.claude/skills/`, `.agents/skills/` (Codex), `.claude/agents/`, and `.codex/agents/` are thin pointers to the authoritative `personas/<name>.md` file; when a persona activates, the tool wrapper instructs the agent to Read the personas file for the full playbook.
+3. Use the task skills in `.claude/skills/` for the work they name. They sequence a task and point at the rule that governs each step; they do not restate rules.
 4. Keep `CLAUDE.md` as a thin pointer to this file rather than maintaining duplicate policy text elsewhere.
 
 ## Non-Negotiables
@@ -51,61 +51,42 @@ rule scanner fails, read the section it names — the scanner output *is* the ro
 govern greenfield discovery and pre-implementation tech-spec artifacts, both dormant in a
 mature codebase. Reach for them only when explicitly framing a new product surface.
 
-## Persona Playbooks
+## Task Skills
 
-Persona content lives once in `personas/<name>.md`. Tool-specific thin-pointer wrappers under each tool's canonical directory instruct the agent to Read the personas file for the full playbook. See `plans/111-persona-library-restructure.md` for the full layout and rationale.
+Guidance is organised by the **task being performed**, not by a role performing it. A role
+tells an agent what it is not allowed to know; a task tells it what order to do things in.
 
-**Authoritative persona files (`personas/`):**
+| Skill | Use when |
+|---|---|
+| `add-endpoint` | Adding or changing a Fastify route — the DTO → mapper → route → regenerate → contract-verification chain |
+| `model-change` | Changing the Prisma schema, a domain type, or an enum. Classify the blast radius first |
+| `add-frontend-feature` | Building anything in `clients/poolmaster` |
+| `release-check` | Before a push or PR, and when a gate fails |
 
-- `personas/pam.md` — Product Manager
-- `personas/piper.md` — Product Discovery *(dormant)*
-- `personas/tom.md` — Technical Specification Creator *(dormant)*
-- `personas/dom.md` — Data Modeler
-- `personas/tess.md` — Test Planner
-- `personas/fran.md` — Frontend Developer
-- `personas/brad.md` — Backend Developer
-- `personas/archie.md` — Architect (may also be spawned for an architecture read on a PR)
-- `personas/quinn.md` — QA/Test Engineer *(invoked as subagent)*
-- `personas/riley.md` — Code Reviewer *(invoked as subagent on demand)*
-- `personas/sage.md` — Security Reviewer *(invoked when slice touches auth, validation, secrets, or data exposure; see `personas/sage.md` for trigger list)*
-- `personas/felix.md` — Frontend Discipline Reviewer *(invoked when slice touches `clients/poolmaster`, frontend tests, frontend rule scanners, shared UI primitives, or React UI rules)*
-- `personas/perry.md` — Performance Reviewer *(invoked when slice touches data access, route/list payloads, hot paths, list rendering, new dependencies, or similar performance surfaces)*
+Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
+and skills cite it as `rules/<file>.md §N *Section Name*`. A skill must not point at a plan,
+an issue, an ADR, or a source line number — all four disappear or drift, and
+`rules:check:skill-references` enforces it. The reasoning is in `workflow-rules.md` §2
+*Skills cite rules, and nothing that can disappear*.
 
-**Tool-specific wrappers (thin pointers; do not duplicate persona content):**
+### Reviewing
 
-- **Claude Code skills:** `.claude/skills/<name>/SKILL.md` — 8 personas (`fran, brad, pam, dom, tess, archie` active; `piper, tom` dormant via `disable-model-invocation: true`).
-- **Claude Code subagents:** `.claude/agents/<name>.md` — `quinn`, `riley`, `felix`, and `perry` (isolated-context verification and review reads).
-- **Codex skills:** `.agents/skills/<name>/SKILL.md` — same 8 personas; `piper` and `tom` are dormant via `.agents/skills/<name>/agents/openai.yaml` with `allow_implicit_invocation: false`.
-- **Codex subagents:** `.codex/agents/<name>.toml` — `quinn.toml`, `riley.toml`, `felix.toml`, and `perry.toml`.
+Review is one pass with up to three lenses, applied only when the diff has the matching
+surface:
 
-Default responsibility split for common lanes:
+- `/code-review` — correctness, the general pass
+- `review-triggers.md` §5 — performance cost
+- `review-triggers.md` §6 — security
+- `review-triggers.md` §7 — architectural fit
 
-- `Piper` / product discovery *(dormant)*: broad product framing, goals, actors, major modules — invoked explicitly for greenfield only
-- `Pam` / product manager: refined product requirements, use cases, business rules, screen purpose
-- `Tom` / technical specification *(dormant)*: technical design, domain/API/flow specification — invoked explicitly for major new features only
-- `Dom` / data modeler: contract-change gate; classifies UI-only vs contract-only vs true model change
-- `Tess` / test planner: coverage matrix authorship
-- `Archie` / architect: execution slicing, sequencing, infrastructure/cross-cutting architecture
-- `Fran` / frontend developer: frontend UX realization and web implementation
-- `Brad` / backend developer: backend/domain/API implementation
-- `Quinn` / QA/test engineer *(subagent)*: verification execution, regression triage, release confidence reporting
-- `Riley` / generalist code reviewer *(subagent)*: findings-first review, risk detection. Spawned by the implementer when a slice warrants an independent read.
-- `Sage` / security reviewer *(subagent, conditional)*: invoked when the slice touches auth, validation, secrets, or data exposure.
-- `Archie` / architect *(also runs as reviewer subagent, conditional)*: in addition to design-time work, invoked at PR time when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs.
-- `Felix` / frontend discipline reviewer *(subagent, conditional)*: invoked when the slice touches the PoolMaster web app, frontend tests, frontend rule scanners, shared UI primitives, or React UI rules.
-- `Perry` / performance reviewer *(subagent, conditional)*: invoked when the slice touches Prisma queries, route/list payloads, sync/scoring hot paths, frontend list rendering, new dependencies, or similar performance-sensitive surfaces.
-
-Reviewer personas are spawned on demand by the implementing agent, not as numbered gates. The branch → PR → CI → owner-reads → owner-asks-for-merge loop is documented in `rules/workflow-rules.md §6 Branching, Review, and Merge Cadence`; what a PR must disclose is in `rules/review-triggers.md`.
-
-If a role is misassigned during discussion or execution, agents should correct
-it proactively and update the relevant persona/rules if the boundary was not
-clear enough. The user should not need to police persona ownership in real
-time.
+`/security-review` covers general security classes; §6 covers what is specific to this
+codebase. What a PR must *disclose* is `review-triggers.md` §1–§4, which is a different
+question from what a reviewer looks for.
 
 Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.
-- Persona files in `personas/` and their thin-pointer wrappers must not redefine or contradict repo-wide policy.
+- Skills sequence work; they do not redefine or contradict repo-wide policy.
 - Cross-cutting workflow requirements such as checking the tracker and validating slices remain required for all agents.
 - Frontend implementation should be driven by reviewed plans, generated SDK/types, and documented API contracts rather than backend implementation details.
 - Contract meaning, API documentation quality, and model-change implementation remain backend-owned responsibilities.
@@ -115,7 +96,7 @@ Important:
 - Check whether the work is already tracked in GitHub Issues and/or `plans/`, and update the relevant issues as work starts and finishes. Plans are narrative only — they do not carry task rows.
 - At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
-- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, `personas/`, and the tool-specific wrapper directories.
+- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `.claude/skills/`.
 - Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; GitHub Issues is the live execution/refinement tracker and `plans/` remain the narrative execution context.
 - **Not every change needs a PR.** Narrative plan updates during execution and trivial doc fixes are direct-push to `main` per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes still go through the branch + PR flow — and when in doubt, the agent asks the user before pushing direct (per *Substantive plan or rule change — ask before pushing*).
 
@@ -149,7 +130,5 @@ CI-only follow-up signals:
 - `plans/`: tracked implementation plans
 - `rules/`: detailed policy and architecture guidance
 - `docs/adr/`: Architecture Decision Records (durable decisions)
-- `personas/`: authoritative persona playbooks
-- `.claude/skills/`, `.claude/agents/`: Claude Code skill and subagent thin-pointer wrappers
-- `.agents/skills/`, `.codex/agents/`: Codex skill and subagent thin-pointer wrappers
+- `.claude/skills/`: task skills — how this repo does a given kind of work
 - `infrastructure/`: deployment and environment assets
