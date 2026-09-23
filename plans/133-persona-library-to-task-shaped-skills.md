@@ -189,9 +189,18 @@ Felix's discipline list is the self-check in `add-frontend-feature`, and Quinn's
 referring to roles whose definitions had just been deleted — the same dangling-concept
 problem as a dead file pointer, harder to spot.
 
-**Fourth — write the single-tool persona layout ADR**, taking whatever number is next at
-that point. Note ADR-0007 was claimed by plan 134's validity-matrix move, so this one is
-0008 or later — confirm at authoring time rather than trusting this sentence.
+**Fourth — write the single-tool persona layout ADR.** ✅ **Landed** as
+[ADR-0008](../docs/adr/0008-single-tool-task-shaped-agent-guidance.md). It records both
+reversals — multi-runtime thin-pointer → single tool, and role-shaped → task-shaped — plus
+the original rationale for each, since that reasoning lived only in `plans/111` and plans do
+not survive their epic.
+
+`plans/111` is deleted with it, which was the last open item in `plans/141` (#139).
+
+Also recorded there and worth not re-litigating: `rules/` stays where it is rather than
+moving into skills as bundled `references/`, because references are per-skill and several
+rule files serve more than one skill — bundling would create copies rather than remove them,
+and `rules/` has a non-agent audience that a directory under `.claude/` would not serve.
 
 ## Open Questions
 

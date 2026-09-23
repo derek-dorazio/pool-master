@@ -61,10 +61,15 @@ spec stays under ADR-0003), and `0682eea` closed stale bead records folded into 
 
 ## Key Decisions
 
-### 1. Plan 111 waits on the persona-layout ADR
+### 1. ~~Plan 111 waits on the persona-layout ADR~~ — done
 
 `pool-master-7p5` is closed with no open children, so `plans/111-persona-library-restructure.md`
-is deletable on the tracker's terms. **Do not delete it yet.**
+was deletable on the tracker's terms. ~~**Do not delete it yet.**~~ **Deleted** — the ADR it
+was waiting on is
+[ADR-0008](../docs/adr/0008-single-tool-task-shaped-agent-guidance.md), which records both
+the thin-pointer layout's original rationale and why it was reversed.
+
+**This was the last open item in this plan.**
 
 Plan 133 cites 111 as the source of the thin-pointer persona pattern it reverses, and
 ADR-0002 requires durable reasoning be codified before deletion. That reasoning's permanent
@@ -143,16 +148,15 @@ PreToolUse hook requiring the review-triggers section — was dropped by decisio
 left open (#145). The reasoning is codified in `rules/review-triggers.md §4`, which is what
 ADR-0002 requires before a plan file goes.
 
-**Two candidates remain, neither deletable today.** Each is blocked on a different thing,
-and ADR-0002's invariant — *tracker closes → plan file deleted*, never the reverse — is what
-makes each blocker binding rather than advisory:
+**One candidate remains.** ADR-0002's invariant — *tracker closes → plan file deleted*,
+never the reverse — is what makes the blocker binding rather than advisory:
 
 | Plan | Blocked on | Why |
 |---|---|---|
-| `plans/111` | #132 (Plan 133) | Decision 1 above. Plan 133 cites 111 as the source of the thin-pointer pattern it reverses; 111's deletion rides with 133's persona-layout ADR, not a general sweep. |
+| ~~`plans/111`~~ | ~~#132~~ | **Deleted.** Its rationale now lives in ADR-0008, which was the codification decision 1 required. |
 | `plans/123` | #82 | Its tracking issue is **open**, with two open sub-issues (#86, #87). Plan 135 owns the disposition; `5xi` stays open until then. |
 
-Both remaining blockers are real dependencies rather than a stall, and the drift this plan
+The remaining blocker is a real dependency rather than a stall, and the drift this plan
 exists to prevent is now reported automatically by the `Stop` hook on every session stop
 rather than discovered months later.
 
