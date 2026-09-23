@@ -25,7 +25,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Fake/mock data in application code | `check-no-mocked-api` |
 | Skipped or disabled tests | `check-test-disable-discipline` |
 | Env-var fallbacks | `check-no-env-fallbacks` |
-| Direct `fetch`/`axios` in the webapp | `check-no-non-sdk-fetch` |
+| Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `check-no-parallel-api-types` |
 | Inline query keys, inline theme styles, bare controls | the corresponding `rules:check:*` scanners |
 | Generated OpenAPI/SDK staleness | `api:check` |

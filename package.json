@@ -26,7 +26,7 @@
     "db:repair:season-migration": "cd packages/core-api && node scripts/repair-sport-league-season-migration.mjs",
     "db:repair:season-migration:apply": "cd packages/core-api && node scripts/repair-sport-league-season-migration.mjs --apply --confirm-qa-season-repair",
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
-    "lint": "eslint 'packages/*/src/**/*.ts' 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
+    "lint": "eslint 'packages/**/*.ts' 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
     "lint:theme-tokens": "node scripts/check-feature-theme-tokens.mjs",
     "rules:check:no-mocked-api": "node scripts/check-no-mocked-api.mjs",
     "rules:check:route-discipline": "node scripts/check-route-discipline.mjs --warn-only",
