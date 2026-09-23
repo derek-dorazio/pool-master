@@ -1,64 +1,93 @@
-# PoolMaster — Product Requirements Rules
+# PoolMaster — Product Definition Rules
 
-Use this document when producing refined product-requirement artifacts under
-`requirements/product-requirements/`.
+Covers the three pre-implementation artifact layers: **discovery**
+(`requirements/product-overview/`), **refined requirements**
+(`requirements/product-requirements/`), and **technical specs** (`tech-specs/`).
 
-## 0. When To Write A Requirements Bundle (And When To Skip)
+**Read §0 first.** All three are high-leverage for a major new feature and net-negative
+for incremental work, and the skip case is the common one in a mature codebase. The
+authoring workflow — how to actually produce a bundle — is the `define-a-feature` skill.
 
-The discovery + requirements bundle — overview + use-cases + screens + business-rules + open-questions for a feature — is high-leverage for **major new features** on a mostly-greenfield surface. It is low-leverage and often net-negative for incremental work on features that already exist.
+---
 
-### Write a requirements bundle when all of the following apply
+## 0. When To Write These Artifacts (And When To Skip)
 
-- The feature is genuinely new (not already covered by an existing feature bundle).
-- It introduces new actors, new domain concepts, new navigation surfaces, or substantially new product behavior.
-- Product decisions benefit from shared framing *before* design/implementation begins.
+### Write a requirements bundle when all of these hold
 
-### Skip the bundle when
+- The feature is genuinely new — not already covered by an existing bundle.
+- It introduces new actors, new domain concepts, new navigation surfaces, or substantially
+  new product behavior.
+- Product decisions benefit from shared framing *before* design or implementation begins.
 
-- The work fits within an existing feature's bundle (no new actors, no new concepts, no new primary surfaces).
-- The scope is a UX refinement, incremental improvement, or bug-class fix.
-- Rewriting the requirements would mostly duplicate what already exists.
+### Write a tech spec when all of these hold
 
-For skip cases, capture the product intent directly in the plan file (`plans/NN-*.md`) — just enough narrative for the slice author to do the work. Do not create a parallel requirements artifact.
+- The work is a major new feature or architectural change introducing substantial new
+  domain types, API surfaces, or integration patterns.
+- The product requirements are approved and current.
+- Implementation has **not** started, and the spec will meaningfully reduce rework.
 
-### Bundles have a lifetime
+### Skip both when
 
-When a feature has shipped and stabilized, trim the bundle to only what still describes *current* product intent. Delete exploratory open-questions that were answered by shipping. Delete entire bundles for features that are no longer active product scope (e.g. retired surfaces, archived apps).
+- The work fits inside an existing feature's bundle or contract — no new actors, concepts,
+  primary surfaces, domain types, endpoints, or integration patterns.
+- The scope is a UX refinement, incremental improvement, refactor, or bug-class fix.
+- Implementation has already begun and the design is emerging through review.
+- The generated SDK types and existing tests already describe the behavior a spec would
+  redocument.
 
-## 1. Purpose
+**For every skip case, capture the narrative directly in the plan file (`plans/NN-*.md`).**
+Do not create a parallel artifact that says the same thing in a different directory.
 
-Product requirements should define **what the product must do** and **how users
-experience it**, without collapsing into schema, DTO, route, or architecture
-implementation details.
+### These artifacts have lifetimes
 
-These artifacts are design inputs for major features (see §0). They are not
-the home of task status — that lives in GitHub Issues.
+- **Requirements bundles** — trim to current product intent once a feature stabilizes.
+  Delete exploratory open-questions answered by shipping. Delete whole bundles for retired
+  scope.
+- **Tech specs are deleted on ship, not archived.** Once implementation lands on `main`
+  with tests and the generated SDK reflects the final contract, the spec goes. Code, tests,
+  generated types and OpenAPI descriptions are the authoritative post-ship spec; a parallel
+  prose spec is pure drift risk. If spec work produced a durable decision that outlasts the
+  feature, write an ADR *before* deleting.
+
+Full lifetimes for every artifact layer are in `workflow-rules.md` §0 *Document Lifecycle*.
+
+---
+
+## 1. Purpose And Boundaries
+
+| Layer | Answers | Must not become |
+|---|---|---|
+| Discovery | What is the product, who does it serve, what are its major parts? | Feature-level use cases, page-by-page detail, schema |
+| Requirements | What must it do, and how do users experience it? | Schema, DTOs, routes, architecture |
+| Tech spec | What contracts and concepts does building it imply? | A permanent reference document |
+
+Discovery goes **wide, not deep**: product shape, primary actors, major modules, main goals
+and constraints, open questions. When clarifying, ask a few broad framing questions rather
+than field-level ones — that depth belongs to requirements.
+
+None of these are the home of task status. That is GitHub Issues.
+
+---
 
 ## 2. Output Structure
 
-The normal output bundle is:
+**Discovery** — `requirements/product-overview/`: `product-overview.md`, `prd.md`,
+`actors.md`, `module-overview.md`, `open-questions.md`.
 
-### Shared Product Files
+**Requirements** — `requirements/product-requirements/`:
 
-- `requirements/product-requirements/product-requirements.md`
-- `requirements/product-requirements/roles-and-actors.md`
-- `requirements/product-requirements/glossary.md`
-- `requirements/product-requirements/domain-concepts.md`
-- `requirements/product-requirements/navigation-and-entry-points.md`
+- Shared: `product-requirements.md`, `roles-and-actors.md`, `glossary.md`,
+  `domain-concepts.md`, `navigation-and-entry-points.md`
+- Per feature, under `features/<feature>/`: `overview.md`, `use-cases.md`, `screens.md`,
+  `business-rules.md`, `open-questions.md`
 
-### Feature Files
+**Tech spec** — `tech-specs/features/<feature>/`: `domain-model.md`, `api-surface.md`,
+`flows.md`, `open-questions.md`, plus `test-matrix.md` when coverage is planned up front.
 
-- `requirements/product-requirements/features/<feature>/overview.md`
-- `requirements/product-requirements/features/<feature>/use-cases.md`
-- `requirements/product-requirements/features/<feature>/screens.md`
-- `requirements/product-requirements/features/<feature>/business-rules.md`
-- `requirements/product-requirements/features/<feature>/open-questions.md`
+Discovery inputs come from a kickoff prompt, `requirements/reference/`, or rough materials —
+notes, screenshots, sketches. Discovery must still work when the only input is a prompt.
 
-Normally read the discovery output from:
-
-- `requirements/product-overview/`
-
-before deep refinement begins.
+---
 
 ## 3. Confidence Labels
 
@@ -76,91 +105,91 @@ Default rule:
   marked `(Inferred)`
 - unresolved or risky assumptions should be marked `(Needs Review)`
 
-## 4. Use-Case Template
+---
 
-Each important use case should normally include:
+## 4. Use Cases
 
-- Use-case ID / title
-- Actor(s)
-- Preconditions
-- Trigger
-- Main flow
-- Alternate flows
-- Error paths
-- Expected outcomes
-- Acceptance criteria
-- Related business rules
+Each important use case should normally include: ID/title, actor(s), preconditions,
+trigger, main flow, alternate flows, error paths, expected outcomes, acceptance criteria,
+and related business rules.
 
-## 5. Screen Documentation Rules
+When visual references are supplied, extract product **meaning**, not implementation
+mimicry. Note explicitly what the visuals confirm, what they inspire, and what they leave
+unresolved. Spacing, layout and legacy control placement are not mandates unless the user
+says so. Ask for a targeted screenshot rather than silently inferring important UX behavior
+from incomplete prose.
 
-Screen docs should describe:
+---
 
-- screen purpose
-- actor visibility / permissions
-- primary actions
-- major states
-- dependencies on backend or other flows
-- entry and exit points
+## 5. Screens
 
-Screen docs should **not** become component trees or layout blueprints.
+Screen docs describe purpose, actor visibility and permissions, primary actions, major
+states, dependencies on backend or other flows, and entry/exit points.
+
+They are **not** component trees or layout blueprints.
+
+---
 
 ## 6. Business Rules
 
-Business-rule docs should separate:
+Separate product rules, permission rules, lifecycle rules, and validation rules.
 
-- product rules
-- permission rules
-- lifecycle rules
-- validation rules
+Do not bury a business-critical rule inside prose in one use case when it is reused across
+several flows.
 
-Do not bury business-critical rules only inside prose use cases when they are
-reused across multiple flows.
+---
 
-## 7. Mode B Visual Extraction
+## 7. Tech Spec Content
 
-When visual references are used:
+- **`domain-model.md`** — entities and concepts, and for each one where it lives: domain
+  type, DTO, persistence model, or derived read model only. Plus enum candidates and closed
+  sets, lifecycle and status semantics, and model-change implications. Do not treat current
+  implementation drift as automatically correct; call confirmed drift out explicitly.
+- **`api-surface.md`** — a compact table: operation, actor/permission, request shape
+  summary, response shape summary, constraints. Describe contract *meaning* rather than
+  copying raw schemas.
+- **`flows.md`** — end-to-end sequence, state transitions, branch and error points, and the
+  interactions between UI, API and background processes. The test is whether someone can
+  reason about the feature without reverse-engineering the code.
+- **`open-questions.md`** — separate blocking questions, non-blocking follow-ups, and known
+  drift between product intent and current implementation.
 
-- extract product meaning, not implementation mimicry
-- explicitly note what the visuals:
-  - confirm
-  - inspire
-  - leave unresolved
-- avoid treating spacing, layout, or legacy control placement as mandatory
-  unless the user explicitly says so
-- when visuals would materially improve product-definition accuracy, ask for
-  targeted screenshots or examples rather than silently inferring important UX
-  behavior from incomplete prose
+Before a spec is complete, cross-check it against the relevant requirements artifacts,
+active plans, current shared domain types and DTOs, and the generated SDK/OpenAPI output.
+Where implementation contradicts approved product direction, **record the mismatch** rather
+than flattening the two together. A spec must not be used to route around an unresolved
+product question.
 
-## 8. Handoff Floor
+---
 
-Before product requirements are handed forward, they must make clear:
+## 8. Handoff Floors
 
-- who the actors are
-- what the core use cases are
-- what the business rules are
-- what the screen purposes and entry points are
-- what is confirmed vs open
-- what technical/model implications are already visible
+**Discovery → requirements** must make clear: what the product or module is trying to
+accomplish, who the primary actors are, what the major modules are, what key constraints
+and assumptions exist, and what still needs product refinement.
 
-## 9. Interaction With Other Layers
+**Requirements → tech spec or implementation** must make clear: the actors, the core use
+cases, the business rules, the screen purposes and entry points, what is confirmed versus
+open, and any technical or model implications already visible.
 
-The layered artifact model is owned by `rules/workflow-rules.md §0 Document Lifecycle`. This rule file only adds requirements-specific notes:
+**Tech spec → implementation** must make clear: which concepts and contracts are affected,
+where a model-impact classification is required, what the implementation baseline is, and
+what coverage should be planned against.
 
-- `requirements/product-requirements/` is authoritative for *major-feature* product intent while the feature is active.
-- When requirement changes affect in-flight work, update the relevant plan narrative in the same effort; task state is updated in GitHub Issues (not in plan task tables — plan files no longer carry task tables).
-- If older plan prose contradicts current refined requirements, requirements wins; plan prose should be reconciled or the plan deleted if its epic has closed.
-- Do not surface product questions from older plan prose without first checking current `requirements/product-requirements/` feature files.
+---
 
-## 10. Continuous Propagation
+## 9. Keeping These Current
 
-- refined product requirements are not write-once artifacts
-- when active design discussions resolve product meaning, actor behavior,
-  lifecycle rules, navigation assumptions, or cross-feature product goals,
-  propagate those decisions upward into the shared product-requirement files in
-  the same lane
-- do not leave important product truth trapped only inside a localized feature
-  slice if it changes the broader product model, actor definitions, or product
-  goals
-- when a resolved feature-level decision materially changes high-level product
-  framing, also update the matching `requirements/product-overview/` artifacts
-  so discovery and refined requirements stay aligned
+These are not write-once artifacts, and the failure mode is product truth stranded inside
+one feature's files.
+
+- When a design discussion resolves product meaning, actor behavior, lifecycle rules, or
+  navigation assumptions, propagate it up into the shared requirements files in the same
+  effort — and into `requirements/product-overview/` when it changes high-level framing.
+- While a feature is active, `requirements/product-requirements/` is authoritative for its
+  product intent. If older plan prose contradicts current requirements, **requirements
+  wins**; reconcile the plan or delete it if its epic has closed.
+- When a requirement change affects in-flight work, update the plan narrative in the same
+  effort. Task state moves in GitHub Issues.
+- Do not raise a product question from old plan prose without first checking the current
+  feature files.

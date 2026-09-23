@@ -34,7 +34,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
 | Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
 | Emits or consumes a domain event | `architecture-rules.md` §4 *Service Topology* (event-bus and idempotency discipline), `testing-rules.md` §8 |
-| Defines product behavior, use cases, or screens | `product-requirements-rules.md`, `poolmaster-webapp-rules.md`, `ux-rules.md` |
+| Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push* |
 | Is iOS or Android work | `swift-rules.md` / `android-rules.md` — both clients are planned, not built |
@@ -47,9 +47,11 @@ gate set. Those are not optional regardless of task shape.
 the layer you are changing, plus `testing-rules.md` for whatever you are testing. When a
 rule scanner fails, read the section it names — the scanner output *is* the routing hint.
 
-**Rarely needed:** `product-discovery-rules.md` and `technical-specification-rules.md`
-govern greenfield discovery and pre-implementation tech-spec artifacts, both dormant in a
-mature codebase. Reach for them only when explicitly framing a new product surface.
+**Rarely needed:** `product-requirements-rules.md` governs the pre-implementation
+definition layers — discovery, refined requirements, tech specs — and is written to be read
+as skip-by-default. Most work here is incremental and skips all three; the narrative goes in
+the plan file instead. Reach for it, and the `define-a-feature` skill, only when framing a
+genuinely new product surface with new actors or domain concepts.
 
 ## Task Skills
 
