@@ -133,7 +133,7 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     await waitFor(() =>
       expect(adminCreateGolfTournamentMock).toHaveBeenCalledTimes(1),
     );
-    const body = adminCreateGolfTournamentMock.mock.calls[0][0].body;
+    const body = (adminCreateGolfTournamentMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body.name).toBe('Spring Classic');
     expect(body.seasonId).toBe('season-1');
     expect(body.startDate).toContain('2026-03-12T');
@@ -180,7 +180,7 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     await waitFor(() =>
       expect(adminCreateGolfTournamentFromProviderEventMock).toHaveBeenCalledTimes(1),
     );
-    const body = adminCreateGolfTournamentFromProviderEventMock.mock.calls[0][0].body;
+    const body = (adminCreateGolfTournamentFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body).toMatchObject({
       seasonId: 'season-1',
       providerId: 'mock-contest-feed',

@@ -213,6 +213,7 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
       expect(adminUpdateGolfSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { seasonId: 'season-2026' },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           body: expect.objectContaining({ name: 'PGA Tour 2026 (revised)' }),
         }),
       ),

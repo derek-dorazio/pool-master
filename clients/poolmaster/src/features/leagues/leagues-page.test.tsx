@@ -126,8 +126,10 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     expect(screen.getByTestId('shared-empty-state')).toBeInTheDocument();
     expect(sharedStateCalls.empty).toHaveBeenCalledWith(
       expect.objectContaining({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         body: expect.stringContaining("Once you create leagues"),
         testId: 'authenticated-landing-empty',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         title: expect.stringContaining('Welcome to Ultimate Office Pool Manager'),
       }),
     );

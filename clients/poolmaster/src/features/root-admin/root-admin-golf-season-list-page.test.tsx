@@ -185,11 +185,14 @@ describe('pool-master-qqs RootAdminGolfSeasonListPage', () => {
     await waitFor(() =>
       expect(adminCreateGolfSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           body: expect.objectContaining({
             sportLeagueId: 'pga',
             name: 'PGA Tour 2028',
             year: 2028,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             startDate: expect.stringMatching(/^2028-01-02T/),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             endDate: expect.stringMatching(/^2028-11-30T/),
           }),
         }),

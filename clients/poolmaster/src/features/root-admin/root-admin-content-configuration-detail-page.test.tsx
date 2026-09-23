@@ -130,8 +130,10 @@ describe('RootAdminContentConfigurationDetailPage', () => {
         path: {
           templateId: '11111111-1111-4111-8111-111111111111',
         },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           name: 'Updated template name',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
           configuration: expect.objectContaining({
             rosterSize: 12,
             countedScores: 8,

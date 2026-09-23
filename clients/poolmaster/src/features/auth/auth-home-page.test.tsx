@@ -8,6 +8,8 @@ import {
   type AuthSessionUser,
 } from './auth-session-cache';
 import { AuthHomePage } from './auth-home-page';
+import type { fetchInvitationPreview } from '@/features/leagues/invitation-preview';
+import type { fetchTeamOwnerInvitationPreview } from '@/features/teams/team-owner-invitation-preview';
 
 const {
   authState,
@@ -29,8 +31,8 @@ const {
   logger.child.mockImplementation(() => logger);
 
   return {
-    fetchInvitationPreviewMock: vi.fn(),
-    fetchTeamOwnerInvitationPreviewMock: vi.fn(),
+    fetchInvitationPreviewMock: vi.fn<typeof fetchInvitationPreview>(),
+    fetchTeamOwnerInvitationPreviewMock: vi.fn<typeof fetchTeamOwnerInvitationPreview>(),
     authState: {
       user: null,
       isAuthenticated: false,
@@ -68,12 +70,12 @@ vi.mock('@/features/leagues/invitation-context-card', () => ({
 }));
 
 vi.mock('@/features/leagues/invitation-preview', () => ({
-  fetchInvitationPreview: (...args: unknown[]) => fetchInvitationPreviewMock(...args),
+  fetchInvitationPreview: fetchInvitationPreviewMock,
   getInvitationPreviewQueryKey: (inviteCode: string) => ['test', 'league-invite', inviteCode],
 }));
 
 vi.mock('@/features/teams/team-owner-invitation-preview', () => ({
-  fetchTeamOwnerInvitationPreview: (...args: unknown[]) => fetchTeamOwnerInvitationPreviewMock(...args),
+  fetchTeamOwnerInvitationPreview: fetchTeamOwnerInvitationPreviewMock,
   getTeamOwnerInvitationPreviewQueryKey: (inviteCode: string) => ['test', 'team-invite', inviteCode],
 }));
 
@@ -171,6 +173,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.login.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           destination: '/welcome',
           userId: 'user-1',
@@ -202,6 +205,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.login.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           destination: '/manage',
           isRootAdmin: true,
@@ -238,6 +242,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.login.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           destination: '/invite/LEAGUE123',
           isRootAdmin: true,
@@ -283,6 +288,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.register.failed',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           destination: '/welcome',
         }),
@@ -375,6 +381,7 @@ describe('AuthHomePage', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.leagueInvitePreview.failed',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           destination: '/invite/LEAGUE123',
           inviteCode: 'LEAGUE123',

@@ -225,6 +225,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             entries: expect.arrayContaining([
               { sportEventParticipantId: 'sep-rory', worldRanking: 1 },
               {

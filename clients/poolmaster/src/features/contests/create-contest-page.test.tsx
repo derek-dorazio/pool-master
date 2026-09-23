@@ -237,11 +237,13 @@ describe('CreateContestPage', () => {
     await waitFor(() =>
       expect(createManagedContestMock).toHaveBeenCalledWith({
         path: { id: 'league-1' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           name: 'Masters Pick 6',
           sportEventId: 'event-1',
           contestFormat: 'ROSTER',
           templateId: '11111111-1111-4111-8111-111111111111',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configurationOverrides: expect.objectContaining({
             mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
@@ -254,6 +256,7 @@ describe('CreateContestPage', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'contest.create.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           contestId: 'contest-1',
         }),
@@ -303,8 +306,10 @@ describe('CreateContestPage', () => {
     await waitFor(() =>
       expect(createManagedContestMock).toHaveBeenCalledWith({
         path: { id: 'league-1' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           templateId: '33333333-3333-4333-8333-333333333333',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configurationOverrides: expect.objectContaining({
             rosterSize: 12,
             countedScores: 8,
@@ -478,6 +483,7 @@ describe('CreateContestPage', () => {
     await waitFor(() =>
       expect(updateContestMock).toHaveBeenCalledWith({
         path: { contestId: 'contest-77' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           name: 'Masters Pick 6 Updated',
           lockAt: '2026-04-10T11:55:00.000Z',
@@ -488,6 +494,7 @@ describe('CreateContestPage', () => {
     await waitFor(() =>
       expect(updateManagedContestConfigurationMock).toHaveBeenCalledWith({
         path: { id: 'league-1', contestId: 'contest-77' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           mode: 'GOLF_TIERED',
           rosterSize: 6,

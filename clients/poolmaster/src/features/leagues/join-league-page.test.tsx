@@ -166,6 +166,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'leagueInvite.accept.succeeded',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
           leagueCode: 'BIGDAWGS',
         }),
