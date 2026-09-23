@@ -410,7 +410,7 @@ state, stale actions, and unthemeable markup accumulate.
 - Frontend HTTP calls must use generated SDK operations from `@/lib/api`.
   Low-level transport exceptions are limited to app infrastructure such as
   generated-client setup, logger transport, and static asset loading. `npm run
-  rules:check:no-non-sdk-fetch` enforces this.
+  eslint.config.js`'s `no-restricted-globals` / `no-restricted-imports` enforce this.
 
 ---
 

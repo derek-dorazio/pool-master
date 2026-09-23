@@ -26,6 +26,33 @@ per-line escape hatch with a recorded justification.
 
 ### 1. Three-way split of the current scanner set
 
+> ## ⚠ Flat config does not merge rule options — read before writing any config
+>
+> For a given rule name, **the last matching config object wins outright**. A later
+> `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block does not add to the
+> top-level one — it **replaces** it, silently, inside that scope.
+>
+> `eslint.config.js` already carries `no-restricted-syntax` at top level (the slice-1 cast
+> selectors). **Five remaining migration targets are proposed as `no-restricted-syntax`**
+> — `no-inline-query-keys`, `no-inline-theme-styles`, `shared-ui-controls`,
+> `no-env-fallbacks`, `feature-theme-tokens`. Adding any of them as a path-scoped block
+> disables the cast rules in that path while `npm run lint` stays green and nothing
+> reports the loss.
+>
+> Confirmed independently three times (two research agents and a direct check): a scoped
+> block declaring its own array drops the inherited selectors; spreading them back in
+> restores both.
+>
+> **Mitigated in advance.** `eslint.config.js` now hoists its selectors into a module-level
+> `CAST_SELECTORS` constant with the rule written into the file's header comment: any scoped
+> re-declaration must spread it —
+> `'no-restricted-syntax': ['error', ...CAST_SELECTORS, ...YOUR_SELECTORS]`.
+>
+> This is the slice-1 "confident, wrong 0 findings" failure in a new costume: the loss is
+> invisible from CI. Treat a green lint after adding a scoped block as unproven until a
+> positive control shows the inherited selectors still fire.
+
+
 **Already covered by existing plugins — near-free:**
 
 > **Standing correction from slice 1: verify every proposed replacement against the
@@ -55,13 +82,75 @@ per-line escape hatch with a recorded justification.
 
 | Scanner | Approach |
 |---|---|
-| `check-route-discipline` | `no-restricted-imports` for Prisma in route files via path overrides, plus custom rules for `SuccessSchema`, handler-level `.map()`, and inline object schemas |
+| `check-route-discipline` | **Researched in depth — the proposal here is wrong; see *Route discipline, measured* below.** `no-restricted-imports` for Prisma catches **0 of 17** findings. No custom rules are needed: all patterns are plain `no-restricted-syntax` selectors. |
 | `check-no-inline-query-keys` | `no-restricted-syntax` on array literals in `queryKey:` position |
 | `check-no-inline-theme-styles` | `no-restricted-syntax` on style props carrying raw color literals |
 | `check-shared-ui-controls` | `no-restricted-syntax` on bare JSX controls where a shared primitive exists |
 | `check-no-env-fallbacks` | `no-restricted-syntax` on `import.meta.env.X ?? …` and `process.env.X ?? …` |
 | `check-no-duplicate-extract-error-message` | `no-restricted-imports` plus a local-redeclaration rule |
 | ~~`check-test-traceability`~~ | **Retired, not migrated.** Plan 138 landed Option B: the UC/BR requirement is dropped and the surviving one — defect-fix tests cite their issue number — is not mechanically detectable, since no scanner can tell which tests are defect-fix tests. Nothing to port. |
+
+### 1a. Route discipline, measured
+
+`check-route-discipline` has **6 patterns; only 4 fire.** Its 95 findings decompose as:
+
+| Pattern | Findings | Verified ESLint equivalent |
+|---|---|---|
+| `prisma.*` calls | 17 | `CallExpression[callee.object.object.name="prisma"]` — **17/17, zero diff** |
+| `SuccessSchema` | 24 | `Identifier[name="SuccessSchema"]` — superset (29; the 5 extras are `ImportSpecifier` double-counts) |
+| `.map(` | 35 | `CallExpression[callee.property.name="map"]` — 35/35 same sites |
+| inline `type:'object'` schemas | 19 | `ObjectExpression:has(> Property[key.name="type"][value.value="object"]):has(> Property[key.name="properties"])` — exact 1:1 |
+| `additionalProperties: true` | **0** | free to port, lands at `error` immediately |
+| `reply.send(await prisma.…)` | **0** | dead; subsumed by the prisma selector |
+
+**Scope:** `packages/core-api/src/modules/**/{routes,handler,handlers}.ts` → 30 files. A bare
+`**/{routes,handler,handlers}.ts` would wrongly capture `packages/mock-contest-feed-provider`
+and `clients/_archived/web`.
+
+**Why the plan's Prisma proposal fails.** The flagged `prisma` binding never comes from an
+import of `@prisma/client` — it comes from `getAppPrisma(fastify)` or a `PrismaClient`
+parameter. Only 2 of 30 route files import `@prisma/client` at all, and one of those has
+**zero** prisma findings. `no-restricted-imports` would produce 2 findings, **none
+overlapping the scanner's 17**, plus a new false positive. Same failure mode as
+`check-unsafe-casts`: written from the rule's name, not from what the scanner matched.
+
+**The honest backlog is 46, not 95.**
+
+- `SuccessSchema` is **24/24 false positives** against the repo's own rule. `service-rules.md`
+  requires `SuccessSchema` only for endpoints returning *domain data*; all 24 sites are
+  mutations with no domain payload (`adminDeleteUser`, `logoutUser`, `pauseContestDraft`, …).
+  The predicate is semantic and not statically decidable. **Delete the pattern** rather than
+  add 24 disable comments.
+- `.map()` broad-matches ~24 false positives, including **5 sites that already delegate to a
+  mapper** — the scanner flags code doing exactly what the rule demands. Narrowed to
+  callbacks returning an object literal it finds **11 real** sites.
+- One prisma finding (`events/routes.ts:14`) is DI wiring, not a query; narrowing to
+  `prisma.model.method()` drops it, leaving 16.
+
+**`drafts/routes.ts` holds 47 of 95** in one 1493-line file, and its prisma and `.map()` work
+overlap in the same functions — 10 of its 14 prisma findings sit inside exported helpers that
+take `prisma` as a parameter, i.e. a repository living in a routes file. There is no drafts
+mapper or repository today. **Slice that file on its own**, not as two tree-wide pattern
+passes.
+
+Suggested order: (a) port `additionalProperties` free and delete the two dead/false patterns;
+(b) inline schemas, 19 → 0, an exact port so it is pure cleanup — budget for OpenAPI regen
+fallout; (c) `drafts/routes.ts` as its own slice; (d) enable the narrowed prisma and `.map()`
+rules tree-wide and delete the scanner.
+
+### 1b. Corrections to the "stays a script" set
+
+| Scanner | Plan said | Verified |
+|---|---|---|
+| `check-no-parallel-api-types` | stays a script | **Overturned.** It only matches *exact type-name collisions* against 942 generated names. `eslint.config.js` is an ES module and can read the generated file at config-load time and pass the name set to a ~12-line rule. Migratable now, zero backlog. Two costs to record: the editor's ESLint server must reload after `api:refresh`, and the rule is **weaker than `5xi.4` wants** — it catches name collisions only, so a local `ContestSummary` structurally duplicating `GetContestResponse` stays invisible. It finds 0 because it is narrow, not because the frontend is clean. |
+| `check-openapi-fresh` | stays a script | **Holds.** Its subject is the delta between committed artifacts and freshly generated ones; ESLint has no phase in which the "expected" side exists. Correctly wired as `api:check`, not in `rules:check`. |
+| `check-pr-review-triggers` | stays a script | **Holds** — it inspects the PR body, not the tree. Two defects found: it checks `result.status` but never `result.error`, so a missing `gh` yields a bare unexplained failure; and CI invokes the script directly rather than via the npm script, so editing the npm script would not change CI. |
+| `check-feature-theme-tokens` | **unclassified** | Belongs in *custom ESLint rules — good fit*, merged with `check-no-inline-theme-styles` (they overlap on `style={{ color: '#fff' }}`). Zero backlog. Migrating it collapses `npm run lint` to a single `eslint` call and removes a `&&` that currently means the theme check never runs when ESLint fails. One regression to accept or mitigate: ESLint core cannot parse `.css` (vacuous today — 0 CSS files under `features/`). |
+| `check-form-query-mirror` | "may not be worth it" | **Justification describes a different rule.** The plan defers it over an RHF field-count rule the scanner does not implement and never mentions; what it actually enforces is `react-ui-rules.md` *Server Data Form-State Hazard*. A second confirmed instance of the table being written from names rather than code. The port is an exact match, and **the scanner is 77 characters from failing open** — its regex caps the `useEffect` body at 1600 chars and the single real finding is 1523. It also misses 4 `.tsx` files outside `features/`. Its one finding is real but flagged for the wrong reason: the hazard named in the message is genuinely guarded, while a *different* clause of the same rule is violated — the latch keys on mount rather than entity identity, so navigating between two manage URLs keeps the previous contest's values. One-line fix. **Promote this to an early slice.** |
+
+**After the migrations land, the surviving scripts contribute nothing to `rules:check`** —
+`openapi-fresh` runs as `api:check` and `pr-review-triggers` is a PR-gated CI step. So
+`rules:check` can eventually be deleted outright rather than shrunk.
 
 **Stays a script — correctly so:**
 
