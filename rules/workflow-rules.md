@@ -470,6 +470,40 @@ Required behavior:
 
 Rules are part of the codebase contract.
 
+### Skills cite rules, and nothing that can disappear
+
+A skill in `.claude/skills/` outlives the work that produced it, so anything it cites has
+to outlive it too. A pointer to something that has since been deleted is worse than no
+pointer at all: it still reads as authoritative, and the reader cannot tell whether the
+guidance moved or was abandoned.
+
+The durable target is **`rules/<file>.md §N *Section Name*`**. Include the section name —
+numbers get renumbered, and a bare number then points confidently at the wrong section.
+
+A skill must not cite:
+
+| Not this | Because |
+|---|---|
+| A GitHub issue number | Issues close, and a closed issue explains nothing to a later reader |
+| `plans/NN-*.md` | Deleted when the parent epic closes (ADR-0002) |
+| `tech-specs/**` | Deleted when the implementation ships (ADR-0003) |
+| A feature directory under `requirements/` | Retired when the feature stabilizes |
+| An ADR | Permanent, but a decision's rationale is not a work instruction. Put the instruction in a rule and let the rule carry the ADR link |
+| A source file line number | Drifts on the next edit above it. Name the file and the symbol |
+
+When the thing worth citing is transient, **state the content directly in the skill
+instead.** A trap is worth two sentences of explanation; it is not worth a pointer to the
+ticket where someone once argued about it.
+
+`scripts/check-skill-references.mjs` enforces this. Fenced code blocks are exempt, so a
+skill can demonstrate a format — a test name, a `SKIP:` marker — without the placeholder
+being read as a live pointer.
+
+This applies to skills specifically. `rules/` files may name a directory as policy (a rule
+about `requirements/` has to say `requirements/`); what they must not do is point at a
+*specific* transient artifact.
+
+
 When a refactor changes architecture, API usage, testing patterns, or generated-client workflow:
 
 - update the relevant file in `rules/` in the same change

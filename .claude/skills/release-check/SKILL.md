@@ -37,9 +37,13 @@ files than anyone believes.
   hint.
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
   0 findings stays at 0.
-- **Typecheck passes but ts-jest fails** → they resolve types differently. This is real and
-  has bitten: `packages/shared/dto/json-schema.ts:21` carries a cast whose removal passes
-  `turbo typecheck` and breaks 8 backend suites with `TS2589`.
+- **Typecheck passes but ts-jest fails** → the package tsconfigs and the ts-jest config
+  resolve types differently, so `turbo typecheck` passing is not proof that the backend
+  suite compiles. A cast that looks redundant under one can be load-bearing under the
+  other, failing with `TS2589` (excessively deep type instantiation). `packages/shared/dto/`
+  carries one such cast with the reason written above it — when a cast has a comment
+  explaining why it exists, verify by running the suite before removing it, not by
+  re-reading the types.
 
 ## "Flake" is a diagnosis, not a default
 
