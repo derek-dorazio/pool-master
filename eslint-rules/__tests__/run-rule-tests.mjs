@@ -11,7 +11,9 @@ import { RuleTester } from 'eslint';
 import tseslintParser from '@typescript-eslint/parser';
 
 import noBareUiControls from '../no-bare-ui-controls.mjs';
+import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
+import noEnvFallbacks from '../no-env-fallbacks.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
@@ -153,3 +155,125 @@ ruleTester.run('no-inline-theme-styles', noInlineThemeStyles, {
 });
 
 console.log('Local ESLint rule tests passed.');
+
+ruleTester.run('no-env-fallbacks', noEnvFallbacks, {
+  valid: [
+    // An empty fallback is a "not configured" sentinel, not a default identity.
+    "const x = process.env.SES_CONFIGURATION_SET ?? '';",
+    // Tunables: a wrong number is not a deployment lying about what it is.
+    'const x = Number(process.env.PORT ?? 3000);',
+    'const x = process.env.POOL_SIZE ?? DEFAULT_POOL_SIZE;',
+    'const x = process.env.GIT_REF ?? null;',
+    // A chain with no literal tail is the bootstrap reader's own shape.
+    'const x = process.env.RELEASE_VERSION || process.env.APP_VERSION;',
+    // A literal fallback on something that is not an env read is unrelated.
+    "const x = config.name ?? 'default';",
+    // The allow option is how a genuine tunable opts out.
+    {
+      code: "const x = process.env.LOG_LEVEL ?? 'info';",
+      options: [{ allow: ['LOG_LEVEL'] }],
+    },
+  ],
+  invalid: [
+    // The shape the line-based scanner failed open on: the read and the literal
+    // never share a physical line, so its per-line regex never saw both.
+    {
+      code: "const x = process.env.APP_ENV\n  ?? process.env.NODE_ENV\n  ?? 'development';",
+      errors: [{ messageId: 'envFallback', data: { name: 'APP_ENV' } }],
+    },
+    // The other shape it missed: its regex required [A-Z_][A-Z0-9_]*.
+    {
+      code: "const x = process.env.npm_package_version ?? '0.1.0';",
+      errors: [{ messageId: 'envFallback', data: { name: 'npm_package_version' } }],
+    },
+    // Computed access is the same read.
+    {
+      code: "const x = process.env['APP_ENV'] ?? 'development';",
+      errors: [{ messageId: 'envFallback' }],
+    },
+    // A conditional tail is a fallback with extra steps -- the obvious way
+    // around a rule that only looks for a bare literal.
+    {
+      code: "const x = process.env.APP_ENV ?? (isCi ? 'ci' : 'development');",
+      errors: [{ messageId: 'envFallback' }],
+    },
+    // `||` absorbs a miss just as `??` does.
+    {
+      code: "const x = process.env.APP_ENV || 'development';",
+      errors: [{ messageId: 'envFallback' }],
+    },
+    // The baseline the scanner did catch, kept so the migration is provably
+    // a superset rather than a trade.
+    {
+      code: "const x = process.env.JWT_SECRET ?? 'poolmaster-dev-secret';",
+      errors: [{ messageId: 'envFallback' }],
+    },
+    {
+      code: 'const x = process.env.JWT_SECRET ?? `dev-secret`;',
+      errors: [{ messageId: 'envFallback' }],
+    },
+    // A chain reports once, not once per operand.
+    {
+      code: "const x = process.env.A ?? process.env.B ?? 'lit';",
+      errors: [{ messageId: 'envFallback', data: { name: 'A' } }],
+    },
+  ],
+});
+
+ruleTester.run('no-disabled-tests', noDisabledTests, {
+  valid: [
+    "describe('suite', () => {});",
+    "it('runs', () => {});",
+    "test('runs', () => {});",
+    "it.each([1, 2])('runs %s', () => {});",
+    // `concurrent` changes scheduling, not whether the test runs.
+    "it.concurrent('runs', () => {});",
+    // `.skip` on something that is not a test runner is unrelated.
+    "obj.skip('not a runner');",
+    "lodash.pending();",
+  ],
+  invalid: [
+    {
+      code: "describe.skip('suite', () => {});",
+      errors: [{ messageId: 'disabledTest', data: { form: 'describe.skip' } }],
+    },
+    {
+      code: "it.skip('t', () => {});",
+      errors: [{ messageId: 'disabledTest', data: { form: 'it.skip' } }],
+    },
+    {
+      code: "test.todo('t');",
+      errors: [{ messageId: 'disabledTest', data: { form: 'test.todo' } }],
+    },
+    {
+      code: "it.fails('t', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
+    {
+      code: "it.failing('t', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
+    {
+      code: "xit('t', () => {});",
+      errors: [{ messageId: 'disabledTest', data: { form: 'xit' } }],
+    },
+    {
+      code: "xdescribe('s', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
+    {
+      code: 'pending();',
+      errors: [{ messageId: 'disabledTest', data: { form: 'pending()' } }],
+    },
+    // The chained form the line-based scanner's regex did not anticipate.
+    {
+      code: "it.skip.each([1])('t %s', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
+    // The policy change: a SKIP marker is no longer an escape.
+    {
+      code: "// SKIP: #123\nit.skip('t', () => {});",
+      errors: [{ messageId: 'disabledTest' }],
+    },
+  ],
+});

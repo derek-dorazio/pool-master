@@ -199,7 +199,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 |---|---|---|---|---|---|---|
 | 1 | ~~No mocked API boundary~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `vi.mock` / `jest.mock` of `@/lib/api` or `@/lib/api-client`. Widened past the scanner, which matched `vi` only. | `eslint-rules/no-mocked-api.mjs` |
 | 2 | Route discipline | `rules:check:route-discipline` | warn-only | 95 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
-| 3 | Test-disable discipline | `rules:check:test-disable` | **blocking** | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` without a `SKIP: pool-master-NNN` comment within two lines above | `scripts/check-test-disable-discipline.mjs` |
+| 3 | ~~Test-disable discipline~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` / `pending()`, plus `*.skip.test.ts` files and `skipped/` dirs. The `SKIP: #NN` escape comment was **removed** — see below. | `eslint-rules/no-disabled-tests.mjs` |
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
@@ -215,9 +215,10 @@ prefix. They exit 0 regardless of finding count, so they do not fail the
 build today. Their counts are visible in every CI run and are tracked as the
 "size of debt" for the parallel cleanup epics.
 
-The blocking gates (`test-disable`, `api:check`, and the PR-only review-triggers
-marker) exit non-zero on any finding and fail the lint-typecheck job,
-which blocks the rest of CI and any PR merge.
+The blocking gates (`api:check` and the PR-only review-triggers marker) exit
+non-zero on any finding and fail the lint-typecheck job, which blocks the rest
+of CI and any PR merge. The migrated gates block through `npm run lint` in the
+same job.
 
 ## Detail: the api:check freshness gate
 
@@ -246,27 +247,28 @@ commit the regenerated artifacts.
 
 ## Detail: the test-disable gate
 
-The only `rules:check` sub-script that is blocking. The reasoning: a skipped
-test without a tracking issue is dead silent regression risk. Every other
-debt class (mocked APIs, untraced tests, bare buttons) is cleanup that
-accumulates measurably; a silently disabled test is debt that hides itself.
+Migrated to `poolmaster/no-disabled-tests` (`eslint-rules/no-disabled-tests.mjs`)
+and **changed in policy** at the same time. The old scanner did not ban skipped
+tests; it banned undocumented ones, letting any skip through if a `SKIP: #NN`
+comment sat within two lines above it.
 
-The pattern detected (matches `rules/testing-rules.md §1C` verbatim):
+That exemption was removed. Nothing ever reconciled a marker against the issue it
+named, so a skip could outlive its tracking issue and stay green indefinitely —
+and writing a comment was cheaper than fixing or deleting the test, which made the
+marker the default resolution for anything that went red.
+
+The forms now rejected unconditionally:
 
 ```
-.skip(  .todo(  .fails(  .failing(  xit(  xtest(  xdescribe(
+.skip(  .todo(  .fails(  .failing(  xit(  xtest(  xdescribe(  pending(
 ```
 
-The exception that makes it pass: an adjacent comment within two lines above:
+plus `it.skip.each(...)` chains, files named `*.skip.test.ts`, and anything under
+a `skipped/` directory. There is no escape comment. The remediation is to fix the
+test or delete it.
 
-```
-// SKIP: pool-master-NNN — short reason
-it.skip('UC-LM-003: ...', ...)
-```
-
-Without that comment, the gate fails and the build blocks. The remediation
-is either to add the SKIP comment with a real issue tracking the
-un-skip, or to remove the disable and either fix or delete the test.
+Migration cost was zero: the repo had no skipped tests when this landed, so the
+ban locked in the existing state rather than demanding a cleanup.
 
 ## Detail: the review triggers gate
 
@@ -338,7 +340,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 |---|---|---|
 | `rules:check:no-mocked-api` (warn) | A test added a module-level mock of the generated API. Today does not block, but lands as visible debt. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
-| `rules:check:test-disable` (**block**) | A test was disabled without a `SKIP: #NN` comment (legacy `SKIP: pool-master-*` markers still pass). | Either: (a) add the comment with a real issue tracking the un-skip, (b) remove the disable and fix the test, or (c) delete the test. |
+| `poolmaster/no-disabled-tests` via `npm run lint` (**block**) | A test was disabled. There is no exempting comment. | Either fix the test, or delete it and note the coverage gap in the slice's closing comment. |
 | `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
@@ -367,7 +369,8 @@ slice flips it from warn-only to fail-on-new, so new debt cannot land
 without explicit acknowledgment. That conversion is tracked under the
 rule-enforcement hardening epic (`pool-master-1y8`).
 
-The two blocking gates (`test-disable`, `api:check`) had clean baselines at
+The two blocking gates (test-disable, now `poolmaster/no-disabled-tests`, and
+`api:check`) had clean baselines at
 landing and went straight to blocking, since they protect against debt
 classes that should never be allowed to grow at all.
 
@@ -507,7 +510,7 @@ package.json                         — npm script wiring (rules:check chain, a
 scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
 eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
 scripts/check-route-discipline.mjs   — gate 2
-scripts/check-test-disable-discipline.mjs — gate 3
+eslint-rules/no-disabled-tests.mjs — gate 3 (migrated from scripts/)
 eslint-rules/no-bare-ui-controls.mjs — gate 4 (migrated from scripts/)
 scripts/check-form-query-mirror.mjs  — gate 5
 scripts/check-openapi-fresh.mjs      — gate 6

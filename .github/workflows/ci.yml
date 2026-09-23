@@ -66,6 +66,11 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
+      # Required at bootstrap with no fallback (#134, core/config.ts). The test
+      # helpers set these too, but CI is explicit so a suite that bootstraps
+      # outside a helper still starts.
+      APP_ENV: ci
+      RELEASE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6

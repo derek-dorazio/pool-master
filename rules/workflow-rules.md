@@ -226,8 +226,8 @@ The closing comment is the canonical post-ship execution record for the slice. P
 - Reference the parent epic in the PR description alongside the slice's own issue.
 - For defect-fix slices, also reference the defect ID in the failing test's traceability comment per `rules/testing-rules.md` §1A.
 
-**Historical `pool-master-<suffix>` IDs.** Commit messages, test traceability comments, and
-`SKIP:` markers written before the migration still carry Beads IDs. They remain valid as
+**Historical `pool-master-<suffix>` IDs.** Commit messages and test traceability comments
+written before the migration still carry Beads IDs. They remain valid as
 historical references — `git show <sha>:.beads/issues.jsonl` recovers any record, closed or
 open — and they are deliberately **not** rewritten. Every migrated issue names its original
 ID in its body, so searching the tracker for a `pool-master-` suffix resolves the mapping.
@@ -331,7 +331,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Every new test's name states the behavior and expected outcome; defect-fix tests reference their issue number, per `rules/testing-rules.md` §1A *Test Self-Documentation*
 - [ ] For defect-fix slices: a failing test reproducing the defect was written *before* the fix and observed to fail on the broken code, per `rules/testing-rules.md` §3 *Defect Verification Protocol* (record the observation in the issue's closing comment)
 - [ ] No application code was modified to make a test pass — no fakes, fallbacks, hardcoded responses, "test mode" branches, or synthetic defaults were added to production paths, per `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*
-- [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced without a `SKIP: #NN` comment and a real issue tracking the un-skip, per `rules/testing-rules.md` §1C *Test-Disable Discipline*
+- [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced — there is no marker that exempts one — per `rules/testing-rules.md` §1C *Test-Disable Discipline*
 - [ ] If the slice instruments logging or branches, each identified positive
       and negative branch is covered by a truthful automated test at the
       appropriate layer

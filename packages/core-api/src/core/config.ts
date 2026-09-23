@@ -53,3 +53,65 @@ export function readJwtSecret(): string {
   }
   return secret;
 }
+
+// ---------------------------------------------------------------------------
+// Deployment identity: environment name and running version
+// ---------------------------------------------------------------------------
+
+export class RequiredEnvMissingError extends Error {
+  constructor(name: string, purpose: string, suggestion: string) {
+    super(
+      `${name} environment variable is required — ${purpose}. ${suggestion} `
+      + 'There is deliberately no default: a hardcoded fallback means a '
+      + 'misconfigured deployment reports something plausible and wrong rather '
+      + 'than failing at startup. See .env.example.',
+    );
+    this.name = 'RequiredEnvMissingError';
+  }
+}
+
+/**
+ * Resolve the deployment environment name and throw if unset.
+ *
+ * This used to be `process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development'`
+ * in `core/logger.ts`. The scanner that bans env fallbacks never caught it,
+ * because the chain spanned three lines and the scanner matched one line at a
+ * time — so every log line from a misconfigured production box claimed
+ * `env: "development"`, which is both wrong and the exact signal an operator
+ * would use to tell those apart.
+ */
+export function readAppEnv(): string {
+  const value = process.env.APP_ENV;
+  if (!value || value.trim().length === 0) {
+    throw new RequiredEnvMissingError(
+      'APP_ENV',
+      'log lines and health output are labelled with it',
+      'Set it to the deployment environment name (development, test, staging, production).',
+    );
+  }
+  return value;
+}
+
+/**
+ * Resolve the running service version and throw if no source provides one.
+ *
+ * Accepts the deployment-injected names first, then npm's own, which is set
+ * only when the process was started through an npm script. A container running
+ * `node dist/index.js` has none of them unless the deployment supplies one —
+ * which is the point: a service that cannot say what version it is running
+ * should not start, rather than reporting a number someone hardcoded once.
+ */
+export function readServiceVersion(): string {
+  const value = process.env.RELEASE_VERSION
+    || process.env.APP_VERSION
+    || process.env.GIT_SHA
+    || process.env.npm_package_version;
+  if (!value || value.trim().length === 0) {
+    throw new RequiredEnvMissingError(
+      'RELEASE_VERSION',
+      'health output and log lines report the running version',
+      'Set RELEASE_VERSION, APP_VERSION or GIT_SHA at deploy time.',
+    );
+  }
+  return value;
+}

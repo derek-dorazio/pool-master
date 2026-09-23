@@ -123,6 +123,11 @@ export async function setupIntegrationTests(): Promise<void> {
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = JWT_SECRET;
   }
+  // #134 — APP_ENV and a version source are likewise required with no fallback,
+  // and this config has no setupFilesAfterEach, so they are set here rather than
+  // in tests/setup.ts. buildTestApp() creates a logger, which reads APP_ENV.
+  process.env.APP_ENV ??= 'test';
+  process.env.RELEASE_VERSION ??= '0.0.0-test';
   prisma = new PrismaClient();
   await prisma.$connect();
   await cleanupTestData();

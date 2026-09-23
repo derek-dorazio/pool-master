@@ -49,7 +49,7 @@ files than anyone believes.
 
 A re-run is justified when a job died before any test body ran, or when it passed on this
 exact commit earlier. Otherwise a failure is real. Never skip, disable, or quarantine a test
-to get green — `rules/testing-rules.md` §1C *Test-Disable Discipline*, which requires a tracked issue for any skip.
+to get green — `rules/testing-rules.md` §1C *Test-Disable Discipline*, which permits no skip at all.
 
 ## Done is more than green
 

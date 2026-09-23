@@ -199,4 +199,34 @@ export default tseslint.config(
     plugins: { poolmaster },
     rules: { 'poolmaster/no-inline-theme-styles': 'error' },
   },
+  {
+    // Test files across every workspace, matching the scanner's walk roots
+    // (tests/, packages/, clients/poolmaster/src/). The rule also fires on the
+    // file path itself, so a parked `*.skip.test.ts` is caught by being linted
+    // at all -- which is why the glob covers those names too.
+    files: [
+      'tests/**/*.{ts,tsx}',
+      'packages/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/__tests__/**/*.{ts,tsx}',
+      'clients/poolmaster/src/**/*.{test,spec}.{ts,tsx}',
+      '**/*.skip.{test,spec}.{ts,tsx}',
+      '**/skipped/**/*.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-disabled-tests': 'error' },
+  },
+  {
+    // Backend source only, matching the scanner's SCAN_ROOT. Deployment identity
+    // must come from the bootstrap readers in core/config.ts, which throw.
+    files: ['packages/core-api/src/**/*.ts'],
+    plugins: { poolmaster },
+    rules: {
+      'poolmaster/no-env-fallbacks': ['error', {
+        // LOG_LEVEL is a tunable, not an identity: a wrong verbosity is a nuisance,
+        // not a deployment reporting itself as something it is not. Everything
+        // else that reads an env name gets a reader that throws.
+        allow: ['LOG_LEVEL'],
+      }],
+    },
+  },
 );

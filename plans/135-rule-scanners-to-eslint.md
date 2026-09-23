@@ -151,16 +151,8 @@ it, and grep before deleting.**
 read of the generated type names, which is a different shape from the four done so far), and
 `feature-theme-tokens` (pairs with `no-inline-theme-styles`).
 
-**Blocked, not deferred:**
-
-- `check-test-disable-discipline` — the policy question in #158. The scanner bans
-  *undocumented* skips, accepting an adjacent `SKIP: #NN` marker; no plugin rule has that
-  concept, so migrating makes skips unconditionally illegal. Free today at zero skipped
-  tests; the first deferred test pays.
-- `check-no-env-fallbacks` — failing open on two real violations (§1x). An AST rule catches
-  both, so writing it correctly turns lint red until `logger.ts`'s multi-line `??` chain and
-  `health-service.ts`'s lowercase env name are fixed at the source. Whether those should
-  throw at bootstrap rather than default is a product call, not a mechanical one.
+**Both blockers were answered and both scanners are now migrated** (see §1y below).
+The owner's call: no fallbacks, error out instead; no skipped tests, no marker escape.
 
 ### 1z. The vehicle is wrong: use a local plugin, not `no-restricted-syntax`
 
@@ -511,3 +503,70 @@ plan file per ADR-0002.
 - Plan 123 — Workflow Gate Hardening (`pool-master-5xi.2`, overlapping scope)
 - Plan 136 — Test runner consolidation (determines the test-lint plugin)
 - `rules/testing-rules.md §1A` — the landed traceability decision (retired one migration target)
+
+---
+
+## 1y. The two blocked scanners, resolved
+
+Both blockers were product calls, and both were answered the same way: **fail loud rather
+than absorb the problem.**
+
+### `check-no-env-fallbacks` → `poolmaster/no-env-fallbacks`
+
+The scanner matched one physical line with a regex and failed open on two live violations.
+The AST rule finds the last operand of a `??`/`||` chain whose left side reads an env
+object, so source wrapping is irrelevant.
+
+Measured on a fixture carrying 8 planted violations and 6 shapes that must stay silent:
+
+| | Caught | Missed |
+|---|---|---|
+| `check-no-env-fallbacks` (line-based) | 3 | 5 |
+| `poolmaster/no-env-fallbacks` (AST) | 8 | 0 |
+
+The five the scanner missed: a `??` chain split across lines, a lowercase env name (its
+regex required `[A-Z_][A-Z0-9_]*`), computed access (`process.env['X']`), a conditional
+tail (`?? (isCi ? 'ci' : 'development')`), and `||` in place of `??`. Neither tool flagged
+any of the 6 allowed shapes (`?? ''`, numeric, identifier, `null`, an allow-listed name, a
+chain with no literal tail).
+
+Source fixes that unblocked it, all in `packages/core-api/src/`:
+
+- `core/config.ts` gained `readAppEnv()` and `readServiceVersion()`, both throwing
+  `RequiredEnvMissingError`, mirroring the existing `readJwtSecret()` shape.
+- `core/logger.ts` lost `resolveEnvironment()` (the `?? 'development'` chain the scanner
+  never saw) **and** `resolveServiceVersion()`, which was a second, silently-optional copy
+  of the same version chain. Both now call the bootstrap readers.
+- `modules/admin/health-service.ts` lost `?? '0.1.0'`.
+- `LOG_LEVEL` is allow-listed by name: a wrong verbosity is a nuisance, not a deployment
+  misreporting what it is. The allowance is a config entry, not a regex blind spot.
+
+**Deployment consequence, stated plainly:** a process that sets none of `RELEASE_VERSION` /
+`APP_VERSION` / `GIT_SHA` / `npm_package_version` now fails at startup. `npm_package_version`
+is only set when the process runs through an npm script, so a container running
+`node dist/index.js` needs an explicit variable. `.env.example`, `tests/setup.ts`,
+`tests/integration/helpers.ts` and the CI workflow were all updated; a deployment manifest
+outside this repo was not, and cannot be from here.
+
+### `check-test-disable-discipline` → `poolmaster/no-disabled-tests`
+
+The scanner banned *undocumented* skips; the rule bans skips. The `SKIP: #NN` escape is
+gone, and `rules/testing-rules.md` §1C was rewritten around why: nothing ever reconciled a
+marker against the issue it named, so a skip outlived its issue and stayed green, and
+writing a comment was cheaper than fixing or deleting the test — which made the marker the
+default resolution for anything that went red.
+
+Migration cost was zero: **the repo had no skipped tests when this landed**, so the ban
+locks in the existing state rather than demanding a cleanup.
+
+The rule covers every scanner form plus `it.skip.each(...)` chains, and keeps the coarse-grain
+half (`*.skip.test.ts` files, `skipped/` directories) by reporting on the file path.
+
+**Coverage trap worth recording.** `npm run lint` globs `packages/**` and
+`clients/poolmaster/src/**` — not `tests/`, which the scanner walked. Migrating the rule into
+`eslint.config.js` alone would have left the gate listed, passing, and checking nothing over
+the largest test tree in the repo. Adding `tests/**` to the main run instead surfaces 2773
+pre-existing `recommendedTypeChecked` errors. `eslint.tests.config.mjs` runs the one rule over
+`tests/` without type information; clearing that backlog, or exempting `tests/` from type-aware
+linting, stays a separate decision. Verified by planting a skip in `tests/` and confirming the
+gate exits 1 — a green gate over an empty tree proves nothing, which is the same lesson as §1x.
