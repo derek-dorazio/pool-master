@@ -90,6 +90,83 @@ per-line escape hatch with a recorded justification.
 | `check-no-duplicate-extract-error-message` | `no-restricted-imports` plus a local-redeclaration rule |
 | ~~`check-test-traceability`~~ | **Retired, not migrated.** Plan 138 landed Option B: the UC/BR requirement is dropped and the surviving one — defect-fix tests cite their issue number — is not mechanically detectable, since no scanner can tell which tests are defect-fix tests. Nothing to port. |
 
+### 1z. The vehicle is wrong: use a local plugin, not `no-restricted-syntax`
+
+**This supersedes the `no-restricted-syntax` proposal in every row below.** Measured against
+planted violations in a mirrored fixture tree:
+
+| Config shape | Planted violations | Caught |
+|---|---|---|
+| One `no-restricted-syntax` block per scanner, as this plan phrases it | 16 | **4** |
+| Hand-computed union blocks per scope | 16 | 16 |
+
+The naive layering silently lost query-keys, theme, controls, dup-extractor **and** the
+slice-1 cast selectors — everything except the last matching block. `npm run lint` stayed
+green throughout.
+
+Spreading the inherited array (the `§1` mitigation) is necessary but **not sufficient**. The
+five scanners have five *different* path scopes that overlap on every axis — query-keys
+includes tests but excludes `lib/query-keys.ts`; theme is `.tsx` only and excludes tests;
+controls is `features/**` minus `features/shared/ui/**` minus tests; dup-extractor excludes
+`lib/errors.ts`; mocked-api's pattern appears **only** in test files. Making that work took
+**seven** hand-maintained union blocks, and each new rule multiplies the partition.
+
+A second, independent instance: the config's `{ files: [test globs], rules: {
+'no-restricted-syntax': 'off' } }` block makes `check-no-mocked-api` **dead on arrival** as a
+`no-restricted-syntax` rule, because its pattern only ever appears in tests.
+
+**Write these as named rules in a local ESLint plugin.** Distinct rule ids never clobber each
+other, so `files`/`ignores` composes per rule exactly as each scanner's exclusion list reads.
+You also get real rule names in output, per-rule `eslint-disable`, and `RuleTester` unit
+tests. Verified working on this ESLint (9.39.4). `no-restricted-syntax` keeps only the
+slice-1 cast selectors.
+
+### 1y. What the zero-finding scanners actually match
+
+All seven verified by planting violations — a scanner at zero cannot be verified by running
+it, since "both report 0" proves nothing.
+
+| Scanner | Plan's description | What it actually does |
+|---|---|---|
+| `check-no-inline-query-keys` | accurate | 5 selectors needed (`as const` / `satisfies` / quoted key variants). Exact match. **106 live `queryKey` sites** — highest editor value. |
+| `check-no-inline-theme-styles` | "raw color literals" | **Wrong.** It flags a literal of *any* kind on 14 named style props — `fontSize: 14` and `color: 'inherit'` are violations. Implementing the plan's wording would drop those. |
+| `check-shared-ui-controls` | accurate | ESLint is **strictly more precise**: the scanner is a raw-text regex and flags `<button>` inside comments. Opposite direction from slice 1's `typeof fetch` case. |
+| `check-no-duplicate-extract-error-message` | "`no-restricted-imports` plus a local-redeclaration rule" | `no-restricted-imports` is **not applicable** — the violation is a local *definition*; there is no non-canonical module to ban importing. Drop that half. |
+| `check-no-mocked-api` | "uncertain; enumerated shapes expressible, general fake-data judgment not" | **Describes a scanner that does not exist here.** It is one regex for `vi.mock('@/lib/api')`. Nothing to split; fully expressible. Worth widening to `/^(vi\|jest)$/` since the backend still runs Jest. |
+| `check-test-disable-discipline` | `eslint-plugin-vitest`/`-jest` + custom rule | Those plugins are **not installed**, and neither expresses the `SKIP:` comment half. One ~30-line custom rule reproduces the scanner byte-for-byte, including its off-by-one marker window. |
+| `check-no-env-fallbacks` | "`import.meta.env.X ?? …` and `process.env.X ?? …`" | The `import.meta.env` half **is not in the scanner** — adding it is a scope expansion, not a migration. And see below. |
+
+### 1x. `check-no-env-fallbacks` is failing open on two real violations
+
+The scanner reports a clean tree. The ESLint equivalent finds two genuine instances of the
+banned pattern, both confirmed by reading the source:
+
+- `packages/core-api/src/core/logger.ts:50` — `process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development'`, split across three lines. The scanner is **line-based**, so a multi-line chain is invisible to it.
+- `packages/core-api/src/modules/admin/health-service.ts:152` — `process.env.npm_package_version ?? '0.1.0'`. The scanner's regex hard-requires `[A-Z_][A-Z0-9_]*`, so a **lowercase env name** slips through.
+
+This is the only one of the seven where ESLint finds bugs the scanner cannot, and it makes
+the migration a bug fix rather than a refactor. Per "a scanner cannot migrate until its
+findings are at zero", budget the two-line cleanup inside that slice.
+
+**A trap in the other direction**, worth recording: the obvious encoding
+`[right.type="Literal"][right.value!=""]` also matches *numeric* literals and flags
+`Number(process.env.PORT ?? 3000)`, which the scanner deliberately allows as a tunable. Use
+`[right.raw=/^['"].+['"]$/]`.
+
+### 1w. Lint coverage gap — found here, fixed here
+
+`npm run lint` globbed `packages/*/src/**/*.ts`, which missed **69 files under
+`packages/shared/` outside `src/`** — the entire DTO layer, where the API contract lives —
+plus the backend test corpus that `check-test-disable-discipline` walks. Migrating any
+scanner without widening the globs would have converted a 673-file gate into a 491-file one.
+
+This applied **retroactively to slice 1**: the cast rules never covered those files either.
+
+Fixed: globs widened to `packages/**/*.ts`, taking coverage from 491 to **545 files**. Cost
+was two `any` findings in `packages/shared/events/event-bus.ts`, a heterogeneous handler
+registry where `unknown` rejects storing a typed handler and `never` stores but cannot be
+called — both tried; now carrying a justification.
+
 ### 1a. Route discipline, measured
 
 `check-route-discipline` has **6 patterns; only 4 fire.** Its 95 findings decompose as:
