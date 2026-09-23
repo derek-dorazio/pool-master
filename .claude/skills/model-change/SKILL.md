@@ -41,7 +41,7 @@ When you present the change, say:
 
 A one-off modeling pattern that nobody argued for is how the next entity becomes harder to
 reason about. If a change suggests a genuinely better repeatable pattern, raise it as a
-**candidate convention** — do not promote it into `domain-model-conventions-rules.md`
+**candidate convention** — do not promote it into `rules/domain-model-conventionsrules.md`
 without the user agreeing, and prefer promoting only what is already visible in multiple
 domain areas.
 
@@ -64,13 +64,15 @@ use that skill for the detail.
 ## Where this goes wrong
 
 - **Enum members added in one place.** A new enum value needs the Prisma enum, the domain
-  type, and every `Record<Enum, …>` map and `switch` that covers it. `Record` typing fails
-  the build on a missing key; a `switch` does not, and
-  `@typescript-eslint/switch-exhaustiveness-check` is not currently enabled — see #160,
-  which found three genuine unhandled domain states this way.
-- **Two definitions of one name.** See #159: a const object and a string union for the same
-  enum, disagreeing about membership, with the barrel silently dropping one. `tsc` does not
-  report it.
+  type, and every `Record<Enum, …>` map and `switch` that covers it. A `Record<Enum, …>`
+  fails the build on a missing key — that is why the codebase types its lookup maps that
+  way. A `switch` does **not**: it compiles fine while silently not handling the new case.
+  Grep for the enum name and check every `switch` by hand.
+- **Two definitions of one name.** A const object and a string union for the same enum can
+  coexist and disagree about membership, and a barrel's explicit re-export silently beats
+  its `export *`. The result is a type and a value that admit different sets, which `tsc`
+  does not report. Before adding an enum, grep for the name across
+  `packages/shared/domain/` to confirm there is exactly one definition.
 - **Stale fields left exposed.** If the product direction has moved and the contract still
   exposes retired fields, say so — contract-cleanup debt is worth naming explicitly rather
   than working around.

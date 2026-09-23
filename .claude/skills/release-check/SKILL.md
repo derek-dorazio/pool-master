@@ -7,7 +7,8 @@ allowed-tools: [Read, Grep, Glob, Bash]
 
 # Gates, and what a failure means
 
-`rules/workflow-rules.md` §3 and `rules/testing-rules.md` §3 define the required set. Run
+`rules/workflow-rules.md` §3 *Required Local Validation Before Push* and
+`rules/testing-rules.md` §3 *Required Local Quality Gates* define the required set. Run
 them locally before pushing — CI is a backstop, not the first run.
 
 ```
@@ -31,7 +32,7 @@ files than anyone believes.
   three legitimate conclusions are: the production code has a real defect (fix it), the test
   asserts something the contract does not require (fix the test), or the behavior is not
   exercisable at this layer (move the test). *"Modify production code to make the test
-  pass"* is never one of them — `rules/testing-rules.md` §1B.
+  pass"* is never one of them — `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*.
 - **A rule scanner fails** → read the section it names. The scanner output *is* the routing
   hint.
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
@@ -44,14 +45,14 @@ files than anyone believes.
 
 A re-run is justified when a job died before any test body ran, or when it passed on this
 exact commit earlier. Otherwise a failure is real. Never skip, disable, or quarantine a test
-to get green — `rules/testing-rules.md` §1C, which requires a tracked issue for any skip.
+to get green — `rules/testing-rules.md` §1C *Test-Disable Discipline*, which requires a tracked issue for any skip.
 
 ## Done is more than green
 
 A slice is not done because CI passed:
 
 - The GitHub issue is reconciled — closed, deferred with a label, or left open with a
-  blocker stated (`rules/workflow-rules.md` §1, Slice Completion Checklist).
+  blocker stated (`rules/workflow-rules.md` §1 *Plans and the Issue Tracker* → Slice Completion Checklist).
 - Docs that the change invalidated are updated **in the same PR**, not a follow-up.
 - The PR discloses what `rules/review-triggers.md` requires: judgement calls, deviations
   from plan, blast radius, and anything you considered and deliberately did not fix.

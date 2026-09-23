@@ -44,12 +44,12 @@ Contract Documentation Checklist you run before calling the work done.
 
 ## Error responses
 
-Error envelope shape and codes are in `rules/service-rules.md` §7. Typed error classes are
+Error envelope shape and codes are in `rules/service-rules.md` §7 *Error Handling*. Typed error classes are
 §7 *Typed Error Class Discipline* — and that discipline is currently clean in
 `packages/core-api`, so a new plain-object throw would be the first.
 
 ## Before you call it done
 
-`rules/testing-rules.md` §3 defines the gate set; `rules/workflow-rules.md` §3 says it is
-not optional. Contract verification, unit, data integration and FAPI are **separate layers
+`rules/testing-rules.md` §3 *Required Local Quality Gates* defines the gate set;
+`rules/workflow-rules.md` §3 *Required Local Validation Before Push* says it is not optional. Contract verification, unit, data integration and FAPI are **separate layers
 with distinct goals** — a FAPI test is not a substitute for a unit test of the same logic.

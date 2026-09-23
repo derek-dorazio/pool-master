@@ -12,8 +12,7 @@ The contract is the **generated hey-api SDK and its exported types**, imported t
 in the contract documentation and belongs in a backend change — not in a locally invented
 shape.
 
-Detail lives in `rules/react-ui-rules.md` (§3 API integration, §4 TanStack Query, §5 state /
-effect / form), `rules/ux-rules.md`, and `rules/poolmaster-webapp-rules.md`. This file is the
+Detail lives in `rules/react-ui-rules.md` (§3 *API Integration Rules*, §4 *TanStack Query Rules*, §5 *State, Effect, Form, And Component Rules*), `rules/ux-rules.md`, and `rules/poolmaster-webapp-rules.md`. This file is the
 order of operations and the traps.
 
 ## Before you start
@@ -24,7 +23,7 @@ arrives, and it hides whether the contract is actually right.
 
 ## Self-check before review
 
-Walk the changed surface against these. Each maps to a section of `react-ui-rules.md`, and
+Walk the changed surface against these. Each maps to a section of `rules/react-uirules.md`, and
 several are scanner-enforced, so a miss fails CI rather than review.
 
 - **State ownership** — TanStack Query owns server state; local state owns local UI state;
@@ -46,15 +45,18 @@ several are scanner-enforced, so a miss fails CI rather than review.
 - **Logging, env, time** — shared logger, config and time utilities. Not `console.log`, not
   direct `import.meta.env`, not ad hoc date arithmetic.
 - **Tests and selectors** — request wiring tested with MSW against generated contract
-  shapes; automation-critical controls expose stable selectors per `react-ui-rules.md` §9.
+  shapes; automation-critical controls expose stable selectors per `rules/react-ui-rules.md` §9 *Stable Automation Selectors*.
 
 ## Two traps worth naming
 
 - **Server data into form state.** Initialize form drafts from server data once per entity
   identity, not on every query-result object change. Memo deps keyed on narrow fields
-  (`data?.id`, `data?.name`) rather than the whole `data` object are deliberate — see
-  `react-ui-rules.md` §5 *Server Data Form-State Hazard*, and #157, where a lint rule
-  demands the opposite and is wrong.
+  (`data?.id`, `data?.name`) rather than the whole `data` object are **deliberate** — see
+  `rules/react-ui-rules.md` §5 *Server Data Form-State Hazard*.
+
+  If a dependency-array lint rule tells you to depend on the whole query object, the rule
+  is wrong here and the code is right. Suppress it inline with a comment naming that rule
+  section; do not widen the deps.
 - **Error handling.** Throw through the shared `ApiError` / `throwApiError` helper in
   `clients/poolmaster/src/lib/errors.ts`, and read messages back through
   `extractErrorMessage`. Do not fork a local copy of that helper —
