@@ -145,9 +145,31 @@ to nineteen `###` subsections and is a file's worth of tracker convention living
 general workflow file. That may still be worth splitting — but it is an argument about one
 section's growth, not about the file being a policy/runbook mixture.
 
-**Deferred out of slice 1 for that reason.** Decisions 1–5 are mechanical and landed;
-this one needs a decision on the re-founded argument first, and it overlaps `plans/142`
-(both edit §0 and §2).
+**Decided: deliberately not done. The file stays whole.**
+
+The premise was that the file mixes policy with runbooks. Plans 132 and 139 removed both
+runbooks for unrelated reasons, so the reason to split went with them. What is left is 967
+lines of durable process, which is a different situation from 967 lines where some of it did
+not belong.
+
+Splitting was rejected on one concrete ground: **the file is consumed sectionally, not read
+end to end.** `AGENTS.md` routes to `workflow-rules.md` §0, §1, §3 and §6 individually by
+task shape. Splitting would rewrite the path in every cross-reference across `rules/`,
+`AGENTS.md` and the PR template while giving the reader the same experience — motion without
+improvement.
+
+Rejected alternatives, recorded so this is not re-raised: extracting §1's tracker
+conventions into a `tracker-rules.md` (~250 lines, same routing cost); extracting §2 on an
+audience argument (rule maintenance has a different reader than product work); and trimming
+the 130-line Slice Completion Checklist, which addresses duplication rather than length and
+is worth considering on its own merits later.
+
+**One thing to watch rather than act on.** The Slice Completion Checklist's layer sections
+now overlap the `add-endpoint` and `model-change` skills. Three artifacts touch the backend
+layer chain: `service-rules.md` §4 states it, the checklist verifies it, the skills sequence
+it. That is defensible — state, verify and sequence are different jobs — but it is where
+drift will appear first. The checklist was audited for existing drift when this was decided
+and none was found.
 
 ## Data Model / API Surface Implications
 

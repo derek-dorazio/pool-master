@@ -45,7 +45,7 @@ The rules below are concrete applications of this principle.
 
 PoolMaster should use consistent domain-model patterns so that:
 
-- data-modeler recommendations are repeatable
+- model-change recommendations are repeatable
 - backend and frontend interpret entity lifecycle the same way
 - DTOs remain aligned with domain semantics rather than drifting into ad hoc
   per-feature patterns
@@ -227,8 +227,7 @@ product need.
 
 ## 6. Data-Modeler Responsibilities
 
-When reviewing a proposed model change, the data-modeler should explicitly
-check:
+When reviewing a proposed model change, explicitly check:
 
 - whether the lifecycle concept is actually soft delete, workflow state, or
   both
@@ -238,8 +237,8 @@ check:
 - whether DTOs will remain semantically aligned with the proposed model
 - whether a proposed extra field is truly needed now or should be deferred
 
-If the proposal breaks these conventions, the data-modeler should call that out
-before backend implementation begins.
+If the proposal breaks these conventions, call that out before backend
+implementation begins.
 
 ---
 

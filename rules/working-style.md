@@ -126,7 +126,7 @@ This is a solo + agent-driven workflow. There is no human catching loops in real
 ### Do not invent product behavior
 
 - When a use case is ambiguous, ask. Do not guess and write tests that codify the guess.
-- When a contract field is unclear (nullable? required? what's the enum?), ask the backend persona or check the generated SDK. Do not assume.
+- When a contract field is unclear (nullable? required? what's the enum?), check the generated SDK and the OpenAPI description. If neither answers it, that is a contract-documentation gap to fix, not an assumption to make.
 - "Plausible default" is not a substitute for confirmed product intent. The cost of asking is much lower than the cost of un-shipping a wrong assumption.
 
 ---

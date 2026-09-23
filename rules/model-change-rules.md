@@ -48,9 +48,9 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 
 - Frontend agents must not directly implement backend-owned model or shared
   contract changes as a convenience while doing UI work.
-- When frontend work reveals a possible model or shared-contract change, route
-  the question through the `data-modeler` persona first so the impact is
-  classified before implementation continues.
+- When frontend work reveals a possible model or shared-contract change,
+  classify the impact — no change, contract-only, or a true model change —
+  before implementation continues. See the `model-change` skill.
 - Backend developers own the implementation of approved model/shared changes,
   including regeneration of the exported SDK/types used by frontend.
 - Contract documentation gaps exposed by frontend questions are backend-owned
