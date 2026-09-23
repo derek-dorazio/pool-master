@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { adminRefreshGolfTournamentField } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -32,7 +32,7 @@ export function GolfFieldRefreshAction({
     mutationFn: async () => {
       const response = await adminRefreshGolfTournamentField({ path: { eventId } });
       if (!response.data?.syncRuns) {
-        throw response.error ?? new Error('Field refresh response is missing data.');
+        throwApiError(response.error, 'Field refresh response is missing data.');
       }
       return response.data.syncRuns;
     },

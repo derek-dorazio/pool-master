@@ -83,7 +83,7 @@ export function createHealthHandlers(healthService: HealthService) {
 
   // --- Search errors ---
 
-  async function searchErrors(
+  function searchErrors(
     request: FastifyRequest<{
       Querystring: {
         service?: string;
@@ -141,7 +141,7 @@ export function createHealthHandlers(healthService: HealthService) {
 
   // --- Alert rules list ---
 
-  async function getAlertRules(
+  function getAlertRules(
     _request: FastifyRequest,
     _reply: FastifyReply,
   ) {

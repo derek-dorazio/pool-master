@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { adminReplaceGolfTierAssignments, adminUpdateGolfFieldEntries } from '@/lib/api';
 import { Alert, Button, Input, Select, SortableList, Tile } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -125,7 +125,7 @@ export function GolfTierBoard({
         body: { assignments: toAssignmentsPayload(board) },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },
@@ -149,7 +149,7 @@ export function GolfTierBoard({
         body: { entries: priceEdits },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },

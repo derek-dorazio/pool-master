@@ -23,6 +23,7 @@ import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
 import { QueryKeys } from '@/lib/query-keys';
+import { throwApiError } from '@/lib/errors';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
@@ -39,7 +40,7 @@ export function LeagueContestHistoryPage() {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -78,7 +79,7 @@ export function LeagueContestHistoryPage() {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {
-        throw response.error ?? new Error('Contest list response is missing data.');
+        throwApiError(response.error, 'Contest list response is missing data.');
       }
 
       return response.data.contests;

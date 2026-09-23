@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { throwApiError } from '@/lib/errors';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -96,7 +97,7 @@ export function GolfTournamentSummaryCard({
         body: toRequestBody(values),
       });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament update response is missing data.');
+        throwApiError(response.error, 'Golf tournament update response is missing data.');
       }
       return response.data.tournament;
     },

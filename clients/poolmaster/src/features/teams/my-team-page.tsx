@@ -39,7 +39,7 @@ import {
   Modal,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -88,7 +88,7 @@ export function MyTeamPage() {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -128,7 +128,7 @@ export function MyTeamPage() {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
       if (!response.data?.squads) {
-        throw response.error ?? new Error('Team list response is missing data.');
+        throwApiError(response.error, 'Team list response is missing data.');
       }
 
       return response.data.squads;
@@ -142,7 +142,7 @@ export function MyTeamPage() {
     queryFn: async (): Promise<OwnerInvitation[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
-        throw response.error ?? new Error('Owner invitation list response is missing data.');
+        throwApiError(response.error, 'Owner invitation list response is missing data.');
       }
 
       return response.data.invitations;
@@ -156,7 +156,7 @@ export function MyTeamPage() {
     queryFn: async (): Promise<LeagueMember[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
-        throw response.error ?? new Error('League members response is missing data.');
+        throwApiError(response.error, 'League members response is missing data.');
       }
 
       return response.data.members;
@@ -256,7 +256,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.squad) {
-        throw response.error ?? new Error('Team creation response is missing data.');
+        throwApiError(response.error, 'Team creation response is missing data.');
       }
 
       return response.data.squad;
@@ -278,7 +278,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.squad) {
-        throw response.error ?? new Error('Team update response is missing data.');
+        throwApiError(response.error, 'Team update response is missing data.');
       }
 
       return response.data.squad;
@@ -300,7 +300,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.squad) {
-        throw response.error ?? new Error('Team icon update response is missing data.');
+        throwApiError(response.error, 'Team icon update response is missing data.');
       }
 
       return response.data.squad;
@@ -328,7 +328,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.invitation) {
-        throw response.error ?? new Error('Owner invitation response is missing data.');
+        throwApiError(response.error, 'Owner invitation response is missing data.');
       }
 
       return response.data.invitation;
@@ -355,7 +355,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.invitation) {
-        throw response.error ?? new Error('Replace owner response is missing data.');
+        throwApiError(response.error, 'Replace owner response is missing data.');
       }
 
       return response.data.invitation;
@@ -377,7 +377,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.invitation) {
-        throw response.error ?? new Error('Revoke owner invitation response is missing data.');
+        throwApiError(response.error, 'Revoke owner invitation response is missing data.');
       }
       return response.data.invitation;
     },
@@ -396,7 +396,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.squad) {
-        throw response.error ?? new Error('Team inactivation response is missing data.');
+        throwApiError(response.error, 'Team inactivation response is missing data.');
       }
 
       return response.data.squad;
@@ -428,7 +428,7 @@ export function MyTeamPage() {
       });
 
       if (!response.data?.success) {
-        throw response.error ?? new Error('Team deletion response is missing data.');
+        throwApiError(response.error, 'Team deletion response is missing data.');
       }
 
       return selectedTeam.name;

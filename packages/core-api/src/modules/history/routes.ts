@@ -117,7 +117,7 @@ export function historyModule(fastify: FastifyInstance): void {
         response: { 200: zodToJsonSchema(HistoryPayoutsResponseSchema) },
       },
     },
-    async (request) => {
+    (request) => {
       const logger = createRequestContextLogger(request);
       logger.debug({ contestId: request.params.id }, 'history payouts route start');
       const payouts = historyService.getContestPayouts(request.params.id);

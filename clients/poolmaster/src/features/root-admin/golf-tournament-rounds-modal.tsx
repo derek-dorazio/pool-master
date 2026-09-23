@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { throwApiError } from '@/lib/errors';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { adminUpdateGolfTournamentRounds } from '@/lib/api';
@@ -86,7 +87,7 @@ export function GolfTournamentRoundsModal({
         },
       });
       if (!response.data?.rounds) {
-        throw response.error ?? new Error('Golf tournament rounds update response is missing data.');
+        throwApiError(response.error, 'Golf tournament rounds update response is missing data.');
       }
       return response.data.rounds;
     },

@@ -31,6 +31,7 @@ import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/lea
 import { formatUserName } from './user-name';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { throwApiError } from '@/lib/errors';
 
 type RootAdminViewedUser = AdminGetUserDetailResponses[200];
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
@@ -252,7 +253,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Admin user detail response is missing data.');
+        throwApiError(response.error, 'Admin user detail response is missing data.');
       }
 
       return response.data;
@@ -290,7 +291,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       });
 
       if (!response.data?.success) {
-        throw response.error ?? new Error('Root-admin role change response is missing success confirmation.');
+        throwApiError(response.error, 'Root-admin role change response is missing success confirmation.');
       }
     },
     onSuccess: () => {
@@ -313,7 +314,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       });
 
       if (!response.data?.temporaryPassword) {
-        throw response.error ?? new Error('Reset-password response is missing a temporary password.');
+        throwApiError(response.error, 'Reset-password response is missing a temporary password.');
       }
 
       return response.data.temporaryPassword;
@@ -361,7 +362,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       });
 
       if (!response.data?.success) {
-        throw response.error ?? new Error('Delete-user response is missing success confirmation.');
+        throwApiError(response.error, 'Delete-user response is missing success confirmation.');
       }
     },
     onSuccess: () => {

@@ -3,7 +3,7 @@ import {
   adminPreviewGolfRoundScores,
 } from '@/lib/api';
 import { BulkUploadPanel, StatusBadge, Tile } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -57,7 +57,7 @@ export function GolfRoundScoreUploadCard({
         body: { rows },
       });
       if (!response.data?.rows) {
-        throw response.error ?? new Error('Round-score preview response is missing data.');
+        throwApiError(response.error, 'Round-score preview response is missing data.');
       }
       return response.data.rows;
     },
@@ -77,7 +77,7 @@ export function GolfRoundScoreUploadCard({
         body: { rows },
       });
       if (response.error) {
-        throw response.error;
+        throwApiError(response.error);
       }
       return response.data;
     },

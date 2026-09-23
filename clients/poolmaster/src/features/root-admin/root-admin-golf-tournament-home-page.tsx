@@ -13,7 +13,7 @@ import {
   LinkButton,
   ListCard,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AdminGetGolfTournamentRoundsResponses } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
@@ -40,7 +40,7 @@ export function RootAdminGolfTournamentHomePage() {
     queryFn: async (): Promise<AdminGolfTournamentDetail> => {
       const response = await adminGetGolfTournament({ path: { eventId } });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament response is missing data.');
+        throwApiError(response.error, 'Golf tournament response is missing data.');
       }
       return response.data.tournament;
     },
@@ -53,7 +53,7 @@ export function RootAdminGolfTournamentHomePage() {
     queryFn: async (): Promise<GolfRound[]> => {
       const response = await adminGetGolfTournamentRounds({ path: { eventId } });
       if (!response.data?.rounds) {
-        throw response.error ?? new Error('Golf tournament rounds response is missing data.');
+        throwApiError(response.error, 'Golf tournament rounds response is missing data.');
       }
       return response.data.rounds;
     },
@@ -70,7 +70,7 @@ export function RootAdminGolfTournamentHomePage() {
         path: { seasonId: tournament?.seasonId ?? '' },
       });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Golf season response is missing data.');
+        throwApiError(response.error, 'Golf season response is missing data.');
       }
       return response.data.season;
     },

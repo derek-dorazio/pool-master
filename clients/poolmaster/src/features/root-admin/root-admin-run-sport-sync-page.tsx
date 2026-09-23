@@ -25,7 +25,7 @@ import {
   type SportSyncSubmission,
   type SyncSport,
 } from './root-admin-sync-utils';
-import { extractErrorMessage } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -43,7 +43,7 @@ export function RootAdminRunSportSyncPage() {
     queryFn: async (): Promise<ProviderSummary[]> => {
       const response = await adminListProviders();
       if (!response.data?.items) {
-        throw response.error ?? new Error('Provider list response is missing data.');
+        throwApiError(response.error, 'Provider list response is missing data.');
       }
       return response.data.items;
     },
@@ -78,7 +78,7 @@ export function RootAdminRunSportSyncPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Sport sync response is missing the preparation payload.');
+        throwApiError(response.error, 'Sport sync response is missing the preparation payload.');
       }
 
       return response.data;
@@ -114,7 +114,11 @@ export function RootAdminRunSportSyncPage() {
       QueryKeys.rootAdmin.providerSyncRuns,
     ],
     onError: (error) => {
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(
           {
             action: 'rootAdmin.sync.failed',

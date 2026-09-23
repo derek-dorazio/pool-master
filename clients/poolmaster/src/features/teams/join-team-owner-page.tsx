@@ -25,6 +25,7 @@ import {
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { ApiError, throwApiError } from '@/lib/errors';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -101,7 +102,7 @@ export function JoinTeamOwnerPage() {
     mutationFn: async () => {
       const response = await acceptTeamOwnerInvitation({ body: { inviteCode } });
       if (!response.data?.invitation) {
-        throw response.error ?? new Error('Team-owner invitation acceptance response is missing data.');
+        throwApiError(response.error, 'Team-owner invitation acceptance response is missing data.');
       }
 
       return response.data.invitation;
@@ -148,7 +149,11 @@ export function JoinTeamOwnerPage() {
         err: error,
       };
 
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(payload, 'Team-owner invitation acceptance failed unexpectedly');
       } else {
         logger.warn(payload, 'Team-owner invitation acceptance was rejected');

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminCloneGolfSeason } from '@/lib/api';
 import { Button, ConfirmationModal } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -31,7 +31,7 @@ export function GolfSeasonCloneAction({ season }: { season: GolfSeason }) {
         body: {},
       });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Clone season response is missing data.');
+        throwApiError(response.error, 'Clone season response is missing data.');
       }
       return response.data;
     },

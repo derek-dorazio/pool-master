@@ -7,7 +7,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -53,7 +53,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
         body: { rows },
       });
       if (!response.data?.rows) {
-        throw response.error ?? new Error('Roster preview response is missing data.');
+        throwApiError(response.error, 'Roster preview response is missing data.');
       }
       return response.data.rows;
     },
@@ -73,7 +73,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
         body: { rows },
       });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Roster apply response is missing data.');
+        throwApiError(response.error, 'Roster apply response is missing data.');
       }
       return response.data.entries;
     },

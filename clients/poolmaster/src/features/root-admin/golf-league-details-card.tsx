@@ -13,7 +13,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -34,7 +34,7 @@ async function updateLeague(
 ) {
   const response = await adminUpdateGolfLeague({ path: { leagueId }, body });
   if (!response.data?.league) {
-    throw response.error ?? new Error('Golf tour update response is missing data.');
+    throwApiError(response.error, 'Golf tour update response is missing data.');
   }
   return response.data.league;
 }

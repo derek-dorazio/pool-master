@@ -38,7 +38,7 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -173,7 +173,7 @@ export function ContestEntryPage() {
     queryFn: async (): Promise<ContestDetail> => {
       const response = await getContest({ path: { contestId } });
       if (!response.data?.contest) {
-        throw response.error ?? new Error('Contest detail response is missing data.');
+        throwApiError(response.error, 'Contest detail response is missing data.');
       }
       return response.data.contest;
     },
@@ -186,7 +186,7 @@ export function ContestEntryPage() {
     queryFn: async (): Promise<ListContestEntriesResponses[200]> => {
       const response = await listContestEntries({ path: { contestId } });
       if (!response.data) {
-        throw response.error ?? new Error('Contest entries response is missing data.');
+        throwApiError(response.error, 'Contest entries response is missing data.');
       }
       return response.data;
     },
@@ -202,7 +202,7 @@ export function ContestEntryPage() {
         query: { entryId },
       });
       if (!response.data) {
-        throw response.error ?? new Error('Draft state response is missing data.');
+        throwApiError(response.error, 'Draft state response is missing data.');
       }
       return response.data;
     },
@@ -216,7 +216,7 @@ export function ContestEntryPage() {
       const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
 
       if (!response.data?.league) {
-        throw response.error ?? new Error('League response is missing league data.');
+        throwApiError(response.error, 'League response is missing league data.');
       }
 
       return response.data.league;
@@ -384,7 +384,7 @@ export function ContestEntryPage() {
       });
 
       if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry update response is missing data.');
+        throwApiError(response.error, 'Contest entry update response is missing data.');
       }
 
       return response.data.entry;
@@ -447,7 +447,7 @@ export function ContestEntryPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Contest selection response is missing data.');
+        throwApiError(response.error, 'Contest selection response is missing data.');
       }
 
       return response.data;

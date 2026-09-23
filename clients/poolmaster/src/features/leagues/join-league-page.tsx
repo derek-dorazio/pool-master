@@ -28,6 +28,7 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon
 import { TeamIcon } from '@/features/teams/team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { ApiError, throwApiError } from '@/lib/errors';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -122,7 +123,7 @@ export function JoinLeaguePage() {
       const response = await acceptInvitation({ body: { inviteCode } });
 
       if (!response.data?.membership) {
-        throw response.error ?? new Error('Invitation acceptance response is missing data.');
+        throwApiError(response.error, 'Invitation acceptance response is missing data.');
       }
 
       const acceptedMembership = response.data.membership;
@@ -146,7 +147,7 @@ export function JoinLeaguePage() {
             });
 
             if (!updateResponse.data?.squad) {
-              throw updateResponse.error ?? new Error('Team update response is missing data.');
+              throwApiError(updateResponse.error, 'Team update response is missing data.');
             }
           }
         }
@@ -201,7 +202,11 @@ export function JoinLeaguePage() {
         err: error,
       };
 
-      if (error instanceof Error) {
+      // ApiError wraps every SDK rejection (see throwApiError) so it is
+      // always `instanceof Error`; check for it explicitly rather than
+      // `error instanceof Error` to keep distinguishing an expected API
+      // rejection from a genuine unexpected exception.
+      if (!(error instanceof ApiError)) {
         logger.error(payload, 'League invitation acceptance failed unexpectedly');
       } else {
         logger.warn(payload, 'League invitation acceptance was rejected');

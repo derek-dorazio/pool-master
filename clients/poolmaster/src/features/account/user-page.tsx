@@ -50,7 +50,7 @@ import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type AccountProfileFormValues = z.infer<typeof AccountProfileUpdateRequestSchema>;
@@ -208,7 +208,7 @@ export function UserPage() {
         },
       });
       if (!response.data?.user) {
-        throw response.error ?? new Error('Profile update response is missing data.');
+        throwApiError(response.error, 'Profile update response is missing data.');
       }
       return response.data.user;
     },
@@ -226,7 +226,7 @@ export function UserPage() {
         },
       });
       if (!response.data?.user) {
-        throw response.error ?? new Error('Username update response is missing data.');
+        throwApiError(response.error, 'Username update response is missing data.');
       }
       return response.data.user;
     },
@@ -247,7 +247,7 @@ export function UserPage() {
         },
       });
       if (!response.data?.user) {
-        throw response.error ?? new Error('Preferences update response is missing data.');
+        throwApiError(response.error, 'Preferences update response is missing data.');
       }
       return response.data.user;
     },
@@ -267,7 +267,7 @@ export function UserPage() {
         },
       });
       if (!response.data?.success) {
-        throw response.error ?? new Error('Password-change response is missing data.');
+        throwApiError(response.error, 'Password-change response is missing data.');
       }
       return response.data;
     },
@@ -285,7 +285,7 @@ export function UserPage() {
     action: async () => {
       const response = await inactivateAccount();
       if (!response.data?.user) {
-        throw response.error ?? new Error('Inactivate-account response is missing data.');
+        throwApiError(response.error, 'Inactivate-account response is missing data.');
       }
       return response.data.user;
     },
@@ -305,7 +305,7 @@ export function UserPage() {
     action: async () => {
       const response = await reactivateAccount();
       if (!response.data?.user) {
-        throw response.error ?? new Error('Reactivate-account response is missing data.');
+        throwApiError(response.error, 'Reactivate-account response is missing data.');
       }
       return response.data.user;
     },
@@ -329,7 +329,7 @@ export function UserPage() {
         },
       });
       if (!response.data?.success) {
-        throw response.error ?? new Error('Delete-account response is missing data.');
+        throwApiError(response.error, 'Delete-account response is missing data.');
       }
       return response.data;
     },

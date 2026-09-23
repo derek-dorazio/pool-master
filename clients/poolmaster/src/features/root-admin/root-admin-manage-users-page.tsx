@@ -2,6 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
+import { throwApiError } from "@/lib/errors";
 import {
   DataGridPage,
   StatusBadge,
@@ -28,9 +29,7 @@ export function RootAdminManageUsersPage() {
       });
 
       if (!response.data) {
-        throw (
-          response.error ?? new Error("User list response is missing data.")
-        );
+        throwApiError(response.error, "User list response is missing data.");
       }
 
       return response.data;

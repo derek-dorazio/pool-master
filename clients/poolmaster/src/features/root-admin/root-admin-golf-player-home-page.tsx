@@ -16,7 +16,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -85,7 +85,7 @@ export function RootAdminGolfPlayerHomePage() {
     queryFn: async (): Promise<GolfPlayer> => {
       const response = await adminGetGolfPlayer({ path: { participantId } });
       if (!response.data?.player) {
-        throw response.error ?? new Error('Golf player response is missing data.');
+        throwApiError(response.error, 'Golf player response is missing data.');
       }
       return response.data.player;
     },
@@ -121,7 +121,7 @@ export function RootAdminGolfPlayerHomePage() {
         body: toBody(values),
       });
       if (!response.data?.player) {
-        throw response.error ?? new Error('Golf player update response is missing data.');
+        throwApiError(response.error, 'Golf player update response is missing data.');
       }
       return response.data.player;
     },

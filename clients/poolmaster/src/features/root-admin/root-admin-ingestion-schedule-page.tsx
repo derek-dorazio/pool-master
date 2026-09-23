@@ -24,6 +24,7 @@ import {
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { throwApiError } from '@/lib/errors';
 
 type IngestionEditableField =
   | 'enabled'
@@ -39,7 +40,7 @@ export function RootAdminIngestionSchedulePage() {
     queryFn: async (): Promise<IngestionScheduleConfig> => {
       const response = await adminGetIngestionSchedule();
       if (!response.data) {
-        throw response.error ?? new Error('Ingestion schedule response is missing data.');
+        throwApiError(response.error, 'Ingestion schedule response is missing data.');
       }
       return response.data;
     },
@@ -72,7 +73,7 @@ export function RootAdminIngestionSchedulePage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Ingestion schedule update response is missing data.');
+        throwApiError(response.error, 'Ingestion schedule update response is missing data.');
       }
 
       return response.data;
@@ -87,7 +88,7 @@ export function RootAdminIngestionSchedulePage() {
     mutationFn: async () => {
       const response = await adminResetIngestionSchedule();
       if (!response.data) {
-        throw response.error ?? new Error('Ingestion schedule reset response is missing data.');
+        throwApiError(response.error, 'Ingestion schedule reset response is missing data.');
       }
       return response.data;
     },

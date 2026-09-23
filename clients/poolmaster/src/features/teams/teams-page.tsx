@@ -32,6 +32,7 @@ import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
+import { throwApiError } from '@/lib/errors';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -58,7 +59,7 @@ export function TeamsPage() {
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
       if (!response.data?.league) {
-        throw response.error ?? new Error('League detail response is missing data.');
+        throwApiError(response.error, 'League detail response is missing data.');
       }
 
       return response.data.league;
@@ -97,7 +98,7 @@ export function TeamsPage() {
     queryFn: async (): Promise<TeamSummary[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
       if (!response.data?.squads) {
-        throw response.error ?? new Error('Team list response is missing data.');
+        throwApiError(response.error, 'Team list response is missing data.');
       }
 
       return response.data.squads;
@@ -111,7 +112,7 @@ export function TeamsPage() {
     queryFn: async (): Promise<OwnerInvitation[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
-        throw response.error ?? new Error('Owner invitation list response is missing data.');
+        throwApiError(response.error, 'Owner invitation list response is missing data.');
       }
 
       return response.data.invitations;
@@ -125,7 +126,7 @@ export function TeamsPage() {
     queryFn: async (): Promise<LeagueMember[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
-        throw response.error ?? new Error('League members response is missing data.');
+        throwApiError(response.error, 'League members response is missing data.');
       }
 
       return response.data.members;

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { adminGetGolfTournament, adminGetGolfTournamentField } from '@/lib/api';
 import { Alert, AsyncPage, Button, LinkButton } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
@@ -30,7 +30,7 @@ export function RootAdminGolfTournamentFieldPage() {
     queryFn: async (): Promise<AdminGolfTournamentDetail> => {
       const response = await adminGetGolfTournament({ path: { eventId } });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Golf tournament response is missing data.');
+        throwApiError(response.error, 'Golf tournament response is missing data.');
       }
       return response.data.tournament;
     },
@@ -43,7 +43,7 @@ export function RootAdminGolfTournamentFieldPage() {
     queryFn: async (): Promise<GolfFieldEntry[]> => {
       const response = await adminGetGolfTournamentField({ path: { eventId } });
       if (!response.data?.entries) {
-        throw response.error ?? new Error('Golf tournament field response is missing data.');
+        throwApiError(response.error, 'Golf tournament field response is missing data.');
       }
       return response.data.entries;
     },

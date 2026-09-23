@@ -8,6 +8,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AdminGetGolfSeasonResponses } from '@/lib/api';
 import { localDateTimeInputToIso } from './golf-admin-utils';
+import { throwApiError } from '@/lib/errors';
 
 type GolfSeason = AdminGetGolfSeasonResponses[200]['season'];
 
@@ -64,7 +65,7 @@ export function GolfSeasonEditModal({
         },
       });
       if (!response.data?.season) {
-        throw response.error ?? new Error('Golf season update response is missing data.');
+        throwApiError(response.error, 'Golf season update response is missing data.');
       }
       return response.data.season;
     },

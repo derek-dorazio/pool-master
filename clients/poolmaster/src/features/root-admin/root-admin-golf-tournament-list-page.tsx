@@ -8,7 +8,7 @@ import {
   StatusBadge,
   formatDateTimeDisplay,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   deriveGolfTournamentReadiness,
@@ -28,7 +28,7 @@ export function RootAdminGolfTournamentListPage() {
       const response = await adminListGolfTournaments();
 
       if (!response.data?.tournaments) {
-        throw response.error ?? new Error('Golf tournament list response is missing data.');
+        throwApiError(response.error, 'Golf tournament list response is missing data.');
       }
 
       return response.data.tournaments;

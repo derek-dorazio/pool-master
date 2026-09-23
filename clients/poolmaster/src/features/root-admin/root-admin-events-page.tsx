@@ -15,7 +15,7 @@ import {
   Modal,
   StatusBadge,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   formatSportEventStatus,
@@ -72,7 +72,7 @@ export function RootAdminEventsPage() {
       });
 
       if (!response.data?.events) {
-        throw response.error ?? new Error('Event browser response is missing data.');
+        throwApiError(response.error, 'Event browser response is missing data.');
       }
 
       return response.data.events;
@@ -95,7 +95,7 @@ export function RootAdminEventsPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('Event participant response is missing data.');
+        throwApiError(response.error, 'Event participant response is missing data.');
       }
 
       return response.data;

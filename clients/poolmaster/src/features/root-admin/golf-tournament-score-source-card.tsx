@@ -11,7 +11,7 @@ import {
   Tile,
   formatDateTimeDisplay,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -68,7 +68,7 @@ export function GolfTournamentScoreSourceCard({
         body: { providerId, externalId },
       });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Score-source link response is missing data.');
+        throwApiError(response.error, 'Score-source link response is missing data.');
       }
       return response.data.tournament;
     },
@@ -92,7 +92,7 @@ export function GolfTournamentScoreSourceCard({
     mutationFn: async () => {
       const response = await adminUnlinkGolfTournamentScoreSource({ path: { eventId } });
       if (!response.data?.tournament) {
-        throw response.error ?? new Error('Score-source unlink response is missing data.');
+        throwApiError(response.error, 'Score-source unlink response is missing data.');
       }
       return response.data.tournament;
     },
