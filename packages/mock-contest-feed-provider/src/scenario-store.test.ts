@@ -5,10 +5,25 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { buildApp } from './app';
 import { ScenarioStore, buildRelativeTodayGolfScenario } from './scenario-store';
+import type {
+  ContestFeedEventResponse,
+  ContestFeedSnapshotResponse,
+  LiveScoresSnapshotResponse,
+} from './contracts';
+
+/* eslint-disable @typescript-eslint/no-floating-promises --
+ * node:test's test() returns a Promise, but registering each top-level test
+ * unawaited is the standard node:test pattern -- the runner tracks and awaits
+ * them itself. Prefixing every call with `void` here reproduces a real,
+ * reproducible failure ("Promise resolution is still pending but the event
+ * loop has already resolved") in the tests that spin up a real Fastify app
+ * (verified by toggling void on/off against a clean checkout twice each way);
+ * root cause not isolated further. Suppressing is the safe choice over
+ * changing a working test file's call shape for a cosmetic lint fix. */
 
 const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 
-void test('ScenarioStore loads event-first scenarios and exposes field snapshots', () => {
+test('ScenarioStore loads event-first scenarios and exposes field snapshots', () => {
   const store = new ScenarioStore(scenarioDir);
 
   const scenarios = store.listScenarios();
@@ -29,7 +44,7 @@ void test('ScenarioStore loads event-first scenarios and exposes field snapshots
   assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
 });
 
-void test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf events for QA coverage', () => {
+test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf events for QA coverage', () => {
   const now = new Date('2026-04-26T21:00:00.000Z');
   const scenario = buildRelativeTodayGolfScenario(now);
 
@@ -69,7 +84,7 @@ void test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday 
   assert.ok(Date.parse(nextWeekend?.schedule.startsAt ?? '') > Date.parse(currentWeekend?.schedule.startsAt ?? ''));
 });
 
-void test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee time across UTC boundaries', () => {
+test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee time across UTC boundaries', () => {
   const rollingEventsFor = (now: string) =>
     buildRelativeTodayGolfScenario(new Date(now)).events
       .filter((event) => event.metadata?.eventType === 'rolling-weekend-qa');
@@ -130,7 +145,7 @@ void test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday 
   assert.equal(completedEvent?.field.status, 'final');
 });
 
-void test('pool-master-eux.9: relative golf events derive provider lifecycle and default scores from current time', () => {
+test('pool-master-eux.9: relative golf events derive provider lifecycle and default scores from current time', () => {
   const currentNow = new Date('2026-04-30T12:01:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -151,7 +166,7 @@ void test('pool-master-eux.9: relative golf events derive provider lifecycle and
   assert.ok(typeof liveScores.contestants[0]?.rounds[0]?.strokes === 'number');
 });
 
-void test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
+test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
   let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -178,7 +193,7 @@ void test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes gener
   assert.equal(nextCycleEvents.at(-1)?.eventId, 'golf-relative-weekend-20260430');
 });
 
-void test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
+test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -214,7 +229,7 @@ void test('pool-master-33l.8.8: explicit mock event states control golf detail, 
   assert.ok(completedResults.contestants.every((contestant) => typeof contestant.strokes === 'number'));
 });
 
-void test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
+test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -280,7 +295,7 @@ void test('pool-master-eux.7: golf mock live-state tokens emit provider-owned mu
   );
 });
 
-void test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {
+test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -302,7 +317,7 @@ void test('pool-master-eux.7: legacy mock event states are aliases into the live
   assert.ok(completed.contestants.some((contestant) => contestant.rounds.some((round) => round.round === 4)));
 });
 
-void test('pool-master-eux.7: direct /scores requests expose every golf live-state wire contract', async () => {
+test('pool-master-eux.7: direct /scores requests expose every golf live-state wire contract', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
   const app = await buildApp();
@@ -325,7 +340,7 @@ void test('pool-master-eux.7: direct /scores requests expose every golf live-sta
         url: `/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?mockEventState=${token}`,
       });
       assert.equal(response.statusCode, 200);
-      const payload = response.json();
+      const payload = response.json<LiveScoresSnapshotResponse>();
       assert.equal(payload.feedKind, 'results');
       assert.equal(payload.eventId, 'golf-masters-2026');
 
@@ -351,7 +366,7 @@ void test('pool-master-eux.7: direct /scores requests expose every golf live-sta
   }
 });
 
-void test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
+test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
   let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -374,7 +389,7 @@ void test('pool-master-s4y: old relative manual-test event ids remain detail-res
   assert.equal(originalDetail.event.field.contestants.length, 80);
 });
 
-void test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
+test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
 
   try {
@@ -430,7 +445,7 @@ void test('ScenarioStore rejects new contestants in deltas unless they include a
   }
 });
 
-void test('ScenarioStore rejects golf events that omit odds contestants', () => {
+test('ScenarioStore rejects golf events that omit odds contestants', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
 
   try {
@@ -486,7 +501,7 @@ void test('ScenarioStore rejects golf events that omit odds contestants', () => 
   }
 });
 
-void test('ScenarioStore throws for missing scenarios and events', () => {
+test('ScenarioStore throws for missing scenarios and events', () => {
   const store = new ScenarioStore(scenarioDir);
 
   assert.throws(() => store.getScenario('missing-scenario'), /Scenario not found/);
@@ -496,7 +511,7 @@ void test('ScenarioStore throws for missing scenarios and events', () => {
   );
 });
 
-void test('pool-master-33l.8.8: routes expose detail, field, and mock event-state score endpoints', async () => {
+test('pool-master-33l.8.8: routes expose detail, field, and mock event-state score endpoints', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
 
@@ -508,7 +523,7 @@ void test('pool-master-33l.8.8: routes expose detail, field, and mock event-stat
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
     });
     assert.equal(detailResponse.statusCode, 200);
-    const detailJson = detailResponse.json();
+    const detailJson = detailResponse.json<ContestFeedEventResponse>();
     assert.equal(detailJson.season.seasonId, 'golf-2026-majors');
     assert.equal(detailJson.event.schedule.fieldLocksAt, '2026-04-29T16:00:00.000Z');
 
@@ -517,7 +532,7 @@ void test('pool-master-33l.8.8: routes expose detail, field, and mock event-stat
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/field',
     });
     assert.equal(fieldResponse.statusCode, 200);
-    const fieldJson = fieldResponse.json();
+    const fieldJson = fieldResponse.json<ContestFeedSnapshotResponse>();
     assert.equal(fieldJson.feedKind, 'field');
     assert.equal(fieldJson.contestants.length, 80);
 
@@ -526,7 +541,7 @@ void test('pool-master-33l.8.8: routes expose detail, field, and mock event-stat
       url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2&mockEventState=live',
     });
     assert.equal(liveScoresResponse.statusCode, 200);
-    const liveScoresJson = liveScoresResponse.json();
+    const liveScoresJson = liveScoresResponse.json<LiveScoresSnapshotResponse>();
     assert.equal(liveScoresJson.feedKind, 'results');
     assert.equal(liveScoresJson.contestants.length, 80);
     assert.equal(liveScoresJson.contestants[0]?.rounds.length, 1);

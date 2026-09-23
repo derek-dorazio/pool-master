@@ -16,6 +16,19 @@ import {
 } from './contracts';
 import { ScenarioStore, type ScenarioStoreOptions } from './scenario-store';
 
+/* eslint-disable @typescript-eslint/require-await --
+ * mockContestFeedRoutes and its preHandler/route handlers below have no
+ * internal await, but de-asyncing all of them (plugin registration function
+ * + every hook/handler) reproduces a real, reproducible test failure --
+ * "Promise resolution is still pending but the event loop has already
+ * resolved" -- in every scenario-store.test.ts test that calls buildApp()
+ * and exercises these routes (verified by toggling async on/off against
+ * clean worktree checkouts, isolated to exactly this file across three
+ * bisection steps). Root cause not isolated further (a Fastify/avvio
+ * hook-chaining interaction, matching the same class of issue found and
+ * reverted in core-api's request-logging-context.ts). Keeping this plugin
+ * fully async is the safe choice over a cosmetic lint fix. */
+
 export interface MockContestFeedRouteOptions {
   readonly scenarioStoreOptions?: ScenarioStoreOptions;
 }
@@ -47,13 +60,13 @@ const eventStateQuerySchema = {
   },
 } as const;
 
-export function mockContestFeedRoutes(
+export async function mockContestFeedRoutes(
   fastify: FastifyInstance,
   options: MockContestFeedRouteOptions = {},
-): void {
+): Promise<void> {
   const store = buildScenarioStore(fastify, options);
 
-  fastify.addHook('preHandler', (request) => {
+  fastify.addHook('preHandler', async (request) => {
     request.log.debug(
       {
         action: 'mockFeedRoute.request.start',
@@ -123,7 +136,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    () => {
+    async () => {
       const payload = {
         status: 'ok',
         service: mockFeedProviderId,
@@ -162,7 +175,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    () => {
+    async () => {
       const scenarios = store.listScenarios();
       const payload = { scenarios };
       logRoutePayload(
@@ -202,7 +215,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    (request) => {
+    async (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getScenario.start', data: request.params },
         'Serving mock contest-feed scenario detail',
@@ -251,7 +264,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    (request) => {
+    async (request) => {
       const events = store.listEvents(request.params.scenarioId);
       const payload = {
         scenarioId: request.params.scenarioId,
@@ -295,7 +308,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    (request) => {
+    async (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getEvent.start', data: request.params },
         'Serving mock contest-feed event detail',
@@ -338,7 +351,7 @@ export function mockContestFeedRoutes(
         querystring: eventStateQuerySchema,
       },
     },
-    (request) => {
+    async (request) => {
       fastify.log.debug(
         {
           action: 'mockFeedRoute.getEventDetail.start',
@@ -406,7 +419,7 @@ export function mockContestFeedRoutes(
           querystring: eventStateQuerySchema,
         },
       },
-      (request) => {
+      async (request) => {
         fastify.log.debug(
           {
             action: 'mockFeedRoute.getSnapshot.start',
@@ -473,7 +486,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    (request) => {
+    async (request) => {
       fastify.log.debug(
         {
           action: 'mockFeedRoute.getScoresSnapshot.start',
@@ -528,7 +541,7 @@ export function mockContestFeedRoutes(
         },
       },
     },
-    (request) => {
+    async (request) => {
       fastify.log.debug(
         { action: 'mockFeedRoute.getUpdates.start', data: request.params },
         'Serving mock contest-feed event updates',
