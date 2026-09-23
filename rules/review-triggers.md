@@ -3,6 +3,11 @@
 Every PR body carries a **Review triggers** section under `<!-- review:triggers -->`. It
 names what this slice touched that warrants a closer read than a file list gives.
 
+This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5 is
+what a reviewer looks for** on the one axis where a checklist genuinely helps. Performance
+review is not a separate pass with its own vote — it is part of the ordinary review, run
+when the diff has a performance surface and skipped when it does not.
+
 This exists because the repo owner reviews at file-list-and-changeset resolution. That
 altitude reliably catches scope creep, unexpected files, and structurally wrong changes. It
 is less likely to catch a subtle problem *inside* a hunk that reads plausibly. Triggers
@@ -127,3 +132,62 @@ the `gh` CLI and was therefore inert in every cloud session.
 
 So enforcement is CI-only, by decision rather than by omission. The cost is one CI cycle on
 the occasions the section is forgotten. Nothing reaches `main` without it either way.
+
+---
+
+## 5. Reviewing for performance cost
+
+The triggers in §2 say what an author should *disclose*. This says what a reviewer should
+*look for* when the diff touches Prisma queries, list or detail endpoints, ingestion /
+scoring / sync hot paths, frontend list rendering, or new runtime dependencies.
+
+**Skip it when the diff has no performance surface.** A performance read of a copy-only or
+tracker-only change produces speculative findings, and speculative findings are worse than
+no findings — they train the reader to skim.
+
+### The eight questions
+
+Ordered roughly by how often they bite here.
+
+| Category | The question to ask the diff |
+|---|---|
+| **N+1** | Does anything run a query per row where a batch or `include` was available? Look for a `.map()` or loop containing an `await` on a repository call. |
+| **INDEX** | Does a new `where` / `orderBy` shape have index support? A new filter column, sort, or composite ordering is the common miss. |
+| **BLOCKING** | Synchronous or slow work on a request path — file, network, crypto, or a large in-memory transform inside a handler. |
+| **PAYLOAD** | Did a list or detail response grow materially? Does a list endpoint have an upper bound on what it returns? |
+| **RENDER** | Avoidable rerenders, unstable keys, expensive derived work computed inline rather than memoized. |
+| **BUNDLE** | Does a new dependency increase shipped JS where a local primitive already exists? |
+| **CACHE** | Polling and refetch intervals, cache invalidation breadth. A mutation invalidating far more than it changed is load, not incorrectness. |
+| **HOTPATH** | Repeated work inside ingestion, scoring, sync, or event-bus loops, where the multiplier is data volume rather than request count. |
+
+Backend shapes are governed by `service-rules.md` §5 *Prisma and Persistence*; frontend
+shapes by `react-ui-rules.md` §4 *TanStack Query Rules* and §5 *State, Effect, Form, And
+Component Rules*.
+
+### Calibration
+
+The temptation is to rate everything high because it is a performance finding. Resist it —
+a review where everything is urgent is one where nothing gets fixed.
+
+- **Critical** — will take down or effectively disable a primary workflow at realistic data
+  volume.
+- **High** — a likely material regression on a hot path: an N+1 in a list endpoint, a
+  missing index for a new common query, blocking I/O in a handler, a heavy dependency with a
+  clear lightweight alternative.
+- **Medium** — measurable but localized; can ride with a follow-up.
+- **Low** — polish, or an optimization worth doing later.
+
+**Prefer evidence over intuition**, and name the multiplier: per row, per request, per poll
+interval, per event. "This looks slow" without a mechanism is not a finding. When evidence
+is unavailable, say so and calibrate *down* — unless the cost is obvious from the code path,
+in which case say that rather than implying a measurement that did not happen.
+
+### Where it stops
+
+- Do not block on speculative micro-optimizations. A hypothetical cost at hypothetical
+  volume is a Medium at most, usually a Low.
+- Do not demand a benchmark for every change. Ask when the disagreement is genuinely about
+  magnitude and the path is hot.
+- **Never propose optimizing by weakening correctness, authorization, validation, or
+  generated-contract discipline.** A faster wrong answer is not a tradeoff, and those rules
+  exist for reasons a performance read cannot see.

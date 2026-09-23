@@ -66,7 +66,7 @@ a person actually performs, not a job title.
 | Archie | Plan mode plus `workflow-rules §1`, which already specifies plan structure |
 | Quinn | The gate commands and `/run`; failure triage is debugging |
 | Riley, Sage, Felix | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
-| Perry | `rules/review-triggers.md` §2 for *when*, plus the `review-performance` skill for *how* |
+| Perry | `rules/review-triggers.md` — §2 for *when* (already there), §5 for *how* (added) |
 | Pam, Tess | Retired as personas. Two pieces of content are worth preserving into `rules/`: Pam's `(Confirmed)` / `(Inferred)` / `(Needs Review)` confidence labels, which are genuinely good spec practice, and Tess's layer-selection heuristic for choosing where a test belongs |
 | Piper, Tom | Deleted. Both dormant; `workflow-rules §2` still lists them as lifecycle steps 1 and 3, contradicting the dormancy markers |
 
@@ -82,7 +82,14 @@ The content splits cleanly, and half of it was already salvaged:
 - **How to look** — the eight finding categories, the severity calibration, the
   evidence-over-intuition discipline, and the limits (no speculative micro-optimizations,
   never optimize by weakening correctness or authorization) became
-  `.claude/skills/review-performance/SKILL.md`.
+  `rules/review-triggers.md` §5 *Reviewing for performance cost*.
+
+  It was briefly a `review-performance` skill, which was the wrong vehicle: a skill has to
+  be invoked, so it would have been a separate pass in practice even without a separate
+  vote. `/code-review` is built-in and not repo-owned, so there is nothing to fold into
+  there — the way to make performance part of the ordinary review here is to put it where a
+  reviewer already reads. `review-triggers.md` is that place, and it now owns both halves:
+  §1–§4 what an author discloses, §5 what a reviewer looks for. `AGENTS.md` routes to it.
 - **The role wrapper** — the nickname, the "Pass 6" framing, the vote format, the
   `> _Perry review · …_` header — deleted, carrying nothing.
 
