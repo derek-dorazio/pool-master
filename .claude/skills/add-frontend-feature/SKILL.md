@@ -60,7 +60,7 @@ several are scanner-enforced, so a miss fails CI rather than review.
 - **Error handling.** Throw through the shared `ApiError` / `throwApiError` helper in
   `clients/poolmaster/src/lib/errors.ts`, and read messages back through
   `extractErrorMessage`. Do not fork a local copy of that helper —
-  `check-no-duplicate-extract-error-message` exists because it has happened.
+  the `poolmaster/no-duplicate-extract-error-message` lint rule exists because it has happened.
 
 ## UX defaults
 

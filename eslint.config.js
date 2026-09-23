@@ -167,4 +167,36 @@ export default tseslint.config(
     plugins: { poolmaster },
     rules: { 'poolmaster/no-mocked-api': 'error' },
   },
+  {
+    // Feature code only. The shared primitives are where a bare control is
+    // supposed to live, and a test rendering a raw <button> is building a
+    // fixture rather than shipping UI.
+    files: ['clients/poolmaster/src/features/**/*.tsx'],
+    ignores: [
+      'clients/poolmaster/src/features/shared/ui/**',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-bare-ui-controls': 'error' },
+  },
+  {
+    // lib/errors.ts is the canonical definition; tests may build local stand-ins.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'clients/poolmaster/src/lib/errors.ts',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-duplicate-extract-error-message': 'error' },
+  },
+  {
+    // .tsx only -- an inline style prop is JSX. Tests excluded, matching the
+    // scanner.
+    files: ['clients/poolmaster/src/**/*.tsx'],
+    ignores: ['**/*.test.tsx', '**/*.spec.tsx'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-inline-theme-styles': 'error' },
+  },
 );
