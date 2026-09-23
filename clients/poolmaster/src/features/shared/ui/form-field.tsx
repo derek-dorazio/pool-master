@@ -6,7 +6,6 @@ import {
   useId,
   useRef,
   type InputHTMLAttributes,
-  type ReactElement,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
@@ -38,13 +37,13 @@ export function FormField({
   const errorId = error ? `${fieldId}-error` : undefined;
   const describedBy =
     [helperTextId, errorId].filter(Boolean).join(" ") || undefined;
-  const renderedChildren = isValidElement(children)
+  const renderedChildren = isValidElement<{
+    "aria-describedby"?: string;
+    "aria-invalid"?: boolean;
+    id?: string;
+  }>(children)
     ? cloneElement(
-        children as ReactElement<{
-          "aria-describedby"?: string;
-          "aria-invalid"?: boolean;
-          id?: string;
-        }>,
+        children,
         {
           "aria-describedby": describedBy,
           "aria-invalid": Boolean(error) || undefined,

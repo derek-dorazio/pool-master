@@ -12,6 +12,7 @@ export function CanonicalTeamHomeRoute() {
     return (
       <Navigate
         replace
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- react-router types both Location.state and Navigate's state prop as `any`; this is an opaque passthrough, not a value this component inspects.
         state={location.state}
         to={`${location.pathname}?${searchParams.toString()}`}
       />

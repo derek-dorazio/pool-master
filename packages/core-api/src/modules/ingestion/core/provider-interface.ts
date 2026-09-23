@@ -95,7 +95,7 @@ export function supportsMockEventStateControls(provider: SportDataProvider): boo
  * and throw at runtime until their slice ships.
  */
 export class LiveScoreUnsupportedError extends Error {
-  constructor(providerId: string, sport: Sport | string) {
+  constructor(providerId: string, sport: string) {
     super(
       `Provider ${providerId} does not yet emit typed LiveScoreResult for ${sport}. ` +
         `Per plans/117 §3.1, only golf-roster providers ship in Phase 4; ` +

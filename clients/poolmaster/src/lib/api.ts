@@ -50,7 +50,7 @@ async function readErrorCode(response: Response): Promise<string | null> {
     return null;
   }
 
-  const body = await response.clone().json().catch(() => null);
+  const body: unknown = await response.clone().json().catch(() => null);
   if (!body || typeof body !== 'object') {
     return null;
   }
