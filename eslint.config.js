@@ -72,6 +72,14 @@ export default tseslint.config(
       '**/generated/**',
       // Build/export helpers. Excluded by the scanners this config replaces.
       '**/scripts/**',
+      // Codegen configuration, not shipped code, and in no tsconfig `include`.
+      // Harmless while the parser was untyped; with `projectService` on, a file
+      // outside the project graph is a hard parse error rather than a finding.
+      // Surfaced when the lint glob widened to `packages/**` (#155) and this
+      // config turned on type-aware parsing -- neither change breaks alone.
+      '**/openapi-ts.config.ts',
+      // Generated declaration output; never belonged in lint scope.
+      '**/*.d.ts',
     ],
   },
   {

@@ -36,8 +36,8 @@ function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown
 
   const obj = node as Record<string, unknown>;
 
-  if (typeof obj.$ref === 'string' && (obj.$ref as string).startsWith('#/')) {
-    const pointer = (obj.$ref as string).slice(2).split('/');
+  if (typeof obj.$ref === 'string' && obj.$ref.startsWith('#/')) {
+    const pointer = obj.$ref.slice(2).split('/');
     let target: unknown = root;
     for (const segment of pointer) {
       if (target === null || typeof target !== 'object') return obj;
