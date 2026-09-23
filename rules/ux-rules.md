@@ -179,8 +179,7 @@ Use those conventions as the starting point, but bias toward a consumer app:
 
 ## 10. Frontend Persona Requirement
 
-The frontend developer persona should use these rules by default when preparing
-the first implementation draft.
+Apply these rules by default when preparing the first implementation draft.
 
 That means:
 

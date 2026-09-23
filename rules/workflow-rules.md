@@ -348,7 +348,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] `npm run api:validate` succeeds
 
 **Docs and rules (ride with code):**
-- [ ] Every doc update triggered by this slice is in *this* PR, not a follow-up. Triggers include: README change, persona checklist update, rule cross-reference, API doc revision, setup-guide line, ADR cross-link.
+- [ ] Every doc update triggered by this slice is in *this* PR, not a follow-up. Triggers include: README change, skill update, rule cross-reference, API doc revision, setup-guide line, ADR cross-link.
 - [ ] Standalone doc-only PRs are not used as a workaround for "I forgot to update the README" — the doc update belongs with the code change that triggered it (per `§6 Docs ride with code`).
 - [ ] If the slice changed architecture, testing patterns, or developer workflow, the matching `rules/*.md` files were updated in the same diff (per `§2 Rule and Documentation Maintenance`).
 - [ ] If the slice deviates from an active plan, the plan file was updated in the same diff or the deviation was explicitly noted in the issue's closing comment.
@@ -547,15 +547,12 @@ Skip the requirements bundle and tech spec for small/incremental work. Those art
 
 Do not treat `requirements/` or `tech-specs/` as replacements for tracker state. When implementation is underway, GitHub Issues is canonical for status.
 
-### Webapp Rebuild Direction
+### Webapp Direction
 
-The go-forward web frontend is the single role-based PoolMaster app.
-
-- New web implementation work should target `clients/poolmaster`.
-- Do not spend implementation effort keeping `clients/web` or `clients/admin` current with new plans once the rebuild plan is active.
-- `clients/web` may be used as reference material for planning, layout ideas, and feature discovery until it is archived, but implementation agents should not treat it as an active delivery target.
-- `clients/admin` is being removed rather than modernized into a separate long-lived app.
-- If a frontend plan or slice is intended for the new app, keep the work isolated to the PoolMaster app and update related build/test/CI wiring in the same effort.
+The web frontend is a single role-based application: `clients/poolmaster`. The rebuild it
+replaced is finished — `clients/admin` is gone and the old web app is reference material
+under `clients/_archived/`, not a delivery target. Do not split functionality across
+multiple React apps. The full statement is `architecture-rules.md` §1 *One web application*.
 
 ### Product Design Workflow For PoolMaster Webapp Planning
 
@@ -587,17 +584,15 @@ Required workflow:
    - backend auth/session or invitation-flow changes
    Confirm those backend implications with the user before implementation
    begins.
-   When those implications suggest a true model change, route them through the
-   data-modeler and have the review explicitly check
-   [domain-model-conventions-rules.md](./domain-model-conventions-rules.md)
-   before backend implementation begins.
+   When those implications suggest a true model change, classify it and check it
+   against [domain-model-conventions-rules.md](./domain-model-conventions-rules.md)
+   before backend implementation begins — see the `model-change` skill.
 6. If the current contract appears to expose retired, stale, or no-longer-valid
    fields for the feature, do not design around them silently. Call out the
    mismatch explicitly as:
    - product scope differs from backend capability, or
    - backend cleanup/documentation debt still exists.
-   Route that mismatch to the data-modeler/backend workflow instead of treating
-   it as approved UX input.
+   Treat that mismatch as backend work to be scoped, not as approved UX input.
 7. Propose the browser E2E flows that should eventually prove the designed
    behavior end to end.
 8. Review those use cases, questions, backend implications, and proposed E2E
@@ -665,49 +660,31 @@ the user. The tracker owns live task state; plans own narrative. Nothing owns "p
 management" as a discrete role — that responsibility is fully subsumed by the tracker and by
 the narrative-only plan convention, which leaves no task tables to reconcile.
 
-### Frontend / Data Model / Backend Handoff Rules
+### Layer Handoff Within a Slice
 
-- Frontend implementation should normally work from:
-  - reviewed plans and use-case companions
-  - generated SDK operations
-  - generated request/response types
-  - documented OpenAPI summaries/descriptions
-- Frontend agents must not answer contract ambiguity by treating backend
-  implementation code as the working spec.
-- If frontend work reveals a possible shared-contract, DTO, or model change,
-  stop and route that question through the `data-modeler` persona first unless
-  the change is already explicitly reviewed and obviously backend-owned.
-- The `data-modeler` persona classifies whether the request is:
-  - UI-only
-  - contract-only
-  - a real model/domain/persistence change
-- The data-modeler review must happen before backend implementation begins on
-  any feature where model, DTO, contract, or persistence impact is plausible.
-  Do not skip directly from frontend/product discovery to backend coding when
-  that classification step is still unresolved.
-- If the change is not obvious and clear from the reviewed plan, confirm the
-  backend/model implication with the user before implementation continues.
-- Backend/shared changes discovered during frontend work must be implemented by
-  the backend developer persona, not by the frontend developer persona.
-- For a feature slice that requires both backend/shared contract changes and
-  frontend changes, the required sequence is:
-  1. backend persona completes the contract/model/API work
-  2. backend persona runs the required backend validation gates
-  3. backend persona regenerates/exports OpenAPI, SDK, and types
-  4. frontend persona begins consuming the exported contract
-  Do not overlap those responsibilities in a way that makes frontend build
-  against an intended-but-not-yet-exported contract.
-- If the frontend developer has a contract question, ask the backend developer
-  persona for the answer instead of reading backend code directly.
-- When such a question reveals a contract documentation gap, the backend
-  developer must fix that documentation gap as part of the handoff, not merely
-  answer the question once.
-- Backend slices that change API contracts must include that documentation-gap
-  repair in the same slice rather than leaving it as follow-up cleanup.
-- Product ambiguity belongs with the user. Contract ambiguity belongs with the
-  backend developer. Model-impact classification belongs with the data-modeler.
+The generated SDK and its exported types are the frontend's contract. Backend source is
+readable — a current model reading it infers the contract correctly and notices when the
+OpenAPI description contradicts it — but it is not the *spec*. When the SDK does not
+describe what the frontend needs, the gap is in the contract documentation, and the fix
+belongs in the contract source (route summary, description, tags, DTO field and enum
+descriptions) in the same slice that surfaced it. Answering the question once and leaving
+the documentation gap is not a fix.
 
----
+**Ordering within a slice that spans both layers:** the contract change lands and is
+exported before frontend work consumes it. Building against an intended-but-unexported
+contract means rewriting when it arrives, and it hides whether the contract is right.
+
+**Classify before implementing.** When work implies a shared-contract, DTO, or persistence
+change, decide which it is — no change, contract-only, or a true model change — before
+starting. Getting that wrong in the optimistic direction is the expensive failure: treating
+an unclear implication as "probably frontend-only" means discovering the model change
+halfway through the UI work. If the classification is not obvious and clearly supported by
+the reviewed plan, confirm with the user first. The sequence is in the `model-change` skill;
+the conventions it must satisfy are `domain-model-conventions-rules.md`.
+
+**Where ambiguity goes:** product ambiguity to the user. Contract ambiguity is resolved by
+reading the contract and fixing its documentation. Model-impact classification is a decision
+made in the slice, not a handoff.
 
 ## 2A. Source-Of-Truth Priority
 
