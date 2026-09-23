@@ -28,9 +28,20 @@ per-line escape hatch with a recorded justification.
 
 > ## ⚠ Flat config does not merge rule options — read before writing any config
 >
-> For a given rule name, **the last matching config object wins outright**. A later
-> `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block does not add to the
-> top-level one — it **replaces** it, silently, inside that scope.
+> A later `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block does not add to
+> the top-level one — it **replaces** it, silently, inside that scope.
+>
+> **The precise boundary**, measured with `--print-config` after a fourth agent contradicted
+> the first statement of this warning. It said "the last matching object wins outright,"
+> which is too strong and would make people restate options they do not need to:
+>
+> | Later entry | Earlier options |
+> |---|---|
+> | bare severity — `'rule': 'error'` | **retained** → `[2, {…inherited}]` |
+> | options array — `'rule': ['error', {}]` | **discarded** → `[2, {}]` |
+>
+> So severity-only overrides and additive plugin blocks (new rule names) are safe. The trap
+> is specifically a scoped re-declaration *with* an options array.
 >
 > `eslint.config.js` already carries `no-restricted-syntax` at top level (the slice-1 cast
 > selectors). **Five remaining migration targets are proposed as `no-restricted-syntax`**
@@ -39,9 +50,14 @@ per-line escape hatch with a recorded justification.
 > disables the cast rules in that path while `npm run lint` stays green and nothing
 > reports the loss.
 >
-> Confirmed independently three times (two research agents and a direct check): a scoped
-> block declaring its own array drops the inherited selectors; spreading them back in
-> restores both.
+> Confirmed independently four times: a scoped block declaring its own array drops the
+> inherited selectors; spreading them back in restores both. The fourth check is the one
+> that narrowed the claim — it also verified with `--print-config` that appending
+> `tseslint.configs.recommendedTypeChecked` leaves `no-restricted-syntax`,
+> `no-restricted-globals`, `no-restricted-imports`, the `no-unused-vars` `argsIgnorePattern`
+> **and** the test-file exemption all intact, because those presets set overlapping rules as
+> bare severities. The only casualties there are `no-empty-object-type` and
+> `no-require-imports` flipping back on, both at 0 findings.
 >
 > **Mitigated in advance.** `eslint.config.js` now hoists its selectors into a module-level
 > `CAST_SELECTORS` constant with the rule written into the file's header comment: any scoped

@@ -4,17 +4,25 @@ import tseslint from 'typescript-eslint';
 /**
  * Selector sets are hoisted to module scope on purpose.
  *
- * ESLint flat config does NOT merge rule options across config objects -- for a
- * given rule name, the last matching object wins outright. A later
- * `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block therefore
- * SILENTLY DISABLES every selector below inside that scope, while `npm run lint`
+ * ESLint flat config does NOT merge rule OPTIONS across config objects. A later
+ * `{ files: [...], rules: { 'no-restricted-syntax': [...] } }` block supplies its
+ * own options array, which REPLACES this one inside that scope rather than adding
+ * to it -- SILENTLY DISABLING every selector below there, while `npm run lint`
  * stays green and nothing reports the loss.
  *
- * Verified: a scoped block declaring its own selector array drops the inherited
- * one entirely; spreading the inherited array back in restores it. Five of the
- * scanners still queued for migration in plans/135 are proposed as
- * `no-restricted-syntax`, so this is a live trap for the next slice, not a
- * hypothetical.
+ * The precise rule, measured with `--print-config`, because the sloppy version of
+ * it ("the last matching object always wins") is wrong and leads people to restate
+ * options they did not need to:
+ *
+ *   later entry is a bare severity      -> earlier options are RETAINED
+ *     'rule': 'error'                      => [2, {...inherited options}]
+ *   later entry supplies an options array -> earlier options are DISCARDED
+ *     'rule': ['error', {}]                => [2, {}]
+ *
+ * So severity-only overrides and additive plugin blocks are safe. Only a scoped
+ * re-declaration WITH options is the trap -- and five of the scanners still queued
+ * for migration in plans/135 are proposed exactly that way, so it is a live trap
+ * for the next slice, not a hypothetical.
  *
  * Rule: any scoped re-declaration must spread these, e.g.
  *   'no-restricted-syntax': ['error', ...CAST_SELECTORS, ...YOUR_NEW_SELECTORS]
