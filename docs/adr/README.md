@@ -55,4 +55,5 @@ Not ADR candidates:
 - [ADR-0004 — Team is the league-facing entity; User page is account-scope only](./0004-team-centric-league-account-scope-boundary.md)
 - [ADR-0005 — Cross-tier log correlation via client trace/request IDs](./0005-cross-tier-log-correlation.md)
 - [ADR-0006 — GitHub Issues as the live task tracker](./0006-github-issues-as-live-task-tracker.md) *(supersedes ADR-0001)*
+- [ADR-0007 — Small validity matrices live in code, not the database](./0007-small-validity-matrices-live-in-code.md)
 - [ADR-0008 — Agent guidance is task-shaped and single-tool](./0008-single-tool-task-shaped-agent-guidance.md)
