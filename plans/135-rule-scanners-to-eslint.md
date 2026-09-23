@@ -76,7 +76,7 @@ per-line escape hatch with a recorded justification.
 |---|---|
 | ~~`check-unsafe-casts`~~ | **Migrated and deleted (slice 1)** — but *not* by the rules originally proposed here. The proposal was `@typescript-eslint/no-explicit-any` and the `no-unsafe-*` family; measured against the tree, that would have caught **0 of 20** findings. Every one was `as unknown as`, which involves no `any` at all, and the `no-unsafe-*` family needs type information and catches *consequences* of `any` values rather than double assertions. What works is `no-restricted-syntax` with `TSAsExpression > TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]`, plus a second selector on `TSAnyKeyword` for the `as any` half. |
 | ~~`check-no-non-sdk-fetch`~~ | **Migrated and deleted (slice 1).** `no-restricted-globals` / `no-restricted-imports` as proposed, and this row was correct — with one caveat found by testing: `no-restricted-globals` flags *any reference* to the global, including `fetchImpl: typeof fetch = fetch`, a dependency-injection test seam that the scanner's `fetch\s*\(` correctly ignored. Ported rules can be *less* precise, not only more. |
-| `check-test-disable-discipline` (detection half) | `eslint-plugin-vitest` / `eslint-plugin-jest` `no-disabled-tests`; the adjacent-`SKIP:`-comment requirement needs a small custom rule. **Unverified** — diff it before trusting it. |
+| `check-test-disable-discipline` | **Not a migration — see *The test-disable row is a policy change* below (#158).** The scanner does not ban skipped tests, it bans *undocumented* ones, and it also flags whole skipped files and directories. `no-disabled-tests` has no concept of either. Adopting it makes skips unconditionally illegal. Decide that on purpose or keep the scanner. |
 
 **Custom ESLint rules — good fit:**
 
@@ -166,6 +166,82 @@ Fixed: globs widened to `packages/**/*.ts`, taking coverage from 491 to **545 fi
 was two `any` findings in `packages/shared/events/event-bus.ts`, a heterogeneous handler
 registry where `unknown` rejects storing a typed handler and `never` stores but cannot be
 called — both tried; now carrying a justification.
+
+### 1v. Off-the-shelf plugins: seven free zeros, and where the scanner set does not overlap
+
+A fourth research agent measured fourteen candidate plugins against the real tree in a
+sandbox matched to the repo's eslint 9.39.4 / typescript 5.9.3. Filed as **#156** (adopt
+the seven at zero), **#157** (`exhaustive-deps`), **#158** (the `tests/` scope and the
+policy change above) and **#159** (a duplicate export the audit turned up). Recorded here
+so the migration plan is not written as though ESLint's ecosystem does not exist.
+
+**Seven plugins find nothing today** — `react-hooks` (`rules-of-hooks`), `jsx-a11y`
+(recommended plus two options), `import-x` (four graph rules), `react`,
+`@tanstack/query` (six of seven), `vitest`, and `jest` (three discipline rules). Composed
+into one bundle in shipping shape and run over 671 files: 0 findings, 0 fatal, each rule
+confirmed on for the right file types via `--print-config`, each zero backed by a passing
+positive control. `rules-of-hooks` in particular is a severe correctness rule the repo has
+never enforced.
+
+**Where they do *not* help, which matters more for this plan.** Of the eleven scanners
+still live, exactly one has meaningful plugin coverage (`check-test-disable-discipline`,
+and only its detection half — see below). `check-no-inline-query-keys`,
+`check-no-mocked-api`, `check-shared-ui-controls`, `check-no-parallel-api-types`,
+`check-no-duplicate-extract-error-message`, `check-no-env-fallbacks`,
+`check-no-inline-theme-styles` and `check-feature-theme-tokens` have **no plugin
+equivalent at all**. The local-plugin route in §1z is not a stopgap until something
+off-the-shelf arrives; it is the only route for this repo's rules.
+
+**Two of the repo's own conventions blind candidate rules**, which is worth stating
+because it will recur:
+
+- `@tanstack/query/exhaustive-deps` cannot see inside a query-key factory, so the
+  `react-ui-rules.md` §4 mandate structurally hides the dependencies it checks. Its one
+  finding (`my-team-history-page.tsx:127`) is a false positive caused by the repo
+  following its own rule, and its zero elsewhere is weak evidence rather than a clean bill.
+- `react-hooks/exhaustive-deps` demands whole query objects where `react-ui-rules.md` §5
+  deliberately keys deps on narrow fields. Four of its ten findings are the rule being
+  wrong; see #157.
+
+**Three plugins are measured skips**, recorded so they are not re-researched: `n` (610
+findings, 598 of them because it understands neither TS path aliases nor npm workspaces),
+`security` (105 findings, 0% true-positive rate — both non-`detect-object-injection`
+findings were read and both are false positives), and `unicorn` (2626 findings, and
+`no-null` alone is 1435 of them against a codebase that uses `?? null` at every query
+boundary).
+
+**No merge-trap collisions.** All fourteen candidates were checked against the six rule
+names this repo declares. Not one plugin declares any of them, so the §1z hazard does not
+extend to plugin adoption in either order.
+
+### 1u. The test-disable row is a policy change, not a migration
+
+`check-test-disable-discipline.mjs` does not ban skipped tests. It bans **undocumented**
+ones: it accepts any skip carrying an adjacent `SKIP: #<issue>` marker (or the legacy
+`SKIP: pool-master-abc.1` form), and it separately flags whole skipped files and
+directories. `no-disabled-tests` has a concept of neither.
+
+So swapping the scanner for the plugin rule makes a skip **unconditionally illegal**
+rather than illegal-unless-tracked. It costs nothing today only because the repo has zero
+skipped tests — confirmed by grepping the scanner's own patterns across `tests/`,
+`clients/` and `packages/`, which returns no matches. The first legitimately-deferred test
+pays for it.
+
+Either keep the scanner for the marker semantics and take the plugin rules as
+belt-and-braces, or make the policy change deliberately and update
+`rules/testing-rules.md`, where the `SKIP: #NN` convention is documented. Landing it
+silently as a migration is the one option that is not available. Tracked in #158.
+
+### 1t. The lint scope gap is not fully closed
+
+§1w widened the glob from 491 to 545 files, closing the `packages/shared/` DTO gap. It did
+not close the other one: **125 files under `tests/` — including 86 backend Jest test files
+— are still unlinted**, plus one under `clients/poolmaster/e2e/`. The frontend test corpus
+under `clients/` is covered; the root-level `tests/` tree is not.
+
+That gap blocks two things in this plan: any `eslint-plugin-jest` adoption beyond the three
+discipline rules (full recommended is 43 findings there), and the `check-test-disable-discipline`
+decision above, since the scanner covers `tests/` and lint does not. Tracked in #158.
 
 ### 1a. Route discipline, measured
 
@@ -326,7 +402,13 @@ problems — 17 of them one audit-log signature. The detection half of `test-dis
 remains, and is unverified against the tree.
 
 The slice did "prove the approach on real violations" — including proving that the table
-above could not be trusted without measuring.
+above could not be trusted without measuring. `test-disable` is now known not to be a
+migration at all (§1u, #158).
+
+**Insertable at any point — the off-the-shelf plugins (#156).** Seven plugins are at zero
+findings today and depend on nothing else in this sequence. Landing them early buys
+`rules-of-hooks` and the a11y rules before the custom-plugin work starts, and it stands up
+the plugin-block config shape that §1z's local plugin will sit beside. See §1v.
 
 **Second — custom rules, highest-traffic first.** Route discipline and the frontend rules
 fire most and benefit most from editor feedback.
@@ -346,6 +428,11 @@ plan file per ADR-0002.
 - **Flat config or legacy?** The repo has `eslint.config.js`, suggesting flat config
   already. Custom rules in flat config are straightforward but the plugin-authoring shape
   differs from the legacy documentation most examples use.
+- **Does the lint glob widen to `tests/`?** 86 backend Jest files are unlinted. This gates
+  the `test-disable` disposition and any `eslint-plugin-jest` adoption past the three
+  discipline rules. See §1t, #158.
+- **Does `check-test-disable-discipline` keep its marker semantics?** §1u — the answer is a
+  policy decision, not a technical one.
 
 ## Sources / Prior Decisions
 
