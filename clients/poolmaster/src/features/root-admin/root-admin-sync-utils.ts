@@ -261,7 +261,7 @@ export function getSupportedSyncSports(
   const configuredSports = Array.from(
     new Set((providers ?? []).flatMap((provider) => provider.sportsCovered)),
   ).filter((sport): sport is SyncSport =>
-    ALL_SYNC_SPORT_OPTIONS.includes(sport as SyncSport),
+    ALL_SYNC_SPORT_OPTIONS.includes(sport),
   );
 
   if (configuredSports.length === 0) {

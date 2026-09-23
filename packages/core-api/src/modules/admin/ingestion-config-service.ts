@@ -67,7 +67,7 @@ export class IngestionConfigService {
     }
 
     this.repository = undefined;
-    this.logger = repositoryOrLogger as FastifyBaseLogger | undefined;
+    this.logger = repositoryOrLogger;
   }
 
   async bootstrap(): Promise<void> {

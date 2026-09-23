@@ -196,7 +196,7 @@ export function createSquadHandlers(service: SquadService) {
         return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required');
       }
       try {
-        const userId = request.authUser!.userId;
+        const userId = request.authUser.userId;
         await service.deleteInactiveSquad(
           request.params.id,
           request.params.squadId,

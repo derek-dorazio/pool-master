@@ -84,6 +84,7 @@ describe('pool-master-za4 SelectableDataGrid', () => {
     render(<Harness data={rows} />);
     await userEvent.click(screen.getByTestId('sel-a'));
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- getByTestId returns HTMLElement; tsc agrees .indeterminate needs this narrowing even though the rule doesn't.
     const all = screen.getByTestId('sel-all') as HTMLInputElement;
     expect(all.indeterminate).toBe(true);
     expect(all).not.toBeChecked();

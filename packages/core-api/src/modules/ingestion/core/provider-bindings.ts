@@ -186,7 +186,7 @@ export function registerConfiguredProviders(
 
   const provider = providerFactory(binding, env);
   for (const sport of provider.sportsCovered) {
-    registry.register(sport as Sport, provider, 'PRIMARY');
+    registry.register(sport, provider, 'PRIMARY');
   }
 
   logger?.info(

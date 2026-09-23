@@ -177,7 +177,7 @@ describe('pool-master-qqs RootAdminGolfSeasonListPage', () => {
     const modal = screen.getByTestId('root-admin-golf-season-list-new-modal');
     const [startInput, endInput] = Array.from(
       modal.querySelectorAll('input[type="date"]'),
-    ) as HTMLInputElement[];
+    );
     await userEvent.type(startInput, '2028-01-02');
     await userEvent.type(endInput, '2028-11-30');
     await userEvent.click(screen.getByTestId('root-admin-golf-season-list-new-save'));

@@ -200,8 +200,8 @@ export class ContestManagementService {
     }, 'contest management list templates start');
     const templates =
       await this.contestConfigTemplateRepo.listBySportAndContestFormat({
-        sport: input.sport as ContestConfigTemplate['sport'],
-        contestFormat: input.contestFormat as ContestConfigTemplate['contestFormat'],
+        sport: input.sport,
+        contestFormat: input.contestFormat,
         eventType: input.eventType,
       });
 
