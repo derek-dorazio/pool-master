@@ -9,26 +9,23 @@ this file does not repeat them. The one-application prohibition itself is
 
 ---
 
-## 1. Squad, Team, And Participant Are Three Different Things
+## 1. "Team" Is A UI Label, Not A Domain Term
 
-This is the naming boundary most likely to be got wrong, and getting it wrong produces code
-that reads plausibly and means the wrong thing.
+The user-facing name for a **Squad** is **Team**. There is no `Team` model —
+`features/teams/` calls `*Squad*` SDK operations throughout.
 
-| Term | What it is | Where the name appears |
-|---|---|---|
-| **Squad** | A league member's entrant vehicle. Owns memberships, creates contest entries, receives owner invitations. | Prisma model, domain types, DTOs, SDK operations |
-| **Team** | The user-facing label for that same entity. | UI copy, routes, `features/teams/` |
-| **Participant** | What gets *selected into* a squad — a golfer, a driver, an NBA team. Carries a `participantType`. | Prisma model, domain types |
+Keep that boundary in both directions: use **Squad** in anything contract-shaped — schema,
+domain types, DTOs, mappers, route names, SDK calls — and **Team** only in what a user
+reads. Do not introduce "team" into the contract layer to match the UI, and do not surface
+"squad" to users to match the schema.
 
-**A Participant can itself be a team**, which is exactly why the domain layer does not call a
-squad a "team." There is no `Team` model; `features/teams/` calls `*Squad*` SDK operations
-throughout.
+The reason the domain layer avoids "team" is that the word is overloaded in this product:
+a league member's entrant vehicle is called a team in the UI, and an event *participant* may
+itself be a team (an NBA team) rather than an individual. Squad disambiguates the first.
 
-So: use **Squad** in anything contract-shaped — schema, domain types, DTOs, mappers, route
-names, SDK calls. Use **Team** in anything a user reads. Do not introduce "team" into the
-contract layer to match the UI, and do not surface "squad" to users to match the schema.
-
----
+The entity relationships behind this — and the vocabulary for the rest of the domain — belong
+in [domain-model-conventions-rules.md](domain-model-conventions-rules.md), not here. This
+file states only the UI-label rule.
 
 ## 2. Role Scopes
 
