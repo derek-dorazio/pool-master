@@ -65,14 +65,26 @@ a person actually performs, not a job title.
 | Dom | A decision point inside `model-change`, not a role |
 | Archie | Plan mode plus `workflow-rules §1`, which already specifies plan structure |
 | Quinn | The gate commands and `/run`; failure triage is debugging |
-| Riley, Sage, Felix, Perry | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
+| Riley, Sage, Felix | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
+| Perry | `rules/review-triggers.md` §2 for *when*, plus the `review-performance` skill for *how* |
 | Pam, Tess | Retired as personas. Two pieces of content are worth preserving into `rules/`: Pam's `(Confirmed)` / `(Inferred)` / `(Needs Review)` confidence labels, which are genuinely good spec practice, and Tess's layer-selection heuristic for choosing where a test belongs |
 | Piper, Tom | Deleted. Both dormant; `workflow-rules §2` still lists them as lifecycle steps 1 and 3, contradicting the dormancy markers |
 
-**Perry is the one plausible survivor as a subagent.** Its trigger list moves to
-`rules/review-triggers.md`, but a deep performance pass on a genuinely
-hot-path slice is work `/code-review` does not do. Keeping it costs one file. Flagged in
-open questions rather than decided.
+~~**Perry is the one plausible survivor as a subagent.**~~ **Decided: Perry does not
+survive.** Keeping it would have been keeping a persona, which contradicts the whole plan —
+the question was framed as "is this pass worth one file?" when it should have been "is this
+role-shaped or task-shaped?" A performance review is a task.
+
+The content splits cleanly, and half of it was already salvaged:
+
+- **When to look** — already in `rules/review-triggers.md` §2, converted from surfaces to
+  conditions. Nothing to move.
+- **How to look** — the eight finding categories, the severity calibration, the
+  evidence-over-intuition discipline, and the limits (no speculative micro-optimizations,
+  never optimize by weakening correctness or authorization) became
+  `.claude/skills/review-performance/SKILL.md`.
+- **The role wrapper** — the nickname, the "Pass 6" framing, the vote format, the
+  `> _Perry review · …_` header — deleted, carrying nothing.
 
 ### 3. Collapse the layout to a single tool
 
@@ -154,9 +166,9 @@ that point. Note ADR-0007 was claimed by plan 134's validity-matrix move, so thi
 
 ## Open Questions
 
-- **Does Perry survive as a subagent?** Its list moves to triggers either way. The
-  question is whether a deep performance pass is worth one file. Still open — decide in the
-  deletion slice, where it is a one-line consequence rather than a separate change.
+- ~~**Does Perry survive as a subagent?**~~ **Resolved: no.** See Decision 2. The question
+  was mis-framed as a cost question; the right one was whether a performance review is a
+  role or a task. It is a task, and it is now `review-performance`.
 - ~~**Where do Pam's confidence labels and Tess's layer heuristic land?**~~ **Resolved: both
   are already in `rules/` and neither needs salvaging.** `product-requirements-rules.md §3
   Confidence Labels` carries `(Confirmed)` / `(Inferred)` / `(Needs Review)` with the same
