@@ -159,17 +159,48 @@ Dom's classification step became Step 1 of `model-change` — a decision point, 
 exactly as Decision 2 specifies. Fran's Implementer Self-Check became the self-check section
 of `add-frontend-feature`. Brad's chain became `add-endpoint`.
 
-**Third — delete the personas and the wrapper trees.** ⏸ Next slice. Remove `personas/`,
-`.agents/`, `.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md`
-(the *Persona Playbooks* section and the repo map) and `workflow-rules.md §2`.
+**Third — delete the personas and the wrapper trees.** ✅ **Landed.** `personas/` (13),
+`.agents/`, `.codex/`, `.claude/agents/` (4) and eight `.claude/skills/` wrappers removed.
+`check-skill-references` wired into `rules:check`, which it could not be while the wrappers
+existed.
 
 Deliberately **not** done in the same slice as the extraction: while both exist, the
 extraction is reviewable against its source. Delete first and the review question becomes
 "is anything missing?" with nothing to compare against.
 
-**Fourth — write the single-tool persona layout ADR**, taking whatever number is next at
-that point. Note ADR-0007 was claimed by plan 134's validity-matrix move, so this one is
-0008 or later — confirm at authoring time rather than trusting this sentence.
+**Three personas carried content with no home, found by reading them rather than trusting
+the roster table.** Codify-before-delete required salvaging it first:
+
+- **Archie** — two architectural invariants stated nowhere else: dependency direction
+  (`packages/shared` must never import from `packages/core-api`, and no cycles) and
+  deferred-work hygiene (no `TODO` markers in merged code). Both added to
+  `architecture-rules.md` §4. Its PR-review lens became `review-triggers.md` §7.
+- **Sage** — a substantial, repo-specific security checklist: authority preHandlers at the
+  route boundary rather than inline, league-isolation on list endpoints, error envelopes
+  leaking internals, `ALLOW_MOCK_PROVIDERS` gating. Became `review-triggers.md` §6.
+- **Perry** — became `review-triggers.md` §5 in the previous slice.
+
+Riley, Felix and Quinn needed no salvage: Riley's two scans are already scanner-enforced,
+Felix's discipline list is the self-check in `add-frontend-feature`, and Quinn's lanes are
+`release-check`.
+
+**36 persona nicknames across five rules files** were replaced with the role they denote
+(`Pam's bundle` → `the product-requirements bundle`). Leaving them would have left rules
+referring to roles whose definitions had just been deleted — the same dangling-concept
+problem as a dead file pointer, harder to spot.
+
+**Fourth — write the single-tool persona layout ADR.** ✅ **Landed** as
+[ADR-0008](../docs/adr/0008-single-tool-task-shaped-agent-guidance.md). It records both
+reversals — multi-runtime thin-pointer → single tool, and role-shaped → task-shaped — plus
+the original rationale for each, since that reasoning lived only in `plans/111` and plans do
+not survive their epic.
+
+`plans/111` is deleted with it, which was the last open item in `plans/141` (#139).
+
+Also recorded there and worth not re-litigating: `rules/` stays where it is rather than
+moving into skills as bundled `references/`, because references are per-skill and several
+rule files serve more than one skill — bundling would create copies rather than remove them,
+and `rules/` has a non-agent audience that a directory under `.claude/` would not serve.
 
 ## Open Questions
 

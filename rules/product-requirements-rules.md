@@ -5,7 +5,7 @@ Use this document when producing refined product-requirement artifacts under
 
 ## 0. When To Write A Requirements Bundle (And When To Skip)
 
-The Piper/Pam requirements bundle — overview + use-cases + screens + business-rules + open-questions for a feature — is high-leverage for **major new features** on a mostly-greenfield surface. It is low-leverage and often net-negative for incremental work on features that already exist.
+The discovery + requirements bundle — overview + use-cases + screens + business-rules + open-questions for a feature — is high-leverage for **major new features** on a mostly-greenfield surface. It is low-leverage and often net-negative for incremental work on features that already exist.
 
 ### Write a requirements bundle when all of the following apply
 
@@ -36,7 +36,7 @@ the home of task status — that lives in GitHub Issues.
 
 ## 2. Output Structure
 
-Pam's normal output bundle is:
+The normal output bundle is:
 
 ### Shared Product Files
 
@@ -54,7 +54,7 @@ Pam's normal output bundle is:
 - `requirements/product-requirements/features/<feature>/business-rules.md`
 - `requirements/product-requirements/features/<feature>/open-questions.md`
 
-Pam should normally read Piper's discovery output from:
+Normally read the discovery output from:
 
 - `requirements/product-overview/`
 
@@ -144,7 +144,7 @@ Before product requirements are handed forward, they must make clear:
 
 ## 9. Interaction With Other Layers
 
-The layered artifact model is owned by `rules/workflow-rules.md §0 Document Lifecycle`. This rule file only adds Pam-specific notes:
+The layered artifact model is owned by `rules/workflow-rules.md §0 Document Lifecycle`. This rule file only adds requirements-specific notes:
 
 - `requirements/product-requirements/` is authoritative for *major-feature* product intent while the feature is active.
 - When requirement changes affect in-flight work, update the relevant plan narrative in the same effort; task state is updated in GitHub Issues (not in plan task tables — plan files no longer carry task tables).

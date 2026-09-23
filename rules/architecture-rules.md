@@ -168,6 +168,17 @@ All backend services are TypeScript services with explicit module boundaries.
 - Database access stays behind service/repository boundaries.
 - Cross-service/module communication uses shared events and typed contracts.
 - League isolation must remain explicit in request context and persistence boundaries.
+- **Dependency direction is one-way: `packages/shared` must never import from
+  `packages/core-api`.** Shared is the contract layer that both the service and the clients
+  depend on; an import in the other direction makes the contract depend on one of its
+  consumers, and the package stops being shareable. Circular dependencies between any two
+  packages are a defect, not a style preference — they break incremental builds and make
+  module initialisation order load-bearing. `import-x/no-cycle` is the mechanical check for
+  the circular half; the direction rule needs a reader.
+- **Do not land `TODO` markers or half-implementations for work you intend to do later.**
+  A `TODO` in merged code is untracked work with no owner and no deadline, and it is
+  invisible to the tracker. If the work is in scope, finish it; if it is not, open an issue
+  and let the issue carry it.
 - **One code path per piece of business logic, however many callers reach it.**
   When the same behavior must be triggered from more than one caller — two
   route lanes (admin vs. sync), an admin-initiated action and a

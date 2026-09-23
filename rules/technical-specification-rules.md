@@ -34,18 +34,18 @@ implementation-ready baseline for design plans and coding work — during the
 pre-implementation phase of a major feature. See §0 for when to write one and
 when to skip.
 
-These specs are the bridge between Pam's requirements and later design,
+These specs are the bridge between the product requirements and later design,
 planning, testing, and implementation — not the long-term home for either.
 
 ## 2. Output Structure
 
-Tom's normal feature bundle is:
+The normal feature bundle is:
 
 - `tech-specs/features/<feature>/domain-model.md`
 - `tech-specs/features/<feature>/api-surface.md`
 - `tech-specs/features/<feature>/flows.md`
 - `tech-specs/features/<feature>/open-questions.md`
-- `tech-specs/features/<feature>/test-matrix.md` when Tess is involved
+- `tech-specs/features/<feature>/test-matrix.md` when coverage is planned up front
 
 ## 3. Domain Model Spec Rules
 
@@ -85,7 +85,7 @@ Prefer describing contract meaning, not copying raw schemas in full.
 - branching/error points
 - interactions between UI, API, and background/system processes
 
-This file should make it easier for Archie, Brad, Fran, Tess, and Quinn to
+This file should make it easier for design, backend, frontend, coverage planning, and verification work to
 reason about the feature slice without reverse-engineering the code.
 
 ## 6. Open Questions
@@ -124,10 +124,10 @@ Do not use technical specs to bypass unresolved product questions.
 Before technical specs are handed forward, they must make clear:
 
 - what concepts and contracts are affected
-- where Dom review is required
-- what Archie should treat as the baseline
-- what Brad and Fran should implement against
-- what Tess should plan coverage against
+- where a model-impact classification is required
+- what design planning should treat as the baseline
+- what backend and frontend work should implement against
+- what coverage should be planned against
 
 ## 10. Interaction With Plans
 

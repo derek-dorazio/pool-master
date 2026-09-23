@@ -35,11 +35,11 @@ All services and clients must follow these testing standards. This document defi
 
 ### Testing Persona Boundary
 
-- `Tess` defines expected scenario/layer coverage in a feature test matrix when
+- **Coverage planning** defines expected scenario/layer coverage in a feature test matrix when
   that planning artifact exists.
-- `Quinn` executes the relevant lanes, triages failures, and reports release
+- **Verification** executes the relevant lanes, triages failures, and reports release
   confidence.
-- `Riley` reviews code quality and regression risk, but does not replace Tess
+- **Code review** covers quality and regression risk, but does not replace coverage planning
   as the coverage-matrix owner.
 
 ### Core Testing Standard
@@ -170,7 +170,7 @@ Mocks, fakes, builders, fixtures, MSW handlers, and `nock` interceptors live in 
 
 ### Repository surface
 
-If you find yourself adding any of the patterns above to make a slice pass, **stop**. Surface the conflict to the user before proceeding. This is a hard rule — Riley flags any instance as a CRITICAL finding and blocks merge.
+If you find yourself adding any of the patterns above to make a slice pass, **stop**. Surface the conflict to the user before proceeding. This is a hard rule — any instance is a blocking review finding.
 
 See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof Rule*) for the failing-test-before-fix discipline that prevents the most common path into these patterns.
 
@@ -227,7 +227,7 @@ deliberately not rewritten — see `docs/adr/0006-github-issues-as-live-task-tra
 adjacent `SKIP: #NN` comment (or a legacy `SKIP: pool-master-*` marker). The
 same check runs in CI through `npm run rules:check`.
 
-Riley scans for this on every review:
+Scan for this on every review:
 
 - Any skipped/todo/expected-fail test introduced by the slice without a `SKIP: #NN` comment is a **TEST / HIGH** finding and blocks merge.
 - Any skipped test introduced by the slice with a comment but no actual issue behind it is a **TEST / HIGH** finding and blocks merge.
@@ -484,7 +484,7 @@ Backend functional tests and any future browser E2E tests must be **use-case dri
 
 ### Required Use-Case Coverage Mapping
 
-For every active feature lane, Tess and Quinn must be able to point to where
+For every active feature lane, coverage planning and verification must be able to point to where
 the documented use cases are proven.
 
 Minimum expectation before deployment:

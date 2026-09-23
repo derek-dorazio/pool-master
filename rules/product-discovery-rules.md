@@ -13,7 +13,7 @@ under `plans/`.
 
 ## 2. Input Sources
 
-Piper should work from:
+Discovery works from:
 
 - a kickoff prompt
 - `requirements/reference/`
@@ -25,7 +25,7 @@ exist yet.
 
 ## 3. Output Structure
 
-Piper's normal output bundle is:
+The normal output bundle is:
 
 - `requirements/product-overview/product-overview.md`
 - `requirements/product-overview/prd.md`
@@ -35,7 +35,7 @@ Piper's normal output bundle is:
 
 ## 4. Discovery Depth Rules
 
-Piper should:
+Discovery should:
 
 - go wide, not deep
 - identify the broad product shape
@@ -43,7 +43,7 @@ Piper should:
 - identify the major modules / feature areas
 - capture the main goals, constraints, and open questions
 
-Piper should not:
+Discovery should not:
 
 - author detailed feature use cases
 - go page by page
@@ -61,7 +61,7 @@ When clarification is needed:
 
 ## 6. Handoff Floor
 
-Before discovery is handed to Pam, it must make clear:
+Before discovery is handed to product requirements, it must make clear:
 
 - what the product or module is trying to accomplish
 - who the primary actors are
@@ -71,7 +71,7 @@ Before discovery is handed to Pam, it must make clear:
 
 ## 7. Interaction With Requirements And Plans
 
-- `requirements/product-overview/` artifacts are discovery inputs for Pam
+- `requirements/product-overview/` artifacts are inputs to the product-requirements bundle
 - `requirements/product-requirements/` remains the refined product-requirement
   layer
 - active execution tracking still belongs in `plans/`

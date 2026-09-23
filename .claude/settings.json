@@ -107,7 +107,6 @@
       "Bash(git add scripts/*)",
       "Bash(git add rules/*)",
       "Bash(git add docs/*)",
-      "Bash(git add personas/*)",
       "Bash(git add plans/*)",
       "Bash(git add AGENTS.md)",
       "Bash(git add CLAUDE.md)",
