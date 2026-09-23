@@ -439,7 +439,7 @@ export function AuthHomePage() {
           {mode === "login" ? (
             <form
               className="mt-6 space-y-4"
-              onSubmit={loginForm.handleSubmit(handleLogin)}
+              onSubmit={(e) => void loginForm.handleSubmit(handleLogin)(e)}
             >
               <FormField
                 error={loginForm.formState.errors.identifier?.message}
@@ -477,7 +477,7 @@ export function AuthHomePage() {
           ) : (
             <form
               className="mt-6 space-y-4"
-              onSubmit={registerForm.handleSubmit(handleRegister)}
+              onSubmit={(e) => void registerForm.handleSubmit(handleRegister)(e)}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField

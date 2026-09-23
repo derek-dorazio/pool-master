@@ -277,7 +277,7 @@ export function CreateLeagueModal({
 
       <form
         className="mt-6 space-y-5"
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={(e) => void form.handleSubmit(handleSubmit)(e)}
       >
         {step === WIZARD_STEP_DETAILS ? (
           <>
@@ -292,7 +292,7 @@ export function CreateLeagueModal({
                 id="create-league-name"
                 {...registeredName}
                 onBlur={(event) => {
-                  registeredName.onBlur(event);
+                  void registeredName.onBlur(event);
                   seedLeagueCodeFromName(event.target.value);
                 }}
                 placeholder="Big Dawgs"

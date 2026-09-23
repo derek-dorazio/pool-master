@@ -181,7 +181,7 @@ export function GolfTournamentSummaryCard({
       >
         <form
           className="space-y-3"
-          onSubmit={form.handleSubmit((values) => updateMutation.mutate(values))}
+          onSubmit={(e) => void form.handleSubmit((values) => updateMutation.mutate(values))(e)}
         >
           <FormField error={form.formState.errors.name?.message} label="Name">
             <Input {...form.register('name')} />

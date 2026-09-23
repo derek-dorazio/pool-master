@@ -2,7 +2,7 @@
  * League-scoped authorization helpers for member-only and commissioner-only routes.
  */
 
-import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
+import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import type {
   ContestRepository,
   LeagueMembershipRepository,
@@ -93,7 +93,7 @@ async function loadMembership(
 /** Allows any league member to access the route. */
 export function requireLeagueMembership(
   membershipRepo: LeagueMembershipRepository,
-): preHandlerHookHandler {
+): preHandlerAsyncHookHandler {
   return async function checkLeagueMembership(request, reply): Promise<void> {
     const logger = request.contextLogger ?? request.log;
     logger.debug({
@@ -118,7 +118,7 @@ export function requireLeagueMembership(
 /** Allows commissioners to access the route. */
 export function requireCommissioner(
   membershipRepo: LeagueMembershipRepository,
-): preHandlerHookHandler {
+): preHandlerAsyncHookHandler {
   return async function checkCommissioner(request, reply): Promise<void> {
     const logger = request.contextLogger ?? request.log;
     logger.debug({
@@ -171,7 +171,7 @@ export function requireCommissioner(
 export function requireCommissionerForContest(
   contestRepo: ContestRepository,
   membershipRepo: LeagueMembershipRepository,
-): preHandlerHookHandler {
+): preHandlerAsyncHookHandler {
   return async function checkContestCommissioner(request, reply): Promise<void> {
     const logger = request.contextLogger ?? request.log;
     const userId = request.authUser?.userId;

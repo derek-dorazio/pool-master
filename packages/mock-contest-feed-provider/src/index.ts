@@ -12,6 +12,6 @@ async function start(): Promise<void> {
   }
 }
 
-start();
+void start();
 
 export { buildApp } from './app';

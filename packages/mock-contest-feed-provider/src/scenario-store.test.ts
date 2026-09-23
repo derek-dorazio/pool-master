@@ -8,7 +8,7 @@ import { ScenarioStore, buildRelativeTodayGolfScenario } from './scenario-store'
 
 const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 
-test('ScenarioStore loads event-first scenarios and exposes field snapshots', () => {
+void test('ScenarioStore loads event-first scenarios and exposes field snapshots', () => {
   const store = new ScenarioStore(scenarioDir);
 
   const scenarios = store.listScenarios();
@@ -29,7 +29,7 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
   assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
 });
 
-test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf events for QA coverage', () => {
+void test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf events for QA coverage', () => {
   const now = new Date('2026-04-26T21:00:00.000Z');
   const scenario = buildRelativeTodayGolfScenario(now);
 
@@ -69,7 +69,7 @@ test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf 
   assert.ok(Date.parse(nextWeekend?.schedule.startsAt ?? '') > Date.parse(currentWeekend?.schedule.startsAt ?? ''));
 });
 
-test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee time across UTC boundaries', () => {
+void test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee time across UTC boundaries', () => {
   const rollingEventsFor = (now: string) =>
     buildRelativeTodayGolfScenario(new Date(now)).events
       .filter((event) => event.metadata?.eventType === 'rolling-weekend-qa');
@@ -130,7 +130,7 @@ test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee t
   assert.equal(completedEvent?.field.status, 'final');
 });
 
-test('pool-master-eux.9: relative golf events derive provider lifecycle and default scores from current time', () => {
+void test('pool-master-eux.9: relative golf events derive provider lifecycle and default scores from current time', () => {
   const currentNow = new Date('2026-04-30T12:01:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -151,7 +151,7 @@ test('pool-master-eux.9: relative golf events derive provider lifecycle and defa
   assert.ok(typeof liveScores.contestants[0]?.rounds[0]?.strokes === 'number');
 });
 
-test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
+void test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
   let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -178,7 +178,7 @@ test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated 
   assert.equal(nextCycleEvents.at(-1)?.eventId, 'golf-relative-weekend-20260430');
 });
 
-test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
+void test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -214,7 +214,7 @@ test('pool-master-33l.8.8: explicit mock event states control golf detail, resul
   assert.ok(completedResults.contestants.every((contestant) => typeof contestant.strokes === 'number'));
 });
 
-test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
+void test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -280,7 +280,7 @@ test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-r
   );
 });
 
-test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {
+void test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
@@ -302,7 +302,7 @@ test('pool-master-eux.7: legacy mock event states are aliases into the live /sco
   assert.ok(completed.contestants.some((contestant) => contestant.rounds.some((round) => round.round === 4)));
 });
 
-test('pool-master-eux.7: direct /scores requests expose every golf live-state wire contract', async () => {
+void test('pool-master-eux.7: direct /scores requests expose every golf live-state wire contract', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
   const app = await buildApp();
@@ -351,7 +351,7 @@ test('pool-master-eux.7: direct /scores requests expose every golf live-state wi
   }
 });
 
-test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
+void test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
   let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
@@ -374,7 +374,7 @@ test('pool-master-s4y: old relative manual-test event ids remain detail-resolvab
   assert.equal(originalDetail.event.field.contestants.length, 80);
 });
 
-test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
+void test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
 
   try {
@@ -430,7 +430,7 @@ test('ScenarioStore rejects new contestants in deltas unless they include a name
   }
 });
 
-test('ScenarioStore rejects golf events that omit odds contestants', () => {
+void test('ScenarioStore rejects golf events that omit odds contestants', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
 
   try {
@@ -486,7 +486,7 @@ test('ScenarioStore rejects golf events that omit odds contestants', () => {
   }
 });
 
-test('ScenarioStore throws for missing scenarios and events', () => {
+void test('ScenarioStore throws for missing scenarios and events', () => {
   const store = new ScenarioStore(scenarioDir);
 
   assert.throws(() => store.getScenario('missing-scenario'), /Scenario not found/);
@@ -496,7 +496,7 @@ test('ScenarioStore throws for missing scenarios and events', () => {
   );
 });
 
-test('pool-master-33l.8.8: routes expose detail, field, and mock event-state score endpoints', async () => {
+void test('pool-master-33l.8.8: routes expose detail, field, and mock event-state score endpoints', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
 

@@ -108,7 +108,7 @@ export function GolfTournamentManualCreateForm({
       <form
         className="space-y-4"
         data-testid="root-admin-golf-tournament-create-manual-form"
-        onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+        onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
       >
         <FormField error={form.formState.errors.name?.message} label="Name">
           <Input

@@ -122,4 +122,4 @@ async function start(): Promise<void> {
   }
 }
 
-start();
+void start();

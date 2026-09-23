@@ -257,7 +257,7 @@ export function RootAdminGolfPlayerHomePage() {
             testId="root-admin-golf-player-home-edit-modal"
             title="Edit golf player"
           >
-            <form className="space-y-3" onSubmit={submit}>
+            <form className="space-y-3" onSubmit={(e) => void submit(e)}>
               <FormField error={form.formState.errors.name?.message} label="Name">
                 <Input {...form.register('name')} />
               </FormField>

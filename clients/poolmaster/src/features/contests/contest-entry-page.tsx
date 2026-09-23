@@ -744,29 +744,32 @@ export function ContestEntryPage() {
                   isBusy={submitSelectionMutation.isPending}
                   isExpanded={isExpanded}
                   key={group.groupId}
-                  onParticipantSelect={async (nextParticipant) => {
-                    await submitSelectionMutation.mutateAsync(nextParticipant.sportEventParticipantId);
-                    setExpandedGroupId((current) => {
-                      if (current !== group.groupId) {
-                        return current;
-                      }
+                  onParticipantSelect={(nextParticipant) => {
+                    void submitSelectionMutation
+                      .mutateAsync(nextParticipant.sportEventParticipantId)
+                      .then(() => {
+                        setExpandedGroupId((current) => {
+                          if (current !== group.groupId) {
+                            return current;
+                          }
 
-                      const currentIndex = selectionGroups.findIndex(
-                        (candidate) => candidate.groupId === group.groupId,
-                      );
-                      const nextSelectedIds = getNextSelectedParticipantIds(
-                        group,
-                        nextParticipant.sportEventParticipantId,
-                      );
-                      if (nextSelectedIds.length < group.picksFromGroup) {
-                        return group.groupId;
-                      }
-                      const nextGroup = selectionGroups
-                        .slice(currentIndex + 1)
-                        .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
+                          const currentIndex = selectionGroups.findIndex(
+                            (candidate) => candidate.groupId === group.groupId,
+                          );
+                          const nextSelectedIds = getNextSelectedParticipantIds(
+                            group,
+                            nextParticipant.sportEventParticipantId,
+                          );
+                          if (nextSelectedIds.length < group.picksFromGroup) {
+                            return group.groupId;
+                          }
+                          const nextGroup = selectionGroups
+                            .slice(currentIndex + 1)
+                            .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
 
-                      return nextGroup?.groupId ?? null;
-                    });
+                          return nextGroup?.groupId ?? null;
+                        });
+                      });
                   }}
                   onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
                   setToggleRef={(element) => {

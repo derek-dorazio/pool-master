@@ -49,7 +49,7 @@ export class AccountConsentService {
     return record;
   }
 
-  async getConsentHistory(userId: string): Promise<unknown[]> {
+  async getConsentHistory(userId: string) {
     this.logger?.debug({
       action: 'accountConsentService.history.start',
       data: { userId },

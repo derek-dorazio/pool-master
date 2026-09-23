@@ -48,9 +48,7 @@ export function notificationsModule(
       });
       logger.info({ userId, count: result.notifications.length, total: result.total }, 'Listed in-app notifications');
       return {
-        notifications: result.notifications.map((notification) =>
-          mapNotificationToDto(notification),
-        ),
+        notifications: result.notifications.map((notification) => mapNotificationToDto(notification)),
         total: result.total,
       };
     },

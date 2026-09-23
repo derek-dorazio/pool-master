@@ -119,7 +119,7 @@ export function GolfTournamentRoundsModal({
     >
       <form
         className="space-y-3"
-        onSubmit={form.handleSubmit((values) => roundsMutation.mutate(values))}
+        onSubmit={(e) => void form.handleSubmit((values) => roundsMutation.mutate(values))(e)}
       >
         {fields.map((field, index) => (
           <div className="grid gap-3 sm:grid-cols-2" key={field.id}>

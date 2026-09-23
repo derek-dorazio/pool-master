@@ -59,7 +59,7 @@ export function accountConsentModule(fastify: FastifyInstance): void {
         },
       }, 'Recorded account consent');
       return reply.status(201).send({
-        consent: mapConsentRecordToDto(consent as Record<string, unknown>),
+        consent: mapConsentRecordToDto(consent),
       });
     },
   );
@@ -90,7 +90,7 @@ export function accountConsentModule(fastify: FastifyInstance): void {
           recordCount: history.length,
         },
       }, 'Loaded account consent history');
-      return { consents: history.map((record) => mapConsentRecordToDto(record as Record<string, unknown>)) };
+      return { consents: history.map((record) => mapConsentRecordToDto(record)) };
     },
   });
 }

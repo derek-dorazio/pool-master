@@ -1863,10 +1863,19 @@ function isManualTestLifecycleEvent(event: ContestFeedEventRecord): boolean {
   return event.metadata?.eventType === manualTestEventType;
 }
 
+interface ManualLifecycleSummary {
+  phase: ManualTestLifecyclePhase;
+  eventId: string;
+  eventName: string;
+  startsAt: string;
+  fieldLocksAt: string | undefined;
+  endsAt: string | undefined;
+}
+
 function summarizeManualTestEvent(
   events: readonly ContestFeedEventRecord[],
   now: Date,
-): Record<string, unknown> | null {
+): ManualLifecycleSummary | null {
   const event = events.find(isManualTestLifecycleEvent);
   if (!event) {
     return null;
@@ -1878,7 +1887,7 @@ function summarizeManualTestEvent(
 function summarizeManualLifecycle(
   event: ContestFeedEventRecord,
   now: Date,
-): Record<string, unknown> | null {
+): ManualLifecycleSummary | null {
   if (!isManualTestLifecycleEvent(event)) {
     return null;
   }

@@ -169,7 +169,7 @@ export function GolfLeagueDetailsCard({ league }: { league: GolfLeague }) {
         testId="root-admin-golf-league-home-edit-modal"
         title="Edit golf tour"
       >
-        <form className="space-y-3" onSubmit={submit}>
+        <form className="space-y-3" onSubmit={(e) => void submit(e)}>
           <FormField error={form.formState.errors.name?.message} label="Tour name">
             <Input {...form.register('name')} />
           </FormField>

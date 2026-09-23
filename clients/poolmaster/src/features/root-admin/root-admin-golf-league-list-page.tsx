@@ -176,7 +176,7 @@ export function RootAdminGolfLeagueListPage() {
       >
         <form
           className="space-y-3"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
+          onSubmit={(e) => void form.handleSubmit((values) => createMutation.mutate(values))(e)}
         >
           <FormField error={form.formState.errors.name?.message} label="Tour name">
             <Input
