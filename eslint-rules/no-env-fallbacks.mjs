@@ -21,6 +21,13 @@
  * Walking the AST closes both: the rule finds the LAST operand of a ??/|| chain
  * whose left side reads an env object, however the source is wrapped.
  *
+ * Logical ASSIGNMENT (`process.env.X ??= 'literal'`, `||=`) is flagged too. It is the
+ * same defect in a different node type -- `AssignmentExpression`, not
+ * `LogicalExpression` -- so a rule that only walked logical expressions missed it
+ * entirely. Found by probing this rule with the syntax after using it legitimately in
+ * `packages/core-api/scripts/`, which is outside this rule's glob: a build tool
+ * declaring its own identity is fine, the same line inside `src/` is not.
+ *
  * Deliberately NOT flagged, matching the scanner's documented allowances:
  *   - `?? ''` — an empty sentinel is "not configured", not a default identity.
  *   - `?? 0`, `?? DEFAULT_X`, `?? null` — tunables (timeouts, pool sizes) and
@@ -146,7 +153,21 @@ export default {
     const envObjects = options.envObjects || DEFAULT_ENV_OBJECTS;
     const allow = new Set(options.allow || []);
 
+    /**
+     * `process.env.X ??= 'literal'` / `||=` — the assignment form of the same thing.
+     * The target is the env read itself, so there is no chain to flatten.
+     */
+    function checkLogicalAssignment(node) {
+      if (node.operator !== '??=' && node.operator !== '||=') return;
+      if (!hardcodedString(node.right)) return;
+      const name = envVarName(node.left, envObjects);
+      if (name !== null && !allow.has(name)) {
+        context.report({ node, messageId: 'envFallback', data: { name } });
+      }
+    }
+
     return {
+      AssignmentExpression: checkLogicalAssignment,
       LogicalExpression(node) {
         if (node.operator !== '??' && node.operator !== '||') return;
         // Report once per chain, from its outermost node.

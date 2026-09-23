@@ -17,6 +17,14 @@ process.env.OPENAPI_EXPORT = 'true';
 // signs or verifies tokens; it only walks the route schemas to emit
 // OpenAPI. A placeholder is sufficient and never reaches a request path.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-not-a-real-secret';
+// #134 — same shape as the JWT_SECRET line above, for the same reason. buildApp()
+// constructs the logger, which reads POOLMASTER_ENVIRONMENT and the service version
+// through core/config.ts and throws when either is unset. This script is a build
+// tool, not a deployment: it boots the app only to walk route schemas and never
+// serves a request, so it declares its own identity. `??=` keeps a real value when
+// one is already set, so running this inside CI or a configured shell is unchanged.
+process.env.POOLMASTER_ENVIRONMENT ??= 'openapi-export';
+process.env.POOLMASTER_SERVICE_VERSION ??= '0.0.0-openapi-export';
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

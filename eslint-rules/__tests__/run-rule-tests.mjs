@@ -174,6 +174,11 @@ ruleTester.run('no-env-fallbacks', noEnvFallbacks, {
       code: "const x = process.env.LOG_LEVEL ?? 'info';",
       options: [{ allow: ['LOG_LEVEL'] }],
     },
+    // Logical assignment with a non-fallback right-hand side.
+    "process.env.OK ??= '';",
+    'process.env.PORT ??= 3000;',
+    // A plain assignment sets a value, it does not absorb a missing one.
+    "process.env.PLAIN = 'assigned';",
   ],
   invalid: [
     // The shape the line-based scanner failed open on: the read and the literal
@@ -217,6 +222,16 @@ ruleTester.run('no-env-fallbacks', noEnvFallbacks, {
     {
       code: "const x = process.env.A ?? process.env.B ?? 'lit';",
       errors: [{ messageId: 'envFallback', data: { name: 'A' } }],
+    },
+    // Logical ASSIGNMENT is the same defect in a different node type. The first
+    // version of this rule walked only LogicalExpression and missed it entirely.
+    {
+      code: "process.env.POOLMASTER_ENVIRONMENT ??= 'development';",
+      errors: [{ messageId: 'envFallback', data: { name: 'POOLMASTER_ENVIRONMENT' } }],
+    },
+    {
+      code: "process.env.FOO ||= 'bar';",
+      errors: [{ messageId: 'envFallback', data: { name: 'FOO' } }],
     },
   ],
 });
