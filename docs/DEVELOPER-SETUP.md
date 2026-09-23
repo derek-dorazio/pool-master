@@ -407,7 +407,7 @@ poolmaster/
 │   ├── push-mock-server/    # APNs/FCM mock for local dev (port 3099)
 │   └── shared/              # Domain types, DB ports, events, utils
 ├── clients/
-│   ├── poolmaster/          # React + Vite + MUI
+│   ├── poolmaster/          # React + Vite + Radix/shadcn + Tailwind
 │   ├── _archived/           # Historical legacy web/admin references
 │   ├── ios/                 # Swift + SwiftUI (planned)
 │   └── android/             # Kotlin + Jetpack Compose (planned)
