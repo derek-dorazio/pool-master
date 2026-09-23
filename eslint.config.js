@@ -200,6 +200,14 @@ export default tseslint.config(
     rules: { 'poolmaster/no-inline-theme-styles': 'error' },
   },
   {
+    // Matches the scanner: all of clients/poolmaster/src, tests excluded, because
+    // a test may legitimately build a local stand-in named after the real shape.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-parallel-api-types': 'error' },
+  },
+  {
     // Test files across every workspace, matching the scanner's walk roots
     // (tests/, packages/, clients/poolmaster/src/). The rule also fires on the
     // file path itself, so a parked `*.skip.test.ts` is caught by being linted

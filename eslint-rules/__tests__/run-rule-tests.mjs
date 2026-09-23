@@ -15,6 +15,7 @@ import noDisabledTests from '../no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
+import noParallelApiTypes from '../no-parallel-api-types.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 
@@ -274,6 +275,64 @@ ruleTester.run('no-disabled-tests', noDisabledTests, {
     {
       code: "// SKIP: #123\nit.skip('t', () => {});",
       errors: [{ messageId: 'disabledTest' }],
+    },
+  ],
+});
+
+// This rule reads the generated type names from disk, so its cases depend on the
+// real `packages/shared/generated/hey-api/types.gen.ts` rather than fixtures. The
+// names below are asserted to exist first, so a regeneration that removes one
+// fails loudly here instead of turning these cases into silent no-ops.
+const GENERATED_SAMPLE = ['GetHealthData', 'GetRootVersionResponse', 'ClientOptions'];
+{
+  const { Linter } = await import('eslint');
+  const linter = new Linter();
+  const stale = GENERATED_SAMPLE.filter((name) => {
+    const messages = linter.verify(`interface ${name} { a: string }`, [
+      {
+        files: ['**/*.ts'],
+        plugins: { poolmaster: { rules: { r: noParallelApiTypes } } },
+        languageOptions: { parser: tseslintParser },
+        rules: { 'poolmaster/r': 'error' },
+      },
+    ], 'clients/poolmaster/src/probe.ts');
+    // Match the rule's own finding, not just "some message" -- a config or parse
+    // error also produces one, which is how the first version of this guard
+    // managed to pass while checking nothing.
+    return !messages.some((m) => m.messageId === 'parallelType');
+  });
+  if (stale.length > 0) {
+    throw new Error(
+      `no-parallel-api-types test fixtures are stale: ${stale.join(', ')} is no longer a `
+      + 'generated hey-api type. Pick current names from '
+      + 'packages/shared/generated/hey-api/types.gen.ts.',
+    );
+  }
+}
+
+ruleTester.run('no-parallel-api-types', noParallelApiTypes, {
+  valid: [
+    // A name the generator does not emit is just an ordinary local type.
+    'interface NotAGeneratedName { a: string }',
+    'type AlsoNotGenerated = { a: string };',
+    // A value binding that happens to share a generated name is not a type.
+    'const GetHealthResponses = 1;',
+    // Importing the generated type is the intended usage.
+    "import type { GetHealthData } from '@poolmaster/shared';",
+  ],
+  invalid: [
+    {
+      code: 'interface GetHealthData { a: string }',
+      errors: [{ messageId: 'parallelType', data: { name: 'GetHealthData' } }],
+    },
+    {
+      code: 'type GetRootVersionResponse = { a: string };',
+      errors: [{ messageId: 'parallelType' }],
+    },
+    // A non-exported local shadow is the same drift.
+    {
+      code: 'type ClientOptions = { a: string };',
+      errors: [{ messageId: 'parallelType' }],
     },
   ],
 });

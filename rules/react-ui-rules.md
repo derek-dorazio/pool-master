@@ -131,10 +131,10 @@ Do not hide broken requests with local fallbacks.
 - New `useQuery`, `useInfiniteQuery`, and mutation invalidation call sites must
   consume the query-key factory.
 - Do not add inline `queryKey: ['literal', ...]` arrays in feature code.
-  `npm run rules:check:no-inline-query-keys` enforces this.
+  The `poolmaster/no-inline-query-keys` ESLint rule enforces this.
 - Do not define page-local API-shaped type aliases or interfaces with the same
-  names as generated `hey-api` types. `npm run
-  rules:check:no-parallel-api-types` enforces this.
+  names as generated `hey-api` types. The `poolmaster/no-parallel-api-types`
+  ESLint rule enforces this.
 - When a mutation succeeds, list the affected query keys explicitly in
   `invalidateQueries`, update the cache from the authoritative mutation
   response, or navigate away from stale state.
@@ -232,7 +232,7 @@ Rules:
   primitive rather than creating a page-local near-duplicate.
 - Duplicated helpers such as error-message extraction, date/number formatting,
   or action-card rendering should be extracted once and reused.
-- `npm run rules:check:shared-ui-controls` records the current bare-control
+- The `poolmaster/no-bare-ui-controls` ESLint rule records the current bare-control
   baseline. New work should drive that count down, not add to it.
 
 ### Server Data Form-State Hazard
@@ -380,7 +380,7 @@ state, stale actions, and unthemeable markup accumulate.
 - New reusable theme tokens belong in the theme/shared UI layer before feature
   code consumes them.
 - `npm run lint:theme-tokens` guards raw theme-token drift in feature code.
-- `npm run rules:check:no-inline-theme-styles` guards literal inline theme
+- The `poolmaster/no-inline-theme-styles` ESLint rule guards literal inline theme
   styles for color, border, shadow, and typography properties.
 
 ### Frontend Logging Discipline

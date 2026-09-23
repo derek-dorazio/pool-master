@@ -302,7 +302,7 @@ Every CI gate runs locally with the same command CI uses. The common loops:
 npm run rules:check
 
 # Run a single scanner in isolation.
-npm run rules:check:no-mocked-api
+npm run lint   # poolmaster/no-mocked-api
 npm run rules:check:route-discipline
 # ...etc.
 
@@ -338,10 +338,10 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 
 | Gate | Failure means | Fix |
 |---|---|---|
-| `rules:check:no-mocked-api` (warn) | A test added a module-level mock of the generated API. Today does not block, but lands as visible debt. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
+| `poolmaster/no-mocked-api` via `npm run lint` (**block**) | A test added a module-level mock of the generated API. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
 | `poolmaster/no-disabled-tests` via `npm run lint` (**block**) | A test was disabled. There is no exempting comment. | Either fix the test, or delete it and note the coverage gap in the slice's closing comment. |
-| `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
+| `poolmaster/no-bare-ui-controls` via `npm run lint` (**block**) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
 | `rules:check:pr-review-triggers` (**block**, PRs only) | The PR body is missing the `<!-- review:triggers -->` marker. | Edit the PR body to include the marker section. The PR template pre-populates it; removing it manually fails the gate. See `rules/workflow-rules.md §6` and `rules/review-triggers.md`. |
