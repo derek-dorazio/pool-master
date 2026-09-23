@@ -37,7 +37,7 @@ on the broken code before the fix landed. Evidence: <commit SHA / referenced lin
 <!-- Required local gates per rules/testing-rules.md §3. Check each. -->
 
 - [ ] `npx turbo typecheck --force`
-- [ ] `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+- [ ] `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
 - [ ] `npx jest --config tests/jest.config.js --forceExit`
 - [ ] `npm run test:service:functional-api`
 - [ ] `npm run test:poolmaster:unit`

@@ -123,27 +123,47 @@ None.
 
 ## Execution Sequence
 
-**First — AGENTS.md conditional routing.** Independent, largest context saving,
-reversible. A net improvement even if the rest of this plan were abandoned.
+**First — AGENTS.md conditional routing.** ✅ **Landed** (`a287d85`). The 15-file mandate is
+replaced by the *Read the Rules Your Task Touches* table.
 
-**Second — extract task skills.** Write the task-shaped skills, pulling the layer chains
-and invariants out of Brad, Fran, and Dom. This is the slice with real content risk: the
-persona files carry nuance worth preserving, and the extraction is a rewrite, not a move.
+**Second — extract task skills.** ✅ **Landed.** Four skills written:
+`.claude/skills/{add-endpoint,model-change,add-frontend-feature,release-check}/SKILL.md`.
 
-**Third — delete the personas and the wrapper trees.** Remove `personas/`, `.agents/`,
-`.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md` and
-`workflow-rules.md` roster tables and the `§2` lifecycle section.
+Deliberately **sequence-and-route, not restatement.** `rules/` already carries the
+substance — `service-rules.md §4` has the backend chain, `react-ui-rules.md` has the
+frontend discipline, `domain-model-conventions-rules.md` has the model language. Copying any
+of it into a skill would recreate the multi-copy problem this plan exists to end. Each skill
+says what order to do things in, what breaks when a step is skipped, and which rule section
+is authoritative.
+
+Dom's classification step became Step 1 of `model-change` — a decision point, not a handoff,
+exactly as Decision 2 specifies. Fran's Implementer Self-Check became the self-check section
+of `add-frontend-feature`. Brad's chain became `add-endpoint`.
+
+**Third — delete the personas and the wrapper trees.** ⏸ Next slice. Remove `personas/`,
+`.agents/`, `.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md`
+(the *Persona Playbooks* section and the repo map) and `workflow-rules.md §2`.
+
+Deliberately **not** done in the same slice as the extraction: while both exist, the
+extraction is reviewable against its source. Delete first and the review question becomes
+"is anything missing?" with nothing to compare against.
 
 **Fourth — write the single-tool persona layout ADR**, taking whatever number is next at
-that point.
+that point. Note ADR-0007 was claimed by plan 134's validity-matrix move, so this one is
+0008 or later — confirm at authoring time rather than trusting this sentence.
 
 ## Open Questions
 
 - **Does Perry survive as a subagent?** Its list moves to triggers either way. The
-  question is whether a deep performance pass is worth one file.
-- **Where do Pam's confidence labels and Tess's layer heuristic land?** Candidates are a
-  small `rules/` addition or folding them into the relevant task skills. They are good
-  content and should not be lost with the personas.
+  question is whether a deep performance pass is worth one file. Still open — decide in the
+  deletion slice, where it is a one-line consequence rather than a separate change.
+- ~~**Where do Pam's confidence labels and Tess's layer heuristic land?**~~ **Resolved: both
+  are already in `rules/` and neither needs salvaging.** `product-requirements-rules.md §3
+  Confidence Labels` carries `(Confirmed)` / `(Inferred)` / `(Needs Review)` with the same
+  default rule Pam states. `testing-rules.md §2 Test Layers` carries the backend and frontend
+  layer tables Tess's heuristic selects from. Checked both before writing anything, which is
+  why this slice adds no new `rules/` content — the salvage step was a no-op, and inventing
+  content to satisfy it would have created the duplication this plan exists to remove.
 - **Does any role framing survive for product work?** Pam maps to a genuinely distinct
   mode — deciding what to build rather than building it. That may be better served by
   plan mode and conversation than by a skill.

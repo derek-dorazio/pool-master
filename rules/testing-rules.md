@@ -262,7 +262,7 @@ These are the default required checks before commit:
 1. `npm run rules:check`
 2. `npm run api:check`
 3. `npx turbo typecheck --force`
-4. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+4. `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
 5. `npx jest --config tests/jest.config.js --forceExit`
 6. `npm run test:service:functional-api`
 7. `npm run test:poolmaster:unit`

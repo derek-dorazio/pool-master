@@ -704,7 +704,7 @@ Before pushing code that could trigger CI, agents must run the full local qualit
 Required local pre-push commands:
 
 1. `npx turbo typecheck --force`
-2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+2. `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
 3. `npx jest --config tests/jest.config.js --forceExit`
 4. `npm run test:service:functional-api`
 5. `npm run test:poolmaster:unit`

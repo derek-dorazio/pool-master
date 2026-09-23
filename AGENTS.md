@@ -129,7 +129,7 @@ Important:
 Run and pass:
 
 - `npx turbo typecheck --force`
-- `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+- `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
 - `npx jest --config tests/jest.config.js --forceExit`
 - `npm run test:service:functional-api`
 - `npm run test:poolmaster:unit`
