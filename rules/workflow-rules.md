@@ -439,6 +439,46 @@ not mistaken for a regression the new slice introduced.
 
 Rules are part of the codebase contract.
 
+### What belongs in a rule
+
+**A rule that describes what *exists* rots. A rule that describes what must *never happen*
+is the only kind that carries information found nowhere else.**
+
+That is the sorting principle, and it is worth applying every time a rule file grows. A
+model reads `package.json`, `schema.prisma` and the filesystem directly — a table restating
+them is a second source of truth that drifts silently and is always the less reliable one.
+What a manifest cannot express is the part worth writing: a prohibition, an invariant, a
+deliberate absence ("we considered X and do not use it"), or a trap that reads as plausible
+code.
+
+Applied to `rules/architecture-rules.md` this removed 63 lines of stack tables and directory
+trees while keeping every decision. Expect a similar ratio elsewhere.
+
+Two corollaries:
+
+- **Before collapsing two sections that "both mention X", read both.** Overlapping subject
+  matter is not shared ownership. Two rules can name the same concept and each carry
+  something the other does not, and a collapse then deletes content while looking like a
+  dedupe.
+- **Measure before acting on a size argument.** A file's length is evidence of nothing on
+  its own, and section-size estimates written from memory are routinely inverted.
+
+### This file is deliberately not split
+
+`workflow-rules.md` is long, and splitting it has been proposed and **rejected**. The
+argument was that it mixed durable policy with runbooks; the runbooks were removed for
+unrelated reasons, and what remains is durable process.
+
+The concrete ground for keeping it whole: **it is consumed sectionally, not read end to
+end.** `AGENTS.md` routes to §0, §1, §3 and §6 individually by task shape. Splitting would
+rewrite the path in every cross-reference across `rules/`, `AGENTS.md` and the PR template
+while giving the reader the same experience.
+
+Rejected alternatives, recorded so they are not re-raised: extracting §1's tracker
+conventions into a separate file, extracting §2 on the argument that rule maintenance has a
+different reader than product work, and trimming §1's Slice Completion Checklist — the last
+of which addresses duplication rather than length and remains open on its own merits.
+
 ### Skills cite rules, and nothing that can disappear
 
 A skill in `.claude/skills/` outlives the work that produced it, so anything it cites has
