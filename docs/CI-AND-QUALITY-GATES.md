@@ -200,7 +200,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 1 | ~~No mocked API boundary~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `vi.mock` / `jest.mock` of `@/lib/api` or `@/lib/api-client`. Widened past the scanner, which matched `vi` only. | `eslint-rules/no-mocked-api.mjs` |
 | 2 | Route discipline | `rules:check:route-discipline` | warn-only | 95 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
 | 3 | Test-disable discipline | `rules:check:test-disable` | **blocking** | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` without a `SKIP: pool-master-NNN` comment within two lines above | `scripts/check-test-disable-discipline.mjs` |
-| 4 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 0 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
+| 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
 | (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
@@ -508,7 +508,7 @@ scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
 eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
 scripts/check-route-discipline.mjs   — gate 2
 scripts/check-test-disable-discipline.mjs — gate 3
-scripts/check-shared-ui-controls.mjs — gate 4
+eslint-rules/no-bare-ui-controls.mjs — gate 4 (migrated from scripts/)
 scripts/check-form-query-mirror.mjs  — gate 5
 scripts/check-openapi-fresh.mjs      — gate 6
 scripts/check-pr-review-triggers.mjs    — review triggers gate (PRs only)

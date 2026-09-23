@@ -33,9 +33,7 @@
 
       "Bash(node scripts/check-route-discipline.mjs)",
       "Bash(node scripts/check-test-disable-discipline.mjs)",
-      "Bash(node scripts/check-shared-ui-controls.mjs)",
       "Bash(node scripts/check-form-query-mirror.mjs)",
-      "Bash(node scripts/check-no-duplicate-extract-error-message.mjs)",
       "Bash(node scripts/check-pr-review-triggers.mjs)",
       "Bash(node scripts/check-feature-theme-tokens.mjs)",
       "Bash(node scripts/check-openapi-fresh.mjs)",

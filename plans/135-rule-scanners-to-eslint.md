@@ -133,11 +133,34 @@ logic, so it is now a `--print-config` assertion that the rule is `off` there an
 elsewhere. Worth keeping the pattern: when a scanner becomes a rule, its test usually splits
 into a logic half and a config half.
 
-**Still to migrate:** `no-inline-theme-styles` and `feature-theme-tokens` (paired, per §1b),
-`shared-ui-controls`, `no-duplicate-extract-error-message`, `no-parallel-api-types`.
-`check-test-disable-discipline` is blocked on the policy question in #158, and
-`check-no-env-fallbacks` needs its two failing-open violations fixed at the source first
-(§1x).
+**Slice 3 added three more**, each verified the same way:
+
+| Rule | Replaces | Verification |
+|---|---|---|
+| `poolmaster/no-bare-ui-controls` | `check-shared-ui-controls` | **Strictly more precise**, as §1y predicted. Scanner `:4 :5 :6 :7`, rule `:4 :5 :6` — line 7 is a `<button>` inside a JSX comment, the scanner's one false positive. |
+| `poolmaster/no-duplicate-extract-error-message` | `check-no-duplicate-extract-error-message` | **Exact match**, 2 and 2. The plan's `no-restricted-imports` half was dropped as inapplicable (§1y): the violation is a local *definition*, so there is no module to ban importing. |
+| `poolmaster/no-inline-theme-styles` | `check-no-inline-theme-styles` | **Exact match**, 4 and 4 — and it catches what the plan's "raw color literals" wording would have dropped: `fontSize: 14`, `color: 'inherit'`, and a no-interpolation template. Correctly ignores `color: theme.accent` and `gap: 8`. |
+
+**A scanner test spawned a deleted scanner for the second time.**
+`frontend-rule-scanners.test.ts` ran `check-no-inline-theme-styles.mjs` twice. Same split as
+slice 2: the rule-logic half moved to RuleTester, and the scope half (`.tsx` only, tests
+excluded) is config. This is now three for three — **assume a scanner has a test that spawns
+it, and grep before deleting.**
+
+**Still to migrate:** `no-parallel-api-types` (migratable per §1b, but needs a config-load-time
+read of the generated type names, which is a different shape from the four done so far), and
+`feature-theme-tokens` (pairs with `no-inline-theme-styles`).
+
+**Blocked, not deferred:**
+
+- `check-test-disable-discipline` — the policy question in #158. The scanner bans
+  *undocumented* skips, accepting an adjacent `SKIP: #NN` marker; no plugin rule has that
+  concept, so migrating makes skips unconditionally illegal. Free today at zero skipped
+  tests; the first deferred test pays.
+- `check-no-env-fallbacks` — failing open on two real violations (§1x). An AST rule catches
+  both, so writing it correctly turns lint red until `logger.ts`'s multi-line `??` chain and
+  `health-service.ts`'s lowercase env name are fixed at the source. Whether those should
+  throw at bootstrap rather than default is a product call, not a mechanical one.
 
 ### 1z. The vehicle is wrong: use a local plugin, not `no-restricted-syntax`
 

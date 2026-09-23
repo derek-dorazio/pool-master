@@ -22,50 +22,13 @@ function withTempRepo(callback: (tempRoot: string) => void) {
 }
 
 describe('pool-master-q8h: frontend rule scanner scripts', () => {
-  it('pool-master-q8h: no-inline-theme-styles flags literal inline theme values only', () => {
-    withTempRepo((tempRoot) => {
-      const featureDir = join(tempRoot, 'clients/poolmaster/src/features/demo');
-      mkdirSync(featureDir, { recursive: true });
-      writeFileSync(
-        join(featureDir, 'theme-violation.tsx'),
-        [
-          'export function Demo() {',
-          '  return <div style={{ color: "#fff", gap: 8, transform: `translateX(${1}px)` }} />;',
-          '}',
-          '',
-        ].join('\n'),
-      );
-
-      const result = runRuleScript('check-no-inline-theme-styles.mjs', tempRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stdout).toContain('theme-violation.tsx:2');
-      expect(result.stdout).toContain('Inline theme style "color"');
-      expect(result.stdout).not.toContain('gap');
-      expect(result.stdout).not.toContain('transform');
-    });
-  });
-
-  it('pool-master-q8h: no-inline-theme-styles passes dynamic non-theme styles', () => {
-    withTempRepo((tempRoot) => {
-      const featureDir = join(tempRoot, 'clients/poolmaster/src/features/demo');
-      mkdirSync(featureDir, { recursive: true });
-      writeFileSync(
-        join(featureDir, 'theme-pass.tsx'),
-        [
-          'export function Demo({ x }: { x: number }) {',
-          '  return <div style={{ gap: 8, transform: `translateX(${x}px)` }} />;',
-          '}',
-          '',
-        ].join('\n'),
-      );
-
-      const result = runRuleScript('check-no-inline-theme-styles.mjs', tempRoot);
-
-      expect(result.status).toBe(0);
-      expect(result.stdout).toContain('No inline theme styles found.');
-    });
-  });
+  // The two `no-inline-theme-styles` cases that lived here moved with the scanner
+  // (#134). That rule is now `poolmaster/no-inline-theme-styles`, and its logic is
+  // covered by RuleTester in eslint-rules/__tests__/ -- including the two cases these
+  // asserted (a literal on a theme prop flags; `gap: 8` and an interpolated template
+  // do not), plus the ones the scanner's own description got wrong: `fontSize: 14`
+  // and `color: 'inherit'` are violations too, which "raw color literals" would have
+  // missed. The scope half -- .tsx only, tests excluded -- is config, not rule logic.
 
   // The two `no-non-sdk-fetch` cases that lived here were removed with the scanner
   // itself (#134): that rule is now `no-restricted-globals` / `no-restricted-imports`
