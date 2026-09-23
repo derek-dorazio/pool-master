@@ -16,71 +16,38 @@ All plan documents and implementation work must conform to these rules. This is 
 
 ---
 
-## 1. Tech Stack Summary
+## 1. Stack Decisions
 
-### Backend
+**The stack itself is not documented here.** What the repo uses is what `package.json`,
+`tsconfig.base.json` and `schema.prisma` say; a table restating them is a second source of
+truth that drifts silently and is always the less reliable one. Read the manifests.
 
-| Concern | Choice | Details In |
-|---|---|---|
-| Language | TypeScript (strict mode) | [Service Rules](service-rules.md) |
-| API framework | Fastify | [Service Rules](service-rules.md) |
-| Validation | Zod DTO schemas converted to Fastify JSON Schema | [Service Rules](service-rules.md) |
-| API contract | OpenAPI 3.1 generated from live Fastify route schemas | [Service Rules](service-rules.md) |
-| Client generation | `@hey-api/openapi-ts` + `@hey-api/client-fetch` | [Service Rules](service-rules.md) |
-| ORM / DB access | Prisma | [Service Rules](service-rules.md) |
-| Runtime | Node.js 20+ LTS | — |
-| Queue / async work | In-process event bus and service-local scheduling; add external queueing only when the architecture truly needs it | — |
-| Auth | App-issued JWT access + refresh tokens, with social auth callback support | [Service Rules](service-rules.md) |
+What belongs here is the subset a manifest cannot express: choices made deliberately, and
+things deliberately *not* adopted. Those exist nowhere else.
 
-### Frontend — Web
+### Deliberate absences
 
-| Concern | Choice | Details In |
-|---|---|---|
-| Web framework | React 18 + TypeScript | [React UI Rules](react-ui-rules.md) |
-| UI library | Radix primitives, shadcn-style components, and TailwindCSS utilities | [React UI Rules](react-ui-rules.md) |
-| Build tool | Vite | [React UI Rules](react-ui-rules.md) |
-| Server state | TanStack Query | [React UI Rules](react-ui-rules.md) |
-| Client/UI state | React local state; shared client stores only for ephemeral UI state if explicitly reintroduced | [React UI Rules](react-ui-rules.md) |
-| Forms | React Hook Form | [React UI Rules](react-ui-rules.md) |
-| Routing | React Router | [React UI Rules](react-ui-rules.md) |
-| API access | Shared generated `hey-api` SDK from `packages/shared/generated/hey-api` | [React UI Rules](react-ui-rules.md) |
+- **No external queue.** Async work runs on the in-process event bus and service-local
+  scheduling. Add external queueing only when the architecture genuinely requires it —
+  not because a task is asynchronous.
+- **No Redis.** Caching and messaging use the in-process event bus plus persistent services
+  where needed. The active MVP runtime has no Redis dependency and should not acquire one
+  incidentally.
+
+### One web application
 
 The go-forward web frontend is a single role-based application: `clients/poolmaster`.
 
-- root-admin capability currently lives in the backend API rather than a separate go-forward admin web app.
-- `clients/_archived/web` is archived reference material only.
-- New web implementation work should target the single PoolMaster app rather than splitting functionality across multiple React apps.
+- Root-admin capability lives in the backend API, not in a separate admin web app.
+- `clients/_archived/web` is archived reference material only. Do not extend it.
+- New web work targets the single PoolMaster app. **Do not split functionality across
+  multiple React apps.**
 
-### Frontend — iOS
+### Unbuilt clients
 
-| Concern | Choice | Details In |
-|---|---|---|
-| Language | Swift | [Swift Rules](swift-rules.md) |
-| UI framework | SwiftUI | [Swift Rules](swift-rules.md) |
-| State management | Observation framework (`@Observable`, `@State`, `@Environment`) | [Swift Rules](swift-rules.md) |
-| Networking | `URLSession` and shared API contract-driven models | [Swift Rules](swift-rules.md) |
-
-### Frontend — Android
-
-| Concern | Choice | Details In |
-|---|---|---|
-| Language | Kotlin | [Android Rules](android-rules.md) |
-| UI framework | Jetpack Compose | [Android Rules](android-rules.md) |
-| Architecture | MVVM / MVI-style unidirectional data flow | [Android Rules](android-rules.md) |
-| DI | Hilt | [Android Rules](android-rules.md) |
-| Networking | Retrofit + OkHttp + kotlinx.serialization | [Android Rules](android-rules.md) |
-
-### Databases and Infrastructure
-
-| Concern | Choice | Rationale |
-|---|---|---|
-| Primary relational DB | PostgreSQL | Prisma-backed primary application database |
-| Cache / messaging | In-process event bus + persistent services where needed | no Redis dependency in the active MVP runtime |
-| Containers | Docker | consistent local and CI environments |
-| IaC | Terraform | reproducible infrastructure |
-| CI/CD | GitHub Actions | build, typecheck, test, deploy |
-| Monitoring | Pino-structured service logs + cloud metrics/logging, with richer error telemetry added when needed | operational visibility |
-| Monorepo | npm workspaces + Turborepo | shared packages and fast pipelines |
+`rules/swift-rules.md` and `rules/android-rules.md` describe clients that do not exist in
+this repo. They are retained as the starting position for whenever those clients begin, and
+nothing in this file should be read as asserting they are built.
 
 ---
 
@@ -122,34 +89,17 @@ Required implications:
 
 ### Validity / Compatibility Matrices Source of Truth
 
-Small enumerated compatibility matrices — e.g., `(tournamentFormat × contestFormat) → valid?`, supported provider × sport combinations, allowed selection-mode-per-contest-format combinations — live in code as TypeScript const maps, not in the database.
+Small enumerated compatibility matrices — `(tournamentFormat × contestFormat) → valid?`,
+provider × sport, selection-mode-per-contest-format — **live in code as TypeScript const
+maps, not in the database.** The criteria for that choice, its tradeoffs, and the rejected
+alternatives are in [ADR-0007](../docs/adr/0007-small-validity-matrices-live-in-code.md).
 
-Pattern:
+The one prohibition, stated here because it is a rule rather than a decision:
 
-```ts
-export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT: Record<TournamentFormat, ContestFormat[]> = {
-  STROKE_PLAY_TOURNAMENT: ['ROSTER'],
-  KNOCKOUT_BRACKET:       ['ROSTER', 'BRACKET'],
-  // ... exhaustive over TournamentFormat
-};
-```
-
-Use code over DB when:
-
-- Matrix is small (tens of cells, not thousands).
-- Cells change at the cadence of code releases, not user actions.
-- Compile-time exhaustiveness checking adds value (TypeScript fails the build if a new enum value lacks a matrix entry).
-- There's no genuine product requirement for runtime configurability by non-developers.
-
-The validity matrix is a domain catalog, not a blanket write permission. Creation and mutation paths must also gate against the combinations that are implemented in the current configuration, scoring, and UI contracts.
-
-Use DB instead when:
-
-- Cells change as part of normal admin-configured workflow.
-- Matrix size is genuinely large (hundreds of entries or more).
-- Tenant-specific overrides are required.
-
-Defaulting to DB is over-engineering for matrices that meet the "code" criteria above. The hidden costs of DB-backed matrices are real: migration on every change, runtime caching, queries on every validation, no compile-time check that all enum values are covered.
+- **A validity matrix is a domain catalog, not a write permission.** It says which
+  combinations are coherent, not which are implemented. Creation and mutation paths must
+  gate against both — the matrix, *and* what the current configuration, scoring and UI
+  contracts actually support.
 
 ---
 
@@ -160,7 +110,12 @@ This is a non-negotiable architecture rule.
 - Application code must never ship mock data, fake data, seeded sample responses, or development-only fallback payloads.
 - If an endpoint is missing or broken, surface loading/error/empty UI states. Do not hide the defect with fake data.
 - This applies across backend services, web/admin hooks, pages, stores, mobile view models, and shared runtime modules.
-- Test doubles belong only in test code, fixtures, previews, or dedicated test infrastructure.
+
+Where test doubles are allowed to live is stated once, in
+[`testing-rules.md §1B`](testing-rules.md) — it names the exact paths, which this file
+previously restated in looser terms. That section covers the *other* route into mock data
+in production: bending application code to make a test pass. This section covers shipping
+fake data to users. They overlap on one case and are otherwise different rules; read both.
 
 Related anti-patterns that are banned:
 
@@ -268,27 +223,9 @@ Rules:
 
 ## 5. Project Structure
 
-```
-poolmaster/
-├── packages/
-│   ├── core-api/
-│   └── shared/
-│       ├── api-routes.ts
-│       ├── dto/
-│       ├── generated/
-│       │   ├── openapi.json
-│       │   └── hey-api/
-│       └── domain/
-├── clients/
-│   ├── poolmaster/
-│   ├── _archived/
-│   ├── ios/
-│   └── android/
-├── tests/
-├── plans/
-├── rules/
-└── infrastructure/
-```
+**The layout is not documented here** — the filesystem is the source of truth, and a tree
+in a rules file rots on the first directory that moves. What follows is the part the
+filesystem cannot tell you: the constraints on where things are allowed to go.
 
 ### Structural Rules
 
