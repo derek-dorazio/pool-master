@@ -65,14 +65,33 @@ a person actually performs, not a job title.
 | Dom | A decision point inside `model-change`, not a role |
 | Archie | Plan mode plus `workflow-rules §1`, which already specifies plan structure |
 | Quinn | The gate commands and `/run`; failure triage is debugging |
-| Riley, Sage, Felix, Perry | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
+| Riley, Sage, Felix | `/code-review`, `/security-review`, scanners, and `rules/review-triggers.md` |
+| Perry | `rules/review-triggers.md` — §2 for *when* (already there), §5 for *how* (added) |
 | Pam, Tess | Retired as personas. Two pieces of content are worth preserving into `rules/`: Pam's `(Confirmed)` / `(Inferred)` / `(Needs Review)` confidence labels, which are genuinely good spec practice, and Tess's layer-selection heuristic for choosing where a test belongs |
 | Piper, Tom | Deleted. Both dormant; `workflow-rules §2` still lists them as lifecycle steps 1 and 3, contradicting the dormancy markers |
 
-**Perry is the one plausible survivor as a subagent.** Its trigger list moves to
-`rules/review-triggers.md`, but a deep performance pass on a genuinely
-hot-path slice is work `/code-review` does not do. Keeping it costs one file. Flagged in
-open questions rather than decided.
+~~**Perry is the one plausible survivor as a subagent.**~~ **Decided: Perry does not
+survive.** Keeping it would have been keeping a persona, which contradicts the whole plan —
+the question was framed as "is this pass worth one file?" when it should have been "is this
+role-shaped or task-shaped?" A performance review is a task.
+
+The content splits cleanly, and half of it was already salvaged:
+
+- **When to look** — already in `rules/review-triggers.md` §2, converted from surfaces to
+  conditions. Nothing to move.
+- **How to look** — the eight finding categories, the severity calibration, the
+  evidence-over-intuition discipline, and the limits (no speculative micro-optimizations,
+  never optimize by weakening correctness or authorization) became
+  `rules/review-triggers.md` §5 *Reviewing for performance cost*.
+
+  It was briefly a `review-performance` skill, which was the wrong vehicle: a skill has to
+  be invoked, so it would have been a separate pass in practice even without a separate
+  vote. `/code-review` is built-in and not repo-owned, so there is nothing to fold into
+  there — the way to make performance part of the ordinary review here is to put it where a
+  reviewer already reads. `review-triggers.md` is that place, and it now owns both halves:
+  §1–§4 what an author discloses, §5 what a reviewer looks for. `AGENTS.md` routes to it.
+- **The role wrapper** — the nickname, the "Pass 6" framing, the vote format, the
+  `> _Perry review · …_` header — deleted, carrying nothing.
 
 ### 3. Collapse the layout to a single tool
 
@@ -123,27 +142,47 @@ None.
 
 ## Execution Sequence
 
-**First — AGENTS.md conditional routing.** Independent, largest context saving,
-reversible. A net improvement even if the rest of this plan were abandoned.
+**First — AGENTS.md conditional routing.** ✅ **Landed** (`a287d85`). The 15-file mandate is
+replaced by the *Read the Rules Your Task Touches* table.
 
-**Second — extract task skills.** Write the task-shaped skills, pulling the layer chains
-and invariants out of Brad, Fran, and Dom. This is the slice with real content risk: the
-persona files carry nuance worth preserving, and the extraction is a rewrite, not a move.
+**Second — extract task skills.** ✅ **Landed.** Four skills written:
+`.claude/skills/{add-endpoint,model-change,add-frontend-feature,release-check}/SKILL.md`.
 
-**Third — delete the personas and the wrapper trees.** Remove `personas/`, `.agents/`,
-`.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md` and
-`workflow-rules.md` roster tables and the `§2` lifecycle section.
+Deliberately **sequence-and-route, not restatement.** `rules/` already carries the
+substance — `service-rules.md §4` has the backend chain, `react-ui-rules.md` has the
+frontend discipline, `domain-model-conventions-rules.md` has the model language. Copying any
+of it into a skill would recreate the multi-copy problem this plan exists to end. Each skill
+says what order to do things in, what breaks when a step is skipped, and which rule section
+is authoritative.
+
+Dom's classification step became Step 1 of `model-change` — a decision point, not a handoff,
+exactly as Decision 2 specifies. Fran's Implementer Self-Check became the self-check section
+of `add-frontend-feature`. Brad's chain became `add-endpoint`.
+
+**Third — delete the personas and the wrapper trees.** ⏸ Next slice. Remove `personas/`,
+`.agents/`, `.codex/`, and the Claude wrappers for retired roles. Update `AGENTS.md`
+(the *Persona Playbooks* section and the repo map) and `workflow-rules.md §2`.
+
+Deliberately **not** done in the same slice as the extraction: while both exist, the
+extraction is reviewable against its source. Delete first and the review question becomes
+"is anything missing?" with nothing to compare against.
 
 **Fourth — write the single-tool persona layout ADR**, taking whatever number is next at
-that point.
+that point. Note ADR-0007 was claimed by plan 134's validity-matrix move, so this one is
+0008 or later — confirm at authoring time rather than trusting this sentence.
 
 ## Open Questions
 
-- **Does Perry survive as a subagent?** Its list moves to triggers either way. The
-  question is whether a deep performance pass is worth one file.
-- **Where do Pam's confidence labels and Tess's layer heuristic land?** Candidates are a
-  small `rules/` addition or folding them into the relevant task skills. They are good
-  content and should not be lost with the personas.
+- ~~**Does Perry survive as a subagent?**~~ **Resolved: no.** See Decision 2. The question
+  was mis-framed as a cost question; the right one was whether a performance review is a
+  role or a task. It is a task, and it is now `review-performance`.
+- ~~**Where do Pam's confidence labels and Tess's layer heuristic land?**~~ **Resolved: both
+  are already in `rules/` and neither needs salvaging.** `product-requirements-rules.md §3
+  Confidence Labels` carries `(Confirmed)` / `(Inferred)` / `(Needs Review)` with the same
+  default rule Pam states. `testing-rules.md §2 Test Layers` carries the backend and frontend
+  layer tables Tess's heuristic selects from. Checked both before writing anything, which is
+  why this slice adds no new `rules/` content — the salvage step was a no-op, and inventing
+  content to satisfy it would have created the duplication this plan exists to remove.
 - **Does any role framing survive for product work?** Pam maps to a genuinely distinct
   mode — deciding what to build rather than building it. That may be better served by
   plan mode and conversation than by a skill.

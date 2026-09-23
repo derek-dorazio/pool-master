@@ -12,7 +12,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 |---|---|---|---|
 | Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
-| Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name; `plans/142` relocates them to a home named for what they are |
+| Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name — a relocation to a home named for what they are is tracked, not yet done |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
 | Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a tracking issue; **deleted** when the parent epic issue closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
@@ -42,7 +42,8 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
      the product?* Domain invariants, actors, information architecture. Read by
      someone who needs to know how the product behaves, independent of how it is
      built. (These files are durable despite living under a directory named for
-     inputs; `plans/142-durable-product-documentation.md` relocates them.)
+     inputs. Relocating them to a directory named for what they are is tracked
+     separately and does not change their durability.)
    - **`docs/adr/*.md`** — *why is the system like this?* Read by someone
      questioning the approach, including the alternatives that were rejected.
 
@@ -469,6 +470,40 @@ Required behavior:
 
 Rules are part of the codebase contract.
 
+### Skills cite rules, and nothing that can disappear
+
+A skill in `.claude/skills/` outlives the work that produced it, so anything it cites has
+to outlive it too. A pointer to something that has since been deleted is worse than no
+pointer at all: it still reads as authoritative, and the reader cannot tell whether the
+guidance moved or was abandoned.
+
+The durable target is **`rules/<file>.md §N *Section Name*`**. Include the section name —
+numbers get renumbered, and a bare number then points confidently at the wrong section.
+
+A skill must not cite:
+
+| Not this | Because |
+|---|---|
+| A GitHub issue number | Issues close, and a closed issue explains nothing to a later reader |
+| `plans/NN-*.md` | Deleted when the parent epic closes (ADR-0002) |
+| `tech-specs/**` | Deleted when the implementation ships (ADR-0003) |
+| A feature directory under `requirements/` | Retired when the feature stabilizes |
+| An ADR | Permanent, but a decision's rationale is not a work instruction. Put the instruction in a rule and let the rule carry the ADR link |
+| A source file line number | Drifts on the next edit above it. Name the file and the symbol |
+
+When the thing worth citing is transient, **state the content directly in the skill
+instead.** A trap is worth two sentences of explanation; it is not worth a pointer to the
+ticket where someone once argued about it.
+
+`scripts/check-skill-references.mjs` enforces this. Fenced code blocks are exempt, so a
+skill can demonstrate a format — a test name, a `SKIP:` marker — without the placeholder
+being read as a live pointer.
+
+This applies to skills specifically. `rules/` files may name a directory as policy (a rule
+about `requirements/` has to say `requirements/`); what they must not do is point at a
+*specific* transient artifact.
+
+
 When a refactor changes architecture, API usage, testing patterns, or generated-client workflow:
 
 - update the relevant file in `rules/` in the same change
@@ -704,7 +739,7 @@ Before pushing code that could trigger CI, agents must run the full local qualit
 Required local pre-push commands:
 
 1. `npx turbo typecheck --force`
-2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+2. `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
 3. `npx jest --config tests/jest.config.js --forceExit`
 4. `npm run test:service:functional-api`
 5. `npm run test:poolmaster:unit`
