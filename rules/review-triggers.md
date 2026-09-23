@@ -29,11 +29,11 @@ Already enforced mechanically, and therefore **not** triggers:
 | Concern | Enforced by |
 |---|---|
 | Fake/mock data in application code | `poolmaster/no-mocked-api` (ESLint) |
-| Skipped or disabled tests | `check-test-disable-discipline` |
-| Env-var fallbacks | `check-no-env-fallbacks` |
+| Skipped or disabled tests | `poolmaster/no-disabled-tests` (ESLint) |
+| Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
-| Frontend types duplicating generated ones | `check-no-parallel-api-types` |
-| Inline query keys, inline theme styles, bare controls | the corresponding `rules:check:*` scanners |
+| Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
+| Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list

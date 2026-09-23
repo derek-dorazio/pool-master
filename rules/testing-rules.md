@@ -178,11 +178,33 @@ See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof R
 
 ## 1C. Test-Disable Discipline
 
-A skipped, todo'd, or expected-to-fail test is a hole in the suite. The auto-merge gate is meaningless if "all green" is achieved by silently turning off the tests that aren't passing.
+A skipped, todo'd, or expected-to-fail test is a hole in the suite. The auto-merge gate
+is meaningless if "all green" is achieved by silently turning off the tests that are not
+passing.
 
-### Forbidden without an active tracker issue
+**There is no marker that makes a skip acceptable.** A test that cannot pass is fixed or
+deleted.
 
-The following markers are not allowed in committed code unless they are paired with a referenced GitHub issue tracking the un-skip:
+### Why there is no escape hatch
+
+This rule used to permit a skip paired with a `SKIP: #NN` comment naming a tracking
+issue. That was a worse rule than no rule, for two reasons:
+
+- **The marker was permanent.** Nothing reconciled a `SKIP:` comment against the issue it
+  named, so the issue could close — or be closed as stale years later — with the skip still
+  sitting in the suite, still green, still claiming coverage it did not have.
+- **It made the wrong thing easy.** Writing a comment is cheaper than fixing a test or
+  arguing for deleting one, so the marker became the default resolution for any test that
+  went red, which is precisely the failure the section exists to prevent.
+
+The two cases the exemption was written for both have better answers. A test asserting
+behavior deferred to a future slice should be **deleted**, with the behavior captured in
+the issue that will implement it — the test is not signal until there is something to
+assert against, and an issue is a better carrier for that intent than a disabled test. A
+test blocked by a fixture or environment is a **broken fixture**: fix it, or delete the
+test and note the gap in the slice's closing comment, where a human reads it.
+
+### Forbidden in all cases
 
 - `it.skip(...)`, `xit(...)`, `test.skip(...)`, `xtest(...)`
 - `describe.skip(...)`, `xdescribe(...)`
@@ -193,44 +215,22 @@ The following markers are not allowed in committed code unless they are paired w
 - `pending(...)` calls inside a test body
 - Hand-rolled early-`return` from a test body that bypasses assertions
 
-### Required when a skip is genuinely necessary
+### Enforcement
 
-A skip is genuinely necessary only when:
+`poolmaster/no-disabled-tests` (`eslint-rules/no-disabled-tests.mjs`) fails the lint gate
+on every form above except the last. It replaced a line-based scanner in #158; the repo had
+zero skipped tests at that point, so the unconditional ban locked in the existing state
+rather than demanding a cleanup.
 
-- The test is asserting behavior that is intentionally deferred to a future slice and removing the test loses signal that should be re-acquired later, or
-- The test is blocked by a fixture / environment / external dependency that cannot be resolved in the current slice.
+The early-`return` form is **not machine-checkable** — an early return is indistinguishable
+from ordinary control flow — so it stays a review item:
 
-In those cases:
-
-1. Open an issue for the un-skip.
-2. Add a leading comment immediately above the skip with the issue number and one-line reason:
-   ```typescript
-   // SKIP: #312 — flaky against ephemeral DB; un-skip after migration to test-containers
-   it.skip('UC-LM-003: rejects DELETE when status=archived', ...)
-   ```
-3. Reference the same issue in the slice's closing comment.
-
-Markers written before the tracker migration use the Beads form
-(`SKIP: pool-master-abc.1`). The scanner still accepts them and they are
-deliberately not rewritten — see `docs/adr/0006-github-issues-as-live-task-tracker.md`.
-
-### Forbidden in all cases
-
-- A skip without a referenced issue.
-- A skip whose stated reason is "test is wrong" or "behavior changed" — those are deletes, not skips. Delete the test instead.
-- A skip whose stated reason is "intermittently fails" without an issue tracking the flake fix.
-- Re-skipping a test that was un-skipped in a prior slice without surfacing the regression to the user.
-
-### Repository scan and CI
-
-`npm run rules:check:test-disable` must return zero matches that lack an
-adjacent `SKIP: #NN` comment (or a legacy `SKIP: pool-master-*` marker). The
-same check runs in CI through `npm run rules:check`.
-
-Scan for this on every review:
-
-- Any skipped/todo/expected-fail test introduced by the slice without a `SKIP: #NN` comment is a **TEST / HIGH** finding and blocks merge.
-- Any skipped test introduced by the slice with a comment but no actual issue behind it is a **TEST / HIGH** finding and blocks merge.
+- Any skipped/todo/expected-fail test introduced by the slice is a **TEST / HIGH** finding
+  and blocks merge.
+- Any test body that returns before reaching an assertion is a **TEST / HIGH** finding and
+  blocks merge.
+- Re-disabling a test that was re-enabled in a prior slice is a regression: surface it to
+  the user rather than handling it in the diff.
 
 ---
 

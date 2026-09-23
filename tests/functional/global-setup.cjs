@@ -166,6 +166,10 @@ async function startDaemon(runId) {
       FUNCTIONAL_SERVER_STATE_FILE: daemonStateFilePath,
       FUNCTIONAL_SERVER_V8_COVERAGE_DIR: functionalServerV8CoverageDir,
       JWT_SECRET: 'poolmaster-dev-secret-change-in-production',
+      // #134 — the spawned server builds the app, so it needs the deployment
+      // identity the logger requires. Same reason as JWT_SECRET above.
+      POOLMASTER_ENVIRONMENT: process.env.POOLMASTER_ENVIRONMENT || 'test',
+      POOLMASTER_SERVICE_VERSION: process.env.POOLMASTER_SERVICE_VERSION || '0.0.0-fapi',
       NODE_V8_COVERAGE: functionalServerV8CoverageDir,
       OPENAPI_EXPORT: 'false',
       POOLMASTER_DISABLE_AUTO_START: 'true',

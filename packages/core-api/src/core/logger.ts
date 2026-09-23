@@ -3,6 +3,7 @@ import type {
   FastifyRequest,
   FastifyServerOptions,
 } from 'fastify';
+import { readAppEnv, readServiceVersion } from './config';
 
 const REDACT_PATHS = [
   'req.headers.authorization',
@@ -40,18 +41,6 @@ export type ServiceLogger = Pick<
   'debug' | 'info' | 'warn' | 'error' | 'fatal'
 >;
 
-function resolveServiceVersion(): string | undefined {
-  return process.env.RELEASE_VERSION
-    ?? process.env.APP_VERSION
-    ?? process.env.GIT_SHA;
-}
-
-function resolveEnvironment(): string {
-  return process.env.APP_ENV
-    ?? process.env.NODE_ENV
-    ?? 'development';
-}
-
 function resolveLogLevel(): string {
   return process.env.LOG_LEVEL
     ?? (process.env.NODE_ENV === 'test' ? 'warn' : 'info');
@@ -66,14 +55,12 @@ function resolveRoute(request: FastifyRequest): string {
 export function createFastifyLoggerOptions(
   serviceName: string,
 ): FastifyServerOptions['logger'] {
-  const version = resolveServiceVersion();
-
   return {
     level: resolveLogLevel(),
     base: {
       service: serviceName,
-      env: resolveEnvironment(),
-      ...(version ? { version } : {}),
+      env: readAppEnv(),
+      version: readServiceVersion(),
     },
     redact: {
       paths: REDACT_PATHS,

@@ -66,6 +66,11 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
+      # Required at bootstrap with no fallback (#134, core/config.ts). The test
+      # helpers set these too, but CI is explicit so a suite that bootstraps
+      # outside a helper still starts.
+      POOLMASTER_ENVIRONMENT: ci
+      RELEASE_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -480,6 +485,10 @@ jobs:
           SERVICE_GIT_REF="${GITHUB_REF_NAME}"
           SERVICE_GIT_SHA="${{ steps.tags.outputs.full_sha }}"
           SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}"
+          # core/config.ts readAppEnv() requires this and throws when unset, so the
+          # service will not start without it. "qa" matches the value the webapp
+          # build already uses and the Terraform var.environment for this cluster.
+          SERVICE_ENVIRONMENT="qa"
           QA_CORE_API_TASK_DEF=""
           QA_MIGRATE_TASK_DEF=""
           QA_MOCK_PROVIDER_TASK_DEF=""
@@ -502,7 +511,8 @@ jobs:
                   --arg BUILD_TIME_UTC "$SERVICE_BUILD_TIME_UTC" \
                   --arg GIT_REF "$SERVICE_GIT_REF" \
                   --arg SERVICE_GIT_SHA "$SERVICE_GIT_SHA" \
-                  --arg SERVICE_VERSION "$SERVICE_VERSION" '
+                  --arg SERVICE_VERSION "$SERVICE_VERSION" \
+                  --arg SERVICE_ENVIRONMENT "$SERVICE_ENVIRONMENT" '
                   del(
                     .taskDefinitionArn,
                     .revision,
@@ -523,7 +533,8 @@ jobs:
                             "POOLMASTER_BUILD_TIME_UTC",
                             "POOLMASTER_GIT_REF",
                             "POOLMASTER_SERVICE_GIT_SHA",
-                            "POOLMASTER_SERVICE_VERSION"
+                            "POOLMASTER_SERVICE_VERSION",
+                            "POOLMASTER_ENVIRONMENT"
                           ] | index($name) | not))
                           + [
                             { name: "LOG_LEVEL", value: $LOG_LEVEL },
@@ -531,7 +542,8 @@ jobs:
                             { name: "POOLMASTER_BUILD_TIME_UTC", value: $BUILD_TIME_UTC },
                             { name: "POOLMASTER_GIT_REF", value: $GIT_REF },
                             { name: "POOLMASTER_SERVICE_GIT_SHA", value: $SERVICE_GIT_SHA },
-                            { name: "POOLMASTER_SERVICE_VERSION", value: $SERVICE_VERSION }
+                            { name: "POOLMASTER_SERVICE_VERSION", value: $SERVICE_VERSION },
+                            { name: "POOLMASTER_ENVIRONMENT", value: $SERVICE_ENVIRONMENT }
                           ])
                       else . end
                     )

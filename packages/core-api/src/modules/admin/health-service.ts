@@ -8,6 +8,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import { readServiceVersion } from '../../core/config';
 
 export type ServiceStatus = 'UP' | 'DEGRADED' | 'DOWN';
 
@@ -149,7 +150,7 @@ function uptimeSeconds(): number {
 }
 
 function version(): string {
-  return process.env.npm_package_version ?? '0.1.0';
+  return readServiceVersion();
 }
 
 export class HealthService {

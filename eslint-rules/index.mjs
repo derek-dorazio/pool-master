@@ -12,7 +12,10 @@
  * rule name in the output, per-rule `eslint-disable`, and RuleTester unit tests.
  */
 import noBareUiControls from './no-bare-ui-controls.mjs';
+import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
+import noEnvFallbacks from './no-env-fallbacks.mjs';
+import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
 import noMockedApi from './no-mocked-api.mjs';
@@ -21,8 +24,11 @@ export default {
   meta: { name: 'poolmaster-local', version: '1.0.0' },
   rules: {
     'no-bare-ui-controls': noBareUiControls,
+    'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
+    'no-env-fallbacks': noEnvFallbacks,
     'no-inline-query-keys': noInlineQueryKeys,
+    'no-parallel-api-types': noParallelApiTypes,
     'no-inline-theme-styles': noInlineThemeStyles,
     'no-mocked-api': noMockedApi,
   },
