@@ -9,7 +9,16 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 
 export const swaggerPlugin = fp(async (fastify) => {
+
   await fastify.register(swagger, {
+    // Publish added schemas under their own $id. Without this, @fastify/swagger
+    // names every hoisted component `def-0`, `def-1`, ... and hey-api generates
+    // `Def0`, `Def1` — components exist but are useless as imports (#192).
+    refResolver: {
+      buildLocalReference(json, _baseUri, _fragment, i) {
+        return typeof json.$id === 'string' && json.$id.length > 0 ? json.$id : `def-${i}`;
+      },
+    },
     openapi: {
       openapi: '3.1.0', // @fastify/swagger uses 3.1.0; compatible with 3.2 patterns
       info: {

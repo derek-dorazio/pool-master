@@ -3506,7 +3506,52 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** @description Version metadata for one deployed component. */
+        VersionComponent: {
+            /** @description Package or runtime component name. */
+            name: string;
+            /** @description Semantic package version or deployment version label. */
+            version: string;
+            /** @description Git SHA for this component build, when supplied by CI. */
+            gitSha: string | null;
+            /** @description CI build or run number for this component build, when supplied by CI. */
+            buildNumber: string | null;
+        };
+        /** @description Public service version metadata for deployment and stale-release diagnostics. */
+        ServiceVersionResponse: {
+            /**
+             * @description Version metadata response schema version.
+             * @enum {number}
+             */
+            schemaVersion: 1;
+            /** @description Runtime environment name such as development, qa, staging, or production. */
+            environment: string;
+            /**
+             * Format: date-time
+             * @description UTC build timestamp supplied by CI, when available.
+             */
+            buildTimeUtc: string | null;
+            /** @description Git branch or ref name supplied by CI, when available. */
+            gitRef: string | null;
+            /** @description Core API service version metadata. */
+            service: {
+                /** @description Package or runtime component name. */
+                name: string;
+                /** @description Semantic package version or deployment version label. */
+                version: string;
+                /** @description Git SHA for this component build, when supplied by CI. */
+                gitSha: string | null;
+                /** @description CI build or run number for this component build, when supplied by CI. */
+                buildNumber: string | null;
+            };
+            /** @description Non-secret runtime metadata useful during operational debugging. */
+            runtime: {
+                /** @description Node.js runtime version running the service. */
+                nodeVersion: string;
+            };
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -3530,38 +3575,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /**
-                         * @description Version metadata response schema version.
-                         * @enum {number}
-                         */
-                        schemaVersion: 1;
-                        /** @description Runtime environment name such as development, qa, staging, or production. */
-                        environment: string;
-                        /**
-                         * Format: date-time
-                         * @description UTC build timestamp supplied by CI, when available.
-                         */
-                        buildTimeUtc: string | null;
-                        /** @description Git branch or ref name supplied by CI, when available. */
-                        gitRef: string | null;
-                        /** @description Core API service version metadata. */
-                        service: {
-                            /** @description Package or runtime component name. */
-                            name: string;
-                            /** @description Semantic package version or deployment version label. */
-                            version: string;
-                            /** @description Git SHA for this component build, when supplied by CI. */
-                            gitSha: string | null;
-                            /** @description CI build or run number for this component build, when supplied by CI. */
-                            buildNumber: string | null;
-                        };
-                        /** @description Non-secret runtime metadata useful during operational debugging. */
-                        runtime: {
-                            /** @description Node.js runtime version running the service. */
-                            nodeVersion: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ServiceVersionResponse"];
                 };
             };
         };
@@ -4026,38 +4040,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /**
-                         * @description Version metadata response schema version.
-                         * @enum {number}
-                         */
-                        schemaVersion: 1;
-                        /** @description Runtime environment name such as development, qa, staging, or production. */
-                        environment: string;
-                        /**
-                         * Format: date-time
-                         * @description UTC build timestamp supplied by CI, when available.
-                         */
-                        buildTimeUtc: string | null;
-                        /** @description Git branch or ref name supplied by CI, when available. */
-                        gitRef: string | null;
-                        /** @description Core API service version metadata. */
-                        service: {
-                            /** @description Package or runtime component name. */
-                            name: string;
-                            /** @description Semantic package version or deployment version label. */
-                            version: string;
-                            /** @description Git SHA for this component build, when supplied by CI. */
-                            gitSha: string | null;
-                            /** @description CI build or run number for this component build, when supplied by CI. */
-                            buildNumber: string | null;
-                        };
-                        /** @description Non-secret runtime metadata useful during operational debugging. */
-                        runtime: {
-                            /** @description Node.js runtime version running the service. */
-                            nodeVersion: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ServiceVersionResponse"];
                 };
             };
         };

@@ -46,17 +46,44 @@ the deploy pipeline (#191).
 
 ## Key Decisions
 
-### 1. Registration mechanism — decide once, in slice 1
+### 1. Registration mechanism — SETTLED in slice 1
 
-Two viable approaches, and **mixing them produces half-referenced documents that are worse
-than either**:
+**`fastify.addSchema({ $id })`, with routes referencing `{ $ref: 'Name#' }`.** Three things
+were established by trying them, and each looked correct one layer up:
 
-- `zod-to-json-schema` with a definitions/`$ref` strategy, collecting named definitions into
-  `components/schemas`.
-- Fastify `addSchema` with a stable `$id` per DTO, letting the swagger plugin emit the refs.
+1. **A route cannot `$ref` `#/components/schemas/Name`.** Fastify builds the response
+   serializer from the route schema and resolves `$ref` against schemas added via
+   `addSchema` — it has no knowledge of `components.schemas`. The document pointer fails at
+   boot: `Cannot find reference "#/components/schemas/ServiceVersionResponse"`.
+2. **@fastify/swagger renames hoisted schemas `def-0`, `def-1`, …** unless given a
+   `refResolver.buildLocalReference` that returns `json.$id`. Without it the components
+   exist and the generator emits `Def0` — present, and useless as an import.
+3. **Component registration must NOT live in the swagger plugin.** A route that `$ref`s a
+   component needs it registered whether or not the app serves docs. Putting the loop in
+   the swagger plugin made every route silently depend on documentation being enabled; the
+   version module's unit tests, which build a bare Fastify instance, failed at boot with
+   `Cannot resolve ref "ServiceVersionResponse#"`. It lives in
+   `plugins/schema-components.ts`, is `fastify-plugin`-wrapped so schemas land on the root
+   instance, and is **idempotent** (`getSchema` before `addSchema`) so every route module
+   can register it without ordering rules.
 
-Slice 1 picks one, applies it to a single small module end to end, and records the choice
-here. Everything downstream copies that module.
+`packages/shared/dto/schema-registry.ts` holds the registry. `registerSchema(name, schema)`
+returns its argument so registration composes inline at the declaration, and **throws when
+two different schemas claim one name** — that collision is the drift this epic removes, and
+it must fail at startup rather than letting the last registration win.
+
+### 1a. Known limitation — nested components still inline
+
+`ServiceVersionResponse.service` publishes the `VersionComponent` shape inline rather than
+referencing it, because `dto/json-schema.ts` resolves local `$ref`s before registration.
+TypeScript is structural, so the inlined shape is still assignable to the named
+`VersionComponent` and the frontend is unaffected — the cost is duplication in the generated
+file, not correctness.
+
+Fixing it means making the conversion registry-aware so a nested *registered* schema emits a
+ref instead of being flattened. Deliberately deferred: it is an optimisation, and
+`json-schema.ts`'s inlining exists for a real reason (generators cannot follow refs embedded
+under `paths`) that a careless change would reintroduce.
 
 ### 2. Naming convention — decide once, in slice 1
 
@@ -105,10 +132,21 @@ hazard. Sequence #186 first where they touch the same fields.
 
 ## Execution Sequence
 
-**Slice 1 — plumbing. Blocks everything else; nothing runs in parallel until it lands.**
-Decide §1 and §2, convert one small module (`version` or `client-logs` — both are tiny and
-have few frontend consumers), regenerate, and confirm the frontend can import a named type
-from it. Record both decisions in this file as part of the slice.
+**Slice 1 — plumbing. DONE.** §1 settled above. Converted the `version` module as the
+server-side proof: `components.schemas` went from 0 to 2 named entries, the route `$ref`s
+its component, and `ServiceVersionResponse` / `VersionComponent` generate as importable
+named types.
+
+**`version` could not prove the frontend half** — it has no frontend consumers at all
+(`lib/version-info.ts` reads a static `version-info.json` asset, which is a different shape
+from the API response). The first module with real consumers carries that proof.
+
+Regression cover, both added in slice 1: `tests/unit/shared/schema-registry.test.ts` for the
+registry contract, and `tests/unit/shared/openapi-named-components.test.ts` asserting on the
+**committed artifacts** — that components are named rather than `def-N`, that a converted
+route `$ref`s rather than inlines, and that the generator emits importable types. Verified by
+removing the `refResolver` and confirming four of those cases fail. Extend
+`CONVERTED_COMPONENTS` in that file as each slice lands.
 
 **Slices 2..N — one per route module, parallelisable after slice 1.**
 `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
@@ -117,8 +155,15 @@ from it. Record both decisions in this file as part of the slice.
 `sport-catalog`, `squads`, `team-invitations`, `version`.
 
 Each slice: register that module's DTOs as named components → `api:refresh` → replace its
-frontend consumers' derivations with imports → delete the now-dead local aliases → tests at
-every layer crossed.
+frontend consumers' derivations with imports → **delete every local derived type the module
+owned** → tests at every layer crossed.
+
+**Deleting the derivations is not optional cleanup; it is the deliverable.** A slice that
+adds the import but leaves `type LeagueDetail = GetLeagueResponses[200]['league']` in place
+has made things worse: there are now two ways to name one shape, and the next developer
+cannot tell which is current. No slice is done while any derived alias it owns still exists.
+`grep -rn "Responses\[200\]" clients/poolmaster/src` must return nothing for that module's
+types before the slice closes.
 
 Per-slice, also resolve that module's share of **#149** (loose `ZodTypeAny` / `z.unknown`).
 A loose Zod type publishes as `unknown`, which defeats the point of naming the schema. It is
