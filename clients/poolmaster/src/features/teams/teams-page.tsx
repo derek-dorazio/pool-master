@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import {
@@ -319,7 +320,7 @@ export function TeamsPage() {
                             </Chip>
                             {leagueMember ? (
                               <Chip>
-                                {leagueMember.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
+                                {leagueMember.role === LeagueRole.COMMISSIONER ? 'Commissioner' : 'Member'}
                               </Chip>
                             ) : null}
                           </div>

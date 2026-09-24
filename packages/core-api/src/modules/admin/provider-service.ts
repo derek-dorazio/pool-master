@@ -8,7 +8,7 @@
 
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport , SportEventSyncScope} from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type {
@@ -500,9 +500,9 @@ export class ProviderService {
       return;
     }
 
-    const allowedFeeds: string[] = event.syncScope === 'FULL'
+    const allowedFeeds: string[] = event.syncScope === SportEventSyncScope.FULL
       ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS', 'EVENTLIVESCORES', 'EVENTRESULTS']
-      : event.syncScope === 'SCORES_ONLY'
+      : event.syncScope === SportEventSyncScope.SCORES_ONLY
       ? ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS']
       : [];
     const disallowedFeeds = feeds.filter((feed) => !allowedFeeds.includes(feed));

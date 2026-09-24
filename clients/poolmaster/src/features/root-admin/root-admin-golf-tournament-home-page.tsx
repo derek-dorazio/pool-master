@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -110,7 +111,7 @@ export function RootAdminGolfTournamentHomePage() {
             </Alert>
           ) : null}
 
-          {tournament.syncScope !== 'NONE' && tournament.fieldCount === 0 ? (
+          {tournament.syncScope !== SportEventSyncScope.NONE && tournament.fieldCount === 0 ? (
             <Callout tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
               <p className="mt-1 text-sm">

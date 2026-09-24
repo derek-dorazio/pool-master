@@ -11,6 +11,7 @@
  * `files`/`ignores` exactly as its scanner's exclusion list reads. You also get a real
  * rule name in the output, per-rule `eslint-disable`, and RuleTester unit tests.
  */
+import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
@@ -24,6 +25,7 @@ import noMockedApi from './no-mocked-api.mjs';
 export default {
   meta: { name: 'poolmaster-local', version: '1.0.0' },
   rules: {
+    'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
     'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,

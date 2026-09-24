@@ -245,7 +245,10 @@ export default tseslint.config(
       '**/*.spec.{ts,tsx}',
     ],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-widened-enum-fields': 'error' },
+    rules: {
+      'poolmaster/no-widened-enum-fields': 'error',
+      'poolmaster/no-bare-enum-literals': 'error',
+    },
   },
   {
     // Backend source only, matching the scanner's SCAN_ROOT. Deployment identity

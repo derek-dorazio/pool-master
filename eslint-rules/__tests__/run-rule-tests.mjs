@@ -17,6 +17,7 @@ import noEnvFallbacks from '../no-env-fallbacks.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noParallelApiTypes from '../no-parallel-api-types.mjs';
 import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
+import noBareEnumLiterals from '../no-bare-enum-literals.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 
@@ -389,6 +390,36 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
       // Nested inline object literals count — that is where row shapes hide.
       code: 'function f(x: { league: { joinPolicy: string } }) { return x; }',
       errors: [{ messageId: 'widenedEnum' }],
+    },
+  ],
+});
+
+ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
+  valid: [
+    // Naming the member is the point of the rule.
+    'const a = x.syncScope === SportEventSyncScope.FULL;',
+    // `status` is String on six models, so a literal there has no enum to name.
+    "const a = x.status === 'ACTIVE';",
+    // Not an enum-backed column.
+    "const a = x.name === 'FULL';",
+    // A value that is not a member of the column's enum is a different bug (tsc's).
+    "const a = x.syncScope === 'NOT_A_MEMBER';",
+    // Not a comparison this rule owns.
+    "const a = x.syncScope > 'FULL';",
+  ],
+  invalid: [
+    {
+      code: "const a = x.syncScope === 'FULL';",
+      errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'FULL' } }],
+    },
+    {
+      code: "const a = x.confidence !== 'EXACT';",
+      errors: [{ messageId: 'bareLiteral' }],
+    },
+    {
+      // Reversed operands — the literal can sit on either side.
+      code: "const a = 'COMMISSIONER' === x.role;",
+      errors: [{ messageId: 'bareLiteral' }],
     },
   ],
 });

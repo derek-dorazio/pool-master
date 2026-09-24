@@ -4,6 +4,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
+import { MappingConfidence } from '@poolmaster/shared/domain';
 import type { Participant } from '@poolmaster/shared/domain';
 
 export interface MatchCandidate {
@@ -134,7 +135,7 @@ export function findMatches(
   candidates.sort((a, b) => b.score - a.score);
 
   // Determine result
-  if (candidates.length > 0 && candidates[0].confidence === 'EXACT') {
+  if (candidates.length > 0 && candidates[0].confidence === MappingConfidence.EXACT) {
     const result = {
       canonicalParticipantId: candidates[0].participant.id,
       candidates,
@@ -151,7 +152,7 @@ export function findMatches(
     return result;
   }
 
-  if (candidates.length > 0 && candidates[0].confidence === 'HIGH') {
+  if (candidates.length > 0 && candidates[0].confidence === MappingConfidence.HIGH) {
     const result = {
       canonicalParticipantId: candidates[0].participant.id,
       candidates,

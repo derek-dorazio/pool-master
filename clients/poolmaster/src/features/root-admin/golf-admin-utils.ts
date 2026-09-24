@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import {
   parseDelimitedRecords,
   type BulkUploadFormat,
@@ -191,7 +192,7 @@ export function deriveGolfAutoTransition(input: {
   endDate: string | null;
   rounds: readonly AdminGolfTournamentRound[];
 }): GolfAutoTransition | null {
-  if (!input.autoLifecycleEnabled || input.syncScope === 'FULL') {
+  if (!input.autoLifecycleEnabled || input.syncScope === SportEventSyncScope.FULL) {
     return null;
   }
 
