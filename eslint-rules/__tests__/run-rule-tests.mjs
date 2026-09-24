@@ -18,6 +18,7 @@ import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noParallelApiTypes from '../no-parallel-api-types.mjs';
 import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
 import noBareEnumLiterals from '../no-bare-enum-literals.mjs';
+import noDuplicateFeatureTypes from '../no-duplicate-feature-types.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 
@@ -420,6 +421,57 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
       // Reversed operands — the literal can sit on either side.
       code: "const a = 'COMMISSIONER' === x.role;",
       errors: [{ messageId: 'bareLiteral' }],
+    },
+  ],
+});
+
+// Reads the real features/ tree, so the fixtures name types that are actually
+// duplicated today. The guard below fails loudly if a consolidation lands and makes
+// one of them single-declaration — otherwise these cases would silently stop testing.
+{
+  const { Linter } = await import('eslint');
+  const linter = new Linter();
+  const fires = (name) => linter.verify(`type ${name} = { a: string };`, [
+    {
+      files: ['**/*.ts'],
+      plugins: { poolmaster: { rules: { r: noDuplicateFeatureTypes } } },
+      languageOptions: { parser: tseslintParser },
+      rules: { 'poolmaster/r': 'error' },
+    },
+  ], 'clients/poolmaster/src/features/probe.ts')
+    .some((m) => m.messageId === 'duplicateType');
+  const stale = ['LeagueDetail', 'GolfSeason'].filter((n) => !fires(n));
+  if (stale.length > 0) {
+    throw new Error(
+      `no-duplicate-feature-types fixtures are stale: ${stale.join(', ')} is no longer `
+      + 'declared in more than one file. Pick another duplicated name, or drop the case '
+      + 'if the consolidation (#87) is finished.',
+    );
+  }
+}
+
+ruleTester.run('no-duplicate-feature-types', noDuplicateFeatureTypes, {
+  valid: [
+    // Not duplicated anywhere.
+    'type SomeNameNothingElseUses = { a: string };',
+    // Per-component suffixes are exempt: repeating them is not duplication.
+    'type LeagueDetailProps = { a: string };',
+    'type GolfSeasonState = { a: string };',
+    // Nested declarations are scoped to their function, so the name is not shared.
+    'function f() { type LeagueDetail = { a: string }; return null; }',
+  ],
+  invalid: [
+    {
+      code: 'type LeagueDetail = { a: string };',
+      errors: [{ messageId: 'duplicateType' }],
+    },
+    {
+      code: 'interface GolfSeason { a: string }',
+      errors: [{ messageId: 'duplicateType' }],
+    },
+    {
+      code: 'export type LeagueSummary = { a: string };',
+      errors: [{ messageId: 'duplicateType' }],
     },
   ],
 });

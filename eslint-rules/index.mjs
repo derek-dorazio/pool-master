@@ -14,6 +14,7 @@
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
+import noDuplicateFeatureTypes from './no-duplicate-feature-types.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from './no-env-fallbacks.mjs';
 import noWidenedEnumFields from './no-widened-enum-fields.mjs';
@@ -29,6 +30,7 @@ export default {
     'no-bare-ui-controls': noBareUiControls,
     'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
+    'no-duplicate-feature-types': noDuplicateFeatureTypes,
     'no-env-fallbacks': noEnvFallbacks,
     'no-inline-query-keys': noInlineQueryKeys,
     'no-parallel-api-types': noParallelApiTypes,
