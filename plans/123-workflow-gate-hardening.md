@@ -2,10 +2,15 @@
 
 **Tracking issue:** #82 (migrated from `pool-master-5xi`)
 
-> **Largely superseded.** `plans/135-rule-scanners-to-eslint.md` supersedes most of this
-> plan; #82 records the per-child disposition, including the two children that were
+> **Largely superseded.** Epic #134 (rule scanners to ESLint, closed) supersedes most of
+> this plan; #82 records the per-child disposition, including the two children that were
 > dropped rather than migrated. Delete this file once that disposition is acted on
 > (ADR-0002) — `plans/141-plan-directory-reconciliation.md` owns that call.
+>
+> **#87's premise is now stale.** #82 scopes it to "strengthening
+> `check-no-parallel-api-types`, which stays a script because it needs cross-file
+> knowledge." That scanner was migrated to `poolmaster/no-parallel-api-types` and deleted
+> in #183, so #87 needs re-scoping or closing before #82 can close.
 
 ## Purpose
 

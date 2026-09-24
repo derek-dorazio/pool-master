@@ -21,9 +21,10 @@ import poolmaster from './eslint-rules/index.mjs';
  *     'rule': ['error', {}]                => [2, {}]
  *
  * So severity-only overrides and additive plugin blocks are safe. Only a scoped
- * re-declaration WITH options is the trap -- and five of the scanners still queued
- * for migration in plans/135 are proposed exactly that way, so it is a live trap
- * for the next slice, not a hypothetical.
+ * re-declaration WITH options is the trap. It is not hypothetical: the migration
+ * that produced this plugin (#134) originally proposed five scanners as layered
+ * `no-restricted-syntax` blocks, which caught 4 of 16 planted violations while
+ * `npm run lint` stayed green. That measurement is why named rules exist below.
  *
  * Rule: any scoped re-declaration must spread these, e.g.
  *   'no-restricted-syntax': ['error', ...CAST_SELECTORS, ...YOUR_NEW_SELECTORS]
@@ -48,7 +49,8 @@ const CAST_SELECTORS = [
 /**
  * Repo conventions live here rather than in `scripts/check-*.mjs` wherever ESLint
  * can express them, so violations surface in the editor at write time instead of
- * at push time in CI. See `plans/135-rule-scanners-to-eslint.md`.
+ * at push time in CI. The migration was #134; the failure modes it hit are
+ * codified in `rules/workflow-rules.md §2` *Retiring an enforcement script*.
  *
  * Every migrated rule was verified against the scanner it replaces by diffing
  * findings across the real tree. A rule that merely looks equivalent is not.
