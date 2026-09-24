@@ -15,6 +15,7 @@ import noBareUiControls from './no-bare-ui-controls.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from './no-env-fallbacks.mjs';
+import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
@@ -29,6 +30,7 @@ export default {
     'no-env-fallbacks': noEnvFallbacks,
     'no-inline-query-keys': noInlineQueryKeys,
     'no-parallel-api-types': noParallelApiTypes,
+    'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
     'no-mocked-api': noMockedApi,
   },

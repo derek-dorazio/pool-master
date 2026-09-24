@@ -58,7 +58,7 @@ export interface GolfTournamentRow {
   fieldLocked: boolean;
   seasonId: string | null;
   leagueEventId: string | null;
-  syncScope: string;
+  syncScope: SportEventSyncScope;
   autoLifecycleEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -95,7 +95,7 @@ type PrismaSportEventWithCounts = {
   fieldLocked: boolean;
   seasonId: string | null;
   leagueEventId: string | null;
-  syncScope: string;
+  syncScope: SportEventSyncScope;
   autoLifecycleEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;

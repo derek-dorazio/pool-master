@@ -47,7 +47,7 @@ function mapToMapping(row: {
   participantId: string;
   providerId: string;
   externalId: string;
-  confidence: string;
+  confidence: MappingConfidence;
   mappedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -57,7 +57,7 @@ function mapToMapping(row: {
     participantId: row.participantId,
     providerId: row.providerId,
     externalId: row.externalId,
-    confidence: row.confidence as MappingConfidence,
+    confidence: row.confidence,
     mappedAt: row.mappedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

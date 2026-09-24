@@ -206,7 +206,7 @@ export class EventScoreSourceService {
     return existing;
   }
 
-  private assertAdminManaged(sportEvent: { syncScope: string }): void {
+  private assertAdminManaged(sportEvent: { syncScope: SportEventSyncScope }): void {
     if (sportEvent.syncScope === SportEventSyncScope.FULL) {
       throw new EventScoreSourceError(
         'This sport event is provider-owned and cannot be edited through admin routes.',

@@ -19,6 +19,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { ContestStatus, SportEventStatus, isDeclaredSportEventTransition, SYSTEM_USER_ID, SYSTEM_USER_EMAIL } from '@poolmaster/shared/domain';
+import type { LeagueRole } from '@poolmaster/shared/domain';
 import {
   renderSystemEmailTemplate,
   type ContestStartedEntrySummary,
@@ -88,7 +89,7 @@ interface ContestStartedCandidate {
     name: string;
     leagueCode: string;
     memberships: Array<{
-      role: string;
+      role: LeagueRole;
       user: ContestStartedEmailUser;
     }>;
   };
