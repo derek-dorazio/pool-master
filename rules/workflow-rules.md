@@ -463,6 +463,31 @@ Two corollaries:
 - **Measure before acting on a size argument.** A file's length is evidence of nothing on
   its own, and section-size estimates written from memory are routinely inverted.
 
+### Retiring an enforcement script
+
+Moving a check from `scripts/check-*.mjs` to an ESLint rule, or deleting it outright, has
+three failure modes that all look like success. Each of these was learned by committing it.
+
+- **A test spawns the script you deleted.** Before deleting any `scripts/check-*.mjs`,
+  audit *every* scanner name referenced under `tests/` against what still exists on disk,
+  in one pass. Grepping only for the scanner currently in hand is how this recurred **four
+  times** — the fourth after the lesson was already written down, because the audit was
+  scoped to the wrong set.
+- **The replacement is narrower than what it replaced, silently.** `npm run lint` globs
+  `packages/` and `clients/`, not `tests/`. A rule migrated into `eslint.config.js` alone
+  is listed, passes, and checks nothing wherever the lint command does not reach. Compare
+  the replacement's actual file set against the scanner's walk roots, not against its
+  intent.
+- **A green gate over zero findings proves nothing.** When both the old scanner and the new
+  rule sit at zero, "it passes" is compatible with the rule matching nothing at all. Verify
+  with **planted violations and line-level diffs** between old and new. Every migration that
+  did this found a discrepancy; the shapes a line-based regex misses — a chain split across
+  lines, a lowercase name, a computed access, an assignment operator instead of a binary one
+  — are not hypothetical.
+
+The same three apply in reverse to a rule you write fresh: plant the violation, confirm it
+fires, and confirm the shapes you meant to allow stay silent.
+
 ### This file is deliberately not split
 
 `workflow-rules.md` is long, and splitting it has been proposed and **rejected**. The
@@ -639,8 +664,18 @@ Required local pre-push commands:
 5. `npm run test:poolmaster:unit`
 6. `npm run test:coverage:service:merged`
 7. `npm run test:coverage:poolmaster:unit`
+8. `npm run rules:check`
+9. `npm run api:check`
+10. `npm run api:validate`
 
 Rules:
+
+- **Items 8-10 are unconditional, not "only if API contracts changed."** `api:check` boots
+  the app in-process to export OpenAPI, so anything touching application *bootstrap* fails
+  it with no contract change at all — a required env var added to the logger did exactly
+  that. The CI `lint-and-typecheck` job runs `rules:check`, `api:check`, `api:validate`,
+  `lint` and `typecheck`; running three of those five locally and pushing is how a red
+  build gets discovered in CI rather than before it.
 
 - Treat these as pre-push gates, not optional follow-up checks.
 - Do not rely on GitHub CI to discover basic lint, unit, or integration failures that could have been caught locally.

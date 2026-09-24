@@ -1,3 +1,24 @@
+/**
+ * Feature theme-token scanner.
+ *
+ * WHY THIS IS STILL A SCRIPT. #134 migrated every other expressible scanner to the local
+ * ESLint plugin in `eslint-rules/`. This one deliberately stayed, and the reason is the
+ * `.css` entry in `checkedExtensions` below: ESLint cannot lint CSS without `@eslint/css`,
+ * which is not installed.
+ *
+ * Both ways to migrate it are worse than leaving it:
+ *
+ *   - Migrate the .ts/.tsx half and keep a trimmed script for .css — one convention
+ *     enforced by two mechanisms, each of which reads as complete.
+ *   - Migrate everything and let .css go unchecked — there are zero .css files under
+ *     features/ today, so the gap would be invisible until the first one is added.
+ *
+ * Adding `@eslint/css` is a real option; it was not taken unilaterally during #134.
+ * `poolmaster/no-inline-theme-styles` is the ESLint rule that covers the adjacent case
+ * (literal values on theme-bearing props in JSX), and the two are complementary rather
+ * than duplicates: this scans class strings and colour literals, that scans style props.
+ */
+
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 

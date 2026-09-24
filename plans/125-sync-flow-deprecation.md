@@ -277,8 +277,8 @@ the user described as "screen-scraped from the event's website."
   §1 — not built, not a dependency of either plan here. `EVENTRESULTS` is deleted entirely
   (§3.3a) as a direct consequence: its only stated purpose was feeding 122, and it duplicated
   a concept ("score") PoolMaster already names and models elsewhere.
-- **`plans/123`** (workflow gate hardening): mostly superseded by
-  `plans/135-rule-scanners-to-eslint.md`. What survives of it — the shared-lifecycle-enum
+- **`plans/123`** (workflow gate hardening): mostly superseded by epic #134 (rule
+  scanners to ESLint, closed). What survives of it — the shared-lifecycle-enum
   enforcement, now #86 — is orthogonal to this plan and unaffected by it.
 
 ---

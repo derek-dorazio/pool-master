@@ -2,10 +2,18 @@
 
 **Tracking issue:** #82 (migrated from `pool-master-5xi`)
 
-> **Largely superseded.** `plans/135-rule-scanners-to-eslint.md` supersedes most of this
-> plan; #82 records the per-child disposition, including the two children that were
+> **Largely superseded.** Epic #134 (rule scanners to ESLint, closed) supersedes most of
+> this plan; #82 records the per-child disposition, including the two children that were
 > dropped rather than migrated. Delete this file once that disposition is acted on
 > (ADR-0002) — `plans/141-plan-directory-reconciliation.md` owns that call.
+>
+> **#87's mechanism is stale; its substance is not.** #82 and #87 both say the check
+> "stays a script because it needs cross-file knowledge." It did not — #183 migrated it to
+> `poolmaster/no-parallel-api-types`, which reads the generated type names at config load.
+> Only that sentence is wrong. The weakness #87 exists to fix is untouched: the check is
+> **name-based only**, so a local API-shaped type under a different name still passes, and
+> the ESLint port reproduced that matching faithfully rather than improving it. #87 is real
+> work, not a bookkeeping close.
 
 ## Purpose
 
