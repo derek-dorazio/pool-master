@@ -226,6 +226,28 @@ export default tseslint.config(
     rules: { 'poolmaster/no-disabled-tests': 'error' },
   },
   {
+    // Hand-written types that mirror a Prisma row. The ignores are integration
+    // boundaries where the value genuinely is an unvalidated string -- each one
+    // was inspected, not guessed:
+    //   bulk-service.ts        a parsed CSV row, before validation
+    //   participants/handler.ts an unvalidated HTTP request body
+    //   user-account-summary   a display label ("Root admin"), not an enum value
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/domain/**/*.ts',
+            'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/core-api/src/modules/leagues/bulk-service.ts',
+      'packages/core-api/src/modules/participants/handler.ts',
+      // HTTP request bodies — a string until the route schema validates it.
+      'packages/core-api/src/modules/leagues/handler.ts',
+      'packages/core-api/src/modules/squads/handler.ts',
+      'clients/poolmaster/src/features/account/user-account-summary.tsx',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-widened-enum-fields': 'error' },
+  },
+  {
     // Backend source only, matching the scanner's SCAN_ROOT. Deployment identity
     // must come from the bootstrap readers in core/config.ts, which throw.
     files: ['packages/core-api/src/**/*.ts'],

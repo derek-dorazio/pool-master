@@ -16,6 +16,7 @@ import noDuplicateExtractErrorMessage from '../no-duplicate-extract-error-messag
 import noEnvFallbacks from '../no-env-fallbacks.mjs';
 import noInlineQueryKeys from '../no-inline-query-keys.mjs';
 import noParallelApiTypes from '../no-parallel-api-types.mjs';
+import noWidenedEnumFields from '../no-widened-enum-fields.mjs';
 import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 
@@ -348,6 +349,46 @@ ruleTester.run('no-parallel-api-types', noParallelApiTypes, {
     {
       code: 'type ClientOptions = { a: string };',
       errors: [{ messageId: 'parallelType' }],
+    },
+  ],
+});
+
+// Reads schema.prisma, so the fixtures below name real columns. `role` is an enum on
+// every model that declares it; `status` is an enum on some and String on others, which
+// is exactly the case the rule must NOT flag.
+ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
+  valid: [
+    // Already the enum type.
+    'interface R { role: LeagueRole }',
+    // Not an enum column at all.
+    'interface R { name: string }',
+    'interface R { id: string }',
+    // `status` is String on Contest/DraftSession/ContestEntry, so a hand-written row
+    // typing it `string` may well be correct — the rule cannot tell which model it
+    // mirrors, so it stays silent rather than guessing.
+    'interface R { status: string }',
+    // Same ambiguity for contestFormat (String on ContestConfigTemplate/ContestTimingPolicy).
+    'interface R { contestFormat: string }',
+    // A non-string annotation is a different question.
+    'interface R { role: number }',
+  ],
+  invalid: [
+    {
+      code: 'interface R { role: string }',
+      errors: [{ messageId: 'widenedEnum', data: { name: 'role', enums: 'PrismaLeagueRole' } }],
+    },
+    {
+      code: 'interface R { participantType: string }',
+      errors: [{ messageId: 'widenedEnum' }],
+    },
+    {
+      code: 'interface R { syncScope: string }',
+      errors: [{ messageId: 'widenedEnum' }],
+    },
+    {
+      // Nested inline object literals count — that is where row shapes hide.
+      code: 'function f(x: { league: { joinPolicy: string } }) { return x; }',
+      errors: [{ messageId: 'widenedEnum' }],
     },
   ],
 });

@@ -13,6 +13,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { MappingConfidence } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import { ParticipantStatus, ParticipantType, Sport, type Participant } from '@poolmaster/shared/domain';
 import type { ParticipantService } from '../participants/service';
@@ -47,7 +48,7 @@ export interface GolfPlayerRow {
 }
 
 export interface GolfPlayerDetail extends GolfPlayerRow {
-  providerMappings: Array<{ providerId: string; externalId: string; confidence: string }>;
+  providerMappings: Array<{ providerId: string; externalId: string; confidence: MappingConfidence }>;
 }
 
 export interface CreateGolfPlayerInput {

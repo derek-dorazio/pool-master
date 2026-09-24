@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { Participant, InjuryStatus } from '@poolmaster/shared/domain';
+import type { Participant, InjuryStatus, ParticipantType } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -153,7 +153,7 @@ function mapToParticipant(row: {
   id: string;
   sportId: string;
   name: string;
-  participantType: string;
+  participantType: ParticipantType;
   externalId: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -173,7 +173,7 @@ function mapToParticipant(row: {
     id: row.id,
     sportId: row.sportId,
     name: row.name,
-    participantType: row.participantType as Participant['participantType'],
+    participantType: row.participantType,
     externalId: row.externalId ?? undefined,
     firstName: row.firstName ?? undefined,
     lastName: row.lastName ?? undefined,
