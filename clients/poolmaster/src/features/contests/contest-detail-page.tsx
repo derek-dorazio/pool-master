@@ -10,7 +10,7 @@ import {
   updateContestEntry,
   type GetContestResponses,
   type ListContestEntriesResponses,
-  type ListLeagueSquadsResponses,
+  type SquadDto,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -44,7 +44,6 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 type ContestDetail = GetContestResponses[200]['contest'];
 type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
 type ContestEntryParticipant = NonNullable<ContestEntryDetail['participants']>[number];
-type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
   // pool-master-eux.5 removed the legacy score blob that previously implied
@@ -161,7 +160,7 @@ export function ContestDetailPage() {
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<TeamSummary[]> => {
+    queryFn: async (): Promise<SquadDto[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
       if (!response.data?.squads) {

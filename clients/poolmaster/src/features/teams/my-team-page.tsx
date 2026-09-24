@@ -17,7 +17,7 @@ import {
   type ListSquadOwnerInvitationsResponses,
   type GetLeagueByCodeResponses,
   type ListLeagueMembersResponses,
-  type ListLeagueSquadsResponses,
+  type SquadDto,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -54,8 +54,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
-type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
-type TeamMember = NonNullable<TeamSummary['members']>[number];
+type TeamMember = NonNullable<SquadDto['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 type ActiveTeamDialog = 'name' | 'owners' | 'inactivate' | 'delete' | null;
 
@@ -124,7 +123,7 @@ export function MyTeamPage() {
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<TeamSummary[]> => {
+    queryFn: async (): Promise<SquadDto[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
       if (!response.data?.squads) {
@@ -263,7 +262,7 @@ export function MyTeamPage() {
     },
     onSuccess: (team) => {
       setTeamName(team.name);
-      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
+      queryClient.setQueryData<SquadDto[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current ? [...current.filter((candidate) => candidate.id !== team.id), team] : [team],
       );
     },
@@ -285,7 +284,7 @@ export function MyTeamPage() {
     },
     onSuccess: (team) => {
       setTeamName(team.name);
-      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
+      queryClient.setQueryData<SquadDto[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },
@@ -308,7 +307,7 @@ export function MyTeamPage() {
     onSuccess: (team) => {
       setIconDraftKey(team.iconKey);
       setIconModalOpen(false);
-      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
+      queryClient.setQueryData<SquadDto[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },

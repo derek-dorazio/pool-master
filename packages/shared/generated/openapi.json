@@ -18,6 +18,1212 @@
       }
     },
     "schemas": {
+      "SquadMembershipDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name for the squad member."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name for the squad member."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "description": "Squad membership status."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the user joined the squad."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad membership record was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad membership record was last updated."
+          }
+        },
+        "required": [
+          "id",
+          "squadId",
+          "leagueId",
+          "userId",
+          "status",
+          "joinedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "Squad membership summary."
+      },
+      "TeamRelationshipDto": {
+        "type": "object",
+        "properties": {
+          "leagueMember": {
+            "type": "boolean",
+            "description": "Whether the current requester is an active member of the team’s parent league."
+          },
+          "owner": {
+            "type": "boolean",
+            "description": "Whether the current requester is an active owner of this team."
+          },
+          "commissioner": {
+            "type": "boolean",
+            "description": "Whether the current requester has commissioner authority in the team’s parent league."
+          }
+        },
+        "required": [
+          "leagueMember",
+          "owner",
+          "commissioner"
+        ],
+        "additionalProperties": false,
+        "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+      },
+      "SquadDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Squad display name."
+          },
+          "iconKey": {
+            "type": "string",
+            "enum": [
+              "CAPTAIN_SMILE_SUNSET",
+              "CAPTAIN_SMILE_FIELD",
+              "CAPTAIN_SMILE_OCEAN",
+              "CAPTAIN_SMILE_MIDNIGHT",
+              "CAPTAIN_SMILE_CANDY",
+              "CAPTAIN_WINK_SUNSET",
+              "CAPTAIN_WINK_FIELD",
+              "CAPTAIN_WINK_OCEAN",
+              "CAPTAIN_WINK_MIDNIGHT",
+              "CAPTAIN_WINK_CANDY",
+              "CHAMPION_BEARD_SUNSET",
+              "CHAMPION_BEARD_FIELD",
+              "CHAMPION_BEARD_OCEAN",
+              "CHAMPION_BEARD_MIDNIGHT",
+              "CHAMPION_BEARD_CANDY",
+              "MAVERICK_MASK_SUNSET",
+              "MAVERICK_MASK_FIELD",
+              "MAVERICK_MASK_OCEAN",
+              "MAVERICK_MASK_MIDNIGHT",
+              "MAVERICK_MASK_CANDY",
+              "STARFACE_SUNSET",
+              "STARFACE_FIELD",
+              "STARFACE_OCEAN",
+              "STARFACE_MIDNIGHT",
+              "STARFACE_CANDY",
+              "HELMET_STRIPE_SUNSET",
+              "HELMET_STRIPE_FIELD",
+              "HELMET_STRIPE_OCEAN",
+              "HELMET_STRIPE_MIDNIGHT",
+              "HELMET_STRIPE_CANDY",
+              "HELMET_BOLT_SUNSET",
+              "HELMET_BOLT_FIELD",
+              "HELMET_BOLT_OCEAN",
+              "HELMET_BOLT_MIDNIGHT",
+              "HELMET_BOLT_CANDY",
+              "HELMET_HORN_SUNSET",
+              "HELMET_HORN_FIELD",
+              "HELMET_HORN_OCEAN",
+              "HELMET_HORN_MIDNIGHT",
+              "HELMET_HORN_CANDY",
+              "HELMET_WING_SUNSET",
+              "HELMET_WING_FIELD",
+              "HELMET_WING_OCEAN",
+              "HELMET_WING_MIDNIGHT",
+              "HELMET_WING_CANDY",
+              "HELMET_GRID_SUNSET",
+              "HELMET_GRID_FIELD",
+              "HELMET_GRID_OCEAN",
+              "HELMET_GRID_MIDNIGHT",
+              "HELMET_GRID_CANDY",
+              "GOLF_BAG_SUNSET",
+              "GOLF_BAG_FIELD",
+              "GOLF_BAG_OCEAN",
+              "GOLF_BAG_MIDNIGHT",
+              "GOLF_BAG_CANDY",
+              "WHISTLE_BADGE_SUNSET",
+              "WHISTLE_BADGE_FIELD",
+              "WHISTLE_BADGE_OCEAN",
+              "WHISTLE_BADGE_MIDNIGHT",
+              "WHISTLE_BADGE_CANDY",
+              "STOPWATCH_BADGE_SUNSET",
+              "STOPWATCH_BADGE_FIELD",
+              "STOPWATCH_BADGE_OCEAN",
+              "STOPWATCH_BADGE_MIDNIGHT",
+              "STOPWATCH_BADGE_CANDY",
+              "MEGAPHONE_SUNSET",
+              "MEGAPHONE_FIELD",
+              "MEGAPHONE_OCEAN",
+              "MEGAPHONE_MIDNIGHT",
+              "MEGAPHONE_CANDY",
+              "FOAM_FINGER_SUNSET",
+              "FOAM_FINGER_FIELD",
+              "FOAM_FINGER_OCEAN",
+              "FOAM_FINGER_MIDNIGHT",
+              "FOAM_FINGER_CANDY",
+              "BULL_HEAD_SUNSET",
+              "BULL_HEAD_FIELD",
+              "BULL_HEAD_OCEAN",
+              "BULL_HEAD_MIDNIGHT",
+              "BULL_HEAD_CANDY",
+              "LUCKY_DUCK_SUNSET",
+              "LUCKY_DUCK_FIELD",
+              "LUCKY_DUCK_OCEAN",
+              "LUCKY_DUCK_MIDNIGHT",
+              "LUCKY_DUCK_CANDY",
+              "TURBO_TURTLE_SUNSET",
+              "TURBO_TURTLE_FIELD",
+              "TURBO_TURTLE_OCEAN",
+              "TURBO_TURTLE_MIDNIGHT",
+              "TURBO_TURTLE_CANDY",
+              "FIRE_PIZZA_SUNSET",
+              "FIRE_PIZZA_FIELD",
+              "FIRE_PIZZA_OCEAN",
+              "FIRE_PIZZA_MIDNIGHT",
+              "FIRE_PIZZA_CANDY",
+              "BANANA_BAT_SUNSET",
+              "BANANA_BAT_FIELD",
+              "BANANA_BAT_OCEAN",
+              "BANANA_BAT_MIDNIGHT",
+              "BANANA_BAT_CANDY"
+            ],
+            "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "Number of memberships attached to the squad."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the squad was last updated."
+          },
+          "teamRelationship": {
+            "type": "object",
+            "properties": {
+              "leagueMember": {
+                "type": "boolean",
+                "description": "Whether the current requester is an active member of the team’s parent league."
+              },
+              "owner": {
+                "type": "boolean",
+                "description": "Whether the current requester is an active owner of this team."
+              },
+              "commissioner": {
+                "type": "boolean",
+                "description": "Whether the current requester has commissioner authority in the team’s parent league."
+              }
+            },
+            "required": [
+              "leagueMember",
+              "owner",
+              "commissioner"
+            ],
+            "additionalProperties": false,
+            "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+          },
+          "isRootAdmin": {
+            "type": "boolean",
+            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "leagueId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "userId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "firstName": {
+                  "type": "string",
+                  "description": "First name for the squad member."
+                },
+                "lastName": {
+                  "type": "string",
+                  "description": "Last name for the squad member."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ACTIVE",
+                    "INACTIVE"
+                  ],
+                  "description": "Squad membership status."
+                },
+                "joinedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the user joined the squad."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the squad membership record was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the squad membership record was last updated."
+                }
+              },
+              "required": [
+                "id",
+                "squadId",
+                "leagueId",
+                "userId",
+                "status",
+                "joinedAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "Squad membership summary."
+            },
+            "description": "Optional expanded squad membership list."
+          }
+        },
+        "required": [
+          "id",
+          "leagueId",
+          "createdBy",
+          "name",
+          "iconKey",
+          "isActive",
+          "memberCount",
+          "createdAt",
+          "updatedAt",
+          "teamRelationship",
+          "isRootAdmin"
+        ],
+        "additionalProperties": false,
+        "description": "Squad detail returned from squad-management APIs."
+      },
+      "SquadResponse": {
+        "type": "object",
+        "properties": {
+          "squad": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "leagueId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "createdBy": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "description": "Squad display name."
+              },
+              "iconKey": {
+                "type": "string",
+                "enum": [
+                  "CAPTAIN_SMILE_SUNSET",
+                  "CAPTAIN_SMILE_FIELD",
+                  "CAPTAIN_SMILE_OCEAN",
+                  "CAPTAIN_SMILE_MIDNIGHT",
+                  "CAPTAIN_SMILE_CANDY",
+                  "CAPTAIN_WINK_SUNSET",
+                  "CAPTAIN_WINK_FIELD",
+                  "CAPTAIN_WINK_OCEAN",
+                  "CAPTAIN_WINK_MIDNIGHT",
+                  "CAPTAIN_WINK_CANDY",
+                  "CHAMPION_BEARD_SUNSET",
+                  "CHAMPION_BEARD_FIELD",
+                  "CHAMPION_BEARD_OCEAN",
+                  "CHAMPION_BEARD_MIDNIGHT",
+                  "CHAMPION_BEARD_CANDY",
+                  "MAVERICK_MASK_SUNSET",
+                  "MAVERICK_MASK_FIELD",
+                  "MAVERICK_MASK_OCEAN",
+                  "MAVERICK_MASK_MIDNIGHT",
+                  "MAVERICK_MASK_CANDY",
+                  "STARFACE_SUNSET",
+                  "STARFACE_FIELD",
+                  "STARFACE_OCEAN",
+                  "STARFACE_MIDNIGHT",
+                  "STARFACE_CANDY",
+                  "HELMET_STRIPE_SUNSET",
+                  "HELMET_STRIPE_FIELD",
+                  "HELMET_STRIPE_OCEAN",
+                  "HELMET_STRIPE_MIDNIGHT",
+                  "HELMET_STRIPE_CANDY",
+                  "HELMET_BOLT_SUNSET",
+                  "HELMET_BOLT_FIELD",
+                  "HELMET_BOLT_OCEAN",
+                  "HELMET_BOLT_MIDNIGHT",
+                  "HELMET_BOLT_CANDY",
+                  "HELMET_HORN_SUNSET",
+                  "HELMET_HORN_FIELD",
+                  "HELMET_HORN_OCEAN",
+                  "HELMET_HORN_MIDNIGHT",
+                  "HELMET_HORN_CANDY",
+                  "HELMET_WING_SUNSET",
+                  "HELMET_WING_FIELD",
+                  "HELMET_WING_OCEAN",
+                  "HELMET_WING_MIDNIGHT",
+                  "HELMET_WING_CANDY",
+                  "HELMET_GRID_SUNSET",
+                  "HELMET_GRID_FIELD",
+                  "HELMET_GRID_OCEAN",
+                  "HELMET_GRID_MIDNIGHT",
+                  "HELMET_GRID_CANDY",
+                  "GOLF_BAG_SUNSET",
+                  "GOLF_BAG_FIELD",
+                  "GOLF_BAG_OCEAN",
+                  "GOLF_BAG_MIDNIGHT",
+                  "GOLF_BAG_CANDY",
+                  "WHISTLE_BADGE_SUNSET",
+                  "WHISTLE_BADGE_FIELD",
+                  "WHISTLE_BADGE_OCEAN",
+                  "WHISTLE_BADGE_MIDNIGHT",
+                  "WHISTLE_BADGE_CANDY",
+                  "STOPWATCH_BADGE_SUNSET",
+                  "STOPWATCH_BADGE_FIELD",
+                  "STOPWATCH_BADGE_OCEAN",
+                  "STOPWATCH_BADGE_MIDNIGHT",
+                  "STOPWATCH_BADGE_CANDY",
+                  "MEGAPHONE_SUNSET",
+                  "MEGAPHONE_FIELD",
+                  "MEGAPHONE_OCEAN",
+                  "MEGAPHONE_MIDNIGHT",
+                  "MEGAPHONE_CANDY",
+                  "FOAM_FINGER_SUNSET",
+                  "FOAM_FINGER_FIELD",
+                  "FOAM_FINGER_OCEAN",
+                  "FOAM_FINGER_MIDNIGHT",
+                  "FOAM_FINGER_CANDY",
+                  "BULL_HEAD_SUNSET",
+                  "BULL_HEAD_FIELD",
+                  "BULL_HEAD_OCEAN",
+                  "BULL_HEAD_MIDNIGHT",
+                  "BULL_HEAD_CANDY",
+                  "LUCKY_DUCK_SUNSET",
+                  "LUCKY_DUCK_FIELD",
+                  "LUCKY_DUCK_OCEAN",
+                  "LUCKY_DUCK_MIDNIGHT",
+                  "LUCKY_DUCK_CANDY",
+                  "TURBO_TURTLE_SUNSET",
+                  "TURBO_TURTLE_FIELD",
+                  "TURBO_TURTLE_OCEAN",
+                  "TURBO_TURTLE_MIDNIGHT",
+                  "TURBO_TURTLE_CANDY",
+                  "FIRE_PIZZA_SUNSET",
+                  "FIRE_PIZZA_FIELD",
+                  "FIRE_PIZZA_OCEAN",
+                  "FIRE_PIZZA_MIDNIGHT",
+                  "FIRE_PIZZA_CANDY",
+                  "BANANA_BAT_SUNSET",
+                  "BANANA_BAT_FIELD",
+                  "BANANA_BAT_OCEAN",
+                  "BANANA_BAT_MIDNIGHT",
+                  "BANANA_BAT_CANDY"
+                ],
+                "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
+              },
+              "isActive": {
+                "type": "boolean",
+                "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
+              },
+              "memberCount": {
+                "type": "integer",
+                "description": "Number of memberships attached to the squad."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the squad was created."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the squad was last updated."
+              },
+              "teamRelationship": {
+                "type": "object",
+                "properties": {
+                  "leagueMember": {
+                    "type": "boolean",
+                    "description": "Whether the current requester is an active member of the team’s parent league."
+                  },
+                  "owner": {
+                    "type": "boolean",
+                    "description": "Whether the current requester is an active owner of this team."
+                  },
+                  "commissioner": {
+                    "type": "boolean",
+                    "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                  }
+                },
+                "required": [
+                  "leagueMember",
+                  "owner",
+                  "commissioner"
+                ],
+                "additionalProperties": false,
+                "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+              },
+              "isRootAdmin": {
+                "type": "boolean",
+                "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "squadId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "leagueId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "description": "First name for the squad member."
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "description": "Last name for the squad member."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ACTIVE",
+                        "INACTIVE"
+                      ],
+                      "description": "Squad membership status."
+                    },
+                    "joinedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the user joined the squad."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the squad membership record was created."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the squad membership record was last updated."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "squadId",
+                    "leagueId",
+                    "userId",
+                    "status",
+                    "joinedAt",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Squad membership summary."
+                },
+                "description": "Optional expanded squad membership list."
+              }
+            },
+            "required": [
+              "id",
+              "leagueId",
+              "createdBy",
+              "name",
+              "iconKey",
+              "isActive",
+              "memberCount",
+              "createdAt",
+              "updatedAt",
+              "teamRelationship",
+              "isRootAdmin"
+            ],
+            "additionalProperties": false,
+            "description": "Squad detail returned from squad-management APIs."
+          }
+        },
+        "required": [
+          "squad"
+        ],
+        "additionalProperties": false,
+        "description": "Single-squad response."
+      },
+      "SquadListResponse": {
+        "type": "object",
+        "properties": {
+          "squads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "leagueId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "createdBy": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Squad display name."
+                },
+                "iconKey": {
+                  "type": "string",
+                  "enum": [
+                    "CAPTAIN_SMILE_SUNSET",
+                    "CAPTAIN_SMILE_FIELD",
+                    "CAPTAIN_SMILE_OCEAN",
+                    "CAPTAIN_SMILE_MIDNIGHT",
+                    "CAPTAIN_SMILE_CANDY",
+                    "CAPTAIN_WINK_SUNSET",
+                    "CAPTAIN_WINK_FIELD",
+                    "CAPTAIN_WINK_OCEAN",
+                    "CAPTAIN_WINK_MIDNIGHT",
+                    "CAPTAIN_WINK_CANDY",
+                    "CHAMPION_BEARD_SUNSET",
+                    "CHAMPION_BEARD_FIELD",
+                    "CHAMPION_BEARD_OCEAN",
+                    "CHAMPION_BEARD_MIDNIGHT",
+                    "CHAMPION_BEARD_CANDY",
+                    "MAVERICK_MASK_SUNSET",
+                    "MAVERICK_MASK_FIELD",
+                    "MAVERICK_MASK_OCEAN",
+                    "MAVERICK_MASK_MIDNIGHT",
+                    "MAVERICK_MASK_CANDY",
+                    "STARFACE_SUNSET",
+                    "STARFACE_FIELD",
+                    "STARFACE_OCEAN",
+                    "STARFACE_MIDNIGHT",
+                    "STARFACE_CANDY",
+                    "HELMET_STRIPE_SUNSET",
+                    "HELMET_STRIPE_FIELD",
+                    "HELMET_STRIPE_OCEAN",
+                    "HELMET_STRIPE_MIDNIGHT",
+                    "HELMET_STRIPE_CANDY",
+                    "HELMET_BOLT_SUNSET",
+                    "HELMET_BOLT_FIELD",
+                    "HELMET_BOLT_OCEAN",
+                    "HELMET_BOLT_MIDNIGHT",
+                    "HELMET_BOLT_CANDY",
+                    "HELMET_HORN_SUNSET",
+                    "HELMET_HORN_FIELD",
+                    "HELMET_HORN_OCEAN",
+                    "HELMET_HORN_MIDNIGHT",
+                    "HELMET_HORN_CANDY",
+                    "HELMET_WING_SUNSET",
+                    "HELMET_WING_FIELD",
+                    "HELMET_WING_OCEAN",
+                    "HELMET_WING_MIDNIGHT",
+                    "HELMET_WING_CANDY",
+                    "HELMET_GRID_SUNSET",
+                    "HELMET_GRID_FIELD",
+                    "HELMET_GRID_OCEAN",
+                    "HELMET_GRID_MIDNIGHT",
+                    "HELMET_GRID_CANDY",
+                    "GOLF_BAG_SUNSET",
+                    "GOLF_BAG_FIELD",
+                    "GOLF_BAG_OCEAN",
+                    "GOLF_BAG_MIDNIGHT",
+                    "GOLF_BAG_CANDY",
+                    "WHISTLE_BADGE_SUNSET",
+                    "WHISTLE_BADGE_FIELD",
+                    "WHISTLE_BADGE_OCEAN",
+                    "WHISTLE_BADGE_MIDNIGHT",
+                    "WHISTLE_BADGE_CANDY",
+                    "STOPWATCH_BADGE_SUNSET",
+                    "STOPWATCH_BADGE_FIELD",
+                    "STOPWATCH_BADGE_OCEAN",
+                    "STOPWATCH_BADGE_MIDNIGHT",
+                    "STOPWATCH_BADGE_CANDY",
+                    "MEGAPHONE_SUNSET",
+                    "MEGAPHONE_FIELD",
+                    "MEGAPHONE_OCEAN",
+                    "MEGAPHONE_MIDNIGHT",
+                    "MEGAPHONE_CANDY",
+                    "FOAM_FINGER_SUNSET",
+                    "FOAM_FINGER_FIELD",
+                    "FOAM_FINGER_OCEAN",
+                    "FOAM_FINGER_MIDNIGHT",
+                    "FOAM_FINGER_CANDY",
+                    "BULL_HEAD_SUNSET",
+                    "BULL_HEAD_FIELD",
+                    "BULL_HEAD_OCEAN",
+                    "BULL_HEAD_MIDNIGHT",
+                    "BULL_HEAD_CANDY",
+                    "LUCKY_DUCK_SUNSET",
+                    "LUCKY_DUCK_FIELD",
+                    "LUCKY_DUCK_OCEAN",
+                    "LUCKY_DUCK_MIDNIGHT",
+                    "LUCKY_DUCK_CANDY",
+                    "TURBO_TURTLE_SUNSET",
+                    "TURBO_TURTLE_FIELD",
+                    "TURBO_TURTLE_OCEAN",
+                    "TURBO_TURTLE_MIDNIGHT",
+                    "TURBO_TURTLE_CANDY",
+                    "FIRE_PIZZA_SUNSET",
+                    "FIRE_PIZZA_FIELD",
+                    "FIRE_PIZZA_OCEAN",
+                    "FIRE_PIZZA_MIDNIGHT",
+                    "FIRE_PIZZA_CANDY",
+                    "BANANA_BAT_SUNSET",
+                    "BANANA_BAT_FIELD",
+                    "BANANA_BAT_OCEAN",
+                    "BANANA_BAT_MIDNIGHT",
+                    "BANANA_BAT_CANDY"
+                  ],
+                  "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
+                },
+                "memberCount": {
+                  "type": "integer",
+                  "description": "Number of memberships attached to the squad."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the squad was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the squad was last updated."
+                },
+                "teamRelationship": {
+                  "type": "object",
+                  "properties": {
+                    "leagueMember": {
+                      "type": "boolean",
+                      "description": "Whether the current requester is an active member of the team’s parent league."
+                    },
+                    "owner": {
+                      "type": "boolean",
+                      "description": "Whether the current requester is an active owner of this team."
+                    },
+                    "commissioner": {
+                      "type": "boolean",
+                      "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                    }
+                  },
+                  "required": [
+                    "leagueMember",
+                    "owner",
+                    "commissioner"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                },
+                "isRootAdmin": {
+                  "type": "boolean",
+                  "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "squadId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "leagueId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "userId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "firstName": {
+                        "type": "string",
+                        "description": "First name for the squad member."
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "description": "Last name for the squad member."
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "ACTIVE",
+                          "INACTIVE"
+                        ],
+                        "description": "Squad membership status."
+                      },
+                      "joinedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the user joined the squad."
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the squad membership record was created."
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the squad membership record was last updated."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "squadId",
+                      "leagueId",
+                      "userId",
+                      "status",
+                      "joinedAt",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Squad membership summary."
+                  },
+                  "description": "Optional expanded squad membership list."
+                }
+              },
+              "required": [
+                "id",
+                "leagueId",
+                "createdBy",
+                "name",
+                "iconKey",
+                "isActive",
+                "memberCount",
+                "createdAt",
+                "updatedAt",
+                "teamRelationship",
+                "isRootAdmin"
+              ],
+              "additionalProperties": false,
+              "description": "Squad detail returned from squad-management APIs."
+            }
+          }
+        },
+        "required": [
+          "squads"
+        ],
+        "additionalProperties": false,
+        "description": "Squad-list response."
+      },
+      "SquadMembershipResponse": {
+        "type": "object",
+        "properties": {
+          "membership": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "squadId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "leagueId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name for the squad member."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name for the squad member."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE"
+                ],
+                "description": "Squad membership status."
+              },
+              "joinedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the user joined the squad."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the squad membership record was created."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the squad membership record was last updated."
+              }
+            },
+            "required": [
+              "id",
+              "squadId",
+              "leagueId",
+              "userId",
+              "status",
+              "joinedAt",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "description": "Squad membership summary."
+          }
+        },
+        "required": [
+          "membership"
+        ],
+        "additionalProperties": false,
+        "description": "Single squad-membership response."
+      },
+      "CreateSquadRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Squad display name."
+          },
+          "iconKey": {
+            "type": "string",
+            "enum": [
+              "CAPTAIN_SMILE_SUNSET",
+              "CAPTAIN_SMILE_FIELD",
+              "CAPTAIN_SMILE_OCEAN",
+              "CAPTAIN_SMILE_MIDNIGHT",
+              "CAPTAIN_SMILE_CANDY",
+              "CAPTAIN_WINK_SUNSET",
+              "CAPTAIN_WINK_FIELD",
+              "CAPTAIN_WINK_OCEAN",
+              "CAPTAIN_WINK_MIDNIGHT",
+              "CAPTAIN_WINK_CANDY",
+              "CHAMPION_BEARD_SUNSET",
+              "CHAMPION_BEARD_FIELD",
+              "CHAMPION_BEARD_OCEAN",
+              "CHAMPION_BEARD_MIDNIGHT",
+              "CHAMPION_BEARD_CANDY",
+              "MAVERICK_MASK_SUNSET",
+              "MAVERICK_MASK_FIELD",
+              "MAVERICK_MASK_OCEAN",
+              "MAVERICK_MASK_MIDNIGHT",
+              "MAVERICK_MASK_CANDY",
+              "STARFACE_SUNSET",
+              "STARFACE_FIELD",
+              "STARFACE_OCEAN",
+              "STARFACE_MIDNIGHT",
+              "STARFACE_CANDY",
+              "HELMET_STRIPE_SUNSET",
+              "HELMET_STRIPE_FIELD",
+              "HELMET_STRIPE_OCEAN",
+              "HELMET_STRIPE_MIDNIGHT",
+              "HELMET_STRIPE_CANDY",
+              "HELMET_BOLT_SUNSET",
+              "HELMET_BOLT_FIELD",
+              "HELMET_BOLT_OCEAN",
+              "HELMET_BOLT_MIDNIGHT",
+              "HELMET_BOLT_CANDY",
+              "HELMET_HORN_SUNSET",
+              "HELMET_HORN_FIELD",
+              "HELMET_HORN_OCEAN",
+              "HELMET_HORN_MIDNIGHT",
+              "HELMET_HORN_CANDY",
+              "HELMET_WING_SUNSET",
+              "HELMET_WING_FIELD",
+              "HELMET_WING_OCEAN",
+              "HELMET_WING_MIDNIGHT",
+              "HELMET_WING_CANDY",
+              "HELMET_GRID_SUNSET",
+              "HELMET_GRID_FIELD",
+              "HELMET_GRID_OCEAN",
+              "HELMET_GRID_MIDNIGHT",
+              "HELMET_GRID_CANDY",
+              "GOLF_BAG_SUNSET",
+              "GOLF_BAG_FIELD",
+              "GOLF_BAG_OCEAN",
+              "GOLF_BAG_MIDNIGHT",
+              "GOLF_BAG_CANDY",
+              "WHISTLE_BADGE_SUNSET",
+              "WHISTLE_BADGE_FIELD",
+              "WHISTLE_BADGE_OCEAN",
+              "WHISTLE_BADGE_MIDNIGHT",
+              "WHISTLE_BADGE_CANDY",
+              "STOPWATCH_BADGE_SUNSET",
+              "STOPWATCH_BADGE_FIELD",
+              "STOPWATCH_BADGE_OCEAN",
+              "STOPWATCH_BADGE_MIDNIGHT",
+              "STOPWATCH_BADGE_CANDY",
+              "MEGAPHONE_SUNSET",
+              "MEGAPHONE_FIELD",
+              "MEGAPHONE_OCEAN",
+              "MEGAPHONE_MIDNIGHT",
+              "MEGAPHONE_CANDY",
+              "FOAM_FINGER_SUNSET",
+              "FOAM_FINGER_FIELD",
+              "FOAM_FINGER_OCEAN",
+              "FOAM_FINGER_MIDNIGHT",
+              "FOAM_FINGER_CANDY",
+              "BULL_HEAD_SUNSET",
+              "BULL_HEAD_FIELD",
+              "BULL_HEAD_OCEAN",
+              "BULL_HEAD_MIDNIGHT",
+              "BULL_HEAD_CANDY",
+              "LUCKY_DUCK_SUNSET",
+              "LUCKY_DUCK_FIELD",
+              "LUCKY_DUCK_OCEAN",
+              "LUCKY_DUCK_MIDNIGHT",
+              "LUCKY_DUCK_CANDY",
+              "TURBO_TURTLE_SUNSET",
+              "TURBO_TURTLE_FIELD",
+              "TURBO_TURTLE_OCEAN",
+              "TURBO_TURTLE_MIDNIGHT",
+              "TURBO_TURTLE_CANDY",
+              "FIRE_PIZZA_SUNSET",
+              "FIRE_PIZZA_FIELD",
+              "FIRE_PIZZA_OCEAN",
+              "FIRE_PIZZA_MIDNIGHT",
+              "FIRE_PIZZA_CANDY",
+              "BANANA_BAT_SUNSET",
+              "BANANA_BAT_FIELD",
+              "BANANA_BAT_OCEAN",
+              "BANANA_BAT_MIDNIGHT",
+              "BANANA_BAT_CANDY"
+            ],
+            "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request payload for creating a squad within a league."
+      },
+      "UpdateSquadRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Updated squad display name."
+          },
+          "iconKey": {
+            "type": "string",
+            "enum": [
+              "CAPTAIN_SMILE_SUNSET",
+              "CAPTAIN_SMILE_FIELD",
+              "CAPTAIN_SMILE_OCEAN",
+              "CAPTAIN_SMILE_MIDNIGHT",
+              "CAPTAIN_SMILE_CANDY",
+              "CAPTAIN_WINK_SUNSET",
+              "CAPTAIN_WINK_FIELD",
+              "CAPTAIN_WINK_OCEAN",
+              "CAPTAIN_WINK_MIDNIGHT",
+              "CAPTAIN_WINK_CANDY",
+              "CHAMPION_BEARD_SUNSET",
+              "CHAMPION_BEARD_FIELD",
+              "CHAMPION_BEARD_OCEAN",
+              "CHAMPION_BEARD_MIDNIGHT",
+              "CHAMPION_BEARD_CANDY",
+              "MAVERICK_MASK_SUNSET",
+              "MAVERICK_MASK_FIELD",
+              "MAVERICK_MASK_OCEAN",
+              "MAVERICK_MASK_MIDNIGHT",
+              "MAVERICK_MASK_CANDY",
+              "STARFACE_SUNSET",
+              "STARFACE_FIELD",
+              "STARFACE_OCEAN",
+              "STARFACE_MIDNIGHT",
+              "STARFACE_CANDY",
+              "HELMET_STRIPE_SUNSET",
+              "HELMET_STRIPE_FIELD",
+              "HELMET_STRIPE_OCEAN",
+              "HELMET_STRIPE_MIDNIGHT",
+              "HELMET_STRIPE_CANDY",
+              "HELMET_BOLT_SUNSET",
+              "HELMET_BOLT_FIELD",
+              "HELMET_BOLT_OCEAN",
+              "HELMET_BOLT_MIDNIGHT",
+              "HELMET_BOLT_CANDY",
+              "HELMET_HORN_SUNSET",
+              "HELMET_HORN_FIELD",
+              "HELMET_HORN_OCEAN",
+              "HELMET_HORN_MIDNIGHT",
+              "HELMET_HORN_CANDY",
+              "HELMET_WING_SUNSET",
+              "HELMET_WING_FIELD",
+              "HELMET_WING_OCEAN",
+              "HELMET_WING_MIDNIGHT",
+              "HELMET_WING_CANDY",
+              "HELMET_GRID_SUNSET",
+              "HELMET_GRID_FIELD",
+              "HELMET_GRID_OCEAN",
+              "HELMET_GRID_MIDNIGHT",
+              "HELMET_GRID_CANDY",
+              "GOLF_BAG_SUNSET",
+              "GOLF_BAG_FIELD",
+              "GOLF_BAG_OCEAN",
+              "GOLF_BAG_MIDNIGHT",
+              "GOLF_BAG_CANDY",
+              "WHISTLE_BADGE_SUNSET",
+              "WHISTLE_BADGE_FIELD",
+              "WHISTLE_BADGE_OCEAN",
+              "WHISTLE_BADGE_MIDNIGHT",
+              "WHISTLE_BADGE_CANDY",
+              "STOPWATCH_BADGE_SUNSET",
+              "STOPWATCH_BADGE_FIELD",
+              "STOPWATCH_BADGE_OCEAN",
+              "STOPWATCH_BADGE_MIDNIGHT",
+              "STOPWATCH_BADGE_CANDY",
+              "MEGAPHONE_SUNSET",
+              "MEGAPHONE_FIELD",
+              "MEGAPHONE_OCEAN",
+              "MEGAPHONE_MIDNIGHT",
+              "MEGAPHONE_CANDY",
+              "FOAM_FINGER_SUNSET",
+              "FOAM_FINGER_FIELD",
+              "FOAM_FINGER_OCEAN",
+              "FOAM_FINGER_MIDNIGHT",
+              "FOAM_FINGER_CANDY",
+              "BULL_HEAD_SUNSET",
+              "BULL_HEAD_FIELD",
+              "BULL_HEAD_OCEAN",
+              "BULL_HEAD_MIDNIGHT",
+              "BULL_HEAD_CANDY",
+              "LUCKY_DUCK_SUNSET",
+              "LUCKY_DUCK_FIELD",
+              "LUCKY_DUCK_OCEAN",
+              "LUCKY_DUCK_MIDNIGHT",
+              "LUCKY_DUCK_CANDY",
+              "TURBO_TURTLE_SUNSET",
+              "TURBO_TURTLE_FIELD",
+              "TURBO_TURTLE_OCEAN",
+              "TURBO_TURTLE_MIDNIGHT",
+              "TURBO_TURTLE_CANDY",
+              "FIRE_PIZZA_SUNSET",
+              "FIRE_PIZZA_FIELD",
+              "FIRE_PIZZA_OCEAN",
+              "FIRE_PIZZA_MIDNIGHT",
+              "FIRE_PIZZA_CANDY",
+              "BANANA_BAT_SUNSET",
+              "BANANA_BAT_FIELD",
+              "BANANA_BAT_OCEAN",
+              "BANANA_BAT_MIDNIGHT",
+              "BANANA_BAT_CANDY"
+            ],
+            "description": "Updated built-in team icon key from the curated PoolMaster team icon catalog."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Patch payload for updating a squad."
+      },
+      "AddSquadMemberRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User to add as an owner of the team."
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "additionalProperties": false,
+        "description": "Request payload for adding a user to a squad."
+      },
       "VersionComponent": {
         "type": "object",
         "properties": {
@@ -5749,273 +6955,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "squads": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "leagueId": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "createdBy": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Squad display name."
-                          },
-                          "iconKey": {
-                            "type": "string",
-                            "enum": [
-                              "CAPTAIN_SMILE_SUNSET",
-                              "CAPTAIN_SMILE_FIELD",
-                              "CAPTAIN_SMILE_OCEAN",
-                              "CAPTAIN_SMILE_MIDNIGHT",
-                              "CAPTAIN_SMILE_CANDY",
-                              "CAPTAIN_WINK_SUNSET",
-                              "CAPTAIN_WINK_FIELD",
-                              "CAPTAIN_WINK_OCEAN",
-                              "CAPTAIN_WINK_MIDNIGHT",
-                              "CAPTAIN_WINK_CANDY",
-                              "CHAMPION_BEARD_SUNSET",
-                              "CHAMPION_BEARD_FIELD",
-                              "CHAMPION_BEARD_OCEAN",
-                              "CHAMPION_BEARD_MIDNIGHT",
-                              "CHAMPION_BEARD_CANDY",
-                              "MAVERICK_MASK_SUNSET",
-                              "MAVERICK_MASK_FIELD",
-                              "MAVERICK_MASK_OCEAN",
-                              "MAVERICK_MASK_MIDNIGHT",
-                              "MAVERICK_MASK_CANDY",
-                              "STARFACE_SUNSET",
-                              "STARFACE_FIELD",
-                              "STARFACE_OCEAN",
-                              "STARFACE_MIDNIGHT",
-                              "STARFACE_CANDY",
-                              "HELMET_STRIPE_SUNSET",
-                              "HELMET_STRIPE_FIELD",
-                              "HELMET_STRIPE_OCEAN",
-                              "HELMET_STRIPE_MIDNIGHT",
-                              "HELMET_STRIPE_CANDY",
-                              "HELMET_BOLT_SUNSET",
-                              "HELMET_BOLT_FIELD",
-                              "HELMET_BOLT_OCEAN",
-                              "HELMET_BOLT_MIDNIGHT",
-                              "HELMET_BOLT_CANDY",
-                              "HELMET_HORN_SUNSET",
-                              "HELMET_HORN_FIELD",
-                              "HELMET_HORN_OCEAN",
-                              "HELMET_HORN_MIDNIGHT",
-                              "HELMET_HORN_CANDY",
-                              "HELMET_WING_SUNSET",
-                              "HELMET_WING_FIELD",
-                              "HELMET_WING_OCEAN",
-                              "HELMET_WING_MIDNIGHT",
-                              "HELMET_WING_CANDY",
-                              "HELMET_GRID_SUNSET",
-                              "HELMET_GRID_FIELD",
-                              "HELMET_GRID_OCEAN",
-                              "HELMET_GRID_MIDNIGHT",
-                              "HELMET_GRID_CANDY",
-                              "GOLF_BAG_SUNSET",
-                              "GOLF_BAG_FIELD",
-                              "GOLF_BAG_OCEAN",
-                              "GOLF_BAG_MIDNIGHT",
-                              "GOLF_BAG_CANDY",
-                              "WHISTLE_BADGE_SUNSET",
-                              "WHISTLE_BADGE_FIELD",
-                              "WHISTLE_BADGE_OCEAN",
-                              "WHISTLE_BADGE_MIDNIGHT",
-                              "WHISTLE_BADGE_CANDY",
-                              "STOPWATCH_BADGE_SUNSET",
-                              "STOPWATCH_BADGE_FIELD",
-                              "STOPWATCH_BADGE_OCEAN",
-                              "STOPWATCH_BADGE_MIDNIGHT",
-                              "STOPWATCH_BADGE_CANDY",
-                              "MEGAPHONE_SUNSET",
-                              "MEGAPHONE_FIELD",
-                              "MEGAPHONE_OCEAN",
-                              "MEGAPHONE_MIDNIGHT",
-                              "MEGAPHONE_CANDY",
-                              "FOAM_FINGER_SUNSET",
-                              "FOAM_FINGER_FIELD",
-                              "FOAM_FINGER_OCEAN",
-                              "FOAM_FINGER_MIDNIGHT",
-                              "FOAM_FINGER_CANDY",
-                              "BULL_HEAD_SUNSET",
-                              "BULL_HEAD_FIELD",
-                              "BULL_HEAD_OCEAN",
-                              "BULL_HEAD_MIDNIGHT",
-                              "BULL_HEAD_CANDY",
-                              "LUCKY_DUCK_SUNSET",
-                              "LUCKY_DUCK_FIELD",
-                              "LUCKY_DUCK_OCEAN",
-                              "LUCKY_DUCK_MIDNIGHT",
-                              "LUCKY_DUCK_CANDY",
-                              "TURBO_TURTLE_SUNSET",
-                              "TURBO_TURTLE_FIELD",
-                              "TURBO_TURTLE_OCEAN",
-                              "TURBO_TURTLE_MIDNIGHT",
-                              "TURBO_TURTLE_CANDY",
-                              "FIRE_PIZZA_SUNSET",
-                              "FIRE_PIZZA_FIELD",
-                              "FIRE_PIZZA_OCEAN",
-                              "FIRE_PIZZA_MIDNIGHT",
-                              "FIRE_PIZZA_CANDY",
-                              "BANANA_BAT_SUNSET",
-                              "BANANA_BAT_FIELD",
-                              "BANANA_BAT_OCEAN",
-                              "BANANA_BAT_MIDNIGHT",
-                              "BANANA_BAT_CANDY"
-                            ],
-                            "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                          },
-                          "isActive": {
-                            "type": "boolean",
-                            "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
-                          },
-                          "memberCount": {
-                            "type": "integer",
-                            "description": "Number of memberships attached to the squad."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the squad was created."
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the squad was last updated."
-                          },
-                          "teamRelationship": {
-                            "type": "object",
-                            "properties": {
-                              "leagueMember": {
-                                "type": "boolean",
-                                "description": "Whether the current requester is an active member of the team’s parent league."
-                              },
-                              "owner": {
-                                "type": "boolean",
-                                "description": "Whether the current requester is an active owner of this team."
-                              },
-                              "commissioner": {
-                                "type": "boolean",
-                                "description": "Whether the current requester has commissioner authority in the team’s parent league."
-                              }
-                            },
-                            "required": [
-                              "leagueMember",
-                              "owner",
-                              "commissioner"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
-                          },
-                          "isRootAdmin": {
-                            "type": "boolean",
-                            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
-                          },
-                          "members": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "id": {
-                                  "type": "string",
-                                  "format": "uuid"
-                                },
-                                "squadId": {
-                                  "type": "string",
-                                  "format": "uuid"
-                                },
-                                "leagueId": {
-                                  "type": "string",
-                                  "format": "uuid"
-                                },
-                                "userId": {
-                                  "type": "string",
-                                  "format": "uuid"
-                                },
-                                "firstName": {
-                                  "type": "string",
-                                  "description": "First name for the squad member."
-                                },
-                                "lastName": {
-                                  "type": "string",
-                                  "description": "Last name for the squad member."
-                                },
-                                "status": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ACTIVE",
-                                    "INACTIVE"
-                                  ],
-                                  "description": "Squad membership status."
-                                },
-                                "joinedAt": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "When the user joined the squad."
-                                },
-                                "createdAt": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "When the squad membership record was created."
-                                },
-                                "updatedAt": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "When the squad membership record was last updated."
-                                }
-                              },
-                              "required": [
-                                "id",
-                                "squadId",
-                                "leagueId",
-                                "userId",
-                                "status",
-                                "joinedAt",
-                                "createdAt",
-                                "updatedAt"
-                              ],
-                              "additionalProperties": false,
-                              "description": "Squad membership summary."
-                            },
-                            "description": "Optional expanded squad membership list."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "leagueId",
-                          "createdBy",
-                          "name",
-                          "iconKey",
-                          "isActive",
-                          "memberCount",
-                          "createdAt",
-                          "updatedAt",
-                          "teamRelationship",
-                          "isRootAdmin"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Squad detail returned from squad-management APIs."
-                      }
-                    }
-                  },
-                  "required": [
-                    "squads"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Squad-list response."
+                  "$ref": "#/components/schemas/SquadListResponse"
                 }
               }
             }
@@ -6151,127 +7091,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "description": "Squad display name."
-                  },
-                  "iconKey": {
-                    "type": "string",
-                    "enum": [
-                      "CAPTAIN_SMILE_SUNSET",
-                      "CAPTAIN_SMILE_FIELD",
-                      "CAPTAIN_SMILE_OCEAN",
-                      "CAPTAIN_SMILE_MIDNIGHT",
-                      "CAPTAIN_SMILE_CANDY",
-                      "CAPTAIN_WINK_SUNSET",
-                      "CAPTAIN_WINK_FIELD",
-                      "CAPTAIN_WINK_OCEAN",
-                      "CAPTAIN_WINK_MIDNIGHT",
-                      "CAPTAIN_WINK_CANDY",
-                      "CHAMPION_BEARD_SUNSET",
-                      "CHAMPION_BEARD_FIELD",
-                      "CHAMPION_BEARD_OCEAN",
-                      "CHAMPION_BEARD_MIDNIGHT",
-                      "CHAMPION_BEARD_CANDY",
-                      "MAVERICK_MASK_SUNSET",
-                      "MAVERICK_MASK_FIELD",
-                      "MAVERICK_MASK_OCEAN",
-                      "MAVERICK_MASK_MIDNIGHT",
-                      "MAVERICK_MASK_CANDY",
-                      "STARFACE_SUNSET",
-                      "STARFACE_FIELD",
-                      "STARFACE_OCEAN",
-                      "STARFACE_MIDNIGHT",
-                      "STARFACE_CANDY",
-                      "HELMET_STRIPE_SUNSET",
-                      "HELMET_STRIPE_FIELD",
-                      "HELMET_STRIPE_OCEAN",
-                      "HELMET_STRIPE_MIDNIGHT",
-                      "HELMET_STRIPE_CANDY",
-                      "HELMET_BOLT_SUNSET",
-                      "HELMET_BOLT_FIELD",
-                      "HELMET_BOLT_OCEAN",
-                      "HELMET_BOLT_MIDNIGHT",
-                      "HELMET_BOLT_CANDY",
-                      "HELMET_HORN_SUNSET",
-                      "HELMET_HORN_FIELD",
-                      "HELMET_HORN_OCEAN",
-                      "HELMET_HORN_MIDNIGHT",
-                      "HELMET_HORN_CANDY",
-                      "HELMET_WING_SUNSET",
-                      "HELMET_WING_FIELD",
-                      "HELMET_WING_OCEAN",
-                      "HELMET_WING_MIDNIGHT",
-                      "HELMET_WING_CANDY",
-                      "HELMET_GRID_SUNSET",
-                      "HELMET_GRID_FIELD",
-                      "HELMET_GRID_OCEAN",
-                      "HELMET_GRID_MIDNIGHT",
-                      "HELMET_GRID_CANDY",
-                      "GOLF_BAG_SUNSET",
-                      "GOLF_BAG_FIELD",
-                      "GOLF_BAG_OCEAN",
-                      "GOLF_BAG_MIDNIGHT",
-                      "GOLF_BAG_CANDY",
-                      "WHISTLE_BADGE_SUNSET",
-                      "WHISTLE_BADGE_FIELD",
-                      "WHISTLE_BADGE_OCEAN",
-                      "WHISTLE_BADGE_MIDNIGHT",
-                      "WHISTLE_BADGE_CANDY",
-                      "STOPWATCH_BADGE_SUNSET",
-                      "STOPWATCH_BADGE_FIELD",
-                      "STOPWATCH_BADGE_OCEAN",
-                      "STOPWATCH_BADGE_MIDNIGHT",
-                      "STOPWATCH_BADGE_CANDY",
-                      "MEGAPHONE_SUNSET",
-                      "MEGAPHONE_FIELD",
-                      "MEGAPHONE_OCEAN",
-                      "MEGAPHONE_MIDNIGHT",
-                      "MEGAPHONE_CANDY",
-                      "FOAM_FINGER_SUNSET",
-                      "FOAM_FINGER_FIELD",
-                      "FOAM_FINGER_OCEAN",
-                      "FOAM_FINGER_MIDNIGHT",
-                      "FOAM_FINGER_CANDY",
-                      "BULL_HEAD_SUNSET",
-                      "BULL_HEAD_FIELD",
-                      "BULL_HEAD_OCEAN",
-                      "BULL_HEAD_MIDNIGHT",
-                      "BULL_HEAD_CANDY",
-                      "LUCKY_DUCK_SUNSET",
-                      "LUCKY_DUCK_FIELD",
-                      "LUCKY_DUCK_OCEAN",
-                      "LUCKY_DUCK_MIDNIGHT",
-                      "LUCKY_DUCK_CANDY",
-                      "TURBO_TURTLE_SUNSET",
-                      "TURBO_TURTLE_FIELD",
-                      "TURBO_TURTLE_OCEAN",
-                      "TURBO_TURTLE_MIDNIGHT",
-                      "TURBO_TURTLE_CANDY",
-                      "FIRE_PIZZA_SUNSET",
-                      "FIRE_PIZZA_FIELD",
-                      "FIRE_PIZZA_OCEAN",
-                      "FIRE_PIZZA_MIDNIGHT",
-                      "FIRE_PIZZA_CANDY",
-                      "BANANA_BAT_SUNSET",
-                      "BANANA_BAT_FIELD",
-                      "BANANA_BAT_OCEAN",
-                      "BANANA_BAT_MIDNIGHT",
-                      "BANANA_BAT_CANDY"
-                    ],
-                    "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Request payload for creating a squad within a league."
+                "$ref": "#/components/schemas/CreateSquadRequest"
               }
             }
-          },
-          "description": "Request payload for creating a squad within a league."
+          }
         },
         "parameters": [
           {
@@ -6289,270 +7112,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "squad": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Squad display name."
-                        },
-                        "iconKey": {
-                          "type": "string",
-                          "enum": [
-                            "CAPTAIN_SMILE_SUNSET",
-                            "CAPTAIN_SMILE_FIELD",
-                            "CAPTAIN_SMILE_OCEAN",
-                            "CAPTAIN_SMILE_MIDNIGHT",
-                            "CAPTAIN_SMILE_CANDY",
-                            "CAPTAIN_WINK_SUNSET",
-                            "CAPTAIN_WINK_FIELD",
-                            "CAPTAIN_WINK_OCEAN",
-                            "CAPTAIN_WINK_MIDNIGHT",
-                            "CAPTAIN_WINK_CANDY",
-                            "CHAMPION_BEARD_SUNSET",
-                            "CHAMPION_BEARD_FIELD",
-                            "CHAMPION_BEARD_OCEAN",
-                            "CHAMPION_BEARD_MIDNIGHT",
-                            "CHAMPION_BEARD_CANDY",
-                            "MAVERICK_MASK_SUNSET",
-                            "MAVERICK_MASK_FIELD",
-                            "MAVERICK_MASK_OCEAN",
-                            "MAVERICK_MASK_MIDNIGHT",
-                            "MAVERICK_MASK_CANDY",
-                            "STARFACE_SUNSET",
-                            "STARFACE_FIELD",
-                            "STARFACE_OCEAN",
-                            "STARFACE_MIDNIGHT",
-                            "STARFACE_CANDY",
-                            "HELMET_STRIPE_SUNSET",
-                            "HELMET_STRIPE_FIELD",
-                            "HELMET_STRIPE_OCEAN",
-                            "HELMET_STRIPE_MIDNIGHT",
-                            "HELMET_STRIPE_CANDY",
-                            "HELMET_BOLT_SUNSET",
-                            "HELMET_BOLT_FIELD",
-                            "HELMET_BOLT_OCEAN",
-                            "HELMET_BOLT_MIDNIGHT",
-                            "HELMET_BOLT_CANDY",
-                            "HELMET_HORN_SUNSET",
-                            "HELMET_HORN_FIELD",
-                            "HELMET_HORN_OCEAN",
-                            "HELMET_HORN_MIDNIGHT",
-                            "HELMET_HORN_CANDY",
-                            "HELMET_WING_SUNSET",
-                            "HELMET_WING_FIELD",
-                            "HELMET_WING_OCEAN",
-                            "HELMET_WING_MIDNIGHT",
-                            "HELMET_WING_CANDY",
-                            "HELMET_GRID_SUNSET",
-                            "HELMET_GRID_FIELD",
-                            "HELMET_GRID_OCEAN",
-                            "HELMET_GRID_MIDNIGHT",
-                            "HELMET_GRID_CANDY",
-                            "GOLF_BAG_SUNSET",
-                            "GOLF_BAG_FIELD",
-                            "GOLF_BAG_OCEAN",
-                            "GOLF_BAG_MIDNIGHT",
-                            "GOLF_BAG_CANDY",
-                            "WHISTLE_BADGE_SUNSET",
-                            "WHISTLE_BADGE_FIELD",
-                            "WHISTLE_BADGE_OCEAN",
-                            "WHISTLE_BADGE_MIDNIGHT",
-                            "WHISTLE_BADGE_CANDY",
-                            "STOPWATCH_BADGE_SUNSET",
-                            "STOPWATCH_BADGE_FIELD",
-                            "STOPWATCH_BADGE_OCEAN",
-                            "STOPWATCH_BADGE_MIDNIGHT",
-                            "STOPWATCH_BADGE_CANDY",
-                            "MEGAPHONE_SUNSET",
-                            "MEGAPHONE_FIELD",
-                            "MEGAPHONE_OCEAN",
-                            "MEGAPHONE_MIDNIGHT",
-                            "MEGAPHONE_CANDY",
-                            "FOAM_FINGER_SUNSET",
-                            "FOAM_FINGER_FIELD",
-                            "FOAM_FINGER_OCEAN",
-                            "FOAM_FINGER_MIDNIGHT",
-                            "FOAM_FINGER_CANDY",
-                            "BULL_HEAD_SUNSET",
-                            "BULL_HEAD_FIELD",
-                            "BULL_HEAD_OCEAN",
-                            "BULL_HEAD_MIDNIGHT",
-                            "BULL_HEAD_CANDY",
-                            "LUCKY_DUCK_SUNSET",
-                            "LUCKY_DUCK_FIELD",
-                            "LUCKY_DUCK_OCEAN",
-                            "LUCKY_DUCK_MIDNIGHT",
-                            "LUCKY_DUCK_CANDY",
-                            "TURBO_TURTLE_SUNSET",
-                            "TURBO_TURTLE_FIELD",
-                            "TURBO_TURTLE_OCEAN",
-                            "TURBO_TURTLE_MIDNIGHT",
-                            "TURBO_TURTLE_CANDY",
-                            "FIRE_PIZZA_SUNSET",
-                            "FIRE_PIZZA_FIELD",
-                            "FIRE_PIZZA_OCEAN",
-                            "FIRE_PIZZA_MIDNIGHT",
-                            "FIRE_PIZZA_CANDY",
-                            "BANANA_BAT_SUNSET",
-                            "BANANA_BAT_FIELD",
-                            "BANANA_BAT_OCEAN",
-                            "BANANA_BAT_MIDNIGHT",
-                            "BANANA_BAT_CANDY"
-                          ],
-                          "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
-                        },
-                        "memberCount": {
-                          "type": "integer",
-                          "description": "Number of memberships attached to the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was last updated."
-                        },
-                        "teamRelationship": {
-                          "type": "object",
-                          "properties": {
-                            "leagueMember": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active member of the team’s parent league."
-                            },
-                            "owner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active owner of this team."
-                            },
-                            "commissioner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
-                            }
-                          },
-                          "required": [
-                            "leagueMember",
-                            "owner",
-                            "commissioner"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
-                        },
-                        "members": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "squadId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "leagueId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "userId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "firstName": {
-                                "type": "string",
-                                "description": "First name for the squad member."
-                              },
-                              "lastName": {
-                                "type": "string",
-                                "description": "Last name for the squad member."
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "ACTIVE",
-                                  "INACTIVE"
-                                ],
-                                "description": "Squad membership status."
-                              },
-                              "joinedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the user joined the squad."
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was created."
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was last updated."
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "squadId",
-                              "leagueId",
-                              "userId",
-                              "status",
-                              "joinedAt",
-                              "createdAt",
-                              "updatedAt"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Squad membership summary."
-                          },
-                          "description": "Optional expanded squad membership list."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "iconKey",
-                        "isActive",
-                        "memberCount",
-                        "createdAt",
-                        "updatedAt",
-                        "teamRelationship",
-                        "isRootAdmin"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad detail returned from squad-management APIs."
-                    }
-                  },
-                  "required": [
-                    "squad"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-squad response."
+                  "$ref": "#/components/schemas/SquadResponse"
                 }
               }
             }
@@ -6709,270 +7269,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "squad": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Squad display name."
-                        },
-                        "iconKey": {
-                          "type": "string",
-                          "enum": [
-                            "CAPTAIN_SMILE_SUNSET",
-                            "CAPTAIN_SMILE_FIELD",
-                            "CAPTAIN_SMILE_OCEAN",
-                            "CAPTAIN_SMILE_MIDNIGHT",
-                            "CAPTAIN_SMILE_CANDY",
-                            "CAPTAIN_WINK_SUNSET",
-                            "CAPTAIN_WINK_FIELD",
-                            "CAPTAIN_WINK_OCEAN",
-                            "CAPTAIN_WINK_MIDNIGHT",
-                            "CAPTAIN_WINK_CANDY",
-                            "CHAMPION_BEARD_SUNSET",
-                            "CHAMPION_BEARD_FIELD",
-                            "CHAMPION_BEARD_OCEAN",
-                            "CHAMPION_BEARD_MIDNIGHT",
-                            "CHAMPION_BEARD_CANDY",
-                            "MAVERICK_MASK_SUNSET",
-                            "MAVERICK_MASK_FIELD",
-                            "MAVERICK_MASK_OCEAN",
-                            "MAVERICK_MASK_MIDNIGHT",
-                            "MAVERICK_MASK_CANDY",
-                            "STARFACE_SUNSET",
-                            "STARFACE_FIELD",
-                            "STARFACE_OCEAN",
-                            "STARFACE_MIDNIGHT",
-                            "STARFACE_CANDY",
-                            "HELMET_STRIPE_SUNSET",
-                            "HELMET_STRIPE_FIELD",
-                            "HELMET_STRIPE_OCEAN",
-                            "HELMET_STRIPE_MIDNIGHT",
-                            "HELMET_STRIPE_CANDY",
-                            "HELMET_BOLT_SUNSET",
-                            "HELMET_BOLT_FIELD",
-                            "HELMET_BOLT_OCEAN",
-                            "HELMET_BOLT_MIDNIGHT",
-                            "HELMET_BOLT_CANDY",
-                            "HELMET_HORN_SUNSET",
-                            "HELMET_HORN_FIELD",
-                            "HELMET_HORN_OCEAN",
-                            "HELMET_HORN_MIDNIGHT",
-                            "HELMET_HORN_CANDY",
-                            "HELMET_WING_SUNSET",
-                            "HELMET_WING_FIELD",
-                            "HELMET_WING_OCEAN",
-                            "HELMET_WING_MIDNIGHT",
-                            "HELMET_WING_CANDY",
-                            "HELMET_GRID_SUNSET",
-                            "HELMET_GRID_FIELD",
-                            "HELMET_GRID_OCEAN",
-                            "HELMET_GRID_MIDNIGHT",
-                            "HELMET_GRID_CANDY",
-                            "GOLF_BAG_SUNSET",
-                            "GOLF_BAG_FIELD",
-                            "GOLF_BAG_OCEAN",
-                            "GOLF_BAG_MIDNIGHT",
-                            "GOLF_BAG_CANDY",
-                            "WHISTLE_BADGE_SUNSET",
-                            "WHISTLE_BADGE_FIELD",
-                            "WHISTLE_BADGE_OCEAN",
-                            "WHISTLE_BADGE_MIDNIGHT",
-                            "WHISTLE_BADGE_CANDY",
-                            "STOPWATCH_BADGE_SUNSET",
-                            "STOPWATCH_BADGE_FIELD",
-                            "STOPWATCH_BADGE_OCEAN",
-                            "STOPWATCH_BADGE_MIDNIGHT",
-                            "STOPWATCH_BADGE_CANDY",
-                            "MEGAPHONE_SUNSET",
-                            "MEGAPHONE_FIELD",
-                            "MEGAPHONE_OCEAN",
-                            "MEGAPHONE_MIDNIGHT",
-                            "MEGAPHONE_CANDY",
-                            "FOAM_FINGER_SUNSET",
-                            "FOAM_FINGER_FIELD",
-                            "FOAM_FINGER_OCEAN",
-                            "FOAM_FINGER_MIDNIGHT",
-                            "FOAM_FINGER_CANDY",
-                            "BULL_HEAD_SUNSET",
-                            "BULL_HEAD_FIELD",
-                            "BULL_HEAD_OCEAN",
-                            "BULL_HEAD_MIDNIGHT",
-                            "BULL_HEAD_CANDY",
-                            "LUCKY_DUCK_SUNSET",
-                            "LUCKY_DUCK_FIELD",
-                            "LUCKY_DUCK_OCEAN",
-                            "LUCKY_DUCK_MIDNIGHT",
-                            "LUCKY_DUCK_CANDY",
-                            "TURBO_TURTLE_SUNSET",
-                            "TURBO_TURTLE_FIELD",
-                            "TURBO_TURTLE_OCEAN",
-                            "TURBO_TURTLE_MIDNIGHT",
-                            "TURBO_TURTLE_CANDY",
-                            "FIRE_PIZZA_SUNSET",
-                            "FIRE_PIZZA_FIELD",
-                            "FIRE_PIZZA_OCEAN",
-                            "FIRE_PIZZA_MIDNIGHT",
-                            "FIRE_PIZZA_CANDY",
-                            "BANANA_BAT_SUNSET",
-                            "BANANA_BAT_FIELD",
-                            "BANANA_BAT_OCEAN",
-                            "BANANA_BAT_MIDNIGHT",
-                            "BANANA_BAT_CANDY"
-                          ],
-                          "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
-                        },
-                        "memberCount": {
-                          "type": "integer",
-                          "description": "Number of memberships attached to the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was last updated."
-                        },
-                        "teamRelationship": {
-                          "type": "object",
-                          "properties": {
-                            "leagueMember": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active member of the team’s parent league."
-                            },
-                            "owner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active owner of this team."
-                            },
-                            "commissioner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
-                            }
-                          },
-                          "required": [
-                            "leagueMember",
-                            "owner",
-                            "commissioner"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
-                        },
-                        "members": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "squadId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "leagueId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "userId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "firstName": {
-                                "type": "string",
-                                "description": "First name for the squad member."
-                              },
-                              "lastName": {
-                                "type": "string",
-                                "description": "Last name for the squad member."
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "ACTIVE",
-                                  "INACTIVE"
-                                ],
-                                "description": "Squad membership status."
-                              },
-                              "joinedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the user joined the squad."
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was created."
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was last updated."
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "squadId",
-                              "leagueId",
-                              "userId",
-                              "status",
-                              "joinedAt",
-                              "createdAt",
-                              "updatedAt"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Squad membership summary."
-                          },
-                          "description": "Optional expanded squad membership list."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "iconKey",
-                        "isActive",
-                        "memberCount",
-                        "createdAt",
-                        "updatedAt",
-                        "teamRelationship",
-                        "isRootAdmin"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad detail returned from squad-management APIs."
-                    }
-                  },
-                  "required": [
-                    "squad"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-squad response."
+                  "$ref": "#/components/schemas/SquadResponse"
                 }
               }
             }
@@ -7108,127 +7405,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "description": "Updated squad display name."
-                  },
-                  "iconKey": {
-                    "type": "string",
-                    "enum": [
-                      "CAPTAIN_SMILE_SUNSET",
-                      "CAPTAIN_SMILE_FIELD",
-                      "CAPTAIN_SMILE_OCEAN",
-                      "CAPTAIN_SMILE_MIDNIGHT",
-                      "CAPTAIN_SMILE_CANDY",
-                      "CAPTAIN_WINK_SUNSET",
-                      "CAPTAIN_WINK_FIELD",
-                      "CAPTAIN_WINK_OCEAN",
-                      "CAPTAIN_WINK_MIDNIGHT",
-                      "CAPTAIN_WINK_CANDY",
-                      "CHAMPION_BEARD_SUNSET",
-                      "CHAMPION_BEARD_FIELD",
-                      "CHAMPION_BEARD_OCEAN",
-                      "CHAMPION_BEARD_MIDNIGHT",
-                      "CHAMPION_BEARD_CANDY",
-                      "MAVERICK_MASK_SUNSET",
-                      "MAVERICK_MASK_FIELD",
-                      "MAVERICK_MASK_OCEAN",
-                      "MAVERICK_MASK_MIDNIGHT",
-                      "MAVERICK_MASK_CANDY",
-                      "STARFACE_SUNSET",
-                      "STARFACE_FIELD",
-                      "STARFACE_OCEAN",
-                      "STARFACE_MIDNIGHT",
-                      "STARFACE_CANDY",
-                      "HELMET_STRIPE_SUNSET",
-                      "HELMET_STRIPE_FIELD",
-                      "HELMET_STRIPE_OCEAN",
-                      "HELMET_STRIPE_MIDNIGHT",
-                      "HELMET_STRIPE_CANDY",
-                      "HELMET_BOLT_SUNSET",
-                      "HELMET_BOLT_FIELD",
-                      "HELMET_BOLT_OCEAN",
-                      "HELMET_BOLT_MIDNIGHT",
-                      "HELMET_BOLT_CANDY",
-                      "HELMET_HORN_SUNSET",
-                      "HELMET_HORN_FIELD",
-                      "HELMET_HORN_OCEAN",
-                      "HELMET_HORN_MIDNIGHT",
-                      "HELMET_HORN_CANDY",
-                      "HELMET_WING_SUNSET",
-                      "HELMET_WING_FIELD",
-                      "HELMET_WING_OCEAN",
-                      "HELMET_WING_MIDNIGHT",
-                      "HELMET_WING_CANDY",
-                      "HELMET_GRID_SUNSET",
-                      "HELMET_GRID_FIELD",
-                      "HELMET_GRID_OCEAN",
-                      "HELMET_GRID_MIDNIGHT",
-                      "HELMET_GRID_CANDY",
-                      "GOLF_BAG_SUNSET",
-                      "GOLF_BAG_FIELD",
-                      "GOLF_BAG_OCEAN",
-                      "GOLF_BAG_MIDNIGHT",
-                      "GOLF_BAG_CANDY",
-                      "WHISTLE_BADGE_SUNSET",
-                      "WHISTLE_BADGE_FIELD",
-                      "WHISTLE_BADGE_OCEAN",
-                      "WHISTLE_BADGE_MIDNIGHT",
-                      "WHISTLE_BADGE_CANDY",
-                      "STOPWATCH_BADGE_SUNSET",
-                      "STOPWATCH_BADGE_FIELD",
-                      "STOPWATCH_BADGE_OCEAN",
-                      "STOPWATCH_BADGE_MIDNIGHT",
-                      "STOPWATCH_BADGE_CANDY",
-                      "MEGAPHONE_SUNSET",
-                      "MEGAPHONE_FIELD",
-                      "MEGAPHONE_OCEAN",
-                      "MEGAPHONE_MIDNIGHT",
-                      "MEGAPHONE_CANDY",
-                      "FOAM_FINGER_SUNSET",
-                      "FOAM_FINGER_FIELD",
-                      "FOAM_FINGER_OCEAN",
-                      "FOAM_FINGER_MIDNIGHT",
-                      "FOAM_FINGER_CANDY",
-                      "BULL_HEAD_SUNSET",
-                      "BULL_HEAD_FIELD",
-                      "BULL_HEAD_OCEAN",
-                      "BULL_HEAD_MIDNIGHT",
-                      "BULL_HEAD_CANDY",
-                      "LUCKY_DUCK_SUNSET",
-                      "LUCKY_DUCK_FIELD",
-                      "LUCKY_DUCK_OCEAN",
-                      "LUCKY_DUCK_MIDNIGHT",
-                      "LUCKY_DUCK_CANDY",
-                      "TURBO_TURTLE_SUNSET",
-                      "TURBO_TURTLE_FIELD",
-                      "TURBO_TURTLE_OCEAN",
-                      "TURBO_TURTLE_MIDNIGHT",
-                      "TURBO_TURTLE_CANDY",
-                      "FIRE_PIZZA_SUNSET",
-                      "FIRE_PIZZA_FIELD",
-                      "FIRE_PIZZA_OCEAN",
-                      "FIRE_PIZZA_MIDNIGHT",
-                      "FIRE_PIZZA_CANDY",
-                      "BANANA_BAT_SUNSET",
-                      "BANANA_BAT_FIELD",
-                      "BANANA_BAT_OCEAN",
-                      "BANANA_BAT_MIDNIGHT",
-                      "BANANA_BAT_CANDY"
-                    ],
-                    "description": "Updated built-in team icon key from the curated PoolMaster team icon catalog."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Patch payload for updating a squad."
+                "$ref": "#/components/schemas/UpdateSquadRequest"
               }
             }
-          },
-          "description": "Patch payload for updating a squad."
+          }
         },
         "parameters": [
           {
@@ -7254,270 +7434,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "squad": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Squad display name."
-                        },
-                        "iconKey": {
-                          "type": "string",
-                          "enum": [
-                            "CAPTAIN_SMILE_SUNSET",
-                            "CAPTAIN_SMILE_FIELD",
-                            "CAPTAIN_SMILE_OCEAN",
-                            "CAPTAIN_SMILE_MIDNIGHT",
-                            "CAPTAIN_SMILE_CANDY",
-                            "CAPTAIN_WINK_SUNSET",
-                            "CAPTAIN_WINK_FIELD",
-                            "CAPTAIN_WINK_OCEAN",
-                            "CAPTAIN_WINK_MIDNIGHT",
-                            "CAPTAIN_WINK_CANDY",
-                            "CHAMPION_BEARD_SUNSET",
-                            "CHAMPION_BEARD_FIELD",
-                            "CHAMPION_BEARD_OCEAN",
-                            "CHAMPION_BEARD_MIDNIGHT",
-                            "CHAMPION_BEARD_CANDY",
-                            "MAVERICK_MASK_SUNSET",
-                            "MAVERICK_MASK_FIELD",
-                            "MAVERICK_MASK_OCEAN",
-                            "MAVERICK_MASK_MIDNIGHT",
-                            "MAVERICK_MASK_CANDY",
-                            "STARFACE_SUNSET",
-                            "STARFACE_FIELD",
-                            "STARFACE_OCEAN",
-                            "STARFACE_MIDNIGHT",
-                            "STARFACE_CANDY",
-                            "HELMET_STRIPE_SUNSET",
-                            "HELMET_STRIPE_FIELD",
-                            "HELMET_STRIPE_OCEAN",
-                            "HELMET_STRIPE_MIDNIGHT",
-                            "HELMET_STRIPE_CANDY",
-                            "HELMET_BOLT_SUNSET",
-                            "HELMET_BOLT_FIELD",
-                            "HELMET_BOLT_OCEAN",
-                            "HELMET_BOLT_MIDNIGHT",
-                            "HELMET_BOLT_CANDY",
-                            "HELMET_HORN_SUNSET",
-                            "HELMET_HORN_FIELD",
-                            "HELMET_HORN_OCEAN",
-                            "HELMET_HORN_MIDNIGHT",
-                            "HELMET_HORN_CANDY",
-                            "HELMET_WING_SUNSET",
-                            "HELMET_WING_FIELD",
-                            "HELMET_WING_OCEAN",
-                            "HELMET_WING_MIDNIGHT",
-                            "HELMET_WING_CANDY",
-                            "HELMET_GRID_SUNSET",
-                            "HELMET_GRID_FIELD",
-                            "HELMET_GRID_OCEAN",
-                            "HELMET_GRID_MIDNIGHT",
-                            "HELMET_GRID_CANDY",
-                            "GOLF_BAG_SUNSET",
-                            "GOLF_BAG_FIELD",
-                            "GOLF_BAG_OCEAN",
-                            "GOLF_BAG_MIDNIGHT",
-                            "GOLF_BAG_CANDY",
-                            "WHISTLE_BADGE_SUNSET",
-                            "WHISTLE_BADGE_FIELD",
-                            "WHISTLE_BADGE_OCEAN",
-                            "WHISTLE_BADGE_MIDNIGHT",
-                            "WHISTLE_BADGE_CANDY",
-                            "STOPWATCH_BADGE_SUNSET",
-                            "STOPWATCH_BADGE_FIELD",
-                            "STOPWATCH_BADGE_OCEAN",
-                            "STOPWATCH_BADGE_MIDNIGHT",
-                            "STOPWATCH_BADGE_CANDY",
-                            "MEGAPHONE_SUNSET",
-                            "MEGAPHONE_FIELD",
-                            "MEGAPHONE_OCEAN",
-                            "MEGAPHONE_MIDNIGHT",
-                            "MEGAPHONE_CANDY",
-                            "FOAM_FINGER_SUNSET",
-                            "FOAM_FINGER_FIELD",
-                            "FOAM_FINGER_OCEAN",
-                            "FOAM_FINGER_MIDNIGHT",
-                            "FOAM_FINGER_CANDY",
-                            "BULL_HEAD_SUNSET",
-                            "BULL_HEAD_FIELD",
-                            "BULL_HEAD_OCEAN",
-                            "BULL_HEAD_MIDNIGHT",
-                            "BULL_HEAD_CANDY",
-                            "LUCKY_DUCK_SUNSET",
-                            "LUCKY_DUCK_FIELD",
-                            "LUCKY_DUCK_OCEAN",
-                            "LUCKY_DUCK_MIDNIGHT",
-                            "LUCKY_DUCK_CANDY",
-                            "TURBO_TURTLE_SUNSET",
-                            "TURBO_TURTLE_FIELD",
-                            "TURBO_TURTLE_OCEAN",
-                            "TURBO_TURTLE_MIDNIGHT",
-                            "TURBO_TURTLE_CANDY",
-                            "FIRE_PIZZA_SUNSET",
-                            "FIRE_PIZZA_FIELD",
-                            "FIRE_PIZZA_OCEAN",
-                            "FIRE_PIZZA_MIDNIGHT",
-                            "FIRE_PIZZA_CANDY",
-                            "BANANA_BAT_SUNSET",
-                            "BANANA_BAT_FIELD",
-                            "BANANA_BAT_OCEAN",
-                            "BANANA_BAT_MIDNIGHT",
-                            "BANANA_BAT_CANDY"
-                          ],
-                          "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
-                        },
-                        "memberCount": {
-                          "type": "integer",
-                          "description": "Number of memberships attached to the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was last updated."
-                        },
-                        "teamRelationship": {
-                          "type": "object",
-                          "properties": {
-                            "leagueMember": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active member of the team’s parent league."
-                            },
-                            "owner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active owner of this team."
-                            },
-                            "commissioner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
-                            }
-                          },
-                          "required": [
-                            "leagueMember",
-                            "owner",
-                            "commissioner"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
-                        },
-                        "members": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "squadId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "leagueId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "userId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "firstName": {
-                                "type": "string",
-                                "description": "First name for the squad member."
-                              },
-                              "lastName": {
-                                "type": "string",
-                                "description": "Last name for the squad member."
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "ACTIVE",
-                                  "INACTIVE"
-                                ],
-                                "description": "Squad membership status."
-                              },
-                              "joinedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the user joined the squad."
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was created."
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was last updated."
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "squadId",
-                              "leagueId",
-                              "userId",
-                              "status",
-                              "joinedAt",
-                              "createdAt",
-                              "updatedAt"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Squad membership summary."
-                          },
-                          "description": "Optional expanded squad membership list."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "iconKey",
-                        "isActive",
-                        "memberCount",
-                        "createdAt",
-                        "updatedAt",
-                        "teamRelationship",
-                        "isRootAdmin"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad detail returned from squad-management APIs."
-                    }
-                  },
-                  "required": [
-                    "squad"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-squad response."
+                  "$ref": "#/components/schemas/SquadResponse"
                 }
               }
             }
@@ -7882,270 +7799,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "squad": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Squad display name."
-                        },
-                        "iconKey": {
-                          "type": "string",
-                          "enum": [
-                            "CAPTAIN_SMILE_SUNSET",
-                            "CAPTAIN_SMILE_FIELD",
-                            "CAPTAIN_SMILE_OCEAN",
-                            "CAPTAIN_SMILE_MIDNIGHT",
-                            "CAPTAIN_SMILE_CANDY",
-                            "CAPTAIN_WINK_SUNSET",
-                            "CAPTAIN_WINK_FIELD",
-                            "CAPTAIN_WINK_OCEAN",
-                            "CAPTAIN_WINK_MIDNIGHT",
-                            "CAPTAIN_WINK_CANDY",
-                            "CHAMPION_BEARD_SUNSET",
-                            "CHAMPION_BEARD_FIELD",
-                            "CHAMPION_BEARD_OCEAN",
-                            "CHAMPION_BEARD_MIDNIGHT",
-                            "CHAMPION_BEARD_CANDY",
-                            "MAVERICK_MASK_SUNSET",
-                            "MAVERICK_MASK_FIELD",
-                            "MAVERICK_MASK_OCEAN",
-                            "MAVERICK_MASK_MIDNIGHT",
-                            "MAVERICK_MASK_CANDY",
-                            "STARFACE_SUNSET",
-                            "STARFACE_FIELD",
-                            "STARFACE_OCEAN",
-                            "STARFACE_MIDNIGHT",
-                            "STARFACE_CANDY",
-                            "HELMET_STRIPE_SUNSET",
-                            "HELMET_STRIPE_FIELD",
-                            "HELMET_STRIPE_OCEAN",
-                            "HELMET_STRIPE_MIDNIGHT",
-                            "HELMET_STRIPE_CANDY",
-                            "HELMET_BOLT_SUNSET",
-                            "HELMET_BOLT_FIELD",
-                            "HELMET_BOLT_OCEAN",
-                            "HELMET_BOLT_MIDNIGHT",
-                            "HELMET_BOLT_CANDY",
-                            "HELMET_HORN_SUNSET",
-                            "HELMET_HORN_FIELD",
-                            "HELMET_HORN_OCEAN",
-                            "HELMET_HORN_MIDNIGHT",
-                            "HELMET_HORN_CANDY",
-                            "HELMET_WING_SUNSET",
-                            "HELMET_WING_FIELD",
-                            "HELMET_WING_OCEAN",
-                            "HELMET_WING_MIDNIGHT",
-                            "HELMET_WING_CANDY",
-                            "HELMET_GRID_SUNSET",
-                            "HELMET_GRID_FIELD",
-                            "HELMET_GRID_OCEAN",
-                            "HELMET_GRID_MIDNIGHT",
-                            "HELMET_GRID_CANDY",
-                            "GOLF_BAG_SUNSET",
-                            "GOLF_BAG_FIELD",
-                            "GOLF_BAG_OCEAN",
-                            "GOLF_BAG_MIDNIGHT",
-                            "GOLF_BAG_CANDY",
-                            "WHISTLE_BADGE_SUNSET",
-                            "WHISTLE_BADGE_FIELD",
-                            "WHISTLE_BADGE_OCEAN",
-                            "WHISTLE_BADGE_MIDNIGHT",
-                            "WHISTLE_BADGE_CANDY",
-                            "STOPWATCH_BADGE_SUNSET",
-                            "STOPWATCH_BADGE_FIELD",
-                            "STOPWATCH_BADGE_OCEAN",
-                            "STOPWATCH_BADGE_MIDNIGHT",
-                            "STOPWATCH_BADGE_CANDY",
-                            "MEGAPHONE_SUNSET",
-                            "MEGAPHONE_FIELD",
-                            "MEGAPHONE_OCEAN",
-                            "MEGAPHONE_MIDNIGHT",
-                            "MEGAPHONE_CANDY",
-                            "FOAM_FINGER_SUNSET",
-                            "FOAM_FINGER_FIELD",
-                            "FOAM_FINGER_OCEAN",
-                            "FOAM_FINGER_MIDNIGHT",
-                            "FOAM_FINGER_CANDY",
-                            "BULL_HEAD_SUNSET",
-                            "BULL_HEAD_FIELD",
-                            "BULL_HEAD_OCEAN",
-                            "BULL_HEAD_MIDNIGHT",
-                            "BULL_HEAD_CANDY",
-                            "LUCKY_DUCK_SUNSET",
-                            "LUCKY_DUCK_FIELD",
-                            "LUCKY_DUCK_OCEAN",
-                            "LUCKY_DUCK_MIDNIGHT",
-                            "LUCKY_DUCK_CANDY",
-                            "TURBO_TURTLE_SUNSET",
-                            "TURBO_TURTLE_FIELD",
-                            "TURBO_TURTLE_OCEAN",
-                            "TURBO_TURTLE_MIDNIGHT",
-                            "TURBO_TURTLE_CANDY",
-                            "FIRE_PIZZA_SUNSET",
-                            "FIRE_PIZZA_FIELD",
-                            "FIRE_PIZZA_OCEAN",
-                            "FIRE_PIZZA_MIDNIGHT",
-                            "FIRE_PIZZA_CANDY",
-                            "BANANA_BAT_SUNSET",
-                            "BANANA_BAT_FIELD",
-                            "BANANA_BAT_OCEAN",
-                            "BANANA_BAT_MIDNIGHT",
-                            "BANANA_BAT_CANDY"
-                          ],
-                          "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
-                        },
-                        "memberCount": {
-                          "type": "integer",
-                          "description": "Number of memberships attached to the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad was last updated."
-                        },
-                        "teamRelationship": {
-                          "type": "object",
-                          "properties": {
-                            "leagueMember": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active member of the team’s parent league."
-                            },
-                            "owner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active owner of this team."
-                            },
-                            "commissioner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
-                            }
-                          },
-                          "required": [
-                            "leagueMember",
-                            "owner",
-                            "commissioner"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
-                        },
-                        "members": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "squadId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "leagueId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "userId": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "firstName": {
-                                "type": "string",
-                                "description": "First name for the squad member."
-                              },
-                              "lastName": {
-                                "type": "string",
-                                "description": "Last name for the squad member."
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "ACTIVE",
-                                  "INACTIVE"
-                                ],
-                                "description": "Squad membership status."
-                              },
-                              "joinedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the user joined the squad."
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was created."
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the squad membership record was last updated."
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "squadId",
-                              "leagueId",
-                              "userId",
-                              "status",
-                              "joinedAt",
-                              "createdAt",
-                              "updatedAt"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Squad membership summary."
-                          },
-                          "description": "Optional expanded squad membership list."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "createdBy",
-                        "name",
-                        "iconKey",
-                        "isActive",
-                        "memberCount",
-                        "createdAt",
-                        "updatedAt",
-                        "teamRelationship",
-                        "isRootAdmin"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad detail returned from squad-management APIs."
-                    }
-                  },
-                  "required": [
-                    "squad"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-squad response."
+                  "$ref": "#/components/schemas/SquadResponse"
                 }
               }
             }
@@ -8283,23 +7937,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "userId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "User to add as an owner of the team."
-                  }
-                },
-                "required": [
-                  "userId"
-                ],
-                "additionalProperties": false,
-                "description": "Request payload for adding a user to a squad."
+                "$ref": "#/components/schemas/AddSquadMemberRequest"
               }
             }
-          },
-          "description": "Request payload for adding a user to a squad."
+          }
         },
         "parameters": [
           {
@@ -8325,78 +7966,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "membership": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "squadId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "userId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name for the squad member."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name for the squad member."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Squad membership status."
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the user joined the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad membership record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad membership record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "squadId",
-                        "leagueId",
-                        "userId",
-                        "status",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad membership summary."
-                    }
-                  },
-                  "required": [
-                    "membership"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single squad-membership response."
+                  "$ref": "#/components/schemas/SquadMembershipResponse"
                 }
               }
             }
@@ -8561,78 +8131,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "membership": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "squadId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "userId": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name for the squad member."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name for the squad member."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Squad membership status."
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the user joined the squad."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad membership record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the squad membership record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "squadId",
-                        "leagueId",
-                        "userId",
-                        "status",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Squad membership summary."
-                    }
-                  },
-                  "required": [
-                    "membership"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single squad-membership response."
+                  "$ref": "#/components/schemas/SquadMembershipResponse"
                 }
               }
             }

@@ -2,15 +2,15 @@ import { z } from 'zod';
 import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
-export const VersionComponentSchema = registerSchema('VersionComponent', z.object({
+export const VersionComponentSchema = z.object({
   name: z.string().describe('Package or runtime component name.'),
   version: z.string().describe('Semantic package version or deployment version label.'),
   gitSha: z.string().nullable().describe('Git SHA for this component build, when supplied by CI.'),
   buildNumber: z.string().nullable().describe('CI build or run number for this component build, when supplied by CI.'),
-}).describe('Version metadata for one deployed component.'));
+}).describe('Version metadata for one deployed component.');
 export type VersionComponent = z.infer<typeof VersionComponentSchema>;
 
-export const ServiceVersionResponseSchema = registerSchema('ServiceVersionResponse', z.object({
+export const ServiceVersionResponseSchema = z.object({
   schemaVersion: z.literal(1).describe('Version metadata response schema version.'),
   environment: z.string().describe('Runtime environment name such as development, qa, staging, or production.'),
   buildTimeUtc: DateTimeSchema.nullable().describe('UTC build timestamp supplied by CI, when available.'),
@@ -19,5 +19,13 @@ export const ServiceVersionResponseSchema = registerSchema('ServiceVersionRespon
   runtime: z.object({
     nodeVersion: z.string().describe('Node.js runtime version running the service.'),
   }).describe('Non-secret runtime metadata useful during operational debugging.'),
-}).describe('Public service version metadata for deployment and stale-release diagnostics.'));
+}).describe('Public service version metadata for deployment and stale-release diagnostics.');
 export type ServiceVersionResponse = z.infer<typeof ServiceVersionResponseSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// Each name below becomes `components.schemas.<name>` in the OpenAPI document and an
+// importable generated type. Routes reference them with schemaRef('<name>') instead of
+// inlining the shape. Frontend code imports the generated type; it must not re-derive
+// the shape from a response map.
+registerSchema('VersionComponent', VersionComponentSchema);
+registerSchema('ServiceVersionResponse', ServiceVersionResponseSchema);

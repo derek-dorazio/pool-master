@@ -9,8 +9,8 @@ import {
   listSquadOwnerInvitations,
   type GetLeagueByCodeResponses,
   type ListLeagueMembersResponses,
-  type ListLeagueSquadsResponses,
   type ListSquadOwnerInvitationsResponses,
+  type SquadDto,
 } from '@/lib/api';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -37,7 +37,6 @@ import { throwApiError } from '@/lib/errors';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
-type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 
 function formatInvitationStatus(status: string) {
@@ -96,7 +95,7 @@ export function TeamsPage() {
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<TeamSummary[]> => {
+    queryFn: async (): Promise<SquadDto[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
       if (!response.data?.squads) {
         throwApiError(response.error, 'Team list response is missing data.');

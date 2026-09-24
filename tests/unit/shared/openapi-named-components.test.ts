@@ -29,7 +29,21 @@ const generatedTypes = readFileSync(
 );
 
 /** Modules converted to named components so far. Extend as each slice lands. */
-const CONVERTED_COMPONENTS = ['ServiceVersionResponse', 'VersionComponent'];
+const CONVERTED_COMPONENTS = [
+  // version (slice 1 — plumbing proof, no frontend consumers)
+  'ServiceVersionResponse',
+  'VersionComponent',
+  // squads (slice 2 — first module with real frontend consumers)
+  'SquadDto',
+  'SquadListResponse',
+  'SquadResponse',
+  'SquadMembershipDto',
+  'SquadMembershipResponse',
+  'TeamRelationshipDto',
+  'CreateSquadRequest',
+  'UpdateSquadRequest',
+  'AddSquadMemberRequest',
+];
 
 describe('#192: DTOs publish as named OpenAPI components', () => {
   it('rule: the document declares components.schemas', () => {
@@ -71,4 +85,29 @@ describe('#192: DTOs publish as named OpenAPI components', () => {
       expect(generatedTypes).toMatch(new RegExp(`^export type ${name} =`, 'm'));
     },
   );
+});
+
+describe('#192: converted modules leave no derived types behind', () => {
+  // Deleting the derivations is the deliverable, not cleanup. A module that adds the
+  // import but leaves `type X = ListFooResponses[200][...]` in place has made things
+  // worse: two ways to name one shape, and no signal which is current.
+  const featureSources = readFileSync(
+    join(ROOT, 'clients/poolmaster/src/features/teams/teams-page.tsx'),
+    'utf8',
+  );
+
+  it('rule: squads consumers import SquadDto rather than deriving it', () => {
+    expect(featureSources).toMatch(/SquadDto/);
+  });
+
+  it('rule: no frontend file derives a type from a squads response map', () => {
+    // Guards the whole tree, not just the file above — a new derivation anywhere
+    // re-opens the drift this slice closed.
+    const { execSync } = require('node:child_process') as typeof import('node:child_process');
+    const hits = execSync(
+      'grep -rl "ListLeagueSquadsResponses" clients/poolmaster/src --include=*.ts --include=*.tsx || true',
+      { cwd: ROOT, encoding: 'utf8' },
+    ).trim();
+    expect(hits).toBe('');
+  });
 });

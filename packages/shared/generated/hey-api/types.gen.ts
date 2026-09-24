@@ -5,6 +5,403 @@ export type ClientOptions = {
 };
 
 /**
+ * Squad membership summary.
+ */
+export type SquadMembershipDto = {
+    id: string;
+    squadId: string;
+    leagueId: string;
+    userId: string;
+    /**
+     * First name for the squad member.
+     */
+    firstName?: string;
+    /**
+     * Last name for the squad member.
+     */
+    lastName?: string;
+    /**
+     * Squad membership status.
+     */
+    status: 'ACTIVE' | 'INACTIVE';
+    /**
+     * When the user joined the squad.
+     */
+    joinedAt: string;
+    /**
+     * When the squad membership record was created.
+     */
+    createdAt: string;
+    /**
+     * When the squad membership record was last updated.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+ */
+export type TeamRelationshipDto = {
+    /**
+     * Whether the current requester is an active member of the team’s parent league.
+     */
+    leagueMember: boolean;
+    /**
+     * Whether the current requester is an active owner of this team.
+     */
+    owner: boolean;
+    /**
+     * Whether the current requester has commissioner authority in the team’s parent league.
+     */
+    commissioner: boolean;
+};
+
+/**
+ * Squad detail returned from squad-management APIs.
+ */
+export type SquadDto = {
+    id: string;
+    leagueId: string;
+    createdBy: string;
+    /**
+     * Squad display name.
+     */
+    name: string;
+    /**
+     * Selected built-in team icon key from the curated PoolMaster team icon catalog.
+     */
+    iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+    /**
+     * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
+     */
+    isActive: boolean;
+    /**
+     * Number of memberships attached to the squad.
+     */
+    memberCount: number;
+    /**
+     * When the squad was created.
+     */
+    createdAt: string;
+    /**
+     * When the squad was last updated.
+     */
+    updatedAt: string;
+    /**
+     * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+     */
+    teamRelationship: {
+        /**
+         * Whether the current requester is an active member of the team’s parent league.
+         */
+        leagueMember: boolean;
+        /**
+         * Whether the current requester is an active owner of this team.
+         */
+        owner: boolean;
+        /**
+         * Whether the current requester has commissioner authority in the team’s parent league.
+         */
+        commissioner: boolean;
+    };
+    /**
+     * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Optional expanded squad membership list.
+     */
+    members?: Array<{
+        id: string;
+        squadId: string;
+        leagueId: string;
+        userId: string;
+        /**
+         * First name for the squad member.
+         */
+        firstName?: string;
+        /**
+         * Last name for the squad member.
+         */
+        lastName?: string;
+        /**
+         * Squad membership status.
+         */
+        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * When the user joined the squad.
+         */
+        joinedAt: string;
+        /**
+         * When the squad membership record was created.
+         */
+        createdAt: string;
+        /**
+         * When the squad membership record was last updated.
+         */
+        updatedAt: string;
+    }>;
+};
+
+/**
+ * Single-squad response.
+ */
+export type SquadResponse = {
+    /**
+     * Squad detail returned from squad-management APIs.
+     */
+    squad: {
+        id: string;
+        leagueId: string;
+        createdBy: string;
+        /**
+         * Squad display name.
+         */
+        name: string;
+        /**
+         * Selected built-in team icon key from the curated PoolMaster team icon catalog.
+         */
+        iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        /**
+         * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
+         */
+        isActive: boolean;
+        /**
+         * Number of memberships attached to the squad.
+         */
+        memberCount: number;
+        /**
+         * When the squad was created.
+         */
+        createdAt: string;
+        /**
+         * When the squad was last updated.
+         */
+        updatedAt: string;
+        /**
+         * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+         */
+        teamRelationship: {
+            /**
+             * Whether the current requester is an active member of the team’s parent league.
+             */
+            leagueMember: boolean;
+            /**
+             * Whether the current requester is an active owner of this team.
+             */
+            owner: boolean;
+            /**
+             * Whether the current requester has commissioner authority in the team’s parent league.
+             */
+            commissioner: boolean;
+        };
+        /**
+         * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Optional expanded squad membership list.
+         */
+        members?: Array<{
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            /**
+             * First name for the squad member.
+             */
+            firstName?: string;
+            /**
+             * Last name for the squad member.
+             */
+            lastName?: string;
+            /**
+             * Squad membership status.
+             */
+            status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * When the squad membership record was last updated.
+             */
+            updatedAt: string;
+        }>;
+    };
+};
+
+/**
+ * Squad-list response.
+ */
+export type SquadListResponse = {
+    squads: Array<{
+        id: string;
+        leagueId: string;
+        createdBy: string;
+        /**
+         * Squad display name.
+         */
+        name: string;
+        /**
+         * Selected built-in team icon key from the curated PoolMaster team icon catalog.
+         */
+        iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        /**
+         * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
+         */
+        isActive: boolean;
+        /**
+         * Number of memberships attached to the squad.
+         */
+        memberCount: number;
+        /**
+         * When the squad was created.
+         */
+        createdAt: string;
+        /**
+         * When the squad was last updated.
+         */
+        updatedAt: string;
+        /**
+         * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+         */
+        teamRelationship: {
+            /**
+             * Whether the current requester is an active member of the team’s parent league.
+             */
+            leagueMember: boolean;
+            /**
+             * Whether the current requester is an active owner of this team.
+             */
+            owner: boolean;
+            /**
+             * Whether the current requester has commissioner authority in the team’s parent league.
+             */
+            commissioner: boolean;
+        };
+        /**
+         * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Optional expanded squad membership list.
+         */
+        members?: Array<{
+            id: string;
+            squadId: string;
+            leagueId: string;
+            userId: string;
+            /**
+             * First name for the squad member.
+             */
+            firstName?: string;
+            /**
+             * Last name for the squad member.
+             */
+            lastName?: string;
+            /**
+             * Squad membership status.
+             */
+            status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * When the squad membership record was last updated.
+             */
+            updatedAt: string;
+        }>;
+    }>;
+};
+
+/**
+ * Single squad-membership response.
+ */
+export type SquadMembershipResponse = {
+    /**
+     * Squad membership summary.
+     */
+    membership: {
+        id: string;
+        squadId: string;
+        leagueId: string;
+        userId: string;
+        /**
+         * First name for the squad member.
+         */
+        firstName?: string;
+        /**
+         * Last name for the squad member.
+         */
+        lastName?: string;
+        /**
+         * Squad membership status.
+         */
+        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * When the user joined the squad.
+         */
+        joinedAt: string;
+        /**
+         * When the squad membership record was created.
+         */
+        createdAt: string;
+        /**
+         * When the squad membership record was last updated.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * Request payload for creating a squad within a league.
+ */
+export type CreateSquadRequest = {
+    /**
+     * Squad display name.
+     */
+    name?: string;
+    /**
+     * Selected built-in team icon key from the curated PoolMaster team icon catalog.
+     */
+    iconKey?: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+};
+
+/**
+ * Patch payload for updating a squad.
+ */
+export type UpdateSquadRequest = {
+    /**
+     * Updated squad display name.
+     */
+    name?: string;
+    /**
+     * Updated built-in team icon key from the curated PoolMaster team icon catalog.
+     */
+    iconKey?: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+};
+
+/**
+ * Request payload for adding a user to a squad.
+ */
+export type AddSquadMemberRequest = {
+    /**
+     * User to add as an owner of the team.
+     */
+    userId: string;
+};
+
+/**
  * Version metadata for one deployed component.
  */
 export type VersionComponent = {
@@ -3290,109 +3687,13 @@ export type ListLeagueSquadsResponses = {
     /**
      * Squad-list response.
      */
-    200: {
-        squads: Array<{
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            /**
-             * Squad display name.
-             */
-            name: string;
-            /**
-             * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             */
-            iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-            /**
-             * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
-             */
-            isActive: boolean;
-            /**
-             * Number of memberships attached to the squad.
-             */
-            memberCount: number;
-            /**
-             * When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
-             */
-            teamRelationship: {
-                /**
-                 * Whether the current requester is an active member of the team’s parent league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active owner of this team.
-                 */
-                owner: boolean;
-                /**
-                 * Whether the current requester has commissioner authority in the team’s parent league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Optional expanded squad membership list.
-             */
-            members?: Array<{
-                id: string;
-                squadId: string;
-                leagueId: string;
-                userId: string;
-                /**
-                 * First name for the squad member.
-                 */
-                firstName?: string;
-                /**
-                 * Last name for the squad member.
-                 */
-                lastName?: string;
-                /**
-                 * Squad membership status.
-                 */
-                status: 'ACTIVE' | 'INACTIVE';
-                /**
-                 * When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }>;
-        }>;
-    };
+    200: SquadListResponse;
 };
 
 export type ListLeagueSquadsResponse = ListLeagueSquadsResponses[keyof ListLeagueSquadsResponses];
 
 export type CreateLeagueSquadData = {
-    /**
-     * Request payload for creating a squad within a league.
-     */
-    body: {
-        /**
-         * Squad display name.
-         */
-        name?: string;
-        /**
-         * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-         */
-        iconKey?: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-    };
+    body: CreateSquadRequest;
     path: {
         id: string;
     };
@@ -3475,94 +3776,7 @@ export type CreateLeagueSquadResponses = {
     /**
      * Single-squad response.
      */
-    201: {
-        /**
-         * Squad detail returned from squad-management APIs.
-         */
-        squad: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            /**
-             * Squad display name.
-             */
-            name: string;
-            /**
-             * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             */
-            iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-            /**
-             * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
-             */
-            isActive: boolean;
-            /**
-             * Number of memberships attached to the squad.
-             */
-            memberCount: number;
-            /**
-             * When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
-             */
-            teamRelationship: {
-                /**
-                 * Whether the current requester is an active member of the team’s parent league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active owner of this team.
-                 */
-                owner: boolean;
-                /**
-                 * Whether the current requester has commissioner authority in the team’s parent league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Optional expanded squad membership list.
-             */
-            members?: Array<{
-                id: string;
-                squadId: string;
-                leagueId: string;
-                userId: string;
-                /**
-                 * First name for the squad member.
-                 */
-                firstName?: string;
-                /**
-                 * Last name for the squad member.
-                 */
-                lastName?: string;
-                /**
-                 * Squad membership status.
-                 */
-                status: 'ACTIVE' | 'INACTIVE';
-                /**
-                 * When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }>;
-        };
-    };
+    201: SquadResponse;
 };
 
 export type CreateLeagueSquadResponse = CreateLeagueSquadResponses[keyof CreateLeagueSquadResponses];
@@ -3769,112 +3983,13 @@ export type GetLeagueSquadResponses = {
     /**
      * Single-squad response.
      */
-    200: {
-        /**
-         * Squad detail returned from squad-management APIs.
-         */
-        squad: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            /**
-             * Squad display name.
-             */
-            name: string;
-            /**
-             * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             */
-            iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-            /**
-             * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
-             */
-            isActive: boolean;
-            /**
-             * Number of memberships attached to the squad.
-             */
-            memberCount: number;
-            /**
-             * When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
-             */
-            teamRelationship: {
-                /**
-                 * Whether the current requester is an active member of the team’s parent league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active owner of this team.
-                 */
-                owner: boolean;
-                /**
-                 * Whether the current requester has commissioner authority in the team’s parent league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Optional expanded squad membership list.
-             */
-            members?: Array<{
-                id: string;
-                squadId: string;
-                leagueId: string;
-                userId: string;
-                /**
-                 * First name for the squad member.
-                 */
-                firstName?: string;
-                /**
-                 * Last name for the squad member.
-                 */
-                lastName?: string;
-                /**
-                 * Squad membership status.
-                 */
-                status: 'ACTIVE' | 'INACTIVE';
-                /**
-                 * When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }>;
-        };
-    };
+    200: SquadResponse;
 };
 
 export type GetLeagueSquadResponse = GetLeagueSquadResponses[keyof GetLeagueSquadResponses];
 
 export type UpdateLeagueSquadData = {
-    /**
-     * Patch payload for updating a squad.
-     */
-    body: {
-        /**
-         * Updated squad display name.
-         */
-        name?: string;
-        /**
-         * Updated built-in team icon key from the curated PoolMaster team icon catalog.
-         */
-        iconKey?: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-    };
+    body: UpdateSquadRequest;
     path: {
         id: string;
         squadId: string;
@@ -3958,94 +4073,7 @@ export type UpdateLeagueSquadResponses = {
     /**
      * Single-squad response.
      */
-    200: {
-        /**
-         * Squad detail returned from squad-management APIs.
-         */
-        squad: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            /**
-             * Squad display name.
-             */
-            name: string;
-            /**
-             * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             */
-            iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-            /**
-             * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
-             */
-            isActive: boolean;
-            /**
-             * Number of memberships attached to the squad.
-             */
-            memberCount: number;
-            /**
-             * When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
-             */
-            teamRelationship: {
-                /**
-                 * Whether the current requester is an active member of the team’s parent league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active owner of this team.
-                 */
-                owner: boolean;
-                /**
-                 * Whether the current requester has commissioner authority in the team’s parent league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Optional expanded squad membership list.
-             */
-            members?: Array<{
-                id: string;
-                squadId: string;
-                leagueId: string;
-                userId: string;
-                /**
-                 * First name for the squad member.
-                 */
-                firstName?: string;
-                /**
-                 * Last name for the squad member.
-                 */
-                lastName?: string;
-                /**
-                 * Squad membership status.
-                 */
-                status: 'ACTIVE' | 'INACTIVE';
-                /**
-                 * When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }>;
-        };
-    };
+    200: SquadResponse;
 };
 
 export type UpdateLeagueSquadResponse = UpdateLeagueSquadResponses[keyof UpdateLeagueSquadResponses];
@@ -4135,108 +4163,13 @@ export type InactivateLeagueSquadResponses = {
     /**
      * Single-squad response.
      */
-    200: {
-        /**
-         * Squad detail returned from squad-management APIs.
-         */
-        squad: {
-            id: string;
-            leagueId: string;
-            createdBy: string;
-            /**
-             * Squad display name.
-             */
-            name: string;
-            /**
-             * Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             */
-            iconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
-            /**
-             * Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.
-             */
-            isActive: boolean;
-            /**
-             * Number of memberships attached to the squad.
-             */
-            memberCount: number;
-            /**
-             * When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
-             */
-            teamRelationship: {
-                /**
-                 * Whether the current requester is an active member of the team’s parent league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active owner of this team.
-                 */
-                owner: boolean;
-                /**
-                 * Whether the current requester has commissioner authority in the team’s parent league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Optional expanded squad membership list.
-             */
-            members?: Array<{
-                id: string;
-                squadId: string;
-                leagueId: string;
-                userId: string;
-                /**
-                 * First name for the squad member.
-                 */
-                firstName?: string;
-                /**
-                 * Last name for the squad member.
-                 */
-                lastName?: string;
-                /**
-                 * Squad membership status.
-                 */
-                status: 'ACTIVE' | 'INACTIVE';
-                /**
-                 * When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }>;
-        };
-    };
+    200: SquadResponse;
 };
 
 export type InactivateLeagueSquadResponse = InactivateLeagueSquadResponses[keyof InactivateLeagueSquadResponses];
 
 export type AddSquadOwnerData = {
-    /**
-     * Request payload for adding a user to a squad.
-     */
-    body: {
-        /**
-         * User to add as an owner of the team.
-         */
-        userId: string;
-    };
+    body: AddSquadMemberRequest;
     path: {
         id: string;
         squadId: string;
@@ -4320,41 +4253,7 @@ export type AddSquadOwnerResponses = {
     /**
      * Single squad-membership response.
      */
-    201: {
-        /**
-         * Squad membership summary.
-         */
-        membership: {
-            id: string;
-            squadId: string;
-            leagueId: string;
-            userId: string;
-            /**
-             * First name for the squad member.
-             */
-            firstName?: string;
-            /**
-             * Last name for the squad member.
-             */
-            lastName?: string;
-            /**
-             * Squad membership status.
-             */
-            status: 'ACTIVE' | 'INACTIVE';
-            /**
-             * When the user joined the squad.
-             */
-            joinedAt: string;
-            /**
-             * When the squad membership record was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad membership record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    201: SquadMembershipResponse;
 };
 
 export type AddSquadOwnerResponse = AddSquadOwnerResponses[keyof AddSquadOwnerResponses];
@@ -4445,41 +4344,7 @@ export type RemoveSquadOwnerResponses = {
     /**
      * Single squad-membership response.
      */
-    200: {
-        /**
-         * Squad membership summary.
-         */
-        membership: {
-            id: string;
-            squadId: string;
-            leagueId: string;
-            userId: string;
-            /**
-             * First name for the squad member.
-             */
-            firstName?: string;
-            /**
-             * Last name for the squad member.
-             */
-            lastName?: string;
-            /**
-             * Squad membership status.
-             */
-            status: 'ACTIVE' | 'INACTIVE';
-            /**
-             * When the user joined the squad.
-             */
-            joinedAt: string;
-            /**
-             * When the squad membership record was created.
-             */
-            createdAt: string;
-            /**
-             * When the squad membership record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    200: SquadMembershipResponse;
 };
 
 export type RemoveSquadOwnerResponse = RemoveSquadOwnerResponses[keyof RemoveSquadOwnerResponses];

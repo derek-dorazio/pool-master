@@ -10,18 +10,18 @@ import type {
   GetLeagueByCodeResponses,
   GetLeagueResponses,
   InactivateLeagueResponses,
-  ListLeagueSquadsResponses,
   ListLeaguesResponses,
   UpdateLeagueDetailsResponses,
   UpdateLeagueIconResponses,
   UpdateLeagueSquadResponses,
+  SquadDto,
+  SquadListResponse,
 } from '@/lib/api';
 
 export type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 export type LeagueDetail = GetLeagueResponses[200]['league'];
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
-export type LeagueSquad = ListLeagueSquadsResponses[200]['squads'][number];
-export type LeagueSquadMember = NonNullable<LeagueSquad['members']>[number];
+export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
 export type InvitationPreview = GetInvitationPreviewResponses[200]['invitation'];
 export type AcceptedLeagueMembership = AcceptInvitationResponses[201]['membership'];
 export type GeneratedInviteLink = GenerateInviteLinkResponses[201]['invitation'];
@@ -58,7 +58,7 @@ type CurrentUserFixture = Pick<
 >;
 
 type LeagueSquadFixture = Pick<
-  LeagueSquad,
+  SquadDto,
   | 'id'
   | 'leagueId'
   | 'createdBy'
@@ -253,7 +253,7 @@ export function buildLeagueSquadMember(
   };
 }
 
-export function buildLeagueSquad(overrides: Partial<LeagueSquad> = {}): LeagueSquad {
+export function buildLeagueSquad(overrides: Partial<SquadDto> = {}): SquadDto {
   return {
     ...baseLeagueSquad,
     ...overrides,
@@ -336,8 +336,8 @@ export function deleteLeagueData(): DeleteLeagueResponses[200] {
 }
 
 export function listLeagueSquadsData(
-  squads: LeagueSquad[],
-): ListLeagueSquadsResponses[200] {
+  squads: SquadDto[],
+): SquadListResponse {
   return { squads };
 }
 
