@@ -327,7 +327,7 @@ export class GolfTournamentService {
     if (!existing) {
       throw new GolfTournamentError(`Golf tournament ${eventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (existing.syncScope === 'FULL') {
+    if (existing.syncScope === SportEventSyncScope.FULL) {
       throw new GolfTournamentError(
         `Sport event ${eventId} is provider-owned and cannot be edited through admin golf routes.`,
         'EVENT_NOT_ADMIN_MANAGED',

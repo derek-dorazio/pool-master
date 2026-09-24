@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import {
   adminLinkGolfTournamentScoreSource,
   adminUnlinkGolfTournamentScoreSource,
@@ -117,13 +118,13 @@ export function GolfTournamentScoreSourceCard({
           {golfSyncScopeLabel(tournament.syncScope)}
         </StatusBadge>
         <p className="text-sm text-muted-foreground">
-          {tournament.syncScope === 'NONE' || !tournament.scoreSource
+          {tournament.syncScope === SportEventSyncScope.NONE || !tournament.scoreSource
             ? 'Not linked — scores must be entered manually.'
             : `Linked to ${tournament.scoreSource.providerId} event ${tournament.scoreSource.externalId} — polled on the live-scores sync cadence.`}
         </p>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {tournament.syncScope === 'NONE' ? (
+        {tournament.syncScope === SportEventSyncScope.NONE ? (
           <Button
             data-testid="root-admin-golf-tournament-link-open"
             onClick={() => setLinkOpen(true)}

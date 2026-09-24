@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport , SportEventSyncScope} from '@poolmaster/shared/domain';
 import type {
   AdminAddGolfLeagueRosterEntryRequest,
   AdminAutoAssignGolfPricesRequest,
@@ -665,7 +665,7 @@ export function createGolfAdminHandlers(
     if (!tournament) {
       return sendError(reply, 404, 'EVENT_NOT_FOUND', `Golf tournament ${request.params.eventId} was not found.`);
     }
-    if (tournament.syncScope === 'NONE') {
+    if (tournament.syncScope === SportEventSyncScope.NONE) {
       return sendError(
         reply,
         409,

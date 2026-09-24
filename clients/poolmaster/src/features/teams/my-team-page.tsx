@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { TeamIconKey } from '@poolmaster/shared/domain';
+import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -656,7 +656,7 @@ export function MyTeamPage() {
                   </span>
                   {leagueMembersByUserId.get(member.userId) ? (
                     <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                      {leagueMembersByUserId.get(member.userId)?.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
+                      {leagueMembersByUserId.get(member.userId)?.role === LeagueRole.COMMISSIONER ? 'Commissioner' : 'Member'}
                     </span>
                   ) : null}
                 </div>
