@@ -1,3 +1,5 @@
+import { readAppEnv } from './config';
+
 const ACCESS_COOKIE = 'poolmaster_access';
 const REFRESH_COOKIE = 'poolmaster_refresh';
 const CSRF_COOKIE = 'poolmaster_csrf';
@@ -12,8 +14,29 @@ type CookieOptions = {
   maxAge?: number;
 };
 
+/**
+ * Environments that may serve session cookies without the `Secure` attribute.
+ *
+ * This list is the EXCEPTION, not the rule: anything not named here gets `Secure`.
+ * That direction is deliberate — the previous version tested
+ * `process.env.NODE_ENV === 'production'`, and Terraform sets `NODE_ENV` to
+ * `var.environment`, which `infrastructure/terraform/variables.tf` validates to
+ * `qa` | `staging` | `prod`. The string `'production'` is therefore never present in
+ * any deployed environment, so the check was false everywhere and the three session
+ * cookies shipped without `Secure` (#182).
+ *
+ * Listing the insecure environments instead of the secure ones means adding a new
+ * deployment target cannot silently reintroduce that: an unrecognised environment
+ * name fails closed, with `Secure` on.
+ */
+const INSECURE_COOKIE_ENVIRONMENTS: ReadonlySet<string> = new Set([
+  'development',
+  'test',
+  'local',
+]);
+
 function isSecureCookieEnvironment(): boolean {
-  return process.env.NODE_ENV === 'production';
+  return !INSECURE_COOKIE_ENVIRONMENTS.has(readAppEnv().toLowerCase());
 }
 
 function serializeCookie(name: string, value: string, options: CookieOptions = {}): string {
