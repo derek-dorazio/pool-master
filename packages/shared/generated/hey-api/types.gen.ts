@@ -401,80 +401,6 @@ export type AddSquadMemberRequest = {
     userId: string;
 };
 
-/**
- * Version metadata for one deployed component.
- */
-export type VersionComponent = {
-    /**
-     * Package or runtime component name.
-     */
-    name: string;
-    /**
-     * Semantic package version or deployment version label.
-     */
-    version: string;
-    /**
-     * Git SHA for this component build, when supplied by CI.
-     */
-    gitSha: string | null;
-    /**
-     * CI build or run number for this component build, when supplied by CI.
-     */
-    buildNumber: string | null;
-};
-
-/**
- * Public service version metadata for deployment and stale-release diagnostics.
- */
-export type ServiceVersionResponse = {
-    /**
-     * Version metadata response schema version.
-     */
-    schemaVersion: 1;
-    /**
-     * Runtime environment name such as development, qa, staging, or production.
-     */
-    environment: string;
-    /**
-     * UTC build timestamp supplied by CI, when available.
-     */
-    buildTimeUtc: string | null;
-    /**
-     * Git branch or ref name supplied by CI, when available.
-     */
-    gitRef: string | null;
-    /**
-     * Core API service version metadata.
-     */
-    service: {
-        /**
-         * Package or runtime component name.
-         */
-        name: string;
-        /**
-         * Semantic package version or deployment version label.
-         */
-        version: string;
-        /**
-         * Git SHA for this component build, when supplied by CI.
-         */
-        gitSha: string | null;
-        /**
-         * CI build or run number for this component build, when supplied by CI.
-         */
-        buildNumber: string | null;
-    };
-    /**
-     * Non-secret runtime metadata useful during operational debugging.
-     */
-    runtime: {
-        /**
-         * Node.js runtime version running the service.
-         */
-        nodeVersion: string;
-    };
-};
-
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -500,7 +426,54 @@ export type GetRootVersionResponses = {
     /**
      * Public service version metadata for deployment and stale-release diagnostics.
      */
-    200: ServiceVersionResponse;
+    200: {
+        /**
+         * Version metadata response schema version.
+         */
+        schemaVersion: 1;
+        /**
+         * Runtime environment name such as development, qa, staging, or production.
+         */
+        environment: string;
+        /**
+         * UTC build timestamp supplied by CI, when available.
+         */
+        buildTimeUtc: string | null;
+        /**
+         * Git branch or ref name supplied by CI, when available.
+         */
+        gitRef: string | null;
+        /**
+         * Core API service version metadata.
+         */
+        service: {
+            /**
+             * Package or runtime component name.
+             */
+            name: string;
+            /**
+             * Semantic package version or deployment version label.
+             */
+            version: string;
+            /**
+             * Git SHA for this component build, when supplied by CI.
+             */
+            gitSha: string | null;
+            /**
+             * CI build or run number for this component build, when supplied by CI.
+             */
+            buildNumber: string | null;
+        };
+        /**
+         * Non-secret runtime metadata useful during operational debugging.
+         */
+        runtime: {
+            /**
+             * Node.js runtime version running the service.
+             */
+            nodeVersion: string;
+        };
+    };
 };
 
 export type GetRootVersionResponse = GetRootVersionResponses[keyof GetRootVersionResponses];
@@ -1065,7 +1038,54 @@ export type GetVersionResponses = {
     /**
      * Public service version metadata for deployment and stale-release diagnostics.
      */
-    200: ServiceVersionResponse;
+    200: {
+        /**
+         * Version metadata response schema version.
+         */
+        schemaVersion: 1;
+        /**
+         * Runtime environment name such as development, qa, staging, or production.
+         */
+        environment: string;
+        /**
+         * UTC build timestamp supplied by CI, when available.
+         */
+        buildTimeUtc: string | null;
+        /**
+         * Git branch or ref name supplied by CI, when available.
+         */
+        gitRef: string | null;
+        /**
+         * Core API service version metadata.
+         */
+        service: {
+            /**
+             * Package or runtime component name.
+             */
+            name: string;
+            /**
+             * Semantic package version or deployment version label.
+             */
+            version: string;
+            /**
+             * Git SHA for this component build, when supplied by CI.
+             */
+            gitSha: string | null;
+            /**
+             * CI build or run number for this component build, when supplied by CI.
+             */
+            buildNumber: string | null;
+        };
+        /**
+         * Non-secret runtime metadata useful during operational debugging.
+         */
+        runtime: {
+            /**
+             * Node.js runtime version running the service.
+             */
+            nodeVersion: string;
+        };
+    };
 };
 
 export type GetVersionResponse = GetVersionResponses[keyof GetVersionResponses];

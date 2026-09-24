@@ -132,14 +132,20 @@ hazard. Sequence #186 first where they touch the same fields.
 
 ## Execution Sequence
 
-**Slice 1 — plumbing. DONE.** §1 settled above. Converted the `version` module as the
-server-side proof: `components.schemas` went from 0 to 2 named entries, the route `$ref`s
-its component, and `ServiceVersionResponse` / `VersionComponent` generate as importable
-named types.
+**Slice 1 — plumbing. DONE.** §1 settled above, and proven end to end on `squads`:
+`components.schemas` went from 0 to 9 named entries, routes `$ref` them, the generator emits
+importable types, and all five frontend derivations were deleted.
 
-**`version` could not prove the frontend half** — it has no frontend consumers at all
-(`lib/version-info.ts` reads a static `version-info.json` asset, which is a different shape
-from the API response). The first module with real consumers carries that proof.
+**`version` was the first module tried and is deliberately NOT converted.** It has no
+frontend consumers — `lib/version-info.ts` reads a static `version-info.json` asset with a
+different shape — so it could only ever prove the server half. It is also operational
+plumbing rather than product surface, and **#180 already owns how `/version` reports build
+identity**, including retiring `VersionService`'s `?? '0.1.0'` / `?? 'development'`
+fallbacks. Converting it here would have split that work across two tickets. It converts as
+part of #180.
+
+**Pick modules with real frontend consumers.** The point of a slice is deleting derivations;
+a module nothing derives from proves only half the chain.
 
 Regression cover, both added in slice 1: `tests/unit/shared/schema-registry.test.ts` for the
 registry contract, and `tests/unit/shared/openapi-named-components.test.ts` asserting on the
@@ -152,7 +158,11 @@ removing the `refResolver` and confirming four of those cases fail. Extend
 `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
 `contest-entry-picks`, `contest-management`, `contests`, `drafts`, `email`, `events`,
 `golf`, `history`, `ingestion`, `invitations`, `leagues`, `notifications`, `participants`,
-`sport-catalog`, `squads`, `team-invitations`, `version`.
+`sport-catalog`, `team-invitations`. (`squads` done; `version` belongs to #180.)
+
+Order by frontend derivation count, highest first — that is where the payoff is.
+`leagues` owns `LeagueDetail` (10 files), `LeagueSummary` (6) and `LeagueMember` (2);
+`contests` owns `ContestSummary` (5) and `ContestDetail` (2).
 
 Each slice: register that module's DTOs as named components → `api:refresh` → replace its
 frontend consumers' derivations with imports → **delete every local derived type the module

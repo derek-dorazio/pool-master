@@ -30,10 +30,9 @@ const generatedTypes = readFileSync(
 
 /** Modules converted to named components so far. Extend as each slice lands. */
 const CONVERTED_COMPONENTS = [
-  // version (slice 1 — plumbing proof, no frontend consumers)
-  'ServiceVersionResponse',
-  'VersionComponent',
-  // squads (slice 2 — first module with real frontend consumers)
+  // squads — the first converted module. The `version` module is deliberately NOT
+  // here: it is operational plumbing with no frontend consumers, and its conversion
+  // is deferred to #180, which already owns how /version reports build identity.
   'SquadDto',
   'SquadListResponse',
   'SquadResponse',
@@ -66,15 +65,10 @@ describe('#192: DTOs publish as named OpenAPI components', () => {
   });
 
   it('rule: a converted route $refs its component instead of inlining the shape', () => {
-    const versionPaths = Object.entries(openapi.paths)
-      .filter(([path]) => path.includes('version'));
-    expect(versionPaths.length).toBeGreaterThan(0);
-    for (const [path, ops] of versionPaths) {
-      const schema = ops.get?.responses?.['200']?.content?.['application/json']?.schema;
-      expect(schema?.$ref)
-        .toBe('#/components/schemas/ServiceVersionResponse');
-      expect(path).toBeTruthy();
-    }
+    const squadListPaths = Object.entries(openapi.paths)
+      .filter(([, ops]) => ops.get?.responses?.['200']?.content?.['application/json']?.schema?.$ref
+        === '#/components/schemas/SquadListResponse');
+    expect(squadListPaths.length).toBeGreaterThan(0);
   });
 
   it.each(CONVERTED_COMPONENTS)(

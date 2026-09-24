@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { DateTimeSchema } from './common.dto';
-import { registerSchema } from './schema-registry';
 
 export const VersionComponentSchema = z.object({
   name: z.string().describe('Package or runtime component name.'),
@@ -21,11 +20,3 @@ export const ServiceVersionResponseSchema = z.object({
   }).describe('Non-secret runtime metadata useful during operational debugging.'),
 }).describe('Public service version metadata for deployment and stale-release diagnostics.');
 export type ServiceVersionResponse = z.infer<typeof ServiceVersionResponseSchema>;
-
-// --- Published contract (#192) -------------------------------------------------
-// Each name below becomes `components.schemas.<name>` in the OpenAPI document and an
-// importable generated type. Routes reference them with schemaRef('<name>') instead of
-// inlining the shape. Frontend code imports the generated type; it must not re-derive
-// the shape from a response map.
-registerSchema('VersionComponent', VersionComponentSchema);
-registerSchema('ServiceVersionResponse', ServiceVersionResponseSchema);
