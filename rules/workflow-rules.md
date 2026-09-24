@@ -433,6 +433,22 @@ not mistaken for a regression the new slice introduced.
 - Do **not** move plans to an archive directory. Git preserves deleted files; archives just replicate the clutter problem under a different name.
 - For historical context, rely on `git log` and `git show`. If a specific decision warrants permanent attention, write an ADR.
 
+**A drift scan is a shortlist, never a decision.** The `Stop` hook
+(`.claude/hooks/check-tracker-reconciliation.mjs`) reports plans whose tracking issue is
+closed, plans declaring no tracking issue, and open issues referenced by the branch's
+commits. It anchors on the plan's `**Tracking issue:** #NN` declaration line, which is the
+only reliable signal — an earlier version scanned for the first tracker ID anywhere in the
+header and silently truncated nested IDs, reporting a plan as belonging to a *different*,
+still-open epic. It produced that wrong answer twice before anyone fixed the instrument.
+
+So: open the plan's header and read its declared issue before acting on any deletion the
+scan suggests. The hook reports; it never deletes.
+
+**The generalisable half:** noting a tool's defect is not fixing it. The first truncation
+was spotted, corrected by hand for that one plan, and the scan was left alone — so it
+produced the same error on the very next input. A one-off correction to one result leaves
+the instrument free to repeat itself.
+
 ---
 
 ## 2. Rule and Documentation Maintenance
