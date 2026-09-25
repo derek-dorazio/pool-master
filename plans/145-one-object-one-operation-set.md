@@ -37,10 +37,55 @@ In scope: the 26 operations under `/admin` that act on objects with an existing 
 surface — league (12), user (8), event (5), team (1) — plus the shape consolidation that
 follows, and the viewer-scope model that makes it expressible.
 
-Out of scope: the 68 genuinely administrative operations — golf catalog (36), provider
-ingestion (10), platform config (10), health and metrics (9), audit (3). They have no
-user-facing counterpart and are real domains. They should stop being *named* "admin", but
+Out of scope: the 32 genuinely administrative operations — provider ingestion and sync
+(12), platform health and metrics (12), operational config (8: poll intervals, ingestion
+schedule). Nothing user-facing reads those. They should stop being *named* "admin", but
 they are not duplicates and this plan does not collapse them.
+
+### 0a. Correcting a classification error made while writing this plan
+
+An earlier draft put the 40 golf operations in the out-of-scope bucket as "golf catalog
+administration — a real catalog domain". **That was wrong, and wrong in exactly the way
+this epic is about: they were classified by who writes them rather than by what object
+they act on.**
+
+The model those operations administer is not an admin domain. It is **Golf's domain model —
+a strongly typed specialization of Event and Participant**:
+
+| General | Golf specialization |
+|---|---|
+| `Event` | golf tournament |
+| `Participant` | golf player |
+| `EventParticipant` | tournament roster entry |
+
+Members read this model constantly. Squads build contest entries by picking players;
+contests are *for* events and show event details; picks come from event participants; the
+scoreboard shows participant scores. They simply do not write it.
+
+Verified against the published contract — every shared component in this model is served by
+a **non-admin** operation:
+
+| Component | Served by |
+|---|---|
+| `ParticipantDto` | `listParticipants`, `getParticipant`, `createParticipant`, `updateParticipant` |
+| `EventSummaryDto` | `listEvents` |
+| `GolfLeaderboardResponse` | `getGolfContestLeaderboard` |
+
+Meanwhile the admin-golf operations carry **projections of those same shapes** — 5, 6, 13
+and 14 fields of an 18-field `ParticipantDto` — inline and unregistered.
+
+So "administering golf events" is a **function** over the shared model, not a separate
+domain, and these operations belong in scope. The corrected split:
+
+| Bucket | Ops |
+|---|---:|
+| **A — shared domain objects** (user 8, league 3, event 3, squad 1, golf model 40) | **55** |
+| **B — genuinely admin-only** (sync/providers 12, platform ops 12, operational config 8) | **32** |
+| **C — config written by admin, read by consumers** (contest templates 2, golf tiers/pricing 5) | **7** |
+
+This also matters beyond golf. Golf is the first sport; the general/specialized relationship
+is how the next sport attaches to the same `Event` and `Participant` objects. Getting it
+right once is what makes a second sport additive.
 
 ## Key Decisions
 
@@ -84,6 +129,47 @@ Verified field-by-field against the published contract:
   10 fields, plus denormalised `leagueCode` / `leagueName`.
 - `ParticipantDto` has projections at 5, 6, 13 and 14 fields across six admin-golf
   operations.
+
+### 2z. The canonical model already exists — it is `schema.prisma`
+
+The entity layer never had this duplication. **The route layer invented it.** 46 models, and
+the domain layer is disciplined:
+
+| Concept | Entity | Invented at the DTO/route layer |
+|---|---|---|
+| User | `User` — **one** | `UserProfileDto`, `AuthenticatedSessionUserDto`, `adminListUsers.items`, `adminGetUserDetail` |
+| User↔League edge | `LeagueMembership` — **one** | `LeagueMemberDto` **and** `LeagueMembershipDto` |
+| User↔Squad edge | `SquadMembership` — **one** | `SquadMembershipDto`, admin `owners[]` |
+| Golf player | **`Participant`** — `golf-player-service.ts` writes `tx.participant.create()` | `ParticipantDto` plus projections at 5, 6, 13 and 14 fields |
+
+**There is no `GolfPlayer` model. No `LeagueMember` model. No `AdminUser` model. No `Owner`
+model.** Those names exist only in DTOs and route paths.
+
+The golf specialization is likewise already modelled correctly, and says so in its naming:
+
+```
+SportEvent             <- SportEventGolfTier
+SportEventParticipant  <- SportEventParticipantGolfRound
+                       <- SportEventParticipantGolfStanding
+                       <- SportEventParticipantGolfValuation
+```
+
+Each golf table names itself as an extension of the general entity it specializes.
+
+**This gives the epic a fixed target rather than a designed one.** The canonical model is
+not something to invent in this work; it is to be *recovered*. And it yields a mechanical
+rule, checkable at authorship rather than by judgement:
+
+> A DTO names an entity or an edge in `schema.prisma`. A DTO whose name has no
+> corresponding model is the signal that it was invented at the route layer.
+
+That rule would have caught `LeagueMemberDto`, `owners[]`, and every golf-player projection
+on the day they were written — which is precisely what §2a shows was missing.
+
+**Possible schema drift, unverified:** `AdminAuditEntry` and `CommissionerAuditLog` are the
+one pair in 46 that might be the same idea twice. Platform-level and league-level audit
+plausibly differ in retention and visibility, so this may be deliberate. Not investigated;
+flagged only so it is not assumed clean.
 
 ### 2a. User is the object. Member and owner are relationships.
 
