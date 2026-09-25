@@ -5,6 +5,369 @@ export type ClientOptions = {
 };
 
 /**
+ * Authentication token bundle returned after login or registration.
+ */
+export type AuthTokensDto = {
+    /**
+     * Short-lived bearer token used for authenticated API requests.
+     */
+    accessToken: string;
+    /**
+     * Longer-lived token that can be exchanged for a fresh access token.
+     */
+    refreshToken: string;
+    /**
+     * Anti-CSRF token that must be echoed on state-changing browser requests.
+     */
+    csrfToken: string;
+    /**
+     * Access-token lifetime in seconds from the time it was issued.
+     */
+    expiresIn: number;
+};
+
+/**
+ * Frontend-facing user profile summary derived from the authenticated account.
+ */
+export type UserProfileDto = {
+    /**
+     * Stable user identifier.
+     */
+    id: string;
+    /**
+     * Primary email address for the user account.
+     */
+    email: string;
+    /**
+     * Unique login identifier for the account.
+     */
+    username: string;
+    /**
+     * First name shown in account and member-management surfaces.
+     */
+    firstName: string;
+    /**
+     * Last name shown in account and member-management surfaces.
+     */
+    lastName: string;
+    /**
+     * Whether the account is currently active for normal sign-in and product usage.
+     */
+    isActive: boolean;
+    /**
+     * Whether the user has platform-level root-admin access.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Authentication provider used for the account when known.
+     */
+    authProvider?: 'email' | 'google' | 'apple';
+    /**
+     * Preferred IANA timezone for user-facing scheduling and reminders.
+     */
+    timezone?: string;
+    /**
+     * Preferred locale for formatting and localized copy.
+     */
+    locale?: string;
+    /**
+     * Preferred clock display used in account and scheduling surfaces.
+     */
+    timeFormat?: '12H' | '24H';
+    /**
+     * Preferred date display format used in account and scheduling surfaces.
+     */
+    dateFormat?: 'MDY' | 'DMY' | 'YMD';
+    /**
+     * Account creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+};
+
+/**
+ * Authenticated user profile summary enriched with the safe session correlation identifier.
+ */
+export type AuthenticatedSessionUserDto = {
+    /**
+     * Stable user identifier.
+     */
+    id: string;
+    /**
+     * Primary email address for the user account.
+     */
+    email: string;
+    /**
+     * Unique login identifier for the account.
+     */
+    username: string;
+    /**
+     * First name shown in account and member-management surfaces.
+     */
+    firstName: string;
+    /**
+     * Last name shown in account and member-management surfaces.
+     */
+    lastName: string;
+    /**
+     * Whether the account is currently active for normal sign-in and product usage.
+     */
+    isActive: boolean;
+    /**
+     * Whether the user has platform-level root-admin access.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Authentication provider used for the account when known.
+     */
+    authProvider?: 'email' | 'google' | 'apple';
+    /**
+     * Preferred IANA timezone for user-facing scheduling and reminders.
+     */
+    timezone?: string;
+    /**
+     * Preferred locale for formatting and localized copy.
+     */
+    locale?: string;
+    /**
+     * Preferred clock display used in account and scheduling surfaces.
+     */
+    timeFormat?: '12H' | '24H';
+    /**
+     * Preferred date display format used in account and scheduling surfaces.
+     */
+    dateFormat?: 'MDY' | 'DMY' | 'YMD';
+    /**
+     * Account creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+    /**
+     * Safe non-secret session correlation identifier for the authenticated browser session.
+     */
+    sessionId: string | null;
+};
+
+/**
+ * Create-account payload for a new username/email/password user.
+ */
+export type RegisterRequest = {
+    /**
+     * Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.
+     */
+    username: string;
+    /**
+     * Primary contact email address for the user account.
+     */
+    email: string;
+    /**
+     * Plaintext password chosen during registration.
+     */
+    password: string;
+    /**
+     * First name captured for the account profile.
+     */
+    firstName: string;
+    /**
+     * Last name captured for the account profile.
+     */
+    lastName: string;
+};
+
+/**
+ * Login payload for an existing username-or-email/password account.
+ */
+export type LoginRequest = {
+    /**
+     * Username or email used to sign in to an existing account.
+     */
+    identifier: string;
+    /**
+     * Existing password for the account.
+     */
+    password: string;
+};
+
+/**
+ * Successful authentication response returned after registration or login.
+ */
+export type AuthResponse = {
+    /**
+     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * Preferred IANA timezone for user-facing scheduling and reminders.
+         */
+        timezone?: string;
+        /**
+         * Preferred locale for formatting and localized copy.
+         */
+        locale?: string;
+        /**
+         * Preferred clock display used in account and scheduling surfaces.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Preferred date display format used in account and scheduling surfaces.
+         */
+        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+        /**
+         * Safe non-secret session correlation identifier for the authenticated browser session.
+         */
+        sessionId: string | null;
+    };
+    /**
+     * Authentication token bundle returned after login or registration.
+     */
+    tokens: {
+        /**
+         * Short-lived bearer token used for authenticated API requests.
+         */
+        accessToken: string;
+        /**
+         * Longer-lived token that can be exchanged for a fresh access token.
+         */
+        refreshToken: string;
+        /**
+         * Anti-CSRF token that must be echoed on state-changing browser requests.
+         */
+        csrfToken: string;
+        /**
+         * Access-token lifetime in seconds from the time it was issued.
+         */
+        expiresIn: number;
+    };
+};
+
+/**
+ * Authenticated current-user profile response.
+ */
+export type MeResponse = {
+    /**
+     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * Preferred IANA timezone for user-facing scheduling and reminders.
+         */
+        timezone?: string;
+        /**
+         * Preferred locale for formatting and localized copy.
+         */
+        locale?: string;
+        /**
+         * Preferred clock display used in account and scheduling surfaces.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Preferred date display format used in account and scheduling surfaces.
+         */
+        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+        /**
+         * Safe non-secret session correlation identifier for the authenticated browser session.
+         */
+        sessionId: string | null;
+    };
+};
+
+/**
+ * Token refresh response including the stable session correlation identifier.
+ */
+export type TokenRefreshResponse = {
+    /**
+     * Short-lived bearer token used for authenticated API requests.
+     */
+    accessToken: string;
+    /**
+     * Longer-lived token that can be exchanged for a fresh access token.
+     */
+    refreshToken: string;
+    /**
+     * Anti-CSRF token that must be echoed on state-changing browser requests.
+     */
+    csrfToken: string;
+    /**
+     * Access-token lifetime in seconds from the time it was issued.
+     */
+    expiresIn: number;
+    /**
+     * Safe non-secret session correlation identifier that remains stable across refresh rotation.
+     */
+    sessionId: string;
+};
+
+/**
  * Tier definition used in contest create and update flows.
  */
 export type TierDefinitionRequest = {
@@ -4685,6 +5048,155 @@ export type ParticipantResponse = {
     };
 };
 
+/**
+ * Notification feed item returned to clients.
+ */
+export type NotificationDto = {
+    /**
+     * Notification identifier.
+     */
+    id: string;
+    /**
+     * Target user when the payload is not implicitly scoped by auth.
+     */
+    userId?: string;
+    /**
+     * Notification category or event type.
+     */
+    eventType: string;
+    /**
+     * Short notification title.
+     */
+    title: string;
+    /**
+     * Longer notification body copy.
+     */
+    body: string;
+    /**
+     * Whether the user has marked the notification as read.
+     */
+    read: boolean;
+    /**
+     * When the notification was marked as read, if applicable.
+     */
+    readAt?: string | null;
+    /**
+     * Whether the notification has been dismissed from the feed.
+     */
+    dismissed?: boolean;
+    /**
+     * Optional image shown alongside the notification.
+     */
+    imageUrl?: string | null;
+    /**
+     * Optional client route or screen hint for notification deep linking.
+     */
+    actionScreen?: string | null;
+    /**
+     * Optional routing parameters for the notification action target.
+     */
+    actionParams?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Optional grouping key for bundling related notifications.
+     */
+    groupKey?: string | null;
+    /**
+     * When the notification was created.
+     */
+    createdAt: string;
+};
+
+/**
+ * Notification-list response.
+ */
+export type NotificationListResponse = {
+    /**
+     * Notification page or slice returned by the API.
+     */
+    notifications: Array<{
+        /**
+         * Notification identifier.
+         */
+        id: string;
+        /**
+         * Target user when the payload is not implicitly scoped by auth.
+         */
+        userId?: string;
+        /**
+         * Notification category or event type.
+         */
+        eventType: string;
+        /**
+         * Short notification title.
+         */
+        title: string;
+        /**
+         * Longer notification body copy.
+         */
+        body: string;
+        /**
+         * Whether the user has marked the notification as read.
+         */
+        read: boolean;
+        /**
+         * When the notification was marked as read, if applicable.
+         */
+        readAt?: string | null;
+        /**
+         * Whether the notification has been dismissed from the feed.
+         */
+        dismissed?: boolean;
+        /**
+         * Optional image shown alongside the notification.
+         */
+        imageUrl?: string | null;
+        /**
+         * Optional client route or screen hint for notification deep linking.
+         */
+        actionScreen?: string | null;
+        /**
+         * Optional routing parameters for the notification action target.
+         */
+        actionParams?: {
+            [key: string]: unknown;
+        };
+        /**
+         * Optional grouping key for bundling related notifications.
+         */
+        groupKey?: string | null;
+        /**
+         * When the notification was created.
+         */
+        createdAt: string;
+    }>;
+    /**
+     * Total number of notifications matching the current query.
+     */
+    total: number;
+};
+
+/**
+ * Unread-notification counter response.
+ */
+export type NotificationUnreadCountResponse = {
+    /**
+     * Unread notification count for the current user.
+     */
+    unreadCount: number;
+};
+
+/**
+ * Bulk mark-all-read response.
+ */
+export type NotificationMarkAllReadResponse = {
+    /**
+     * How many notifications were marked as read by the bulk operation.
+     */
+    markedRead: number;
+};
+
 export type EventStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
 export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
@@ -5196,31 +5708,7 @@ export type GetRootVersionResponses = {
 export type GetRootVersionResponse = GetRootVersionResponses[keyof GetRootVersionResponses];
 
 export type RegisterUserData = {
-    /**
-     * Create-account payload for a new username/email/password user.
-     */
-    body: {
-        /**
-         * Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.
-         */
-        username: string;
-        /**
-         * Primary contact email address for the user account.
-         */
-        email: string;
-        /**
-         * Plaintext password chosen during registration.
-         */
-        password: string;
-        /**
-         * First name captured for the account profile.
-         */
-        firstName: string;
-        /**
-         * Last name captured for the account profile.
-         */
-        lastName: string;
-    };
+    body: RegisterRequest;
     path?: never;
     query?: never;
     url: '/api/v1/auth/register';
@@ -5279,108 +5767,13 @@ export type RegisterUserResponses = {
     /**
      * Successful authentication response returned after registration or login.
      */
-    201: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-        /**
-         * Authentication token bundle returned after login or registration.
-         */
-        tokens: {
-            /**
-             * Short-lived bearer token used for authenticated API requests.
-             */
-            accessToken: string;
-            /**
-             * Longer-lived token that can be exchanged for a fresh access token.
-             */
-            refreshToken: string;
-            /**
-             * Anti-CSRF token that must be echoed on state-changing browser requests.
-             */
-            csrfToken: string;
-            /**
-             * Access-token lifetime in seconds from the time it was issued.
-             */
-            expiresIn: number;
-        };
-    };
+    201: AuthResponse;
 };
 
 export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
 
 export type LoginUserData = {
-    /**
-     * Login payload for an existing username-or-email/password account.
-     */
-    body: {
-        /**
-         * Username or email used to sign in to an existing account.
-         */
-        identifier: string;
-        /**
-         * Existing password for the account.
-         */
-        password: string;
-    };
+    body: LoginRequest;
     path?: never;
     query?: never;
     url: '/api/v1/auth/login';
@@ -5439,90 +5832,7 @@ export type LoginUserResponses = {
     /**
      * Successful authentication response returned after registration or login.
      */
-    200: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-        /**
-         * Authentication token bundle returned after login or registration.
-         */
-        tokens: {
-            /**
-             * Short-lived bearer token used for authenticated API requests.
-             */
-            accessToken: string;
-            /**
-             * Longer-lived token that can be exchanged for a fresh access token.
-             */
-            refreshToken: string;
-            /**
-             * Anti-CSRF token that must be echoed on state-changing browser requests.
-             */
-            csrfToken: string;
-            /**
-             * Access-token lifetime in seconds from the time it was issued.
-             */
-            expiresIn: number;
-        };
-    };
+    200: AuthResponse;
 };
 
 export type LoginUserResponse = LoginUserResponses[keyof LoginUserResponses];
@@ -5565,28 +5875,7 @@ export type RefreshTokenResponses = {
     /**
      * Token refresh response including the stable session correlation identifier.
      */
-    200: {
-        /**
-         * Short-lived bearer token used for authenticated API requests.
-         */
-        accessToken: string;
-        /**
-         * Longer-lived token that can be exchanged for a fresh access token.
-         */
-        refreshToken: string;
-        /**
-         * Anti-CSRF token that must be echoed on state-changing browser requests.
-         */
-        csrfToken: string;
-        /**
-         * Access-token lifetime in seconds from the time it was issued.
-         */
-        expiresIn: number;
-        /**
-         * Safe non-secret session correlation identifier that remains stable across refresh rotation.
-         */
-        sessionId: string;
-    };
+    200: TokenRefreshResponse;
 };
 
 export type RefreshTokenResponse = RefreshTokenResponses[keyof RefreshTokenResponses];
@@ -5677,69 +5966,7 @@ export type GetCurrentUserResponses = {
     /**
      * Authenticated current-user profile response.
      */
-    200: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-    };
+    200: MeResponse;
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
@@ -25427,71 +25654,7 @@ export type ListNotificationsResponses = {
     /**
      * Notification-list response.
      */
-    200: {
-        /**
-         * Notification page or slice returned by the API.
-         */
-        notifications: Array<{
-            /**
-             * Notification identifier.
-             */
-            id: string;
-            /**
-             * Target user when the payload is not implicitly scoped by auth.
-             */
-            userId?: string;
-            /**
-             * Notification category or event type.
-             */
-            eventType: string;
-            /**
-             * Short notification title.
-             */
-            title: string;
-            /**
-             * Longer notification body copy.
-             */
-            body: string;
-            /**
-             * Whether the user has marked the notification as read.
-             */
-            read: boolean;
-            /**
-             * When the notification was marked as read, if applicable.
-             */
-            readAt?: string | null;
-            /**
-             * Whether the notification has been dismissed from the feed.
-             */
-            dismissed?: boolean;
-            /**
-             * Optional image shown alongside the notification.
-             */
-            imageUrl?: string | null;
-            /**
-             * Optional client route or screen hint for notification deep linking.
-             */
-            actionScreen?: string | null;
-            /**
-             * Optional routing parameters for the notification action target.
-             */
-            actionParams?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Optional grouping key for bundling related notifications.
-             */
-            groupKey?: string | null;
-            /**
-             * When the notification was created.
-             */
-            createdAt: string;
-        }>;
-        /**
-         * Total number of notifications matching the current query.
-         */
-        total: number;
-    };
+    200: NotificationListResponse;
 };
 
 export type ListNotificationsResponse = ListNotificationsResponses[keyof ListNotificationsResponses];
@@ -25507,12 +25670,7 @@ export type GetUnreadNotificationCountResponses = {
     /**
      * Unread-notification counter response.
      */
-    200: {
-        /**
-         * Unread notification count for the current user.
-         */
-        unreadCount: number;
-    };
+    200: NotificationUnreadCountResponse;
 };
 
 export type GetUnreadNotificationCountResponse = GetUnreadNotificationCountResponses[keyof GetUnreadNotificationCountResponses];
@@ -25551,12 +25709,7 @@ export type MarkAllNotificationsReadResponses = {
     /**
      * Bulk mark-all-read response.
      */
-    200: {
-        /**
-         * How many notifications were marked as read by the bulk operation.
-         */
-        markedRead: number;
-    };
+    200: NotificationMarkAllReadResponse;
 };
 
 export type MarkAllNotificationsReadResponse = MarkAllNotificationsReadResponses[keyof MarkAllNotificationsReadResponses];

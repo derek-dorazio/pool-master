@@ -2,6 +2,7 @@
  * Notification DTOs — request/response schemas for notification endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { DateTimeSchema, JsonObjectSchema, SuccessSchema } from './common.dto';
 
 // --- Response Sub-schemas ---
@@ -40,3 +41,12 @@ export const NotificationMarkedReadResponseSchema = SuccessSchema;
 export const NotificationMarkAllReadResponseSchema = z.object({
   markedRead: z.number().describe('How many notifications were marked as read by the bulk operation.'),
 }).describe('Bulk mark-all-read response.');
+
+// --- Published contract (#192) -------------------------------------------------
+// NotificationMarkedReadResponseSchema is not registered: it IS SuccessSchema (an alias,
+// same object), so publishing it would add a component identical to the generic success
+// envelope. Those routes reference SuccessSchema directly instead — same emitted JSON.
+registerSchema('NotificationDto', NotificationDtoSchema);
+registerSchema('NotificationListResponse', NotificationListResponseSchema);
+registerSchema('NotificationUnreadCountResponse', NotificationUnreadCountResponseSchema);
+registerSchema('NotificationMarkAllReadResponse', NotificationMarkAllReadResponseSchema);

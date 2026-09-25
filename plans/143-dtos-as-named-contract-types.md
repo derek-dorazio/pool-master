@@ -208,10 +208,18 @@ is nearly spent.
 
 ### Slice order, and why
 
-1. **Small leaves first** — `client-logs`, `events`, `admin/audit-routes`,
-   `account-consent`, `participants`, `notifications`, `auth`, `history`. Low risk, and
-   they exercise the now-five-check guard set on unfamiliar modules before anything large
-   is bet on it.
+1. **Small leaves first** — DONE except `history`: `client-logs`, `events`,
+   `admin/audit-routes`, `account-consent`, `participants`, `notifications`, `auth`.
+
+   **`history` is deliberately NOT converted, and should not be until #149 lands.** Every
+   one of its response schemas is `z.object({ <key>: z.array(HistoryObjectSchema) })`, and
+   `HistoryObjectSchema` is `JsonObjectSchema` — `z.record(z.unknown())`. Registering them
+   would publish named components carrying no information: `HistoryResultsResponse` would
+   generate as `{ results: Array<Record<string, unknown>> }`. That satisfies every guard
+   and moves the component count while delivering nothing, and it makes the contract *look*
+   published when it is not. Give those responses real shapes under #149 first, then
+   convert. (`HistorySeasonChampionDtoSchema` and `HistorySeasonHighlightsDtoSchema` are
+   real shapes but no route serves them.)
 2. **`config`** — both its route files together, the smallest of the three cross-file DTOs.
 3. **`account`, `drafts`** — self-contained, medium.
 4. **The admin cluster** — `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`

@@ -3507,6 +3507,252 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Authentication token bundle returned after login or registration. */
+        AuthTokensDto: {
+            /** @description Short-lived bearer token used for authenticated API requests. */
+            accessToken: string;
+            /** @description Longer-lived token that can be exchanged for a fresh access token. */
+            refreshToken: string;
+            /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
+            csrfToken: string;
+            /** @description Access-token lifetime in seconds from the time it was issued. */
+            expiresIn: number;
+        };
+        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+        UserProfileDto: {
+            /** @description Stable user identifier. */
+            id: string;
+            /** @description Primary email address for the user account. */
+            email: string;
+            /** @description Unique login identifier for the account. */
+            username: string;
+            /** @description First name shown in account and member-management surfaces. */
+            firstName: string;
+            /** @description Last name shown in account and member-management surfaces. */
+            lastName: string;
+            /** @description Whether the account is currently active for normal sign-in and product usage. */
+            isActive: boolean;
+            /** @description Whether the user has platform-level root-admin access. */
+            isRootAdmin: boolean;
+            /**
+             * @description Authentication provider used for the account when known.
+             * @enum {string}
+             */
+            authProvider?: "email" | "google" | "apple";
+            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+            timezone?: string;
+            /** @description Preferred locale for formatting and localized copy. */
+            locale?: string;
+            /**
+             * @description Preferred clock display used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            timeFormat?: "12H" | "24H";
+            /**
+             * @description Preferred date display format used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            dateFormat?: "MDY" | "DMY" | "YMD";
+            /**
+             * Format: date-time
+             * @description Account creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        };
+        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+        AuthenticatedSessionUserDto: {
+            /** @description Stable user identifier. */
+            id: string;
+            /** @description Primary email address for the user account. */
+            email: string;
+            /** @description Unique login identifier for the account. */
+            username: string;
+            /** @description First name shown in account and member-management surfaces. */
+            firstName: string;
+            /** @description Last name shown in account and member-management surfaces. */
+            lastName: string;
+            /** @description Whether the account is currently active for normal sign-in and product usage. */
+            isActive: boolean;
+            /** @description Whether the user has platform-level root-admin access. */
+            isRootAdmin: boolean;
+            /**
+             * @description Authentication provider used for the account when known.
+             * @enum {string}
+             */
+            authProvider?: "email" | "google" | "apple";
+            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+            timezone?: string;
+            /** @description Preferred locale for formatting and localized copy. */
+            locale?: string;
+            /**
+             * @description Preferred clock display used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            timeFormat?: "12H" | "24H";
+            /**
+             * @description Preferred date display format used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            dateFormat?: "MDY" | "DMY" | "YMD";
+            /**
+             * Format: date-time
+             * @description Account creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * Format: uuid
+             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string | null;
+        };
+        /** @description Create-account payload for a new username/email/password user. */
+        RegisterRequest: {
+            /** @description Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field. */
+            username: string;
+            /**
+             * Format: email
+             * @description Primary contact email address for the user account.
+             */
+            email: string;
+            /** @description Plaintext password chosen during registration. */
+            password: string;
+            /** @description First name captured for the account profile. */
+            firstName: string;
+            /** @description Last name captured for the account profile. */
+            lastName: string;
+        };
+        /** @description Login payload for an existing username-or-email/password account. */
+        LoginRequest: {
+            /** @description Username or email used to sign in to an existing account. */
+            identifier: string;
+            /** @description Existing password for the account. */
+            password: string;
+        };
+        /** @description Successful authentication response returned after registration or login. */
+        AuthResponse: {
+            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+                /**
+                 * Format: uuid
+                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                 */
+                sessionId: string | null;
+            };
+            /** @description Authentication token bundle returned after login or registration. */
+            tokens: {
+                /** @description Short-lived bearer token used for authenticated API requests. */
+                accessToken: string;
+                /** @description Longer-lived token that can be exchanged for a fresh access token. */
+                refreshToken: string;
+                /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
+                csrfToken: string;
+                /** @description Access-token lifetime in seconds from the time it was issued. */
+                expiresIn: number;
+            };
+        };
+        /** @description Authenticated current-user profile response. */
+        MeResponse: {
+            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+                /**
+                 * Format: uuid
+                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                 */
+                sessionId: string | null;
+            };
+        };
+        /** @description Token refresh response including the stable session correlation identifier. */
+        TokenRefreshResponse: {
+            /** @description Short-lived bearer token used for authenticated API requests. */
+            accessToken: string;
+            /** @description Longer-lived token that can be exchanged for a fresh access token. */
+            refreshToken: string;
+            /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
+            csrfToken: string;
+            /** @description Access-token lifetime in seconds from the time it was issued. */
+            expiresIn: number;
+            /**
+             * Format: uuid
+             * @description Safe non-secret session correlation identifier that remains stable across refresh rotation.
+             */
+            sessionId: string;
+        };
         /** @description Tier definition used in contest create and update flows. */
         TierDefinitionRequest: {
             /** @description Stable tier identifier. */
@@ -6959,6 +7205,95 @@ export interface components {
                 updatedAt: string;
             };
         };
+        /** @description Notification feed item returned to clients. */
+        NotificationDto: {
+            /** @description Notification identifier. */
+            id: string;
+            /** @description Target user when the payload is not implicitly scoped by auth. */
+            userId?: string;
+            /** @description Notification category or event type. */
+            eventType: string;
+            /** @description Short notification title. */
+            title: string;
+            /** @description Longer notification body copy. */
+            body: string;
+            /** @description Whether the user has marked the notification as read. */
+            read: boolean;
+            /**
+             * Format: date-time
+             * @description When the notification was marked as read, if applicable.
+             */
+            readAt?: string | null;
+            /** @description Whether the notification has been dismissed from the feed. */
+            dismissed?: boolean;
+            /** @description Optional image shown alongside the notification. */
+            imageUrl?: string | null;
+            /** @description Optional client route or screen hint for notification deep linking. */
+            actionScreen?: string | null;
+            /** @description Optional routing parameters for the notification action target. */
+            actionParams?: {
+                [key: string]: unknown;
+            };
+            /** @description Optional grouping key for bundling related notifications. */
+            groupKey?: string | null;
+            /**
+             * Format: date-time
+             * @description When the notification was created.
+             */
+            createdAt: string;
+        };
+        /** @description Notification-list response. */
+        NotificationListResponse: {
+            /** @description Notification page or slice returned by the API. */
+            notifications: {
+                /** @description Notification identifier. */
+                id: string;
+                /** @description Target user when the payload is not implicitly scoped by auth. */
+                userId?: string;
+                /** @description Notification category or event type. */
+                eventType: string;
+                /** @description Short notification title. */
+                title: string;
+                /** @description Longer notification body copy. */
+                body: string;
+                /** @description Whether the user has marked the notification as read. */
+                read: boolean;
+                /**
+                 * Format: date-time
+                 * @description When the notification was marked as read, if applicable.
+                 */
+                readAt?: string | null;
+                /** @description Whether the notification has been dismissed from the feed. */
+                dismissed?: boolean;
+                /** @description Optional image shown alongside the notification. */
+                imageUrl?: string | null;
+                /** @description Optional client route or screen hint for notification deep linking. */
+                actionScreen?: string | null;
+                /** @description Optional routing parameters for the notification action target. */
+                actionParams?: {
+                    [key: string]: unknown;
+                };
+                /** @description Optional grouping key for bundling related notifications. */
+                groupKey?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the notification was created.
+                 */
+                createdAt: string;
+            }[];
+            /** @description Total number of notifications matching the current query. */
+            total: number;
+        };
+        /** @description Unread-notification counter response. */
+        NotificationUnreadCountResponse: {
+            /** @description Unread notification count for the current user. */
+            unreadCount: number;
+        };
+        /** @description Bulk mark-all-read response. */
+        NotificationMarkAllReadResponse: {
+            /** @description How many notifications were marked as read by the bulk operation. */
+            markedRead: number;
+        };
         /** @enum {string} */
         EventStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
@@ -7350,24 +7685,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Create-account payload for a new username/email/password user. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field. */
-                    username: string;
-                    /**
-                     * Format: email
-                     * @description Primary contact email address for the user account.
-                     */
-                    email: string;
-                    /** @description Plaintext password chosen during registration. */
-                    password: string;
-                    /** @description First name captured for the account profile. */
-                    firstName: string;
-                    /** @description Last name captured for the account profile. */
-                    lastName: string;
-                };
+                "application/json": components["schemas"]["RegisterRequest"];
             };
         };
         responses: {
@@ -7377,65 +7697,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                        /** @description Authentication token bundle returned after login or registration. */
-                        tokens: {
-                            /** @description Short-lived bearer token used for authenticated API requests. */
-                            accessToken: string;
-                            /** @description Longer-lived token that can be exchanged for a fresh access token. */
-                            refreshToken: string;
-                            /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
-                            csrfToken: string;
-                            /** @description Access-token lifetime in seconds from the time it was issued. */
-                            expiresIn: number;
-                        };
-                    };
+                    "application/json": components["schemas"]["AuthResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7485,15 +7747,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Login payload for an existing username-or-email/password account. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Username or email used to sign in to an existing account. */
-                    identifier: string;
-                    /** @description Existing password for the account. */
-                    password: string;
-                };
+                "application/json": components["schemas"]["LoginRequest"];
             };
         };
         responses: {
@@ -7503,65 +7759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                        /** @description Authentication token bundle returned after login or registration. */
-                        tokens: {
-                            /** @description Short-lived bearer token used for authenticated API requests. */
-                            accessToken: string;
-                            /** @description Longer-lived token that can be exchanged for a fresh access token. */
-                            refreshToken: string;
-                            /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
-                            csrfToken: string;
-                            /** @description Access-token lifetime in seconds from the time it was issued. */
-                            expiresIn: number;
-                        };
-                    };
+                    "application/json": components["schemas"]["AuthResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7619,21 +7817,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Short-lived bearer token used for authenticated API requests. */
-                        accessToken: string;
-                        /** @description Longer-lived token that can be exchanged for a fresh access token. */
-                        refreshToken: string;
-                        /** @description Anti-CSRF token that must be echoed on state-changing browser requests. */
-                        csrfToken: string;
-                        /** @description Access-token lifetime in seconds from the time it was issued. */
-                        expiresIn: number;
-                        /**
-                         * Format: uuid
-                         * @description Safe non-secret session correlation identifier that remains stable across refresh rotation.
-                         */
-                        sessionId: string;
-                    };
+                    "application/json": components["schemas"]["TokenRefreshResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7717,54 +7901,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
+                    "application/json": components["schemas"]["MeResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -24986,47 +25123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Notification page or slice returned by the API. */
-                        notifications: {
-                            /** @description Notification identifier. */
-                            id: string;
-                            /** @description Target user when the payload is not implicitly scoped by auth. */
-                            userId?: string;
-                            /** @description Notification category or event type. */
-                            eventType: string;
-                            /** @description Short notification title. */
-                            title: string;
-                            /** @description Longer notification body copy. */
-                            body: string;
-                            /** @description Whether the user has marked the notification as read. */
-                            read: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the notification was marked as read, if applicable.
-                             */
-                            readAt?: string | null;
-                            /** @description Whether the notification has been dismissed from the feed. */
-                            dismissed?: boolean;
-                            /** @description Optional image shown alongside the notification. */
-                            imageUrl?: string | null;
-                            /** @description Optional client route or screen hint for notification deep linking. */
-                            actionScreen?: string | null;
-                            /** @description Optional routing parameters for the notification action target. */
-                            actionParams?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional grouping key for bundling related notifications. */
-                            groupKey?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description When the notification was created.
-                             */
-                            createdAt: string;
-                        }[];
-                        /** @description Total number of notifications matching the current query. */
-                        total: number;
-                    };
+                    "application/json": components["schemas"]["NotificationListResponse"];
                 };
             };
         };
@@ -25046,10 +25143,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Unread notification count for the current user. */
-                        unreadCount: number;
-                    };
+                    "application/json": components["schemas"]["NotificationUnreadCountResponse"];
                 };
             };
         };
@@ -25097,10 +25191,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description How many notifications were marked as read by the bulk operation. */
-                        markedRead: number;
-                    };
+                    "application/json": components["schemas"]["NotificationMarkAllReadResponse"];
                 };
             };
         };

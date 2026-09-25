@@ -1,12 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import {
-  NotificationListResponseSchema,
-  NotificationUnreadCountResponseSchema,
-  NotificationMarkedReadResponseSchema,
-  NotificationMarkAllReadResponseSchema,
-} from '@poolmaster/shared/dto/notifications.dto';
+import { SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/notifications.dto';
 import { mapNotificationToDto } from '../../mappers';
 import { InAppChannel } from './channels/in-app-channel';
 
@@ -18,6 +16,8 @@ export function notificationsModule(
   app: FastifyInstance,
   opts: NotificationModuleOpts,
 ): void {
+  void app.register(schemaComponentsPlugin);
+
   const inAppChannel = new InAppChannel(opts.prisma);
 
   app.get<{ Querystring: { limit?: string; offset?: string; unreadOnly?: string } }>(
@@ -29,7 +29,7 @@ export function notificationsModule(
         description:
           'Returns the authenticated user notification feed for in-app inbox and unread-state surfaces.',
         operationId: 'listNotifications',
-        response: { 200: zodToJsonSchema(NotificationListResponseSchema) },
+        response: { 200: schemaRef('NotificationListResponse') },
       },
     },
     async (request) => {
@@ -61,7 +61,7 @@ export function notificationsModule(
       description:
         'Returns the unread notification count used by shell badges and lightweight polling surfaces.',
       operationId: 'getUnreadNotificationCount',
-      response: { 200: zodToJsonSchema(NotificationUnreadCountResponseSchema) },
+      response: { 200: schemaRef('NotificationUnreadCountResponse') },
     },
     handler: async (request) => {
       const logger = request.contextLogger ?? request.log;
@@ -80,7 +80,7 @@ export function notificationsModule(
       description:
         'Marks the specified notification as read for the authenticated user.',
       operationId: 'markNotificationRead',
-      response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const logger = request.contextLogger ?? request.log;
@@ -98,7 +98,7 @@ export function notificationsModule(
       description:
         'Marks every current notification as read for the authenticated user.',
       operationId: 'markAllNotificationsRead',
-      response: { 200: zodToJsonSchema(NotificationMarkAllReadResponseSchema) },
+      response: { 200: schemaRef('NotificationMarkAllReadResponse') },
     },
     handler: async (request) => {
       const logger = request.contextLogger ?? request.log;
@@ -117,7 +117,7 @@ export function notificationsModule(
       description:
         'Dismisses a notification so it no longer appears in the active inbox feed.',
       operationId: 'dismissNotification',
-      response: { 200: zodToJsonSchema(NotificationMarkedReadResponseSchema) },
+      response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     handler: async (request) => {
       const logger = request.contextLogger ?? request.log;

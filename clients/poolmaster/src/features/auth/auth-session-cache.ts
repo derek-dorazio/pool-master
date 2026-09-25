@@ -1,11 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { GetCurrentUserResponses, InactivateAccountResponses, ReactivateAccountResponses, UpdateAccountPreferencesResponses, UpdateAccountProfileResponses } from '@/lib/api';
+import type { AuthenticatedSessionUserDto, InactivateAccountResponses, ReactivateAccountResponses, UpdateAccountPreferencesResponses, UpdateAccountProfileResponses } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 
 export const AUTH_ME_QUERY_KEY = QueryKeys.auth.me;
 export const AUTH_REFRESH_QUERY_KEY = QueryKeys.auth.refresh;
 
-export type AuthSessionUser = GetCurrentUserResponses[200]['user'];
+export type AuthSessionUser = AuthenticatedSessionUserDto;
 export type AuthSessionData = AuthSessionUser | null;
 export type AuthSessionUserUpdate =
   | AuthSessionUser

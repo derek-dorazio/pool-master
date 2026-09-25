@@ -18,6 +18,544 @@
       }
     },
     "schemas": {
+      "AuthTokensDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Short-lived bearer token used for authenticated API requests."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Longer-lived token that can be exchanged for a fresh access token."
+          },
+          "csrfToken": {
+            "type": "string",
+            "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Access-token lifetime in seconds from the time it was issued."
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "csrfToken",
+          "expiresIn"
+        ],
+        "additionalProperties": false,
+        "description": "Authentication token bundle returned after login or registration."
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable user identifier."
+          },
+          "email": {
+            "type": "string",
+            "description": "Primary email address for the user account."
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique login identifier for the account."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name shown in account and member-management surfaces."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name shown in account and member-management surfaces."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the account is currently active for normal sign-in and product usage."
+          },
+          "isRootAdmin": {
+            "type": "boolean",
+            "description": "Whether the user has platform-level root-admin access."
+          },
+          "authProvider": {
+            "type": "string",
+            "enum": [
+              "email",
+              "google",
+              "apple"
+            ],
+            "description": "Authentication provider used for the account when known."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+          },
+          "locale": {
+            "type": "string",
+            "description": "Preferred locale for formatting and localized copy."
+          },
+          "timeFormat": {
+            "type": "string",
+            "enum": [
+              "12H",
+              "24H"
+            ],
+            "description": "Preferred clock display used in account and scheduling surfaces."
+          },
+          "dateFormat": {
+            "type": "string",
+            "enum": [
+              "MDY",
+              "DMY",
+              "YMD"
+            ],
+            "description": "Preferred date display format used in account and scheduling surfaces."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp in ISO 8601 format."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "username",
+          "firstName",
+          "lastName",
+          "isActive",
+          "isRootAdmin"
+        ],
+        "additionalProperties": false,
+        "description": "Frontend-facing user profile summary derived from the authenticated account."
+      },
+      "AuthenticatedSessionUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable user identifier."
+          },
+          "email": {
+            "type": "string",
+            "description": "Primary email address for the user account."
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique login identifier for the account."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name shown in account and member-management surfaces."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name shown in account and member-management surfaces."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the account is currently active for normal sign-in and product usage."
+          },
+          "isRootAdmin": {
+            "type": "boolean",
+            "description": "Whether the user has platform-level root-admin access."
+          },
+          "authProvider": {
+            "type": "string",
+            "enum": [
+              "email",
+              "google",
+              "apple"
+            ],
+            "description": "Authentication provider used for the account when known."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+          },
+          "locale": {
+            "type": "string",
+            "description": "Preferred locale for formatting and localized copy."
+          },
+          "timeFormat": {
+            "type": "string",
+            "enum": [
+              "12H",
+              "24H"
+            ],
+            "description": "Preferred clock display used in account and scheduling surfaces."
+          },
+          "dateFormat": {
+            "type": "string",
+            "enum": [
+              "MDY",
+              "DMY",
+              "YMD"
+            ],
+            "description": "Preferred date display format used in account and scheduling surfaces."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp in ISO 8601 format."
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Safe non-secret session correlation identifier for the authenticated browser session."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "username",
+          "firstName",
+          "lastName",
+          "isActive",
+          "isRootAdmin",
+          "sessionId"
+        ],
+        "additionalProperties": false,
+        "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100,
+            "pattern": "^\\S+$",
+            "description": "Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Primary contact email address for the user account."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "Plaintext password chosen during registration."
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "First name captured for the account profile."
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Last name captured for the account profile."
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "password",
+          "firstName",
+          "lastName"
+        ],
+        "additionalProperties": false,
+        "description": "Create-account payload for a new username/email/password user."
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Username or email used to sign in to an existing account."
+          },
+          "password": {
+            "type": "string",
+            "description": "Existing password for the account."
+          }
+        },
+        "required": [
+          "identifier",
+          "password"
+        ],
+        "additionalProperties": false,
+        "description": "Login payload for an existing username-or-email/password account."
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable user identifier."
+              },
+              "email": {
+                "type": "string",
+                "description": "Primary email address for the user account."
+              },
+              "username": {
+                "type": "string",
+                "description": "Unique login identifier for the account."
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name shown in account and member-management surfaces."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name shown in account and member-management surfaces."
+              },
+              "isActive": {
+                "type": "boolean",
+                "description": "Whether the account is currently active for normal sign-in and product usage."
+              },
+              "isRootAdmin": {
+                "type": "boolean",
+                "description": "Whether the user has platform-level root-admin access."
+              },
+              "authProvider": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "google",
+                  "apple"
+                ],
+                "description": "Authentication provider used for the account when known."
+              },
+              "timezone": {
+                "type": "string",
+                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+              },
+              "locale": {
+                "type": "string",
+                "description": "Preferred locale for formatting and localized copy."
+              },
+              "timeFormat": {
+                "type": "string",
+                "enum": [
+                  "12H",
+                  "24H"
+                ],
+                "description": "Preferred clock display used in account and scheduling surfaces."
+              },
+              "dateFormat": {
+                "type": "string",
+                "enum": [
+                  "MDY",
+                  "DMY",
+                  "YMD"
+                ],
+                "description": "Preferred date display format used in account and scheduling surfaces."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Account creation timestamp in ISO 8601 format."
+              },
+              "sessionId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "Safe non-secret session correlation identifier for the authenticated browser session."
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "username",
+              "firstName",
+              "lastName",
+              "isActive",
+              "isRootAdmin",
+              "sessionId"
+            ],
+            "additionalProperties": false,
+            "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
+          },
+          "tokens": {
+            "type": "object",
+            "properties": {
+              "accessToken": {
+                "type": "string",
+                "description": "Short-lived bearer token used for authenticated API requests."
+              },
+              "refreshToken": {
+                "type": "string",
+                "description": "Longer-lived token that can be exchanged for a fresh access token."
+              },
+              "csrfToken": {
+                "type": "string",
+                "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
+              },
+              "expiresIn": {
+                "type": "number",
+                "description": "Access-token lifetime in seconds from the time it was issued."
+              }
+            },
+            "required": [
+              "accessToken",
+              "refreshToken",
+              "csrfToken",
+              "expiresIn"
+            ],
+            "additionalProperties": false,
+            "description": "Authentication token bundle returned after login or registration."
+          }
+        },
+        "required": [
+          "user",
+          "tokens"
+        ],
+        "additionalProperties": false,
+        "description": "Successful authentication response returned after registration or login."
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable user identifier."
+              },
+              "email": {
+                "type": "string",
+                "description": "Primary email address for the user account."
+              },
+              "username": {
+                "type": "string",
+                "description": "Unique login identifier for the account."
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name shown in account and member-management surfaces."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name shown in account and member-management surfaces."
+              },
+              "isActive": {
+                "type": "boolean",
+                "description": "Whether the account is currently active for normal sign-in and product usage."
+              },
+              "isRootAdmin": {
+                "type": "boolean",
+                "description": "Whether the user has platform-level root-admin access."
+              },
+              "authProvider": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "google",
+                  "apple"
+                ],
+                "description": "Authentication provider used for the account when known."
+              },
+              "timezone": {
+                "type": "string",
+                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+              },
+              "locale": {
+                "type": "string",
+                "description": "Preferred locale for formatting and localized copy."
+              },
+              "timeFormat": {
+                "type": "string",
+                "enum": [
+                  "12H",
+                  "24H"
+                ],
+                "description": "Preferred clock display used in account and scheduling surfaces."
+              },
+              "dateFormat": {
+                "type": "string",
+                "enum": [
+                  "MDY",
+                  "DMY",
+                  "YMD"
+                ],
+                "description": "Preferred date display format used in account and scheduling surfaces."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Account creation timestamp in ISO 8601 format."
+              },
+              "sessionId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "Safe non-secret session correlation identifier for the authenticated browser session."
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "username",
+              "firstName",
+              "lastName",
+              "isActive",
+              "isRootAdmin",
+              "sessionId"
+            ],
+            "additionalProperties": false,
+            "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
+          }
+        },
+        "required": [
+          "user"
+        ],
+        "additionalProperties": false,
+        "description": "Authenticated current-user profile response."
+      },
+      "TokenRefreshResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Short-lived bearer token used for authenticated API requests."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Longer-lived token that can be exchanged for a fresh access token."
+          },
+          "csrfToken": {
+            "type": "string",
+            "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Access-token lifetime in seconds from the time it was issued."
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Safe non-secret session correlation identifier that remains stable across refresh rotation."
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "csrfToken",
+          "expiresIn",
+          "sessionId"
+        ],
+        "additionalProperties": false,
+        "description": "Token refresh response including the stable session correlation identifier."
+      },
       "TierDefinitionRequest": {
         "type": "object",
         "properties": {
@@ -10507,6 +11045,217 @@
         "additionalProperties": false,
         "description": "Single-participant detail response."
       },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Notification identifier."
+          },
+          "userId": {
+            "type": "string",
+            "description": "Target user when the payload is not implicitly scoped by auth."
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Notification category or event type."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short notification title."
+          },
+          "body": {
+            "type": "string",
+            "description": "Longer notification body copy."
+          },
+          "read": {
+            "type": "boolean",
+            "description": "Whether the user has marked the notification as read."
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the notification was marked as read, if applicable."
+          },
+          "dismissed": {
+            "type": "boolean",
+            "description": "Whether the notification has been dismissed from the feed."
+          },
+          "imageUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional image shown alongside the notification."
+          },
+          "actionScreen": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional client route or screen hint for notification deep linking."
+          },
+          "actionParams": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Optional routing parameters for the notification action target."
+          },
+          "groupKey": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional grouping key for bundling related notifications."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the notification was created."
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "title",
+          "body",
+          "read",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "description": "Notification feed item returned to clients."
+      },
+      "NotificationListResponse": {
+        "type": "object",
+        "properties": {
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Notification identifier."
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "Target user when the payload is not implicitly scoped by auth."
+                },
+                "eventType": {
+                  "type": "string",
+                  "description": "Notification category or event type."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Short notification title."
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Longer notification body copy."
+                },
+                "read": {
+                  "type": "boolean",
+                  "description": "Whether the user has marked the notification as read."
+                },
+                "readAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When the notification was marked as read, if applicable."
+                },
+                "dismissed": {
+                  "type": "boolean",
+                  "description": "Whether the notification has been dismissed from the feed."
+                },
+                "imageUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional image shown alongside the notification."
+                },
+                "actionScreen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional client route or screen hint for notification deep linking."
+                },
+                "actionParams": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "description": "Optional routing parameters for the notification action target."
+                },
+                "groupKey": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional grouping key for bundling related notifications."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the notification was created."
+                }
+              },
+              "required": [
+                "id",
+                "eventType",
+                "title",
+                "body",
+                "read",
+                "createdAt"
+              ],
+              "additionalProperties": false,
+              "description": "Notification feed item returned to clients."
+            },
+            "description": "Notification page or slice returned by the API."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of notifications matching the current query."
+          }
+        },
+        "required": [
+          "notifications",
+          "total"
+        ],
+        "additionalProperties": false,
+        "description": "Notification-list response."
+      },
+      "NotificationUnreadCountResponse": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "number",
+            "description": "Unread notification count for the current user."
+          }
+        },
+        "required": [
+          "unreadCount"
+        ],
+        "additionalProperties": false,
+        "description": "Unread-notification counter response."
+      },
+      "NotificationMarkAllReadResponse": {
+        "type": "object",
+        "properties": {
+          "markedRead": {
+            "type": "number",
+            "description": "How many notifications were marked as read by the bulk operation."
+          }
+        },
+        "required": [
+          "markedRead"
+        ],
+        "additionalProperties": false,
+        "description": "Bulk mark-all-read response."
+      },
       "EventStatusDto": {
         "type": "string",
         "enum": [
@@ -11607,52 +12356,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "username": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 100,
-                    "pattern": "^\\S+$",
-                    "description": "Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field."
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "description": "Primary contact email address for the user account."
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "maxLength": 128,
-                    "description": "Plaintext password chosen during registration."
-                  },
-                  "firstName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "description": "First name captured for the account profile."
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "description": "Last name captured for the account profile."
-                  }
-                },
-                "required": [
-                  "username",
-                  "email",
-                  "password",
-                  "firstName",
-                  "lastName"
-                ],
-                "additionalProperties": false,
-                "description": "Create-account payload for a new username/email/password user."
+                "$ref": "#/components/schemas/RegisterRequest"
               }
             }
-          },
-          "description": "Create-account payload for a new username/email/password user."
+          }
         },
         "responses": {
           "201": {
@@ -11660,136 +12367,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Stable user identifier."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Primary email address for the user account."
-                        },
-                        "username": {
-                          "type": "string",
-                          "description": "Unique login identifier for the account."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name shown in account and member-management surfaces."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name shown in account and member-management surfaces."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the account is currently active for normal sign-in and product usage."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the user has platform-level root-admin access."
-                        },
-                        "authProvider": {
-                          "type": "string",
-                          "enum": [
-                            "email",
-                            "google",
-                            "apple"
-                          ],
-                          "description": "Authentication provider used for the account when known."
-                        },
-                        "timezone": {
-                          "type": "string",
-                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
-                        },
-                        "locale": {
-                          "type": "string",
-                          "description": "Preferred locale for formatting and localized copy."
-                        },
-                        "timeFormat": {
-                          "type": "string",
-                          "enum": [
-                            "12H",
-                            "24H"
-                          ],
-                          "description": "Preferred clock display used in account and scheduling surfaces."
-                        },
-                        "dateFormat": {
-                          "type": "string",
-                          "enum": [
-                            "MDY",
-                            "DMY",
-                            "YMD"
-                          ],
-                          "description": "Preferred date display format used in account and scheduling surfaces."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Account creation timestamp in ISO 8601 format."
-                        },
-                        "sessionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid",
-                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "firstName",
-                        "lastName",
-                        "isActive",
-                        "isRootAdmin",
-                        "sessionId"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
-                    },
-                    "tokens": {
-                      "type": "object",
-                      "properties": {
-                        "accessToken": {
-                          "type": "string",
-                          "description": "Short-lived bearer token used for authenticated API requests."
-                        },
-                        "refreshToken": {
-                          "type": "string",
-                          "description": "Longer-lived token that can be exchanged for a fresh access token."
-                        },
-                        "csrfToken": {
-                          "type": "string",
-                          "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
-                        },
-                        "expiresIn": {
-                          "type": "number",
-                          "description": "Access-token lifetime in seconds from the time it was issued."
-                        }
-                      },
-                      "required": [
-                        "accessToken",
-                        "refreshToken",
-                        "csrfToken",
-                        "expiresIn"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Authentication token bundle returned after login or registration."
-                    }
-                  },
-                  "required": [
-                    "user",
-                    "tokens"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Successful authentication response returned after registration or login."
+                  "$ref": "#/components/schemas/AuthResponse"
                 }
               }
             }
@@ -11888,29 +12466,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "identifier": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "description": "Username or email used to sign in to an existing account."
-                  },
-                  "password": {
-                    "type": "string",
-                    "description": "Existing password for the account."
-                  }
-                },
-                "required": [
-                  "identifier",
-                  "password"
-                ],
-                "additionalProperties": false,
-                "description": "Login payload for an existing username-or-email/password account."
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
-          },
-          "description": "Login payload for an existing username-or-email/password account."
+          }
         },
         "responses": {
           "200": {
@@ -11918,136 +12477,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Stable user identifier."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Primary email address for the user account."
-                        },
-                        "username": {
-                          "type": "string",
-                          "description": "Unique login identifier for the account."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name shown in account and member-management surfaces."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name shown in account and member-management surfaces."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the account is currently active for normal sign-in and product usage."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the user has platform-level root-admin access."
-                        },
-                        "authProvider": {
-                          "type": "string",
-                          "enum": [
-                            "email",
-                            "google",
-                            "apple"
-                          ],
-                          "description": "Authentication provider used for the account when known."
-                        },
-                        "timezone": {
-                          "type": "string",
-                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
-                        },
-                        "locale": {
-                          "type": "string",
-                          "description": "Preferred locale for formatting and localized copy."
-                        },
-                        "timeFormat": {
-                          "type": "string",
-                          "enum": [
-                            "12H",
-                            "24H"
-                          ],
-                          "description": "Preferred clock display used in account and scheduling surfaces."
-                        },
-                        "dateFormat": {
-                          "type": "string",
-                          "enum": [
-                            "MDY",
-                            "DMY",
-                            "YMD"
-                          ],
-                          "description": "Preferred date display format used in account and scheduling surfaces."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Account creation timestamp in ISO 8601 format."
-                        },
-                        "sessionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid",
-                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "firstName",
-                        "lastName",
-                        "isActive",
-                        "isRootAdmin",
-                        "sessionId"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
-                    },
-                    "tokens": {
-                      "type": "object",
-                      "properties": {
-                        "accessToken": {
-                          "type": "string",
-                          "description": "Short-lived bearer token used for authenticated API requests."
-                        },
-                        "refreshToken": {
-                          "type": "string",
-                          "description": "Longer-lived token that can be exchanged for a fresh access token."
-                        },
-                        "csrfToken": {
-                          "type": "string",
-                          "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
-                        },
-                        "expiresIn": {
-                          "type": "number",
-                          "description": "Access-token lifetime in seconds from the time it was issued."
-                        }
-                      },
-                      "required": [
-                        "accessToken",
-                        "refreshToken",
-                        "csrfToken",
-                        "expiresIn"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Authentication token bundle returned after login or registration."
-                    }
-                  },
-                  "required": [
-                    "user",
-                    "tokens"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Successful authentication response returned after registration or login."
+                  "$ref": "#/components/schemas/AuthResponse"
                 }
               }
             }
@@ -12147,39 +12577,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string",
-                      "description": "Short-lived bearer token used for authenticated API requests."
-                    },
-                    "refreshToken": {
-                      "type": "string",
-                      "description": "Longer-lived token that can be exchanged for a fresh access token."
-                    },
-                    "csrfToken": {
-                      "type": "string",
-                      "description": "Anti-CSRF token that must be echoed on state-changing browser requests."
-                    },
-                    "expiresIn": {
-                      "type": "number",
-                      "description": "Access-token lifetime in seconds from the time it was issued."
-                    },
-                    "sessionId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "Safe non-secret session correlation identifier that remains stable across refresh rotation."
-                    }
-                  },
-                  "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "csrfToken",
-                    "expiresIn",
-                    "sessionId"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Token refresh response including the stable session correlation identifier."
+                  "$ref": "#/components/schemas/TokenRefreshResponse"
                 }
               }
             }
@@ -12315,106 +12713,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Stable user identifier."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Primary email address for the user account."
-                        },
-                        "username": {
-                          "type": "string",
-                          "description": "Unique login identifier for the account."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name shown in account and member-management surfaces."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name shown in account and member-management surfaces."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the account is currently active for normal sign-in and product usage."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the user has platform-level root-admin access."
-                        },
-                        "authProvider": {
-                          "type": "string",
-                          "enum": [
-                            "email",
-                            "google",
-                            "apple"
-                          ],
-                          "description": "Authentication provider used for the account when known."
-                        },
-                        "timezone": {
-                          "type": "string",
-                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
-                        },
-                        "locale": {
-                          "type": "string",
-                          "description": "Preferred locale for formatting and localized copy."
-                        },
-                        "timeFormat": {
-                          "type": "string",
-                          "enum": [
-                            "12H",
-                            "24H"
-                          ],
-                          "description": "Preferred clock display used in account and scheduling surfaces."
-                        },
-                        "dateFormat": {
-                          "type": "string",
-                          "enum": [
-                            "MDY",
-                            "DMY",
-                            "YMD"
-                          ],
-                          "description": "Preferred date display format used in account and scheduling surfaces."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Account creation timestamp in ISO 8601 format."
-                        },
-                        "sessionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid",
-                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "username",
-                        "firstName",
-                        "lastName",
-                        "isActive",
-                        "isRootAdmin",
-                        "sessionId"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
-                    }
-                  },
-                  "required": [
-                    "user"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Authenticated current-user profile response."
+                  "$ref": "#/components/schemas/MeResponse"
                 }
               }
             }
@@ -53229,105 +53528,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "notifications": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Notification identifier."
-                          },
-                          "userId": {
-                            "type": "string",
-                            "description": "Target user when the payload is not implicitly scoped by auth."
-                          },
-                          "eventType": {
-                            "type": "string",
-                            "description": "Notification category or event type."
-                          },
-                          "title": {
-                            "type": "string",
-                            "description": "Short notification title."
-                          },
-                          "body": {
-                            "type": "string",
-                            "description": "Longer notification body copy."
-                          },
-                          "read": {
-                            "type": "boolean",
-                            "description": "Whether the user has marked the notification as read."
-                          },
-                          "readAt": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "description": "When the notification was marked as read, if applicable."
-                          },
-                          "dismissed": {
-                            "type": "boolean",
-                            "description": "Whether the notification has been dismissed from the feed."
-                          },
-                          "imageUrl": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional image shown alongside the notification."
-                          },
-                          "actionScreen": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional client route or screen hint for notification deep linking."
-                          },
-                          "actionParams": {
-                            "type": "object",
-                            "additionalProperties": {},
-                            "description": "Optional routing parameters for the notification action target."
-                          },
-                          "groupKey": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional grouping key for bundling related notifications."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the notification was created."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "eventType",
-                          "title",
-                          "body",
-                          "read",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Notification feed item returned to clients."
-                      },
-                      "description": "Notification page or slice returned by the API."
-                    },
-                    "total": {
-                      "type": "number",
-                      "description": "Total number of notifications matching the current query."
-                    }
-                  },
-                  "required": [
-                    "notifications",
-                    "total"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Notification-list response."
+                  "$ref": "#/components/schemas/NotificationListResponse"
                 }
               }
             }
@@ -53349,18 +53550,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "unreadCount": {
-                      "type": "number",
-                      "description": "Unread notification count for the current user."
-                    }
-                  },
-                  "required": [
-                    "unreadCount"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Unread-notification counter response."
+                  "$ref": "#/components/schemas/NotificationUnreadCountResponse"
                 }
               }
             }
@@ -53428,18 +53618,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "markedRead": {
-                      "type": "number",
-                      "description": "How many notifications were marked as read by the bulk operation."
-                    }
-                  },
-                  "required": [
-                    "markedRead"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Bulk mark-all-read response."
+                  "$ref": "#/components/schemas/NotificationMarkAllReadResponse"
                 }
               }
             }
