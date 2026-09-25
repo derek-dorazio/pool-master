@@ -68,7 +68,7 @@ export {
   TabsList,
   TabsTrigger,
 } from "./tabs";
-export { NotificationCard, Toast, ToastProvider, ToastViewport } from "./toast";
+export { Toast, ToastProvider, ToastViewport } from "./toast";
 export { HelpText, Tooltip, TooltipProvider } from "./tooltip";
 export { Modal } from "./modal";
 export {

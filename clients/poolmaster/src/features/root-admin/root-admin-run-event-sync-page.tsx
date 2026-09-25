@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviders, adminSyncProviderEventData, listEvents, type ListEventsResponses } from '@/lib/api';
+import { adminListProviders, adminSyncProviderEventData, listEvents, type EventSummaryDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,
@@ -25,7 +25,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type EventSyncEvent = ListEventsResponses[200]['events'][number];
 type MockEventState = 'open' | 'locked' | 'live' | 'completed';
 
 const MOCK_EVENT_STATE_OPTIONS: Array<{ value: MockEventState | ''; label: string }> = [
@@ -39,7 +38,7 @@ const MOCK_EVENT_STATE_OPTIONS: Array<{ value: MockEventState | ''; label: strin
 function getValidEventStatusesForPreset(
   presetId: EventSyncPresetId,
   hasMockEventStateOverride: boolean,
-): EventSyncEvent['status'][] {
+): EventSummaryDto['status'][] {
   if (hasMockEventStateOverride) {
     return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
   }
@@ -61,7 +60,7 @@ function formatEventStartDate(startDate: string) {
   }).format(new Date(startDate));
 }
 
-function formatEventOptionLabel(event: EventSyncEvent) {
+function formatEventOptionLabel(event: EventSummaryDto) {
   const participantText = typeof event.participantCount === 'number'
     ? `${event.participantCount} participants`
     : 'participants unknown';
@@ -129,7 +128,7 @@ export function RootAdminRunEventSyncPage() {
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
-    queryFn: async (): Promise<EventSyncEvent[]> => {
+    queryFn: async (): Promise<EventSummaryDto[]> => {
       const response = await listEvents({
         query: {
           sport: eventSyncSport,

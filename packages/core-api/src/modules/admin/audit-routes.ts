@@ -3,16 +3,17 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import {
-  AuditEntryResponseSchema,
-  AuditListResponseSchema,
-  SuccessSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+import { SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/admin.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { listAuditLog, getAuditEntry, exportAuditLog } from './audit-handler';
 
 export function auditRoutes(app: FastifyInstance): void {
+  void app.register(schemaComponentsPlugin);
+
   const querySchema = {
     querystring: {
       type: 'object' as const,
@@ -52,7 +53,7 @@ export function auditRoutes(app: FastifyInstance): void {
         'Returns the administrative audit log feed with filtering, pagination, and search support.',
       operationId: 'adminListAuditLog',
       response: {
-        200: zodToJsonSchema(AuditListResponseSchema),
+        200: schemaRef('AuditListResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       ...querySchema,
@@ -66,7 +67,7 @@ export function auditRoutes(app: FastifyInstance): void {
         'Returns the detail view for a single audit log entry.',
       operationId: 'adminGetAuditEntry',
       response: {
-        200: zodToJsonSchema(AuditEntryResponseSchema),
+        200: schemaRef('AuditEntryResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },

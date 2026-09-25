@@ -2,6 +2,7 @@
  * Admin DTOs — request/response schemas for root-admin endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
@@ -683,3 +684,12 @@ export const AuditEntryResponseSchema = z.object({
   entry: AuditEntryDtoSchema,
 }).describe('Single admin audit-entry response.');
 export type AuditEntryResponse = z.infer<typeof AuditEntryResponseSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// PARTIAL on purpose. Only the audit schemas are registered, because only
+// admin/audit-routes.ts is converted; the rest of this module's schemas are served by
+// admin/routes.ts, which is still mixed (see its #192-mixed: marker). Registering them
+// before that file converts would trip check 1 on every one of its routes.
+registerSchema('AuditEntryDto', AuditEntryDtoSchema);
+registerSchema('AuditListResponse', AuditListResponseSchema);
+registerSchema('AuditEntryResponse', AuditEntryResponseSchema);

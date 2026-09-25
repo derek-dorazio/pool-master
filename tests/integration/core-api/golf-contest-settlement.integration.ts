@@ -5,7 +5,6 @@ import { GolfContestSettlementService } from '../../../packages/core-api/src/mod
 import {
   cleanupTestData,
   createTestUser,
-  getApp,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -201,36 +200,34 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     })).resolves.toBe(2);
     expect(completedEvents).toHaveLength(1);
 
-    const historyResponse = await getApp().inject({
-      method: 'GET',
-      url: `/api/v1/contests/${directContest.id}/history/summary`,
-      headers: owner.headers,
+    // Idempotency is the point of the second settle: the frozen standings must be
+    // byte-for-byte what the first settlement wrote. This previously read back through
+    // GET /contests/:id/history/summary; that module was deleted as dead code (#192), so
+    // the assertion now reads the frozen rows directly, which is strictly stronger than
+    // asserting on a route's projection of them.
+    const settledStandings = await prisma.contestEntryGolfStanding.findMany({
+      where: { contestId: directContest.id },
+      orderBy: { position: 'asc' },
     });
-
-    expect(historyResponse.statusCode).toBe(200);
-    expect(historyResponse.json()).toEqual(expect.objectContaining({
-      contestId: directContest.id,
-      contestName: directContest.name,
-      sport: Sport.GOLF,
-      contestFormat: 'ROSTER',
-      numEntries: 2,
-      finalStandings: expect.arrayContaining([
-        expect.objectContaining({
-          contestId: directContest.id,
-          entryId: directEntries.winner.id,
-          finalRank: 1,
-          finalScoreToPar: -9,
-          isWinner: true,
-        }),
-        expect.objectContaining({
-          contestId: directContest.id,
-          entryId: directEntries.runnerUp.id,
-          finalRank: 2,
-          finalScoreToPar: 1,
-          isWinner: false,
-        }),
-      ]),
-    }));
+    expect(settledStandings.map((standing) => ({
+      contestEntryId: standing.contestEntryId,
+      totalScoreToPar: standing.totalScoreToPar,
+      position: standing.position,
+      status: standing.status,
+    }))).toEqual([
+      {
+        contestEntryId: directEntries.winner.id,
+        totalScoreToPar: -9,
+        position: 1,
+        status: 'FINAL',
+      },
+      {
+        contestEntryId: directEntries.runnerUp.id,
+        totalScoreToPar: 1,
+        position: 2,
+        status: 'FINAL',
+      },
+    ]);
   });
 });
 

@@ -2,6 +2,7 @@
  * Auth DTOs — request/response schemas for authentication endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { SuccessSchema } from './common.dto';
 
@@ -131,3 +132,20 @@ export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 
 export const LogoutResponseSchema = SuccessSchema;
 export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// Only what auth/routes.ts serves. RefreshRequestSchema, LogoutRequestSchema and
+// LogoutResponseSchema are not referenced by any route, so registering them would
+// publish components nothing serves (check 2).
+//
+// AuthenticatedSessionUserDto is the payoff here: getCurrentUser's `user` was derived in
+// three frontend files under three different names (AuthSessionUser, PostAuthUser,
+// CurrentUser).
+registerSchema('AuthTokensDto', AuthTokensDtoSchema);
+registerSchema('UserProfileDto', UserProfileDtoSchema);
+registerSchema('AuthenticatedSessionUserDto', AuthenticatedSessionUserDtoSchema);
+registerSchema('RegisterRequest', RegisterRequestSchema);
+registerSchema('LoginRequest', LoginRequestSchema);
+registerSchema('AuthResponse', AuthResponseSchema);
+registerSchema('MeResponse', MeResponseSchema);
+registerSchema('TokenRefreshResponse', TokenRefreshResponseSchema);

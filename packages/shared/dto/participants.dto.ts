@@ -2,6 +2,7 @@
  * Participant DTOs — request/response schemas for participant endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   InjuryStatusCode,
   ParticipantStatus,
@@ -133,3 +134,8 @@ export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSche
 export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
 }).describe('Single-participant detail response.');
+
+// --- Published contract (#192) -------------------------------------------------
+registerSchema('ParticipantDto', ParticipantDtoSchema);
+registerSchema('ParticipantListResponse', ParticipantListResponseSchema);
+registerSchema('ParticipantResponse', ParticipantResponseSchema);

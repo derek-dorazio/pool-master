@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 
 export const ClientLogLevelSchema = z.enum([
   'debug',
@@ -32,3 +33,9 @@ export const ClientLogBatchSchema = z.object({
 export type ClientLogLevel = z.infer<typeof ClientLogLevelSchema>;
 export type ClientLogEntry = z.infer<typeof ClientLogEntrySchema>;
 export type ClientLogBatch = z.infer<typeof ClientLogBatchSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// ClientLogBatch is a request body; the frontend builds it in lib/logger/network-sink.ts.
+registerSchema('ClientLogLevel', ClientLogLevelSchema);
+registerSchema('ClientLogEntry', ClientLogEntrySchema);
+registerSchema('ClientLogBatch', ClientLogBatchSchema);

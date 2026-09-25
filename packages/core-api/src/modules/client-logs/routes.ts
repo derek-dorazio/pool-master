@@ -1,13 +1,16 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  ClientLogBatchSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/client-logs.dto';
 import { createClientLogHandlers } from './handler';
 import { ClientLogService } from './service';
 
 export function clientLogsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const service = new ClientLogService({
     logger: fastify.log,
   });
@@ -22,7 +25,7 @@ export function clientLogsModule(fastify: FastifyInstance): void {
         description:
           'Accepts browser-produced structured log batches so webapp runtime events can be correlated with backend request logs in operational tooling.',
         operationId: 'ingestClientLogs',
-        body: zodToJsonSchema(ClientLogBatchSchema),
+        body: schemaRef('ClientLogBatch'),
         response: {
           204: { type: 'null' },
           400: zodToJsonSchema(ErrorEnvelopeSchema),

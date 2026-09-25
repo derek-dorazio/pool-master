@@ -5,6 +5,369 @@ export type ClientOptions = {
 };
 
 /**
+ * Authentication token bundle returned after login or registration.
+ */
+export type AuthTokensDto = {
+    /**
+     * Short-lived bearer token used for authenticated API requests.
+     */
+    accessToken: string;
+    /**
+     * Longer-lived token that can be exchanged for a fresh access token.
+     */
+    refreshToken: string;
+    /**
+     * Anti-CSRF token that must be echoed on state-changing browser requests.
+     */
+    csrfToken: string;
+    /**
+     * Access-token lifetime in seconds from the time it was issued.
+     */
+    expiresIn: number;
+};
+
+/**
+ * Frontend-facing user profile summary derived from the authenticated account.
+ */
+export type UserProfileDto = {
+    /**
+     * Stable user identifier.
+     */
+    id: string;
+    /**
+     * Primary email address for the user account.
+     */
+    email: string;
+    /**
+     * Unique login identifier for the account.
+     */
+    username: string;
+    /**
+     * First name shown in account and member-management surfaces.
+     */
+    firstName: string;
+    /**
+     * Last name shown in account and member-management surfaces.
+     */
+    lastName: string;
+    /**
+     * Whether the account is currently active for normal sign-in and product usage.
+     */
+    isActive: boolean;
+    /**
+     * Whether the user has platform-level root-admin access.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Authentication provider used for the account when known.
+     */
+    authProvider?: 'email' | 'google' | 'apple';
+    /**
+     * Preferred IANA timezone for user-facing scheduling and reminders.
+     */
+    timezone?: string;
+    /**
+     * Preferred locale for formatting and localized copy.
+     */
+    locale?: string;
+    /**
+     * Preferred clock display used in account and scheduling surfaces.
+     */
+    timeFormat?: '12H' | '24H';
+    /**
+     * Preferred date display format used in account and scheduling surfaces.
+     */
+    dateFormat?: 'MDY' | 'DMY' | 'YMD';
+    /**
+     * Account creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+};
+
+/**
+ * Authenticated user profile summary enriched with the safe session correlation identifier.
+ */
+export type AuthenticatedSessionUserDto = {
+    /**
+     * Stable user identifier.
+     */
+    id: string;
+    /**
+     * Primary email address for the user account.
+     */
+    email: string;
+    /**
+     * Unique login identifier for the account.
+     */
+    username: string;
+    /**
+     * First name shown in account and member-management surfaces.
+     */
+    firstName: string;
+    /**
+     * Last name shown in account and member-management surfaces.
+     */
+    lastName: string;
+    /**
+     * Whether the account is currently active for normal sign-in and product usage.
+     */
+    isActive: boolean;
+    /**
+     * Whether the user has platform-level root-admin access.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Authentication provider used for the account when known.
+     */
+    authProvider?: 'email' | 'google' | 'apple';
+    /**
+     * Preferred IANA timezone for user-facing scheduling and reminders.
+     */
+    timezone?: string;
+    /**
+     * Preferred locale for formatting and localized copy.
+     */
+    locale?: string;
+    /**
+     * Preferred clock display used in account and scheduling surfaces.
+     */
+    timeFormat?: '12H' | '24H';
+    /**
+     * Preferred date display format used in account and scheduling surfaces.
+     */
+    dateFormat?: 'MDY' | 'DMY' | 'YMD';
+    /**
+     * Account creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+    /**
+     * Safe non-secret session correlation identifier for the authenticated browser session.
+     */
+    sessionId: string | null;
+};
+
+/**
+ * Create-account payload for a new username/email/password user.
+ */
+export type RegisterRequest = {
+    /**
+     * Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.
+     */
+    username: string;
+    /**
+     * Primary contact email address for the user account.
+     */
+    email: string;
+    /**
+     * Plaintext password chosen during registration.
+     */
+    password: string;
+    /**
+     * First name captured for the account profile.
+     */
+    firstName: string;
+    /**
+     * Last name captured for the account profile.
+     */
+    lastName: string;
+};
+
+/**
+ * Login payload for an existing username-or-email/password account.
+ */
+export type LoginRequest = {
+    /**
+     * Username or email used to sign in to an existing account.
+     */
+    identifier: string;
+    /**
+     * Existing password for the account.
+     */
+    password: string;
+};
+
+/**
+ * Successful authentication response returned after registration or login.
+ */
+export type AuthResponse = {
+    /**
+     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * Preferred IANA timezone for user-facing scheduling and reminders.
+         */
+        timezone?: string;
+        /**
+         * Preferred locale for formatting and localized copy.
+         */
+        locale?: string;
+        /**
+         * Preferred clock display used in account and scheduling surfaces.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Preferred date display format used in account and scheduling surfaces.
+         */
+        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+        /**
+         * Safe non-secret session correlation identifier for the authenticated browser session.
+         */
+        sessionId: string | null;
+    };
+    /**
+     * Authentication token bundle returned after login or registration.
+     */
+    tokens: {
+        /**
+         * Short-lived bearer token used for authenticated API requests.
+         */
+        accessToken: string;
+        /**
+         * Longer-lived token that can be exchanged for a fresh access token.
+         */
+        refreshToken: string;
+        /**
+         * Anti-CSRF token that must be echoed on state-changing browser requests.
+         */
+        csrfToken: string;
+        /**
+         * Access-token lifetime in seconds from the time it was issued.
+         */
+        expiresIn: number;
+    };
+};
+
+/**
+ * Authenticated current-user profile response.
+ */
+export type MeResponse = {
+    /**
+     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * Preferred IANA timezone for user-facing scheduling and reminders.
+         */
+        timezone?: string;
+        /**
+         * Preferred locale for formatting and localized copy.
+         */
+        locale?: string;
+        /**
+         * Preferred clock display used in account and scheduling surfaces.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Preferred date display format used in account and scheduling surfaces.
+         */
+        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+        /**
+         * Safe non-secret session correlation identifier for the authenticated browser session.
+         */
+        sessionId: string | null;
+    };
+};
+
+/**
+ * Token refresh response including the stable session correlation identifier.
+ */
+export type TokenRefreshResponse = {
+    /**
+     * Short-lived bearer token used for authenticated API requests.
+     */
+    accessToken: string;
+    /**
+     * Longer-lived token that can be exchanged for a fresh access token.
+     */
+    refreshToken: string;
+    /**
+     * Anti-CSRF token that must be echoed on state-changing browser requests.
+     */
+    csrfToken: string;
+    /**
+     * Access-token lifetime in seconds from the time it was issued.
+     */
+    expiresIn: number;
+    /**
+     * Safe non-secret session correlation identifier that remains stable across refresh rotation.
+     */
+    sessionId: string;
+};
+
+/**
  * Tier definition used in contest create and update flows.
  */
 export type TierDefinitionRequest = {
@@ -4368,6 +4731,1040 @@ export type TeamOwnerInvitationPreviewResponse = {
     };
 };
 
+/**
+ * Participant summary returned by participant-search and detail APIs.
+ */
+export type ParticipantDto = {
+    /**
+     * Participant identifier.
+     */
+    id: string;
+    /**
+     * Owning sport identifier.
+     */
+    sportId: string;
+    /**
+     * Primary participant display name.
+     */
+    name: string;
+    /**
+     * Whether the participant is an individual or team.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM';
+    /**
+     * Primary provider identifier when one exists.
+     */
+    externalId?: string;
+    /**
+     * First name when the participant is a person.
+     */
+    firstName?: string;
+    /**
+     * Last name when the participant is a person.
+     */
+    lastName?: string;
+    /**
+     * Short-form display name for compact UI surfaces.
+     */
+    shortName?: string;
+    /**
+     * Participant nationality or country code when known.
+     */
+    nationality?: string;
+    /**
+     * Position, role, or event classification when known.
+     */
+    position?: string | null;
+    /**
+     * Current team affiliation when the participant is not itself a team.
+     */
+    teamAffiliation?: string | null;
+    /**
+     * Current participant lifecycle or availability status.
+     */
+    status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+    /**
+     * Normalized participant injury or availability state.
+     */
+    injuryStatus: {
+        /**
+         * Current injury or availability status code.
+         */
+        status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+        /**
+         * Optional injury-status detail or summary.
+         */
+        detail?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        expectedReturn?: string;
+        /**
+         * Expected return timestamp when known.
+         */
+        updatedAt?: string;
+        /**
+         * Source that provided the injury-status update.
+         */
+        source?: string;
+    };
+    /**
+     * Optional participant image URL.
+     */
+    photoUrl?: string | null;
+    /**
+     * Expected return timestamp when known.
+     */
+    photoLastUpdated?: string;
+    /**
+     * Map of provider identifiers keyed by provider code.
+     */
+    externalIds: {
+        [key: string]: string;
+    };
+    /**
+     * When the participant record was created.
+     */
+    createdAt: string;
+    /**
+     * When the participant record was last updated.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Participant-list response.
+ */
+export type ParticipantListResponse = {
+    /**
+     * Participant page or slice returned by the API.
+     */
+    participants: Array<{
+        /**
+         * Participant identifier.
+         */
+        id: string;
+        /**
+         * Owning sport identifier.
+         */
+        sportId: string;
+        /**
+         * Primary participant display name.
+         */
+        name: string;
+        /**
+         * Whether the participant is an individual or team.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * Primary provider identifier when one exists.
+         */
+        externalId?: string;
+        /**
+         * First name when the participant is a person.
+         */
+        firstName?: string;
+        /**
+         * Last name when the participant is a person.
+         */
+        lastName?: string;
+        /**
+         * Short-form display name for compact UI surfaces.
+         */
+        shortName?: string;
+        /**
+         * Participant nationality or country code when known.
+         */
+        nationality?: string;
+        /**
+         * Position, role, or event classification when known.
+         */
+        position?: string | null;
+        /**
+         * Current team affiliation when the participant is not itself a team.
+         */
+        teamAffiliation?: string | null;
+        /**
+         * Current participant lifecycle or availability status.
+         */
+        status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+        /**
+         * Normalized participant injury or availability state.
+         */
+        injuryStatus: {
+            /**
+             * Current injury or availability status code.
+             */
+            status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+            /**
+             * Optional injury-status detail or summary.
+             */
+            detail?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            expectedReturn?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            updatedAt?: string;
+            /**
+             * Source that provided the injury-status update.
+             */
+            source?: string;
+        };
+        /**
+         * Optional participant image URL.
+         */
+        photoUrl?: string | null;
+        /**
+         * Expected return timestamp when known.
+         */
+        photoLastUpdated?: string;
+        /**
+         * Map of provider identifiers keyed by provider code.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
+        /**
+         * When the participant record was created.
+         */
+        createdAt: string;
+        /**
+         * When the participant record was last updated.
+         */
+        updatedAt: string;
+    }>;
+    /**
+     * Total participants matching the current filters.
+     */
+    total: number;
+};
+
+/**
+ * Single-participant detail response.
+ */
+export type ParticipantResponse = {
+    /**
+     * Participant summary returned by participant-search and detail APIs.
+     */
+    participant: {
+        /**
+         * Participant identifier.
+         */
+        id: string;
+        /**
+         * Owning sport identifier.
+         */
+        sportId: string;
+        /**
+         * Primary participant display name.
+         */
+        name: string;
+        /**
+         * Whether the participant is an individual or team.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * Primary provider identifier when one exists.
+         */
+        externalId?: string;
+        /**
+         * First name when the participant is a person.
+         */
+        firstName?: string;
+        /**
+         * Last name when the participant is a person.
+         */
+        lastName?: string;
+        /**
+         * Short-form display name for compact UI surfaces.
+         */
+        shortName?: string;
+        /**
+         * Participant nationality or country code when known.
+         */
+        nationality?: string;
+        /**
+         * Position, role, or event classification when known.
+         */
+        position?: string | null;
+        /**
+         * Current team affiliation when the participant is not itself a team.
+         */
+        teamAffiliation?: string | null;
+        /**
+         * Current participant lifecycle or availability status.
+         */
+        status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+        /**
+         * Normalized participant injury or availability state.
+         */
+        injuryStatus: {
+            /**
+             * Current injury or availability status code.
+             */
+            status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
+            /**
+             * Optional injury-status detail or summary.
+             */
+            detail?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            expectedReturn?: string;
+            /**
+             * Expected return timestamp when known.
+             */
+            updatedAt?: string;
+            /**
+             * Source that provided the injury-status update.
+             */
+            source?: string;
+        };
+        /**
+         * Optional participant image URL.
+         */
+        photoUrl?: string | null;
+        /**
+         * Expected return timestamp when known.
+         */
+        photoLastUpdated?: string;
+        /**
+         * Map of provider identifiers keyed by provider code.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
+        /**
+         * When the participant record was created.
+         */
+        createdAt: string;
+        /**
+         * When the participant record was last updated.
+         */
+        updatedAt: string;
+    };
+};
+
+export type EventStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+
+export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+
+export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED';
+
+/**
+ * Event list item returned from event-discovery endpoints.
+ */
+export type EventSummaryDto = {
+    /**
+     * Sport-event identifier.
+     */
+    id: string;
+    /**
+     * Provider event identifier used by event-level sync operations.
+     */
+    externalId: string;
+    /**
+     * Sport associated with the event.
+     */
+    sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Primary event name shown in contest and event selectors.
+     */
+    name: string;
+    /**
+     * Venue name for the event, when known.
+     */
+    venue?: string | null;
+    /**
+     * Human-readable event location, when known.
+     */
+    location?: string | null;
+    /**
+     * Provider-normalized event status.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    /**
+     * Scheduled or actual event start time.
+     */
+    startDate: string;
+    /**
+     * Scheduled or actual event end time, when known.
+     */
+    endDate?: string | null;
+    /**
+     * PoolMaster operational datetime when the event becomes available for contest setup.
+     */
+    releaseAt: string;
+    /**
+     * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+     */
+    fieldLocksAt: string;
+    /**
+     * Participant count when the provider exposes field size.
+     */
+    participantCount?: number | null;
+    /**
+     * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+     */
+    fieldLocked: boolean;
+    /**
+     * Current readiness state for contest setup and event-driven contest operations.
+     */
+    readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+    /**
+     * Structured reasons explaining why the event is or is not contest-eligible right now.
+     */
+    readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+    /**
+     * Whether the event is currently eligible for contest creation/configuration flows.
+     */
+    contestEligible: boolean;
+};
+
+export type EventListQuery = {
+    /**
+     * Optional sport filter.
+     */
+    sport?: string;
+    /**
+     * Optional provider-normalized event status filter.
+     */
+    status?: string;
+    /**
+     * Optional page-size style limit.
+     */
+    limit?: number;
+};
+
+/**
+ * Event list response for the requested sport or filter set.
+ */
+export type EventListResponse = {
+    events: Array<{
+        /**
+         * Sport-event identifier.
+         */
+        id: string;
+        /**
+         * Provider event identifier used by event-level sync operations.
+         */
+        externalId: string;
+        /**
+         * Sport associated with the event.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Primary event name shown in contest and event selectors.
+         */
+        name: string;
+        /**
+         * Venue name for the event, when known.
+         */
+        venue?: string | null;
+        /**
+         * Human-readable event location, when known.
+         */
+        location?: string | null;
+        /**
+         * Provider-normalized event status.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Scheduled or actual event start time.
+         */
+        startDate: string;
+        /**
+         * Scheduled or actual event end time, when known.
+         */
+        endDate?: string | null;
+        /**
+         * PoolMaster operational datetime when the event becomes available for contest setup.
+         */
+        releaseAt: string;
+        /**
+         * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+         */
+        fieldLocksAt: string;
+        /**
+         * Participant count when the provider exposes field size.
+         */
+        participantCount?: number | null;
+        /**
+         * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+         */
+        fieldLocked: boolean;
+        /**
+         * Current readiness state for contest setup and event-driven contest operations.
+         */
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        /**
+         * Structured reasons explaining why the event is or is not contest-eligible right now.
+         */
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        /**
+         * Whether the event is currently eligible for contest creation/configuration flows.
+         */
+        contestEligible: boolean;
+    }>;
+};
+
+/**
+ * Admin audit-log entry.
+ */
+export type AuditEntryDto = {
+    id: string;
+    actorEmail: string;
+    actorName: string;
+    action: string;
+    resourceType: string;
+    resourceId: string;
+    description: string;
+    reason?: string;
+    ipAddress?: string;
+    createdAt: string;
+    hasStateChanges: boolean;
+};
+
+/**
+ * Admin audit-log list response.
+ */
+export type AuditListResponse = {
+    items: Array<{
+        id: string;
+        actorEmail: string;
+        actorName: string;
+        action: string;
+        resourceType: string;
+        resourceId: string;
+        description: string;
+        reason?: string;
+        ipAddress?: string;
+        createdAt: string;
+        hasStateChanges: boolean;
+    }>;
+    total: number;
+    page: number;
+    pageSize: number;
+};
+
+/**
+ * Single admin audit-entry response.
+ */
+export type AuditEntryResponse = {
+    /**
+     * Admin audit-log entry.
+     */
+    entry: {
+        id: string;
+        actorEmail: string;
+        actorName: string;
+        action: string;
+        resourceType: string;
+        resourceId: string;
+        description: string;
+        reason?: string;
+        ipAddress?: string;
+        createdAt: string;
+        hasStateChanges: boolean;
+    };
+};
+
+/**
+ * Poll-interval configuration payload exposed to clients and root-admin tools.
+ */
+export type PollIntervalConfig = {
+    /**
+     * Recommended refresh interval for standings and leaderboard surfaces.
+     */
+    standings: number;
+    /**
+     * Recommended refresh interval for draft state and pick-clock surfaces.
+     */
+    draft: number;
+    /**
+     * Recommended refresh interval for contest status and lifecycle surfaces.
+     */
+    contestStatus: number;
+    /**
+     * Recommended refresh interval for unread notifications and similar badge counts.
+     */
+    notifications: number;
+    /**
+     * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+     */
+    default: number;
+};
+
+/**
+ * Partial poll-interval update payload used by root-admin configuration tools.
+ */
+export type PollIntervalConfigPatch = {
+    /**
+     * Recommended refresh interval for standings and leaderboard surfaces.
+     */
+    standings?: number;
+    /**
+     * Recommended refresh interval for draft state and pick-clock surfaces.
+     */
+    draft?: number;
+    /**
+     * Recommended refresh interval for contest status and lifecycle surfaces.
+     */
+    contestStatus?: number;
+    /**
+     * Recommended refresh interval for unread notifications and similar badge counts.
+     */
+    notifications?: number;
+    /**
+     * Fallback refresh interval for pollable surfaces without a more specific recommendation.
+     */
+    default?: number;
+};
+
+/**
+ * Partial ingestion scheduling override used for global updates and per-sport overrides.
+ */
+export type IngestionScheduleConfigOverride = {
+    scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    healthCheck?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    eventSchedule?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    eventParticipants?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    participantRankings?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    eventLiveScores?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Partial feed-scheduling override payload.
+     */
+    eventResults?: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+};
+
+/**
+ * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+ */
+export type IngestionScheduleConfig = {
+    /**
+     * Sports that scheduled ingestion is allowed to run automatically.
+     */
+    scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+    /**
+     * Scheduling policy for provider health checks.
+     */
+    healthCheck: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
+     */
+    eventSchedule: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+     */
+    eventParticipants: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for ranking refreshes.
+     */
+    participantRankings: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for live score polling.
+     */
+    eventLiveScores: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Scheduling policy for completed-event result refreshes.
+     */
+    eventResults: {
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled: boolean;
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+         */
+        lookaheadDays?: number;
+    };
+    /**
+     * Per-sport scheduling overrides applied on top of the global feed policies.
+     */
+    perSportOverrides: {
+        [key: string]: {
+            scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            healthCheck?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            eventSchedule?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            eventParticipants?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            participantRankings?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            eventLiveScores?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+            /**
+             * Partial feed-scheduling override payload.
+             */
+            eventResults?: {
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled?: boolean;
+                /**
+                 * How often the feed should run, in minutes, for interval-driven orchestration.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                 */
+                intervalSeconds?: number;
+                /**
+                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
+                 */
+                lookaheadDays?: number;
+            };
+        };
+    };
+};
+
+export type ClientLogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+export type ClientLogEntry = {
+    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+    action: string;
+    msg?: string;
+    ts: string;
+    route?: string;
+    sessionId?: string | null;
+    userId?: string | null;
+    clientRequestId?: string | null;
+    data?: {
+        [key: string]: unknown;
+    };
+    err?: unknown;
+};
+
+export type ClientLogBatch = {
+    schemaVersion: 1;
+    clientTraceId: string;
+    webappVersion: string;
+    userAgent: string;
+    entries: Array<{
+        level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+        action: string;
+        msg?: string;
+        ts: string;
+        route?: string;
+        sessionId?: string | null;
+        userId?: string | null;
+        clientRequestId?: string | null;
+        data?: {
+            [key: string]: unknown;
+        };
+        err?: unknown;
+    }>;
+};
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -4446,31 +5843,7 @@ export type GetRootVersionResponses = {
 export type GetRootVersionResponse = GetRootVersionResponses[keyof GetRootVersionResponses];
 
 export type RegisterUserData = {
-    /**
-     * Create-account payload for a new username/email/password user.
-     */
-    body: {
-        /**
-         * Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.
-         */
-        username: string;
-        /**
-         * Primary contact email address for the user account.
-         */
-        email: string;
-        /**
-         * Plaintext password chosen during registration.
-         */
-        password: string;
-        /**
-         * First name captured for the account profile.
-         */
-        firstName: string;
-        /**
-         * Last name captured for the account profile.
-         */
-        lastName: string;
-    };
+    body: RegisterRequest;
     path?: never;
     query?: never;
     url: '/api/v1/auth/register';
@@ -4529,108 +5902,13 @@ export type RegisterUserResponses = {
     /**
      * Successful authentication response returned after registration or login.
      */
-    201: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-        /**
-         * Authentication token bundle returned after login or registration.
-         */
-        tokens: {
-            /**
-             * Short-lived bearer token used for authenticated API requests.
-             */
-            accessToken: string;
-            /**
-             * Longer-lived token that can be exchanged for a fresh access token.
-             */
-            refreshToken: string;
-            /**
-             * Anti-CSRF token that must be echoed on state-changing browser requests.
-             */
-            csrfToken: string;
-            /**
-             * Access-token lifetime in seconds from the time it was issued.
-             */
-            expiresIn: number;
-        };
-    };
+    201: AuthResponse;
 };
 
 export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
 
 export type LoginUserData = {
-    /**
-     * Login payload for an existing username-or-email/password account.
-     */
-    body: {
-        /**
-         * Username or email used to sign in to an existing account.
-         */
-        identifier: string;
-        /**
-         * Existing password for the account.
-         */
-        password: string;
-    };
+    body: LoginRequest;
     path?: never;
     query?: never;
     url: '/api/v1/auth/login';
@@ -4689,90 +5967,7 @@ export type LoginUserResponses = {
     /**
      * Successful authentication response returned after registration or login.
      */
-    200: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-        /**
-         * Authentication token bundle returned after login or registration.
-         */
-        tokens: {
-            /**
-             * Short-lived bearer token used for authenticated API requests.
-             */
-            accessToken: string;
-            /**
-             * Longer-lived token that can be exchanged for a fresh access token.
-             */
-            refreshToken: string;
-            /**
-             * Anti-CSRF token that must be echoed on state-changing browser requests.
-             */
-            csrfToken: string;
-            /**
-             * Access-token lifetime in seconds from the time it was issued.
-             */
-            expiresIn: number;
-        };
-    };
+    200: AuthResponse;
 };
 
 export type LoginUserResponse = LoginUserResponses[keyof LoginUserResponses];
@@ -4815,28 +6010,7 @@ export type RefreshTokenResponses = {
     /**
      * Token refresh response including the stable session correlation identifier.
      */
-    200: {
-        /**
-         * Short-lived bearer token used for authenticated API requests.
-         */
-        accessToken: string;
-        /**
-         * Longer-lived token that can be exchanged for a fresh access token.
-         */
-        refreshToken: string;
-        /**
-         * Anti-CSRF token that must be echoed on state-changing browser requests.
-         */
-        csrfToken: string;
-        /**
-         * Access-token lifetime in seconds from the time it was issued.
-         */
-        expiresIn: number;
-        /**
-         * Safe non-secret session correlation identifier that remains stable across refresh rotation.
-         */
-        sessionId: string;
-    };
+    200: TokenRefreshResponse;
 };
 
 export type RefreshTokenResponse = RefreshTokenResponses[keyof RefreshTokenResponses];
@@ -4927,69 +6101,7 @@ export type GetCurrentUserResponses = {
     /**
      * Authenticated current-user profile response.
      */
-    200: {
-        /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
-    };
+    200: MeResponse;
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
@@ -9808,74 +10920,7 @@ export type ListEventsResponses = {
     /**
      * Event list response for the requested sport or filter set.
      */
-    200: {
-        events: Array<{
-            /**
-             * Sport-event identifier.
-             */
-            id: string;
-            /**
-             * Provider event identifier used by event-level sync operations.
-             */
-            externalId: string;
-            /**
-             * Sport associated with the event.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Primary event name shown in contest and event selectors.
-             */
-            name: string;
-            /**
-             * Venue name for the event, when known.
-             */
-            venue?: string | null;
-            /**
-             * Human-readable event location, when known.
-             */
-            location?: string | null;
-            /**
-             * Provider-normalized event status.
-             */
-            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            /**
-             * Scheduled or actual event start time.
-             */
-            startDate: string;
-            /**
-             * Scheduled or actual event end time, when known.
-             */
-            endDate?: string | null;
-            /**
-             * PoolMaster operational datetime when the event becomes available for contest setup.
-             */
-            releaseAt: string;
-            /**
-             * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
-             */
-            fieldLocksAt: string;
-            /**
-             * Participant count when the provider exposes field size.
-             */
-            participantCount?: number | null;
-            /**
-             * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
-             */
-            fieldLocked: boolean;
-            /**
-             * Current readiness state for contest setup and event-driven contest operations.
-             */
-            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
-            /**
-             * Structured reasons explaining why the event is or is not contest-eligible right now.
-             */
-            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
-            /**
-             * Whether the event is currently eligible for contest creation/configuration flows.
-             */
-            contestEligible: boolean;
-        }>;
-    };
+    200: EventListResponse;
 };
 
 export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
@@ -9900,112 +10945,7 @@ export type ListParticipantsResponses = {
     /**
      * Participant-list response.
      */
-    200: {
-        /**
-         * Participant page or slice returned by the API.
-         */
-        participants: Array<{
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Position, role, or event classification when known.
-             */
-            position?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        }>;
-        /**
-         * Total participants matching the current filters.
-         */
-        total: number;
-    };
+    200: ParticipantListResponse;
 };
 
 export type ListParticipantsResponse = ListParticipantsResponses[keyof ListParticipantsResponses];
@@ -10035,108 +10975,7 @@ export type CreateParticipantResponses = {
     /**
      * Single-participant detail response.
      */
-    201: {
-        /**
-         * Participant summary returned by participant-search and detail APIs.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Position, role, or event classification when known.
-             */
-            position?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    201: ParticipantResponse;
 };
 
 export type CreateParticipantResponse = CreateParticipantResponses[keyof CreateParticipantResponses];
@@ -10181,108 +11020,7 @@ export type GetParticipantResponses = {
     /**
      * Single-participant detail response.
      */
-    200: {
-        /**
-         * Participant summary returned by participant-search and detail APIs.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Position, role, or event classification when known.
-             */
-            position?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    200: ParticipantResponse;
 };
 
 export type GetParticipantResponse = GetParticipantResponses[keyof GetParticipantResponses];
@@ -10343,295 +11081,10 @@ export type UpdateParticipantResponses = {
     /**
      * Single-participant detail response.
      */
-    200: {
-        /**
-         * Participant summary returned by participant-search and detail APIs.
-         */
-        participant: {
-            /**
-             * Participant identifier.
-             */
-            id: string;
-            /**
-             * Owning sport identifier.
-             */
-            sportId: string;
-            /**
-             * Primary participant display name.
-             */
-            name: string;
-            /**
-             * Whether the participant is an individual or team.
-             */
-            participantType: 'INDIVIDUAL' | 'TEAM';
-            /**
-             * Primary provider identifier when one exists.
-             */
-            externalId?: string;
-            /**
-             * First name when the participant is a person.
-             */
-            firstName?: string;
-            /**
-             * Last name when the participant is a person.
-             */
-            lastName?: string;
-            /**
-             * Short-form display name for compact UI surfaces.
-             */
-            shortName?: string;
-            /**
-             * Participant nationality or country code when known.
-             */
-            nationality?: string;
-            /**
-             * Position, role, or event classification when known.
-             */
-            position?: string | null;
-            /**
-             * Current team affiliation when the participant is not itself a team.
-             */
-            teamAffiliation?: string | null;
-            /**
-             * Current participant lifecycle or availability status.
-             */
-            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
-            /**
-             * Normalized participant injury or availability state.
-             */
-            injuryStatus: {
-                /**
-                 * Current injury or availability status code.
-                 */
-                status: 'HEALTHY' | 'QUESTIONABLE' | 'DOUBTFUL' | 'OUT' | 'WITHDRAWN' | 'SUSPENDED' | 'SCRATCHED';
-                /**
-                 * Optional injury-status detail or summary.
-                 */
-                detail?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                expectedReturn?: string;
-                /**
-                 * Expected return timestamp when known.
-                 */
-                updatedAt?: string;
-                /**
-                 * Source that provided the injury-status update.
-                 */
-                source?: string;
-            };
-            /**
-             * Optional participant image URL.
-             */
-            photoUrl?: string | null;
-            /**
-             * Expected return timestamp when known.
-             */
-            photoLastUpdated?: string;
-            /**
-             * Map of provider identifiers keyed by provider code.
-             */
-            externalIds: {
-                [key: string]: string;
-            };
-            /**
-             * When the participant record was created.
-             */
-            createdAt: string;
-            /**
-             * When the participant record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    200: ParticipantResponse;
 };
 
 export type UpdateParticipantResponse = UpdateParticipantResponses[keyof UpdateParticipantResponses];
-
-export type GetContestHistorySummaryData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/summary';
-};
-
-export type GetContestHistorySummaryErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type GetContestHistorySummaryError = GetContestHistorySummaryErrors[keyof GetContestHistorySummaryErrors];
-
-export type GetContestHistorySummaryResponses = {
-    /**
-     * Arbitrary JSON object payload.
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetContestHistorySummaryResponse = GetContestHistorySummaryResponses[keyof GetContestHistorySummaryResponses];
-
-export type GetContestHistoryStandingsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/standings';
-};
-
-export type GetContestHistoryStandingsResponses = {
-    /**
-     * Historical standings response.
-     */
-    200: {
-        standings: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetContestHistoryStandingsResponse = GetContestHistoryStandingsResponses[keyof GetContestHistoryStandingsResponses];
-
-export type GetRosterHistoryData = {
-    body?: never;
-    path: {
-        id: string;
-        entryId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/roster/{entryId}';
-};
-
-export type GetRosterHistoryErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type GetRosterHistoryError = GetRosterHistoryErrors[keyof GetRosterHistoryErrors];
-
-export type GetRosterHistoryResponses = {
-    /**
-     * Arbitrary JSON object payload.
-     */
-    200: {
-        [key: string]: unknown;
-    };
-};
-
-export type GetRosterHistoryResponse = GetRosterHistoryResponses[keyof GetRosterHistoryResponses];
-
-export type GetContestPayoutsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{id}/history/payouts';
-};
-
-export type GetContestPayoutsResponses = {
-    /**
-     * Historical payouts response.
-     */
-    200: {
-        payouts: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetContestPayoutsResponse = GetContestPayoutsResponses[keyof GetContestPayoutsResponses];
-
-export type GetLeagueResultsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/results';
-};
-
-export type GetLeagueResultsResponses = {
-    /**
-     * Historical results response.
-     */
-    200: {
-        results: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetLeagueResultsResponse = GetLeagueResultsResponses[keyof GetLeagueResultsResponses];
-
-export type GetMemberResultsData = {
-    body?: never;
-    path: {
-        id: string;
-        mid: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/history/members/{mid}/results';
-};
-
-export type GetMemberResultsResponses = {
-    /**
-     * Historical results response.
-     */
-    200: {
-        results: Array<{
-            [key: string]: unknown;
-        }>;
-    };
-};
-
-export type GetMemberResultsResponse = GetMemberResultsResponses[keyof GetMemberResultsResponses];
 
 export type ReactivateAccountData = {
     body?: never;
@@ -11717,151 +12170,6 @@ export type DeleteAccountResponses = {
 };
 
 export type DeleteAccountResponse = DeleteAccountResponses[keyof DeleteAccountResponses];
-
-export type GetConsentHistoryData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/consent';
-};
-
-export type GetConsentHistoryResponses = {
-    /**
-     * Consent-history response for the authenticated user.
-     */
-    200: {
-        consents: Array<{
-            /**
-             * Consent-record identifier.
-             */
-            id: string;
-            /**
-             * User who recorded the consent decision.
-             */
-            userId: string;
-            /**
-             * Consent category, such as terms acceptance or age affirmation.
-             */
-            consentType: string;
-            /**
-             * Whether the user granted the consent at this point in time.
-             */
-            granted: boolean;
-            /**
-             * Policy or consent-text version acknowledged by the user.
-             */
-            version: string;
-            /**
-             * Minimum age that had to be affirmed when the consent required an age gate.
-             */
-            minimumAgeThreshold?: number | null;
-            /**
-             * Whether the user affirmed they met the required age threshold.
-             */
-            ageAffirmed?: boolean | null;
-            /**
-             * Captured request IP when the consent was recorded, if retained.
-             */
-            ipAddress?: string | null;
-            /**
-             * Captured client user agent when the consent was recorded, if retained.
-             */
-            userAgent?: string | null;
-            /**
-             * When the consent decision was recorded.
-             */
-            createdAt: string;
-        }>;
-    };
-};
-
-export type GetConsentHistoryResponse = GetConsentHistoryResponses[keyof GetConsentHistoryResponses];
-
-export type RecordConsentData = {
-    /**
-     * Authenticated request payload for recording a consent decision.
-     */
-    body: {
-        /**
-         * Consent category being recorded.
-         */
-        consentType: string;
-        /**
-         * Whether the user accepts or declines the consent.
-         */
-        granted: boolean;
-        /**
-         * Policy version presented to the user.
-         */
-        version: string;
-        /**
-         * Optional age-gate threshold that the user was asked to affirm.
-         */
-        minimumAgeThreshold?: number | null;
-        /**
-         * Optional age affirmation captured alongside the consent.
-         */
-        ageAffirmed?: boolean | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/consent';
-};
-
-export type RecordConsentResponses = {
-    /**
-     * Response returned after recording a consent decision.
-     */
-    201: {
-        /**
-         * Stored consent record returned from consent-history APIs.
-         */
-        consent: {
-            /**
-             * Consent-record identifier.
-             */
-            id: string;
-            /**
-             * User who recorded the consent decision.
-             */
-            userId: string;
-            /**
-             * Consent category, such as terms acceptance or age affirmation.
-             */
-            consentType: string;
-            /**
-             * Whether the user granted the consent at this point in time.
-             */
-            granted: boolean;
-            /**
-             * Policy or consent-text version acknowledged by the user.
-             */
-            version: string;
-            /**
-             * Minimum age that had to be affirmed when the consent required an age gate.
-             */
-            minimumAgeThreshold?: number | null;
-            /**
-             * Whether the user affirmed they met the required age threshold.
-             */
-            ageAffirmed?: boolean | null;
-            /**
-             * Captured request IP when the consent was recorded, if retained.
-             */
-            ipAddress?: string | null;
-            /**
-             * Captured client user agent when the consent was recorded, if retained.
-             */
-            userAgent?: string | null;
-            /**
-             * When the consent decision was recorded.
-             */
-            createdAt: string;
-        };
-    };
-};
-
-export type RecordConsentResponse = RecordConsentResponses[keyof RecordConsentResponses];
 
 export type AdminListUsersData = {
     body?: never;
@@ -16468,24 +16776,7 @@ export type AdminListAuditLogResponses = {
     /**
      * Admin audit-log list response.
      */
-    200: {
-        items: Array<{
-            id: string;
-            actorEmail: string;
-            actorName: string;
-            action: string;
-            resourceType: string;
-            resourceId: string;
-            description: string;
-            reason?: string;
-            ipAddress?: string;
-            createdAt: string;
-            hasStateChanges: boolean;
-        }>;
-        total: number;
-        page: number;
-        pageSize: number;
-    };
+    200: AuditListResponse;
 };
 
 export type AdminListAuditLogResponse = AdminListAuditLogResponses[keyof AdminListAuditLogResponses];
@@ -16552,24 +16843,7 @@ export type AdminGetAuditEntryResponses = {
     /**
      * Single admin audit-entry response.
      */
-    200: {
-        /**
-         * Admin audit-log entry.
-         */
-        entry: {
-            id: string;
-            actorEmail: string;
-            actorName: string;
-            action: string;
-            resourceType: string;
-            resourceId: string;
-            description: string;
-            reason?: string;
-            ipAddress?: string;
-            createdAt: string;
-            hasStateChanges: boolean;
-        };
-    };
+    200: AuditEntryResponse;
 };
 
 export type AdminGetAuditEntryResponse = AdminGetAuditEntryResponses[keyof AdminGetAuditEntryResponses];
@@ -21024,58 +21298,13 @@ export type AdminGetPollIntervalsResponses = {
     /**
      * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
-    200: {
-        /**
-         * Recommended refresh interval for standings and leaderboard surfaces.
-         */
-        standings: number;
-        /**
-         * Recommended refresh interval for draft state and pick-clock surfaces.
-         */
-        draft: number;
-        /**
-         * Recommended refresh interval for contest status and lifecycle surfaces.
-         */
-        contestStatus: number;
-        /**
-         * Recommended refresh interval for unread notifications and similar badge counts.
-         */
-        notifications: number;
-        /**
-         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
-         */
-        default: number;
-    };
+    200: PollIntervalConfig;
 };
 
 export type AdminGetPollIntervalsResponse = AdminGetPollIntervalsResponses[keyof AdminGetPollIntervalsResponses];
 
 export type AdminUpdatePollIntervalsData = {
-    /**
-     * Partial poll-interval update payload used by root-admin configuration tools.
-     */
-    body: {
-        /**
-         * Recommended refresh interval for standings and leaderboard surfaces.
-         */
-        standings?: number;
-        /**
-         * Recommended refresh interval for draft state and pick-clock surfaces.
-         */
-        draft?: number;
-        /**
-         * Recommended refresh interval for contest status and lifecycle surfaces.
-         */
-        contestStatus?: number;
-        /**
-         * Recommended refresh interval for unread notifications and similar badge counts.
-         */
-        notifications?: number;
-        /**
-         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
-         */
-        default?: number;
-    };
+    body: PollIntervalConfigPatch;
     path?: never;
     query?: never;
     url: '/api/v1/admin/config/poll-intervals';
@@ -21112,28 +21341,7 @@ export type AdminUpdatePollIntervalsResponses = {
     /**
      * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
-    200: {
-        /**
-         * Recommended refresh interval for standings and leaderboard surfaces.
-         */
-        standings: number;
-        /**
-         * Recommended refresh interval for draft state and pick-clock surfaces.
-         */
-        draft: number;
-        /**
-         * Recommended refresh interval for contest status and lifecycle surfaces.
-         */
-        contestStatus: number;
-        /**
-         * Recommended refresh interval for unread notifications and similar badge counts.
-         */
-        notifications: number;
-        /**
-         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
-         */
-        default: number;
-    };
+    200: PollIntervalConfig;
 };
 
 export type AdminUpdatePollIntervalsResponse = AdminUpdatePollIntervalsResponses[keyof AdminUpdatePollIntervalsResponses];
@@ -21176,28 +21384,7 @@ export type AdminResetPollIntervalsResponses = {
     /**
      * Poll-interval configuration payload exposed to clients and root-admin tools.
      */
-    200: {
-        /**
-         * Recommended refresh interval for standings and leaderboard surfaces.
-         */
-        standings: number;
-        /**
-         * Recommended refresh interval for draft state and pick-clock surfaces.
-         */
-        draft: number;
-        /**
-         * Recommended refresh interval for contest status and lifecycle surfaces.
-         */
-        contestStatus: number;
-        /**
-         * Recommended refresh interval for unread notifications and similar badge counts.
-         */
-        notifications: number;
-        /**
-         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
-         */
-        default: number;
-    };
+    200: PollIntervalConfig;
 };
 
 export type AdminResetPollIntervalsResponse = AdminResetPollIntervalsResponses[keyof AdminResetPollIntervalsResponses];
@@ -21240,409 +21427,13 @@ export type AdminGetIngestionScheduleResponses = {
     /**
      * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
-    200: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Scheduling policy for provider health checks.
-         */
-        healthCheck: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-         */
-        eventSchedule: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for ranking refreshes.
-         */
-        participantRankings: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for completed-event result refreshes.
-         */
-        eventResults: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventSchedule?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                participantRankings?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventResults?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-            };
-        };
-    };
+    200: IngestionScheduleConfig;
 };
 
 export type AdminGetIngestionScheduleResponse = AdminGetIngestionScheduleResponses[keyof AdminGetIngestionScheduleResponses];
 
 export type AdminUpdateIngestionScheduleData = {
-    /**
-     * Partial ingestion scheduling override used for global updates and per-sport overrides.
-     */
-    body: {
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        healthCheck?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventSchedule?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventParticipants?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        participantRankings?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventLiveScores?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventResults?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-    };
+    body: IngestionScheduleConfigOverride;
     path?: never;
     query?: never;
     url: '/api/v1/admin/config/ingestion-schedule';
@@ -21679,409 +21470,13 @@ export type AdminUpdateIngestionScheduleResponses = {
     /**
      * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
-    200: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Scheduling policy for provider health checks.
-         */
-        healthCheck: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-         */
-        eventSchedule: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for ranking refreshes.
-         */
-        participantRankings: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for completed-event result refreshes.
-         */
-        eventResults: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventSchedule?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                participantRankings?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventResults?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-            };
-        };
-    };
+    200: IngestionScheduleConfig;
 };
 
 export type AdminUpdateIngestionScheduleResponse = AdminUpdateIngestionScheduleResponses[keyof AdminUpdateIngestionScheduleResponses];
 
 export type AdminSetSportIngestionOverrideData = {
-    /**
-     * Partial ingestion scheduling override used for global updates and per-sport overrides.
-     */
-    body: {
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        healthCheck?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventSchedule?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventParticipants?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        participantRankings?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventLiveScores?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Partial feed-scheduling override payload.
-         */
-        eventResults?: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled?: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-    };
+    body: IngestionScheduleConfigOverride;
     path: {
         sport: string;
     };
@@ -22120,272 +21515,7 @@ export type AdminSetSportIngestionOverrideResponses = {
     /**
      * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
-    200: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Scheduling policy for provider health checks.
-         */
-        healthCheck: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-         */
-        eventSchedule: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for ranking refreshes.
-         */
-        participantRankings: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for completed-event result refreshes.
-         */
-        eventResults: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventSchedule?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                participantRankings?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventResults?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-            };
-        };
-    };
+    200: IngestionScheduleConfig;
 };
 
 export type AdminSetSportIngestionOverrideResponse = AdminSetSportIngestionOverrideResponses[keyof AdminSetSportIngestionOverrideResponses];
@@ -22430,272 +21560,7 @@ export type AdminResetSportIngestionOverrideResponses = {
     /**
      * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
-    200: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Scheduling policy for provider health checks.
-         */
-        healthCheck: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-         */
-        eventSchedule: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for ranking refreshes.
-         */
-        participantRankings: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for completed-event result refreshes.
-         */
-        eventResults: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventSchedule?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                participantRankings?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventResults?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-            };
-        };
-    };
+    200: IngestionScheduleConfig;
 };
 
 export type AdminResetSportIngestionOverrideResponse = AdminResetSportIngestionOverrideResponses[keyof AdminResetSportIngestionOverrideResponses];
@@ -22711,334 +21576,13 @@ export type AdminResetIngestionScheduleResponses = {
     /**
      * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
-    200: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-        /**
-         * Scheduling policy for provider health checks.
-         */
-        healthCheck: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
-         */
-        eventSchedule: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for ranking refreshes.
-         */
-        participantRankings: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for completed-event result refreshes.
-         */
-        eventResults: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Per-sport scheduling overrides applied on top of the global feed policies.
-         */
-        perSportOverrides: {
-            [key: string]: {
-                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                healthCheck?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventSchedule?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventParticipants?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                participantRankings?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventLiveScores?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-                /**
-                 * Partial feed-scheduling override payload.
-                 */
-                eventResults?: {
-                    /**
-                     * Whether the feed should be scheduled automatically.
-                     */
-                    enabled?: boolean;
-                    /**
-                     * How often the feed should run, in minutes, for interval-driven orchestration.
-                     */
-                    intervalMinutes?: number;
-                    /**
-                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                     */
-                    intervalSeconds?: number;
-                    /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
-                     */
-                    lookaheadDays?: number;
-                };
-            };
-        };
-    };
+    200: IngestionScheduleConfig;
 };
 
 export type AdminResetIngestionScheduleResponse = AdminResetIngestionScheduleResponses[keyof AdminResetIngestionScheduleResponses];
 
-export type GetPollIntervalsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/config/poll-intervals';
-};
-
-export type GetPollIntervalsResponses = {
-    /**
-     * Poll-interval configuration payload exposed to clients and root-admin tools.
-     */
-    200: {
-        /**
-         * Recommended refresh interval for standings and leaderboard surfaces.
-         */
-        standings: number;
-        /**
-         * Recommended refresh interval for draft state and pick-clock surfaces.
-         */
-        draft: number;
-        /**
-         * Recommended refresh interval for contest status and lifecycle surfaces.
-         */
-        contestStatus: number;
-        /**
-         * Recommended refresh interval for unread notifications and similar badge counts.
-         */
-        notifications: number;
-        /**
-         * Fallback refresh interval for pollable surfaces without a more specific recommendation.
-         */
-        default: number;
-    };
-};
-
-export type GetPollIntervalsResponse = GetPollIntervalsResponses[keyof GetPollIntervalsResponses];
-
 export type IngestClientLogsData = {
-    body: {
-        schemaVersion: 1;
-        clientTraceId: string;
-        webappVersion: string;
-        userAgent: string;
-        entries: Array<{
-            level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-            action: string;
-            msg?: string;
-            ts: string;
-            route?: string;
-            sessionId?: string | null;
-            userId?: string | null;
-            clientRequestId?: string | null;
-            data?: {
-                [key: string]: unknown;
-            };
-            err?: unknown;
-        }>;
-    };
+    body: ClientLogBatch;
     path?: never;
     query?: never;
     url: '/api/v1/client-logs/';
@@ -25306,171 +23850,3 @@ export type SkipSnakeDraftTurnResponses = {
 };
 
 export type SkipSnakeDraftTurnResponse = SkipSnakeDraftTurnResponses[keyof SkipSnakeDraftTurnResponses];
-
-export type ListNotificationsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications';
-};
-
-export type ListNotificationsResponses = {
-    /**
-     * Notification-list response.
-     */
-    200: {
-        /**
-         * Notification page or slice returned by the API.
-         */
-        notifications: Array<{
-            /**
-             * Notification identifier.
-             */
-            id: string;
-            /**
-             * Target user when the payload is not implicitly scoped by auth.
-             */
-            userId?: string;
-            /**
-             * Notification category or event type.
-             */
-            eventType: string;
-            /**
-             * Short notification title.
-             */
-            title: string;
-            /**
-             * Longer notification body copy.
-             */
-            body: string;
-            /**
-             * Whether the user has marked the notification as read.
-             */
-            read: boolean;
-            /**
-             * When the notification was marked as read, if applicable.
-             */
-            readAt?: string | null;
-            /**
-             * Whether the notification has been dismissed from the feed.
-             */
-            dismissed?: boolean;
-            /**
-             * Optional image shown alongside the notification.
-             */
-            imageUrl?: string | null;
-            /**
-             * Optional client route or screen hint for notification deep linking.
-             */
-            actionScreen?: string | null;
-            /**
-             * Optional routing parameters for the notification action target.
-             */
-            actionParams?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Optional grouping key for bundling related notifications.
-             */
-            groupKey?: string | null;
-            /**
-             * When the notification was created.
-             */
-            createdAt: string;
-        }>;
-        /**
-         * Total number of notifications matching the current query.
-         */
-        total: number;
-    };
-};
-
-export type ListNotificationsResponse = ListNotificationsResponses[keyof ListNotificationsResponses];
-
-export type GetUnreadNotificationCountData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/unread-count';
-};
-
-export type GetUnreadNotificationCountResponses = {
-    /**
-     * Unread-notification counter response.
-     */
-    200: {
-        /**
-         * Unread notification count for the current user.
-         */
-        unreadCount: number;
-    };
-};
-
-export type GetUnreadNotificationCountResponse = GetUnreadNotificationCountResponses[keyof GetUnreadNotificationCountResponses];
-
-export type MarkNotificationReadData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/{id}/read';
-};
-
-export type MarkNotificationReadResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type MarkNotificationReadResponse = MarkNotificationReadResponses[keyof MarkNotificationReadResponses];
-
-export type MarkAllNotificationsReadData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/notifications/read-all';
-};
-
-export type MarkAllNotificationsReadResponses = {
-    /**
-     * Bulk mark-all-read response.
-     */
-    200: {
-        /**
-         * How many notifications were marked as read by the bulk operation.
-         */
-        markedRead: number;
-    };
-};
-
-export type MarkAllNotificationsReadResponse = MarkAllNotificationsReadResponses[keyof MarkAllNotificationsReadResponses];
-
-export type DismissNotificationData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/notifications/{id}';
-};
-
-export type DismissNotificationResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type DismissNotificationResponse = DismissNotificationResponses[keyof DismissNotificationResponses];

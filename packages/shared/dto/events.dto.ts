@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   GolfParticipantInactiveReason,
   ParticipantType,
@@ -157,3 +158,18 @@ export const SportEventParticipantDtoSchema = z.object({
   updatedAt: DateTimeSchema,
 }).describe('Canonical SportEventParticipant DTO per plans/117 §4.1 / §12.1 — pure row projection.');
 export type SportEventParticipantDto = z.infer<typeof SportEventParticipantDtoSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// Only what events/routes.ts actually serves. SportDtoSchema, SportEventDtoSchema and
+// SportEventParticipantDtoSchema are referenced nowhere, so registering them would
+// publish components no route serves.
+//
+// The three enums are also consumed by admin.dto.ts. Naming them here gives the frontend
+// importable unions instead of re-spelled literals; the nested occurrences inside admin's
+// still-inline schemas are unaffected (see plans/143 §1a).
+registerSchema('EventStatusDto', EventStatusDtoSchema);
+registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
+registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
+registerSchema('EventSummaryDto', EventSummaryDtoSchema);
+registerSchema('EventListQuery', EventListQuerySchema);
+registerSchema('EventListResponse', EventListResponseSchema);

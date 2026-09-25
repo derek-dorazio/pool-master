@@ -188,17 +188,12 @@ instead, and re-measure rather than trusting it:
 | `admin/routes.ts` | 41 | carries the `#192-mixed:` marker; needs `admin` + `ingestion` + `contest-management` DTOs |
 | `account/routes.ts` | 12 | |
 | `drafts/routes.ts` | 12 | |
-| `admin/platform-config-routes.ts` | 11 | shares `config.dto.ts` with `config/routes.ts` |
 | `contest-management/routes.ts` | 7 | `contest-management.dto.ts` also feeds `admin/routes.ts` |
 | `auth/routes.ts` | 6 | |
-| `history/routes.ts` | 6 | |
-| `notifications/routes.ts` | 5 | |
 | `participants/routes.ts` | 4 | |
-| `account-consent/routes.ts` | 3 | |
 | `admin/audit-routes.ts` | 2 | shares `admin.dto.ts` with `admin/routes.ts` |
 | `events/routes.ts` | 2 | |
 | `client-logs/routes.ts` | 1 | |
-| `config/routes.ts` | 1 | shares `config.dto.ts` with `admin/platform-config-routes.ts` |
 | `version/routes.ts` | 1 | deferred to #180 |
 
 **Only three DTO modules cross route-file boundaries:** `admin.dto.ts` (2 files),
@@ -208,11 +203,19 @@ is nearly spent.
 
 ### Slice order, and why
 
-1. **Small leaves first** — `client-logs`, `events`, `admin/audit-routes`,
-   `account-consent`, `participants`, `notifications`, `auth`, `history`. Low risk, and
-   they exercise the now-five-check guard set on unfamiliar modules before anything large
-   is bet on it.
-2. **`config`** — both its route files together, the smallest of the three cross-file DTOs.
+1. **Small leaves first — DONE.** `client-logs`, `events`, `admin/audit-routes`,
+   `participants`, `auth`.
+
+   **Three modules were DELETED rather than converted:** `history`, `notifications` and
+   `account-consent`. Each had zero frontend callers and no server-side producer — closed
+   loops no feature entered. `history` had no table of its own either; it re-queried the
+   contest tables, which is what the contest list and scoreboard already do. The cheapest
+   conversion is the one you do not do: this removed three modules from the backlog instead
+   of adding named components nothing would import. Measure before converting.
+2. **`config` — DONE.** `admin/platform-config-routes.ts` converted (all 8 of its
+   operations have frontend callers). The public `GET /api/v1/config/poll-intervals` was
+   DELETED: zero callers, and the admin routes that manage the same configuration are the
+   ones the product actually uses.
 3. **`account`, `drafts`** — self-contained, medium.
 4. **The admin cluster** — `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
    across `admin/routes.ts`, `admin/audit-routes.ts` and `contest-management/routes.ts`.

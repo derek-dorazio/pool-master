@@ -13,18 +13,15 @@ import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import {
-  zodToJsonSchema,
-  RegisterRequestSchema,
-  LoginRequestSchema,
-  AuthResponseSchema,
-  TokenRefreshResponseSchema,
-  MeResponseSchema,
-  ErrorEnvelopeSchema,
-  SuccessSchema,
-} from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/auth.dto';
 
 export function authModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const authService = new AuthService(prisma, fastify.log);
   const handlers = createAuthHandlers(authService);
@@ -37,9 +34,9 @@ export function authModule(fastify: FastifyInstance): void {
       description:
         'Creates a new username/email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.',
       operationId: 'registerUser',
-      body: zodToJsonSchema(RegisterRequestSchema),
+      body: schemaRef('RegisterRequest'),
       response: {
-        201: zodToJsonSchema(AuthResponseSchema),
+        201: schemaRef('AuthResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -55,9 +52,9 @@ export function authModule(fastify: FastifyInstance): void {
       description:
         'Authenticates an existing account using username or email plus password, then returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.',
       operationId: 'loginUser',
-      body: zodToJsonSchema(LoginRequestSchema),
+      body: schemaRef('LoginRequest'),
       response: {
-        200: zodToJsonSchema(AuthResponseSchema),
+        200: schemaRef('AuthResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -74,7 +71,7 @@ export function authModule(fastify: FastifyInstance): void {
         'Rotates the refresh-token session forward and returns a new token bundle. Browser clients normally rely on the refresh cookie rather than sending a body payload.',
       operationId: 'refreshToken',
       response: {
-        200: zodToJsonSchema(TokenRefreshResponseSchema),
+        200: schemaRef('TokenRefreshResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -106,7 +103,7 @@ export function authModule(fastify: FastifyInstance): void {
         'Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.',
       operationId: 'getCurrentUser',
       response: {
-        200: zodToJsonSchema(MeResponseSchema),
+        200: schemaRef('MeResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

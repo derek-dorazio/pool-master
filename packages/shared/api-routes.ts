@@ -110,23 +110,12 @@ export const API_ROUTES = {
     audit: '/api/v1/admin/audit',
   },
 
-  // Config
-  config: {
-    pollIntervals: '/api/v1/config/poll-intervals',
-  },
-
   observability: {
     clientLogs: '/api/v1/client-logs',
   },
 
-  // Notifications
-  notifications: {
-    list: '/api/v1/notifications',
-  },
-
   // Account / Compliance
   account: {
-    consent: '/api/v1/account/consent',
     reactivate: '/api/v1/account/reactivate',
     inactivate: '/api/v1/account/inactivate',
     profile: '/api/v1/account/profile',
