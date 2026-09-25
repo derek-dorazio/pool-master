@@ -128,10 +128,23 @@ boolean, so auction (simultaneous bidding) fits later without a migration. Keep
 
 This plan covers `INDEPENDENT` only.
 
-**Tiered, budget and category are `isExclusive = false` contests.** That is the intended
-configuration and what the product ships. The engine must still handle `true`, because the
-column exists, the shared handler enforces it, and an exclusive tiered contest is a
-coherent first-come-first-served format — but it is not the expected setup for these types.
+**`isExclusive` defaults to `false` everywhere, and exclusivity is the minority case for
+this application.** Audited and already true across every layer: Prisma carries
+`@default(false)` on both `Contest` and `ContestConfiguration`; the four request DTOs
+declare `z.boolean().optional()`, so an omitted field falls through to that default; and
+nothing in `packages/` or `clients/poolmaster/` sets it to `true`. The only `true`
+literals outside tests live in `clients/_archived/`, which is not in the lint or build
+surface.
+
+One deliberate asymmetry: `drafts.dto.ts:98` declares `isExclusive: z.boolean()` as
+**required**. That is the response DTO — the server always knows the value — so required is
+correct there. Requests stay optional.
+
+Record this as an invariant: **no template, seed, factory or migration may default
+`isExclusive` to `true`.** Tiered, budget and category are non-exclusive contests. Engines
+must still handle `true`, because the column exists, the shared handler enforces it, and an
+exclusive tiered contest is a coherent first-come-first-served format — but it is never the
+default.
 
 ### 4a. Exclusivity test coverage — a real gap, found while writing this plan
 
