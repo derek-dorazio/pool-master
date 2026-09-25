@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { getLeagueByCode, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, type ListSquadOwnerInvitationsResponses, type SquadDto, type LeagueDetailDto, type LeagueMemberDto } from '@/lib/api';
+import { type LeagueDetailDto, type LeagueMemberDto, type SquadDto, type TeamOwnerInvitationDto, getLeagueByCode, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
@@ -26,7 +26,6 @@ import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 
 function formatInvitationStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -98,7 +97,7 @@ export function TeamsPage() {
 
   const ownerInvitationsQuery = useQuery({
     queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-    queryFn: async (): Promise<OwnerInvitation[]> => {
+    queryFn: async (): Promise<TeamOwnerInvitationDto[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
         throwApiError(response.error, 'Owner invitation list response is missing data.');
@@ -125,7 +124,7 @@ export function TeamsPage() {
   });
 
   const pendingInvitationsByTeam = useMemo(() => {
-    const grouped = new Map<string, OwnerInvitation[]>();
+    const grouped = new Map<string, TeamOwnerInvitationDto[]>();
     for (const invitation of ownerInvitationsQuery.data ?? []) {
       if (invitation.status !== 'PENDING') {
         continue;

@@ -157,14 +157,18 @@ removing the `refResolver` and confirming four of those cases fail. Extend
 
 **Slices 2..N — one per route module, parallelisable after slice 1.**
 
-Done: `squads` (slice 2), `leagues` (slice 3), `contests` (slice 4). `version` belongs
-to #180. **Check this list before starting — it is what keeps two parallel sessions off
-the same module.**
+Done: `squads` (slice 2), `leagues` (slice 3), `contests` (slice 4),
+`team-invitations` + the `team-owner-invitations` DTO module (slice 5). `version`
+belongs to #180. **Check this list before starting — it is what keeps two parallel
+sessions off the same module.**
 
 Remaining: `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
 `contest-entry-picks`, `contest-management`, `drafts`, `email`, `events`, `golf`,
-`history`, `ingestion`, `invitations`, `notifications`, `participants`, `sport-catalog`,
-`team-invitations`.
+`history`, `ingestion`, `invitations`, `notifications`, `participants`, `sport-catalog`.
+
+**`admin/routes.ts` carries a `#192-mixed:` marker.** It `$ref`s league components but
+inlines its own, which is legitimate until the admin slice runs. The slice that converts
+it deletes the marker; check 5 then covers the file.
 
 Order by frontend derivation count, highest first — that is where the payoff is. The
 three highest-value modules are now done: `leagues` owned `LeagueDetail` (10 files),
@@ -227,8 +231,30 @@ conversion fails without any type error, failing test, or implausible-looking do
    *boot*, and only in whatever app-building path exercises that module — a module without
    such a test ships broken.
 
+5. **A converted route file still inlines a domain schema nobody registered.** Checks 1-3
+   all reason about names that are ALREADY in the registry, so a DTO module with zero
+   registrations is invisible to every one of them. `team-owner-invitations.dto.ts` had
+   seven exported schemas and no registrations while `squads/routes.ts` — marked converted
+   — inlined five of them, and every guard passed. A file may opt out with a
+   `#192-mixed:` comment naming why; opted-out files are printed on success.
+
 Each was verified by planting the failure and confirming it fires, not by observing a green
-run. Check 1 found six real half-conversions on its first execution.
+run. Check 1 found six real half-conversions on its first execution; check 5 found the
+`team-owner-invitations` module.
+
+### Two blind spots found by re-auditing already-converted modules
+
+Both were found only because the earlier slices were re-checked after the guards existed,
+which is the practice worth keeping: **a guard written during slice N does not retroactively
+prove slices 1..N-1, and neither does it passing.**
+
+- **`openapi-named-components.test.ts` checked only `responses.200`.** Ten of 45 converted
+  operations return 201, so they were invisible to it — and seven derivations against
+  `createLeague`, `generateInviteLink` and `acceptInvitation` survived in
+  `leagues/test/fixtures.ts` indexing `[201]` while the guard read green. It now scans every
+  2xx status.
+- **Check 5's gap, above.** Squads, the original end-to-end proof, was half-converted for
+  three slices.
 
 ### A slice's scope is not knowable from its DTO module
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   LeagueRole,
   SquadOwnerInvitationStatus,
@@ -94,3 +95,15 @@ export const TeamOwnerInvitationPreviewResponseSchema = z.object({
 export type TeamOwnerInvitationPreviewResponse = z.infer<
   typeof TeamOwnerInvitationPreviewResponseSchema
 >;
+
+// --- Published contract (#192) -------------------------------------------------
+// These shapes are served by BOTH squads/routes.ts and team-invitations/routes.ts, so
+// both modules convert together. TeamOwnerInvitationDto is the canonical invitation
+// shape; the frontend imports it rather than deriving from a response map.
+registerSchema('CreateSquadOwnerInvitationRequest', CreateSquadOwnerInvitationRequestSchema);
+registerSchema('ReplaceSquadOwnerRequest', ReplaceSquadOwnerRequestSchema);
+registerSchema('AcceptTeamOwnerInvitationRequest', AcceptTeamOwnerInvitationRequestSchema);
+registerSchema('TeamOwnerInvitationDto', TeamOwnerInvitationDtoSchema);
+registerSchema('TeamOwnerInvitationResponse', TeamOwnerInvitationResponseSchema);
+registerSchema('TeamOwnerInvitationListResponse', TeamOwnerInvitationListResponseSchema);
+registerSchema('TeamOwnerInvitationPreviewResponse', TeamOwnerInvitationPreviewResponseSchema);

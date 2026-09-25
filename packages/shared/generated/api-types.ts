@@ -6530,6 +6530,199 @@ export interface components {
              */
             userId: string;
         };
+        /** @description Request payload for inviting an additional co-owner to a team. */
+        CreateSquadOwnerInvitationRequest: {
+            /**
+             * Format: email
+             * @description Email address for the intended co-owner.
+             */
+            email: string;
+        };
+        /** @description Request payload for replacing an existing active owner on a team. */
+        ReplaceSquadOwnerRequest: {
+            /**
+             * Format: email
+             * @description Email address for the replacement owner.
+             */
+            email: string;
+        };
+        /** @description Authenticated team-owner invitation acceptance payload. */
+        AcceptTeamOwnerInvitationRequest: {
+            /** @description Team-owner invitation code from the invite URL or email. */
+            inviteCode: string;
+        };
+        /** @description Pending or historical team-owner invitation record. */
+        TeamOwnerInvitationDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: email */
+            email: string;
+            inviteCode: string;
+            /** @enum {string} */
+            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+            /** Format: uuid */
+            invitedBy: string;
+            /** Format: uuid */
+            acceptedBy?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            acceptedAt?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            expiresAt?: string | null;
+            /** Format: uuid */
+            replacementForUserId?: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            createdAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            updatedAt: string | null;
+            team: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                /** @enum {string} */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            };
+        };
+        /** @description Single team-owner invitation response. */
+        TeamOwnerInvitationResponse: {
+            /** @description Pending or historical team-owner invitation record. */
+            invitation: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: email */
+                email: string;
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** Format: uuid */
+                invitedBy: string;
+                /** Format: uuid */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                acceptedAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                expiresAt?: string | null;
+                /** Format: uuid */
+                replacementForUserId?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string | null;
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+            };
+        };
+        /** @description League-scoped list of team-owner invitations. */
+        TeamOwnerInvitationListResponse: {
+            invitations: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: email */
+                email: string;
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** Format: uuid */
+                invitedBy: string;
+                /** Format: uuid */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                acceptedAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                expiresAt?: string | null;
+                /** Format: uuid */
+                replacementForUserId?: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                createdAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                updatedAt: string | null;
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+            }[];
+        };
+        /** @description Public preview payload for a team-owner invitation. */
+        TeamOwnerInvitationPreviewResponse: {
+            invitation: {
+                inviteCode: string;
+                /** @enum {string} */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                league: {
+                    /** Format: uuid */
+                    id: string;
+                    leagueCode: string;
+                    name: string;
+                };
+                team: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+                /**
+                 * @description League role applied when the invitation is accepted.
+                 * @enum {string}
+                 */
+                roleAfterAccept: "MEMBER";
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -9083,54 +9276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        invitations: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: email */
-                            email: string;
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** Format: uuid */
-                            invitedBy: string;
-                            /** Format: uuid */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            acceptedAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            expiresAt?: string | null;
-                            /** Format: uuid */
-                            replacementForUserId?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            createdAt: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            updatedAt: string | null;
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                        }[];
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9202,16 +9348,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for inviting an additional co-owner to a team. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Email address for the intended co-owner.
-                     */
-                    email: string;
-                };
+                "application/json": components["schemas"]["CreateSquadOwnerInvitationRequest"];
             };
         };
         responses: {
@@ -9221,55 +9360,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Pending or historical team-owner invitation record. */
-                        invitation: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: email */
-                            email: string;
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** Format: uuid */
-                            invitedBy: string;
-                            /** Format: uuid */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            acceptedAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            expiresAt?: string | null;
-                            /** Format: uuid */
-                            replacementForUserId?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            createdAt: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            updatedAt: string | null;
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9342,16 +9433,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for replacing an existing active owner on a team. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Email address for the replacement owner.
-                     */
-                    email: string;
-                };
+                "application/json": components["schemas"]["ReplaceSquadOwnerRequest"];
             };
         };
         responses: {
@@ -9361,55 +9445,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Pending or historical team-owner invitation record. */
-                        invitation: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: email */
-                            email: string;
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** Format: uuid */
-                            invitedBy: string;
-                            /** Format: uuid */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            acceptedAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            expiresAt?: string | null;
-                            /** Format: uuid */
-                            replacementForUserId?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            createdAt: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            updatedAt: string | null;
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9489,55 +9525,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Pending or historical team-owner invitation record. */
-                        invitation: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: email */
-                            email: string;
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** Format: uuid */
-                            invitedBy: string;
-                            /** Format: uuid */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            acceptedAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            expiresAt?: string | null;
-                            /** Format: uuid */
-                            replacementForUserId?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            createdAt: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            updatedAt: string | null;
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9757,31 +9745,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        invitation: {
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            league: {
-                                /** Format: uuid */
-                                id: string;
-                                leagueCode: string;
-                                name: string;
-                            };
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                            /**
-                             * @description League role applied when the invitation is accepted.
-                             * @enum {string}
-                             */
-                            roleAfterAccept: "MEMBER";
-                        };
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationPreviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9831,13 +9795,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Authenticated team-owner invitation acceptance payload. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Team-owner invitation code from the invite URL or email. */
-                    inviteCode: string;
-                };
+                "application/json": components["schemas"]["AcceptTeamOwnerInvitationRequest"];
             };
         };
         responses: {
@@ -9847,55 +9807,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Pending or historical team-owner invitation record. */
-                        invitation: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: email */
-                            email: string;
-                            inviteCode: string;
-                            /** @enum {string} */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** Format: uuid */
-                            invitedBy: string;
-                            /** Format: uuid */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            acceptedAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            expiresAt?: string | null;
-                            /** Format: uuid */
-                            replacementForUserId?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            createdAt: string | null;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            updatedAt: string | null;
-                            team: {
-                                /** Format: uuid */
-                                id: string;
-                                name: string;
-                                /** @enum {string} */
-                                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["TeamOwnerInvitationResponse"];
                 };
             };
             /** @description Standard API error envelope. */

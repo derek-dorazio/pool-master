@@ -8,6 +8,7 @@
  *   2. A registered name never reaches `components.schemas`.
  *   3. `registerSchema('X', YSchema)` — the published name does not match its schema.
  *   4. A route file calls `schemaRef()` without registering the components plugin.
+ *   5. A CONVERTED route file still inlines a domain schema that nobody registered.
  *
  * Check 1 is the original and the reason this file exists (#192).
  *
@@ -146,6 +147,51 @@ for (const file of walk(ROUTES_ROOT)) {
   });
 }
 
+// --- 5. A converted route file must not inline any domain schema ---------------
+// Checks 1-3 all reason about names that are ALREADY registered, so a DTO module
+// nobody registered at all is invisible to every one of them. That is not
+// hypothetical: `team-owner-invitations.dto.ts` had seven exported schemas and zero
+// registrations while `squads/routes.ts` — a module marked converted — inlined five
+// of them. Every guard passed.
+//
+// The rule that closes it: once a route file uses `schemaRef()` it has opted into the
+// contract, so every remaining `zodToJsonSchema()` in it must be a generic envelope.
+// Unconverted files use no `schemaRef()` and stay silent, so this creates no backlog.
+const GENERIC_ENVELOPES = new Set(['ErrorEnvelopeSchema', 'SuccessSchema']);
+
+//
+// One honest exception. A route file can be MIXED on purpose: `admin/routes.ts` $refs
+// league components because leagues' DTOs cross into it, while admin's own DTOs wait
+// for their slice. A file declares that with a marker naming its tracking issue:
+//
+//     // #192-mixed: admin DTOs convert in their own slice; league components already $ref'd.
+//
+// The exemption lives at the violation site, not in a list inside this script, so it is
+// visible in review and deleted by the slice that converts the file. Opted-out files are
+// printed on success so they cannot go quiet.
+const MIXED_MARKER = '#192-mixed:';
+const mixedFiles = [];
+
+for (const file of walk(ROUTES_ROOT)) {
+  const text = readFileSync(file, 'utf8');
+  if (!text.includes('schemaRef(')) continue; // unconverted module — inlining is correct
+  const rel = relative(process.cwd(), file);
+  if (text.includes(MIXED_MARKER)) {
+    mixedFiles.push(rel);
+    continue;
+  }
+  text.split('\n').forEach((line, index) => {
+    const m = /zodToJsonSchema\(\s*(\w+)\s*\)/.exec(line);
+    if (m === null || GENERIC_ENVELOPES.has(m[1])) return;
+    structural.push(
+      `${rel}:${index + 1}\n`
+      + `    This file is converted (it calls schemaRef), but still inlines ${m[1]}.\n`
+      + '    Register that schema and $ref it, or the module is only half published.\n'
+      + `    If the file is deliberately mixed, add a '${MIXED_MARKER} <why>' comment.`,
+    );
+  });
+}
+
 if (structural.length > 0) {
   console.error(`Found ${structural.length} structural problem(s) with named components:\n`);
   for (const line of structural) console.error(`  ${line}\n`);
@@ -166,4 +212,8 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log(`Named-component contract OK (${registered.size} registered components, 4 checks).`);
+console.log(`Named-component contract OK (${registered.size} registered components, 5 checks).`);
+if (mixedFiles.length > 0) {
+  console.log(`  ${mixedFiles.length} file(s) opted out of check 5 via '${MIXED_MARKER}':`);
+  for (const f of mixedFiles) console.log(`    ${f}`);
+}

@@ -16,6 +16,10 @@
  *   - A blanket rewrite matched `ListLeaguesResponses` inside
  *     `AdminListLeaguesResponses` and renamed a type belonging to an unconverted
  *     module. Overreach reads as progress unless something asserts the opposite.
+ *
+ * And a third, which this guard itself missed for a slice: checking only `responses.200`
+ * hid every 201-returning operation, so a converted module kept `[201]` derivations and
+ * still read as green. See `hasSuccessRef`.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -41,23 +45,52 @@ const generatedTypes = readFileSync(
 
 const componentNames = Object.keys(openapi.components?.schemas ?? {});
 
+type Operation = OpenApiDoc['paths'][string][string];
+
 /**
- * Response-map names for operations already converted to a `$ref`.
+ * True when ANY success status on the operation is a `$ref`.
  *
- * hey-api derives the map name from the operationId, so this is computable rather
- * than listed: `listLeagues` -> `ListLeaguesResponses`. An operation whose 200 is
- * still an inline schema is NOT here, which is what keeps the guard off unconverted
- * modules.
+ * Scanning every 2xx rather than 200 alone is load-bearing. The first version of this
+ * guard checked `responses['200']`, which made every 201-returning operation invisible
+ * to it: `createLeague`, `generateInviteLink` and `acceptInvitation` were converted and
+ * published as named components, while seven derivations against them survived in
+ * `leagues/test/fixtures.ts` indexing `[201]`. The guard reported green on a
+ * half-converted module, which is the exact failure it exists to catch.
  */
-function retiredResponseMaps(): string[] {
-  const maps = new Set<string>();
+function hasSuccessRef(op: Operation): boolean {
+  return Object.entries(op.responses ?? {}).some(
+    ([status, response]) => /^2\d\d$/.test(status)
+      && response?.content?.['application/json']?.schema?.$ref !== undefined,
+  );
+}
+
+/** hey-api derives the map name from the operationId: `listLeagues` -> `ListLeaguesResponses`. */
+function responseMapName(operationId: string): string {
+  return `${operationId.charAt(0).toUpperCase()}${operationId.slice(1)}Responses`;
+}
+
+function operations(): { operationId: string; op: Operation }[] {
+  const all: { operationId: string; op: Operation }[] = [];
   for (const ops of Object.values(openapi.paths)) {
     for (const op of Object.values(ops)) {
       if (typeof op !== 'object' || op === null) continue;
-      const ref = op.responses?.['200']?.content?.['application/json']?.schema?.$ref;
-      if (ref === undefined || op.operationId === undefined) continue;
-      maps.add(`${op.operationId.charAt(0).toUpperCase()}${op.operationId.slice(1)}Responses`);
+      if (typeof op.operationId !== 'string') continue;
+      all.push({ operationId: op.operationId, op });
     }
+  }
+  return all;
+}
+
+/**
+ * Response-map names for operations already converted to a `$ref`.
+ *
+ * Computable rather than listed. An operation with no `$ref` on any success status is
+ * NOT here, which is what keeps the guard off unconverted modules.
+ */
+function retiredResponseMaps(): string[] {
+  const maps = new Set<string>();
+  for (const { operationId, op } of operations()) {
+    if (hasSuccessRef(op)) maps.add(responseMapName(operationId));
   }
   return [...maps].sort();
 }
@@ -112,13 +145,9 @@ describe('#192: converted modules leave no derivations behind', () => {
     // matched a converted map's name as a substring of an unconverted one would
     // otherwise look like extra progress. At least one unconverted operation's map
     // must still be indexed somewhere, or this conversion has reached too far.
-    const stillInline = Object.values(openapi.paths)
-      .flatMap((ops) => Object.values(ops))
-      .filter((op): op is { operationId: string } =>
-        typeof op === 'object' && op !== null
-        && typeof op.operationId === 'string'
-        && op.responses?.['200']?.content?.['application/json']?.schema?.$ref === undefined)
-      .map((op) => `${op.operationId.charAt(0).toUpperCase()}${op.operationId.slice(1)}Responses`);
+    const stillInline = operations()
+      .filter(({ op }) => !hasSuccessRef(op))
+      .map(({ operationId }) => responseMapName(operationId));
     const anyStillIndexed = stillInline.some((m) => filesIndexing(m) !== '');
     expect(anyStillIndexed).toBe(true);
   });

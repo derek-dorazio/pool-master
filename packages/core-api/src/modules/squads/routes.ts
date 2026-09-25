@@ -3,14 +3,8 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto/squads.dto';
-import {
-  CreateSquadOwnerInvitationRequestSchema,
-  ReplaceSquadOwnerRequestSchema,
-  TeamOwnerInvitationListResponseSchema,
-  TeamOwnerInvitationResponseSchema,
-  SuccessSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+import '@poolmaster/shared/dto/team-owner-invitations.dto';
+import { SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaLeagueMembershipRepository,
@@ -198,7 +192,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.',
       operationId: 'listSquadOwnerInvitations',
       response: {
-        200: zodToJsonSchema(TeamOwnerInvitationListResponseSchema),
+        200: schemaRef('TeamOwnerInvitationListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -214,9 +208,9 @@ export function squadsModule(fastify: FastifyInstance): void {
       description:
         'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.',
       operationId: 'createSquadOwnerInvitation',
-      body: zodToJsonSchema(CreateSquadOwnerInvitationRequestSchema),
+      body: schemaRef('CreateSquadOwnerInvitationRequest'),
       response: {
-        201: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        201: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -232,9 +226,9 @@ export function squadsModule(fastify: FastifyInstance): void {
       description:
         'Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.',
       operationId: 'replaceSquadOwner',
-      body: zodToJsonSchema(ReplaceSquadOwnerRequestSchema),
+      body: schemaRef('ReplaceSquadOwnerRequest'),
       response: {
-        201: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        201: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -251,7 +245,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.',
       operationId: 'revokeSquadOwnerInvitation',
       response: {
-        200: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        200: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
