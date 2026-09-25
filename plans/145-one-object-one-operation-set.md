@@ -17,6 +17,31 @@ Implementation agents repeatedly read the `/admin` prefix as "admin needs its ow
 and built shadow copies. The cost is compounding: every agent that arrives afterwards finds
 two plausible definitions of one concept and picks one.
 
+## Working Rules For This Pass
+
+Set by the repo owner. They bound what this work may and may not do.
+
+1. **Surface conflicting model concepts — do not resolve them silently.** Conflicting object
+   names, relationship names, shadow objects that look alike: report them and ask, *and*
+   propose the change that makes sense. Open questions live at the foot of this plan.
+2. **The database, entity and DAO layer is the source of truth.** Assume it is imperfect —
+   it may have drifted, it almost certainly does not model admin operations well, and it may
+   not carry the full operation set. Anchor on it anyway; it is the cleanest model available.
+   Highlight every gap rather than papering over it.
+3. **No lean projections.** Every page uses the full object. `LeagueDto` is `LeagueDto`
+   everywhere; a page that needs four fields renders four fields. Wire size is not a concern
+   here, and tailored projections are how the shadow copies started.
+4. **Admin-only fields and functions are NOTED, not enforced.** Routes get permissioned to
+   root admin — that part is easy and in scope. Field-level trimming for commissioners and
+   members has no solution yet, and inventing one now is forbidden: the "admin-only mindset"
+   is the single biggest cause of the duplication being cleaned up. Mark admin-only
+   properties on the DTO and move on. **Accepting some field-exposure risk is a deliberate
+   trade** in exchange for reaching one model end to end. Nobody creates a new object or a
+   new field projection during this pass.
+
+The goal of this pass is a single end-to-end flow — UI → route → DTO → service → DAO →
+schema — over one set of objects and one set of operations. Everything else waits.
+
 ## Governing Principles
 
 **One canonical DTO per concept, one operation set per object.** Permission decides who may
@@ -129,6 +154,57 @@ Verified field-by-field against the published contract:
   10 fields, plus denormalised `leagueCode` / `leagueName`.
 - `ParticipantDto` has projections at 5, 6, 13 and 14 fields across six admin-golf
   operations.
+
+### 2y. Why the route layer drifted: the DAO does not cover the model
+
+The DAO is the right anchor, and it is also the proximate cause of the drift — because it
+**stops exactly where the shadow DTOs begin**.
+
+**14 of 46 models have a repository port.** The covered set is `User`, `League`,
+`LeagueMembership`, `Squad`, `SquadMembership`, `SquadOwnerInvitation`, `LeagueInvitation`,
+`Sport`, `Season`, `Participant`, `ParticipantProviderMapping`, `Contest`, `ContestEntry`,
+`DraftSession`.
+
+Uncovered — including the entities central to everything a member does:
+
+| Entity | Why it matters |
+|---|---|
+| `SportEvent` | contests are *for* events |
+| `SportEventParticipant` | picks come from these |
+| `ContestEntryPick` | the entry itself |
+| `SportEventGolfTier`, `…GolfRound`, `…GolfStanding`, `…GolfValuation` | the golf model members read |
+| `ContestConfiguration`, `ContestConfigTemplate` | what shapes a contest |
+| `SportLeague`, `RefreshToken` | |
+
+And coverage alone overstates it: **`UserRepository` has no list or search** — only
+`findById`, `findByEmail`, `create`, `update`, `delete`. So `adminListUsers` cannot use it,
+and `admin/user-service.ts` calls `prisma.user.findMany()` directly.
+
+The consequence shows up cleanly when services are counted by how they read:
+
+| Service | repo calls | raw prisma |
+|---|---:|---:|
+| `squads/owner-invitation-service` | 31 | 2 |
+| `squads/service` | 24 | 2 |
+| `leagues/invitation-service` | 16 | 3 |
+| `contests/service` | 12 | 13 |
+| **every `admin/*` service** | **0** | 2–27 |
+| **every `golf/*` service** | **0** | 6–24 |
+| `account`, `auth`, `sport-catalog`, `events` | **0** | 5–14 |
+
+**The correlation with DTO quality is near-perfect.** The repo-backed modules — squads,
+leagues — have the clean DTOs, including `LeagueMembershipDto`, the one correctly shaped
+edge in the contract. The repo=0 modules are where every shadow copy and projection lives.
+
+That is the mechanism, end to end:
+
+> No port for the entity → the service goes straight to Prisma → nothing constrains the
+> shape it returns → each service invents its own → the same entity acquires several DTOs.
+
+So "the DAO is the source of truth" is the right principle and **not yet true in practice**.
+Making it true is the first half of this epic: extend the ports to cover the model and the
+full operation set (including the unscoped `findAll`-style reads admin needs), then make
+services use them. The DTOs then have something to derive from.
 
 ### 2z. The canonical model already exists — it is `schema.prisma`
 
@@ -271,7 +347,34 @@ sensible duplicate threshold.
 exactly why it survived this long. Any guard built for this epic must detect subset and
 rename relationships, not just near-identical field sets.
 
-## Execution Sequence
+## Execution Sequence — bottom-up, one layer at a time
+
+Reversed from the earlier draft. #192 was driving from the DTO layer down; that layer is
+downstream of the problem, and converting it first only publishes the shadow copies with
+official names. **#192 is paused as a driver** and resumes as the export step below.
+
+**Pass 1 — schema and DAO.** Extend the repository ports to cover the model and the full
+operation set, including the unscoped reads admin needs (`findAll`, list, search,
+pagination). Resolve schema-level conflicts first (open questions below). This is where the
+model becomes finite and knowable.
+
+**Pass 2 — services onto the DAO.** Move the repo=0 services onto ports. `admin/*` and
+`golf/*` are the bulk. No new shapes; a service returns entities.
+
+**Pass 3 — DTOs and routes.** One DTO per entity and per edge, named for the schema.
+One operation set per object, permissioned. Admin-only fields annotated, not enforced
+(rule 4). Duplicate routes collapse here.
+
+**Pass 4 — export.** #192 resumes: register the now-canonical DTOs as named components,
+regenerate the client SDK. Cheap, because there is one shape per concept to register.
+
+**Pass 5 — UI.** One pass over every surface that touches an object or a shadow of it,
+moving it onto the generated type. Full objects, per rule 3.
+
+Each pass completes before the next begins. The end state is one flow — UI → route → DTO →
+service → DAO → schema — over one set of objects and one set of operations.
+
+## Prior Execution Sequence (superseded)
 
 Ordering is driven by one constraint: **#192 must not publish the duplicates as official
 named components.** Its remaining modules are `admin` and `admin-golf`, which is precisely
