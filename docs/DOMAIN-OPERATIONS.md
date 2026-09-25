@@ -212,11 +212,29 @@ of the create operation — it is the userId that becomes the first commissioner
 
 ## Open items
 
-- **Password reset vs change.** Listed as two operations because the precondition differs
-  (current password vs none). If they unify behind one operation with an
-  admin-only-skip-verification branch, say so — it is a real call, not an oversight.
-- **Commissioner creating a squad for another member.** Listed as `member` create only.
-  Whether a commissioner may create a squad on someone's behalf is unresolved.
+Reduced by the access rules. What remains:
+
+- **Does a commissioner's authority reach inside a squad?** A3 grants authority over
+  *leagues*; A5 constrains *members* to their own squad. Neither says whether a
+  commissioner may rename, deactivate, delete or alter the membership of a squad they do
+  not belong to. Marked † in the tables above. **Plausible answer: yes** — a commissioner
+  running a league needs to fix a squad whose owner has gone quiet — but it is authority
+  over another member's data, so it should be granted deliberately rather than assumed.
+- **May a member delete their own squad?** A5 settles that they cannot delete a peer's.
+  Their own is unresolved, and it is destructive once the squad holds contest entries.
+- **May a commissioner create a squad on another member's behalf?** The same question as
+  the first, on the create side.
+
+Resolved by the rules, recorded so they are not reopened:
+
+- **Password reset vs change** — A6 distinguishes them by *subject*, not just precondition:
+  changing your own password is `self` and requires the current one; resetting another
+  user's is `rootAdmin` and does not. Two operations.
+- **Embed or reference on edges** — A4 and A6 together require edges to carry peer
+  identity. See the note under the access rules.
+
+Out of scope by design:
+
 - **Field-level redaction is not modelled.** Admin-only fields are annotated on the
   canonical DTO and left exposed, per §13. This document assigns roles to *operations*,
   not to fields.
