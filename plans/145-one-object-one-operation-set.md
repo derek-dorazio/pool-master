@@ -374,6 +374,56 @@ moving it onto the generated type. Full objects, per rule 3.
 Each pass completes before the next begins. The end state is one flow — UI → route → DTO →
 service → DAO → schema — over one set of objects and one set of operations.
 
+## Slices — grouped by related objects
+
+Each slice takes a cluster of related entities through all of passes 1–3 (DAO → services →
+DTOs/routes) before the next begins. Ordering is by dependency: later clusters reference
+earlier ones.
+
+### Slice 1 — Identity and membership
+`User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, `LeagueInvitation`,
+`SquadOwnerInvitation`
+
+**All seven already have repository ports** — the best-covered cluster, and the one whose
+repo-backed services already produce the cleanest DTOs. Work here is mostly completion
+rather than construction: add the missing operations (`UserRepository` has no list or
+search), move `admin/user-service.ts` and `admin/league-service.ts` off raw Prisma, and
+collapse the duplicate DTOs and routes — `LeagueMemberDto`/`LeagueMembershipDto`,
+`adminListUsers` vs `UserProfileDto`, `/account/*` vs `/admin/users/*`,
+`adminInactivateLeague` vs `inactivateLeague`, `adminListTeams` vs `SquadDto`.
+
+### Slice 2 — Events and participants (the cross-sport core)
+Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
+`SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
+`ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`
+Golf instances: `SportEventGolfTier`, `SportEventParticipantGolfRound`,
+`SportEventParticipantGolfStanding`, `SportEventParticipantGolfValuation`
+
+**The largest gap.** `SportEvent`, `SportEventParticipant`, `SportEventRound` and every golf
+table have **no repository port**, which is why all 40 golf admin operations and the whole
+`golf/*` service layer run on raw Prisma and produce projections.
+
+**The schema already models the specialization correctly.** `SportEvent.sport` is the
+discriminator — a golf event *is* a `SportEvent` with `sport = 'GOLF'` — and the golf tables
+are extension rows keyed to the core (`SportEventParticipantGolfValuation` is `@unique` on
+`sportEventParticipantId`, a true 1:1). Core row plus optional sport extension. **That is
+the pattern; sport particulars must stay in the extension and never migrate into the core.**
+
+### Slice 3 — Contests and entries
+`Contest`, `ContestEntry`, `ContestEntryPick`, `ContestConfiguration`,
+`ContestConfigTemplate`, `ContestPrizeDefinition`, `ContestTimingPolicy`,
+`ContestEntryAggregationRule`, `ParticipantContestScoringRule`, `ContestEntryGolfStanding`
+
+`Contest` and `ContestEntry` have ports; nothing else in the cluster does. Overlaps #198
+(selection engine) — that epic's `SelectionEngine` sits on this cluster's DAO, so #198's
+first slice should follow this one.
+
+### Slice 4 — Platform and operations
+Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
+
+The genuinely admin-only 32 operations. No shared objects, no collapse — this slice is
+naming (stop calling it "admin") and bringing it onto ports for consistency.
+
 ## Prior Execution Sequence (superseded)
 
 Ordering is driven by one constraint: **#192 must not publish the duplicates as official
@@ -395,6 +445,21 @@ where the shadow copies concentrate.
 components published.
 
 ## Open Questions
+
+### Q0. Golf has leaked into the cross-sport core — rename the enum?
+
+`SportEventParticipant` is the cross-sport entity, but its `inactiveReason` column is typed
+`PrismaGolfParticipantInactiveReason`. The values are `WITHDRAWN`, `CUT`, `ELIMINATED` —
+`WITHDRAWN` and `ELIMINATED` are sport-agnostic; only `CUT` is golf-flavoured, and it has a
+natural analogue in other cut/elimination formats.
+
+**Proposal:** rename the enum to `ParticipantInactiveReason` and keep the values. The core
+entity then carries no sport-specific type. It is a Prisma enum rename, so it needs a
+migration — cheap, but not free while `migrate-qa` is broken (#191).
+
+This is the only instance found of sport particulars sitting in the core. Everything else
+golf-specific is correctly in an extension table.
+
 
 - **Embed or reference?** An edge carries `userId`. When a consumer needs the person's
   name inline — a member list, a squad roster — does the edge embed the canonical `UserDto`,
