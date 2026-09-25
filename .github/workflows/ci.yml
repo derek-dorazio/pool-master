@@ -38,10 +38,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: node scripts/check-pr-review-triggers.mjs
-      - name: Lint full repo
-        run: npm run lint
-      - name: Typecheck full repo
-        run: npm run typecheck
+      # Service-only. The webapp's lint and typecheck run in poolmaster-build, so a
+      # client-side type error cannot prevent the backend integration and functional
+      # suites from reporting. See plans/145 — phase 1 of the domain-model refactor
+      # deliberately leaves the client red while the service tier is brought into line.
+      - name: Lint service
+        run: npm run lint:service
+      - name: Typecheck service
+        run: npm run typecheck:service
 
   # =========================================================================
   # Backend Unit Tests + Coverage
@@ -325,6 +329,14 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+      - run: npm run build --workspace @poolmaster/shared
+      # The webapp's own gates live here rather than in lint-and-typecheck, so that a
+      # client-side failure does not skip the backend test jobs that depend on it.
+      - name: Lint webapp
+        run: npm run lint:webapp
+      - name: Typecheck webapp
+        run: npm run typecheck:webapp
       - run: npm run build:poolmaster
 
   # =========================================================================

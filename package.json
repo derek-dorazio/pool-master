@@ -64,7 +64,11 @@
     "api:check": "node scripts/check-openapi-fresh.mjs",
     "api:validate": "node --import tsx scripts/validate-openapi-spec.ts",
     "api:refresh": "npm run api:export && npm run api:generate",
-    "rules:check:skill-references": "node scripts/check-skill-references.mjs"
+    "rules:check:skill-references": "node scripts/check-skill-references.mjs",
+    "lint:service": "eslint 'packages/**/*.ts' --max-warnings 0",
+    "lint:webapp": "eslint 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
+    "typecheck:service": "turbo typecheck --filter=!@poolmaster/poolmaster",
+    "typecheck:webapp": "turbo typecheck --filter=@poolmaster/poolmaster"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
