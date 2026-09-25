@@ -16,10 +16,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfTournamentTiersResponses,
-  AdminReplaceGolfTournamentTiersData,
-} from '@/lib/api';
+import type { AdminGetGolfTournamentTiersResponses, AdminReplaceGolfTournamentTiersData } from '@/lib/api';
 
 type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
 type TierDraft = {

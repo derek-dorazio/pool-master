@@ -1,9 +1,4 @@
-import type {
-  AdminListProviderSyncRunsResponses,
-  AdminListProvidersResponses,
-  AdminPrepareSportSyncResponses,
-  AdminSyncProviderEventDataResponses,
-} from '@/lib/api';
+import type { AdminListProviderSyncRunsResponses, AdminListProvidersResponses, AdminPrepareSportSyncResponses, AdminSyncProviderEventDataResponses } from '@/lib/api';
 
 export type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 export type ProviderSummary = AdminListProvidersResponses[200]['items'][number];

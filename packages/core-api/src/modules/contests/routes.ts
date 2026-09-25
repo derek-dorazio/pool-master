@@ -4,27 +4,11 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import {
-  CloseContestRequestSchema,
-  ContestAuditLogResponseSchema,
-  ContestEntryDeletionResponseSchema,
-  ContestEntryDetailResponseSchema,
-  ContestEntryListResponseSchema,
-  ContestEntryResponseSchema,
-  ContestListResponseSchema,
-  ContestResponseSchema,
-  CreateContestRequestSchema,
-  ExtendContestDeadlineRequestSchema,
-  ExtendPickClockRequestSchema,
-  GolfLeaderboardResponseSchema,
-  MyContestEntryResponseSchema,
-  PauseContestDraftRequestSchema,
-  ReopenContestRequestSchema,
-  SuccessSchema,
-  UndoContestDraftSelectionRequestSchema,
-  UpdateContestEntryRequestSchema,
-  UpdateContestLockTimeRequestSchema,
-  UpdateContestRequestSchema,
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components these routes $ref (#192).
+import '@poolmaster/shared/dto/contests.dto';
+import { SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -54,6 +38,8 @@ import {
 } from '../email';
 
 export function contestsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
@@ -92,7 +78,7 @@ export function contestsModule(fastify: FastifyInstance): void {
       description:
         'Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests.',
       operationId: 'listContests',
-      response: { 200: zodToJsonSchema(ContestListResponseSchema) },
+      response: { 200: schemaRef('ContestListResponse') },
     },
     handler: handlers.listContests,
   });
@@ -104,9 +90,9 @@ export function contestsModule(fastify: FastifyInstance): void {
       description:
         'Creates a contest inside the target league using the league-scoped contest creation flow for commissioners.',
       operationId: 'createContest',
-      body: zodToJsonSchema(CreateContestRequestSchema),
+      body: schemaRef('CreateContestRequest'),
       response: {
-        201: zodToJsonSchema(ContestResponseSchema),
+        201: schemaRef('ContestResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -121,6 +107,8 @@ export function contestsModule(fastify: FastifyInstance): void {
  * operations that use contestId rather than leagueId.
  */
 export function contestsByIdModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const contestRepo = new PrismaContestRepository(prisma);
   const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
@@ -174,7 +162,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier.',
       operationId: 'getContest',
       response: {
-        200: zodToJsonSchema(ContestResponseSchema),
+        200: schemaRef('ContestResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -189,7 +177,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Lists the contest entries currently registered for the contest, including data needed for administration and participant views.',
       operationId: 'listContestEntries',
       response: {
-        200: zodToJsonSchema(ContestEntryListResponseSchema),
+        200: schemaRef('ContestEntryListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -205,7 +193,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks.',
       operationId: 'getContestEntry',
       response: {
-        200: zodToJsonSchema(ContestEntryDetailResponseSchema),
+        200: schemaRef('ContestEntryDetailResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -221,7 +209,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.',
       operationId: 'getGolfContestLeaderboard',
       response: {
-        200: zodToJsonSchema(GolfLeaderboardResponseSchema),
+        200: schemaRef('GolfLeaderboardResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -238,7 +226,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.',
       operationId: 'getMyContestEntry',
       response: {
-        200: zodToJsonSchema(MyContestEntryResponseSchema),
+        200: schemaRef('MyContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -254,7 +242,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation.',
       operationId: 'enterContest',
       response: {
-        201: zodToJsonSchema(ContestEntryResponseSchema),
+        201: schemaRef('ContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -271,7 +259,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest.',
       operationId: 'leaveContest',
       response: {
-        200: zodToJsonSchema(ContestEntryDeletionResponseSchema),
+        200: schemaRef('ContestEntryDeletionResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -286,9 +274,9 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable.',
       operationId: 'updateContestEntry',
-      body: zodToJsonSchema(UpdateContestEntryRequestSchema),
+      body: schemaRef('UpdateContestEntryRequest'),
       response: {
-        200: zodToJsonSchema(ContestEntryResponseSchema),
+        200: schemaRef('ContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -303,9 +291,9 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Updates mutable contest fields for the target contest and returns the refreshed contest payload.',
       operationId: 'updateContest',
-      body: zodToJsonSchema(UpdateContestRequestSchema),
+      body: schemaRef('UpdateContestRequest'),
       response: {
-        200: zodToJsonSchema(ContestResponseSchema),
+        200: schemaRef('ContestResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -337,7 +325,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Undoes the most recent draft selection through the contest-level override surface used by commissioners and administrators.',
       operationId: 'undoContestDraftSelection',
-      body: zodToJsonSchema(UndoContestDraftSelectionRequestSchema),
+      body: schemaRef('UndoContestDraftSelectionRequest'),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requireContestCommissioner,
@@ -350,7 +338,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Pauses an active draft through the contest override surface without requiring the dedicated draft-room route family.',
       operationId: 'pauseContestDraft',
-      body: zodToJsonSchema(PauseContestDraftRequestSchema),
+      body: schemaRef('PauseContestDraftRequest'),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requireContestCommissioner,
@@ -375,7 +363,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Adds extra time to the current drafter turn through the contest override surface.',
       operationId: 'extendPickClock',
-      body: zodToJsonSchema(ExtendPickClockRequestSchema),
+      body: schemaRef('ExtendPickClockRequest'),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
     preHandler: requireContestCommissioner,
@@ -390,8 +378,8 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.',
       operationId: 'reopenContest',
-      body: zodToJsonSchema(ReopenContestRequestSchema),
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      body: schemaRef('ReopenContestRequest'),
+      response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,
     handler: overrides.reopenContest,
@@ -403,8 +391,8 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.',
       operationId: 'closeContest',
-      body: zodToJsonSchema(CloseContestRequestSchema),
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      body: schemaRef('CloseContestRequest'),
+      response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,
     handler: overrides.closeContest,
@@ -416,8 +404,8 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Moves the contest deadline later to keep the contest open longer without recreating it.',
       operationId: 'extendContestDeadline',
-      body: zodToJsonSchema(ExtendContestDeadlineRequestSchema),
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      body: schemaRef('ExtendContestDeadlineRequest'),
+      response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,
     handler: overrides.extendDeadline,
@@ -429,8 +417,8 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Changes the contest lock time that governs when picks or entries stop being editable.',
       operationId: 'updateContestLockTime',
-      body: zodToJsonSchema(UpdateContestLockTimeRequestSchema),
-      response: { 200: zodToJsonSchema(ContestResponseSchema) },
+      body: schemaRef('UpdateContestLockTimeRequest'),
+      response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,
     handler: overrides.updateLockTime,
@@ -443,7 +431,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Returns the audit trail for contest-level actions so commissioner and admin surfaces can review what changed.',
       operationId: 'getContestAuditLog',
-      response: { 200: zodToJsonSchema(ContestAuditLogResponseSchema) },
+      response: { 200: schemaRef('ContestAuditLogResponse') },
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };

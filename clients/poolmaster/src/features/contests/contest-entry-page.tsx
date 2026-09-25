@@ -1,17 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-  getContest,
-  getDraftState,
-  getLeague,
-  listContestEntries,
-  submitContestSelection,
-  updateContestEntry,
-  type GetContestResponses,
-  type GetDraftStateResponses,
-  type ListContestEntriesResponses,
-} from '@/lib/api';
+import { getContest, getDraftState, getLeague, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDetailDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -42,7 +32,6 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
@@ -59,7 +48,7 @@ function formatRelativeToPar(value: number | null | undefined) {
   return value > 0 ? `+${value}` : `${value}`;
 }
 
-function getContestPhaseLabel(contest: ContestDetail) {
+function getContestPhaseLabel(contest: ContestDetailDto) {
   switch (contest.status) {
     case 'OPEN':
       return 'Editable until contest lock';
@@ -170,7 +159,7 @@ export function ContestEntryPage() {
 
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDetail> => {
+    queryFn: async (): Promise<ContestDetailDto> => {
       const response = await getContest({ path: { contestId } });
       if (!response.data?.contest) {
         throwApiError(response.error, 'Contest detail response is missing data.');
@@ -183,7 +172,7 @@ export function ContestEntryPage() {
 
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: async (): Promise<ListContestEntriesResponses[200]> => {
+    queryFn: async (): Promise<ContestEntryListResponse> => {
       const response = await listContestEntries({ path: { contestId } });
       if (!response.data) {
         throwApiError(response.error, 'Contest entries response is missing data.');

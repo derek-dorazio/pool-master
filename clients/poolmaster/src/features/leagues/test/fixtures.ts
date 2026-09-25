@@ -1,33 +1,14 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type {
-  AcceptInvitationResponses,
-  ActivateLeagueResponses,
-  CreateLeagueResponses,
-  DeleteLeagueResponses,
-  GenerateInviteLinkResponses,
-  GetCurrentUserResponses,
-  GetInvitationPreviewResponses,
-  GetLeagueByCodeResponses,
-  GetLeagueResponses,
-  InactivateLeagueResponses,
-  ListLeagueSquadsResponses,
-  ListLeaguesResponses,
-  UpdateLeagueDetailsResponses,
-  UpdateLeagueIconResponses,
-  UpdateLeagueSquadResponses,
-} from '@/lib/api';
+import type { AcceptInvitationResponses, CreateLeagueResponses, DeleteLeagueResponses, GenerateInviteLinkResponses, GetCurrentUserResponses, SquadDto, SquadListResponse, LeagueDetailDto, LeagueSummaryDto, LeagueListResponse, LeagueResponse, SquadResponse, InvitationPreviewResponse } from '@/lib/api';
 
-export type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
-export type LeagueDetail = GetLeagueResponses[200]['league'];
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
-export type LeagueSquad = ListLeagueSquadsResponses[200]['squads'][number];
-export type LeagueSquadMember = NonNullable<LeagueSquad['members']>[number];
-export type InvitationPreview = GetInvitationPreviewResponses[200]['invitation'];
+export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
+export type InvitationPreview = InvitationPreviewResponse['invitation'];
 export type AcceptedLeagueMembership = AcceptInvitationResponses[201]['membership'];
 export type GeneratedInviteLink = GenerateInviteLinkResponses[201]['invitation'];
 
 type LeagueSummaryFixture = Pick<
-  LeagueSummary,
+  LeagueSummaryDto,
   | 'id'
   | 'leagueCode'
   | 'name'
@@ -42,7 +23,7 @@ type LeagueSummaryFixture = Pick<
   | 'createdAt'
 >;
 
-type LeagueDetailFixture = LeagueSummaryFixture & Pick<LeagueDetail, 'joinPolicy'>;
+type LeagueDetailFixture = LeagueSummaryFixture & Pick<LeagueDetailDto, 'joinPolicy'>;
 
 type CurrentUserFixture = Pick<
   CurrentUser,
@@ -58,7 +39,7 @@ type CurrentUserFixture = Pick<
 >;
 
 type LeagueSquadFixture = Pick<
-  LeagueSquad,
+  SquadDto,
   | 'id'
   | 'leagueId'
   | 'createdBy'
@@ -223,14 +204,14 @@ export function apiSuccess<TData>(data: TData): { data: TData } {
   return { data };
 }
 
-export function buildLeagueSummary(overrides: Partial<LeagueSummary> = {}): LeagueSummary {
+export function buildLeagueSummary(overrides: Partial<LeagueSummaryDto> = {}): LeagueSummaryDto {
   return {
     ...baseLeagueSummary,
     ...overrides,
   };
 }
 
-export function buildLeagueDetail(overrides: Partial<LeagueDetail> = {}): LeagueDetail {
+export function buildLeagueDetail(overrides: Partial<LeagueDetailDto> = {}): LeagueDetailDto {
   return {
     ...baseLeagueDetail,
     ...overrides,
@@ -253,7 +234,7 @@ export function buildLeagueSquadMember(
   };
 }
 
-export function buildLeagueSquad(overrides: Partial<LeagueSquad> = {}): LeagueSquad {
+export function buildLeagueSquad(overrides: Partial<SquadDto> = {}): SquadDto {
   return {
     ...baseLeagueSquad,
     ...overrides,
@@ -287,17 +268,17 @@ export function buildGeneratedInviteLink(
   };
 }
 
-export function listLeaguesData(leagues: LeagueSummary[]): ListLeaguesResponses[200] {
+export function listLeaguesData(leagues: LeagueSummaryDto[]): LeagueListResponse {
   return { leagues };
 }
 
-export function getLeagueData(league: LeagueDetail): GetLeagueResponses[200] {
+export function getLeagueData(league: LeagueDetailDto): LeagueResponse {
   return { league };
 }
 
 export function getLeagueByCodeData(
-  league: GetLeagueByCodeResponses[200]['league'],
-): GetLeagueByCodeResponses[200] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
@@ -308,26 +289,26 @@ export function createLeagueData(
 }
 
 export function updateLeagueDetailsData(
-  league: UpdateLeagueDetailsResponses[200]['league'],
-): UpdateLeagueDetailsResponses[200] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
 export function updateLeagueIconData(
-  league: UpdateLeagueIconResponses[200]['league'],
-): UpdateLeagueIconResponses[200] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
 export function inactivateLeagueData(
-  league: InactivateLeagueResponses[200]['league'],
-): InactivateLeagueResponses[200] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
 export function activateLeagueData(
-  league: ActivateLeagueResponses[200]['league'],
-): ActivateLeagueResponses[200] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
@@ -336,14 +317,14 @@ export function deleteLeagueData(): DeleteLeagueResponses[200] {
 }
 
 export function listLeagueSquadsData(
-  squads: LeagueSquad[],
-): ListLeagueSquadsResponses[200] {
+  squads: SquadDto[],
+): SquadListResponse {
   return { squads };
 }
 
 export function updateLeagueSquadData(
-  squad: UpdateLeagueSquadResponses[200]['squad'],
-): UpdateLeagueSquadResponses[200] {
+  squad: SquadDto,
+): SquadResponse {
   return { squad };
 }
 
@@ -355,7 +336,7 @@ export function generateInviteLinkData(
 
 export function getInvitationPreviewData(
   invitation: InvitationPreview,
-): GetInvitationPreviewResponses[200] {
+): InvitationPreviewResponse {
   return { invitation };
 }
 

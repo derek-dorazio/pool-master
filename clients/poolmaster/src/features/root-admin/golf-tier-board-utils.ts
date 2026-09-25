@@ -1,8 +1,4 @@
-import type {
-  AdminGetGolfTournamentFieldResponses,
-  AdminGetGolfTournamentTiersResponses,
-  AdminReplaceGolfTierAssignmentsData,
-} from '@/lib/api';
+import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses, AdminReplaceGolfTierAssignmentsData } from '@/lib/api';
 
 type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
 type FieldEntry =

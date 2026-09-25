@@ -3506,7 +3506,3031 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** @description Tier definition used in contest create and update flows. */
+        TierDefinitionRequest: {
+            /** @description Stable tier identifier. */
+            tierId: string;
+            /** @description Tier label shown in commissioner and draft UI. */
+            tierName: string;
+            /** @description Tier order number. */
+            tierNumber: number;
+            /** @description How many picks each entry must make from the tier. */
+            picksFromTier: number;
+            /** @description Optional ranking range that produced the tier. */
+            rankingRange?: [
+                number,
+                number
+            ];
+            /** @description Optional pricing range that produced the tier. */
+            priceRange?: [
+                number,
+                number
+            ];
+            /** @description Optional cap on how many participants can live in the tier. */
+            maxParticipants?: number;
+            /** @description Participants assigned to the tier. */
+            participantIds: string[];
+        };
+        /** @description Contest-configuration payload used by contest create and update endpoints. */
+        ContestCrudConfigurationRequest: {
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: {
+                /** @description Stable tier identifier. */
+                tierId: string;
+                /** @description Tier label shown in commissioner and draft UI. */
+                tierName: string;
+                /** @description Tier order number. */
+                tierNumber: number;
+                /** @description How many picks each entry must make from the tier. */
+                picksFromTier: number;
+                /** @description Optional ranking range that produced the tier. */
+                rankingRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional pricing range that produced the tier. */
+                priceRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional cap on how many participants can live in the tier. */
+                maxParticipants?: number;
+                /** @description Participants assigned to the tier. */
+                participantIds: string[];
+            }[];
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: number[];
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+        };
+        /** @description Request payload for creating a contest. */
+        CreateContestRequest: {
+            name: string;
+            eventId?: string;
+            /**
+             * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+             * @enum {string}
+             */
+            contestFormat: "ROSTER";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+            /** @description Contest-configuration payload used by contest create and update endpoints. */
+            contestConfiguration?: {
+                draftMode?: string;
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: {
+                    /** @description Stable tier identifier. */
+                    tierId: string;
+                    /** @description Tier label shown in commissioner and draft UI. */
+                    tierName: string;
+                    /** @description Tier order number. */
+                    tierNumber: number;
+                    /** @description How many picks each entry must make from the tier. */
+                    picksFromTier: number;
+                    /** @description Optional ranking range that produced the tier. */
+                    rankingRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional pricing range that produced the tier. */
+                    priceRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional cap on how many participants can live in the tier. */
+                    maxParticipants?: number;
+                    /** @description Participants assigned to the tier. */
+                    participantIds: string[];
+                }[];
+                tierAssignmentMethod?: string;
+                budget?: number;
+                pricingMethod?: string;
+                rosterSize?: number;
+                pickCount?: number;
+                picksPerPeriod?: number;
+                roundValues?: number[];
+                startRound?: string;
+                isExclusive?: boolean;
+                bestBallN?: number;
+                missedCutPenalty?: number;
+                captainSlot?: boolean;
+                captainMultiplier?: number;
+            };
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            lockAt?: string;
+            isExclusive?: boolean;
+            /** @description Whether eliminated entries stop accumulating score events. */
+            scoringStopsOnElimination?: boolean;
+        };
+        /** @description Patch payload for updating editable contest metadata. */
+        UpdateContestRequest: {
+            name?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            lockAt?: string;
+            /** @description Whether the contest should continue to enforce exclusive picks. */
+            isExclusive?: boolean;
+        };
+        /** @description Request payload for updating a contest entry while the contest is still joinable. */
+        UpdateContestEntryRequest: {
+            /** @description Unique entry name shown anywhere the team entry is listed. */
+            name?: string;
+            /** @description Optional tiebreaker prediction saved on the contest entry. */
+            tiebreakerValue?: number | null;
+        };
+        /** @description Commissioner request payload for undoing a contest draft selection. */
+        UndoContestDraftSelectionRequest: {
+            /** @description Draft pick to undo. */
+            pickId: string;
+            /** @description Commissioner reason recorded for the undo action. */
+            reason: string;
+        };
+        /** @description Commissioner request payload for pausing a draft. */
+        PauseContestDraftRequest: {
+            /** @description Reason recorded for pausing the draft. */
+            reason: string;
+        };
+        /** @description Commissioner request payload for extending the current draft turn. */
+        ExtendPickClockRequest: {
+            /** @description How many seconds to add to the current draft pick clock. */
+            additionalSeconds: number;
+        };
+        /** @description Request payload for reopening a closed contest. */
+        ReopenContestRequest: {
+            /** @description Reason recorded for reopening the contest. */
+            reason: string;
+        };
+        /** @description Request payload for force-closing a contest. */
+        CloseContestRequest: {
+            /** @description Reason recorded for closing the contest. */
+            reason: string;
+        };
+        /** @description Request payload for extending a contest end time. */
+        ExtendContestDeadlineRequest: {
+            /**
+             * Format: date-time
+             * @description Replacement contest end timestamp.
+             */
+            newEnd: string;
+            /** @description Reason recorded for the deadline extension. */
+            reason: string;
+        };
+        /** @description Request payload for updating a contest lock time. */
+        UpdateContestLockTimeRequest: {
+            /**
+             * Format: date-time
+             * @description Replacement contest lock timestamp.
+             */
+            newLock: string;
+            /** @description Reason recorded for changing the lock time. */
+            reason: string;
+        };
+        /** @description Contest list item used in contest indexes and league home summaries. */
+        ContestSummaryDto: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            /** @enum {string} */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            leagueId: string;
+            sportEventId?: string | null;
+            sport?: string | null;
+            /** @description Number of entries currently in the contest. */
+            entryCount?: number;
+            /** Format: date-time */
+            startsAt?: string | null;
+            /** Format: date-time */
+            endsAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        /** @description Contest detail returned by contest detail endpoints. */
+        ContestDetailDto: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            /** @enum {string} */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            leagueId: string;
+            sportEventId?: string | null;
+            sport?: string | null;
+            /** @description Number of entries currently in the contest. */
+            entryCount?: number;
+            /** Format: date-time */
+            startsAt?: string | null;
+            /** Format: date-time */
+            endsAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            lockAt?: string | null;
+            isExclusive?: boolean;
+        };
+        /** @description Contest entry summary. */
+        ContestEntryDto: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            /** @enum {string} */
+            status: "ACTIVE" | "INACTIVE";
+            tiebreakerValue?: number | null;
+            isEliminated: boolean;
+            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+            picksCount: number;
+            /**
+             * Format: date-time
+             * @description When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the contest entry was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Raw ContestEntryPick row used by persistence-aware surfaces. */
+        ContestEntryPickDto: {
+            /** @description Pick identifier. */
+            id: string;
+            /** @description Owning contest entry identifier. */
+            entryId: string;
+            /** @description Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant). */
+            sportEventParticipantId: string;
+            /**
+             * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
+             * @enum {string}
+             */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @description Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1. */
+            period: number | null;
+            /** @description Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1. */
+            slot: number | null;
+            /** @description Selection tier (tiered ROSTER); null otherwise. */
+            tier: string | null;
+            /** @description Budget cost (budget ROSTER); null otherwise. */
+            cost: number | null;
+            /** @description Whether this pick was auto-assigned (snake-draft auto-pick, Survivor missed-week auto-loss, etc.). */
+            isAutoPicked: boolean;
+            /** @description Snake-draft round; null outside snake-draft mechanism. */
+            draftRound: number | null;
+            /** @description Snake-draft pick order; null outside snake-draft mechanism. */
+            draftPickNumber: number | null;
+            /**
+             * Format: date-time
+             * @description When the pick was made (or auto-picked).
+             */
+            pickedAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint. */
+        ContestEntryParticipantDetailDto: {
+            pickId: string;
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            participantStatus?: string | null;
+            position?: string | null;
+            teamAffiliation?: string | null;
+            /**
+             * Format: date-time
+             * @description When the participant was added to the contest entry.
+             */
+            pickedAt: string;
+        };
+        /** @description Expanded contest entry detail. */
+        ContestEntryDetailDto: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            /** @enum {string} */
+            status: "ACTIVE" | "INACTIVE";
+            tiebreakerValue?: number | null;
+            isEliminated: boolean;
+            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+            picksCount: number;
+            /**
+             * Format: date-time
+             * @description When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the contest entry was last updated.
+             */
+            updatedAt: string;
+            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+            participants?: {
+                pickId: string;
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                participantStatus?: string | null;
+                position?: string | null;
+                teamAffiliation?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the participant was added to the contest entry.
+                 */
+                pickedAt: string;
+            }[];
+        };
+        /** @description Single R1/R2/R3/R4 Golf leaderboard cell for a picked golfer. */
+        GolfLeaderboardRoundCellDto: {
+            /** @description Golf round number represented by this leaderboard column. */
+            round: number;
+            /**
+             * @description Normalized status for this round cell.
+             * @enum {string}
+             */
+            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+            strokes: number | null;
+            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+            scoreToPar: number | null;
+            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+            thru: number | null;
+            /**
+             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+             * @enum {string}
+             */
+            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+            displayValue: string | null;
+        };
+        /** @description Fixed four-round Golf leaderboard columns. */
+        GolfLeaderboardRoundColumnsDto: {
+            /** @description Round 1 leaderboard column. */
+            r1: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 2 leaderboard column. */
+            r2: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 3 leaderboard column. */
+            r3: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 4 leaderboard column. */
+            r4: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+        };
+        /** @description Golf event participant read model used by the contest leaderboard. This is loaded once per event and joined to entry picks in memory. */
+        GolfLeaderboardParticipantDto: {
+            /** @description SportEventParticipant row selected by contest picks. */
+            sportEventParticipantId: string;
+            /** @description Canonical participant identifier. */
+            participantId: string;
+            /** @description Golfer display name. */
+            name: string;
+            /** @description Optional shorter golfer display name. */
+            shortName: string | null;
+            /** @description Whether this golfer is currently eligible/available for this tournament. */
+            isActive: boolean;
+            /**
+             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+             * @enum {string|null}
+             */
+            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+            /** @description Latest copied global world ranking on this event participant. */
+            worldRanking: number | null;
+            /** @description Event-scoped odds-to-win for this golfer. */
+            oddsToWin: number | null;
+            /** @description Event seed/order when supplied by the provider. */
+            seedNumber: number | null;
+            /** @description TOT column value: current event total relative to par. Lower is better. */
+            totalScoreToPar: number | null;
+            /** @description Current event total strokes across persisted Golf rounds. */
+            totalStrokes: number | null;
+            /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+            thru: number | null;
+            /** @description Current or latest round represented by the standing. */
+            currentRound: number | null;
+            /**
+             * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+             * @enum {string}
+             */
+            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+            /** @description Event leaderboard position for this golfer when available. */
+            position: number | null;
+            /** @description Provider/display position such as T2 when available. */
+            displayPosition: string | null;
+            /**
+             * Format: date-time
+             * @description Provider timestamp for the current Golf standing.
+             */
+            asOf: string | null;
+            /** @description R1 through R4 detail for expanded member leaderboard rows. */
+            rounds: {
+                /** @description Round 1 leaderboard column. */
+                r1: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 2 leaderboard column. */
+                r2: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 3 leaderboard column. */
+                r3: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 4 leaderboard column. */
+                r4: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+            };
+        };
+        /** @description Expanded Golf pick row for a contest leaderboard entry. */
+        GolfLeaderboardEntryPickDto: {
+            /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+            pickId: string;
+            /** @description Selected SportEventParticipant. */
+            sportEventParticipantId: string;
+            /**
+             * Format: date-time
+             * @description When this golfer was selected.
+             */
+            pickedAt: string;
+            /** @description Optional roster slot from the pick row. */
+            slot: number | null;
+            /** @description Optional tier/category from the pick row. */
+            tier: string | null;
+            /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+            isCounting: boolean;
+            /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+            isDropped: boolean;
+            /** @description Expanded golfer event data for this pick. */
+            participant: {
+                /** @description SportEventParticipant row selected by contest picks. */
+                sportEventParticipantId: string;
+                /** @description Canonical participant identifier. */
+                participantId: string;
+                /** @description Golfer display name. */
+                name: string;
+                /** @description Optional shorter golfer display name. */
+                shortName: string | null;
+                /** @description Whether this golfer is currently eligible/available for this tournament. */
+                isActive: boolean;
+                /**
+                 * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                 * @enum {string|null}
+                 */
+                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                /** @description Latest copied global world ranking on this event participant. */
+                worldRanking: number | null;
+                /** @description Event-scoped odds-to-win for this golfer. */
+                oddsToWin: number | null;
+                /** @description Event seed/order when supplied by the provider. */
+                seedNumber: number | null;
+                /** @description TOT column value: current event total relative to par. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Current event total strokes across persisted Golf rounds. */
+                totalStrokes: number | null;
+                /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                thru: number | null;
+                /** @description Current or latest round represented by the standing. */
+                currentRound: number | null;
+                /**
+                 * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Event leaderboard position for this golfer when available. */
+                position: number | null;
+                /** @description Provider/display position such as T2 when available. */
+                displayPosition: string | null;
+                /**
+                 * Format: date-time
+                 * @description Provider timestamp for the current Golf standing.
+                 */
+                asOf: string | null;
+                /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                rounds: {
+                    /** @description Round 1 leaderboard column. */
+                    r1: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 2 leaderboard column. */
+                    r2: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 3 leaderboard column. */
+                    r3: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 4 leaderboard column. */
+                    r4: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                };
+            };
+        };
+        /** @description Single Team row in the Golf contest leaderboard. */
+        GolfLeaderboardEntryDto: {
+            /** @description Contest entry identifier. */
+            entryId: string;
+            /** @description Team entry display name. */
+            entryName: string;
+            /** @description Entry number for squads allowed to submit multiple entries. */
+            entryNumber: number;
+            /** @description Squad/team identifier. */
+            squadId: string;
+            /** @description Squad/team display name. */
+            squadName: string;
+            /**
+             * @description Contest entry lifecycle status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
+            totalScoreToPar: number | null;
+            /** @description Computed contest leaderboard rank for this entry. */
+            position: number | null;
+            /** @description Computed display rank, including T-prefix for ties. */
+            displayPosition: string | null;
+            /** @description How many selected golfers count toward this entry under the contest configuration. */
+            countingPickCount: number;
+            /** @description How many selected golfers currently have event standings. */
+            scoredPickCount: number;
+            /** @description Selected golfers with counting/dropped flags computed at read time. */
+            picks: {
+                /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+                pickId: string;
+                /** @description Selected SportEventParticipant. */
+                sportEventParticipantId: string;
+                /**
+                 * Format: date-time
+                 * @description When this golfer was selected.
+                 */
+                pickedAt: string;
+                /** @description Optional roster slot from the pick row. */
+                slot: number | null;
+                /** @description Optional tier/category from the pick row. */
+                tier: string | null;
+                /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+                isCounting: boolean;
+                /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+                isDropped: boolean;
+                /** @description Expanded golfer event data for this pick. */
+                participant: {
+                    /** @description SportEventParticipant row selected by contest picks. */
+                    sportEventParticipantId: string;
+                    /** @description Canonical participant identifier. */
+                    participantId: string;
+                    /** @description Golfer display name. */
+                    name: string;
+                    /** @description Optional shorter golfer display name. */
+                    shortName: string | null;
+                    /** @description Whether this golfer is currently eligible/available for this tournament. */
+                    isActive: boolean;
+                    /**
+                     * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                     * @enum {string|null}
+                     */
+                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                    /** @description Latest copied global world ranking on this event participant. */
+                    worldRanking: number | null;
+                    /** @description Event-scoped odds-to-win for this golfer. */
+                    oddsToWin: number | null;
+                    /** @description Event seed/order when supplied by the provider. */
+                    seedNumber: number | null;
+                    /** @description TOT column value: current event total relative to par. Lower is better. */
+                    totalScoreToPar: number | null;
+                    /** @description Current event total strokes across persisted Golf rounds. */
+                    totalStrokes: number | null;
+                    /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                    thru: number | null;
+                    /** @description Current or latest round represented by the standing. */
+                    currentRound: number | null;
+                    /**
+                     * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Event leaderboard position for this golfer when available. */
+                    position: number | null;
+                    /** @description Provider/display position such as T2 when available. */
+                    displayPosition: string | null;
+                    /**
+                     * Format: date-time
+                     * @description Provider timestamp for the current Golf standing.
+                     */
+                    asOf: string | null;
+                    /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                    rounds: {
+                        /** @description Round 1 leaderboard column. */
+                        r1: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 2 leaderboard column. */
+                        r2: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 3 leaderboard column. */
+                        r3: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 4 leaderboard column. */
+                        r4: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                    };
+                };
+            }[];
+        };
+        /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
+        GolfLeaderboardCountingRuleDto: {
+            /**
+             * @description Golf roster rule: sum the best N selected golfer totals for the entry.
+             * @enum {string}
+             */
+            type: "BEST_N_GOLFERS";
+            /** @description Number of selected golfers that currently count toward each entry total. */
+            count: number;
+        };
+        /** @description Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound. */
+        GolfLeaderboardResponse: {
+            /** @description Contest whose leaderboard was requested. */
+            contestId: string;
+            /** @description Golf sport event backing this contest leaderboard. */
+            sportEventId: string;
+            /**
+             * @description Golf leaderboard totals are relative to par and lower is better.
+             * @enum {string}
+             */
+            scoringMode: "GOLF_TO_PAR";
+            /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
+            countingRule: {
+                /**
+                 * @description Golf roster rule: sum the best N selected golfer totals for the entry.
+                 * @enum {string}
+                 */
+                type: "BEST_N_GOLFERS";
+                /** @description Number of selected golfers that currently count toward each entry total. */
+                count: number;
+            };
+            /** @description All event participants for the contest event, loaded once for UI joins and filtering. */
+            participants: {
+                /** @description SportEventParticipant row selected by contest picks. */
+                sportEventParticipantId: string;
+                /** @description Canonical participant identifier. */
+                participantId: string;
+                /** @description Golfer display name. */
+                name: string;
+                /** @description Optional shorter golfer display name. */
+                shortName: string | null;
+                /** @description Whether this golfer is currently eligible/available for this tournament. */
+                isActive: boolean;
+                /**
+                 * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                 * @enum {string|null}
+                 */
+                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                /** @description Latest copied global world ranking on this event participant. */
+                worldRanking: number | null;
+                /** @description Event-scoped odds-to-win for this golfer. */
+                oddsToWin: number | null;
+                /** @description Event seed/order when supplied by the provider. */
+                seedNumber: number | null;
+                /** @description TOT column value: current event total relative to par. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Current event total strokes across persisted Golf rounds. */
+                totalStrokes: number | null;
+                /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                thru: number | null;
+                /** @description Current or latest round represented by the standing. */
+                currentRound: number | null;
+                /**
+                 * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Event leaderboard position for this golfer when available. */
+                position: number | null;
+                /** @description Provider/display position such as T2 when available. */
+                displayPosition: string | null;
+                /**
+                 * Format: date-time
+                 * @description Provider timestamp for the current Golf standing.
+                 */
+                asOf: string | null;
+                /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                rounds: {
+                    /** @description Round 1 leaderboard column. */
+                    r1: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 2 leaderboard column. */
+                    r2: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 3 leaderboard column. */
+                    r3: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 4 leaderboard column. */
+                    r4: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                };
+            }[];
+            /** @description Contest entries ordered by computed Golf total. */
+            entries: {
+                /** @description Contest entry identifier. */
+                entryId: string;
+                /** @description Team entry display name. */
+                entryName: string;
+                /** @description Entry number for squads allowed to submit multiple entries. */
+                entryNumber: number;
+                /** @description Squad/team identifier. */
+                squadId: string;
+                /** @description Squad/team display name. */
+                squadName: string;
+                /**
+                 * @description Contest entry lifecycle status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Computed contest leaderboard rank for this entry. */
+                position: number | null;
+                /** @description Computed display rank, including T-prefix for ties. */
+                displayPosition: string | null;
+                /** @description How many selected golfers count toward this entry under the contest configuration. */
+                countingPickCount: number;
+                /** @description How many selected golfers currently have event standings. */
+                scoredPickCount: number;
+                /** @description Selected golfers with counting/dropped flags computed at read time. */
+                picks: {
+                    /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+                    pickId: string;
+                    /** @description Selected SportEventParticipant. */
+                    sportEventParticipantId: string;
+                    /**
+                     * Format: date-time
+                     * @description When this golfer was selected.
+                     */
+                    pickedAt: string;
+                    /** @description Optional roster slot from the pick row. */
+                    slot: number | null;
+                    /** @description Optional tier/category from the pick row. */
+                    tier: string | null;
+                    /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+                    isCounting: boolean;
+                    /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+                    isDropped: boolean;
+                    /** @description Expanded golfer event data for this pick. */
+                    participant: {
+                        /** @description SportEventParticipant row selected by contest picks. */
+                        sportEventParticipantId: string;
+                        /** @description Canonical participant identifier. */
+                        participantId: string;
+                        /** @description Golfer display name. */
+                        name: string;
+                        /** @description Optional shorter golfer display name. */
+                        shortName: string | null;
+                        /** @description Whether this golfer is currently eligible/available for this tournament. */
+                        isActive: boolean;
+                        /**
+                         * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                         * @enum {string|null}
+                         */
+                        inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                        /** @description Latest copied global world ranking on this event participant. */
+                        worldRanking: number | null;
+                        /** @description Event-scoped odds-to-win for this golfer. */
+                        oddsToWin: number | null;
+                        /** @description Event seed/order when supplied by the provider. */
+                        seedNumber: number | null;
+                        /** @description TOT column value: current event total relative to par. Lower is better. */
+                        totalScoreToPar: number | null;
+                        /** @description Current event total strokes across persisted Golf rounds. */
+                        totalStrokes: number | null;
+                        /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                        thru: number | null;
+                        /** @description Current or latest round represented by the standing. */
+                        currentRound: number | null;
+                        /**
+                         * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Event leaderboard position for this golfer when available. */
+                        position: number | null;
+                        /** @description Provider/display position such as T2 when available. */
+                        displayPosition: string | null;
+                        /**
+                         * Format: date-time
+                         * @description Provider timestamp for the current Golf standing.
+                         */
+                        asOf: string | null;
+                        /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                        rounds: {
+                            /** @description Round 1 leaderboard column. */
+                            r1: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 2 leaderboard column. */
+                            r2: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 3 leaderboard column. */
+                            r3: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 4 leaderboard column. */
+                            r4: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                        };
+                    };
+                }[];
+            }[];
+            /**
+             * Format: date-time
+             * @description Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
+             */
+            asOf: string | null;
+        };
+        /** @description Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob. */
+        ContestConfigurationDetailDto: {
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: {
+                /** @description Stable tier identifier. */
+                tierId: string;
+                /** @description Tier label shown in commissioner and draft UI. */
+                tierName: string;
+                /** @description Tier order number. */
+                tierNumber: number;
+                /** @description How many picks each entry must make from the tier. */
+                picksFromTier: number;
+                /** @description Optional ranking range that produced the tier. */
+                rankingRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional pricing range that produced the tier. */
+                priceRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional cap on how many participants can live in the tier. */
+                maxParticipants?: number;
+                /** @description Participants assigned to the tier. */
+                participantIds: string[];
+            }[];
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: number[];
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /** @description Optional typed configuration mode for golf-first managed contests. */
+            mode?: string;
+            /**
+             * Format: date-time
+             * @description Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string | null;
+            /** @description Maximum entries a Team may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description How many roster scores count toward the entry total in managed golf contests. */
+            countedScores?: number;
+            /** @description Tier source used for managed golf contests. */
+            tierSource?: string;
+            tierGeneration?: {
+                /** @description Default managed tier size used to seed tier generation. */
+                defaultTierSize: number;
+            };
+            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+            tiers?: {
+                /** @description Stable tier key such as A, B, or C. */
+                tierKey: string;
+                /** @description Commissioner-facing tier label. */
+                label: string;
+                /** @description How many golfers must be picked from the tier. */
+                pickCount: number;
+                /** @description Starting resolved rank/odds position for the tier. */
+                startPosition: number;
+                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                endPosition: number | null;
+            }[];
+            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+            cutRule?: {
+                /** @enum {string} */
+                type: "FIXED_SCORE";
+                /** @description Fallback score assigned when a golfer misses the cut. */
+                fixedScore: number;
+            };
+            /** @description Managed-golf playoff handling strategy. */
+            playoffHandling?: string;
+            /** @description Managed-golf leaderboard display scoring mode. */
+            displayScoring?: string;
+            /** @description Managed-golf tiebreaker configuration. */
+            tiebreaker?: {
+                /** @enum {string} */
+                type: "PREDICT_WINNING_SCORE";
+            };
+            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+            categories?: {
+                /** @enum {string} */
+                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                /** @description Commissioner-facing category label. */
+                label: string;
+                /** @description How many golfers must be picked for the category. */
+                pickCount: number;
+            }[];
+        };
+        /** @description Single-contest response. */
+        ContestResponse: {
+            /** @description Contest detail returned by contest detail endpoints. */
+            contest: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                /** @enum {string} */
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @enum {string} */
+                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                /** @enum {string} */
+                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                leagueId: string;
+                sportEventId?: string | null;
+                sport?: string | null;
+                /** @description Number of entries currently in the contest. */
+                entryCount?: number;
+                /** Format: date-time */
+                startsAt?: string | null;
+                /** Format: date-time */
+                endsAt?: string | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+                /** Format: date-time */
+                lockAt?: string | null;
+                isExclusive?: boolean;
+            };
+            /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
+            contestConfiguration?: {
+                draftMode?: string;
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: {
+                    /** @description Stable tier identifier. */
+                    tierId: string;
+                    /** @description Tier label shown in commissioner and draft UI. */
+                    tierName: string;
+                    /** @description Tier order number. */
+                    tierNumber: number;
+                    /** @description How many picks each entry must make from the tier. */
+                    picksFromTier: number;
+                    /** @description Optional ranking range that produced the tier. */
+                    rankingRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional pricing range that produced the tier. */
+                    priceRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional cap on how many participants can live in the tier. */
+                    maxParticipants?: number;
+                    /** @description Participants assigned to the tier. */
+                    participantIds: string[];
+                }[];
+                tierAssignmentMethod?: string;
+                budget?: number;
+                pricingMethod?: string;
+                rosterSize?: number;
+                pickCount?: number;
+                picksPerPeriod?: number;
+                roundValues?: number[];
+                startRound?: string;
+                isExclusive?: boolean;
+                bestBallN?: number;
+                missedCutPenalty?: number;
+                captainSlot?: boolean;
+                captainMultiplier?: number;
+                /** @description Optional typed configuration mode for golf-first managed contests. */
+                mode?: string;
+                /**
+                 * Format: date-time
+                 * @description Contest entry lock timestamp stored on the contest configuration record.
+                 */
+                locksAt?: string | null;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description How many roster scores count toward the entry total in managed golf contests. */
+                countedScores?: number;
+                /** @description Tier source used for managed golf contests. */
+                tierSource?: string;
+                tierGeneration?: {
+                    /** @description Default managed tier size used to seed tier generation. */
+                    defaultTierSize: number;
+                };
+                /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                tiers?: {
+                    /** @description Stable tier key such as A, B, or C. */
+                    tierKey: string;
+                    /** @description Commissioner-facing tier label. */
+                    label: string;
+                    /** @description How many golfers must be picked from the tier. */
+                    pickCount: number;
+                    /** @description Starting resolved rank/odds position for the tier. */
+                    startPosition: number;
+                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                    endPosition: number | null;
+                }[];
+                /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                cutRule?: {
+                    /** @enum {string} */
+                    type: "FIXED_SCORE";
+                    /** @description Fallback score assigned when a golfer misses the cut. */
+                    fixedScore: number;
+                };
+                /** @description Managed-golf playoff handling strategy. */
+                playoffHandling?: string;
+                /** @description Managed-golf leaderboard display scoring mode. */
+                displayScoring?: string;
+                /** @description Managed-golf tiebreaker configuration. */
+                tiebreaker?: {
+                    /** @enum {string} */
+                    type: "PREDICT_WINNING_SCORE";
+                };
+                /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                categories?: {
+                    /** @enum {string} */
+                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                    /** @description Commissioner-facing category label. */
+                    label: string;
+                    /** @description How many golfers must be picked for the category. */
+                    pickCount: number;
+                }[];
+            } | null;
+        };
+        /** @description Contest-list response. */
+        ContestListResponse: {
+            contests: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                /** @enum {string} */
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @enum {string} */
+                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                /** @enum {string} */
+                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                leagueId: string;
+                sportEventId?: string | null;
+                sport?: string | null;
+                /** @description Number of entries currently in the contest. */
+                entryCount?: number;
+                /** Format: date-time */
+                startsAt?: string | null;
+                /** Format: date-time */
+                endsAt?: string | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+            }[];
+        };
+        /** @description Single contest-entry response. */
+        ContestEntryResponse: {
+            /** @description Contest that owns the entry. */
+            contestId: string;
+            /** @description Contest entry summary. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Expanded contest-entry detail response. */
+        ContestEntryDetailResponse: {
+            /** @description Contest that owns the entry. */
+            contestId: string;
+            /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            picksRevealed: boolean;
+            /** @description Expanded contest entry detail. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    position?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            };
+        };
+        /** @description Contest-entry list response. */
+        ContestEntryListResponse: {
+            /** @description Contest whose entries are being returned. */
+            contestId: string;
+            /** @description Total number of entries in the contest. */
+            total: number;
+            /** @description Whether the current user has at least one active entry in the contest. */
+            isJoined: boolean;
+            /** @description Primary current-user entry when the contest allows a single active entry. */
+            myEntryId: string | null;
+            /** @description All current-user entry identifiers when multiple entries are allowed. */
+            myEntryIds?: string[];
+            /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            picksRevealed: boolean;
+            /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
+            entries: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    position?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            }[];
+        };
+        /** @description Current-user contest-entry response. */
+        MyContestEntryResponse: {
+            /** @description Contest being queried. */
+            contestId: string;
+            /** @description Current user entry, or null when the user has not joined the contest. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+            } | null;
+        };
+        /** @description Contest-entry deletion response. */
+        ContestEntryDeletionResponse: {
+            /** @description Contest from which the entry was removed. */
+            contestId: string;
+            /**
+             * @description Confirms that the delete operation succeeded.
+             * @enum {boolean}
+             */
+            deleted: true;
+        };
+        /** @description Commissioner audit-log entry. */
+        ContestAuditLogEntryDto: {
+            /** @description Audit-log entry id. */
+            id: string;
+            /** @description League this entry belongs to. */
+            leagueId: string;
+            /** @description Contest this entry references when the action is contest-scoped. */
+            contestId?: string;
+            /** @description User id of the commissioner / actor that performed the action. */
+            actorId: string;
+            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+            action: string;
+            /**
+             * @description Audit-log entry category — broad classification of the action that produced this entry.
+             * @enum {string}
+             */
+            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+            /** @description Human-readable description of what happened. */
+            description: string;
+            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+            beforeState?: {
+                [key: string]: unknown;
+            };
+            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+            afterState?: {
+                [key: string]: unknown;
+            };
+            /** @description Optional human-supplied reason / justification for the action. */
+            reason?: string;
+            /** @description IP address from which the action originated, when available. */
+            ipAddress?: string;
+            /**
+             * Format: date-time
+             * @description When the audit entry was recorded.
+             */
+            createdAt: string;
+        };
+        /** @description Contest audit-log response. */
+        ContestAuditLogResponse: {
+            entries: {
+                /** @description Audit-log entry id. */
+                id: string;
+                /** @description League this entry belongs to. */
+                leagueId: string;
+                /** @description Contest this entry references when the action is contest-scoped. */
+                contestId?: string;
+                /** @description User id of the commissioner / actor that performed the action. */
+                actorId: string;
+                /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                action: string;
+                /**
+                 * @description Audit-log entry category — broad classification of the action that produced this entry.
+                 * @enum {string}
+                 */
+                category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                /** @description Human-readable description of what happened. */
+                description: string;
+                /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                beforeState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                afterState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Optional human-supplied reason / justification for the action. */
+                reason?: string;
+                /** @description IP address from which the action originated, when available. */
+                ipAddress?: string;
+                /**
+                 * Format: date-time
+                 * @description When the audit entry was recorded.
+                 */
+                createdAt: string;
+            }[];
+        };
+        /** @description Commissioner request payload for creating a new private league. */
+        CreateLeagueRequest: {
+            /** @description Primary league name shown in selectors, invites, and league home. */
+            name: string;
+            /** @description Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`. */
+            leagueCode: string;
+            /** @description Optional short description or commissioner-facing summary for the league. */
+            description?: string;
+        };
+        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
+        DeleteLeagueRequest: {
+            /** @description Exact league code confirmation required before permanently deleting an inactive league. */
+            leagueCode: string;
+        };
+        /** @description Commissioner request payload for editing league details while the league remains active. */
+        UpdateLeagueDetailsRequest: {
+            /** @description Updated primary league name shown in selectors, tiles, and league home. */
+            name: string;
+            /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
+            description?: string;
+        };
+        /** @description Commissioner request payload for selecting a built-in league icon. */
+        UpdateLeagueIconRequest: {
+            /**
+             * @description Selected built-in league icon from the curated PoolMaster icon catalog.
+             * @enum {string}
+             */
+            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+        };
+        /** @description Commissioner request payload for sending direct email invites. */
+        SendLeagueInvitationsRequest: {
+            /** @description Email recipients to invite into the league. */
+            emails: string[];
+            /** @description Optional commissioner note included with the invitation email. */
+            message?: string;
+        };
+        /** @description Commissioner request payload for creating a shareable invite link. */
+        GenerateInviteLinkRequest: {
+            /** @description Optional invite-link lifetime in days. */
+            expiresInDays?: number;
+            /** @description Optional maximum number of accepted joins. Zero means unlimited use. */
+            maxUses?: number;
+        };
+        /** @description Commissioner-managed membership role update payload. */
+        ChangeLeagueMemberRoleRequest: {
+            /**
+             * @description Target membership role after the change. Commissioner grants league-administration access.
+             * @enum {string}
+             */
+            role: "COMMISSIONER" | "MEMBER";
+        };
+        /** @description Authenticated invitation-acceptance payload. */
+        AcceptInvitationRequest: {
+            /** @description Invite code from the invite URL or invitation email. */
+            inviteCode: string;
+        };
+        /** @description Commissioner request payload for copying a prior season into a new one. */
+        CopySeasonRequest: {
+            /** @description Contests from the source season that should be copied forward. */
+            sourceContestIds: string[];
+        };
+        /** @description Single CSV-style member import row. */
+        CsvImportRow: {
+            /** @description Email address for the imported member row. */
+            email: string;
+            /** @description Optional first name supplied in the import row. */
+            firstName?: string;
+            /** @description Optional last name supplied in the import row. */
+            lastName?: string;
+            /**
+             * @description Optional requested league role for the imported member.
+             * @enum {string}
+             */
+            role?: "COMMISSIONER" | "MEMBER";
+        };
+        /** @description Commissioner request payload for importing league members. */
+        ImportLeagueMembersRequest: {
+            /** @description Rows to import as league members. */
+            rows: {
+                /** @description Email address for the imported member row. */
+                email: string;
+                /** @description Optional first name supplied in the import row. */
+                firstName?: string;
+                /** @description Optional last name supplied in the import row. */
+                lastName?: string;
+                /**
+                 * @description Optional requested league role for the imported member.
+                 * @enum {string}
+                 */
+                role?: "COMMISSIONER" | "MEMBER";
+            }[];
+        };
+        /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+        LeagueRelationshipDto: {
+            /** @description Whether the current requester is an active member of this league. */
+            leagueMember: boolean;
+            /** @description Whether the current requester is an active commissioner of this league. */
+            commissioner: boolean;
+        };
+        /** @description League list item used for selectors, welcome screens, and league overviews. */
+        LeagueSummaryDto: {
+            /** @description Internal league identifier used for authenticated management APIs. */
+            id: string;
+            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+            leagueCode: string;
+            /** @description Primary display name for the league. */
+            name: string;
+            /** @description Optional short league description. */
+            description?: string | null;
+            /** @description Whether the league is currently active for normal write interactions. */
+            isActive: boolean;
+            /**
+             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+             * @enum {string}
+             */
+            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+            /** @description Current number of memberships in the league. */
+            memberCount: number;
+            /** @description Number of currently active contests associated with the league. */
+            activeContestCount: number;
+            /**
+             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+             * @enum {string|null}
+             */
+            memberType: "COMMISSIONER" | "MEMBER" | null;
+            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+            leagueRelationship: {
+                /** @description Whether the current requester is an active member of this league. */
+                leagueMember: boolean;
+                /** @description Whether the current requester is an active commissioner of this league. */
+                commissioner: boolean;
+            };
+            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+            isRootAdmin: boolean;
+            /**
+             * Format: date-time
+             * @description League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        };
+        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+        LeagueDetailDto: {
+            /** @description Internal league identifier used for authenticated management APIs. */
+            id: string;
+            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+            leagueCode: string;
+            /** @description Primary display name for the league. */
+            name: string;
+            /** @description Optional short league description. */
+            description?: string | null;
+            /** @description Whether the league is currently active for normal write interactions. */
+            isActive: boolean;
+            /**
+             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+             * @enum {string}
+             */
+            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+            /** @description Current number of memberships in the league. */
+            memberCount: number;
+            /** @description Number of currently active contests associated with the league. */
+            activeContestCount: number;
+            /**
+             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+             * @enum {string|null}
+             */
+            memberType: "COMMISSIONER" | "MEMBER" | null;
+            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+            leagueRelationship: {
+                /** @description Whether the current requester is an active member of this league. */
+                leagueMember: boolean;
+                /** @description Whether the current requester is an active commissioner of this league. */
+                commissioner: boolean;
+            };
+            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+            isRootAdmin: boolean;
+            /**
+             * Format: date-time
+             * @description League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             * @enum {string}
+             */
+            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+        };
+        /** @description League membership summary shown in member-management views. */
+        LeagueMemberDto: {
+            /** @description Membership record identifier. */
+            id: string;
+            /** @description User account identifier for the member. */
+            userId: string;
+            /**
+             * Format: email
+             * @description Email address for the member account.
+             */
+            email: string;
+            /** @description First name shown in member-management surfaces. */
+            firstName: string;
+            /** @description Last name shown in member-management surfaces. */
+            lastName: string;
+            /**
+             * @description League role for the member, such as COMMISSIONER or MEMBER.
+             * @enum {string}
+             */
+            role: "COMMISSIONER" | "MEMBER";
+            /**
+             * Format: date-time
+             * @description When the user joined or was activated in the league.
+             */
+            joinedAt?: string;
+        };
+        /** @description Detailed league membership record. */
+        LeagueMembershipDto: {
+            /** @description Membership record identifier. */
+            id: string;
+            /** @description League that owns the membership. */
+            leagueId: string;
+            /** @description User account attached to the membership. */
+            userId: string;
+            /**
+             * @description Current league role for the user.
+             * @enum {string}
+             */
+            role: "COMMISSIONER" | "MEMBER";
+            /**
+             * @description Membership lifecycle state.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the league.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the membership record was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Invitation record returned from commissioner invite-management APIs. */
+        LeagueInvitationDto: {
+            /** @description Invitation record identifier. */
+            id: string;
+            /** @description League that owns the invitation. */
+            leagueId: string;
+            /** @description Email recipient for direct email invites. Link invites omit this field. */
+            email?: string | null;
+            /** @description Shareable invitation code used in URLs and acceptance requests. */
+            inviteCode: string;
+            /**
+             * @description Invitation delivery mode, such as EMAIL or LINK.
+             * @enum {string}
+             */
+            inviteType: "EMAIL" | "LINK";
+            /**
+             * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+             * @enum {string}
+             */
+            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+            /** @description Maximum accepted joins allowed for the invitation. */
+            maxUses: number;
+            /** @description How many times the invitation has already been accepted. */
+            currentUses: number;
+            /** @description User ID of the commissioner or actor that issued the invite. */
+            invitedBy: string;
+            /**
+             * Format: date-time
+             * @description When the invite stops being valid, if it expires.
+             */
+            expiresAt?: string | null;
+            /**
+             * Format: date-time
+             * @description When the invitation was accepted, if applicable.
+             */
+            acceptedAt?: string | null;
+            /** @description User ID that accepted the invite, when known. */
+            acceptedBy?: string | null;
+            /**
+             * Format: date-time
+             * @description Invitation creation timestamp.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Last invitation update timestamp.
+             */
+            updatedAt: string;
+        };
+        /** @description Invitation preview payload used by `/invite/<inviteCode>` flows. */
+        InvitationPreviewResponse: {
+            /** @description Public invitation preview shown before or after authentication. */
+            invitation: {
+                /** @description Invitation code currently being previewed. */
+                inviteCode: string;
+                /**
+                 * @description Current invitation lifecycle state.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Minimal league identity shown before accepting the invite. */
+                league: {
+                    /** @description League ID associated with the invitation. */
+                    id: string;
+                    /** @description Bookmarkable short code for the invited league. */
+                    leagueCode: string;
+                    /** @description Display name for the invited league. */
+                    name: string;
+                };
+            };
+        };
+        /** @description Commissioner dashboard action item. */
+        LeagueActionItemDto: {
+            id: string;
+            leagueId: string;
+            contestId?: string | null;
+            title: string;
+            description: string;
+            actionUrl?: string | null;
+            resolved: boolean;
+            /**
+             * Format: date-time
+             * @description When the action item was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the action item was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Recent member activity row used on commissioner dashboards. */
+        MemberActivityEventDto: {
+            /** @description User involved in the activity event. */
+            userId: string;
+            /** @description First name shown for the member activity event when available. */
+            firstName?: string;
+            /** @description Last name shown for the member activity event when available. */
+            lastName?: string;
+            /** @description Normalized member activity action label. */
+            action: string;
+            /**
+             * Format: date-time
+             * @description When the member activity occurred.
+             */
+            timestamp: string;
+        };
+        /** @description Upcoming league event summary. */
+        UpcomingEventDto: {
+            contestId?: string;
+            title: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            date: string;
+            /**
+             * @description Upcoming event category.
+             * @enum {string}
+             */
+            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+        };
+        /** @description Single-league detail response. */
+        LeagueResponse: {
+            /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+            league: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                 * @enum {string|null}
+                 */
+                memberType: "COMMISSIONER" | "MEMBER" | null;
+                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                leagueRelationship: {
+                    /** @description Whether the current requester is an active member of this league. */
+                    leagueMember: boolean;
+                    /** @description Whether the current requester is an active commissioner of this league. */
+                    commissioner: boolean;
+                };
+                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                isRootAdmin: boolean;
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+                /**
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
+                 */
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+            };
+        };
+        /** @description League-list response. */
+        LeagueListResponse: {
+            leagues: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                 * @enum {string|null}
+                 */
+                memberType: "COMMISSIONER" | "MEMBER" | null;
+                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                leagueRelationship: {
+                    /** @description Whether the current requester is an active member of this league. */
+                    leagueMember: boolean;
+                    /** @description Whether the current requester is an active commissioner of this league. */
+                    commissioner: boolean;
+                };
+                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                isRootAdmin: boolean;
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            }[];
+        };
+        /** @description League-members response. */
+        LeagueMembersResponse: {
+            members: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description User account identifier for the member. */
+                userId: string;
+                /**
+                 * Format: email
+                 * @description Email address for the member account.
+                 */
+                email: string;
+                /** @description First name shown in member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in member-management surfaces. */
+                lastName: string;
+                /**
+                 * @description League role for the member, such as COMMISSIONER or MEMBER.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * Format: date-time
+                 * @description When the user joined or was activated in the league.
+                 */
+                joinedAt?: string;
+            }[];
+        };
+        /** @description Single league-membership response. */
+        LeagueMembershipResponse: {
+            /** @description Detailed league membership record. */
+            membership: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description League invitation-send response. */
+        SendLeagueInvitationsResponse: {
+            /** @description Invitation records successfully created and sent. */
+            sent: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            }[];
+            /** @description Emails skipped because they already belong to the league. */
+            skippedMembers: string[];
+            /** @description Emails skipped because they were duplicated in the request or invite set. */
+            skippedDuplicates: string[];
+        };
+        /** @description Generated invite-link response. */
+        GenerateInviteLinkResponse: {
+            /** @description Invitation record returned from commissioner invite-management APIs. */
+            invitation: {
+                /** @description Invitation record identifier. */
+                id: string;
+                /** @description League that owns the invitation. */
+                leagueId: string;
+                /** @description Email recipient for direct email invites. Link invites omit this field. */
+                email?: string | null;
+                /** @description Shareable invitation code used in URLs and acceptance requests. */
+                inviteCode: string;
+                /**
+                 * @description Invitation delivery mode, such as EMAIL or LINK.
+                 * @enum {string}
+                 */
+                inviteType: "EMAIL" | "LINK";
+                /**
+                 * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+                 * @enum {string}
+                 */
+                status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
+                /** @description Maximum accepted joins allowed for the invitation. */
+                maxUses: number;
+                /** @description How many times the invitation has already been accepted. */
+                currentUses: number;
+                /** @description User ID of the commissioner or actor that issued the invite. */
+                invitedBy: string;
+                /**
+                 * Format: date-time
+                 * @description When the invite stops being valid, if it expires.
+                 */
+                expiresAt?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the invitation was accepted, if applicable.
+                 */
+                acceptedAt?: string | null;
+                /** @description User ID that accepted the invite, when known. */
+                acceptedBy?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Invitation creation timestamp.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description Last invitation update timestamp.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description League audit-log response. */
+        LeagueAuditEntriesResponse: {
+            entries: {
+                /** @description Audit-log entry id. */
+                id: string;
+                /** @description League this entry belongs to. */
+                leagueId: string;
+                /** @description Contest this entry references when the action is contest-scoped. */
+                contestId?: string;
+                /** @description User id of the commissioner / actor that performed the action. */
+                actorId: string;
+                /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                action: string;
+                /**
+                 * @description Audit-log entry category — broad classification of the action that produced this entry.
+                 * @enum {string}
+                 */
+                category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                /** @description Human-readable description of what happened. */
+                description: string;
+                /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                beforeState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                afterState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Optional human-supplied reason / justification for the action. */
+                reason?: string;
+                /** @description IP address from which the action originated, when available. */
+                ipAddress?: string;
+                /**
+                 * Format: date-time
+                 * @description When the audit entry was recorded.
+                 */
+                createdAt: string;
+            }[];
+        };
+        /** @description Commissioner dashboard response. */
+        LeagueDashboardResponse: {
+            /** @description League summary payload driving the dashboard header. */
+            league: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                 * @enum {string|null}
+                 */
+                memberType: "COMMISSIONER" | "MEMBER" | null;
+                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                leagueRelationship: {
+                    /** @description Whether the current requester is an active member of this league. */
+                    leagueMember: boolean;
+                    /** @description Whether the current requester is an active commissioner of this league. */
+                    commissioner: boolean;
+                };
+                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                isRootAdmin: boolean;
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /** @description Outstanding commissioner action items. */
+            actionItems: {
+                id: string;
+                leagueId: string;
+                contestId?: string | null;
+                title: string;
+                description: string;
+                actionUrl?: string | null;
+                resolved: boolean;
+                /**
+                 * Format: date-time
+                 * @description When the action item was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the action item was last updated.
+                 */
+                updatedAt: string;
+            }[];
+            /** @description Contest summaries included in the dashboard payload. */
+            contests: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                /** @enum {string} */
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @enum {string} */
+                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                /** @enum {string} */
+                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                leagueId: string;
+                sportEventId?: string | null;
+                sport?: string | null;
+                /** @description Number of entries currently in the contest. */
+                entryCount?: number;
+                /** Format: date-time */
+                startsAt?: string | null;
+                /** Format: date-time */
+                endsAt?: string | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+            }[];
+            /** @description Current league member count. */
+            memberCount: number;
+            /** @description Current number of pending invitations. */
+            pendingInvites: number;
+            /** @description Recent member activity for the league. */
+            recentMemberActivity: {
+                /** @description User involved in the activity event. */
+                userId: string;
+                /** @description First name shown for the member activity event when available. */
+                firstName?: string;
+                /** @description Last name shown for the member activity event when available. */
+                lastName?: string;
+                /** @description Normalized member activity action label. */
+                action: string;
+                /**
+                 * Format: date-time
+                 * @description When the member activity occurred.
+                 */
+                timestamp: string;
+            }[];
+            /** @description Upcoming league events that should be surfaced on the dashboard. */
+            upcomingEvents: {
+                contestId?: string;
+                title: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                date: string;
+                /**
+                 * @description Upcoming event category.
+                 * @enum {string}
+                 */
+                eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
+            }[];
+        };
+        /** @description Action-item resolution response. */
+        ResolveActionItemResponse: {
+            /** @description Commissioner dashboard action item. */
+            actionItem: {
+                id: string;
+                leagueId: string;
+                contestId?: string | null;
+                title: string;
+                description: string;
+                actionUrl?: string | null;
+                resolved: boolean;
+                /**
+                 * Format: date-time
+                 * @description When the action item was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the action item was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Arbitrary JSON object payload. */
+        LeagueBulkOperationResponse: {
+            [key: string]: unknown;
+        };
+        /** @description Squad membership summary. */
+        SquadMembershipDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description First name for the squad member. */
+            firstName?: string;
+            /** @description Last name for the squad member. */
+            lastName?: string;
+            /**
+             * @description Squad membership status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+        TeamRelationshipDto: {
+            /** @description Whether the current requester is an active member of the team’s parent league. */
+            leagueMember: boolean;
+            /** @description Whether the current requester is an active owner of this team. */
+            owner: boolean;
+            /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+            commissioner: boolean;
+        };
+        /** @description Squad detail returned from squad-management APIs. */
+        SquadDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            createdBy: string;
+            /** @description Squad display name. */
+            name: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+            isActive: boolean;
+            /** @description Number of memberships attached to the squad. */
+            memberCount: number;
+            /**
+             * Format: date-time
+             * @description When the squad was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad was last updated.
+             */
+            updatedAt: string;
+            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+            teamRelationship: {
+                /** @description Whether the current requester is an active member of the team’s parent league. */
+                leagueMember: boolean;
+                /** @description Whether the current requester is an active owner of this team. */
+                owner: boolean;
+                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                commissioner: boolean;
+            };
+            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+            isRootAdmin: boolean;
+            /** @description Optional expanded squad membership list. */
+            members?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description First name for the squad member. */
+                firstName?: string;
+                /** @description Last name for the squad member. */
+                lastName?: string;
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description Single-squad response. */
+        SquadResponse: {
+            /** @description Squad detail returned from squad-management APIs. */
+            squad: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                teamRelationship: {
+                    /** @description Whether the current requester is an active member of the team’s parent league. */
+                    leagueMember: boolean;
+                    /** @description Whether the current requester is an active owner of this team. */
+                    owner: boolean;
+                    /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                    commissioner: boolean;
+                };
+                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                isRootAdmin: boolean;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description First name for the squad member. */
+                    firstName?: string;
+                    /** @description Last name for the squad member. */
+                    lastName?: string;
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            };
+        };
+        /** @description Squad-list response. */
+        SquadListResponse: {
+            squads: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                teamRelationship: {
+                    /** @description Whether the current requester is an active member of the team’s parent league. */
+                    leagueMember: boolean;
+                    /** @description Whether the current requester is an active owner of this team. */
+                    owner: boolean;
+                    /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                    commissioner: boolean;
+                };
+                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                isRootAdmin: boolean;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description First name for the squad member. */
+                    firstName?: string;
+                    /** @description Last name for the squad member. */
+                    lastName?: string;
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            }[];
+        };
+        /** @description Single squad-membership response. */
+        SquadMembershipResponse: {
+            /** @description Squad membership summary. */
+            membership: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description First name for the squad member. */
+                firstName?: string;
+                /** @description Last name for the squad member. */
+                lastName?: string;
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Request payload for creating a squad within a league. */
+        CreateSquadRequest: {
+            /** @description Squad display name. */
+            name?: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Patch payload for updating a squad. */
+        UpdateSquadRequest: {
+            /** @description Updated squad display name. */
+            name?: string;
+            /**
+             * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Request payload for adding a user to a squad. */
+        AddSquadMemberRequest: {
+            /**
+             * Format: uuid
+             * @description User to add as an owner of the team.
+             */
+            userId: string;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -4077,48 +7101,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        leagues: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4149,17 +7132,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Commissioner request payload for creating a new private league. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Primary league name shown in selectors, invites, and league home. */
-                    name: string;
-                    /** @description Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`. */
-                    leagueCode: string;
-                    /** @description Optional short description or commissioner-facing summary for the league. */
-                    description?: string;
-                };
+                "application/json": components["schemas"]["CreateLeagueRequest"];
             };
         };
         responses: {
@@ -4169,54 +7144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4276,54 +7204,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4356,13 +7237,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Exact league code confirmation required before permanently deleting an inactive league. */
-                    leagueCode: string;
-                };
+                "application/json": components["schemas"]["DeleteLeagueRequest"];
             };
         };
         responses: {
@@ -4438,54 +7315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4518,15 +7348,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for editing league details while the league remains active. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Updated primary league name shown in selectors, tiles, and league home. */
-                    name: string;
-                    /** @description Optional updated commissioner-facing league description. Omit or send an empty value to clear it. */
-                    description?: string;
-                };
+                "application/json": components["schemas"]["UpdateLeagueDetailsRequest"];
             };
         };
         responses: {
@@ -4536,54 +7360,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4635,16 +7412,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for selecting a built-in league icon. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * @description Selected built-in league icon from the curated PoolMaster icon catalog.
-                     * @enum {string}
-                     */
-                    iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                };
+                "application/json": components["schemas"]["UpdateLeagueIconRequest"];
             };
         };
         responses: {
@@ -4654,54 +7424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4761,54 +7484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4868,54 +7544,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -4967,15 +7596,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for sending direct email invites. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Email recipients to invite into the league. */
-                    emails: string[];
-                    /** @description Optional commissioner note included with the invitation email. */
-                    message?: string;
-                };
+                "application/json": components["schemas"]["SendLeagueInvitationsRequest"];
             };
         };
         responses: {
@@ -4985,61 +7608,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Invitation records successfully created and sent. */
-                        sent: {
-                            /** @description Invitation record identifier. */
-                            id: string;
-                            /** @description League that owns the invitation. */
-                            leagueId: string;
-                            /** @description Email recipient for direct email invites. Link invites omit this field. */
-                            email?: string | null;
-                            /** @description Shareable invitation code used in URLs and acceptance requests. */
-                            inviteCode: string;
-                            /**
-                             * @description Invitation delivery mode, such as EMAIL or LINK.
-                             * @enum {string}
-                             */
-                            inviteType: "EMAIL" | "LINK";
-                            /**
-                             * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-                             * @enum {string}
-                             */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** @description Maximum accepted joins allowed for the invitation. */
-                            maxUses: number;
-                            /** @description How many times the invitation has already been accepted. */
-                            currentUses: number;
-                            /** @description User ID of the commissioner or actor that issued the invite. */
-                            invitedBy: string;
-                            /**
-                             * Format: date-time
-                             * @description When the invite stops being valid, if it expires.
-                             */
-                            expiresAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description When the invitation was accepted, if applicable.
-                             */
-                            acceptedAt?: string | null;
-                            /** @description User ID that accepted the invite, when known. */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Invitation creation timestamp.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description Last invitation update timestamp.
-                             */
-                            updatedAt: string;
-                        }[];
-                        /** @description Emails skipped because they already belong to the league. */
-                        skippedMembers: string[];
-                        /** @description Emails skipped because they were duplicated in the request or invite set. */
-                        skippedDuplicates: string[];
-                    };
+                    "application/json": components["schemas"]["SendLeagueInvitationsResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5091,15 +7660,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for creating a shareable invite link. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Optional invite-link lifetime in days. */
-                    expiresInDays?: number;
-                    /** @description Optional maximum number of accepted joins. Zero means unlimited use. */
-                    maxUses?: number;
-                };
+                "application/json": components["schemas"]["GenerateInviteLinkRequest"];
             };
         };
         responses: {
@@ -5109,57 +7672,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Invitation record returned from commissioner invite-management APIs. */
-                        invitation: {
-                            /** @description Invitation record identifier. */
-                            id: string;
-                            /** @description League that owns the invitation. */
-                            leagueId: string;
-                            /** @description Email recipient for direct email invites. Link invites omit this field. */
-                            email?: string | null;
-                            /** @description Shareable invitation code used in URLs and acceptance requests. */
-                            inviteCode: string;
-                            /**
-                             * @description Invitation delivery mode, such as EMAIL or LINK.
-                             * @enum {string}
-                             */
-                            inviteType: "EMAIL" | "LINK";
-                            /**
-                             * @description Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-                             * @enum {string}
-                             */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** @description Maximum accepted joins allowed for the invitation. */
-                            maxUses: number;
-                            /** @description How many times the invitation has already been accepted. */
-                            currentUses: number;
-                            /** @description User ID of the commissioner or actor that issued the invite. */
-                            invitedBy: string;
-                            /**
-                             * Format: date-time
-                             * @description When the invite stops being valid, if it expires.
-                             */
-                            expiresAt?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description When the invitation was accepted, if applicable.
-                             */
-                            acceptedAt?: string | null;
-                            /** @description User ID that accepted the invite, when known. */
-                            acceptedBy?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Invitation creation timestamp.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description Last invitation update timestamp.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["GenerateInviteLinkResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5267,33 +7780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        members: {
-                            /** @description Membership record identifier. */
-                            id: string;
-                            /** @description User account identifier for the member. */
-                            userId: string;
-                            /**
-                             * Format: email
-                             * @description Email address for the member account.
-                             */
-                            email: string;
-                            /** @description First name shown in member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in member-management surfaces. */
-                            lastName: string;
-                            /**
-                             * @description League role for the member, such as COMMISSIONER or MEMBER.
-                             * @enum {string}
-                             */
-                            role: "COMMISSIONER" | "MEMBER";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined or was activated in the league.
-                             */
-                            joinedAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueMembersResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5346,16 +7833,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner-managed membership role update payload. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * @description Target membership role after the change. Commissioner grants league-administration access.
-                     * @enum {string}
-                     */
-                    role: "COMMISSIONER" | "MEMBER";
-                };
+                "application/json": components["schemas"]["ChangeLeagueMemberRoleRequest"];
             };
         };
         responses: {
@@ -5365,42 +7845,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league membership record. */
-                        membership: {
-                            /** @description Membership record identifier. */
-                            id: string;
-                            /** @description League that owns the membership. */
-                            leagueId: string;
-                            /** @description User account attached to the membership. */
-                            userId: string;
-                            /**
-                             * @description Current league role for the user.
-                             * @enum {string}
-                             */
-                            role: "COMMISSIONER" | "MEMBER";
-                            /**
-                             * @description Membership lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined the league.
-                             */
-                            joinedAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueMembershipResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5650,130 +8095,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description League summary payload driving the dashboard header. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                        /** @description Outstanding commissioner action items. */
-                        actionItems: {
-                            id: string;
-                            leagueId: string;
-                            contestId?: string | null;
-                            title: string;
-                            description: string;
-                            actionUrl?: string | null;
-                            resolved: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the action item was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the action item was last updated.
-                             */
-                            updatedAt: string;
-                        }[];
-                        /** @description Contest summaries included in the dashboard payload. */
-                        contests: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                        }[];
-                        /** @description Current league member count. */
-                        memberCount: number;
-                        /** @description Current number of pending invitations. */
-                        pendingInvites: number;
-                        /** @description Recent member activity for the league. */
-                        recentMemberActivity: {
-                            /** @description User involved in the activity event. */
-                            userId: string;
-                            /** @description First name shown for the member activity event when available. */
-                            firstName?: string;
-                            /** @description Last name shown for the member activity event when available. */
-                            lastName?: string;
-                            /** @description Normalized member activity action label. */
-                            action: string;
-                            /**
-                             * Format: date-time
-                             * @description When the member activity occurred.
-                             */
-                            timestamp: string;
-                        }[];
-                        /** @description Upcoming league events that should be surfaced on the dashboard. */
-                        upcomingEvents: {
-                            contestId?: string;
-                            title: string;
-                            /**
-                             * Format: date-time
-                             * @description ISO 8601 datetime string.
-                             */
-                            date: string;
-                            /**
-                             * @description Upcoming event category.
-                             * @enum {string}
-                             */
-                            eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueDashboardResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5834,28 +8156,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Commissioner dashboard action item. */
-                        actionItem: {
-                            id: string;
-                            leagueId: string;
-                            contestId?: string | null;
-                            title: string;
-                            description: string;
-                            actionUrl?: string | null;
-                            resolved: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the action item was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the action item was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ResolveActionItemResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5896,44 +8197,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        entries: {
-                            /** @description Audit-log entry id. */
-                            id: string;
-                            /** @description League this entry belongs to. */
-                            leagueId: string;
-                            /** @description Contest this entry references when the action is contest-scoped. */
-                            contestId?: string;
-                            /** @description User id of the commissioner / actor that performed the action. */
-                            actorId: string;
-                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                            action: string;
-                            /**
-                             * @description Audit-log entry category — broad classification of the action that produced this entry.
-                             * @enum {string}
-                             */
-                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                            /** @description Human-readable description of what happened. */
-                            description: string;
-                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            beforeState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            afterState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional human-supplied reason / justification for the action. */
-                            reason?: string;
-                            /** @description IP address from which the action originated, when available. */
-                            ipAddress?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the audit entry was recorded.
-                             */
-                            createdAt: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueAuditEntriesResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -5974,44 +8238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        entries: {
-                            /** @description Audit-log entry id. */
-                            id: string;
-                            /** @description League this entry belongs to. */
-                            leagueId: string;
-                            /** @description Contest this entry references when the action is contest-scoped. */
-                            contestId?: string;
-                            /** @description User id of the commissioner / actor that performed the action. */
-                            actorId: string;
-                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                            action: string;
-                            /**
-                             * @description Audit-log entry category — broad classification of the action that produced this entry.
-                             * @enum {string}
-                             */
-                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                            /** @description Human-readable description of what happened. */
-                            description: string;
-                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            beforeState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            afterState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional human-supplied reason / justification for the action. */
-                            reason?: string;
-                            /** @description IP address from which the action originated, when available. */
-                            ipAddress?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the audit entry was recorded.
-                             */
-                            createdAt: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueAuditEntriesResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6063,13 +8290,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for copying a prior season into a new one. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Contests from the source season that should be copied forward. */
-                    sourceContestIds: string[];
-                };
+                "application/json": components["schemas"]["CopySeasonRequest"];
             };
         };
         responses: {
@@ -6079,9 +8302,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["LeagueBulkOperationResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6114,25 +8335,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for importing league members. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Rows to import as league members. */
-                    rows: {
-                        /** @description Email address for the imported member row. */
-                        email: string;
-                        /** @description Optional first name supplied in the import row. */
-                        firstName?: string;
-                        /** @description Optional last name supplied in the import row. */
-                        lastName?: string;
-                        /**
-                         * @description Optional requested league role for the imported member.
-                         * @enum {string}
-                         */
-                        role?: "COMMISSIONER" | "MEMBER";
-                    }[];
-                };
+                "application/json": components["schemas"]["ImportLeagueMembersRequest"];
             };
         };
         responses: {
@@ -6142,9 +8347,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["LeagueBulkOperationResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6204,83 +8407,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        squads: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            createdBy: string;
-                            /** @description Squad display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                            isActive: boolean;
-                            /** @description Number of memberships attached to the squad. */
-                            memberCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                            teamRelationship: {
-                                /** @description Whether the current requester is an active member of the team’s parent league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active owner of this team. */
-                                owner: boolean;
-                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                            isRootAdmin: boolean;
-                            /** @description Optional expanded squad membership list. */
-                            members?: {
-                                /** Format: uuid */
-                                id: string;
-                                /** Format: uuid */
-                                squadId: string;
-                                /** Format: uuid */
-                                leagueId: string;
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the squad member. */
-                                firstName?: string;
-                                /** @description Last name for the squad member. */
-                                lastName?: string;
-                                /**
-                                 * @description Squad membership status.
-                                 * @enum {string}
-                                 */
-                                status: "ACTIVE" | "INACTIVE";
-                                /**
-                                 * Format: date-time
-                                 * @description When the user joined the squad.
-                                 */
-                                joinedAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was created.
-                                 */
-                                createdAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was last updated.
-                                 */
-                                updatedAt: string;
-                            }[];
-                        }[];
-                    };
+                    "application/json": components["schemas"]["SquadListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6351,18 +8478,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for creating a squad within a league. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Squad display name. */
-                    name?: string;
-                    /**
-                     * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                     * @enum {string}
-                     */
-                    iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                };
+                "application/json": components["schemas"]["CreateSquadRequest"];
             };
         };
         responses: {
@@ -6372,84 +8490,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad detail returned from squad-management APIs. */
-                        squad: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            createdBy: string;
-                            /** @description Squad display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                            isActive: boolean;
-                            /** @description Number of memberships attached to the squad. */
-                            memberCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                            teamRelationship: {
-                                /** @description Whether the current requester is an active member of the team’s parent league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active owner of this team. */
-                                owner: boolean;
-                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                            isRootAdmin: boolean;
-                            /** @description Optional expanded squad membership list. */
-                            members?: {
-                                /** Format: uuid */
-                                id: string;
-                                /** Format: uuid */
-                                squadId: string;
-                                /** Format: uuid */
-                                leagueId: string;
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the squad member. */
-                                firstName?: string;
-                                /** @description Last name for the squad member. */
-                                lastName?: string;
-                                /**
-                                 * @description Squad membership status.
-                                 * @enum {string}
-                                 */
-                                status: "ACTIVE" | "INACTIVE";
-                                /**
-                                 * Format: date-time
-                                 * @description When the user joined the squad.
-                                 */
-                                joinedAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was created.
-                                 */
-                                createdAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was last updated.
-                                 */
-                                updatedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6529,84 +8570,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad detail returned from squad-management APIs. */
-                        squad: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            createdBy: string;
-                            /** @description Squad display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                            isActive: boolean;
-                            /** @description Number of memberships attached to the squad. */
-                            memberCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                            teamRelationship: {
-                                /** @description Whether the current requester is an active member of the team’s parent league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active owner of this team. */
-                                owner: boolean;
-                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                            isRootAdmin: boolean;
-                            /** @description Optional expanded squad membership list. */
-                            members?: {
-                                /** Format: uuid */
-                                id: string;
-                                /** Format: uuid */
-                                squadId: string;
-                                /** Format: uuid */
-                                leagueId: string;
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the squad member. */
-                                firstName?: string;
-                                /** @description Last name for the squad member. */
-                                lastName?: string;
-                                /**
-                                 * @description Squad membership status.
-                                 * @enum {string}
-                                 */
-                                status: "ACTIVE" | "INACTIVE";
-                                /**
-                                 * Format: date-time
-                                 * @description When the user joined the squad.
-                                 */
-                                joinedAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was created.
-                                 */
-                                createdAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was last updated.
-                                 */
-                                updatedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6783,18 +8747,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Patch payload for updating a squad. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Updated squad display name. */
-                    name?: string;
-                    /**
-                     * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
-                     * @enum {string}
-                     */
-                    iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                };
+                "application/json": components["schemas"]["UpdateSquadRequest"];
             };
         };
         responses: {
@@ -6804,84 +8759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad detail returned from squad-management APIs. */
-                        squad: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            createdBy: string;
-                            /** @description Squad display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                            isActive: boolean;
-                            /** @description Number of memberships attached to the squad. */
-                            memberCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                            teamRelationship: {
-                                /** @description Whether the current requester is an active member of the team’s parent league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active owner of this team. */
-                                owner: boolean;
-                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                            isRootAdmin: boolean;
-                            /** @description Optional expanded squad membership list. */
-                            members?: {
-                                /** Format: uuid */
-                                id: string;
-                                /** Format: uuid */
-                                squadId: string;
-                                /** Format: uuid */
-                                leagueId: string;
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the squad member. */
-                                firstName?: string;
-                                /** @description Last name for the squad member. */
-                                lastName?: string;
-                                /**
-                                 * @description Squad membership status.
-                                 * @enum {string}
-                                 */
-                                status: "ACTIVE" | "INACTIVE";
-                                /**
-                                 * Format: date-time
-                                 * @description When the user joined the squad.
-                                 */
-                                joinedAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was created.
-                                 */
-                                createdAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was last updated.
-                                 */
-                                updatedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -6961,84 +8839,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad detail returned from squad-management APIs. */
-                        squad: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            createdBy: string;
-                            /** @description Squad display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                            isActive: boolean;
-                            /** @description Number of memberships attached to the squad. */
-                            memberCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                            teamRelationship: {
-                                /** @description Whether the current requester is an active member of the team’s parent league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active owner of this team. */
-                                owner: boolean;
-                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                            isRootAdmin: boolean;
-                            /** @description Optional expanded squad membership list. */
-                            members?: {
-                                /** Format: uuid */
-                                id: string;
-                                /** Format: uuid */
-                                squadId: string;
-                                /** Format: uuid */
-                                leagueId: string;
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the squad member. */
-                                firstName?: string;
-                                /** @description Last name for the squad member. */
-                                lastName?: string;
-                                /**
-                                 * @description Squad membership status.
-                                 * @enum {string}
-                                 */
-                                status: "ACTIVE" | "INACTIVE";
-                                /**
-                                 * Format: date-time
-                                 * @description When the user joined the squad.
-                                 */
-                                joinedAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was created.
-                                 */
-                                createdAt: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When the squad membership record was last updated.
-                                 */
-                                updatedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7110,16 +8911,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for adding a user to a squad. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: uuid
-                     * @description User to add as an owner of the team.
-                     */
-                    userId: string;
-                };
+                "application/json": components["schemas"]["AddSquadMemberRequest"];
             };
         };
         responses: {
@@ -7129,43 +8923,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad membership summary. */
-                        membership: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            userId: string;
-                            /** @description First name for the squad member. */
-                            firstName?: string;
-                            /** @description Last name for the squad member. */
-                            lastName?: string;
-                            /**
-                             * @description Squad membership status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined the squad.
-                             */
-                            joinedAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad membership record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad membership record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadMembershipResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7246,43 +9004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Squad membership summary. */
-                        membership: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            squadId: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** Format: uuid */
-                            userId: string;
-                            /** @description First name for the squad member. */
-                            firstName?: string;
-                            /** @description Last name for the squad member. */
-                            lastName?: string;
-                            /**
-                             * @description Squad membership status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined the squad.
-                             */
-                            joinedAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad membership record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the squad membership record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["SquadMembershipResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7894,27 +9616,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Public invitation preview shown before or after authentication. */
-                        invitation: {
-                            /** @description Invitation code currently being previewed. */
-                            inviteCode: string;
-                            /**
-                             * @description Current invitation lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** @description Minimal league identity shown before accepting the invite. */
-                            league: {
-                                /** @description League ID associated with the invitation. */
-                                id: string;
-                                /** @description Bookmarkable short code for the invited league. */
-                                leagueCode: string;
-                                /** @description Display name for the invited league. */
-                                name: string;
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["InvitationPreviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7964,13 +9666,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Authenticated invitation-acceptance payload. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Invite code from the invite URL or invitation email. */
-                    inviteCode: string;
-                };
+                "application/json": components["schemas"]["AcceptInvitationRequest"];
             };
         };
         responses: {
@@ -7980,42 +9678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league membership record. */
-                        membership: {
-                            /** @description Membership record identifier. */
-                            id: string;
-                            /** @description League that owns the membership. */
-                            leagueId: string;
-                            /** @description User account attached to the membership. */
-                            userId: string;
-                            /**
-                             * @description Current league role for the user.
-                             * @enum {string}
-                             */
-                            role: "COMMISSIONER" | "MEMBER";
-                            /**
-                             * @description Membership lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined the league.
-                             */
-                            joinedAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueMembershipResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -8311,33 +9974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        contests: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestListResponse"];
                 };
             };
         };
@@ -8351,75 +9988,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for creating a contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    name: string;
-                    eventId?: string;
-                    /**
-                     * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
-                     * @enum {string}
-                     */
-                    contestFormat: "ROSTER";
-                    /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                    /** @description Contest-configuration payload used by contest create and update endpoints. */
-                    contestConfiguration?: {
-                        draftMode?: string;
-                        rounds?: number;
-                        timePerPickSeconds?: number;
-                        autoPickPolicy?: string;
-                        tierConfig?: {
-                            /** @description Stable tier identifier. */
-                            tierId: string;
-                            /** @description Tier label shown in commissioner and draft UI. */
-                            tierName: string;
-                            /** @description Tier order number. */
-                            tierNumber: number;
-                            /** @description How many picks each entry must make from the tier. */
-                            picksFromTier: number;
-                            /** @description Optional ranking range that produced the tier. */
-                            rankingRange?: [
-                                number,
-                                number
-                            ];
-                            /** @description Optional pricing range that produced the tier. */
-                            priceRange?: [
-                                number,
-                                number
-                            ];
-                            /** @description Optional cap on how many participants can live in the tier. */
-                            maxParticipants?: number;
-                            /** @description Participants assigned to the tier. */
-                            participantIds: string[];
-                        }[];
-                        tierAssignmentMethod?: string;
-                        budget?: number;
-                        pricingMethod?: string;
-                        rosterSize?: number;
-                        pickCount?: number;
-                        picksPerPeriod?: number;
-                        roundValues?: number[];
-                        startRound?: string;
-                        isExclusive?: boolean;
-                        bestBallN?: number;
-                        missedCutPenalty?: number;
-                        captainSlot?: boolean;
-                        captainMultiplier?: number;
-                    };
-                    /** @enum {string} */
-                    scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                    /** Format: date-time */
-                    lockAt?: string;
-                    isExclusive?: boolean;
-                    /** @description Whether eliminated entries stop accumulating score events. */
-                    scoringStopsOnElimination?: boolean;
-                };
+                "application/json": components["schemas"]["CreateContestRequest"];
             };
         };
         responses: {
@@ -8429,136 +10000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9380,136 +10822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9542,20 +10855,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Patch payload for updating editable contest metadata. */
         requestBody: {
             content: {
-                "application/json": {
-                    name?: string;
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                    /** Format: date-time */
-                    lockAt?: string;
-                    /** @description Whether the contest should continue to enforce exclusive picks. */
-                    isExclusive?: boolean;
-                };
+                "application/json": components["schemas"]["UpdateContestRequest"];
             };
         };
         responses: {
@@ -9565,136 +10867,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9820,60 +10993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest whose entries are being returned. */
-                        contestId: string;
-                        /** @description Total number of entries in the contest. */
-                        total: number;
-                        /** @description Whether the current user has at least one active entry in the contest. */
-                        isJoined: boolean;
-                        /** @description Primary current-user entry when the contest allows a single active entry. */
-                        myEntryId: string | null;
-                        /** @description All current-user entry identifiers when multiple entries are allowed. */
-                        myEntryIds?: string[];
-                        /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
-                        picksRevealed: boolean;
-                        /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
-                        entries: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
-                            participants?: {
-                                pickId: string;
-                                sportEventParticipantId: string;
-                                participantId: string;
-                                participantName: string;
-                                participantStatus?: string | null;
-                                position?: string | null;
-                                teamAffiliation?: string | null;
-                                /**
-                                 * Format: date-time
-                                 * @description When the participant was added to the contest entry.
-                                 */
-                                pickedAt: string;
-                            }[];
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestEntryListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9934,52 +11054,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
-                        picksRevealed: boolean;
-                        /** @description Expanded contest entry detail. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
-                            participants?: {
-                                pickId: string;
-                                sportEventParticipantId: string;
-                                participantId: string;
-                                participantName: string;
-                                participantStatus?: string | null;
-                                position?: string | null;
-                                teamAffiliation?: string | null;
-                                /**
-                                 * Format: date-time
-                                 * @description When the participant was added to the contest entry.
-                                 */
-                                pickedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryDetailResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10032,15 +11107,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for updating a contest entry while the contest is still joinable. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Unique entry name shown anywhere the team entry is listed. */
-                    name?: string;
-                    /** @description Optional tiebreaker prediction saved on the contest entry. */
-                    tiebreakerValue?: number | null;
-                };
+                "application/json": components["schemas"]["UpdateContestEntryRequest"];
             };
         };
         responses: {
@@ -10050,35 +11119,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Contest entry summary. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10138,362 +11179,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest whose leaderboard was requested. */
-                        contestId: string;
-                        /** @description Golf sport event backing this contest leaderboard. */
-                        sportEventId: string;
-                        /**
-                         * @description Golf leaderboard totals are relative to par and lower is better.
-                         * @enum {string}
-                         */
-                        scoringMode: "GOLF_TO_PAR";
-                        /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
-                        countingRule: {
-                            /**
-                             * @description Golf roster rule: sum the best N selected golfer totals for the entry.
-                             * @enum {string}
-                             */
-                            type: "BEST_N_GOLFERS";
-                            /** @description Number of selected golfers that currently count toward each entry total. */
-                            count: number;
-                        };
-                        /** @description All event participants for the contest event, loaded once for UI joins and filtering. */
-                        participants: {
-                            /** @description SportEventParticipant row selected by contest picks. */
-                            sportEventParticipantId: string;
-                            /** @description Canonical participant identifier. */
-                            participantId: string;
-                            /** @description Golfer display name. */
-                            name: string;
-                            /** @description Optional shorter golfer display name. */
-                            shortName: string | null;
-                            /** @description Whether this golfer is currently eligible/available for this tournament. */
-                            isActive: boolean;
-                            /**
-                             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
-                             * @enum {string|null}
-                             */
-                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                            /** @description Latest copied global world ranking on this event participant. */
-                            worldRanking: number | null;
-                            /** @description Event-scoped odds-to-win for this golfer. */
-                            oddsToWin: number | null;
-                            /** @description Event seed/order when supplied by the provider. */
-                            seedNumber: number | null;
-                            /** @description TOT column value: current event total relative to par. Lower is better. */
-                            totalScoreToPar: number | null;
-                            /** @description Current event total strokes across persisted Golf rounds. */
-                            totalStrokes: number | null;
-                            /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
-                            thru: number | null;
-                            /** @description Current or latest round represented by the standing. */
-                            currentRound: number | null;
-                            /**
-                             * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
-                             * @enum {string}
-                             */
-                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                            /** @description Event leaderboard position for this golfer when available. */
-                            position: number | null;
-                            /** @description Provider/display position such as T2 when available. */
-                            displayPosition: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Provider timestamp for the current Golf standing.
-                             */
-                            asOf: string | null;
-                            /** @description R1 through R4 detail for expanded member leaderboard rows. */
-                            rounds: {
-                                /** @description Round 1 leaderboard column. */
-                                r1: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 2 leaderboard column. */
-                                r2: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 3 leaderboard column. */
-                                r3: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 4 leaderboard column. */
-                                r4: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                            };
-                        }[];
-                        /** @description Contest entries ordered by computed Golf total. */
-                        entries: {
-                            /** @description Contest entry identifier. */
-                            entryId: string;
-                            /** @description Team entry display name. */
-                            entryName: string;
-                            /** @description Entry number for squads allowed to submit multiple entries. */
-                            entryNumber: number;
-                            /** @description Squad/team identifier. */
-                            squadId: string;
-                            /** @description Squad/team display name. */
-                            squadName: string;
-                            /**
-                             * @description Contest entry lifecycle status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
-                            totalScoreToPar: number | null;
-                            /** @description Computed contest leaderboard rank for this entry. */
-                            position: number | null;
-                            /** @description Computed display rank, including T-prefix for ties. */
-                            displayPosition: string | null;
-                            /** @description How many selected golfers count toward this entry under the contest configuration. */
-                            countingPickCount: number;
-                            /** @description How many selected golfers currently have event standings. */
-                            scoredPickCount: number;
-                            /** @description Selected golfers with counting/dropped flags computed at read time. */
-                            picks: {
-                                /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
-                                pickId: string;
-                                /** @description Selected SportEventParticipant. */
-                                sportEventParticipantId: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When this golfer was selected.
-                                 */
-                                pickedAt: string;
-                                /** @description Optional roster slot from the pick row. */
-                                slot: number | null;
-                                /** @description Optional tier/category from the pick row. */
-                                tier: string | null;
-                                /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
-                                isCounting: boolean;
-                                /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
-                                isDropped: boolean;
-                                /** @description Expanded golfer event data for this pick. */
-                                participant: {
-                                    /** @description SportEventParticipant row selected by contest picks. */
-                                    sportEventParticipantId: string;
-                                    /** @description Canonical participant identifier. */
-                                    participantId: string;
-                                    /** @description Golfer display name. */
-                                    name: string;
-                                    /** @description Optional shorter golfer display name. */
-                                    shortName: string | null;
-                                    /** @description Whether this golfer is currently eligible/available for this tournament. */
-                                    isActive: boolean;
-                                    /**
-                                     * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
-                                     * @enum {string|null}
-                                     */
-                                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                                    /** @description Latest copied global world ranking on this event participant. */
-                                    worldRanking: number | null;
-                                    /** @description Event-scoped odds-to-win for this golfer. */
-                                    oddsToWin: number | null;
-                                    /** @description Event seed/order when supplied by the provider. */
-                                    seedNumber: number | null;
-                                    /** @description TOT column value: current event total relative to par. Lower is better. */
-                                    totalScoreToPar: number | null;
-                                    /** @description Current event total strokes across persisted Golf rounds. */
-                                    totalStrokes: number | null;
-                                    /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
-                                    thru: number | null;
-                                    /** @description Current or latest round represented by the standing. */
-                                    currentRound: number | null;
-                                    /**
-                                     * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Event leaderboard position for this golfer when available. */
-                                    position: number | null;
-                                    /** @description Provider/display position such as T2 when available. */
-                                    displayPosition: string | null;
-                                    /**
-                                     * Format: date-time
-                                     * @description Provider timestamp for the current Golf standing.
-                                     */
-                                    asOf: string | null;
-                                    /** @description R1 through R4 detail for expanded member leaderboard rows. */
-                                    rounds: {
-                                        /** @description Round 1 leaderboard column. */
-                                        r1: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 2 leaderboard column. */
-                                        r2: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 3 leaderboard column. */
-                                        r3: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 4 leaderboard column. */
-                                        r4: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                    };
-                                };
-                            }[];
-                        }[];
-                        /**
-                         * Format: date-time
-                         * @description Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
-                         */
-                        asOf: string | null;
-                    };
+                    "application/json": components["schemas"]["GolfLeaderboardResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10553,35 +11239,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest being queried. */
-                        contestId: string;
-                        /** @description Current user entry, or null when the user has not joined the contest. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["MyContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10641,35 +11299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Contest entry summary. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10748,15 +11378,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest from which the entry was removed. */
-                        contestId: string;
-                        /**
-                         * @description Confirms that the delete operation succeeded.
-                         * @enum {boolean}
-                         */
-                        deleted: true;
-                    };
+                    "application/json": components["schemas"]["ContestEntryDeletionResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10808,15 +11430,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for undoing a contest draft selection. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Draft pick to undo. */
-                    pickId: string;
-                    /** @description Commissioner reason recorded for the undo action. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["UndoContestDraftSelectionRequest"];
             };
         };
         responses: {
@@ -10846,13 +11462,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for pausing a draft. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for pausing the draft. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["PauseContestDraftRequest"];
             };
         };
         responses: {
@@ -10910,13 +11522,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for extending the current draft turn. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description How many seconds to add to the current draft pick clock. */
-                    additionalSeconds: number;
-                };
+                "application/json": components["schemas"]["ExtendPickClockRequest"];
             };
         };
         responses: {
@@ -10946,13 +11554,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for reopening a closed contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for reopening the contest. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["ReopenContestRequest"];
             };
         };
         responses: {
@@ -10962,136 +11566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11105,13 +11580,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for force-closing a contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for closing the contest. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["CloseContestRequest"];
             };
         };
         responses: {
@@ -11121,136 +11592,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11264,18 +11606,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for extending a contest end time. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: date-time
-                     * @description Replacement contest end timestamp.
-                     */
-                    newEnd: string;
-                    /** @description Reason recorded for the deadline extension. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["ExtendContestDeadlineRequest"];
             };
         };
         responses: {
@@ -11285,136 +11618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11428,18 +11632,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for updating a contest lock time. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: date-time
-                     * @description Replacement contest lock timestamp.
-                     */
-                    newLock: string;
-                    /** @description Reason recorded for changing the lock time. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["UpdateContestLockTimeRequest"];
             };
         };
         responses: {
@@ -11449,136 +11644,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11600,44 +11666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        entries: {
-                            /** @description Audit-log entry id. */
-                            id: string;
-                            /** @description League this entry belongs to. */
-                            leagueId: string;
-                            /** @description Contest this entry references when the action is contest-scoped. */
-                            contestId?: string;
-                            /** @description User id of the commissioner / actor that performed the action. */
-                            actorId: string;
-                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                            action: string;
-                            /**
-                             * @description Audit-log entry category — broad classification of the action that produced this entry.
-                             * @enum {string}
-                             */
-                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                            /** @description Human-readable description of what happened. */
-                            description: string;
-                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            beforeState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            afterState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional human-supplied reason / justification for the action. */
-                            reason?: string;
-                            /** @description IP address from which the action originated, when available. */
-                            ipAddress?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the audit entry was recorded.
-                             */
-                            createdAt: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestAuditLogResponse"];
                 };
             };
         };
@@ -14504,48 +14533,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        leagues: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -14673,54 +14661,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -14791,13 +14732,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Exact league code confirmation required before permanently deleting an inactive league. */
-                    leagueCode: string;
-                };
+                "application/json": components["schemas"]["DeleteLeagueRequest"];
             };
         };
         responses: {

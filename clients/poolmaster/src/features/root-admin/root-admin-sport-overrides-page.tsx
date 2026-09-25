@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminGetIngestionSchedule,
-  adminResetSportIngestionOverride,
-  adminSetSportIngestionOverride,
-} from '@/lib/api';
+import { adminGetIngestionSchedule, adminResetSportIngestionOverride, adminSetSportIngestionOverride } from '@/lib/api';
 import {
   Button,
   Checkbox,

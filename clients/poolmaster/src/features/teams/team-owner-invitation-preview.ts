@@ -1,7 +1,4 @@
-import {
-  getTeamOwnerInvitationPreview,
-  type GetTeamOwnerInvitationPreviewResponses,
-} from '@/lib/api';
+import { getTeamOwnerInvitationPreview, type GetTeamOwnerInvitationPreviewResponses } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 

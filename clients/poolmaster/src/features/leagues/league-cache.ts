@@ -1,11 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { GetLeagueResponses, ListLeaguesResponses } from '@/lib/api';
+import type { LeagueDetailDto, LeagueSummaryDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 
-export type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
-export type LeagueDetail = GetLeagueResponses[200]['league'];
 
-export function toLeagueSummary(league: LeagueDetail): LeagueSummary {
+export function toLeagueSummary(league: LeagueDetailDto): LeagueSummaryDto {
   return {
     id: league.id,
     leagueCode: league.leagueCode,
@@ -23,8 +21,8 @@ export function toLeagueSummary(league: LeagueDetail): LeagueSummary {
 }
 
 export function upsertLeagueSummary(
-  leagues: LeagueSummary[] | undefined,
-  nextLeague: LeagueSummary,
+  leagues: LeagueSummaryDto[] | undefined,
+  nextLeague: LeagueSummaryDto,
 ) {
   if (!leagues) {
     return [nextLeague];
@@ -40,20 +38,20 @@ export function upsertLeagueSummary(
   return nextLeagues;
 }
 
-export function removeLeagueSummary(leagues: LeagueSummary[] | undefined, leagueId: string) {
+export function removeLeagueSummary(leagues: LeagueSummaryDto[] | undefined, leagueId: string) {
   return (leagues ?? []).filter((league) => league.id !== leagueId);
 }
 
 export function syncLeagueCaches(
   queryClient: QueryClient,
-  league: LeagueDetail,
+  league: LeagueDetailDto,
   options: {
     manageLeagueId?: string | null;
   } = {},
 ) {
   const summary = toLeagueSummary(league);
 
-  queryClient.setQueryData<LeagueSummary[]>(QueryKeys.leagues.list, (current) =>
+  queryClient.setQueryData<LeagueSummaryDto[]>(QueryKeys.leagues.list, (current) =>
     upsertLeagueSummary(current, summary),
   );
   queryClient.setQueryData(QueryKeys.leagues.detail(league.leagueCode), league);

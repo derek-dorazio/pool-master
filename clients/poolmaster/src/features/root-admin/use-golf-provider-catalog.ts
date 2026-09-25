@@ -1,8 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListProviderCatalogEvents,
-  adminListProviders,
-} from '@/lib/api';
+import { adminListProviderCatalogEvents, adminListProviders } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import type { AdminListProviderCatalogEventsResponses } from '@/lib/api';
 import { resolveGolfProviderId } from './golf-admin-utils';

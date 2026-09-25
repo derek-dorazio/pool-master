@@ -1,19 +1,17 @@
 import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/squads.dto';
 import {
   CreateSquadOwnerInvitationRequestSchema,
-  AddSquadMemberRequestSchema,
   ReplaceSquadOwnerRequestSchema,
-  SquadListResponseSchema,
-  SquadMembershipResponseSchema,
-  SquadResponseSchema,
   TeamOwnerInvitationListResponseSchema,
   TeamOwnerInvitationResponseSchema,
-  UpdateSquadRequestSchema,
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import { CreateSquadRequestSchema } from '@poolmaster/shared/dto/squads.dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
@@ -27,6 +25,9 @@ import { SquadService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
 
 export function squadsModule(fastify: FastifyInstance): void {
+  // Routes below $ref named components, so they must be registered on this instance.
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
@@ -57,7 +58,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
       operationId: 'listLeagueSquads',
       response: {
-        200: zodToJsonSchema(SquadListResponseSchema),
+        200: schemaRef('SquadListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -73,9 +74,9 @@ export function squadsModule(fastify: FastifyInstance): void {
       description:
         'Creates a squad in the target league for commissioner or member-managed squad participation.',
       operationId: 'createLeagueSquad',
-      body: zodToJsonSchema(CreateSquadRequestSchema),
+      body: schemaRef('CreateSquadRequest'),
       response: {
-        201: zodToJsonSchema(SquadResponseSchema),
+        201: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -92,7 +93,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
       operationId: 'getLeagueSquad',
       response: {
-        200: zodToJsonSchema(SquadResponseSchema),
+        200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -108,9 +109,9 @@ export function squadsModule(fastify: FastifyInstance): void {
       description:
         'Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.',
       operationId: 'updateLeagueSquad',
-      body: zodToJsonSchema(UpdateSquadRequestSchema),
+      body: schemaRef('UpdateSquadRequest'),
       response: {
-        200: zodToJsonSchema(SquadResponseSchema),
+        200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -127,7 +128,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.',
       operationId: 'inactivateLeagueSquad',
       response: {
-        200: zodToJsonSchema(SquadResponseSchema),
+        200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -161,9 +162,9 @@ export function squadsModule(fastify: FastifyInstance): void {
       description:
         'Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.',
       operationId: 'addSquadOwner',
-      body: zodToJsonSchema(AddSquadMemberRequestSchema),
+      body: schemaRef('AddSquadMemberRequest'),
       response: {
-        201: zodToJsonSchema(SquadMembershipResponseSchema),
+        201: schemaRef('SquadMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -180,7 +181,7 @@ export function squadsModule(fastify: FastifyInstance): void {
         'Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.',
       operationId: 'removeSquadOwner',
       response: {
-        200: zodToJsonSchema(SquadMembershipResponseSchema),
+        200: schemaRef('SquadMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),

@@ -5,10 +5,7 @@ import { adminGetGolfLeagueRoster, adminListGolfLeagues } from '@/lib/api';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfLeagueRosterResponses,
-  AdminListGolfLeaguesResponses,
-} from '@/lib/api';
+import type { AdminGetGolfLeagueRosterResponses, AdminListGolfLeaguesResponses } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GolfLeagueDetailsCard } from './golf-league-details-card';
 import { GolfLeagueRosterGridCard } from './golf-league-roster-grid-card';

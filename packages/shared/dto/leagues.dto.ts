@@ -2,6 +2,7 @@
  * League DTOs — request/response schemas for league endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   InvitationStatus,
   JoinPolicy,
@@ -360,3 +361,40 @@ export const ResolveActionItemResponseSchema = z.object({
 export type ResolveActionItemResponse = z.infer<typeof ResolveActionItemResponseSchema>;
 
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
+
+// --- Published contract (#192) -------------------------------------------------
+// Each name becomes `components.schemas.<name>` and an importable generated type.
+// LeagueDetailDto extends LeagueSummaryDto, so the detail shape is a superset of the
+// list shape by construction — the frontend imports whichever it actually needs and
+// must not re-derive either from a response map.
+registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
+registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
+registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
+registerSchema('UpdateLeagueIconRequest', UpdateLeagueIconRequestSchema);
+registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchema);
+registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
+registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);
+registerSchema('AcceptInvitationRequest', AcceptInvitationRequestSchema);
+registerSchema('CopySeasonRequest', CopySeasonRequestSchema);
+registerSchema('CsvImportRow', CsvImportRowSchema);
+registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
+registerSchema('LeagueRelationshipDto', LeagueRelationshipDtoSchema);
+registerSchema('LeagueSummaryDto', LeagueSummaryDtoSchema);
+registerSchema('LeagueDetailDto', LeagueDetailDtoSchema);
+registerSchema('LeagueMemberDto', LeagueMemberDtoSchema);
+registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
+registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
+registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
+registerSchema('LeagueActionItemDto', LeagueActionItemDtoSchema);
+registerSchema('MemberActivityEventDto', MemberActivityEventDtoSchema);
+registerSchema('UpcomingEventDto', UpcomingEventDtoSchema);
+registerSchema('LeagueResponse', LeagueResponseSchema);
+registerSchema('LeagueListResponse', LeagueListResponseSchema);
+registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
+registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);
+registerSchema('SendLeagueInvitationsResponse', SendLeagueInvitationsResponseSchema);
+registerSchema('GenerateInviteLinkResponse', GenerateInviteLinkResponseSchema);
+registerSchema('LeagueAuditEntriesResponse', LeagueAuditEntriesResponseSchema);
+registerSchema('LeagueDashboardResponse', LeagueDashboardResponseSchema);
+registerSchema('ResolveActionItemResponse', ResolveActionItemResponseSchema);
+registerSchema('LeagueBulkOperationResponse', LeagueBulkOperationResponseSchema);

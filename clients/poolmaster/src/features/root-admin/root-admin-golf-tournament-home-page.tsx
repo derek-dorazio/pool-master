@@ -2,11 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  adminGetGolfSeason,
-  adminGetGolfTournament,
-  adminGetGolfTournamentRounds,
-} from '@/lib/api';
+import { adminGetGolfSeason, adminGetGolfTournament, adminGetGolfTournamentRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,

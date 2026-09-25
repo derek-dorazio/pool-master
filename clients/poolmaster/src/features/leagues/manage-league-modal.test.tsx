@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import type { LeagueSummaryDto } from '@/lib/api';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -12,7 +13,6 @@ import {
   inactivateLeagueData,
   updateLeagueDetailsData,
   updateLeagueIconData,
-  type LeagueSummary,
 } from './test/fixtures';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -30,7 +30,7 @@ bindApiMocks({
   updateLeagueIcon: updateLeagueIconMock,
 });
 
-function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDto[]> }) {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.leagues.list,
     queryFn,
@@ -248,7 +248,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       iconKey: 'GOLF_BALL',
     }))));
     const leaguesQueryFn = vi
-      .fn<() => Promise<LeagueSummary[]>>()
+      .fn<() => Promise<LeagueSummaryDto[]>>()
       .mockResolvedValue([commissionerLeague]);
 
     const queryClient = new QueryClient({

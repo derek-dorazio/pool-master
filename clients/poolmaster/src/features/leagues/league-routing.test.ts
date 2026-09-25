@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { LeagueSummaryDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
@@ -9,9 +10,11 @@ import {
   getLeagueSelectorOptions,
   sortLeaguesForOverview,
 } from './league-routing';
-import { buildLeagueSummary, type LeagueSummary } from './test/fixtures';
+import {
+  buildLeagueSummary,
+} from './test/fixtures';
 
-const leagues: LeagueSummary[] = [
+const leagues: LeagueSummaryDto[] = [
   buildLeagueSummary({
     id: 'league-active-member',
     leagueCode: 'ACTIVE1',

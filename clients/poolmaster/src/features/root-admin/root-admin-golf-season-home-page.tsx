@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  adminGetGolfSeason,
-  adminListGolfLeagues,
-  adminListGolfTournaments,
-  adminSetCurrentGolfSeason,
-} from '@/lib/api';
+import { adminGetGolfSeason, adminListGolfLeagues, adminListGolfTournaments, adminSetCurrentGolfSeason } from '@/lib/api';
 import {
   AsyncPage,
   Button,
@@ -21,10 +16,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfSeasonResponses,
-  AdminListGolfTournamentsResponses,
-} from '@/lib/api';
+import type { AdminGetGolfSeasonResponses, AdminListGolfTournamentsResponses } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GolfSeasonCloneAction } from './golf-season-clone-action';
 import { GolfSeasonEditModal } from './golf-season-edit-modal';

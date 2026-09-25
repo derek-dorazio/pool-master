@@ -6,10 +6,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfRoundScoresResponses,
-  AdminUpdateGolfRoundScoreData,
-} from '@/lib/api';
+import type { AdminGetGolfRoundScoresResponses, AdminUpdateGolfRoundScoreData } from '@/lib/api';
 import {
   GOLF_ROUND_SCORE_STATUSES,
   formatGolfRoundStatus,

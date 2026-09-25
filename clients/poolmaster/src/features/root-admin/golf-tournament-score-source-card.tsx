@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
-import {
-  adminLinkGolfTournamentScoreSource,
-  adminUnlinkGolfTournamentScoreSource,
-} from '@/lib/api';
+import { adminLinkGolfTournamentScoreSource, adminUnlinkGolfTournamentScoreSource } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,

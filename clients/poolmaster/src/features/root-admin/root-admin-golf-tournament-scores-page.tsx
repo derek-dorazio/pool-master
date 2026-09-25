@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  adminGetGolfRoundScores,
-  adminGetGolfTournament,
-  adminGetGolfTournamentField,
-  adminGetGolfTournamentRounds,
-} from '@/lib/api';
+import { adminGetGolfRoundScores, adminGetGolfTournament, adminGetGolfTournamentField, adminGetGolfTournamentRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -16,11 +11,7 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfRoundScoresResponses,
-  AdminGetGolfTournamentFieldResponses,
-  AdminGetGolfTournamentRoundsResponses,
-} from '@/lib/api';
+import type { AdminGetGolfRoundScoresResponses, AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentRoundsResponses } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
   golfTournamentHasScoreSync,

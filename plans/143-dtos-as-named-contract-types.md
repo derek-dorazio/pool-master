@@ -46,17 +46,44 @@ the deploy pipeline (#191).
 
 ## Key Decisions
 
-### 1. Registration mechanism — decide once, in slice 1
+### 1. Registration mechanism — SETTLED in slice 1
 
-Two viable approaches, and **mixing them produces half-referenced documents that are worse
-than either**:
+**`fastify.addSchema({ $id })`, with routes referencing `{ $ref: 'Name#' }`.** Three things
+were established by trying them, and each looked correct one layer up:
 
-- `zod-to-json-schema` with a definitions/`$ref` strategy, collecting named definitions into
-  `components/schemas`.
-- Fastify `addSchema` with a stable `$id` per DTO, letting the swagger plugin emit the refs.
+1. **A route cannot `$ref` `#/components/schemas/Name`.** Fastify builds the response
+   serializer from the route schema and resolves `$ref` against schemas added via
+   `addSchema` — it has no knowledge of `components.schemas`. The document pointer fails at
+   boot: `Cannot find reference "#/components/schemas/ServiceVersionResponse"`.
+2. **@fastify/swagger renames hoisted schemas `def-0`, `def-1`, …** unless given a
+   `refResolver.buildLocalReference` that returns `json.$id`. Without it the components
+   exist and the generator emits `Def0` — present, and useless as an import.
+3. **Component registration must NOT live in the swagger plugin.** A route that `$ref`s a
+   component needs it registered whether or not the app serves docs. Putting the loop in
+   the swagger plugin made every route silently depend on documentation being enabled; the
+   version module's unit tests, which build a bare Fastify instance, failed at boot with
+   `Cannot resolve ref "ServiceVersionResponse#"`. It lives in
+   `plugins/schema-components.ts`, is `fastify-plugin`-wrapped so schemas land on the root
+   instance, and is **idempotent** (`getSchema` before `addSchema`) so every route module
+   can register it without ordering rules.
 
-Slice 1 picks one, applies it to a single small module end to end, and records the choice
-here. Everything downstream copies that module.
+`packages/shared/dto/schema-registry.ts` holds the registry. `registerSchema(name, schema)`
+returns its argument so registration composes inline at the declaration, and **throws when
+two different schemas claim one name** — that collision is the drift this epic removes, and
+it must fail at startup rather than letting the last registration win.
+
+### 1a. Known limitation — nested components still inline
+
+`ServiceVersionResponse.service` publishes the `VersionComponent` shape inline rather than
+referencing it, because `dto/json-schema.ts` resolves local `$ref`s before registration.
+TypeScript is structural, so the inlined shape is still assignable to the named
+`VersionComponent` and the frontend is unaffected — the cost is duplication in the generated
+file, not correctness.
+
+Fixing it means making the conversion registry-aware so a nested *registered* schema emits a
+ref instead of being flattened. Deliberately deferred: it is an optimisation, and
+`json-schema.ts`'s inlining exists for a real reason (generators cannot follow refs embedded
+under `paths`) that a careless change would reintroduce.
 
 ### 2. Naming convention — decide once, in slice 1
 
@@ -105,33 +132,115 @@ hazard. Sequence #186 first where they touch the same fields.
 
 ## Execution Sequence
 
-**Slice 1 — plumbing. Blocks everything else; nothing runs in parallel until it lands.**
-Decide §1 and §2, convert one small module (`version` or `client-logs` — both are tiny and
-have few frontend consumers), regenerate, and confirm the frontend can import a named type
-from it. Record both decisions in this file as part of the slice.
+**Slice 1 — plumbing. DONE.** §1 settled above, and proven end to end on `squads`:
+`components.schemas` went from 0 to 9 named entries, routes `$ref` them, the generator emits
+importable types, and all five frontend derivations were deleted. `leagues` and `contests`
+followed on the same mechanism; `components.schemas` now carries **75** named entries.
+
+**`version` was the first module tried and is deliberately NOT converted.** It has no
+frontend consumers — `lib/version-info.ts` reads a static `version-info.json` asset with a
+different shape — so it could only ever prove the server half. It is also operational
+plumbing rather than product surface, and **#180 already owns how `/version` reports build
+identity**, including retiring `VersionService`'s `?? '0.1.0'` / `?? 'development'`
+fallbacks. Converting it here would have split that work across two tickets. It converts as
+part of #180.
+
+**Pick modules with real frontend consumers.** The point of a slice is deleting derivations;
+a module nothing derives from proves only half the chain.
+
+Regression cover, both added in slice 1: `tests/unit/shared/schema-registry.test.ts` for the
+registry contract, and `tests/unit/shared/openapi-named-components.test.ts` asserting on the
+**committed artifacts** — that components are named rather than `def-N`, that a converted
+route `$ref`s rather than inlines, and that the generator emits importable types. Verified by
+removing the `refResolver` and confirming four of those cases fail. Extend
+`CONVERTED_COMPONENTS` in that file as each slice lands.
 
 **Slices 2..N — one per route module, parallelisable after slice 1.**
-`account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
-`contest-entry-picks`, `contest-management`, `contests`, `drafts`, `email`, `events`,
-`golf`, `history`, `ingestion`, `invitations`, `leagues`, `notifications`, `participants`,
-`sport-catalog`, `squads`, `team-invitations`, `version`.
+
+Done: `squads` (slice 2), `leagues` (slice 3), `contests` (slice 4). `version` belongs
+to #180. **Check this list before starting — it is what keeps two parallel sessions off
+the same module.**
+
+Remaining: `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
+`contest-entry-picks`, `contest-management`, `drafts`, `email`, `events`, `golf`,
+`history`, `ingestion`, `invitations`, `notifications`, `participants`, `sport-catalog`,
+`team-invitations`.
+
+Order by frontend derivation count, highest first — that is where the payoff is. The
+three highest-value modules are now done: `leagues` owned `LeagueDetail` (10 files),
+`LeagueSummary` (6) and `LeagueMember` (2); `contests` owned `ContestSummary` (5) and
+`ContestDetail` (2). What remains is a longer tail — 84 response-map derivations across
+the frontend, down from 139.
 
 Each slice: register that module's DTOs as named components → `api:refresh` → replace its
-frontend consumers' derivations with imports → delete the now-dead local aliases → tests at
-every layer crossed.
+frontend consumers' derivations with imports → **delete every local derived type the module
+owned** → tests at every layer crossed.
+
+**Deleting the derivations is not optional cleanup; it is the deliverable.** A slice that
+adds the import but leaves `type LeagueDetail = GetLeagueResponses[200]['league']` in place
+has made things worse: there are now two ways to name one shape, and the next developer
+cannot tell which is current. No slice is done while any derived alias it owns still exists.
+`grep -rn "Responses\[200\]" clients/poolmaster/src` must return nothing for that module's
+types before the slice closes.
 
 Per-slice, also resolve that module's share of **#149** (loose `ZodTypeAny` / `z.unknown`).
 A loose Zod type publishes as `unknown`, which defeats the point of naming the schema. It is
 cheaper to fix while already editing the schema than as a second pass.
 
 Sizing note: `admin` (685 lines of DTO) and `admin-golf` (649) are far larger than the rest
-and should be split further when they are picked up. `contests` (462) and `leagues` (362)
-are the next tier.
+and should be split further when they are picked up — they are now the two largest
+remaining. (`contests` at 462 DTO lines and `leagues` at 362 are done.)
 
 **Final slice — enforcement.**
 Lint rule banning `Responses[...]` indexing in `features/**`, so the old pattern cannot
 return. Retire `poolmaster/no-duplicate-feature-types` if the class of problem is gone, or
 keep it as a backstop and say why.
+
+## Guards
+
+Two gates cover this epic, and between them they have caught every mistake made so far.
+Both are **self-deriving** — neither keeps a list of converted modules, because a list is
+maintenance that gets forgotten, and a forgotten entry makes a guard quietly stop covering
+a module.
+
+**`tests/unit/shared/openapi-named-components.test.ts`** asserts on the committed
+artifacts. Every component must generate an importable type; none may be a `def-N`
+placeholder; and no frontend file may index into the response map of an operation whose
+200 is now a `$ref` — those map names are computed from the operationIds, the same way
+hey-api derives them. It also asserts the mirror: at least one *unconverted* operation's
+map must still be indexed, so a rewrite that matched a converted name as a substring of an
+unconverted one reads as failure rather than progress.
+
+**`scripts/check-dto-conversion-complete.mjs`** (in `rules:check`) covers four ways the
+conversion fails without any type error, failing test, or implausible-looking document:
+
+1. **A route inlines a schema that is published as a named component.** Half-converted
+   modules publish one shape inline and `$ref` it everywhere else, so the frontend gets a
+   named type for part of a module and a response-map derivation for the rest.
+2. **A registered name never reaches `components.schemas`.** `registerSchema()` runs as a
+   module side effect, so a DTO module no route imports registers nothing — the registry
+   looks right and the document silently lacks the component.
+3. **`registerSchema('X', YSchema)`** publishes the wrong shape under a plausible name.
+   Nothing downstream can tell: the component exists, generates a type, and every `$ref`
+   resolves. Only the shape is wrong.
+4. **A route calls `schemaRef()` without registering the components plugin.** That fails at
+   *boot*, and only in whatever app-building path exercises that module — a module without
+   such a test ships broken.
+
+Each was verified by planting the failure and confirming it fires, not by observing a green
+run. Check 1 found six real half-conversions on its first execution.
+
+### A slice's scope is not knowable from its DTO module
+
+Two structural facts, both learned the hard way, both of which change how a slice is
+planned:
+
+- **DTO ownership does not follow route-module boundaries.** `leagues.dto.ts` schemas are
+  consumed by `admin/routes.ts` and `invitations/routes.ts`. Converting "the leagues
+  module" left those two inlining shapes every other route referenced.
+- **Converting a route changes which FRONTEND files are in scope.** The set of derivations
+  to delete follows from which operations now `$ref`, not from the DTO module — which is
+  why the test derives it from the document.
 
 ## Open Questions
 

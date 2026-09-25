@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import {
-  getLeagueByCode,
-  listContests,
-  type GetLeagueByCodeResponses,
-  type ListContestsResponses,
-} from '@/lib/api';
+import { getLeagueByCode, listContests, type LeagueDetailDto, type ContestSummaryDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestCreatePath,
@@ -34,8 +29,6 @@ import { isHistoricalContest } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
-type ContestSummary = ListContestsResponses[200]['contests'][number];
 
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -45,7 +38,7 @@ export function ManageContestsPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
@@ -84,7 +77,7 @@ export function ManageContestsPage() {
   const leagueId = leagueQuery.data?.id ?? '';
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestSummary[]> => {
+    queryFn: async (): Promise<ContestSummaryDto[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {

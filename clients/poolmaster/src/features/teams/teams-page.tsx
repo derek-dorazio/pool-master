@@ -2,16 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import {
-  getLeagueByCode,
-  listLeagueMembers,
-  listLeagueSquads,
-  listSquadOwnerInvitations,
-  type GetLeagueByCodeResponses,
-  type ListLeagueMembersResponses,
-  type ListLeagueSquadsResponses,
-  type ListSquadOwnerInvitationsResponses,
-} from '@/lib/api';
+import { getLeagueByCode, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, type ListSquadOwnerInvitationsResponses, type SquadDto, type LeagueDetailDto, type LeagueMemberDto } from '@/lib/api';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
@@ -35,9 +26,6 @@ import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
-type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
-type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 
 function formatInvitationStatus(status: string) {
@@ -57,7 +45,7 @@ export function TeamsPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
       if (!response.data?.league) {
         throwApiError(response.error, 'League detail response is missing data.');
@@ -96,7 +84,7 @@ export function TeamsPage() {
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<TeamSummary[]> => {
+    queryFn: async (): Promise<SquadDto[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
       if (!response.data?.squads) {
         throwApiError(response.error, 'Team list response is missing data.');
@@ -124,7 +112,7 @@ export function TeamsPage() {
 
   const leagueMembersQuery = useQuery({
     queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMember[]> => {
+    queryFn: async (): Promise<LeagueMemberDto[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
         throwApiError(response.error, 'League members response is missing data.');

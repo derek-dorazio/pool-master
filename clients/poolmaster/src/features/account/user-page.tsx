@@ -14,15 +14,7 @@ import {
   AccountPreferencesUpdateRequestSchema,
   AccountUsernameUpdateRequestSchema,
 } from '@poolmaster/shared/dto';
-import {
-  changeAccountPassword,
-  deleteAccount,
-  inactivateAccount,
-  reactivateAccount,
-  updateAccountPreferences,
-  updateAccountProfile,
-  updateAccountUsername,
-} from '@/lib/api';
+import { changeAccountPassword, deleteAccount, inactivateAccount, reactivateAccount, updateAccountPreferences, updateAccountProfile, updateAccountUsername } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   AUTH_ME_QUERY_KEY,

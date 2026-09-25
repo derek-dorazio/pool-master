@@ -2,10 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListProviderSyncRuns,
-  adminListProviders,
-} from '@/lib/api';
+import { adminListProviderSyncRuns, adminListProviders } from '@/lib/api';
 import {
   Alert,
   Button,

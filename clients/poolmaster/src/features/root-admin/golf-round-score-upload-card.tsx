@@ -1,7 +1,4 @@
-import {
-  adminApplyGolfRoundScores,
-  adminPreviewGolfRoundScores,
-} from '@/lib/api';
+import { adminApplyGolfRoundScores, adminPreviewGolfRoundScores } from '@/lib/api';
 import { BulkUploadPanel, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 
@@ -84,3 +85,16 @@ export const SquadMembershipResponseSchema = z.object({
   membership: SquadMembershipDtoSchema,
 }).describe('Single squad-membership response.');
 export type SquadMembershipResponse = z.infer<typeof SquadMembershipResponseSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// See version.dto.ts for the convention. SquadDto is the canonical squad shape; the
+// frontend imports it rather than deriving from ListLeagueSquadsResponses.
+registerSchema('SquadMembershipDto', SquadMembershipDtoSchema);
+registerSchema('TeamRelationshipDto', TeamRelationshipDtoSchema);
+registerSchema('SquadDto', SquadDtoSchema);
+registerSchema('SquadResponse', SquadResponseSchema);
+registerSchema('SquadListResponse', SquadListResponseSchema);
+registerSchema('SquadMembershipResponse', SquadMembershipResponseSchema);
+registerSchema('CreateSquadRequest', CreateSquadRequestSchema);
+registerSchema('UpdateSquadRequest', UpdateSquadRequestSchema);
+registerSchema('AddSquadMemberRequest', AddSquadMemberRequestSchema);

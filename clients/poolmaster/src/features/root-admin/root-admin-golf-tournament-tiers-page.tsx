@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  adminGetGolfTournament,
-  adminGetGolfTournamentField,
-  adminGetGolfTournamentTiers,
-} from '@/lib/api';
+import { adminGetGolfTournament, adminGetGolfTournamentField, adminGetGolfTournamentTiers } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -15,10 +11,7 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminGetGolfTournamentFieldResponses,
-  AdminGetGolfTournamentTiersResponses,
-} from '@/lib/api';
+import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
   isAdminManagedGolfTournament,
