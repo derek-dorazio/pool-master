@@ -105,16 +105,28 @@ known gaps, both a single field:
 `GetLeague` and `GetLeagueByCode` already return identical 13-field shapes, so that pair
 needs no change. Fix the two gaps in the slices that own those modules.
 
-### 4. Parallel authoring, serialised merging
+### 4. One session, serial slices — REVISED
 
-Every slice regenerates `openapi.json` and `packages/shared/generated/hey-api/`, and
-`api:check` is a **blocking** gate that fails when the committed artifacts are stale. Two
-slices in flight therefore conflict on those files **every time** — this is guaranteed, not
-occasional.
+This epic was originally scoped for parallel agent sessions. **That is no longer the plan:
+the remaining conversion runs in a single session, serially.** What follows from that:
 
-Work the slices in parallel; merge them one at a time, rebasing and re-running
-`npm run api:refresh` immediately before each merge. A slice that sat unmerged for a day
-needs regenerating again, not just rebasing.
+- **The artifact collision is moot.** Every slice regenerates `openapi.json` and
+  `packages/shared/generated/hey-api/`, and `api:check` is a blocking gate. That made two
+  in-flight slices conflict *every time*. With one session there is nothing to collide with.
+- **Slices no longer need to be module-shaped.** Module-sized scopes existed to give
+  parallel agents bounded, non-overlapping work. That framing is what produced both bugs
+  found in slice 5 (see the blind-spots section): `team-owner-invitations.dto.ts` was
+  missed because it is not named after a route module, and `admin/routes.ts` needed a
+  `#192-mixed:` marker only because module-shaped slices leave files half-converted.
+- **Slices are now sized for REVIEW, not for scheduling.** The repo owner reads each PR;
+  that is the only constraint on how big a slice should be.
+
+**The completion criterion is now DTO-shaped:** a slice is done when every producer and
+every consumer of the DTOs it registered is converted, wherever they live — not when a
+named module's directory is finished. Check 1 already enforces the producer half (any
+route inlining a registered schema fails), which is why registering the league DTOs forced
+`admin/routes.ts` and `invitations/routes.ts` to convert in the leagues slice. The consumer
+half is still convention.
 
 ### 5. What this does and does not fix
 
@@ -135,7 +147,7 @@ hazard. Sequence #186 first where they touch the same fields.
 **Slice 1 — plumbing. DONE.** §1 settled above, and proven end to end on `squads`:
 `components.schemas` went from 0 to 9 named entries, routes `$ref` them, the generator emits
 importable types, and all five frontend derivations were deleted. `leagues` and `contests`
-followed on the same mechanism; `components.schemas` now carries **75** named entries.
+followed on the same mechanism; `components.schemas` now carries **82** named entries.
 
 **`version` was the first module tried and is deliberately NOT converted.** It has no
 frontend consumers — `lib/version-info.ts` reads a static `version-info.json` asset with a
@@ -158,23 +170,59 @@ removing the `refResolver` and confirming four of those cases fail. Extend
 **Slices 2..N — one per route module, parallelisable after slice 1.**
 
 Done: `squads` (slice 2), `leagues` (slice 3), `contests` (slice 4),
-`team-invitations` + the `team-owner-invitations` DTO module (slice 5). `version`
-belongs to #180. **Check this list before starting — it is what keeps two parallel
-sessions off the same module.**
+`team-invitations` + the `team-owner-invitations` DTO module (slice 5). `invitations` came
+free with the leagues slice and is already clean. `version` belongs to #180.
 
-Remaining: `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
-`contest-entry-picks`, `contest-management`, `drafts`, `email`, `events`, `golf`,
-`history`, `ingestion`, `invitations`, `notifications`, `participants`, `sport-catalog`.
+**The earlier module list was wrong in both directions.** It named `golf`, `sport-catalog`,
+`email` and `contest-entry-picks` as remaining modules; none of them has a `routes.ts` at
+all. It also listed `invitations`, which was already done. Work the measured list below
+instead, and re-measure rather than trusting it:
 
-**`admin/routes.ts` carries a `#192-mixed:` marker.** It `$ref`s league components but
-inlines its own, which is legitimate until the admin slice runs. The slice that converts
-it deletes the marker; check 5 then covers the file.
+```
+# route files with remaining domain inlines (anything not ErrorEnvelopeSchema/SuccessSchema)
+```
 
-Order by frontend derivation count, highest first — that is where the payoff is. The
-three highest-value modules are now done: `leagues` owned `LeagueDetail` (10 files),
-`LeagueSummary` (6) and `LeagueMember` (2); `contests` owned `ContestSummary` (5) and
-`ContestDetail` (2). What remains is a longer tail — 84 response-map derivations across
-the frontend, down from 139.
+| Route file | Domain inlines | Notes |
+|---|---:|---|
+| `admin/golf/routes.ts` | 102 | largest by far; also the largest frontend payoff (~30 derivations) |
+| `admin/routes.ts` | 41 | carries the `#192-mixed:` marker; needs `admin` + `ingestion` + `contest-management` DTOs |
+| `account/routes.ts` | 12 | |
+| `drafts/routes.ts` | 12 | |
+| `admin/platform-config-routes.ts` | 11 | shares `config.dto.ts` with `config/routes.ts` |
+| `contest-management/routes.ts` | 7 | `contest-management.dto.ts` also feeds `admin/routes.ts` |
+| `auth/routes.ts` | 6 | |
+| `history/routes.ts` | 6 | |
+| `notifications/routes.ts` | 5 | |
+| `participants/routes.ts` | 4 | |
+| `account-consent/routes.ts` | 3 | |
+| `admin/audit-routes.ts` | 2 | shares `admin.dto.ts` with `admin/routes.ts` |
+| `events/routes.ts` | 2 | |
+| `client-logs/routes.ts` | 1 | |
+| `config/routes.ts` | 1 | shares `config.dto.ts` with `admin/platform-config-routes.ts` |
+| `version/routes.ts` | 1 | deferred to #180 |
+
+**Only three DTO modules cross route-file boundaries:** `admin.dto.ts` (2 files),
+`config.dto.ts` (2), `contest-management.dto.ts` (2). Everything else is 1:1, so most
+remaining slices are genuinely self-contained — the cross-module hazard that bit slices 2-4
+is nearly spent.
+
+### Slice order, and why
+
+1. **Small leaves first** — `client-logs`, `events`, `admin/audit-routes`,
+   `account-consent`, `participants`, `notifications`, `auth`, `history`. Low risk, and
+   they exercise the now-five-check guard set on unfamiliar modules before anything large
+   is bet on it.
+2. **`config`** — both its route files together, the smallest of the three cross-file DTOs.
+3. **`account`, `drafts`** — self-contained, medium.
+4. **The admin cluster** — `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
+   across `admin/routes.ts`, `admin/audit-routes.ts` and `contest-management/routes.ts`.
+   **This is what deletes the `#192-mixed:` marker.** Until it lands, check 5 is blind to
+   the second-largest route file in the repo, so this should not sit to the end. It may be
+   split into several PRs; the marker stays until the last one.
+5. **`admin-golf`** — 102 inlines and the biggest frontend payoff, taken last among the
+   conversions because it is the one most worth having a fully proven guard set for.
+6. **Enforcement slice** — lint rule banning `Responses[...]` indexing in `features/**`;
+   retire the `#192-mixed:` mechanism once no file uses it.
 
 Each slice: register that module's DTOs as named components → `api:refresh` → replace its
 frontend consumers' derivations with imports → **delete every local derived type the module
@@ -184,8 +232,9 @@ owned** → tests at every layer crossed.
 adds the import but leaves `type LeagueDetail = GetLeagueResponses[200]['league']` in place
 has made things worse: there are now two ways to name one shape, and the next developer
 cannot tell which is current. No slice is done while any derived alias it owns still exists.
-`grep -rn "Responses\[200\]" clients/poolmaster/src` must return nothing for that module's
-types before the slice closes.
+`grep -rnE "Responses\[[0-9]+\]" clients/poolmaster/src` must return nothing for that
+module's types before the slice closes. **Match any status, not just 200** — checking only
+`[200]` is precisely the bug that let seven `[201]` derivations survive three slices.
 
 Per-slice, also resolve that module's share of **#149** (loose `ZodTypeAny` / `z.unknown`).
 A loose Zod type publishes as `unknown`, which defeats the point of naming the schema. It is
@@ -195,10 +244,9 @@ Sizing note: `admin` (685 lines of DTO) and `admin-golf` (649) are far larger th
 and should be split further when they are picked up — they are now the two largest
 remaining. (`contests` at 462 DTO lines and `leagues` at 362 are done.)
 
-**Final slice — enforcement.**
-Lint rule banning `Responses[...]` indexing in `features/**`, so the old pattern cannot
-return. Retire `poolmaster/no-duplicate-feature-types` if the class of problem is gone, or
-keep it as a backstop and say why.
+The enforcement slice (item 6 above) also decides the fate of
+`poolmaster/no-duplicate-feature-types`: retire it if the class of problem is gone, or keep
+it as a backstop and say why.
 
 ## Guards
 
