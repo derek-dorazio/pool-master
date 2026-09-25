@@ -23,8 +23,6 @@ import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
-import { historyModule } from './modules/history/routes';
-import { accountConsentModule } from './modules/account-consent/routes';
 import { accountModule } from './modules/account/routes';
 import { adminModule } from './modules/admin/routes';
 import { IngestionConfigService } from './modules/admin/ingestion-config-service';
@@ -39,7 +37,6 @@ import { versionModule } from './modules/version/routes';
 import { draftsModule } from './modules/drafts/routes';
 
 // Notification module
-import { notificationsModule } from './modules/notifications/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
@@ -221,9 +218,7 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(historyModule, { prefix: '/api/v1' });
   app.register(accountModule, { prefix: '/api/v1/account' });
-  app.register(accountConsentModule, { prefix: '/api/v1/account' });
   app.register(adminModule, {
     prefix: '/api/v1/admin',
     providerRegistry: registry,
@@ -239,14 +234,6 @@ export function buildApp() {
   // Draft module
   // =========================================================================
   app.register(draftsModule, { prefix: '/api/v1/drafts' });
-
-  // =========================================================================
-  // Notification module
-  // =========================================================================
-  app.register(notificationsModule, {
-    prefix: '/api/v1',
-    prisma,
-  });
 
   // =========================================================================
   // Lifecycle hooks

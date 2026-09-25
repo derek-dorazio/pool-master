@@ -191,10 +191,7 @@ instead, and re-measure rather than trusting it:
 | `admin/platform-config-routes.ts` | 11 | shares `config.dto.ts` with `config/routes.ts` |
 | `contest-management/routes.ts` | 7 | `contest-management.dto.ts` also feeds `admin/routes.ts` |
 | `auth/routes.ts` | 6 | |
-| `history/routes.ts` | 6 | |
-| `notifications/routes.ts` | 5 | |
 | `participants/routes.ts` | 4 | |
-| `account-consent/routes.ts` | 3 | |
 | `admin/audit-routes.ts` | 2 | shares `admin.dto.ts` with `admin/routes.ts` |
 | `events/routes.ts` | 2 | |
 | `client-logs/routes.ts` | 1 | |
@@ -208,18 +205,15 @@ is nearly spent.
 
 ### Slice order, and why
 
-1. **Small leaves first** — DONE except `history`: `client-logs`, `events`,
-   `admin/audit-routes`, `account-consent`, `participants`, `notifications`, `auth`.
+1. **Small leaves first — DONE.** `client-logs`, `events`, `admin/audit-routes`,
+   `participants`, `auth`.
 
-   **`history` is deliberately NOT converted, and should not be until #149 lands.** Every
-   one of its response schemas is `z.object({ <key>: z.array(HistoryObjectSchema) })`, and
-   `HistoryObjectSchema` is `JsonObjectSchema` — `z.record(z.unknown())`. Registering them
-   would publish named components carrying no information: `HistoryResultsResponse` would
-   generate as `{ results: Array<Record<string, unknown>> }`. That satisfies every guard
-   and moves the component count while delivering nothing, and it makes the contract *look*
-   published when it is not. Give those responses real shapes under #149 first, then
-   convert. (`HistorySeasonChampionDtoSchema` and `HistorySeasonHighlightsDtoSchema` are
-   real shapes but no route serves them.)
+   **Three modules were DELETED rather than converted:** `history`, `notifications` and
+   `account-consent`. Each had zero frontend callers and no server-side producer — closed
+   loops no feature entered. `history` had no table of its own either; it re-queried the
+   contest tables, which is what the contest list and scoreboard already do. The cheapest
+   conversion is the one you do not do: this removed three modules from the backlog instead
+   of adding named components nothing would import. Measure before converting.
 2. **`config`** — both its route files together, the smallest of the three cross-file DTOs.
 3. **`account`, `drafts`** — self-contained, medium.
 4. **The admin cluster** — `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
