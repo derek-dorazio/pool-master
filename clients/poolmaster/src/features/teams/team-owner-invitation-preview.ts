@@ -1,8 +1,8 @@
-import { getTeamOwnerInvitationPreview, type GetTeamOwnerInvitationPreviewResponses } from '@/lib/api';
+import { type TeamOwnerInvitationPreviewResponse, getTeamOwnerInvitationPreview } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-export type TeamOwnerInvitationPreview = GetTeamOwnerInvitationPreviewResponses[200]['invitation'];
+export type TeamOwnerInvitationPreview = TeamOwnerInvitationPreviewResponse['invitation'];
 
 export function getTeamOwnerInvitationPreviewQueryKey(inviteCode: string) {
   return QueryKeys.invitations.teamOwnerPreview(inviteCode);

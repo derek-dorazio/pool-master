@@ -1,11 +1,11 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type { AcceptInvitationResponses, CreateLeagueResponses, DeleteLeagueResponses, GenerateInviteLinkResponses, GetCurrentUserResponses, SquadDto, SquadListResponse, LeagueDetailDto, LeagueSummaryDto, LeagueListResponse, LeagueResponse, SquadResponse, InvitationPreviewResponse } from '@/lib/api';
+import type { DeleteLeagueResponses, GenerateInviteLinkResponse, GetCurrentUserResponses, InvitationPreviewResponse, LeagueDetailDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, LeagueSummaryDto, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
 
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
 export type InvitationPreview = InvitationPreviewResponse['invitation'];
-export type AcceptedLeagueMembership = AcceptInvitationResponses[201]['membership'];
-export type GeneratedInviteLink = GenerateInviteLinkResponses[201]['invitation'];
+export type AcceptedLeagueMembership = LeagueMembershipDto;
+export type GeneratedInviteLink = LeagueInvitationDto;
 
 type LeagueSummaryFixture = Pick<
   LeagueSummaryDto,
@@ -283,8 +283,8 @@ export function getLeagueByCodeData(
 }
 
 export function createLeagueData(
-  league: CreateLeagueResponses[201]['league'],
-): CreateLeagueResponses[201] {
+  league: LeagueDetailDto,
+): LeagueResponse {
   return { league };
 }
 
@@ -329,8 +329,8 @@ export function updateLeagueSquadData(
 }
 
 export function generateInviteLinkData(
-  invitation: GenerateInviteLinkResponses[201]['invitation'],
-): GenerateInviteLinkResponses[201] {
+  invitation: LeagueInvitationDto,
+): GenerateInviteLinkResponse {
   return { invitation };
 }
 
@@ -342,6 +342,6 @@ export function getInvitationPreviewData(
 
 export function acceptInvitationData(
   membership: AcceptedLeagueMembership,
-): AcceptInvitationResponses[201] {
+): LeagueMembershipResponse {
   return { membership };
 }

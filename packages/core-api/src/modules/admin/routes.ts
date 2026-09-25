@@ -127,6 +127,9 @@ export interface AdminModuleOptions {
   eventLifecycleService?: EventLifecycleService;
 }
 
+// #192-mixed: admin's own DTOs convert in their own slice (see plans/143); the league
+// components this file $refs arrived with the leagues slice, since leagues DTOs are
+// served from here too. Delete this marker when the admin slice lands.
 export async function adminModule(
   fastify: FastifyInstance,
   opts: AdminModuleOptions = {},

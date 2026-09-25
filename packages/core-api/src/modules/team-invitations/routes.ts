@@ -1,10 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
-import {
-  AcceptTeamOwnerInvitationRequestSchema,
-  TeamOwnerInvitationPreviewResponseSchema,
-  TeamOwnerInvitationResponseSchema,
-} from '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/team-owner-invitations.dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
@@ -16,6 +15,8 @@ import { createSquadOwnerInvitationHandlers } from '../squads/owner-invitation-h
 import { SquadOwnerInvitationService } from '../squads/owner-invitation-service';
 
 export function teamInvitationsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const invitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
@@ -38,7 +39,7 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
         'Returns the minimal league and team identity needed to render the public team-owner invitation flow before or after authentication.',
       operationId: 'getTeamOwnerInvitationPreview',
       response: {
-        200: zodToJsonSchema(TeamOwnerInvitationPreviewResponseSchema),
+        200: schemaRef('TeamOwnerInvitationPreviewResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -53,9 +54,9 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       description:
         'Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.',
       operationId: 'acceptTeamOwnerInvitation',
-      body: zodToJsonSchema(AcceptTeamOwnerInvitationRequestSchema),
+      body: schemaRef('AcceptTeamOwnerInvitationRequest'),
       response: {
-        201: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        201: schemaRef('TeamOwnerInvitationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { createSquadOwnerInvitation, createLeagueSquad, deleteLeagueSquad, getLeagueByCode, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad, type ListSquadOwnerInvitationsResponses, type SquadDto, type LeagueDetailDto, type LeagueMemberDto } from '@/lib/api';
+import { type LeagueDetailDto, type LeagueMemberDto, type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, getLeagueByCode, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
@@ -37,7 +37,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type TeamMember = NonNullable<SquadDto['members']>[number];
-type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 type ActiveTeamDialog = 'name' | 'owners' | 'inactivate' | 'delete' | null;
 
 const TEAM_PAGE_FALLBACK_ERROR = 'We could not complete that team action. Please try again.';
@@ -120,7 +119,7 @@ export function MyTeamPage() {
 
   const ownerInvitationsQuery = useQuery({
     queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-    queryFn: async (): Promise<OwnerInvitation[]> => {
+    queryFn: async (): Promise<TeamOwnerInvitationDto[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
         throwApiError(response.error, 'Owner invitation list response is missing data.');
