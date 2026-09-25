@@ -49,20 +49,27 @@ selector when the user belongs to more than one. Cross-league reads are `rootAdm
 **A5. A member writes only their own squad.** They read peers' squads (A4); they change
 nothing that is not theirs.
 
-**A6. Only `rootAdmin` may operate on a user other than themselves.** A user reads and
-writes their own `User` and no one else's. **A commissioner has no user operations** —
-being a commissioner grants league authority, not authority over people.
+**A6. Only `rootAdmin` may *write* a user other than themselves.** A user writes their own
+`User` and no one else's. **A commissioner has no user write operations** — being a
+commissioner grants league authority, not authority over people.
+
+**Reading is different.** League members **can and should** read each other's user data —
+name and email — because that is what a member roster is. The read is scoped **indirectly,
+through the join to `LeagueMembership`**, so it returns only users sharing a league with
+the caller. There is no unscoped user read for a member; that is `rootAdmin` by A1.
 
 ### What A4 and A6 together require of the edges
 
-A6 forbids a member reading another member's `User`. A4 requires a member to see the
-other members of their league. Both hold only if **peer identity travels on the edge** —
-`LeagueMembership` and `SquadMembership` carry enough of the person (name) to render a
-roster, and a member never reads a peer `User` directly.
+A member reads peer users, but only through the league join. So a league-scoped read
+returns the user, and by §8 and working rule 3 the shape it returns is the **canonical
+`UserDto`** — not a name-only fragment assembled for a roster view.
 
-This resolves the embed-or-reference question for this cluster: **edges embed the
-identity a league-scoped view needs.** They do not merely reference `userId` and leave the
-client to resolve it, because resolving it is an operation A6 forbids.
+This resolves the embed-or-reference question for this cluster: **edges embed the canonical
+`UserDto`.** `LeagueMembership` and `SquadMembership` carry the person, not just a `userId`
+the client must resolve with a second call it is not permitted to make unscoped.
+
+Secrets are not a redaction concern here — `passwordHash` and `authId` are not on the
+canonical `UserDto` at all, for any caller.
 
 ---
 
@@ -76,13 +83,15 @@ Cluster: `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`,
 The principal. One object; the caller's relationship to it decides the role, not a
 separate object.
 
-**A6 governs this entire object: self, or `rootAdmin`. A commissioner has no row here.**
+**A6 governs writes: self, or `rootAdmin`. A commissioner has no write row here.** Reads
+are wider — see the league-scoped row.
 
 | Operation | Role | Rule |
 |---|---|---|
 | Register | `public` | — |
 | Read one | `self`, `rootAdmin` | A6 · `me` resolves to the caller |
-| List / search | `rootAdmin` | **A1** |
+| **Read league peers** | `member` | **A4 + A6** · scoped through the `LeagueMembership` join; returns users sharing a league with the caller, as the canonical `UserDto` |
+| List / search *(unscoped)* | `rootAdmin` | **A1** |
 | Update profile, username, preferences | `self`, `rootAdmin` | A6 |
 | Change own password | `self` | A6 · requires the current password |
 | Reset another's password | `rootAdmin` | A6 · no current password; the subject differs, not just the precondition |
@@ -92,8 +101,9 @@ separate object.
 | Revoke sessions | `self`, `rootAdmin` | A6 · self-logout and admin force-logout are **one operation** |
 | Grant / revoke root admin | `rootAdmin` | A6 |
 
-**A member never reads a peer's `User`.** Peer identity reaches them on the
-`LeagueMembership` / `SquadMembership` edge — see the note under the access rules.
+**A member reads peers' `User` data — name and email — through the league join, never
+unscoped.** The canonical `UserDto` travels on the `LeagueMembership` / `SquadMembership`
+edge. A6 restricts *writing* other users, not reading them.
 
 ### League
 
@@ -114,7 +124,7 @@ Carries `role: COMMISSIONER \| MEMBER` and `status`. Unique on `(leagueId, userI
 | Operation | Role | Notes |
 |---|---|---|
 | Create | *(via invitation acceptance)* | Not a direct operation — see `LeagueInvitation` |
-| Read list for a league | `member`, `commissioner` | **A4** · takes a league; this is how members see each other, and it carries peer identity per A6 |
+| Read list for a league | `member`, `commissioner` | **A4** · takes a league; this is how members see each other. Embeds the canonical `UserDto` |
 | Read one | `member`, `commissioner` | A4 |
 | Change role | `commissioner` | **A3** |
 | Remove | `commissioner`, `member:own` | Commissioner removes a member; a member leaves. **One operation, two callers** |
@@ -145,7 +155,7 @@ belongs to at most one squad per league.**
 | Operation | Role | Notes |
 |---|---|---|
 | Create | *(via invitation acceptance)* | See `SquadOwnerInvitation` |
-| Read list for a squad | `member`, `commissioner` | **A4** · carries peer identity per A6 |
+| Read list for a squad | `member`, `commissioner` | **A4** · embeds the canonical `UserDto` |
 | Remove | `member:own`, `commissioner`† | **A5** · leaving your squad and being removed are **one operation** |
 | Replace | `commissioner`† | Swap one owner for another; see `replacementForUserId` on the invitation |
 
@@ -230,8 +240,9 @@ Resolved by the rules, recorded so they are not reopened:
 - **Password reset vs change** — A6 distinguishes them by *subject*, not just precondition:
   changing your own password is `self` and requires the current one; resetting another
   user's is `rootAdmin` and does not. Two operations.
-- **Embed or reference on edges** — A4 and A6 together require edges to carry peer
-  identity. See the note under the access rules.
+- **Embed or reference on edges** — edges embed the canonical `UserDto`. A member reads
+  peer users through the league join, and returns the full object per rule 3. See the note
+  under the access rules.
 
 Out of scope by design:
 
