@@ -217,7 +217,14 @@ is nearly spent.
    DELETED: zero callers, and the admin routes that manage the same configuration are the
    ones the product actually uses.
 3. **`account`, `drafts`** — self-contained, medium.
-4. **The admin cluster** — `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
+4. **The admin cluster — BLOCKED on #201.** Converting `admin` and `admin-golf` now would
+   publish shadow copies as official named components: `adminListUsers.items` is identical
+   to `UserProfileDto`, `adminListEvents` is `EventSummaryDto` plus four fields, and
+   `adminListTeams` is `SquadDto` with `members` renamed and projected. Plan 145 collapses
+   those first. `account` also waits, and becomes trivial afterwards — it `$ref`s
+   `AuthenticatedSessionUserDto` and publishes nothing new.
+
+   When unblocked: `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
    across `admin/routes.ts`, `admin/audit-routes.ts` and `contest-management/routes.ts`.
    **This is what deletes the `#192-mixed:` marker.** Until it lands, check 5 is blind to
    the second-largest route file in the repo, so this should not sit to the end. It may be
