@@ -188,6 +188,52 @@ Lint rule banning `Responses[...]` indexing in `features/**`, so the old pattern
 return. Retire `poolmaster/no-duplicate-feature-types` if the class of problem is gone, or
 keep it as a backstop and say why.
 
+## Guards
+
+Two gates cover this epic, and between them they have caught every mistake made so far.
+Both are **self-deriving** — neither keeps a list of converted modules, because a list is
+maintenance that gets forgotten, and a forgotten entry makes a guard quietly stop covering
+a module.
+
+**`tests/unit/shared/openapi-named-components.test.ts`** asserts on the committed
+artifacts. Every component must generate an importable type; none may be a `def-N`
+placeholder; and no frontend file may index into the response map of an operation whose
+200 is now a `$ref` — those map names are computed from the operationIds, the same way
+hey-api derives them. It also asserts the mirror: at least one *unconverted* operation's
+map must still be indexed, so a rewrite that matched a converted name as a substring of an
+unconverted one reads as failure rather than progress.
+
+**`scripts/check-dto-conversion-complete.mjs`** (in `rules:check`) covers four ways the
+conversion fails without any type error, failing test, or implausible-looking document:
+
+1. **A route inlines a schema that is published as a named component.** Half-converted
+   modules publish one shape inline and `$ref` it everywhere else, so the frontend gets a
+   named type for part of a module and a response-map derivation for the rest.
+2. **A registered name never reaches `components.schemas`.** `registerSchema()` runs as a
+   module side effect, so a DTO module no route imports registers nothing — the registry
+   looks right and the document silently lacks the component.
+3. **`registerSchema('X', YSchema)`** publishes the wrong shape under a plausible name.
+   Nothing downstream can tell: the component exists, generates a type, and every `$ref`
+   resolves. Only the shape is wrong.
+4. **A route calls `schemaRef()` without registering the components plugin.** That fails at
+   *boot*, and only in whatever app-building path exercises that module — a module without
+   such a test ships broken.
+
+Each was verified by planting the failure and confirming it fires, not by observing a green
+run. Check 1 found six real half-conversions on its first execution.
+
+### A slice's scope is not knowable from its DTO module
+
+Two structural facts, both learned the hard way, both of which change how a slice is
+planned:
+
+- **DTO ownership does not follow route-module boundaries.** `leagues.dto.ts` schemas are
+  consumed by `admin/routes.ts` and `invitations/routes.ts`. Converting "the leagues
+  module" left those two inlining shapes every other route referenced.
+- **Converting a route changes which FRONTEND files are in scope.** The set of derivations
+  to delete follows from which operations now `$ref`, not from the DTO module — which is
+  why the test derives it from the document.
+
 ## Open Questions
 
 - **Does the `$ref` strategy survive Fastify's response validation?** The route schemas are

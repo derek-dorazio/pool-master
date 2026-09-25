@@ -1,5 +1,15 @@
 /**
- * A DTO module that publishes named components must not still inline them (#192).
+ * Structural gates for the named-component contract (#192).
+ *
+ * Four checks, each covering a way the conversion fails SILENTLY — no type error, no
+ * failing test, and a document that looks plausible:
+ *
+ *   1. A route inlines a schema that is published as a named component.
+ *   2. A registered name never reaches `components.schemas`.
+ *   3. `registerSchema('X', YSchema)` — the published name does not match its schema.
+ *   4. A route file calls `schemaRef()` without registering the components plugin.
+ *
+ * Check 1 is the original and the reason this file exists (#192).
  *
  * The failure this catches: a module gets its `registerSchema()` block and most of its
  * routes converted to `schemaRef()`, but one or two routes keep calling
@@ -42,6 +52,54 @@ function* walk(dir) {
 
 const registered = registeredSchemaNames();
 const findings = [];
+const structural = [];
+
+// --- 3. The published name must match the schema it publishes ------------------
+// registerSchema('LeagueDto', SquadDtoSchema) publishes the wrong shape under a
+// plausible name. Nothing downstream can tell: the component exists, generates a
+// type, and every $ref to it resolves. Only the shape is wrong.
+for (const [schemaConst, { component, dtoFile }] of registered) {
+  const expected = schemaConst.replace(/Schema$/, '');
+  if (expected !== component) {
+    structural.push(
+      `${dtoFile}: registerSchema('${component}', ${schemaConst}) — name does not match `
+      + `its schema. Expected '${expected}', or rename the schema const.`,
+    );
+  }
+}
+
+// --- 2. A registered name must actually reach components.schemas ---------------
+// registerSchema() runs as a module side effect, so a DTO module no route imports
+// registers nothing. The registry looks correct, the document silently lacks the
+// component, and the frontend has no type to import.
+try {
+  const doc = JSON.parse(readFileSync('packages/shared/generated/openapi.json', 'utf8'));
+  const published = new Set(Object.keys(doc.components?.schemas ?? {}));
+  for (const { component, dtoFile } of registered.values()) {
+    if (!published.has(component)) {
+      structural.push(
+        `${dtoFile}: '${component}' is registered but absent from components.schemas. `
+        + 'The DTO module is probably never imported by a route — add '
+        + `\`import '@poolmaster/shared/dto/${dtoFile.replace(/\.ts$/, '')}';\` to the routes that use it.`,
+      );
+    }
+  }
+} catch {
+  // No generated document in this checkout; api:check owns that failure.
+}
+
+// --- 4. schemaRef() requires the components plugin on that instance -------------
+// Without it the route fails at BOOT with `Cannot resolve ref`, and only in whatever
+// app-building path exercises that module. A module with no such test ships broken.
+for (const file of walk(ROUTES_ROOT)) {
+  const text = readFileSync(file, 'utf8');
+  if (text.includes('schemaRef(') && !text.includes('schemaComponentsPlugin')) {
+    structural.push(
+      `${relative(process.cwd(), file)}: calls schemaRef() without registering `
+      + 'schemaComponentsPlugin. The route will fail at boot with "Cannot resolve ref".',
+    );
+  }
+}
 
 for (const file of walk(ROUTES_ROOT)) {
   const text = readFileSync(file, 'utf8');
@@ -60,6 +118,13 @@ for (const file of walk(ROUTES_ROOT)) {
   });
 }
 
+if (structural.length > 0) {
+  console.error(`Found ${structural.length} structural problem(s) with named components:\n`);
+  for (const line of structural) console.error(`  ${line}\n`);
+  console.error('See plans/143 (#192).');
+  process.exit(1);
+}
+
 if (findings.length > 0) {
   console.error(`Found ${findings.length} route(s) inlining a schema that is published as a named component:\n`);
   for (const f of findings) {
@@ -73,4 +138,4 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log(`No half-converted DTO modules (${registered.size} registered components checked).`);
+console.log(`Named-component contract OK (${registered.size} registered components, 4 checks).`);
