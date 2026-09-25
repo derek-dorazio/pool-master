@@ -49,6 +49,15 @@ selector when the user belongs to more than one. Cross-league reads are `rootAdm
 **A5. A member writes only their own squad.** They read peers' squads (A4); they change
 nothing that is not theirs.
 
+**A7. A commissioner may perform any member operation on behalf of any member of their
+league.** Rename a squad, invite a co-owner, change membership — everything a member may
+do for themselves, a commissioner may do for anyone in the league they run.
+
+This is a rule that **generates rows rather than needing them listed**: every `member:own`
+operation below is also available to that league's `commissioner`, without the table
+saying so each time. A7 stops at the league boundary and at `User` — a commissioner acts
+within their league, and A6 still gives them no user write operations.
+
 **A6. Only `rootAdmin` may *write* a user other than themselves.** A user writes their own
 `User` and no one else's. **A commissioner has no user write operations** — being a
 commissioner grants league authority, not authority over people.
@@ -114,8 +123,8 @@ edge. A6 restricts *writing* other users, not reading them.
 | Read by invite code | `authenticated` | Precedes membership, so it cannot require it |
 | List | `member`, `rootAdmin` | **A1 + A2** · a member gets their leagues (scoped read), root admin gets all (`findAll`). **One operation, scoped by role** |
 | Update details, icon, join policy | `commissioner` | **A3** |
-| Activate / inactivate | `commissioner` | **A3** |
-| Delete | `commissioner` | A3 · requires typing the `leagueCode` to confirm |
+| Activate / inactivate *(soft)* | `commissioner` | **A3** · `isActive` |
+| Delete permanently *(hard)* | `commissioner` | A3 · `deleteInactiveLeague` — **gated: throws unless already inactive**, and requires typing the `leagueCode` to confirm |
 
 ### LeagueMembership — the User↔League edge
 
@@ -135,16 +144,12 @@ Never a sports team. Unique on `(leagueId, name)`.
 
 | Operation | Role | Notes |
 |---|---|---|
-| Create | `member` | Creates the caller's squad in a league they belong to, plus their `SquadMembership` |
+| Create | `member`, `commissioner` | **A7** · creates the subject's squad plus their `SquadMembership`; a commissioner may do this on a member's behalf |
 | Read one | `member`, `commissioner` | **A4** · peers readable |
 | List for a league | `member`, `commissioner` | **A4** · takes a league |
-| Update name, icon | `member:own`, `commissioner`† | **A5** |
-| Activate / inactivate | `member:own`, `commissioner`† | **A5** |
-| Delete | `commissioner`† | A5 forbids a member deleting a peer's squad; whether they may delete **their own** is unresolved |
-
-† **Commissioner write access to squads is derived, not stated.** A3 grants the
-commissioner authority over *leagues*; the six rules do not say whether that reaches the
-squads inside one. Flagged below.
+| Update name, icon | `member:own`, `commissioner` | **A5 + A7** |
+| Activate / inactivate *(soft)* | `member:own`, `commissioner` | **A5 + A7** · `isActive`. The normal path |
+| Delete permanently *(hard)* | `commissioner` | `deleteInactiveSquad` — **gated: throws unless already inactive**, then cascades to `contestEntry`, `contestEntryPick` and `draftPickHistory`. See the note below |
 
 ### SquadMembership — the User↔Squad edge, and ownership
 
@@ -156,8 +161,8 @@ belongs to at most one squad per league.**
 |---|---|---|
 | Create | *(via invitation acceptance)* | See `SquadOwnerInvitation` |
 | Read list for a squad | `member`, `commissioner` | **A4** · embeds the canonical `UserDto` |
-| Remove | `member:own`, `commissioner`† | **A5** · leaving your squad and being removed are **one operation** |
-| Replace | `commissioner`† | Swap one owner for another; see `replacementForUserId` on the invitation |
+| Remove | `member:own`, `commissioner` | **A5 + A7** · leaving your squad and being removed are **one operation** |
+| Replace | `commissioner` | **A7** · swap one owner for another; see `replacementForUserId` on the invitation |
 
 ### LeagueInvitation
 
@@ -222,24 +227,38 @@ of the create operation — it is the userId that becomes the first commissioner
 
 ## Open items
 
-Reduced by the access rules. What remains:
+One remains, and it is narrower than it looked:
 
-- **Does a commissioner's authority reach inside a squad?** A3 grants authority over
-  *leagues*; A5 constrains *members* to their own squad. Neither says whether a
-  commissioner may rename, deactivate, delete or alter the membership of a squad they do
-  not belong to. Marked † in the tables above. **Plausible answer: yes** — a commissioner
-  running a league needs to fix a squad whose owner has gone quiet — but it is authority
-  over another member's data, so it should be granted deliberately rather than assumed.
-- **May a member delete their own squad?** A5 settles that they cannot delete a peer's.
-  Their own is unresolved, and it is destructive once the squad holds contest entries.
-- **May a commissioner create a squad on another member's behalf?** The same question as
-  the first, on the create side.
+- **May a member hard-delete their own inactive squad?** A5 settles that they cannot delete
+  a peer's, and A7 gives the commissioner the operation regardless. What is open is whether
+  permanent deletion is a member operation at all, given it destroys contest history.
+  Currently listed as `commissioner` only.
+
+### Soft and hard delete both exist, and hard delete is gated
+
+Worth stating plainly, because it is easy to remember this as "soft delete only":
+
+- **Inactivate** sets `isActive = false`. This is the normal path and what the product
+  uses day to day.
+- **Delete permanently** is a real row removal, and it **throws unless the record is
+  already inactive**. For a squad it cascades to `contestEntry`, `contestEntryPick` and
+  `draftPickHistory`. For a league it additionally requires typing the `leagueCode` back.
+
+The service methods say so in their names — `deleteInactiveSquad`, `deleteInactiveLeague`
+— and this is exactly the pattern
+[`rules/domain-model-conventions-rules.md`](../rules/domain-model-conventions-rules.md) §2
+prescribes: `isActive` as "eligibility gating before a later hard delete".
+
+So these are **two operations, not one**, and the catalog lists them separately. Collapsing
+them would hide the gate.
 
 Resolved by the rules, recorded so they are not reopened:
 
 - **Password reset vs change** — A6 distinguishes them by *subject*, not just precondition:
   changing your own password is `self` and requires the current one; resetting another
   user's is `rootAdmin` and does not. Two operations.
+- **Commissioner authority inside a squad** — A7. A commissioner performs any member
+  operation on behalf of any member of their league.
 - **Embed or reference on edges** — edges embed the canonical `UserDto`. A member reads
   peer users through the league join, and returns the full object per rule 3. See the note
   under the access rules.
