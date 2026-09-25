@@ -6723,6 +6723,181 @@ export interface components {
                 roleAfterAccept: "MEMBER";
             };
         };
+        /** @enum {string} */
+        EventStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+        /** @enum {string} */
+        EventReadinessStatusDto: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+        /** @enum {string} */
+        EventReadinessReasonDto: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED";
+        /** @description Event list item returned from event-discovery endpoints. */
+        EventSummaryDto: {
+            /** @description Sport-event identifier. */
+            id: string;
+            /** @description Provider event identifier used by event-level sync operations. */
+            externalId: string;
+            /**
+             * @description Sport associated with the event.
+             * @enum {string}
+             */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @description Primary event name shown in contest and event selectors. */
+            name: string;
+            /** @description Venue name for the event, when known. */
+            venue?: string | null;
+            /** @description Human-readable event location, when known. */
+            location?: string | null;
+            /**
+             * @description Provider-normalized event status.
+             * @enum {string}
+             */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /**
+             * Format: date-time
+             * @description Scheduled or actual event start time.
+             */
+            startDate: string;
+            /**
+             * Format: date-time
+             * @description Scheduled or actual event end time, when known.
+             */
+            endDate?: string | null;
+            /**
+             * Format: date-time
+             * @description PoolMaster operational datetime when the event becomes available for contest setup.
+             */
+            releaseAt: string;
+            /**
+             * Format: date-time
+             * @description PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+             */
+            fieldLocksAt: string;
+            /** @description Participant count when the provider exposes field size. */
+            participantCount?: number | null;
+            /** @description Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior. */
+            fieldLocked: boolean;
+            /**
+             * @description Current readiness state for contest setup and event-driven contest operations.
+             * @enum {string}
+             */
+            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+            /** @description Structured reasons explaining why the event is or is not contest-eligible right now. */
+            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+            /** @description Whether the event is currently eligible for contest creation/configuration flows. */
+            contestEligible: boolean;
+        };
+        EventListQuery: {
+            /** @description Optional sport filter. */
+            sport?: string;
+            /** @description Optional provider-normalized event status filter. */
+            status?: string;
+            /** @description Optional page-size style limit. */
+            limit?: number;
+        };
+        /** @description Event list response for the requested sport or filter set. */
+        EventListResponse: {
+            events: {
+                /** @description Sport-event identifier. */
+                id: string;
+                /** @description Provider event identifier used by event-level sync operations. */
+                externalId: string;
+                /**
+                 * @description Sport associated with the event.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Primary event name shown in contest and event selectors. */
+                name: string;
+                /** @description Venue name for the event, when known. */
+                venue?: string | null;
+                /** @description Human-readable event location, when known. */
+                location?: string | null;
+                /**
+                 * @description Provider-normalized event status.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /**
+                 * Format: date-time
+                 * @description Scheduled or actual event start time.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled or actual event end time, when known.
+                 */
+                endDate?: string | null;
+                /**
+                 * Format: date-time
+                 * @description PoolMaster operational datetime when the event becomes available for contest setup.
+                 */
+                releaseAt: string;
+                /**
+                 * Format: date-time
+                 * @description PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+                 */
+                fieldLocksAt: string;
+                /** @description Participant count when the provider exposes field size. */
+                participantCount?: number | null;
+                /** @description Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior. */
+                fieldLocked: boolean;
+                /**
+                 * @description Current readiness state for contest setup and event-driven contest operations.
+                 * @enum {string}
+                 */
+                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+                /** @description Structured reasons explaining why the event is or is not contest-eligible right now. */
+                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+                /** @description Whether the event is currently eligible for contest creation/configuration flows. */
+                contestEligible: boolean;
+            }[];
+        };
+        /** @enum {string} */
+        ClientLogLevel: "debug" | "info" | "warn" | "error" | "fatal";
+        ClientLogEntry: {
+            /** @enum {string} */
+            level: "debug" | "info" | "warn" | "error" | "fatal";
+            action: string;
+            msg?: string;
+            /** Format: date-time */
+            ts: string;
+            route?: string;
+            /** Format: uuid */
+            sessionId?: string | null;
+            /** Format: uuid */
+            userId?: string | null;
+            /** Format: uuid */
+            clientRequestId?: string | null;
+            data?: {
+                [key: string]: unknown;
+            };
+            err?: unknown;
+        };
+        ClientLogBatch: {
+            /** @enum {number} */
+            schemaVersion: 1;
+            clientTraceId: string;
+            webappVersion: string;
+            userAgent: string;
+            entries: {
+                /** @enum {string} */
+                level: "debug" | "info" | "warn" | "error" | "fatal";
+                action: string;
+                msg?: string;
+                /** Format: date-time */
+                ts: string;
+                route?: string;
+                /** Format: uuid */
+                sessionId?: string | null;
+                /** Format: uuid */
+                userId?: string | null;
+                /** Format: uuid */
+                clientRequestId?: string | null;
+                data?: {
+                    [key: string]: unknown;
+                };
+                err?: unknown;
+            }[];
+        };
     };
     responses: never;
     parameters: never;
@@ -11605,63 +11780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        events: {
-                            /** @description Sport-event identifier. */
-                            id: string;
-                            /** @description Provider event identifier used by event-level sync operations. */
-                            externalId: string;
-                            /**
-                             * @description Sport associated with the event.
-                             * @enum {string}
-                             */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            /** @description Primary event name shown in contest and event selectors. */
-                            name: string;
-                            /** @description Venue name for the event, when known. */
-                            venue?: string | null;
-                            /** @description Human-readable event location, when known. */
-                            location?: string | null;
-                            /**
-                             * @description Provider-normalized event status.
-                             * @enum {string}
-                             */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
-                            /**
-                             * Format: date-time
-                             * @description Scheduled or actual event start time.
-                             */
-                            startDate: string;
-                            /**
-                             * Format: date-time
-                             * @description Scheduled or actual event end time, when known.
-                             */
-                            endDate?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description PoolMaster operational datetime when the event becomes available for contest setup.
-                             */
-                            releaseAt: string;
-                            /**
-                             * Format: date-time
-                             * @description PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
-                             */
-                            fieldLocksAt: string;
-                            /** @description Participant count when the provider exposes field size. */
-                            participantCount?: number | null;
-                            /** @description Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior. */
-                            fieldLocked: boolean;
-                            /**
-                             * @description Current readiness state for contest setup and event-driven contest operations.
-                             * @enum {string}
-                             */
-                            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
-                            /** @description Structured reasons explaining why the event is or is not contest-eligible right now. */
-                            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
-                            /** @description Whether the event is currently eligible for contest creation/configuration flows. */
-                            contestEligible: boolean;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["EventListResponse"];
                 };
             };
         };
@@ -22903,32 +23022,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @enum {number} */
-                    schemaVersion: 1;
-                    clientTraceId: string;
-                    webappVersion: string;
-                    userAgent: string;
-                    entries: {
-                        /** @enum {string} */
-                        level: "debug" | "info" | "warn" | "error" | "fatal";
-                        action: string;
-                        msg?: string;
-                        /** Format: date-time */
-                        ts: string;
-                        route?: string;
-                        /** Format: uuid */
-                        sessionId?: string | null;
-                        /** Format: uuid */
-                        userId?: string | null;
-                        /** Format: uuid */
-                        clientRequestId?: string | null;
-                        data?: {
-                            [key: string]: unknown;
-                        };
-                        err?: unknown;
-                    }[];
-                };
+                "application/json": components["schemas"]["ClientLogBatch"];
             };
         };
         responses: {

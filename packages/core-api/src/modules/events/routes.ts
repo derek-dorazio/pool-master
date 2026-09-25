@@ -1,14 +1,15 @@
 import type { FastifyInstance } from 'fastify';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
-import {
-  EventListResponseSchema,
-  EventListQuerySchema,
-} from '@poolmaster/shared/dto/events.dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/events.dto';
 import { getAppPrisma } from '../../core/prisma-context';
 import { createEventHandlers } from './handler';
 import { EventService } from './service';
 
 export function eventsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const eventService = new EventService(
     prisma.sportEvent,
@@ -23,8 +24,8 @@ export function eventsModule(fastify: FastifyInstance): void {
       description:
         'Returns ingested sport events so admin, scoring, and contest setup surfaces can browse the current event catalog.',
       operationId: 'listEvents',
-      querystring: zodToJsonSchema(EventListQuerySchema),
-      response: { 200: zodToJsonSchema(EventListResponseSchema) },
+      querystring: schemaRef('EventListQuery'),
+      response: { 200: schemaRef('EventListResponse') },
     },
     handler: handler.listEvents,
   });

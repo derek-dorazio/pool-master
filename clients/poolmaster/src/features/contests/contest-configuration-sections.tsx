@@ -1,6 +1,6 @@
 import type {
+  EventSummaryDto,
   GetManagedContestResponses,
-  ListEventsResponses,
   ListManagedContestTemplatesResponses,
 } from "@/lib/api";
 import {
@@ -14,7 +14,6 @@ import {
   Tile,
 } from "@/features/shared/ui";
 
-type SportEventSummary = ListEventsResponses[200]["events"][number];
 type ManagedContestTemplate =
   ListManagedContestTemplatesResponses[200]["templates"][number];
 type InheritedTier =
@@ -70,10 +69,10 @@ export function ContestTemplatePicker({
 }
 
 type EventReadinessPanelProps = {
-  event: SportEventSummary;
+  event: EventSummaryDto;
   formatDateTimeDisplay: (value: string | null) => string;
-  formatReadinessLabel: (event: SportEventSummary) => string;
-  formatReadinessReasons: (event: SportEventSummary) => string;
+  formatReadinessLabel: (event: EventSummaryDto) => string;
+  formatReadinessReasons: (event: EventSummaryDto) => string;
 };
 
 export function EventReadinessPanel({
@@ -178,9 +177,9 @@ export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
 }
 
 type NoEligibleEventsAlertProps = {
-  events: SportEventSummary[];
-  formatReadinessLabel: (event: SportEventSummary) => string;
-  formatReadinessReasons: (event: SportEventSummary) => string;
+  events: EventSummaryDto[];
+  formatReadinessLabel: (event: EventSummaryDto) => string;
+  formatReadinessReasons: (event: EventSummaryDto) => string;
 };
 
 export function NoEligibleEventsAlert({

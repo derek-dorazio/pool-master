@@ -10021,6 +10021,514 @@
         ],
         "additionalProperties": false,
         "description": "Public preview payload for a team-owner invitation."
+      },
+      "EventStatusDto": {
+        "type": "string",
+        "enum": [
+          "SCHEDULED",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "CANCELLED",
+          "POSTPONED"
+        ]
+      },
+      "EventReadinessStatusDto": {
+        "type": "string",
+        "enum": [
+          "NOT_RELEASED",
+          "PENDING_FIELD",
+          "CONTEST_ELIGIBLE",
+          "FIELD_LOCKED"
+        ]
+      },
+      "EventReadinessReasonDto": {
+        "type": "string",
+        "enum": [
+          "EVENT_NOT_RELEASED",
+          "FIELD_NOT_LOADED",
+          "FIELD_LOCKED"
+        ]
+      },
+      "EventSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Sport-event identifier."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Provider event identifier used by event-level sync operations."
+          },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF",
+              "NFL",
+              "NBA",
+              "F1",
+              "NASCAR",
+              "NCAA_BASKETBALL",
+              "NCAA_HOCKEY",
+              "NCAA_FOOTBALL",
+              "TENNIS",
+              "HORSE_RACING",
+              "SOCCER",
+              "NHL",
+              "MLB",
+              "UFC"
+            ],
+            "description": "Sport associated with the event."
+          },
+          "name": {
+            "type": "string",
+            "description": "Primary event name shown in contest and event selectors."
+          },
+          "venue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Venue name for the event, when known."
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human-readable event location, when known."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "POSTPONED"
+            ],
+            "description": "Provider-normalized event status."
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Scheduled or actual event start time."
+          },
+          "endDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Scheduled or actual event end time, when known."
+          },
+          "releaseAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "PoolMaster operational datetime when the event becomes available for contest setup."
+          },
+          "fieldLocksAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
+          },
+          "participantCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Participant count when the provider exposes field size."
+          },
+          "fieldLocked": {
+            "type": "boolean",
+            "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
+          },
+          "readinessStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_RELEASED",
+              "PENDING_FIELD",
+              "CONTEST_ELIGIBLE",
+              "FIELD_LOCKED"
+            ],
+            "description": "Current readiness state for contest setup and event-driven contest operations."
+          },
+          "readinessReasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "EVENT_NOT_RELEASED",
+                "FIELD_NOT_LOADED",
+                "FIELD_LOCKED"
+              ]
+            },
+            "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
+          },
+          "contestEligible": {
+            "type": "boolean",
+            "description": "Whether the event is currently eligible for contest creation/configuration flows."
+          }
+        },
+        "required": [
+          "id",
+          "externalId",
+          "sport",
+          "name",
+          "status",
+          "startDate",
+          "releaseAt",
+          "fieldLocksAt",
+          "fieldLocked",
+          "readinessStatus",
+          "readinessReasons",
+          "contestEligible"
+        ],
+        "additionalProperties": false,
+        "description": "Event list item returned from event-discovery endpoints."
+      },
+      "EventListQuery": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "type": "string",
+            "description": "Optional sport filter."
+          },
+          "status": {
+            "type": "string",
+            "description": "Optional provider-normalized event status filter."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Optional page-size style limit."
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventListResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Sport-event identifier."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "Provider event identifier used by event-level sync operations."
+                },
+                "sport": {
+                  "type": "string",
+                  "enum": [
+                    "GOLF",
+                    "NFL",
+                    "NBA",
+                    "F1",
+                    "NASCAR",
+                    "NCAA_BASKETBALL",
+                    "NCAA_HOCKEY",
+                    "NCAA_FOOTBALL",
+                    "TENNIS",
+                    "HORSE_RACING",
+                    "SOCCER",
+                    "NHL",
+                    "MLB",
+                    "UFC"
+                  ],
+                  "description": "Sport associated with the event."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Primary event name shown in contest and event selectors."
+                },
+                "venue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Venue name for the event, when known."
+                },
+                "location": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Human-readable event location, when known."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED",
+                    "POSTPONED"
+                  ],
+                  "description": "Provider-normalized event status."
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Scheduled or actual event start time."
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "Scheduled or actual event end time, when known."
+                },
+                "releaseAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "PoolMaster operational datetime when the event becomes available for contest setup."
+                },
+                "fieldLocksAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
+                },
+                "participantCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Participant count when the provider exposes field size."
+                },
+                "fieldLocked": {
+                  "type": "boolean",
+                  "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
+                },
+                "readinessStatus": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_RELEASED",
+                    "PENDING_FIELD",
+                    "CONTEST_ELIGIBLE",
+                    "FIELD_LOCKED"
+                  ],
+                  "description": "Current readiness state for contest setup and event-driven contest operations."
+                },
+                "readinessReasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "EVENT_NOT_RELEASED",
+                      "FIELD_NOT_LOADED",
+                      "FIELD_LOCKED"
+                    ]
+                  },
+                  "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
+                },
+                "contestEligible": {
+                  "type": "boolean",
+                  "description": "Whether the event is currently eligible for contest creation/configuration flows."
+                }
+              },
+              "required": [
+                "id",
+                "externalId",
+                "sport",
+                "name",
+                "status",
+                "startDate",
+                "releaseAt",
+                "fieldLocksAt",
+                "fieldLocked",
+                "readinessStatus",
+                "readinessReasons",
+                "contestEligible"
+              ],
+              "additionalProperties": false,
+              "description": "Event list item returned from event-discovery endpoints."
+            }
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "additionalProperties": false,
+        "description": "Event list response for the requested sport or filter set."
+      },
+      "ClientLogLevel": {
+        "type": "string",
+        "enum": [
+          "debug",
+          "info",
+          "warn",
+          "error",
+          "fatal"
+        ]
+      },
+      "ClientLogEntry": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error",
+              "fatal"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "msg": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "route": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "userId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "clientRequestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "err": {}
+        },
+        "required": [
+          "level",
+          "action",
+          "ts"
+        ],
+        "additionalProperties": false
+      },
+      "ClientLogBatch": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "clientTraceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "webappVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "userAgent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "debug",
+                    "info",
+                    "warn",
+                    "error",
+                    "fatal"
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "msg": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ts": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "route": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sessionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "userId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "clientRequestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "data": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "err": {}
+              },
+              "required": [
+                "level",
+                "action",
+                "ts"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "clientTraceId",
+          "webappVersion",
+          "userAgent",
+          "entries"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -19619,155 +20127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Sport-event identifier."
-                          },
-                          "externalId": {
-                            "type": "string",
-                            "description": "Provider event identifier used by event-level sync operations."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport associated with the event."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Primary event name shown in contest and event selectors."
-                          },
-                          "venue": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Venue name for the event, when known."
-                          },
-                          "location": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Human-readable event location, when known."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "SCHEDULED",
-                              "IN_PROGRESS",
-                              "COMPLETED",
-                              "CANCELLED",
-                              "POSTPONED"
-                            ],
-                            "description": "Provider-normalized event status."
-                          },
-                          "startDate": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Scheduled or actual event start time."
-                          },
-                          "endDate": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "description": "Scheduled or actual event end time, when known."
-                          },
-                          "releaseAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "PoolMaster operational datetime when the event becomes available for contest setup."
-                          },
-                          "fieldLocksAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
-                          },
-                          "participantCount": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "description": "Participant count when the provider exposes field size."
-                          },
-                          "fieldLocked": {
-                            "type": "boolean",
-                            "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
-                          },
-                          "readinessStatus": {
-                            "type": "string",
-                            "enum": [
-                              "NOT_RELEASED",
-                              "PENDING_FIELD",
-                              "CONTEST_ELIGIBLE",
-                              "FIELD_LOCKED"
-                            ],
-                            "description": "Current readiness state for contest setup and event-driven contest operations."
-                          },
-                          "readinessReasons": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "EVENT_NOT_RELEASED",
-                                "FIELD_NOT_LOADED",
-                                "FIELD_LOCKED"
-                              ]
-                            },
-                            "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
-                          },
-                          "contestEligible": {
-                            "type": "boolean",
-                            "description": "Whether the event is currently eligible for contest creation/configuration flows."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "externalId",
-                          "sport",
-                          "name",
-                          "status",
-                          "startDate",
-                          "releaseAt",
-                          "fieldLocksAt",
-                          "fieldLocked",
-                          "readinessStatus",
-                          "readinessReasons",
-                          "contestEligible"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Event list item returned from event-discovery endpoints."
-                      }
-                    }
-                  },
-                  "required": [
-                    "events"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Event list response for the requested sport or filter set."
+                  "$ref": "#/components/schemas/EventListResponse"
                 }
               }
             }
@@ -46242,103 +46602,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "schemaVersion": {
-                    "type": "number",
-                    "enum": [
-                      1
-                    ]
-                  },
-                  "clientTraceId": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "webappVersion": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "userAgent": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "entries": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "level": {
-                          "type": "string",
-                          "enum": [
-                            "debug",
-                            "info",
-                            "warn",
-                            "error",
-                            "fatal"
-                          ]
-                        },
-                        "action": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "msg": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "ts": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "route": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "sessionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid"
-                        },
-                        "userId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid"
-                        },
-                        "clientRequestId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid"
-                        },
-                        "data": {
-                          "type": "object",
-                          "additionalProperties": {}
-                        },
-                        "err": {}
-                      },
-                      "required": [
-                        "level",
-                        "action",
-                        "ts"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "minItems": 1,
-                    "maxItems": 200
-                  }
-                },
-                "required": [
-                  "schemaVersion",
-                  "clientTraceId",
-                  "webappVersion",
-                  "userAgent",
-                  "entries"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ClientLogBatch"
               }
             }
           }

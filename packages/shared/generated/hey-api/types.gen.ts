@@ -4368,6 +4368,207 @@ export type TeamOwnerInvitationPreviewResponse = {
     };
 };
 
+export type EventStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+
+export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+
+export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED';
+
+/**
+ * Event list item returned from event-discovery endpoints.
+ */
+export type EventSummaryDto = {
+    /**
+     * Sport-event identifier.
+     */
+    id: string;
+    /**
+     * Provider event identifier used by event-level sync operations.
+     */
+    externalId: string;
+    /**
+     * Sport associated with the event.
+     */
+    sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Primary event name shown in contest and event selectors.
+     */
+    name: string;
+    /**
+     * Venue name for the event, when known.
+     */
+    venue?: string | null;
+    /**
+     * Human-readable event location, when known.
+     */
+    location?: string | null;
+    /**
+     * Provider-normalized event status.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    /**
+     * Scheduled or actual event start time.
+     */
+    startDate: string;
+    /**
+     * Scheduled or actual event end time, when known.
+     */
+    endDate?: string | null;
+    /**
+     * PoolMaster operational datetime when the event becomes available for contest setup.
+     */
+    releaseAt: string;
+    /**
+     * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+     */
+    fieldLocksAt: string;
+    /**
+     * Participant count when the provider exposes field size.
+     */
+    participantCount?: number | null;
+    /**
+     * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+     */
+    fieldLocked: boolean;
+    /**
+     * Current readiness state for contest setup and event-driven contest operations.
+     */
+    readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+    /**
+     * Structured reasons explaining why the event is or is not contest-eligible right now.
+     */
+    readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+    /**
+     * Whether the event is currently eligible for contest creation/configuration flows.
+     */
+    contestEligible: boolean;
+};
+
+export type EventListQuery = {
+    /**
+     * Optional sport filter.
+     */
+    sport?: string;
+    /**
+     * Optional provider-normalized event status filter.
+     */
+    status?: string;
+    /**
+     * Optional page-size style limit.
+     */
+    limit?: number;
+};
+
+/**
+ * Event list response for the requested sport or filter set.
+ */
+export type EventListResponse = {
+    events: Array<{
+        /**
+         * Sport-event identifier.
+         */
+        id: string;
+        /**
+         * Provider event identifier used by event-level sync operations.
+         */
+        externalId: string;
+        /**
+         * Sport associated with the event.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Primary event name shown in contest and event selectors.
+         */
+        name: string;
+        /**
+         * Venue name for the event, when known.
+         */
+        venue?: string | null;
+        /**
+         * Human-readable event location, when known.
+         */
+        location?: string | null;
+        /**
+         * Provider-normalized event status.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Scheduled or actual event start time.
+         */
+        startDate: string;
+        /**
+         * Scheduled or actual event end time, when known.
+         */
+        endDate?: string | null;
+        /**
+         * PoolMaster operational datetime when the event becomes available for contest setup.
+         */
+        releaseAt: string;
+        /**
+         * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+         */
+        fieldLocksAt: string;
+        /**
+         * Participant count when the provider exposes field size.
+         */
+        participantCount?: number | null;
+        /**
+         * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+         */
+        fieldLocked: boolean;
+        /**
+         * Current readiness state for contest setup and event-driven contest operations.
+         */
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        /**
+         * Structured reasons explaining why the event is or is not contest-eligible right now.
+         */
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        /**
+         * Whether the event is currently eligible for contest creation/configuration flows.
+         */
+        contestEligible: boolean;
+    }>;
+};
+
+export type ClientLogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+export type ClientLogEntry = {
+    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+    action: string;
+    msg?: string;
+    ts: string;
+    route?: string;
+    sessionId?: string | null;
+    userId?: string | null;
+    clientRequestId?: string | null;
+    data?: {
+        [key: string]: unknown;
+    };
+    err?: unknown;
+};
+
+export type ClientLogBatch = {
+    schemaVersion: 1;
+    clientTraceId: string;
+    webappVersion: string;
+    userAgent: string;
+    entries: Array<{
+        level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+        action: string;
+        msg?: string;
+        ts: string;
+        route?: string;
+        sessionId?: string | null;
+        userId?: string | null;
+        clientRequestId?: string | null;
+        data?: {
+            [key: string]: unknown;
+        };
+        err?: unknown;
+    }>;
+};
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -9808,74 +10009,7 @@ export type ListEventsResponses = {
     /**
      * Event list response for the requested sport or filter set.
      */
-    200: {
-        events: Array<{
-            /**
-             * Sport-event identifier.
-             */
-            id: string;
-            /**
-             * Provider event identifier used by event-level sync operations.
-             */
-            externalId: string;
-            /**
-             * Sport associated with the event.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Primary event name shown in contest and event selectors.
-             */
-            name: string;
-            /**
-             * Venue name for the event, when known.
-             */
-            venue?: string | null;
-            /**
-             * Human-readable event location, when known.
-             */
-            location?: string | null;
-            /**
-             * Provider-normalized event status.
-             */
-            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            /**
-             * Scheduled or actual event start time.
-             */
-            startDate: string;
-            /**
-             * Scheduled or actual event end time, when known.
-             */
-            endDate?: string | null;
-            /**
-             * PoolMaster operational datetime when the event becomes available for contest setup.
-             */
-            releaseAt: string;
-            /**
-             * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
-             */
-            fieldLocksAt: string;
-            /**
-             * Participant count when the provider exposes field size.
-             */
-            participantCount?: number | null;
-            /**
-             * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
-             */
-            fieldLocked: boolean;
-            /**
-             * Current readiness state for contest setup and event-driven contest operations.
-             */
-            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
-            /**
-             * Structured reasons explaining why the event is or is not contest-eligible right now.
-             */
-            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
-            /**
-             * Whether the event is currently eligible for contest creation/configuration flows.
-             */
-            contestEligible: boolean;
-        }>;
-    };
+    200: EventListResponse;
 };
 
 export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
@@ -23019,26 +23153,7 @@ export type GetPollIntervalsResponses = {
 export type GetPollIntervalsResponse = GetPollIntervalsResponses[keyof GetPollIntervalsResponses];
 
 export type IngestClientLogsData = {
-    body: {
-        schemaVersion: 1;
-        clientTraceId: string;
-        webappVersion: string;
-        userAgent: string;
-        entries: Array<{
-            level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-            action: string;
-            msg?: string;
-            ts: string;
-            route?: string;
-            sessionId?: string | null;
-            userId?: string | null;
-            clientRequestId?: string | null;
-            data?: {
-                [key: string]: unknown;
-            };
-            err?: unknown;
-        }>;
-    };
+    body: ClientLogBatch;
     path?: never;
     query?: never;
     url: '/api/v1/client-logs/';

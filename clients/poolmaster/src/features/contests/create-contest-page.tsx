@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { GetManagedContestResponses, ListManagedContestTemplatesResponses, ListEventsResponses, LeagueDetailDto } from '@/lib/api';
+import type { EventSummaryDto, GetManagedContestResponses, LeagueDetailDto, ListManagedContestTemplatesResponses } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -52,7 +52,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type SportEventSummary = ListEventsResponses[200]['events'][number];
 type ManagedContest = GetManagedContestResponses[200]['contest'];
 type ManagedContestTemplate = ListManagedContestTemplatesResponses[200]['templates'][number];
 type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
@@ -104,7 +103,7 @@ function formatDateTimeDisplay(isoString: string | null) {
   return date.toLocaleString();
 }
 
-function formatReadinessLabel(event: SportEventSummary) {
+function formatReadinessLabel(event: EventSummaryDto) {
   switch (event.readinessStatus) {
     case 'CONTEST_ELIGIBLE':
       return 'Contest ready';
@@ -118,7 +117,7 @@ function formatReadinessLabel(event: SportEventSummary) {
   }
 }
 
-function formatReadinessReasons(event: SportEventSummary) {
+function formatReadinessReasons(event: EventSummaryDto) {
   if (!event.readinessReasons.length) {
     return 'This event is ready for contest setup.';
   }
@@ -201,7 +200,7 @@ function deriveLockAtFromEvent(
   );
 }
 
-function sortEventsForPicker(events: SportEventSummary[]) {
+function sortEventsForPicker(events: EventSummaryDto[]) {
   return [...events].sort((left, right) => {
     const leftTime = Date.parse(left.startDate);
     const rightTime = Date.parse(right.startDate);
@@ -275,7 +274,7 @@ export function CreateContestPage() {
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
-    queryFn: async (): Promise<SportEventSummary[]> => {
+    queryFn: async (): Promise<EventSummaryDto[]> => {
       const response = await listEvents({
         query: {
           sport: Sport.GOLF,
