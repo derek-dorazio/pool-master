@@ -429,21 +429,90 @@ Output: answered questions, and a model the owner has agreed to.
 
 Only once stages 1 and 2 are settled, and strictly in this order:
 
-| Step | Layer |
-|---|---|
-| 3.1 | **Schema** — migrations, if stage 1 said the schema is wrong |
-| 3.2 | **DAO** — repository ports covering the cluster's entities and its full operation set, including the unscoped reads admin needs |
-| 3.3 | **Services** — moved onto those ports; no service returns a shape it invented |
-| 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) |
-| 3.5 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) |
-| 3.6 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) |
+| Step | Layer | Phase |
+|---|---|---|
+| 3.1 | **Schema** — migrations, if stage 1 said the schema is wrong | 1 |
+| 3.2 | **DAO** — repository ports covering the cluster's entities and its full operation set, including the unscoped reads admin needs | 1 |
+| 3.3 | **Services** — moved onto those ports; no service returns a shape it invented | 1 |
+| 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) | 1 |
+| 3.5 | **Tests** — the slice's unit, integration and functional-api tests moved onto the canonical shapes | 1 |
+| 3.6 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
+| 3.7 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
 
-A slice is done when that flow is unbroken for its cluster and nothing in the codebase names
-those entities any other way.
+**A slice's stage 3 stops at 3.5.** Steps 3.6 and 3.7 do not run per slice — see the phase
+split below. A slice is done, for phase-1 purposes, when its schema, DAO, services, routes
+and tests name the cluster's entities one way and the phase-1 gates are green.
+
+## Two phases — backend first, then the frontend in one pass
+
+Set by the repo owner. All of it lands on **one branch**; the phases are a sequencing rule
+within that branch, not separate branches or separate PRs.
+
+> "Instead of trying to fix everything in a single pass, first adjust all of the backend and
+> tests. Make sure the service build is clean. Then begin on the front-end once all of the
+> types and client SDK's are exported."
+
+**Phase 1 — every slice, backend only.** Slices 1 through 4 each run stages 1, 2 and steps
+3.1–3.5. The webapp is not touched and is *expected to be broken* for the duration: routes
+and DTOs are changing underneath it and the generated client has not been regenerated yet.
+
+**The boundary — export once.** After the last slice's backend is green, run 3.6 for
+everything at once: register the canonical DTOs as named OpenAPI components, `npm run
+api:refresh`, and regenerate the client SDK. One regeneration over a settled model, not four
+over a moving one.
+
+**Phase 2 — the frontend, one pass.** Every webapp surface moves onto the regenerated types.
+Doing this once means each surface is rewritten against the final shape rather than against
+an intermediate one that a later slice would change again.
+
+### Why the phases, concretely
+
+Slices 2 and 3 change objects slice 1's frontend would already be rendering — a league page
+shows squads, events and contest entries. Converting that page after slice 1 means
+converting it again after slices 2 and 3. Deferring the whole frontend to one pass over a
+settled model is strictly less work and produces one shape per surface instead of three.
+
+### Phase-1 gates — what "the service build is clean" means
+
+These four commands are the phase-1 definition of done. **Do not run the whole-repo `npm run
+lint` or `npm run typecheck` during phase 1** — they include the webapp, which is expected
+to be red, and a red webapp says nothing about whether the backend is clean.
+
+| Command | Covers |
+|---|---|
+| `npm run lint:service` | `packages/**/*.ts` |
+| `npm run typecheck:service` | every package except the webapp |
+| `npm run typecheck:tests` | `tests/**` — the only gate that compiles the test tree (see below) |
+| `npm run test:unit` | backend unit suite |
+
+`npm run rules:check`, `npm run api:check` and `npm run api:validate` also apply and are not
+phase-scoped.
+
+**`typecheck:tests` exists because nothing used to compile `tests/`.** `turbo typecheck`
+covers `packages/` only (#181) and jest transpiles per file without a program-wide check, so
+a test importing a module the change deleted compiled locally and failed in CI. That is
+exactly the failure mode this pass will generate repeatedly — every slice deletes shadow
+DTOs and the services behind them. Both CI fallouts on #197 were this. Run it before every
+push.
+
+The integration and functional-api suites need Postgres, which is not available in every
+working environment. Where it is missing, push the branch and let CI run them:
+`service-coverage-report` is the job that does.
+
+### CI during phase 1
+
+The CI jobs were split so a broken webapp does not block the backend suites
+(`b20c653`, `a2830d9`). The backend chain is `all-contract-gates` →
+`service-lint-typecheck` → `service-coverage-report` / `service-build`, and none of it
+depends on `poolmaster-build`. Expect `poolmaster-build` and `poolmaster-unit-tests` to be
+red for all of phase 1; that is the plan working, not a regression. They must be green
+before phase 2 is done.
 
 ## Slices — grouped by related objects
 
-Ordered by dependency: later clusters reference earlier ones.
+Ordered by dependency: later clusters reference earlier ones. **Slices 1–4 are phase-1
+(backend) units** — each runs stages 1 and 2 and steps 3.1–3.5, and none of them touches the
+webapp. The frontend is a single pass after all four, listed last.
 
 ### Slice 1 — Identity and membership
 `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, `LeagueInvitation`,
@@ -457,6 +526,18 @@ vs `/admin/users/*`, `adminInactivateLeague` vs `inactivateLeague`, `adminListTe
 `SquadDto`.
 
 First because it is the smallest real test of the whole workflow.
+
+**Stage 1.0 and stage 2 are already done for this slice** — the ER diagram is in #202 and the
+repo owner's answers are recorded in `docs/DOMAIN-OPERATIONS.md` (access rules A1–A7). Two
+schema changes came out of that review and are step 3.1 for this slice:
+
+- Add `@@unique([leagueId, name])` to `Squad` — squad names are unique within a league.
+- Drop `League.createdBy` — not a concept the model needs. Removes the column, the field in
+  `domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the DTO field in
+  `admin/league-service.ts`.
+
+Stage 1's shadow inventory has not been run yet. Known starting points to confirm are listed
+above.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
@@ -490,6 +571,15 @@ Providers, sync runs, ingestion jobs, health, metrics, audit, operational config
 
 The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
 (stop calling it "admin") and bringing services onto ports for consistency.
+
+### Phase 2 — the frontend, once
+Not a fifth slice. Runs after all four slices' backends are green and step 3.6 has exported
+the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
+in slices 1–4 moves onto the generated type, using the full object (rule 3).
+
+Its gates are the ones phase 1 deliberately skips: `npm run lint:webapp`,
+`npm run typecheck:webapp`, `npm run test:poolmaster:unit`, and green `poolmaster-build` /
+`poolmaster-unit-tests` in CI.
 
 ## Open Questions — found so far
 
