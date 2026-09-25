@@ -10022,6 +10022,491 @@
         "additionalProperties": false,
         "description": "Public preview payload for a team-owner invitation."
       },
+      "ParticipantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Participant identifier."
+          },
+          "sportId": {
+            "type": "string",
+            "description": "Owning sport identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Primary participant display name."
+          },
+          "participantType": {
+            "type": "string",
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM"
+            ],
+            "description": "Whether the participant is an individual or team."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Primary provider identifier when one exists."
+          },
+          "firstName": {
+            "type": "string",
+            "description": "First name when the participant is a person."
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name when the participant is a person."
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Short-form display name for compact UI surfaces."
+          },
+          "nationality": {
+            "type": "string",
+            "description": "Participant nationality or country code when known."
+          },
+          "position": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Position, role, or event classification when known."
+          },
+          "teamAffiliation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Current team affiliation when the participant is not itself a team."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "RETIRED",
+              "SUSPENDED"
+            ],
+            "description": "Current participant lifecycle or availability status."
+          },
+          "injuryStatus": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "HEALTHY",
+                  "QUESTIONABLE",
+                  "DOUBTFUL",
+                  "OUT",
+                  "WITHDRAWN",
+                  "SUSPENDED",
+                  "SCRATCHED"
+                ],
+                "description": "Current injury or availability status code."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Optional injury-status detail or summary."
+              },
+              "expectedReturn": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "source": {
+                "type": "string",
+                "description": "Source that provided the injury-status update."
+              }
+            },
+            "required": [
+              "status"
+            ],
+            "additionalProperties": false,
+            "description": "Normalized participant injury or availability state."
+          },
+          "photoUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional participant image URL."
+          },
+          "photoLastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expected return timestamp when known."
+          },
+          "externalIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of provider identifiers keyed by provider code."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the participant record was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the participant record was last updated."
+          }
+        },
+        "required": [
+          "id",
+          "sportId",
+          "name",
+          "participantType",
+          "status",
+          "injuryStatus",
+          "externalIds",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "Participant summary returned by participant-search and detail APIs."
+      },
+      "ParticipantListResponse": {
+        "type": "object",
+        "properties": {
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Participant identifier."
+                },
+                "sportId": {
+                  "type": "string",
+                  "description": "Owning sport identifier."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Primary participant display name."
+                },
+                "participantType": {
+                  "type": "string",
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM"
+                  ],
+                  "description": "Whether the participant is an individual or team."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "Primary provider identifier when one exists."
+                },
+                "firstName": {
+                  "type": "string",
+                  "description": "First name when the participant is a person."
+                },
+                "lastName": {
+                  "type": "string",
+                  "description": "Last name when the participant is a person."
+                },
+                "shortName": {
+                  "type": "string",
+                  "description": "Short-form display name for compact UI surfaces."
+                },
+                "nationality": {
+                  "type": "string",
+                  "description": "Participant nationality or country code when known."
+                },
+                "position": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Position, role, or event classification when known."
+                },
+                "teamAffiliation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Current team affiliation when the participant is not itself a team."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ACTIVE",
+                    "INACTIVE",
+                    "RETIRED",
+                    "SUSPENDED"
+                  ],
+                  "description": "Current participant lifecycle or availability status."
+                },
+                "injuryStatus": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "HEALTHY",
+                        "QUESTIONABLE",
+                        "DOUBTFUL",
+                        "OUT",
+                        "WITHDRAWN",
+                        "SUSPENDED",
+                        "SCRATCHED"
+                      ],
+                      "description": "Current injury or availability status code."
+                    },
+                    "detail": {
+                      "type": "string",
+                      "description": "Optional injury-status detail or summary."
+                    },
+                    "expectedReturn": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Expected return timestamp when known."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Expected return timestamp when known."
+                    },
+                    "source": {
+                      "type": "string",
+                      "description": "Source that provided the injury-status update."
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Normalized participant injury or availability state."
+                },
+                "photoUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional participant image URL."
+                },
+                "photoLastUpdated": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Expected return timestamp when known."
+                },
+                "externalIds": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Map of provider identifiers keyed by provider code."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the participant record was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the participant record was last updated."
+                }
+              },
+              "required": [
+                "id",
+                "sportId",
+                "name",
+                "participantType",
+                "status",
+                "injuryStatus",
+                "externalIds",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "Participant summary returned by participant-search and detail APIs."
+            },
+            "description": "Participant page or slice returned by the API."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total participants matching the current filters."
+          }
+        },
+        "required": [
+          "participants",
+          "total"
+        ],
+        "additionalProperties": false,
+        "description": "Participant-list response."
+      },
+      "ParticipantResponse": {
+        "type": "object",
+        "properties": {
+          "participant": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Participant identifier."
+              },
+              "sportId": {
+                "type": "string",
+                "description": "Owning sport identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Primary participant display name."
+              },
+              "participantType": {
+                "type": "string",
+                "enum": [
+                  "INDIVIDUAL",
+                  "TEAM"
+                ],
+                "description": "Whether the participant is an individual or team."
+              },
+              "externalId": {
+                "type": "string",
+                "description": "Primary provider identifier when one exists."
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name when the participant is a person."
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name when the participant is a person."
+              },
+              "shortName": {
+                "type": "string",
+                "description": "Short-form display name for compact UI surfaces."
+              },
+              "nationality": {
+                "type": "string",
+                "description": "Participant nationality or country code when known."
+              },
+              "position": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Position, role, or event classification when known."
+              },
+              "teamAffiliation": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Current team affiliation when the participant is not itself a team."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE",
+                  "RETIRED",
+                  "SUSPENDED"
+                ],
+                "description": "Current participant lifecycle or availability status."
+              },
+              "injuryStatus": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "HEALTHY",
+                      "QUESTIONABLE",
+                      "DOUBTFUL",
+                      "OUT",
+                      "WITHDRAWN",
+                      "SUSPENDED",
+                      "SCRATCHED"
+                    ],
+                    "description": "Current injury or availability status code."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "Optional injury-status detail or summary."
+                  },
+                  "expectedReturn": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Expected return timestamp when known."
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Expected return timestamp when known."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Source that provided the injury-status update."
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "additionalProperties": false,
+                "description": "Normalized participant injury or availability state."
+              },
+              "photoUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Optional participant image URL."
+              },
+              "photoLastUpdated": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Expected return timestamp when known."
+              },
+              "externalIds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Map of provider identifiers keyed by provider code."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the participant record was created."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the participant record was last updated."
+              }
+            },
+            "required": [
+              "id",
+              "sportId",
+              "name",
+              "participantType",
+              "status",
+              "injuryStatus",
+              "externalIds",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false,
+            "description": "Participant summary returned by participant-search and detail APIs."
+          }
+        },
+        "required": [
+          "participant"
+        ],
+        "additionalProperties": false,
+        "description": "Single-participant detail response."
+      },
       "EventStatusDto": {
         "type": "string",
         "enum": [
@@ -10357,6 +10842,464 @@
         ],
         "additionalProperties": false,
         "description": "Event list response for the requested sport or filter set."
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actorEmail": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hasStateChanges": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "actorEmail",
+          "actorName",
+          "action",
+          "resourceType",
+          "resourceId",
+          "description",
+          "createdAt",
+          "hasStateChanges"
+        ],
+        "additionalProperties": false,
+        "description": "Admin audit-log entry."
+      },
+      "AuditListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "actorEmail": {
+                  "type": "string"
+                },
+                "actorName": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "resourceType": {
+                  "type": "string"
+                },
+                "resourceId": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "ipAddress": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "hasStateChanges": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "actorEmail",
+                "actorName",
+                "action",
+                "resourceType",
+                "resourceId",
+                "description",
+                "createdAt",
+                "hasStateChanges"
+              ],
+              "additionalProperties": false,
+              "description": "Admin audit-log entry."
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "additionalProperties": false,
+        "description": "Admin audit-log list response."
+      },
+      "AuditEntryResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "actorEmail": {
+                "type": "string"
+              },
+              "actorName": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "resourceType": {
+                "type": "string"
+              },
+              "resourceId": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "ipAddress": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "hasStateChanges": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "actorEmail",
+              "actorName",
+              "action",
+              "resourceType",
+              "resourceId",
+              "description",
+              "createdAt",
+              "hasStateChanges"
+            ],
+            "additionalProperties": false,
+            "description": "Admin audit-log entry."
+          }
+        },
+        "required": [
+          "entry"
+        ],
+        "additionalProperties": false,
+        "description": "Single admin audit-entry response."
+      },
+      "ConsentRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Consent-record identifier."
+          },
+          "userId": {
+            "type": "string",
+            "description": "User who recorded the consent decision."
+          },
+          "consentType": {
+            "type": "string",
+            "description": "Consent category, such as terms acceptance or age affirmation."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "Whether the user granted the consent at this point in time."
+          },
+          "version": {
+            "type": "string",
+            "description": "Policy or consent-text version acknowledged by the user."
+          },
+          "minimumAgeThreshold": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Minimum age that had to be affirmed when the consent required an age gate."
+          },
+          "ageAffirmed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the user affirmed they met the required age threshold."
+          },
+          "ipAddress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Captured request IP when the consent was recorded, if retained."
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Captured client user agent when the consent was recorded, if retained."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the consent decision was recorded."
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "consentType",
+          "granted",
+          "version",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "description": "Stored consent record returned from consent-history APIs."
+      },
+      "ConsentHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Consent-record identifier."
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "User who recorded the consent decision."
+                },
+                "consentType": {
+                  "type": "string",
+                  "description": "Consent category, such as terms acceptance or age affirmation."
+                },
+                "granted": {
+                  "type": "boolean",
+                  "description": "Whether the user granted the consent at this point in time."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "Policy or consent-text version acknowledged by the user."
+                },
+                "minimumAgeThreshold": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Minimum age that had to be affirmed when the consent required an age gate."
+                },
+                "ageAffirmed": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the user affirmed they met the required age threshold."
+                },
+                "ipAddress": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Captured request IP when the consent was recorded, if retained."
+                },
+                "userAgent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Captured client user agent when the consent was recorded, if retained."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the consent decision was recorded."
+                }
+              },
+              "required": [
+                "id",
+                "userId",
+                "consentType",
+                "granted",
+                "version",
+                "createdAt"
+              ],
+              "additionalProperties": false,
+              "description": "Stored consent record returned from consent-history APIs."
+            }
+          }
+        },
+        "required": [
+          "consents"
+        ],
+        "additionalProperties": false,
+        "description": "Consent-history response for the authenticated user."
+      },
+      "ConsentRecordRequest": {
+        "type": "object",
+        "properties": {
+          "consentType": {
+            "type": "string",
+            "description": "Consent category being recorded."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "Whether the user accepts or declines the consent."
+          },
+          "version": {
+            "type": "string",
+            "description": "Policy version presented to the user."
+          },
+          "minimumAgeThreshold": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 13,
+            "maximum": 18,
+            "description": "Optional age-gate threshold that the user was asked to affirm."
+          },
+          "ageAffirmed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Optional age affirmation captured alongside the consent."
+          }
+        },
+        "required": [
+          "consentType",
+          "granted",
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "Authenticated request payload for recording a consent decision."
+      },
+      "ConsentRecordResponse": {
+        "type": "object",
+        "properties": {
+          "consent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Consent-record identifier."
+              },
+              "userId": {
+                "type": "string",
+                "description": "User who recorded the consent decision."
+              },
+              "consentType": {
+                "type": "string",
+                "description": "Consent category, such as terms acceptance or age affirmation."
+              },
+              "granted": {
+                "type": "boolean",
+                "description": "Whether the user granted the consent at this point in time."
+              },
+              "version": {
+                "type": "string",
+                "description": "Policy or consent-text version acknowledged by the user."
+              },
+              "minimumAgeThreshold": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Minimum age that had to be affirmed when the consent required an age gate."
+              },
+              "ageAffirmed": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Whether the user affirmed they met the required age threshold."
+              },
+              "ipAddress": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Captured request IP when the consent was recorded, if retained."
+              },
+              "userAgent": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Captured client user agent when the consent was recorded, if retained."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the consent decision was recorded."
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "consentType",
+              "granted",
+              "version",
+              "createdAt"
+            ],
+            "additionalProperties": false,
+            "description": "Stored consent record returned from consent-history APIs."
+          }
+        },
+        "required": [
+          "consent"
+        ],
+        "additionalProperties": false,
+        "description": "Response returned after recording a consent decision."
       },
       "ClientLogLevel": {
         "type": "string",
@@ -20215,175 +21158,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participants": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Participant identifier."
-                          },
-                          "sportId": {
-                            "type": "string",
-                            "description": "Owning sport identifier."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Primary participant display name."
-                          },
-                          "participantType": {
-                            "type": "string",
-                            "enum": [
-                              "INDIVIDUAL",
-                              "TEAM"
-                            ],
-                            "description": "Whether the participant is an individual or team."
-                          },
-                          "externalId": {
-                            "type": "string",
-                            "description": "Primary provider identifier when one exists."
-                          },
-                          "firstName": {
-                            "type": "string",
-                            "description": "First name when the participant is a person."
-                          },
-                          "lastName": {
-                            "type": "string",
-                            "description": "Last name when the participant is a person."
-                          },
-                          "shortName": {
-                            "type": "string",
-                            "description": "Short-form display name for compact UI surfaces."
-                          },
-                          "nationality": {
-                            "type": "string",
-                            "description": "Participant nationality or country code when known."
-                          },
-                          "position": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Position, role, or event classification when known."
-                          },
-                          "teamAffiliation": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Current team affiliation when the participant is not itself a team."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "ACTIVE",
-                              "INACTIVE",
-                              "RETIRED",
-                              "SUSPENDED"
-                            ],
-                            "description": "Current participant lifecycle or availability status."
-                          },
-                          "injuryStatus": {
-                            "type": "object",
-                            "properties": {
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "HEALTHY",
-                                  "QUESTIONABLE",
-                                  "DOUBTFUL",
-                                  "OUT",
-                                  "WITHDRAWN",
-                                  "SUSPENDED",
-                                  "SCRATCHED"
-                                ],
-                                "description": "Current injury or availability status code."
-                              },
-                              "detail": {
-                                "type": "string",
-                                "description": "Optional injury-status detail or summary."
-                              },
-                              "expectedReturn": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "Expected return timestamp when known."
-                              },
-                              "updatedAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "Expected return timestamp when known."
-                              },
-                              "source": {
-                                "type": "string",
-                                "description": "Source that provided the injury-status update."
-                              }
-                            },
-                            "required": [
-                              "status"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Normalized participant injury or availability state."
-                          },
-                          "photoUrl": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional participant image URL."
-                          },
-                          "photoLastUpdated": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Expected return timestamp when known."
-                          },
-                          "externalIds": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "Map of provider identifiers keyed by provider code."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the participant record was created."
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the participant record was last updated."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "sportId",
-                          "name",
-                          "participantType",
-                          "status",
-                          "injuryStatus",
-                          "externalIds",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Participant summary returned by participant-search and detail APIs."
-                      },
-                      "description": "Participant page or slice returned by the API."
-                    },
-                    "total": {
-                      "type": "number",
-                      "description": "Total participants matching the current filters."
-                    }
-                  },
-                  "required": [
-                    "participants",
-                    "total"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Participant-list response."
+                  "$ref": "#/components/schemas/ParticipantListResponse"
                 }
               }
             }
@@ -20466,166 +21241,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participant": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Participant identifier."
-                        },
-                        "sportId": {
-                          "type": "string",
-                          "description": "Owning sport identifier."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Primary participant display name."
-                        },
-                        "participantType": {
-                          "type": "string",
-                          "enum": [
-                            "INDIVIDUAL",
-                            "TEAM"
-                          ],
-                          "description": "Whether the participant is an individual or team."
-                        },
-                        "externalId": {
-                          "type": "string",
-                          "description": "Primary provider identifier when one exists."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name when the participant is a person."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name when the participant is a person."
-                        },
-                        "shortName": {
-                          "type": "string",
-                          "description": "Short-form display name for compact UI surfaces."
-                        },
-                        "nationality": {
-                          "type": "string",
-                          "description": "Participant nationality or country code when known."
-                        },
-                        "position": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Position, role, or event classification when known."
-                        },
-                        "teamAffiliation": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Current team affiliation when the participant is not itself a team."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE",
-                            "RETIRED",
-                            "SUSPENDED"
-                          ],
-                          "description": "Current participant lifecycle or availability status."
-                        },
-                        "injuryStatus": {
-                          "type": "object",
-                          "properties": {
-                            "status": {
-                              "type": "string",
-                              "enum": [
-                                "HEALTHY",
-                                "QUESTIONABLE",
-                                "DOUBTFUL",
-                                "OUT",
-                                "WITHDRAWN",
-                                "SUSPENDED",
-                                "SCRATCHED"
-                              ],
-                              "description": "Current injury or availability status code."
-                            },
-                            "detail": {
-                              "type": "string",
-                              "description": "Optional injury-status detail or summary."
-                            },
-                            "expectedReturn": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "updatedAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "source": {
-                              "type": "string",
-                              "description": "Source that provided the injury-status update."
-                            }
-                          },
-                          "required": [
-                            "status"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Normalized participant injury or availability state."
-                        },
-                        "photoUrl": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Optional participant image URL."
-                        },
-                        "photoLastUpdated": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Expected return timestamp when known."
-                        },
-                        "externalIds": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Map of provider identifiers keyed by provider code."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "sportId",
-                        "name",
-                        "participantType",
-                        "status",
-                        "injuryStatus",
-                        "externalIds",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Participant summary returned by participant-search and detail APIs."
-                    }
-                  },
-                  "required": [
-                    "participant"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-participant detail response."
+                  "$ref": "#/components/schemas/ParticipantResponse"
                 }
               }
             }
@@ -20657,166 +21273,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participant": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Participant identifier."
-                        },
-                        "sportId": {
-                          "type": "string",
-                          "description": "Owning sport identifier."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Primary participant display name."
-                        },
-                        "participantType": {
-                          "type": "string",
-                          "enum": [
-                            "INDIVIDUAL",
-                            "TEAM"
-                          ],
-                          "description": "Whether the participant is an individual or team."
-                        },
-                        "externalId": {
-                          "type": "string",
-                          "description": "Primary provider identifier when one exists."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name when the participant is a person."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name when the participant is a person."
-                        },
-                        "shortName": {
-                          "type": "string",
-                          "description": "Short-form display name for compact UI surfaces."
-                        },
-                        "nationality": {
-                          "type": "string",
-                          "description": "Participant nationality or country code when known."
-                        },
-                        "position": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Position, role, or event classification when known."
-                        },
-                        "teamAffiliation": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Current team affiliation when the participant is not itself a team."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE",
-                            "RETIRED",
-                            "SUSPENDED"
-                          ],
-                          "description": "Current participant lifecycle or availability status."
-                        },
-                        "injuryStatus": {
-                          "type": "object",
-                          "properties": {
-                            "status": {
-                              "type": "string",
-                              "enum": [
-                                "HEALTHY",
-                                "QUESTIONABLE",
-                                "DOUBTFUL",
-                                "OUT",
-                                "WITHDRAWN",
-                                "SUSPENDED",
-                                "SCRATCHED"
-                              ],
-                              "description": "Current injury or availability status code."
-                            },
-                            "detail": {
-                              "type": "string",
-                              "description": "Optional injury-status detail or summary."
-                            },
-                            "expectedReturn": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "updatedAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "source": {
-                              "type": "string",
-                              "description": "Source that provided the injury-status update."
-                            }
-                          },
-                          "required": [
-                            "status"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Normalized participant injury or availability state."
-                        },
-                        "photoUrl": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Optional participant image URL."
-                        },
-                        "photoLastUpdated": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Expected return timestamp when known."
-                        },
-                        "externalIds": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Map of provider identifiers keyed by provider code."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "sportId",
-                        "name",
-                        "participantType",
-                        "status",
-                        "injuryStatus",
-                        "externalIds",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Participant summary returned by participant-search and detail APIs."
-                    }
-                  },
-                  "required": [
-                    "participant"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-participant detail response."
+                  "$ref": "#/components/schemas/ParticipantResponse"
                 }
               }
             }
@@ -20944,166 +21401,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participant": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Participant identifier."
-                        },
-                        "sportId": {
-                          "type": "string",
-                          "description": "Owning sport identifier."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Primary participant display name."
-                        },
-                        "participantType": {
-                          "type": "string",
-                          "enum": [
-                            "INDIVIDUAL",
-                            "TEAM"
-                          ],
-                          "description": "Whether the participant is an individual or team."
-                        },
-                        "externalId": {
-                          "type": "string",
-                          "description": "Primary provider identifier when one exists."
-                        },
-                        "firstName": {
-                          "type": "string",
-                          "description": "First name when the participant is a person."
-                        },
-                        "lastName": {
-                          "type": "string",
-                          "description": "Last name when the participant is a person."
-                        },
-                        "shortName": {
-                          "type": "string",
-                          "description": "Short-form display name for compact UI surfaces."
-                        },
-                        "nationality": {
-                          "type": "string",
-                          "description": "Participant nationality or country code when known."
-                        },
-                        "position": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Position, role, or event classification when known."
-                        },
-                        "teamAffiliation": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Current team affiliation when the participant is not itself a team."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE",
-                            "RETIRED",
-                            "SUSPENDED"
-                          ],
-                          "description": "Current participant lifecycle or availability status."
-                        },
-                        "injuryStatus": {
-                          "type": "object",
-                          "properties": {
-                            "status": {
-                              "type": "string",
-                              "enum": [
-                                "HEALTHY",
-                                "QUESTIONABLE",
-                                "DOUBTFUL",
-                                "OUT",
-                                "WITHDRAWN",
-                                "SUSPENDED",
-                                "SCRATCHED"
-                              ],
-                              "description": "Current injury or availability status code."
-                            },
-                            "detail": {
-                              "type": "string",
-                              "description": "Optional injury-status detail or summary."
-                            },
-                            "expectedReturn": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "updatedAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "description": "Expected return timestamp when known."
-                            },
-                            "source": {
-                              "type": "string",
-                              "description": "Source that provided the injury-status update."
-                            }
-                          },
-                          "required": [
-                            "status"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Normalized participant injury or availability state."
-                        },
-                        "photoUrl": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Optional participant image URL."
-                        },
-                        "photoLastUpdated": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Expected return timestamp when known."
-                        },
-                        "externalIds": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Map of provider identifiers keyed by provider code."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "sportId",
-                        "name",
-                        "participantType",
-                        "status",
-                        "injuryStatus",
-                        "externalIds",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Participant summary returned by participant-search and detail APIs."
-                    }
-                  },
-                  "required": [
-                    "participant"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-participant detail response."
+                  "$ref": "#/components/schemas/ParticipantResponse"
                 }
               }
             }
@@ -23346,48 +23644,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "consentType": {
-                    "type": "string",
-                    "description": "Consent category being recorded."
-                  },
-                  "granted": {
-                    "type": "boolean",
-                    "description": "Whether the user accepts or declines the consent."
-                  },
-                  "version": {
-                    "type": "string",
-                    "description": "Policy version presented to the user."
-                  },
-                  "minimumAgeThreshold": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 13,
-                    "maximum": 18,
-                    "description": "Optional age-gate threshold that the user was asked to affirm."
-                  },
-                  "ageAffirmed": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Optional age affirmation captured alongside the consent."
-                  }
-                },
-                "required": [
-                  "consentType",
-                  "granted",
-                  "version"
-                ],
-                "additionalProperties": false,
-                "description": "Authenticated request payload for recording a consent decision."
+                "$ref": "#/components/schemas/ConsentRecordRequest"
               }
             }
-          },
-          "description": "Authenticated request payload for recording a consent decision."
+          }
         },
         "responses": {
           "201": {
@@ -23395,82 +23655,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "consent": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Consent-record identifier."
-                        },
-                        "userId": {
-                          "type": "string",
-                          "description": "User who recorded the consent decision."
-                        },
-                        "consentType": {
-                          "type": "string",
-                          "description": "Consent category, such as terms acceptance or age affirmation."
-                        },
-                        "granted": {
-                          "type": "boolean",
-                          "description": "Whether the user granted the consent at this point in time."
-                        },
-                        "version": {
-                          "type": "string",
-                          "description": "Policy or consent-text version acknowledged by the user."
-                        },
-                        "minimumAgeThreshold": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "description": "Minimum age that had to be affirmed when the consent required an age gate."
-                        },
-                        "ageAffirmed": {
-                          "type": [
-                            "boolean",
-                            "null"
-                          ],
-                          "description": "Whether the user affirmed they met the required age threshold."
-                        },
-                        "ipAddress": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Captured request IP when the consent was recorded, if retained."
-                        },
-                        "userAgent": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Captured client user agent when the consent was recorded, if retained."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the consent decision was recorded."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "userId",
-                        "consentType",
-                        "granted",
-                        "version",
-                        "createdAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Stored consent record returned from consent-history APIs."
-                    }
-                  },
-                  "required": [
-                    "consent"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Response returned after recording a consent decision."
+                  "$ref": "#/components/schemas/ConsentRecordResponse"
                 }
               }
             }
@@ -23490,85 +23675,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "consents": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Consent-record identifier."
-                          },
-                          "userId": {
-                            "type": "string",
-                            "description": "User who recorded the consent decision."
-                          },
-                          "consentType": {
-                            "type": "string",
-                            "description": "Consent category, such as terms acceptance or age affirmation."
-                          },
-                          "granted": {
-                            "type": "boolean",
-                            "description": "Whether the user granted the consent at this point in time."
-                          },
-                          "version": {
-                            "type": "string",
-                            "description": "Policy or consent-text version acknowledged by the user."
-                          },
-                          "minimumAgeThreshold": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "description": "Minimum age that had to be affirmed when the consent required an age gate."
-                          },
-                          "ageAffirmed": {
-                            "type": [
-                              "boolean",
-                              "null"
-                            ],
-                            "description": "Whether the user affirmed they met the required age threshold."
-                          },
-                          "ipAddress": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Captured request IP when the consent was recorded, if retained."
-                          },
-                          "userAgent": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Captured client user agent when the consent was recorded, if retained."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the consent decision was recorded."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "userId",
-                          "consentType",
-                          "granted",
-                          "version",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Stored consent record returned from consent-history APIs."
-                      }
-                    }
-                  },
-                  "required": [
-                    "consents"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Consent-history response for the authenticated user."
+                  "$ref": "#/components/schemas/ConsentHistoryResponse"
                 }
               }
             }
@@ -33306,81 +33413,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "actorEmail": {
-                            "type": "string"
-                          },
-                          "actorName": {
-                            "type": "string"
-                          },
-                          "action": {
-                            "type": "string"
-                          },
-                          "resourceType": {
-                            "type": "string"
-                          },
-                          "resourceId": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "reason": {
-                            "type": "string"
-                          },
-                          "ipAddress": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "hasStateChanges": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "actorEmail",
-                          "actorName",
-                          "action",
-                          "resourceType",
-                          "resourceId",
-                          "description",
-                          "createdAt",
-                          "hasStateChanges"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Admin audit-log entry."
-                      }
-                    },
-                    "total": {
-                      "type": "number"
-                    },
-                    "page": {
-                      "type": "number"
-                    },
-                    "pageSize": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "total",
-                    "page",
-                    "pageSize"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Admin audit-log list response."
+                  "$ref": "#/components/schemas/AuditListResponse"
                 }
               }
             }
@@ -33451,66 +33484,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "entry": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "actorEmail": {
-                          "type": "string"
-                        },
-                        "actorName": {
-                          "type": "string"
-                        },
-                        "action": {
-                          "type": "string"
-                        },
-                        "resourceType": {
-                          "type": "string"
-                        },
-                        "resourceId": {
-                          "type": "string"
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "reason": {
-                          "type": "string"
-                        },
-                        "ipAddress": {
-                          "type": "string"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "hasStateChanges": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "actorEmail",
-                        "actorName",
-                        "action",
-                        "resourceType",
-                        "resourceId",
-                        "description",
-                        "createdAt",
-                        "hasStateChanges"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Admin audit-log entry."
-                    }
-                  },
-                  "required": [
-                    "entry"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single admin audit-entry response."
+                  "$ref": "#/components/schemas/AuditEntryResponse"
                 }
               }
             }

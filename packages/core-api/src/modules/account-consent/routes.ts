@@ -1,15 +1,15 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  ConsentHistoryResponseSchema,
-  ConsentRecordRequestSchema,
-  ConsentRecordResponseSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/account-consent.dto';
 import { mapConsentRecordToDto } from '../../mappers';
 import { AccountConsentService } from './account-consent-service';
 import { getAppPrisma } from '../../core/prisma-context';
 
 export function accountConsentModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const consentService = new AccountConsentService(prisma, fastify.log);
 
@@ -22,8 +22,8 @@ export function accountConsentModule(fastify: FastifyInstance): void {
         description:
           'Records an authenticated user consent decision for a policy/version pair, including age-affirmation context when applicable.',
         operationId: 'recordConsent',
-        response: { 201: zodToJsonSchema(ConsentRecordResponseSchema) },
-        body: zodToJsonSchema(ConsentRecordRequestSchema),
+        response: { 201: schemaRef('ConsentRecordResponse') },
+        body: schemaRef('ConsentRecordRequest'),
       },
     },
     async (request, reply) => {
@@ -71,7 +71,7 @@ export function accountConsentModule(fastify: FastifyInstance): void {
       description:
         'Returns the authenticated user consent history so account and compliance surfaces can show what was agreed and when.',
       operationId: 'getConsentHistory',
-      response: { 200: zodToJsonSchema(ConsentHistoryResponseSchema) },
+      response: { 200: schemaRef('ConsentHistoryResponse') },
     },
     handler: async (request) => {
       const logger = request.contextLogger ?? request.log;

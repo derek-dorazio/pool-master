@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { DateTimeSchema } from './common.dto';
 
 export const ConsentRecordDtoSchema = z.object({
@@ -29,3 +30,9 @@ export const ConsentRecordRequestSchema = z.object({
 export const ConsentRecordResponseSchema = z.object({
   consent: ConsentRecordDtoSchema,
 }).describe('Response returned after recording a consent decision.');
+
+// --- Published contract (#192) -------------------------------------------------
+registerSchema('ConsentRecordDto', ConsentRecordDtoSchema);
+registerSchema('ConsentHistoryResponse', ConsentHistoryResponseSchema);
+registerSchema('ConsentRecordRequest', ConsentRecordRequestSchema);
+registerSchema('ConsentRecordResponse', ConsentRecordResponseSchema);

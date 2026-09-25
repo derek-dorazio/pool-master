@@ -6723,6 +6723,242 @@ export interface components {
                 roleAfterAccept: "MEMBER";
             };
         };
+        /** @description Participant summary returned by participant-search and detail APIs. */
+        ParticipantDto: {
+            /** @description Participant identifier. */
+            id: string;
+            /** @description Owning sport identifier. */
+            sportId: string;
+            /** @description Primary participant display name. */
+            name: string;
+            /**
+             * @description Whether the participant is an individual or team.
+             * @enum {string}
+             */
+            participantType: "INDIVIDUAL" | "TEAM";
+            /** @description Primary provider identifier when one exists. */
+            externalId?: string;
+            /** @description First name when the participant is a person. */
+            firstName?: string;
+            /** @description Last name when the participant is a person. */
+            lastName?: string;
+            /** @description Short-form display name for compact UI surfaces. */
+            shortName?: string;
+            /** @description Participant nationality or country code when known. */
+            nationality?: string;
+            /** @description Position, role, or event classification when known. */
+            position?: string | null;
+            /** @description Current team affiliation when the participant is not itself a team. */
+            teamAffiliation?: string | null;
+            /**
+             * @description Current participant lifecycle or availability status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+            /** @description Normalized participant injury or availability state. */
+            injuryStatus: {
+                /**
+                 * @description Current injury or availability status code.
+                 * @enum {string}
+                 */
+                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                /** @description Optional injury-status detail or summary. */
+                detail?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                expectedReturn?: string;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                updatedAt?: string;
+                /** @description Source that provided the injury-status update. */
+                source?: string;
+            };
+            /** @description Optional participant image URL. */
+            photoUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Expected return timestamp when known.
+             */
+            photoLastUpdated?: string;
+            /** @description Map of provider identifiers keyed by provider code. */
+            externalIds: {
+                [key: string]: string;
+            };
+            /**
+             * Format: date-time
+             * @description When the participant record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the participant record was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Participant-list response. */
+        ParticipantListResponse: {
+            /** @description Participant page or slice returned by the API. */
+            participants: {
+                /** @description Participant identifier. */
+                id: string;
+                /** @description Owning sport identifier. */
+                sportId: string;
+                /** @description Primary participant display name. */
+                name: string;
+                /**
+                 * @description Whether the participant is an individual or team.
+                 * @enum {string}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Primary provider identifier when one exists. */
+                externalId?: string;
+                /** @description First name when the participant is a person. */
+                firstName?: string;
+                /** @description Last name when the participant is a person. */
+                lastName?: string;
+                /** @description Short-form display name for compact UI surfaces. */
+                shortName?: string;
+                /** @description Participant nationality or country code when known. */
+                nationality?: string;
+                /** @description Position, role, or event classification when known. */
+                position?: string | null;
+                /** @description Current team affiliation when the participant is not itself a team. */
+                teamAffiliation?: string | null;
+                /**
+                 * @description Current participant lifecycle or availability status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+                /** @description Normalized participant injury or availability state. */
+                injuryStatus: {
+                    /**
+                     * @description Current injury or availability status code.
+                     * @enum {string}
+                     */
+                    status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                    /** @description Optional injury-status detail or summary. */
+                    detail?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    expectedReturn?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    updatedAt?: string;
+                    /** @description Source that provided the injury-status update. */
+                    source?: string;
+                };
+                /** @description Optional participant image URL. */
+                photoUrl?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                photoLastUpdated?: string;
+                /** @description Map of provider identifiers keyed by provider code. */
+                externalIds: {
+                    [key: string]: string;
+                };
+                /**
+                 * Format: date-time
+                 * @description When the participant record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the participant record was last updated.
+                 */
+                updatedAt: string;
+            }[];
+            /** @description Total participants matching the current filters. */
+            total: number;
+        };
+        /** @description Single-participant detail response. */
+        ParticipantResponse: {
+            /** @description Participant summary returned by participant-search and detail APIs. */
+            participant: {
+                /** @description Participant identifier. */
+                id: string;
+                /** @description Owning sport identifier. */
+                sportId: string;
+                /** @description Primary participant display name. */
+                name: string;
+                /**
+                 * @description Whether the participant is an individual or team.
+                 * @enum {string}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Primary provider identifier when one exists. */
+                externalId?: string;
+                /** @description First name when the participant is a person. */
+                firstName?: string;
+                /** @description Last name when the participant is a person. */
+                lastName?: string;
+                /** @description Short-form display name for compact UI surfaces. */
+                shortName?: string;
+                /** @description Participant nationality or country code when known. */
+                nationality?: string;
+                /** @description Position, role, or event classification when known. */
+                position?: string | null;
+                /** @description Current team affiliation when the participant is not itself a team. */
+                teamAffiliation?: string | null;
+                /**
+                 * @description Current participant lifecycle or availability status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
+                /** @description Normalized participant injury or availability state. */
+                injuryStatus: {
+                    /**
+                     * @description Current injury or availability status code.
+                     * @enum {string}
+                     */
+                    status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
+                    /** @description Optional injury-status detail or summary. */
+                    detail?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    expectedReturn?: string;
+                    /**
+                     * Format: date-time
+                     * @description Expected return timestamp when known.
+                     */
+                    updatedAt?: string;
+                    /** @description Source that provided the injury-status update. */
+                    source?: string;
+                };
+                /** @description Optional participant image URL. */
+                photoUrl?: string | null;
+                /**
+                 * Format: date-time
+                 * @description Expected return timestamp when known.
+                 */
+                photoLastUpdated?: string;
+                /** @description Map of provider identifiers keyed by provider code. */
+                externalIds: {
+                    [key: string]: string;
+                };
+                /**
+                 * Format: date-time
+                 * @description When the participant record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the participant record was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
         /** @enum {string} */
         EventStatusDto: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
@@ -6850,6 +7086,155 @@ export interface components {
                 /** @description Whether the event is currently eligible for contest creation/configuration flows. */
                 contestEligible: boolean;
             }[];
+        };
+        /** @description Admin audit-log entry. */
+        AuditEntryDto: {
+            id: string;
+            actorEmail: string;
+            actorName: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            description: string;
+            reason?: string;
+            ipAddress?: string;
+            /** Format: date-time */
+            createdAt: string;
+            hasStateChanges: boolean;
+        };
+        /** @description Admin audit-log list response. */
+        AuditListResponse: {
+            items: {
+                id: string;
+                actorEmail: string;
+                actorName: string;
+                action: string;
+                resourceType: string;
+                resourceId: string;
+                description: string;
+                reason?: string;
+                ipAddress?: string;
+                /** Format: date-time */
+                createdAt: string;
+                hasStateChanges: boolean;
+            }[];
+            total: number;
+            page: number;
+            pageSize: number;
+        };
+        /** @description Single admin audit-entry response. */
+        AuditEntryResponse: {
+            /** @description Admin audit-log entry. */
+            entry: {
+                id: string;
+                actorEmail: string;
+                actorName: string;
+                action: string;
+                resourceType: string;
+                resourceId: string;
+                description: string;
+                reason?: string;
+                ipAddress?: string;
+                /** Format: date-time */
+                createdAt: string;
+                hasStateChanges: boolean;
+            };
+        };
+        /** @description Stored consent record returned from consent-history APIs. */
+        ConsentRecordDto: {
+            /** @description Consent-record identifier. */
+            id: string;
+            /** @description User who recorded the consent decision. */
+            userId: string;
+            /** @description Consent category, such as terms acceptance or age affirmation. */
+            consentType: string;
+            /** @description Whether the user granted the consent at this point in time. */
+            granted: boolean;
+            /** @description Policy or consent-text version acknowledged by the user. */
+            version: string;
+            /** @description Minimum age that had to be affirmed when the consent required an age gate. */
+            minimumAgeThreshold?: number | null;
+            /** @description Whether the user affirmed they met the required age threshold. */
+            ageAffirmed?: boolean | null;
+            /** @description Captured request IP when the consent was recorded, if retained. */
+            ipAddress?: string | null;
+            /** @description Captured client user agent when the consent was recorded, if retained. */
+            userAgent?: string | null;
+            /**
+             * Format: date-time
+             * @description When the consent decision was recorded.
+             */
+            createdAt: string;
+        };
+        /** @description Consent-history response for the authenticated user. */
+        ConsentHistoryResponse: {
+            consents: {
+                /** @description Consent-record identifier. */
+                id: string;
+                /** @description User who recorded the consent decision. */
+                userId: string;
+                /** @description Consent category, such as terms acceptance or age affirmation. */
+                consentType: string;
+                /** @description Whether the user granted the consent at this point in time. */
+                granted: boolean;
+                /** @description Policy or consent-text version acknowledged by the user. */
+                version: string;
+                /** @description Minimum age that had to be affirmed when the consent required an age gate. */
+                minimumAgeThreshold?: number | null;
+                /** @description Whether the user affirmed they met the required age threshold. */
+                ageAffirmed?: boolean | null;
+                /** @description Captured request IP when the consent was recorded, if retained. */
+                ipAddress?: string | null;
+                /** @description Captured client user agent when the consent was recorded, if retained. */
+                userAgent?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the consent decision was recorded.
+                 */
+                createdAt: string;
+            }[];
+        };
+        /** @description Authenticated request payload for recording a consent decision. */
+        ConsentRecordRequest: {
+            /** @description Consent category being recorded. */
+            consentType: string;
+            /** @description Whether the user accepts or declines the consent. */
+            granted: boolean;
+            /** @description Policy version presented to the user. */
+            version: string;
+            /** @description Optional age-gate threshold that the user was asked to affirm. */
+            minimumAgeThreshold?: number | null;
+            /** @description Optional age affirmation captured alongside the consent. */
+            ageAffirmed?: boolean | null;
+        };
+        /** @description Response returned after recording a consent decision. */
+        ConsentRecordResponse: {
+            /** @description Stored consent record returned from consent-history APIs. */
+            consent: {
+                /** @description Consent-record identifier. */
+                id: string;
+                /** @description User who recorded the consent decision. */
+                userId: string;
+                /** @description Consent category, such as terms acceptance or age affirmation. */
+                consentType: string;
+                /** @description Whether the user granted the consent at this point in time. */
+                granted: boolean;
+                /** @description Policy or consent-text version acknowledged by the user. */
+                version: string;
+                /** @description Minimum age that had to be affirmed when the consent required an age gate. */
+                minimumAgeThreshold?: number | null;
+                /** @description Whether the user affirmed they met the required age threshold. */
+                ageAffirmed?: boolean | null;
+                /** @description Captured request IP when the consent was recorded, if retained. */
+                ipAddress?: string | null;
+                /** @description Captured client user agent when the consent was recorded, if retained. */
+                userAgent?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the consent decision was recorded.
+                 */
+                createdAt: string;
+            };
         };
         /** @enum {string} */
         ClientLogLevel: "debug" | "info" | "warn" | "error" | "fatal";
@@ -11809,86 +12194,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Participant page or slice returned by the API. */
-                        participants: {
-                            /** @description Participant identifier. */
-                            id: string;
-                            /** @description Owning sport identifier. */
-                            sportId: string;
-                            /** @description Primary participant display name. */
-                            name: string;
-                            /**
-                             * @description Whether the participant is an individual or team.
-                             * @enum {string}
-                             */
-                            participantType: "INDIVIDUAL" | "TEAM";
-                            /** @description Primary provider identifier when one exists. */
-                            externalId?: string;
-                            /** @description First name when the participant is a person. */
-                            firstName?: string;
-                            /** @description Last name when the participant is a person. */
-                            lastName?: string;
-                            /** @description Short-form display name for compact UI surfaces. */
-                            shortName?: string;
-                            /** @description Participant nationality or country code when known. */
-                            nationality?: string;
-                            /** @description Position, role, or event classification when known. */
-                            position?: string | null;
-                            /** @description Current team affiliation when the participant is not itself a team. */
-                            teamAffiliation?: string | null;
-                            /**
-                             * @description Current participant lifecycle or availability status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                            /** @description Normalized participant injury or availability state. */
-                            injuryStatus: {
-                                /**
-                                 * @description Current injury or availability status code.
-                                 * @enum {string}
-                                 */
-                                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                                /** @description Optional injury-status detail or summary. */
-                                detail?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                expectedReturn?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                updatedAt?: string;
-                                /** @description Source that provided the injury-status update. */
-                                source?: string;
-                            };
-                            /** @description Optional participant image URL. */
-                            photoUrl?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Expected return timestamp when known.
-                             */
-                            photoLastUpdated?: string;
-                            /** @description Map of provider identifiers keyed by provider code. */
-                            externalIds: {
-                                [key: string]: string;
-                            };
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was last updated.
-                             */
-                            updatedAt: string;
-                        }[];
-                        /** @description Total participants matching the current filters. */
-                        total: number;
-                    };
+                    "application/json": components["schemas"]["ParticipantListResponse"];
                 };
             };
         };
@@ -11925,84 +12231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Participant summary returned by participant-search and detail APIs. */
-                        participant: {
-                            /** @description Participant identifier. */
-                            id: string;
-                            /** @description Owning sport identifier. */
-                            sportId: string;
-                            /** @description Primary participant display name. */
-                            name: string;
-                            /**
-                             * @description Whether the participant is an individual or team.
-                             * @enum {string}
-                             */
-                            participantType: "INDIVIDUAL" | "TEAM";
-                            /** @description Primary provider identifier when one exists. */
-                            externalId?: string;
-                            /** @description First name when the participant is a person. */
-                            firstName?: string;
-                            /** @description Last name when the participant is a person. */
-                            lastName?: string;
-                            /** @description Short-form display name for compact UI surfaces. */
-                            shortName?: string;
-                            /** @description Participant nationality or country code when known. */
-                            nationality?: string;
-                            /** @description Position, role, or event classification when known. */
-                            position?: string | null;
-                            /** @description Current team affiliation when the participant is not itself a team. */
-                            teamAffiliation?: string | null;
-                            /**
-                             * @description Current participant lifecycle or availability status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                            /** @description Normalized participant injury or availability state. */
-                            injuryStatus: {
-                                /**
-                                 * @description Current injury or availability status code.
-                                 * @enum {string}
-                                 */
-                                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                                /** @description Optional injury-status detail or summary. */
-                                detail?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                expectedReturn?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                updatedAt?: string;
-                                /** @description Source that provided the injury-status update. */
-                                source?: string;
-                            };
-                            /** @description Optional participant image URL. */
-                            photoUrl?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Expected return timestamp when known.
-                             */
-                            photoLastUpdated?: string;
-                            /** @description Map of provider identifiers keyed by provider code. */
-                            externalIds: {
-                                [key: string]: string;
-                            };
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ParticipantResponse"];
                 };
             };
         };
@@ -12024,84 +12253,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Participant summary returned by participant-search and detail APIs. */
-                        participant: {
-                            /** @description Participant identifier. */
-                            id: string;
-                            /** @description Owning sport identifier. */
-                            sportId: string;
-                            /** @description Primary participant display name. */
-                            name: string;
-                            /**
-                             * @description Whether the participant is an individual or team.
-                             * @enum {string}
-                             */
-                            participantType: "INDIVIDUAL" | "TEAM";
-                            /** @description Primary provider identifier when one exists. */
-                            externalId?: string;
-                            /** @description First name when the participant is a person. */
-                            firstName?: string;
-                            /** @description Last name when the participant is a person. */
-                            lastName?: string;
-                            /** @description Short-form display name for compact UI surfaces. */
-                            shortName?: string;
-                            /** @description Participant nationality or country code when known. */
-                            nationality?: string;
-                            /** @description Position, role, or event classification when known. */
-                            position?: string | null;
-                            /** @description Current team affiliation when the participant is not itself a team. */
-                            teamAffiliation?: string | null;
-                            /**
-                             * @description Current participant lifecycle or availability status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                            /** @description Normalized participant injury or availability state. */
-                            injuryStatus: {
-                                /**
-                                 * @description Current injury or availability status code.
-                                 * @enum {string}
-                                 */
-                                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                                /** @description Optional injury-status detail or summary. */
-                                detail?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                expectedReturn?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                updatedAt?: string;
-                                /** @description Source that provided the injury-status update. */
-                                source?: string;
-                            };
-                            /** @description Optional participant image URL. */
-                            photoUrl?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Expected return timestamp when known.
-                             */
-                            photoLastUpdated?: string;
-                            /** @description Map of provider identifiers keyed by provider code. */
-                            externalIds: {
-                                [key: string]: string;
-                            };
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ParticipantResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -12159,84 +12311,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Participant summary returned by participant-search and detail APIs. */
-                        participant: {
-                            /** @description Participant identifier. */
-                            id: string;
-                            /** @description Owning sport identifier. */
-                            sportId: string;
-                            /** @description Primary participant display name. */
-                            name: string;
-                            /**
-                             * @description Whether the participant is an individual or team.
-                             * @enum {string}
-                             */
-                            participantType: "INDIVIDUAL" | "TEAM";
-                            /** @description Primary provider identifier when one exists. */
-                            externalId?: string;
-                            /** @description First name when the participant is a person. */
-                            firstName?: string;
-                            /** @description Last name when the participant is a person. */
-                            lastName?: string;
-                            /** @description Short-form display name for compact UI surfaces. */
-                            shortName?: string;
-                            /** @description Participant nationality or country code when known. */
-                            nationality?: string;
-                            /** @description Position, role, or event classification when known. */
-                            position?: string | null;
-                            /** @description Current team affiliation when the participant is not itself a team. */
-                            teamAffiliation?: string | null;
-                            /**
-                             * @description Current participant lifecycle or availability status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
-                            /** @description Normalized participant injury or availability state. */
-                            injuryStatus: {
-                                /**
-                                 * @description Current injury or availability status code.
-                                 * @enum {string}
-                                 */
-                                status: "HEALTHY" | "QUESTIONABLE" | "DOUBTFUL" | "OUT" | "WITHDRAWN" | "SUSPENDED" | "SCRATCHED";
-                                /** @description Optional injury-status detail or summary. */
-                                detail?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                expectedReturn?: string;
-                                /**
-                                 * Format: date-time
-                                 * @description Expected return timestamp when known.
-                                 */
-                                updatedAt?: string;
-                                /** @description Source that provided the injury-status update. */
-                                source?: string;
-                            };
-                            /** @description Optional participant image URL. */
-                            photoUrl?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Expected return timestamp when known.
-                             */
-                            photoLastUpdated?: string;
-                            /** @description Map of provider identifiers keyed by provider code. */
-                            externalIds: {
-                                [key: string]: string;
-                            };
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ParticipantResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -13395,33 +13470,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        consents: {
-                            /** @description Consent-record identifier. */
-                            id: string;
-                            /** @description User who recorded the consent decision. */
-                            userId: string;
-                            /** @description Consent category, such as terms acceptance or age affirmation. */
-                            consentType: string;
-                            /** @description Whether the user granted the consent at this point in time. */
-                            granted: boolean;
-                            /** @description Policy or consent-text version acknowledged by the user. */
-                            version: string;
-                            /** @description Minimum age that had to be affirmed when the consent required an age gate. */
-                            minimumAgeThreshold?: number | null;
-                            /** @description Whether the user affirmed they met the required age threshold. */
-                            ageAffirmed?: boolean | null;
-                            /** @description Captured request IP when the consent was recorded, if retained. */
-                            ipAddress?: string | null;
-                            /** @description Captured client user agent when the consent was recorded, if retained. */
-                            userAgent?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description When the consent decision was recorded.
-                             */
-                            createdAt: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ConsentHistoryResponse"];
                 };
             };
         };
@@ -13433,21 +13482,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Authenticated request payload for recording a consent decision. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Consent category being recorded. */
-                    consentType: string;
-                    /** @description Whether the user accepts or declines the consent. */
-                    granted: boolean;
-                    /** @description Policy version presented to the user. */
-                    version: string;
-                    /** @description Optional age-gate threshold that the user was asked to affirm. */
-                    minimumAgeThreshold?: number | null;
-                    /** @description Optional age affirmation captured alongside the consent. */
-                    ageAffirmed?: boolean | null;
-                };
+                "application/json": components["schemas"]["ConsentRecordRequest"];
             };
         };
         responses: {
@@ -13457,34 +13494,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Stored consent record returned from consent-history APIs. */
-                        consent: {
-                            /** @description Consent-record identifier. */
-                            id: string;
-                            /** @description User who recorded the consent decision. */
-                            userId: string;
-                            /** @description Consent category, such as terms acceptance or age affirmation. */
-                            consentType: string;
-                            /** @description Whether the user granted the consent at this point in time. */
-                            granted: boolean;
-                            /** @description Policy or consent-text version acknowledged by the user. */
-                            version: string;
-                            /** @description Minimum age that had to be affirmed when the consent required an age gate. */
-                            minimumAgeThreshold?: number | null;
-                            /** @description Whether the user affirmed they met the required age threshold. */
-                            ageAffirmed?: boolean | null;
-                            /** @description Captured request IP when the consent was recorded, if retained. */
-                            ipAddress?: string | null;
-                            /** @description Captured client user agent when the consent was recorded, if retained. */
-                            userAgent?: string | null;
-                            /**
-                             * Format: date-time
-                             * @description When the consent decision was recorded.
-                             */
-                            createdAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ConsentRecordResponse"];
                 };
             };
         };
@@ -17465,25 +17475,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        items: {
-                            id: string;
-                            actorEmail: string;
-                            actorName: string;
-                            action: string;
-                            resourceType: string;
-                            resourceId: string;
-                            description: string;
-                            reason?: string;
-                            ipAddress?: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            hasStateChanges: boolean;
-                        }[];
-                        total: number;
-                        page: number;
-                        pageSize: number;
-                    };
+                    "application/json": components["schemas"]["AuditListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -17524,23 +17516,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Admin audit-log entry. */
-                        entry: {
-                            id: string;
-                            actorEmail: string;
-                            actorName: string;
-                            action: string;
-                            resourceType: string;
-                            resourceId: string;
-                            description: string;
-                            reason?: string;
-                            ipAddress?: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            hasStateChanges: boolean;
-                        };
-                    };
+                    "application/json": components["schemas"]["AuditEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */

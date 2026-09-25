@@ -3,14 +3,12 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import {
-  zodToJsonSchema,
-  ParticipantListResponseSchema,
-} from '@poolmaster/shared/dto';
+import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import {
-  ParticipantResponseSchema,
-} from '@poolmaster/shared/dto/participants.dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/participants.dto';
 import {
   PrismaParticipantRepository,
   PrismaParticipantProviderMappingRepository,
@@ -20,6 +18,8 @@ import { createParticipantHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
 
 export function participantsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const participantRepo = new PrismaParticipantRepository(prisma);
   const providerMappingRepo = new PrismaParticipantProviderMappingRepository(prisma);
@@ -55,7 +55,7 @@ export function participantsModule(fastify: FastifyInstance): void {
         },
       },
       response: {
-        200: zodToJsonSchema(ParticipantListResponseSchema),
+        200: schemaRef('ParticipantListResponse'),
       },
     },
     handler: handler.searchParticipants,
@@ -71,7 +71,7 @@ export function participantsModule(fastify: FastifyInstance): void {
         'Returns participant detail for the target participant identifier.',
       operationId: 'getParticipant',
       response: {
-        200: zodToJsonSchema(ParticipantResponseSchema),
+        200: schemaRef('ParticipantResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -103,7 +103,7 @@ export function participantsModule(fastify: FastifyInstance): void {
         },
       },
       response: {
-        201: zodToJsonSchema(ParticipantResponseSchema),
+        201: schemaRef('ParticipantResponse'),
       },
     },
     handler: handler.createParticipant,
@@ -117,7 +117,7 @@ export function participantsModule(fastify: FastifyInstance): void {
         'Updates mutable participant fields such as display metadata and identifiers.',
       operationId: 'updateParticipant',
       response: {
-        200: zodToJsonSchema(ParticipantResponseSchema),
+        200: schemaRef('ParticipantResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: {
