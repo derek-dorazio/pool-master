@@ -14,8 +14,10 @@ env:
   AWS_REGION: us-east-2
 
 jobs:
-  lint-typecheck:
-    name: lint-and-typecheck
+  # Repo-wide gates: the published contract and the model/rule guards. Scope is the
+  # whole repository, so this blocks both service and web work.
+  all-contract-gates:
+    name: all-contract-gates
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -26,25 +28,39 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - run: npm run build --workspace @poolmaster/shared
-      - name: Rule enforcement checks
+      - name: all - rule enforcement checks
         run: npm run rules:check
-      - name: Generated API freshness
+      - name: all - generated API freshness
         run: npm run api:check
-      - name: Generated API spec quality
+      - name: all - generated API spec quality
         run: npm run api:validate
-      - name: Review triggers marker (PRs only)
+      - name: all - review triggers marker (PRs only)
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: node scripts/check-pr-review-triggers.mjs
-      # Service-only. The webapp's lint and typecheck run in poolmaster-build, so a
-      # client-side type error cannot prevent the backend integration and functional
-      # suites from reporting. See plans/145 — phase 1 of the domain-model refactor
-      # deliberately leaves the client red while the service tier is brought into line.
-      - name: Lint service
+
+  # Service-tier static checks. Separate from the web equivalents so a client-side type
+  # error cannot prevent the backend integration and functional suites from reporting —
+  # see plans/145, phase 1, where the client is deliberately red while the service tier
+  # is brought into line.
+  service-lint-typecheck:
+    name: service-lint-typecheck
+    runs-on: ubuntu-latest
+    needs: all-contract-gates
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+      - run: npm run build --workspace @poolmaster/shared
+      - name: service - lint
         run: npm run lint:service
-      - name: Typecheck service
+      - name: service - typecheck
         run: npm run typecheck:service
 
   # =========================================================================
@@ -53,7 +69,7 @@ jobs:
   service-coverage-report:
     name: service-coverage-report
     runs-on: ubuntu-latest
-    needs: lint-typecheck
+    needs: service-lint-typecheck
     services:
       postgres:
         image: postgres:16
@@ -97,10 +113,10 @@ jobs:
           const fs = require('fs');
           const summary = process.env.GITHUB_STEP_SUMMARY;
           const sections = [
-            ['Service Unit Coverage', 'coverage/service-unit/coverage-summary.json'],
-            ['Service Integration Coverage', 'coverage/service-integration/coverage-summary.json'],
-            ['Service Functional API Coverage', 'coverage/service-functional-api/coverage-summary.json'],
-            ['Merged Service Coverage', 'coverage/service-merged/coverage-summary.json'],
+            ['Service Unit Coverage', 'coverage/service-unit/all-coverage-summary.json'],
+            ['Service Integration Coverage', 'coverage/service-integration/all-coverage-summary.json'],
+            ['Service Functional API Coverage', 'coverage/service-functional-api/all-coverage-summary.json'],
+            ['Merged Service Coverage', 'coverage/service-merged/all-coverage-summary.json'],
           ];
 
           const markdown = ['### Service Coverage'];
@@ -165,7 +181,7 @@ jobs:
   poolmaster-unit-tests:
     name: poolmaster-unit-tests
     runs-on: ubuntu-latest
-    needs: lint-typecheck
+    needs: all-contract-gates
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -232,8 +248,8 @@ jobs:
             clients/poolmaster/coverage/coverage-final.json
           if-no-files-found: warn
 
-  coverage-summary:
-    name: coverage-summary
+  all-coverage-summary:
+    name: all-coverage-summary
     runs-on: ubuntu-latest
     needs: [service-coverage-report, poolmaster-unit-tests]
     if: always()
@@ -259,8 +275,8 @@ jobs:
           const fs = require('fs');
           const summary = process.env.GITHUB_STEP_SUMMARY;
           const reports = [
-            ['Service', 'coverage-artifacts/service/service-merged/coverage-summary.json'],
-            ['PoolMaster Unit', 'coverage-artifacts/poolmaster/coverage-summary.json'],
+            ['Service', 'coverage-artifacts/service/service-merged/all-coverage-summary.json'],
+            ['PoolMaster Unit', 'coverage-artifacts/poolmaster/all-coverage-summary.json'],
           ];
 
           const rows = reports.map(([name, path]) => {
@@ -292,7 +308,7 @@ jobs:
   service-build:
     name: service-build
     runs-on: ubuntu-latest
-    needs: lint-typecheck
+    needs: service-lint-typecheck
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -303,10 +319,10 @@ jobs:
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - run: npm run build:service
 
-  mock-contest-feed-provider-build:
-    name: mock-contest-feed-provider-build
+  service-mock-provider-build:
+    name: service-mock-provider-build
     runs-on: ubuntu-latest
-    needs: lint-typecheck
+    needs: service-lint-typecheck
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -321,7 +337,7 @@ jobs:
   poolmaster-build:
     name: poolmaster-build
     runs-on: ubuntu-latest
-    needs: lint-typecheck
+    needs: all-contract-gates
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -333,18 +349,19 @@ jobs:
       - run: npm run build --workspace @poolmaster/shared
       # The webapp's own gates live here rather than in lint-and-typecheck, so that a
       # client-side failure does not skip the backend test jobs that depend on it.
-      - name: Lint webapp
+      - name: poolmaster - lint
         run: npm run lint:webapp
-      - name: Typecheck webapp
+      - name: poolmaster - typecheck
         run: npm run typecheck:webapp
       - run: npm run build:poolmaster
 
   # =========================================================================
   # Publish Images + Deploy to QA
   # =========================================================================
-  publish-images:
+  deploy-publish-images:
+    name: deploy-publish-images
     runs-on: ubuntu-latest
-    needs: [service-coverage-report, poolmaster-unit-tests, service-build, mock-contest-feed-provider-build, poolmaster-build]
+    needs: [service-coverage-report, poolmaster-unit-tests, service-build, service-mock-provider-build, poolmaster-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -746,9 +763,10 @@ jobs:
   # =========================================================================
   # QA Database Migrations — apply schema changes before smoke tests
   # =========================================================================
-  migrate-qa:
+  deploy-migrate-qa:
+    name: deploy-migrate-qa
     runs-on: ubuntu-latest
-    needs: publish-images
+    needs: deploy-publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Configure AWS credentials
@@ -1108,7 +1126,7 @@ jobs:
     # shouldn't depend on migrate-qa succeeding — depend on the same thing
     # migrate-qa itself depends on instead. An unrelated migration failure
     # was silently skipping this job on every recent main run.
-    needs: publish-images
+    needs: deploy-publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
