@@ -430,3 +430,123 @@ existing tables.
 The substrate test is: "can the next sport / contest type / variant ship
 without altering any existing table?" If no, the design is too coupled to
 today's variants.
+
+---
+
+## 12. League, Squad, and Membership Vocabulary
+
+These terms are settled. Do not introduce synonyms or sub-concepts for them.
+
+### Squad is the league's team
+
+A **Squad** is a team *within a PoolMaster league*. It is never a sports team — a
+real-world team (where one exists for a sport) is a `Participant` or an event-scoped
+entity, never a `Squad`.
+
+Where UI copy says "team", the entity is `Squad`. Route paths, DTO fields and
+variable names use **Squad**. `teams[]` as a field name for squads is wrong.
+
+### Squad member and squad owner are the same thing
+
+`SquadMembership` has **no role column**. Every member of a squad is an owner of that
+squad; the words are synonyms. If a squad has seven members, all seven are owners.
+
+There is no primary owner, no secondary owner, no owner-versus-member distinction. Do
+not add one, and do not name a field `owners` when the entity is `SquadMembership`.
+
+Contrast with `LeagueMembership`, which *does* carry `role: COMMISSIONER | MEMBER` —
+that distinction is real and belongs to the league edge, not the squad edge.
+
+### One squad per user per league
+
+`SquadMembership.@@unique([leagueId, userId])` is a deliberate product rule: **a user
+belongs to at most one squad in any given league.** It keeps screens and flows simple
+and is intended to stay.
+
+This is why `SquadMembership.leagueId` is denormalised even though it is derivable via
+`squad.leagueId` — the constraint needs it on the row. **That denormalisation is
+load-bearing; do not "clean it up".**
+
+### Squad names are unique within a league
+
+`@@unique([leagueId, name])`. A league may not contain two squads with the same name.
+
+### League creation establishes the first commissioner
+
+Creating a league must also create a `LeagueMembership` for the creator with
+`role = COMMISSIONER`. That membership — not `League.createdBy` — is the authoritative
+statement of who runs a league.
+
+`League.createdBy` is provenance only. No functionality depends on it.
+
+---
+
+## 13. Operation Access Roles
+
+Every operation declares who may call it. The declaration is part of the contract and
+belongs in the route definition and the OpenAPI description, not in tribal knowledge.
+
+### The actors
+
+| Actor | Scope |
+|---|---|
+| **Root admin** | Every league, every user, every object |
+| **Commissioner** | One league — the league their `LeagueMembership.role` names them commissioner of |
+| **Member** | One league — as a `LeagueMembership` holder |
+
+### The default access pattern within a league
+
+This is the common case and should be assumed unless an operation states otherwise:
+
+| Actor | Own data | Peer data (same league) | League-wide data |
+|---|---|---|---|
+| **Member** | read / write | **read only** | read |
+| **Commissioner** | read / write | read / write | read / write |
+
+"Own data" means the objects tied to the caller's own `SquadMembership` — their squad,
+their contest entries, their picks. "Peer data" is the same objects belonging to another
+member of the same league. **Members can see their peers; they cannot change them.**
+
+### Annotating operations
+
+Each operation is tagged with the minimum role required, and where the own/peer
+distinction applies, which side it falls on. Examples:
+
+- `rootAdmin` — cross-league operations
+- `commissioner` — league-scoped write
+- `member:own` — the caller's own data, read or write
+- `member:peer` — another member's data, read only
+- `member` — league-scoped read available to any member
+
+An operation whose access cannot be expressed in these terms is a signal that the
+operation is modelled wrong, not that the vocabulary needs extending. Raise it.
+
+### Access level is not a reason for a second object
+
+Permission never justifies a duplicate DTO, a duplicate route, or an `AdminXDto`
+alongside an `XDto`. The object is the object; the role decides who may call the
+operation. See §8 and §14.
+
+Field-level redaction for lower-privilege callers has **no implementation yet**.
+Admin-only fields are annotated on the canonical DTO and left exposed for now — a
+deliberate, recorded trade in exchange for a single coherent model. Do not build a
+redaction scheme, and do not create a variant DTO to avoid one.
+
+---
+
+## 14. Gaps Are Requirements
+
+No shadow or derived object may be created — no per-page DTO, no projection, no "just
+for this view" shape, no `AdminXDto` beside an `XDto`.
+
+If the model appears to lack something, that is not licence to work around it. Bring it
+back as a question: **what is the new concept, and where does it fit in the core domain
+model?** The answer either changes the model — a new entity, edge, field or operation —
+or reveals the concept already exists under another name. Both are progress. Inventing
+a parallel shape is neither.
+
+**A written convention has already proven insufficient here.** §8 has forbidden
+per-page DTO variants since the repository's first commit, naming
+`LeagueSummaryDto` / `LeagueDetailDto` as the explicit counter-example — and both exist
+in the published contract today. Treat this section as a hard stop, not guidance, and
+prefer a mechanical guard over a restated rule.

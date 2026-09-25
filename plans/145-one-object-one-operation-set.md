@@ -297,14 +297,23 @@ only edge attributes. It predates this refactor — defined in `ef90117` (2026-0
 unlike the `adminListLeagues` case above, this one *is* independent evidence that the right
 pattern existed here first. It is the template, not a thing to invent.
 
-**But `LeagueMemberDto`, the flattened one, was authored in the same commit.** Both shapes
-were born together. So the cause is not erosion over time or a later agent degrading an
-earlier design: it is the absence of a stated rule at the point of authorship. Two shapes
-for one edge looked reasonable to whoever wrote them because nothing said otherwise.
+**Correction — an earlier draft claimed both shapes were "authored in the same commit",
+inferring that the cause was the absence of a stated rule at the point of authorship. That
+inference was wrong.** They share `ef90117` because `ef90117` is the repository's **root
+commit** — 1,283 files, 307,057 insertions, no parent. Everything present at import shares
+that SHA; it says nothing about authorship sequence.
 
-That matters for the fix. A cleanup alone restores consistency once and leaves the same
-vacuum behind. The rule has to be written down, and a guard has to enforce it, or the next
-agent authors the fifth partial copy for the same reason the first four exist.
+The real finding is stronger. **`rules/domain-model-conventions-rules.md` §8 already states
+the rule** — "One canonical DTO per entity", with per-page variants forbidden and
+`LeagueSummaryDto` / `LeagueDetailDto` named as the explicit counter-example. Both of those
+are registered components in the published contract today.
+
+So this is not a vacuum. A convention was written down, in the right file, with the exact
+violating pair named — **and it did not prevent any of this.** That changes what the fix
+has to be: restating the rule is demonstrably insufficient, so the enforcement must be
+mechanical. §2z gives the check — a DTO whose name has no corresponding entity or edge in
+`schema.prisma` was invented at the route layer — and that is computable from the committed
+artifacts, like the five guards #192 already ships.
 
 Target shape for an edge:
 
