@@ -12,8 +12,9 @@ import {
   sendLeagueInvitations,
   updateLeagueDetails,
   updateLeagueIcon,
-  type GetLeagueResponses,
   type LeaveLeagueResponses,
+  type LeagueDetailDto,
+  type LeagueSummaryDto,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -38,7 +39,10 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
+import {
+  removeLeagueSummary,
+  syncLeagueCaches,
+} from './league-cache';
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
@@ -47,7 +51,6 @@ import { buildInvitePath, rememberRecentLeagueCode } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeaveLeagueResult = LeaveLeagueResponses[200];
 type ActiveLeagueDialog = 'details' | 'inactivate' | 'invite' | 'leave' | null;
 
@@ -83,7 +86,7 @@ export function LeagueDetailPage() {
   const [detailsDescription, setDetailsDescription] = useState('');
   const [detailsDraftLeagueId, setDetailsDraftLeagueId] = useState<string | null>(null);
   const [iconModalOpen, setIconModalOpen] = useState(false);
-  const [iconDraftKey, setIconDraftKey] = useState<LeagueDetail['iconKey']>('TROPHY');
+  const [iconDraftKey, setIconDraftKey] = useState<LeagueDetailDto['iconKey']>('TROPHY');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [activeDialog, setActiveDialog] = useState<ActiveLeagueDialog>(null);
@@ -91,7 +94,7 @@ export function LeagueDetailPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
@@ -222,7 +225,7 @@ export function LeagueDetailPage() {
   });
 
   const updateIconMutation = useInvalidatingMutation({
-    mutationFn: async (iconKey: LeagueDetail['iconKey']) => {
+    mutationFn: async (iconKey: LeagueDetailDto['iconKey']) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
         body: { iconKey },
@@ -306,7 +309,7 @@ export function LeagueDetailPage() {
     },
     onSuccess: () => {
       setDeleteModalOpen(false);
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
       void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
@@ -329,7 +332,7 @@ export function LeagueDetailPage() {
     onSuccess: () => {
       setLeaveActionError(null);
       setLeaveCompleted(true);
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
     },
@@ -384,7 +387,7 @@ export function LeagueDetailPage() {
   }
 
   async function handleLeaveCompletionAcknowledge() {
-    const remainingLeagues = queryClient.getQueryData<LeagueSummary[]>(QueryKeys.leagues.list) ?? [];
+    const remainingLeagues = queryClient.getQueryData<LeagueSummaryDto[]>(QueryKeys.leagues.list) ?? [];
     const nextLeague = remainingLeagues.find((league) => league.isActive) ?? remainingLeagues[0];
 
     setActiveDialog(null);

@@ -11,9 +11,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import type {
   GetManagedContestResponses,
-  GetLeagueByCodeResponses,
   ListManagedContestTemplatesResponses,
   ListEventsResponses,
+  LeagueDetailDto,
 } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
@@ -66,7 +66,6 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
 type ManagedContest = GetManagedContestResponses[200]['contest'];
 type ManagedContestTemplate = ListManagedContestTemplatesResponses[200]['templates'][number];
@@ -275,7 +274,7 @@ export function CreateContestPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {

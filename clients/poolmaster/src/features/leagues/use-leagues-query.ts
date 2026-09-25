@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
+import { listLeagues, type LeagueSummaryDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 export function useLeaguesQuery({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: QueryKeys.leagues.list,
-    queryFn: async (): Promise<LeagueSummary[]> => {
+    queryFn: async (): Promise<LeagueSummaryDto[]> => {
       const response = await listLeagues();
       if (!response.data) {
         throwApiError(response.error, 'League list response is missing data.');

@@ -1,7 +1,6 @@
-import type { ListLeaguesResponses } from '@/lib/api';
+import type { LeagueSummaryDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 export const RECENT_LEAGUE_COOKIE = 'poolmaster_recent_league';
 
@@ -83,7 +82,7 @@ export function rememberRecentLeagueCode(leagueCode: string) {
   document.cookie = `${RECENT_LEAGUE_COOKIE}=${encodeURIComponent(leagueCode)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
 }
 
-export function resolveDefaultLeagueCode(leagues: LeagueSummary[]) {
+export function resolveDefaultLeagueCode(leagues: LeagueSummaryDto[]) {
   if (!leagues.length) {
     return null;
   }
@@ -113,15 +112,15 @@ export function getLeagueInitials(name: string) {
     .join('');
 }
 
-function getLeagueCreatedAtTime(league: LeagueSummary) {
+function getLeagueCreatedAtTime(league: LeagueSummaryDto) {
   return league.createdAt ? Date.parse(league.createdAt) : 0;
 }
 
-export function sortLeaguesNewestFirst(leagues: LeagueSummary[]) {
+export function sortLeaguesNewestFirst(leagues: LeagueSummaryDto[]) {
   return [...leagues].sort((left, right) => getLeagueCreatedAtTime(right) - getLeagueCreatedAtTime(left));
 }
 
-export function sortLeaguesForOverview(leagues: LeagueSummary[]) {
+export function sortLeaguesForOverview(leagues: LeagueSummaryDto[]) {
   return [...leagues].sort((left, right) => {
     if (left.isActive !== right.isActive) {
       return left.isActive ? -1 : 1;
@@ -139,7 +138,7 @@ export function sortLeaguesForOverview(leagues: LeagueSummary[]) {
   });
 }
 
-export function getLeagueSelectorOptions(leagues: LeagueSummary[]) {
+export function getLeagueSelectorOptions(leagues: LeagueSummaryDto[]) {
   return sortLeaguesNewestFirst(
     leagues.filter((league) => league.isActive || league.leagueRelationship.commissioner),
   );

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { LeagueDetailDto } from '@/lib/api';
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { throwApiError } from "@/lib/errors";
@@ -6,7 +7,6 @@ import {
   getMyContestEntry,
   getLeagueByCode,
   listContests,
-  type GetLeagueByCodeResponses,
   type ListContestsResponses,
 } from "@/lib/api";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
@@ -33,7 +33,6 @@ import { isHistoricalContest } from "./contest-status";
 import { ContestListCard } from "./contest-list-card";
 import { QueryKeys } from '@/lib/query-keys';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]["league"];
 type ContestSummary = ListContestsResponses[200]["contests"][number];
 
 export function LeagueContestsPage() {
@@ -46,7 +45,7 @@ export function LeagueContestsPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {

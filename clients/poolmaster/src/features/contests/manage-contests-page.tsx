@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import {
   getLeagueByCode,
   listContests,
-  type GetLeagueByCodeResponses,
   type ListContestsResponses,
+  type LeagueDetailDto,
 } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -34,7 +34,6 @@ import { isHistoricalContest } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 
 export function ManageContestsPage() {
@@ -45,7 +44,7 @@ export function ManageContestsPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {

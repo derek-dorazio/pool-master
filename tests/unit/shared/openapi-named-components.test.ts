@@ -42,6 +42,26 @@ const CONVERTED_COMPONENTS = [
   'CreateSquadRequest',
   'UpdateSquadRequest',
   'AddSquadMemberRequest',
+  // leagues — the highest-derivation module (18 sites across 3 names)
+  'LeagueSummaryDto',
+  'LeagueDetailDto',
+  'LeagueMemberDto',
+  'LeagueResponse',
+  'LeagueListResponse',
+  'LeagueMembersResponse',
+];
+
+/**
+ * Response maps that no frontend file may index into any more, because the module
+ * that owns them has been converted. Each entry is a module's derivations being gone
+ * for good — a new one anywhere re-opens the drift the conversion closed.
+ */
+const RETIRED_RESPONSE_MAPS = [
+  'ListLeagueSquadsResponses',
+  'GetLeagueResponses',
+  'GetLeagueByCodeResponses',
+  'ListLeaguesResponses',
+  'ListLeagueMembersResponses',
 ];
 
 describe('#192: DTOs publish as named OpenAPI components', () => {
@@ -94,14 +114,31 @@ describe('#192: converted modules leave no derived types behind', () => {
     expect(featureSources).toMatch(/SquadDto/);
   });
 
-  it('rule: no frontend file derives a type from a squads response map', () => {
-    // Guards the whole tree, not just the file above — a new derivation anywhere
-    // re-opens the drift this slice closed.
+  it.each(RETIRED_RESPONSE_MAPS)(
+    'rule: no frontend file indexes into %s any more',
+    (responseMap) => {
+      // Guards the whole tree. The word boundary matters: an unanchored match would
+      // also hit AdminListLeaguesResponses, a different endpoint that is NOT yet
+      // converted — a blanket rewrite did exactly that during the leagues slice and
+      // renamed an admin type out from under itself.
+      const { execSync } = require('node:child_process') as typeof import('node:child_process');
+      const hits = execSync(
+        `grep -rlE "\\b${responseMap}\\[" clients/poolmaster/src --include=*.ts --include=*.tsx || true`,
+        { cwd: ROOT, encoding: 'utf8' },
+      ).trim();
+      expect(hits).toBe('');
+    },
+  );
+
+  it('rule: an unconverted module keeps its response map untouched', () => {
+    // AdminListLeaguesResponses belongs to the admin module, which has not been
+    // converted. It must still be there — its absence would mean a conversion
+    // reached past its own module.
     const { execSync } = require('node:child_process') as typeof import('node:child_process');
     const hits = execSync(
-      'grep -rl "ListLeagueSquadsResponses" clients/poolmaster/src --include=*.ts --include=*.tsx || true',
+      'grep -rl "AdminListLeaguesResponses" clients/poolmaster/src --include=*.tsx || true',
       { cwd: ROOT, encoding: 'utf8' },
     ).trim();
-    expect(hits).toBe('');
+    expect(hits).not.toBe('');
   });
 });

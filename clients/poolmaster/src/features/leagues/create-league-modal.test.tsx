@@ -2,14 +2,13 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import type { ListLeaguesResponses } from '@/lib/api';
+import type { LeagueSummaryDto } from '@/lib/api';
 import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
 import {
   apiSuccess,
   buildLeagueDetail,
   buildLeagueSummary,
   createLeagueData,
-  type LeagueSummary,
 } from './test/fixtures';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -41,7 +40,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDto[]> }) {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.leagues.list,
     queryFn,
@@ -102,7 +101,7 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     createLeagueMock.mockResolvedValue(apiSuccess(createLeagueData(createdLeague)));
 
     const onCreated = vi.fn();
-    const leaguesQueryFn = vi.fn<() => Promise<LeagueSummary[]>>().mockResolvedValue([]);
+    const leaguesQueryFn = vi.fn<() => Promise<LeagueSummaryDto[]>>().mockResolvedValue([]);
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -145,7 +144,7 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('BIGDAWGS'));
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData<ListLeaguesResponses[200]['leagues']>(QueryKeys.leagues.list)).toEqual([
+    expect(queryClient.getQueryData<LeagueSummaryDto[]>(QueryKeys.leagues.list)).toEqual([
       buildLeagueSummary({
         id: 'league-1',
         leagueCode: 'BIGDAWGS',

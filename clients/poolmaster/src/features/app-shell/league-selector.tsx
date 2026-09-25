@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ListLeaguesResponses } from "@/lib/api";
+import type { LeagueSummaryDto } from '@/lib/api';
 import { getLogger } from "@/lib/logger";
 import { Button, Tile } from "@/features/shared/ui";
 import {
@@ -9,11 +9,10 @@ import {
 } from "@/features/leagues/league-routing";
 import { LeagueIcon } from "@/features/leagues/league-icon";
 
-type LeagueSummary = ListLeaguesResponses[200]["leagues"][number];
 
 type LeagueSelectorProps = {
   activeLeagueCode?: string | null;
-  leagues: LeagueSummary[];
+  leagues: LeagueSummaryDto[];
   onCreateLeague: () => void;
   onNavigate: (path: string) => void;
 };

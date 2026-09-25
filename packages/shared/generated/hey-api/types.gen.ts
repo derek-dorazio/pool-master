@@ -5,6 +5,1151 @@ export type ClientOptions = {
 };
 
 /**
+ * Commissioner request payload for creating a new private league.
+ */
+export type CreateLeagueRequest = {
+    /**
+     * Primary league name shown in selectors, invites, and league home.
+     */
+    name: string;
+    /**
+     * Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`.
+     */
+    leagueCode: string;
+    /**
+     * Optional short description or commissioner-facing summary for the league.
+     */
+    description?: string;
+};
+
+/**
+ * Commissioner confirmation payload for permanently deleting an inactive league.
+ */
+export type DeleteLeagueRequest = {
+    /**
+     * Exact league code confirmation required before permanently deleting an inactive league.
+     */
+    leagueCode: string;
+};
+
+/**
+ * Commissioner request payload for editing league details while the league remains active.
+ */
+export type UpdateLeagueDetailsRequest = {
+    /**
+     * Updated primary league name shown in selectors, tiles, and league home.
+     */
+    name: string;
+    /**
+     * Optional updated commissioner-facing league description. Omit or send an empty value to clear it.
+     */
+    description?: string;
+};
+
+/**
+ * Commissioner request payload for selecting a built-in league icon.
+ */
+export type UpdateLeagueIconRequest = {
+    /**
+     * Selected built-in league icon from the curated PoolMaster icon catalog.
+     */
+    iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+};
+
+/**
+ * Commissioner request payload for sending direct email invites.
+ */
+export type SendLeagueInvitationsRequest = {
+    /**
+     * Email recipients to invite into the league.
+     */
+    emails: Array<string>;
+    /**
+     * Optional commissioner note included with the invitation email.
+     */
+    message?: string;
+};
+
+/**
+ * Commissioner request payload for creating a shareable invite link.
+ */
+export type GenerateInviteLinkRequest = {
+    /**
+     * Optional invite-link lifetime in days.
+     */
+    expiresInDays?: number;
+    /**
+     * Optional maximum number of accepted joins. Zero means unlimited use.
+     */
+    maxUses?: number;
+};
+
+/**
+ * Commissioner-managed membership role update payload.
+ */
+export type ChangeLeagueMemberRoleRequest = {
+    /**
+     * Target membership role after the change. Commissioner grants league-administration access.
+     */
+    role: 'COMMISSIONER' | 'MEMBER';
+};
+
+/**
+ * Authenticated invitation-acceptance payload.
+ */
+export type AcceptInvitationRequest = {
+    /**
+     * Invite code from the invite URL or invitation email.
+     */
+    inviteCode: string;
+};
+
+/**
+ * Commissioner request payload for copying a prior season into a new one.
+ */
+export type CopySeasonRequest = {
+    /**
+     * Contests from the source season that should be copied forward.
+     */
+    sourceContestIds: Array<string>;
+};
+
+/**
+ * Single CSV-style member import row.
+ */
+export type CsvImportRow = {
+    /**
+     * Email address for the imported member row.
+     */
+    email: string;
+    /**
+     * Optional first name supplied in the import row.
+     */
+    firstName?: string;
+    /**
+     * Optional last name supplied in the import row.
+     */
+    lastName?: string;
+    /**
+     * Optional requested league role for the imported member.
+     */
+    role?: 'COMMISSIONER' | 'MEMBER';
+};
+
+/**
+ * Commissioner request payload for importing league members.
+ */
+export type ImportLeagueMembersRequest = {
+    /**
+     * Rows to import as league members.
+     */
+    rows: Array<{
+        /**
+         * Email address for the imported member row.
+         */
+        email: string;
+        /**
+         * Optional first name supplied in the import row.
+         */
+        firstName?: string;
+        /**
+         * Optional last name supplied in the import row.
+         */
+        lastName?: string;
+        /**
+         * Optional requested league role for the imported member.
+         */
+        role?: 'COMMISSIONER' | 'MEMBER';
+    }>;
+};
+
+/**
+ * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+ */
+export type LeagueRelationshipDto = {
+    /**
+     * Whether the current requester is an active member of this league.
+     */
+    leagueMember: boolean;
+    /**
+     * Whether the current requester is an active commissioner of this league.
+     */
+    commissioner: boolean;
+};
+
+/**
+ * League list item used for selectors, welcome screens, and league overviews.
+ */
+export type LeagueSummaryDto = {
+    /**
+     * Internal league identifier used for authenticated management APIs.
+     */
+    id: string;
+    /**
+     * Stable short code used in bookmarkable league-home routes and invite context.
+     */
+    leagueCode: string;
+    /**
+     * Primary display name for the league.
+     */
+    name: string;
+    /**
+     * Optional short league description.
+     */
+    description?: string | null;
+    /**
+     * Whether the league is currently active for normal write interactions.
+     */
+    isActive: boolean;
+    /**
+     * Selected built-in league icon key from the curated PoolMaster icon catalog.
+     */
+    iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+    /**
+     * Current number of memberships in the league.
+     */
+    memberCount: number;
+    /**
+     * Number of currently active contests associated with the league.
+     */
+    activeContestCount: number;
+    /**
+     * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+     */
+    memberType: 'COMMISSIONER' | 'MEMBER' | null;
+    /**
+     * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+     */
+    leagueRelationship: {
+        /**
+         * Whether the current requester is an active member of this league.
+         */
+        leagueMember: boolean;
+        /**
+         * Whether the current requester is an active commissioner of this league.
+         */
+        commissioner: boolean;
+    };
+    /**
+     * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+     */
+    isRootAdmin: boolean;
+    /**
+     * League creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+};
+
+/**
+ * Detailed league payload used by league-home and commissioner-management surfaces.
+ */
+export type LeagueDetailDto = {
+    /**
+     * Internal league identifier used for authenticated management APIs.
+     */
+    id: string;
+    /**
+     * Stable short code used in bookmarkable league-home routes and invite context.
+     */
+    leagueCode: string;
+    /**
+     * Primary display name for the league.
+     */
+    name: string;
+    /**
+     * Optional short league description.
+     */
+    description?: string | null;
+    /**
+     * Whether the league is currently active for normal write interactions.
+     */
+    isActive: boolean;
+    /**
+     * Selected built-in league icon key from the curated PoolMaster icon catalog.
+     */
+    iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+    /**
+     * Current number of memberships in the league.
+     */
+    memberCount: number;
+    /**
+     * Number of currently active contests associated with the league.
+     */
+    activeContestCount: number;
+    /**
+     * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+     */
+    memberType: 'COMMISSIONER' | 'MEMBER' | null;
+    /**
+     * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+     */
+    leagueRelationship: {
+        /**
+         * Whether the current requester is an active member of this league.
+         */
+        leagueMember: boolean;
+        /**
+         * Whether the current requester is an active commissioner of this league.
+         */
+        commissioner: boolean;
+    };
+    /**
+     * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+     */
+    isRootAdmin: boolean;
+    /**
+     * League creation timestamp in ISO 8601 format.
+     */
+    createdAt?: string;
+    /**
+     * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+     */
+    joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+};
+
+/**
+ * League membership summary shown in member-management views.
+ */
+export type LeagueMemberDto = {
+    /**
+     * Membership record identifier.
+     */
+    id: string;
+    /**
+     * User account identifier for the member.
+     */
+    userId: string;
+    /**
+     * Email address for the member account.
+     */
+    email: string;
+    /**
+     * First name shown in member-management surfaces.
+     */
+    firstName: string;
+    /**
+     * Last name shown in member-management surfaces.
+     */
+    lastName: string;
+    /**
+     * League role for the member, such as COMMISSIONER or MEMBER.
+     */
+    role: 'COMMISSIONER' | 'MEMBER';
+    /**
+     * When the user joined or was activated in the league.
+     */
+    joinedAt?: string;
+};
+
+/**
+ * Detailed league membership record.
+ */
+export type LeagueMembershipDto = {
+    /**
+     * Membership record identifier.
+     */
+    id: string;
+    /**
+     * League that owns the membership.
+     */
+    leagueId: string;
+    /**
+     * User account attached to the membership.
+     */
+    userId: string;
+    /**
+     * Current league role for the user.
+     */
+    role: 'COMMISSIONER' | 'MEMBER';
+    /**
+     * Membership lifecycle state.
+     */
+    status: 'ACTIVE' | 'INACTIVE';
+    /**
+     * When the user joined the league.
+     */
+    joinedAt: string;
+    /**
+     * When the membership record was created.
+     */
+    createdAt: string;
+    /**
+     * When the membership record was last updated.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Invitation record returned from commissioner invite-management APIs.
+ */
+export type LeagueInvitationDto = {
+    /**
+     * Invitation record identifier.
+     */
+    id: string;
+    /**
+     * League that owns the invitation.
+     */
+    leagueId: string;
+    /**
+     * Email recipient for direct email invites. Link invites omit this field.
+     */
+    email?: string | null;
+    /**
+     * Shareable invitation code used in URLs and acceptance requests.
+     */
+    inviteCode: string;
+    /**
+     * Invitation delivery mode, such as EMAIL or LINK.
+     */
+    inviteType: 'EMAIL' | 'LINK';
+    /**
+     * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+     */
+    status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+    /**
+     * Maximum accepted joins allowed for the invitation.
+     */
+    maxUses: number;
+    /**
+     * How many times the invitation has already been accepted.
+     */
+    currentUses: number;
+    /**
+     * User ID of the commissioner or actor that issued the invite.
+     */
+    invitedBy: string;
+    /**
+     * When the invite stops being valid, if it expires.
+     */
+    expiresAt?: string | null;
+    /**
+     * When the invitation was accepted, if applicable.
+     */
+    acceptedAt?: string | null;
+    /**
+     * User ID that accepted the invite, when known.
+     */
+    acceptedBy?: string | null;
+    /**
+     * Invitation creation timestamp.
+     */
+    createdAt: string;
+    /**
+     * Last invitation update timestamp.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Invitation preview payload used by `/invite/<inviteCode>` flows.
+ */
+export type InvitationPreviewResponse = {
+    /**
+     * Public invitation preview shown before or after authentication.
+     */
+    invitation: {
+        /**
+         * Invitation code currently being previewed.
+         */
+        inviteCode: string;
+        /**
+         * Current invitation lifecycle state.
+         */
+        status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+        /**
+         * Minimal league identity shown before accepting the invite.
+         */
+        league: {
+            /**
+             * League ID associated with the invitation.
+             */
+            id: string;
+            /**
+             * Bookmarkable short code for the invited league.
+             */
+            leagueCode: string;
+            /**
+             * Display name for the invited league.
+             */
+            name: string;
+        };
+    };
+};
+
+/**
+ * Commissioner dashboard action item.
+ */
+export type LeagueActionItemDto = {
+    id: string;
+    leagueId: string;
+    contestId?: string | null;
+    title: string;
+    description: string;
+    actionUrl?: string | null;
+    resolved: boolean;
+    /**
+     * When the action item was created.
+     */
+    createdAt: string;
+    /**
+     * When the action item was last updated.
+     */
+    updatedAt: string;
+};
+
+/**
+ * Recent member activity row used on commissioner dashboards.
+ */
+export type MemberActivityEventDto = {
+    /**
+     * User involved in the activity event.
+     */
+    userId: string;
+    /**
+     * First name shown for the member activity event when available.
+     */
+    firstName?: string;
+    /**
+     * Last name shown for the member activity event when available.
+     */
+    lastName?: string;
+    /**
+     * Normalized member activity action label.
+     */
+    action: string;
+    /**
+     * When the member activity occurred.
+     */
+    timestamp: string;
+};
+
+/**
+ * Upcoming league event summary.
+ */
+export type UpcomingEventDto = {
+    contestId?: string;
+    title: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    date: string;
+    /**
+     * Upcoming event category.
+     */
+    eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+};
+
+/**
+ * Single-league detail response.
+ */
+export type LeagueResponse = {
+    /**
+     * Detailed league payload used by league-home and commissioner-management surfaces.
+     */
+    league: {
+        /**
+         * Internal league identifier used for authenticated management APIs.
+         */
+        id: string;
+        /**
+         * Stable short code used in bookmarkable league-home routes and invite context.
+         */
+        leagueCode: string;
+        /**
+         * Primary display name for the league.
+         */
+        name: string;
+        /**
+         * Optional short league description.
+         */
+        description?: string | null;
+        /**
+         * Whether the league is currently active for normal write interactions.
+         */
+        isActive: boolean;
+        /**
+         * Selected built-in league icon key from the curated PoolMaster icon catalog.
+         */
+        iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+        /**
+         * Current number of memberships in the league.
+         */
+        memberCount: number;
+        /**
+         * Number of currently active contests associated with the league.
+         */
+        activeContestCount: number;
+        /**
+         * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+         */
+        memberType: 'COMMISSIONER' | 'MEMBER' | null;
+        /**
+         * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+         */
+        leagueRelationship: {
+            /**
+             * Whether the current requester is an active member of this league.
+             */
+            leagueMember: boolean;
+            /**
+             * Whether the current requester is an active commissioner of this league.
+             */
+            commissioner: boolean;
+        };
+        /**
+         * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+         */
+        isRootAdmin: boolean;
+        /**
+         * League creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+        /**
+         * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+         */
+        joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+    };
+};
+
+/**
+ * League-list response.
+ */
+export type LeagueListResponse = {
+    leagues: Array<{
+        /**
+         * Internal league identifier used for authenticated management APIs.
+         */
+        id: string;
+        /**
+         * Stable short code used in bookmarkable league-home routes and invite context.
+         */
+        leagueCode: string;
+        /**
+         * Primary display name for the league.
+         */
+        name: string;
+        /**
+         * Optional short league description.
+         */
+        description?: string | null;
+        /**
+         * Whether the league is currently active for normal write interactions.
+         */
+        isActive: boolean;
+        /**
+         * Selected built-in league icon key from the curated PoolMaster icon catalog.
+         */
+        iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+        /**
+         * Current number of memberships in the league.
+         */
+        memberCount: number;
+        /**
+         * Number of currently active contests associated with the league.
+         */
+        activeContestCount: number;
+        /**
+         * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+         */
+        memberType: 'COMMISSIONER' | 'MEMBER' | null;
+        /**
+         * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+         */
+        leagueRelationship: {
+            /**
+             * Whether the current requester is an active member of this league.
+             */
+            leagueMember: boolean;
+            /**
+             * Whether the current requester is an active commissioner of this league.
+             */
+            commissioner: boolean;
+        };
+        /**
+         * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+         */
+        isRootAdmin: boolean;
+        /**
+         * League creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+    }>;
+};
+
+/**
+ * League-members response.
+ */
+export type LeagueMembersResponse = {
+    members: Array<{
+        /**
+         * Membership record identifier.
+         */
+        id: string;
+        /**
+         * User account identifier for the member.
+         */
+        userId: string;
+        /**
+         * Email address for the member account.
+         */
+        email: string;
+        /**
+         * First name shown in member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * League role for the member, such as COMMISSIONER or MEMBER.
+         */
+        role: 'COMMISSIONER' | 'MEMBER';
+        /**
+         * When the user joined or was activated in the league.
+         */
+        joinedAt?: string;
+    }>;
+};
+
+/**
+ * Single league-membership response.
+ */
+export type LeagueMembershipResponse = {
+    /**
+     * Detailed league membership record.
+     */
+    membership: {
+        /**
+         * Membership record identifier.
+         */
+        id: string;
+        /**
+         * League that owns the membership.
+         */
+        leagueId: string;
+        /**
+         * User account attached to the membership.
+         */
+        userId: string;
+        /**
+         * Current league role for the user.
+         */
+        role: 'COMMISSIONER' | 'MEMBER';
+        /**
+         * Membership lifecycle state.
+         */
+        status: 'ACTIVE' | 'INACTIVE';
+        /**
+         * When the user joined the league.
+         */
+        joinedAt: string;
+        /**
+         * When the membership record was created.
+         */
+        createdAt: string;
+        /**
+         * When the membership record was last updated.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * League invitation-send response.
+ */
+export type SendLeagueInvitationsResponse = {
+    /**
+     * Invitation records successfully created and sent.
+     */
+    sent: Array<{
+        /**
+         * Invitation record identifier.
+         */
+        id: string;
+        /**
+         * League that owns the invitation.
+         */
+        leagueId: string;
+        /**
+         * Email recipient for direct email invites. Link invites omit this field.
+         */
+        email?: string | null;
+        /**
+         * Shareable invitation code used in URLs and acceptance requests.
+         */
+        inviteCode: string;
+        /**
+         * Invitation delivery mode, such as EMAIL or LINK.
+         */
+        inviteType: 'EMAIL' | 'LINK';
+        /**
+         * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+         */
+        status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+        /**
+         * Maximum accepted joins allowed for the invitation.
+         */
+        maxUses: number;
+        /**
+         * How many times the invitation has already been accepted.
+         */
+        currentUses: number;
+        /**
+         * User ID of the commissioner or actor that issued the invite.
+         */
+        invitedBy: string;
+        /**
+         * When the invite stops being valid, if it expires.
+         */
+        expiresAt?: string | null;
+        /**
+         * When the invitation was accepted, if applicable.
+         */
+        acceptedAt?: string | null;
+        /**
+         * User ID that accepted the invite, when known.
+         */
+        acceptedBy?: string | null;
+        /**
+         * Invitation creation timestamp.
+         */
+        createdAt: string;
+        /**
+         * Last invitation update timestamp.
+         */
+        updatedAt: string;
+    }>;
+    /**
+     * Emails skipped because they already belong to the league.
+     */
+    skippedMembers: Array<string>;
+    /**
+     * Emails skipped because they were duplicated in the request or invite set.
+     */
+    skippedDuplicates: Array<string>;
+};
+
+/**
+ * Generated invite-link response.
+ */
+export type GenerateInviteLinkResponse = {
+    /**
+     * Invitation record returned from commissioner invite-management APIs.
+     */
+    invitation: {
+        /**
+         * Invitation record identifier.
+         */
+        id: string;
+        /**
+         * League that owns the invitation.
+         */
+        leagueId: string;
+        /**
+         * Email recipient for direct email invites. Link invites omit this field.
+         */
+        email?: string | null;
+        /**
+         * Shareable invitation code used in URLs and acceptance requests.
+         */
+        inviteCode: string;
+        /**
+         * Invitation delivery mode, such as EMAIL or LINK.
+         */
+        inviteType: 'EMAIL' | 'LINK';
+        /**
+         * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
+         */
+        status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+        /**
+         * Maximum accepted joins allowed for the invitation.
+         */
+        maxUses: number;
+        /**
+         * How many times the invitation has already been accepted.
+         */
+        currentUses: number;
+        /**
+         * User ID of the commissioner or actor that issued the invite.
+         */
+        invitedBy: string;
+        /**
+         * When the invite stops being valid, if it expires.
+         */
+        expiresAt?: string | null;
+        /**
+         * When the invitation was accepted, if applicable.
+         */
+        acceptedAt?: string | null;
+        /**
+         * User ID that accepted the invite, when known.
+         */
+        acceptedBy?: string | null;
+        /**
+         * Invitation creation timestamp.
+         */
+        createdAt: string;
+        /**
+         * Last invitation update timestamp.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * League audit-log response.
+ */
+export type LeagueAuditEntriesResponse = {
+    entries: Array<{
+        /**
+         * Audit-log entry id.
+         */
+        id: string;
+        /**
+         * League this entry belongs to.
+         */
+        leagueId: string;
+        /**
+         * Contest this entry references when the action is contest-scoped.
+         */
+        contestId?: string;
+        /**
+         * User id of the commissioner / actor that performed the action.
+         */
+        actorId: string;
+        /**
+         * Action verb in dotted form (e.g., "league.member.role.changed").
+         */
+        action: string;
+        /**
+         * Audit-log entry category — broad classification of the action that produced this entry.
+         */
+        category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
+        /**
+         * Human-readable description of what happened.
+         */
+        description: string;
+        /**
+         * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
+         */
+        beforeState?: {
+            [key: string]: unknown;
+        };
+        /**
+         * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
+         */
+        afterState?: {
+            [key: string]: unknown;
+        };
+        /**
+         * Optional human-supplied reason / justification for the action.
+         */
+        reason?: string;
+        /**
+         * IP address from which the action originated, when available.
+         */
+        ipAddress?: string;
+        /**
+         * When the audit entry was recorded.
+         */
+        createdAt: string;
+    }>;
+};
+
+/**
+ * Commissioner dashboard response.
+ */
+export type LeagueDashboardResponse = {
+    /**
+     * League summary payload driving the dashboard header.
+     */
+    league: {
+        /**
+         * Internal league identifier used for authenticated management APIs.
+         */
+        id: string;
+        /**
+         * Stable short code used in bookmarkable league-home routes and invite context.
+         */
+        leagueCode: string;
+        /**
+         * Primary display name for the league.
+         */
+        name: string;
+        /**
+         * Optional short league description.
+         */
+        description?: string | null;
+        /**
+         * Whether the league is currently active for normal write interactions.
+         */
+        isActive: boolean;
+        /**
+         * Selected built-in league icon key from the curated PoolMaster icon catalog.
+         */
+        iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+        /**
+         * Current number of memberships in the league.
+         */
+        memberCount: number;
+        /**
+         * Number of currently active contests associated with the league.
+         */
+        activeContestCount: number;
+        /**
+         * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+         */
+        memberType: 'COMMISSIONER' | 'MEMBER' | null;
+        /**
+         * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+         */
+        leagueRelationship: {
+            /**
+             * Whether the current requester is an active member of this league.
+             */
+            leagueMember: boolean;
+            /**
+             * Whether the current requester is an active commissioner of this league.
+             */
+            commissioner: boolean;
+        };
+        /**
+         * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+         */
+        isRootAdmin: boolean;
+        /**
+         * League creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+    };
+    /**
+     * Outstanding commissioner action items.
+     */
+    actionItems: Array<{
+        id: string;
+        leagueId: string;
+        contestId?: string | null;
+        title: string;
+        description: string;
+        actionUrl?: string | null;
+        resolved: boolean;
+        /**
+         * When the action item was created.
+         */
+        createdAt: string;
+        /**
+         * When the action item was last updated.
+         */
+        updatedAt: string;
+    }>;
+    /**
+     * Contest summaries included in the dashboard payload.
+     */
+    contests: Array<{
+        id: string;
+        name: string;
+        status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+        scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
+        leagueId: string;
+        sportEventId?: string | null;
+        sport?: string | null;
+        /**
+         * Number of entries currently in the contest.
+         */
+        entryCount?: number;
+        startsAt?: string | null;
+        endsAt?: string | null;
+        createdAt?: string;
+        updatedAt?: string;
+    }>;
+    /**
+     * Current league member count.
+     */
+    memberCount: number;
+    /**
+     * Current number of pending invitations.
+     */
+    pendingInvites: number;
+    /**
+     * Recent member activity for the league.
+     */
+    recentMemberActivity: Array<{
+        /**
+         * User involved in the activity event.
+         */
+        userId: string;
+        /**
+         * First name shown for the member activity event when available.
+         */
+        firstName?: string;
+        /**
+         * Last name shown for the member activity event when available.
+         */
+        lastName?: string;
+        /**
+         * Normalized member activity action label.
+         */
+        action: string;
+        /**
+         * When the member activity occurred.
+         */
+        timestamp: string;
+    }>;
+    /**
+     * Upcoming league events that should be surfaced on the dashboard.
+     */
+    upcomingEvents: Array<{
+        contestId?: string;
+        title: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        date: string;
+        /**
+         * Upcoming event category.
+         */
+        eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
+    }>;
+};
+
+/**
+ * Action-item resolution response.
+ */
+export type ResolveActionItemResponse = {
+    /**
+     * Commissioner dashboard action item.
+     */
+    actionItem: {
+        id: string;
+        leagueId: string;
+        contestId?: string | null;
+        title: string;
+        description: string;
+        actionUrl?: string | null;
+        resolved: boolean;
+        /**
+         * When the action item was created.
+         */
+        createdAt: string;
+        /**
+         * When the action item was last updated.
+         */
+        updatedAt: string;
+    };
+};
+
+/**
+ * Arbitrary JSON object payload.
+ */
+export type LeagueBulkOperationResponse = {
+    [key: string]: unknown;
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -1128,89 +2273,13 @@ export type ListLeaguesResponses = {
     /**
      * League-list response.
      */
-    200: {
-        leagues: Array<{
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        }>;
-    };
+    200: LeagueListResponse;
 };
 
 export type ListLeaguesResponse = ListLeaguesResponses[keyof ListLeaguesResponses];
 
 export type CreateLeagueData = {
-    /**
-     * Commissioner request payload for creating a new private league.
-     */
-    body: {
-        /**
-         * Primary league name shown in selectors, invites, and league home.
-         */
-        name: string;
-        /**
-         * Required unique league route code used in bookmarkable URLs such as `/league/<leagueCode>`.
-         */
-        leagueCode: string;
-        /**
-         * Optional short description or commissioner-facing summary for the league.
-         */
-        description?: string;
-    };
+    body: CreateLeagueRequest;
     path?: never;
     query?: never;
     url: '/api/v1/leagues/';
@@ -1269,88 +2338,13 @@ export type CreateLeagueResponses = {
     /**
      * Single-league detail response.
      */
-    201: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    201: LeagueResponse;
 };
 
 export type CreateLeagueResponse = CreateLeagueResponses[keyof CreateLeagueResponses];
 
 export type DeleteLeagueData = {
-    /**
-     * Commissioner confirmation payload for permanently deleting an inactive league.
-     */
-    body: {
-        /**
-         * Exact league code confirmation required before permanently deleting an inactive league.
-         */
-        leagueCode: string;
-    };
+    body: DeleteLeagueRequest;
     path: {
         id: string;
     };
@@ -1461,74 +2455,7 @@ export type GetLeagueResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type GetLeagueResponse = GetLeagueResponses[keyof GetLeagueResponses];
@@ -1573,92 +2500,13 @@ export type GetLeagueByCodeResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type GetLeagueByCodeResponse = GetLeagueByCodeResponses[keyof GetLeagueByCodeResponses];
 
 export type UpdateLeagueDetailsData = {
-    /**
-     * Commissioner request payload for editing league details while the league remains active.
-     */
-    body: {
-        /**
-         * Updated primary league name shown in selectors, tiles, and league home.
-         */
-        name: string;
-        /**
-         * Optional updated commissioner-facing league description. Omit or send an empty value to clear it.
-         */
-        description?: string;
-    };
+    body: UpdateLeagueDetailsRequest;
     path: {
         id: string;
     };
@@ -1719,88 +2567,13 @@ export type UpdateLeagueDetailsResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type UpdateLeagueDetailsResponse = UpdateLeagueDetailsResponses[keyof UpdateLeagueDetailsResponses];
 
 export type UpdateLeagueIconData = {
-    /**
-     * Commissioner request payload for selecting a built-in league icon.
-     */
-    body: {
-        /**
-         * Selected built-in league icon from the curated PoolMaster icon catalog.
-         */
-        iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-    };
+    body: UpdateLeagueIconRequest;
     path: {
         id: string;
     };
@@ -1861,74 +2634,7 @@ export type UpdateLeagueIconResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type UpdateLeagueIconResponse = UpdateLeagueIconResponses[keyof UpdateLeagueIconResponses];
@@ -1995,74 +2701,7 @@ export type InactivateLeagueResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type InactivateLeagueResponse = InactivateLeagueResponses[keyof InactivateLeagueResponses];
@@ -2129,92 +2768,13 @@ export type ActivateLeagueResponses = {
     /**
      * Single-league detail response.
      */
-    200: {
-        /**
-         * Detailed league payload used by league-home and commissioner-management surfaces.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-             */
-            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
-        };
-    };
+    200: LeagueResponse;
 };
 
 export type ActivateLeagueResponse = ActivateLeagueResponses[keyof ActivateLeagueResponses];
 
 export type SendLeagueInvitationsData = {
-    /**
-     * Commissioner request payload for sending direct email invites.
-     */
-    body: {
-        /**
-         * Email recipients to invite into the league.
-         */
-        emails: Array<string>;
-        /**
-         * Optional commissioner note included with the invitation email.
-         */
-        message?: string;
-    };
+    body: SendLeagueInvitationsRequest;
     path: {
         id: string;
     };
@@ -2275,95 +2835,13 @@ export type SendLeagueInvitationsResponses = {
     /**
      * League invitation-send response.
      */
-    201: {
-        /**
-         * Invitation records successfully created and sent.
-         */
-        sent: Array<{
-            /**
-             * Invitation record identifier.
-             */
-            id: string;
-            /**
-             * League that owns the invitation.
-             */
-            leagueId: string;
-            /**
-             * Email recipient for direct email invites. Link invites omit this field.
-             */
-            email?: string | null;
-            /**
-             * Shareable invitation code used in URLs and acceptance requests.
-             */
-            inviteCode: string;
-            /**
-             * Invitation delivery mode, such as EMAIL or LINK.
-             */
-            inviteType: 'EMAIL' | 'LINK';
-            /**
-             * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-             */
-            status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
-            /**
-             * Maximum accepted joins allowed for the invitation.
-             */
-            maxUses: number;
-            /**
-             * How many times the invitation has already been accepted.
-             */
-            currentUses: number;
-            /**
-             * User ID of the commissioner or actor that issued the invite.
-             */
-            invitedBy: string;
-            /**
-             * When the invite stops being valid, if it expires.
-             */
-            expiresAt?: string | null;
-            /**
-             * When the invitation was accepted, if applicable.
-             */
-            acceptedAt?: string | null;
-            /**
-             * User ID that accepted the invite, when known.
-             */
-            acceptedBy?: string | null;
-            /**
-             * Invitation creation timestamp.
-             */
-            createdAt: string;
-            /**
-             * Last invitation update timestamp.
-             */
-            updatedAt: string;
-        }>;
-        /**
-         * Emails skipped because they already belong to the league.
-         */
-        skippedMembers: Array<string>;
-        /**
-         * Emails skipped because they were duplicated in the request or invite set.
-         */
-        skippedDuplicates: Array<string>;
-    };
+    201: SendLeagueInvitationsResponse;
 };
 
-export type SendLeagueInvitationsResponse = SendLeagueInvitationsResponses[keyof SendLeagueInvitationsResponses];
+export type SendLeagueInvitationsResponse2 = SendLeagueInvitationsResponses[keyof SendLeagueInvitationsResponses];
 
 export type GenerateInviteLinkData = {
-    /**
-     * Commissioner request payload for creating a shareable invite link.
-     */
-    body: {
-        /**
-         * Optional invite-link lifetime in days.
-         */
-        expiresInDays?: number;
-        /**
-         * Optional maximum number of accepted joins. Zero means unlimited use.
-         */
-        maxUses?: number;
-    };
+    body: GenerateInviteLinkRequest;
     path: {
         id: string;
     };
@@ -2402,72 +2880,10 @@ export type GenerateInviteLinkResponses = {
     /**
      * Generated invite-link response.
      */
-    201: {
-        /**
-         * Invitation record returned from commissioner invite-management APIs.
-         */
-        invitation: {
-            /**
-             * Invitation record identifier.
-             */
-            id: string;
-            /**
-             * League that owns the invitation.
-             */
-            leagueId: string;
-            /**
-             * Email recipient for direct email invites. Link invites omit this field.
-             */
-            email?: string | null;
-            /**
-             * Shareable invitation code used in URLs and acceptance requests.
-             */
-            inviteCode: string;
-            /**
-             * Invitation delivery mode, such as EMAIL or LINK.
-             */
-            inviteType: 'EMAIL' | 'LINK';
-            /**
-             * Invitation lifecycle state, such as PENDING, ACCEPTED, REVOKED, or EXPIRED.
-             */
-            status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
-            /**
-             * Maximum accepted joins allowed for the invitation.
-             */
-            maxUses: number;
-            /**
-             * How many times the invitation has already been accepted.
-             */
-            currentUses: number;
-            /**
-             * User ID of the commissioner or actor that issued the invite.
-             */
-            invitedBy: string;
-            /**
-             * When the invite stops being valid, if it expires.
-             */
-            expiresAt?: string | null;
-            /**
-             * When the invitation was accepted, if applicable.
-             */
-            acceptedAt?: string | null;
-            /**
-             * User ID that accepted the invite, when known.
-             */
-            acceptedBy?: string | null;
-            /**
-             * Invitation creation timestamp.
-             */
-            createdAt: string;
-            /**
-             * Last invitation update timestamp.
-             */
-            updatedAt: string;
-        };
-    };
+    201: GenerateInviteLinkResponse;
 };
 
-export type GenerateInviteLinkResponse = GenerateInviteLinkResponses[keyof GenerateInviteLinkResponses];
+export type GenerateInviteLinkResponse2 = GenerateInviteLinkResponses[keyof GenerateInviteLinkResponses];
 
 export type RevokeInviteLinkData = {
     body?: never;
@@ -2604,52 +3020,13 @@ export type ListLeagueMembersResponses = {
     /**
      * League-members response.
      */
-    200: {
-        members: Array<{
-            /**
-             * Membership record identifier.
-             */
-            id: string;
-            /**
-             * User account identifier for the member.
-             */
-            userId: string;
-            /**
-             * Email address for the member account.
-             */
-            email: string;
-            /**
-             * First name shown in member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * League role for the member, such as COMMISSIONER or MEMBER.
-             */
-            role: 'COMMISSIONER' | 'MEMBER';
-            /**
-             * When the user joined or was activated in the league.
-             */
-            joinedAt?: string;
-        }>;
-    };
+    200: LeagueMembersResponse;
 };
 
 export type ListLeagueMembersResponse = ListLeagueMembersResponses[keyof ListLeagueMembersResponses];
 
 export type ChangeMemberRoleData = {
-    /**
-     * Commissioner-managed membership role update payload.
-     */
-    body: {
-        /**
-         * Target membership role after the change. Commissioner grants league-administration access.
-         */
-        role: 'COMMISSIONER' | 'MEMBER';
-    };
+    body: ChangeLeagueMemberRoleRequest;
     path: {
         id: string;
         uid: string;
@@ -2733,45 +3110,7 @@ export type ChangeMemberRoleResponses = {
     /**
      * Single league-membership response.
      */
-    200: {
-        /**
-         * Detailed league membership record.
-         */
-        membership: {
-            /**
-             * Membership record identifier.
-             */
-            id: string;
-            /**
-             * League that owns the membership.
-             */
-            leagueId: string;
-            /**
-             * User account attached to the membership.
-             */
-            userId: string;
-            /**
-             * Current league role for the user.
-             */
-            role: 'COMMISSIONER' | 'MEMBER';
-            /**
-             * Membership lifecycle state.
-             */
-            status: 'ACTIVE' | 'INACTIVE';
-            /**
-             * When the user joined the league.
-             */
-            joinedAt: string;
-            /**
-             * When the membership record was created.
-             */
-            createdAt: string;
-            /**
-             * When the membership record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    200: LeagueMembershipResponse;
 };
 
 export type ChangeMemberRoleResponse = ChangeMemberRoleResponses[keyof ChangeMemberRoleResponses];
@@ -3027,160 +3366,7 @@ export type GetLeagueDashboardResponses = {
     /**
      * Commissioner dashboard response.
      */
-    200: {
-        /**
-         * League summary payload driving the dashboard header.
-         */
-        league: {
-            /**
-             * Internal league identifier used for authenticated management APIs.
-             */
-            id: string;
-            /**
-             * Stable short code used in bookmarkable league-home routes and invite context.
-             */
-            leagueCode: string;
-            /**
-             * Primary display name for the league.
-             */
-            name: string;
-            /**
-             * Optional short league description.
-             */
-            description?: string | null;
-            /**
-             * Whether the league is currently active for normal write interactions.
-             */
-            isActive: boolean;
-            /**
-             * Selected built-in league icon key from the curated PoolMaster icon catalog.
-             */
-            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
-            /**
-             * Current number of memberships in the league.
-             */
-            memberCount: number;
-            /**
-             * Number of currently active contests associated with the league.
-             */
-            activeContestCount: number;
-            /**
-             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             */
-            memberType: 'COMMISSIONER' | 'MEMBER' | null;
-            /**
-             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
-             */
-            leagueRelationship: {
-                /**
-                 * Whether the current requester is an active member of this league.
-                 */
-                leagueMember: boolean;
-                /**
-                 * Whether the current requester is an active commissioner of this league.
-                 */
-                commissioner: boolean;
-            };
-            /**
-             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
-             */
-            isRootAdmin: boolean;
-            /**
-             * League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-        /**
-         * Outstanding commissioner action items.
-         */
-        actionItems: Array<{
-            id: string;
-            leagueId: string;
-            contestId?: string | null;
-            title: string;
-            description: string;
-            actionUrl?: string | null;
-            resolved: boolean;
-            /**
-             * When the action item was created.
-             */
-            createdAt: string;
-            /**
-             * When the action item was last updated.
-             */
-            updatedAt: string;
-        }>;
-        /**
-         * Contest summaries included in the dashboard payload.
-         */
-        contests: Array<{
-            id: string;
-            name: string;
-            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
-            leagueId: string;
-            sportEventId?: string | null;
-            sport?: string | null;
-            /**
-             * Number of entries currently in the contest.
-             */
-            entryCount?: number;
-            startsAt?: string | null;
-            endsAt?: string | null;
-            createdAt?: string;
-            updatedAt?: string;
-        }>;
-        /**
-         * Current league member count.
-         */
-        memberCount: number;
-        /**
-         * Current number of pending invitations.
-         */
-        pendingInvites: number;
-        /**
-         * Recent member activity for the league.
-         */
-        recentMemberActivity: Array<{
-            /**
-             * User involved in the activity event.
-             */
-            userId: string;
-            /**
-             * First name shown for the member activity event when available.
-             */
-            firstName?: string;
-            /**
-             * Last name shown for the member activity event when available.
-             */
-            lastName?: string;
-            /**
-             * Normalized member activity action label.
-             */
-            action: string;
-            /**
-             * When the member activity occurred.
-             */
-            timestamp: string;
-        }>;
-        /**
-         * Upcoming league events that should be surfaced on the dashboard.
-         */
-        upcomingEvents: Array<{
-            contestId?: string;
-            title: string;
-            /**
-             * ISO 8601 datetime string.
-             */
-            date: string;
-            /**
-             * Upcoming event category.
-             */
-            eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
-        }>;
-    };
+    200: LeagueDashboardResponse;
 };
 
 export type GetLeagueDashboardResponse = GetLeagueDashboardResponses[keyof GetLeagueDashboardResponses];
@@ -3226,31 +3412,10 @@ export type ResolveActionItemResponses = {
     /**
      * Action-item resolution response.
      */
-    200: {
-        /**
-         * Commissioner dashboard action item.
-         */
-        actionItem: {
-            id: string;
-            leagueId: string;
-            contestId?: string | null;
-            title: string;
-            description: string;
-            actionUrl?: string | null;
-            resolved: boolean;
-            /**
-             * When the action item was created.
-             */
-            createdAt: string;
-            /**
-             * When the action item was last updated.
-             */
-            updatedAt: string;
-        };
-    };
+    200: ResolveActionItemResponse;
 };
 
-export type ResolveActionItemResponse = ResolveActionItemResponses[keyof ResolveActionItemResponses];
+export type ResolveActionItemResponse2 = ResolveActionItemResponses[keyof ResolveActionItemResponses];
 
 export type GetLeagueAuditLogData = {
     body?: never;
@@ -3292,62 +3457,7 @@ export type GetLeagueAuditLogResponses = {
     /**
      * League audit-log response.
      */
-    200: {
-        entries: Array<{
-            /**
-             * Audit-log entry id.
-             */
-            id: string;
-            /**
-             * League this entry belongs to.
-             */
-            leagueId: string;
-            /**
-             * Contest this entry references when the action is contest-scoped.
-             */
-            contestId?: string;
-            /**
-             * User id of the commissioner / actor that performed the action.
-             */
-            actorId: string;
-            /**
-             * Action verb in dotted form (e.g., "league.member.role.changed").
-             */
-            action: string;
-            /**
-             * Audit-log entry category — broad classification of the action that produced this entry.
-             */
-            category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-            /**
-             * Human-readable description of what happened.
-             */
-            description: string;
-            /**
-             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            beforeState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            afterState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Optional human-supplied reason / justification for the action.
-             */
-            reason?: string;
-            /**
-             * IP address from which the action originated, when available.
-             */
-            ipAddress?: string;
-            /**
-             * When the audit entry was recorded.
-             */
-            createdAt: string;
-        }>;
-    };
+    200: LeagueAuditEntriesResponse;
 };
 
 export type GetLeagueAuditLogResponse = GetLeagueAuditLogResponses[keyof GetLeagueAuditLogResponses];
@@ -3414,76 +3524,13 @@ export type GetMemberAuditLogResponses = {
     /**
      * League audit-log response.
      */
-    200: {
-        entries: Array<{
-            /**
-             * Audit-log entry id.
-             */
-            id: string;
-            /**
-             * League this entry belongs to.
-             */
-            leagueId: string;
-            /**
-             * Contest this entry references when the action is contest-scoped.
-             */
-            contestId?: string;
-            /**
-             * User id of the commissioner / actor that performed the action.
-             */
-            actorId: string;
-            /**
-             * Action verb in dotted form (e.g., "league.member.role.changed").
-             */
-            action: string;
-            /**
-             * Audit-log entry category — broad classification of the action that produced this entry.
-             */
-            category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-            /**
-             * Human-readable description of what happened.
-             */
-            description: string;
-            /**
-             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            beforeState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            afterState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Optional human-supplied reason / justification for the action.
-             */
-            reason?: string;
-            /**
-             * IP address from which the action originated, when available.
-             */
-            ipAddress?: string;
-            /**
-             * When the audit entry was recorded.
-             */
-            createdAt: string;
-        }>;
-    };
+    200: LeagueAuditEntriesResponse;
 };
 
 export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemberAuditLogResponses];
 
 export type CopySeasonData = {
-    /**
-     * Commissioner request payload for copying a prior season into a new one.
-     */
-    body: {
-        /**
-         * Contests from the source season that should be copied forward.
-         */
-        sourceContestIds: Array<string>;
-    };
+    body: CopySeasonRequest;
     path: {
         id: string;
     };
@@ -3522,40 +3569,13 @@ export type CopySeasonResponses = {
     /**
      * Arbitrary JSON object payload.
      */
-    201: {
-        [key: string]: unknown;
-    };
+    201: LeagueBulkOperationResponse;
 };
 
 export type CopySeasonResponse = CopySeasonResponses[keyof CopySeasonResponses];
 
 export type ImportMembersData = {
-    /**
-     * Commissioner request payload for importing league members.
-     */
-    body: {
-        /**
-         * Rows to import as league members.
-         */
-        rows: Array<{
-            /**
-             * Email address for the imported member row.
-             */
-            email: string;
-            /**
-             * Optional first name supplied in the import row.
-             */
-            firstName?: string;
-            /**
-             * Optional last name supplied in the import row.
-             */
-            lastName?: string;
-            /**
-             * Optional requested league role for the imported member.
-             */
-            role?: 'COMMISSIONER' | 'MEMBER';
-        }>;
-    };
+    body: ImportLeagueMembersRequest;
     path: {
         id: string;
     };
@@ -3616,9 +3636,7 @@ export type ImportMembersResponses = {
     /**
      * Arbitrary JSON object payload.
      */
-    201: {
-        [key: string]: unknown;
-    };
+    201: LeagueBulkOperationResponse;
 };
 
 export type ImportMembersResponse = ImportMembersResponses[keyof ImportMembersResponses];

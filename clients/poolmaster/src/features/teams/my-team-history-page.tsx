@@ -7,10 +7,10 @@ import {
   listContestEntries,
   listContests,
   listLeagueSquads,
-  type GetLeagueByCodeResponses,
   type ListContestEntriesResponses,
   type ListContestsResponses,
   type SquadDto,
+  type LeagueDetailDto,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -31,7 +31,6 @@ import {
   Tile,
 } from '@/features/shared/ui';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
 
@@ -44,7 +43,7 @@ export function MyTeamHistoryPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {

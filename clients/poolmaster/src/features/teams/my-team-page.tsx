@@ -15,9 +15,9 @@ import {
   revokeSquadOwnerInvitation,
   updateLeagueSquad,
   type ListSquadOwnerInvitationsResponses,
-  type GetLeagueByCodeResponses,
-  type ListLeagueMembersResponses,
   type SquadDto,
+  type LeagueDetailDto,
+  type LeagueMemberDto,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -52,8 +52,6 @@ import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
-type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type TeamMember = NonNullable<SquadDto['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 type ActiveTeamDialog = 'name' | 'owners' | 'inactivate' | 'delete' | null;
@@ -83,7 +81,7 @@ export function MyTeamPage() {
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetail> => {
+    queryFn: async (): Promise<LeagueDetailDto> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
@@ -152,7 +150,7 @@ export function MyTeamPage() {
 
   const leagueMembersQuery = useQuery({
     queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMember[]> => {
+    queryFn: async (): Promise<LeagueMemberDto[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
         throwApiError(response.error, 'League members response is missing data.');

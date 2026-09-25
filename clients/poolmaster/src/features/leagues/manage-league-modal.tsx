@@ -8,7 +8,7 @@ import {
   inactivateLeague,
   updateLeagueDetails,
   updateLeagueIcon,
-  type ListLeaguesResponses,
+  type LeagueSummaryDto,
 } from '@/lib/api';
 import { buildLeaguePath } from './league-routing';
 import { LeagueIcon } from './league-icon';
@@ -19,7 +19,6 @@ import { Button, Chip, formatDateDisplay, Input, Textarea } from '@/features/sha
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 const MANAGE_TAB_DETAILS = 'details';
 const MANAGE_TAB_ICON = 'icon';
@@ -45,7 +44,7 @@ const MANAGE_TABS: Array<{ key: ManageTab; label: string; hint: string }> = [
 
 type ManageLeagueModalProps = {
   isOpen: boolean;
-  league: LeagueSummary | null;
+  league: LeagueSummaryDto | null;
   onClose: () => void;
   onDeleted: () => void;
 };
@@ -89,7 +88,7 @@ function ManageLeagueModalContent({
   onDeleted,
 }: {
   isOpen: boolean;
-  league: LeagueSummary;
+  league: LeagueSummaryDto;
   onClose: () => void;
   onDeleted: () => void;
 }) {
@@ -205,7 +204,7 @@ function ManageLeagueModalContent({
       return response.data;
     },
     onSuccess: () => {
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
         removeLeagueSummary(current, league?.id ?? ''),
       );
       queryClient.removeQueries({ queryKey: QueryKeys.leagues.detail(league?.leagueCode), exact: true });

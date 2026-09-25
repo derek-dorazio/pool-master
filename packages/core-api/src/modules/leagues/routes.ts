@@ -3,28 +3,13 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/leagues.dto';
 import {
-  CreateLeagueRequestSchema,
-  UpdateLeagueDetailsRequestSchema,
-  UpdateLeagueIconRequestSchema,
-  DeleteLeagueRequestSchema,
-  LeagueAuditEntriesResponseSchema,
-  LeagueBulkOperationResponseSchema,
-  LeagueDashboardResponseSchema,
   zodToJsonSchema,
-  GenerateInviteLinkRequestSchema,
-  GenerateInviteLinkResponseSchema,
-  ImportLeagueMembersRequestSchema,
-  LeagueListResponseSchema,
-  LeagueMembershipResponseSchema,
-  LeagueResponseSchema,
-  ResolveActionItemResponseSchema,
-  SendLeagueInvitationsRequestSchema,
-  SendLeagueInvitationsResponseSchema,
   SuccessSchema,
-  ChangeLeagueMemberRoleRequestSchema,
-  CopySeasonRequestSchema,
-  LeagueMembersResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
@@ -58,6 +43,9 @@ import {
 } from '../email';
 
 export function leaguesModule(fastify: FastifyInstance): void {
+  // Routes below $ref named components, so they must be registered on this instance.
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
@@ -131,7 +119,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.',
       operationId: 'listLeagues',
       response: {
-        200: zodToJsonSchema(LeagueListResponseSchema),
+        200: schemaRef('LeagueListResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -145,9 +133,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.',
       operationId: 'createLeague',
-      body: zodToJsonSchema(CreateLeagueRequestSchema),
+      body: schemaRef('CreateLeagueRequest'),
       response: {
-        201: zodToJsonSchema(LeagueResponseSchema),
+        201: schemaRef('LeagueResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -163,7 +151,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.',
       operationId: 'getLeague',
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -178,7 +166,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.',
       operationId: 'getLeagueByCode',
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -192,9 +180,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Allows a commissioner to edit the active league detail fields that are currently product truth: name and description. League code remains immutable after creation.',
       operationId: 'updateLeagueDetails',
-      body: zodToJsonSchema(UpdateLeagueDetailsRequestSchema),
+      body: schemaRef('UpdateLeagueDetailsRequest'),
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -210,9 +198,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Allows a commissioner to select a built-in league icon from the curated PoolMaster icon catalog. Custom uploads remain out of scope for this slice.',
       operationId: 'updateLeagueIcon',
-      body: zodToJsonSchema(UpdateLeagueIconRequestSchema),
+      body: schemaRef('UpdateLeagueIconRequest'),
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -229,7 +217,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.',
       operationId: 'inactivateLeague',
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -246,7 +234,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Allows a commissioner to reactivate an inactive league so normal league usage and commissioner edits become available again.',
       operationId: 'activateLeague',
       response: {
-        200: zodToJsonSchema(LeagueResponseSchema),
+        200: schemaRef('LeagueResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -262,7 +250,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.',
       operationId: 'deleteLeague',
-      body: zodToJsonSchema(DeleteLeagueRequestSchema),
+      body: schemaRef('DeleteLeagueRequest'),
       response: {
         200: zodToJsonSchema(SuccessSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -282,9 +270,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response.',
       operationId: 'sendLeagueInvitations',
-      body: zodToJsonSchema(SendLeagueInvitationsRequestSchema),
+      body: schemaRef('SendLeagueInvitationsRequest'),
       response: {
-        201: zodToJsonSchema(SendLeagueInvitationsResponseSchema),
+        201: schemaRef('SendLeagueInvitationsResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         502: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -300,9 +288,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Creates a reusable invitation link for the target league. The resulting invite code is later previewed through the public invitation endpoints.',
       operationId: 'generateInviteLink',
-      body: zodToJsonSchema(GenerateInviteLinkRequestSchema),
+      body: schemaRef('GenerateInviteLinkRequest'),
       response: {
-        201: zodToJsonSchema(GenerateInviteLinkResponseSchema),
+        201: schemaRef('GenerateInviteLinkResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -337,7 +325,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns the current league membership list for authenticated members and commissioners. This powers member rosters and commissioner management surfaces.',
       operationId: 'listLeagueMembers',
       response: {
-        200: zodToJsonSchema(LeagueMembersResponseSchema),
+        200: schemaRef('LeagueMembersResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -353,9 +341,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Allows a commissioner to promote or demote a member within the league.',
       operationId: 'changeMemberRole',
-      body: zodToJsonSchema(ChangeLeagueMemberRoleRequestSchema),
+      body: schemaRef('ChangeLeagueMemberRoleRequest'),
       response: {
-        200: zodToJsonSchema(LeagueMembershipResponseSchema),
+        200: schemaRef('LeagueMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -410,7 +398,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns the commissioner-oriented dashboard payload for a league, including action items, member counts, pending invites, and upcoming events.',
       operationId: 'getLeagueDashboard',
       response: {
-        200: zodToJsonSchema(LeagueDashboardResponseSchema),
+        200: schemaRef('LeagueDashboardResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -427,7 +415,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Marks a commissioner action item as resolved and returns the updated action-item record for the league dashboard.',
       operationId: 'resolveActionItem',
       response: {
-        200: zodToJsonSchema(ResolveActionItemResponseSchema),
+        200: schemaRef('ResolveActionItemResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -445,7 +433,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns the commissioner-visible audit log for league-level actions.',
       operationId: 'getLeagueAuditLog',
       response: {
-        200: zodToJsonSchema(LeagueAuditEntriesResponseSchema),
+        200: schemaRef('LeagueAuditEntriesResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -461,7 +449,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
         'Returns member-scoped audit information inside the league for commissioner or permitted member review surfaces.',
       operationId: 'getMemberAuditLog',
       response: {
-        200: zodToJsonSchema(LeagueAuditEntriesResponseSchema),
+        200: schemaRef('LeagueAuditEntriesResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -479,9 +467,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Copies prior contest definitions into the current league so commissioners can bootstrap a new season from historical contests.',
       operationId: 'copySeason',
-      body: zodToJsonSchema(CopySeasonRequestSchema),
+      body: schemaRef('CopySeasonRequest'),
       response: {
-        201: zodToJsonSchema(LeagueBulkOperationResponseSchema),
+        201: schemaRef('LeagueBulkOperationResponse'),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -496,9 +484,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Imports member rows for the league and creates invitations or memberships according to the validated bulk payload.',
       operationId: 'importMembers',
-      body: zodToJsonSchema(ImportLeagueMembersRequestSchema),
+      body: schemaRef('ImportLeagueMembersRequest'),
       response: {
-        201: zodToJsonSchema(LeagueBulkOperationResponseSchema),
+        201: schemaRef('LeagueBulkOperationResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
