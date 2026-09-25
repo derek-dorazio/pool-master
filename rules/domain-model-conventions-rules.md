@@ -287,10 +287,8 @@ Frontend filters fields it doesn't render.
   They drift.
 - The canonical DTO is the single source of truth for the entity's full
   shape on the wire.
-- Permission-driven thin/redacted variants (see next rule) are
-  **supplementary** contracts for restricted access levels. They do not
-  replace the canonical DTO for callers with full access; they exist
-  alongside it.
+- **There are no supplementary variants.** Not for a page, not for a role, not
+  for an access level. One entity, one DTO. See §13 and §14.
 
 ### Mutation inputs derive from the canonical DTO
 
@@ -319,21 +317,36 @@ Deriving the schema means every change to the canonical DTO automatically
 flows to its mutation inputs at compile time. Hand-shaping breaks that
 guarantee.
 
-### DTO variants are permission-driven, not view-driven
-
-A redacted DTO that hides fields based on the viewer's access level is a
-legitimate variant — it's a different contract for a different access level.
+### No DTO variants — view-driven or permission-driven
 
 A list-view DTO that omits fields "for performance" is forbidden — that's view
 convenience and drifts from the canonical entity shape.
 
-Examples:
+A redacted DTO that hides fields based on the viewer's access level is **also
+forbidden**. Permission decides who may call an operation; it never justifies a
+second shape. Admin-only fields are annotated on the canonical DTO and left
+exposed — see §13.
 
-- ✅ `ContestEntryThinDto` (id, name, squadName) shown to non-owners
-  pre-event-live, while `ContestEntryDto` (with picks + scores) shown to
-  owners — permission boundary.
 - ❌ `LeagueSummaryDto` for list view + `LeagueDetailDto` for detail page —
-  view convenience, drifts.
+  view convenience, drifts. **Both exist in the published contract today.**
+- ❌ `AdminTeamOwnerSummaryDto` — three fields of `SquadMembership`, described in
+  its own docstring as a "thin owner summary row for root-admin surfaces".
+
+#### Struck: the former permission-variant allowance
+
+Until 2026-09, this section permitted redacted variants for restricted access
+levels, with `ContestEntryThinDto` given as an approved example. **That allowance
+is withdrawn**, for a reason worth recording so it is not reinstated:
+
+`ContestEntryThinDto` was never built. In the entire codebase the allowance
+produced **zero** of the variants it sanctioned, and exactly one artifact —
+`AdminTeamOwnerSummaryDto`, a shadow copy of `SquadMembership` written in the
+allowance's own vocabulary ("thin", role-scoped, "for root-admin surfaces") while
+violating this section's own canonical-DTO rule.
+
+A rule that produced only its own abuse is not a rule worth keeping. If genuine
+field-level redaction is needed later, it is a model change requiring explicit
+approval under §14 — not a standing licence.
 
 ---
 
