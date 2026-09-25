@@ -134,7 +134,8 @@ hazard. Sequence #186 first where they touch the same fields.
 
 **Slice 1 — plumbing. DONE.** §1 settled above, and proven end to end on `squads`:
 `components.schemas` went from 0 to 9 named entries, routes `$ref` them, the generator emits
-importable types, and all five frontend derivations were deleted.
+importable types, and all five frontend derivations were deleted. `leagues` and `contests`
+followed on the same mechanism; `components.schemas` now carries **75** named entries.
 
 **`version` was the first module tried and is deliberately NOT converted.** It has no
 frontend consumers — `lib/version-info.ts` reads a static `version-info.json` asset with a
@@ -155,14 +156,21 @@ removing the `refResolver` and confirming four of those cases fail. Extend
 `CONVERTED_COMPONENTS` in that file as each slice lands.
 
 **Slices 2..N — one per route module, parallelisable after slice 1.**
-`account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
-`contest-entry-picks`, `contest-management`, `contests`, `drafts`, `email`, `events`,
-`golf`, `history`, `ingestion`, `invitations`, `leagues`, `notifications`, `participants`,
-`sport-catalog`, `team-invitations`. (`squads` done; `version` belongs to #180.)
 
-Order by frontend derivation count, highest first — that is where the payoff is.
-`leagues` owns `LeagueDetail` (10 files), `LeagueSummary` (6) and `LeagueMember` (2);
-`contests` owns `ContestSummary` (5) and `ContestDetail` (2).
+Done: `squads` (slice 2), `leagues` (slice 3), `contests` (slice 4). `version` belongs
+to #180. **Check this list before starting — it is what keeps two parallel sessions off
+the same module.**
+
+Remaining: `account`, `account-consent`, `admin`, `auth`, `client-logs`, `config`,
+`contest-entry-picks`, `contest-management`, `drafts`, `email`, `events`, `golf`,
+`history`, `ingestion`, `invitations`, `notifications`, `participants`, `sport-catalog`,
+`team-invitations`.
+
+Order by frontend derivation count, highest first — that is where the payoff is. The
+three highest-value modules are now done: `leagues` owned `LeagueDetail` (10 files),
+`LeagueSummary` (6) and `LeagueMember` (2); `contests` owned `ContestSummary` (5) and
+`ContestDetail` (2). What remains is a longer tail — 84 response-map derivations across
+the frontend, down from 139.
 
 Each slice: register that module's DTOs as named components → `api:refresh` → replace its
 frontend consumers' derivations with imports → **delete every local derived type the module
@@ -180,8 +188,8 @@ A loose Zod type publishes as `unknown`, which defeats the point of naming the s
 cheaper to fix while already editing the schema than as a second pass.
 
 Sizing note: `admin` (685 lines of DTO) and `admin-golf` (649) are far larger than the rest
-and should be split further when they are picked up. `contests` (462) and `leagues` (362)
-are the next tier.
+and should be split further when they are picked up — they are now the two largest
+remaining. (`contests` at 462 DTO lines and `leagues` at 362 are done.)
 
 **Final slice — enforcement.**
 Lint rule banning `Responses[...]` indexing in `features/**`, so the old pattern cannot
