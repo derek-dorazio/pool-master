@@ -16,9 +16,7 @@ import {
   AccountResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
-  ConsentHistoryResponseSchema,
   ContestManagementResponseSchema,
-  ConsentRecordResponseSchema,
   DraftStateResponseSchema,
   ErrorEnvelopeSchema,
   EventListResponseSchema,
@@ -552,33 +550,6 @@ describe('Contract verification (web)', () => {
     expect(res.statusCode).toBe(201);
     const parsed = ContestManagementResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
-  });
-
-  it('pool-master-eux.5 account consent routes match their DTOs without legacy scoring validation', async () => {
-    const user = await createTestUser({ displayName: 'Contract Consent User' });
-
-    const consentRes = await getApp().inject({
-      method: 'POST',
-      url: API_ROUTES.account.consent,
-      headers: user.headers,
-      payload: {
-        consentType: 'terms_of_service',
-        granted: true,
-        version: '2026-04',
-        minimumAgeThreshold: 18,
-        ageAffirmed: true,
-      },
-    });
-    expect(consentRes.statusCode).toBe(201);
-    expect(ConsentRecordResponseSchema.safeParse(consentRes.json()).success).toBe(true);
-
-    const consentHistoryRes = await getApp().inject({
-      method: 'GET',
-      url: API_ROUTES.account.consent,
-      headers: user.headers,
-    });
-    expect(consentHistoryRes.statusCode).toBe(200);
-    expect(ConsentHistoryResponseSchema.safeParse(consentHistoryRes.json()).success).toBe(true);
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {

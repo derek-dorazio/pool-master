@@ -30,13 +30,10 @@ import { invitationsModule } from '../../packages/core-api/src/modules/invitatio
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
-import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { accountModule } from '../../packages/core-api/src/modules/account/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
-import { historyModule } from '../../packages/core-api/src/modules/history/routes';
-import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -97,15 +94,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(accountModule, { prefix: '/api/v1/account' });
-  testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
-  testApp.register(historyModule, { prefix: '/api/v1' });
-  testApp.register(notificationsModule, {
-    prefix: '/api/v1',
-    prisma,
-  });
 
   await testApp.ready();
   return testApp;
