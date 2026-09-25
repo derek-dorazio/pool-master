@@ -39,6 +39,20 @@ Set by the repo owner. They bound what this work may and may not do.
    trade** in exchange for reaching one model end to end. Nobody creates a new object or a
    new field projection during this pass.
 
+5. **No shadow or derived object may be created — and permission will not be given.**
+   Not a new DTO for a variant view, not a projection, not a "just for this page" shape, not
+   an `AdminXDto` beside an `XDto`. If the model appears to lack something, that is not a
+   licence to work around it.
+
+   **A gap is a requirement.** Bring it back as: *what is the new concept, and where does it
+   fit in the core domain model?* The answer changes the model — a new entity, a new edge, a
+   new field, a new operation — or it turns out the concept already exists under another
+   name. Both outcomes are progress. Inventing a parallel shape is not, and is how every
+   duplicate documented in this plan came to exist.
+
+   This rule outlives the pass. It is a candidate for `rules/*.md` codification before this
+   plan is deleted (ADR-0002).
+
 The goal of this pass is a single end-to-end flow — UI → route → DTO → service → DAO →
 schema — over one set of objects and one set of operations. Everything else waits.
 
