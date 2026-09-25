@@ -14,7 +14,7 @@ export type AuthSessionUserUpdate =
   | ReactivateAccountResponses[200]['user']
   | InactivateAccountResponses[200]['user'];
 
-// Issue 206 — this used to carry a `withResolvedSessionId` merge, because account responses
+// #206 — this used to carry a `withResolvedSessionId` merge, because account responses
 // returned a user without the `sessionId` that /auth/me had supplied and a naive
 // setQueryData would erase it. No response carries a session id any more, so the cached
 // user is whatever the server last returned.

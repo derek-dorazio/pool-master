@@ -33,7 +33,7 @@ function buildUser(overrides?: Partial<AuthSessionUser>): AuthSessionUser {
 }
 
 describe('pool-master-rop.78.11 auth session cache', () => {
-  // Issue 206 — this used to assert that a `sessionId` absent from an account response was
+  // #206 — this used to assert that a `sessionId` absent from an account response was
   // preserved from the previously cached user. No response carries a session id now, so
   // the behaviour under test is the plain replacement that remains.
   it('pool-master-rop.78.11 caches the user an account update returns', () => {

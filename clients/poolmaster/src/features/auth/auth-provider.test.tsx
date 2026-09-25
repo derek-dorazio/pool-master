@@ -167,7 +167,7 @@ describe('AuthProvider', () => {
 
     await screen.findByText('user-2');
 
-    // Issue 206 — the recovered user is the evidence of recovery; there is no session id
+    // #206 — the recovered user is the evidence of recovery; there is no session id
     // in any response body any more.
     expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-2');
     expect(mockLogger.info).toHaveBeenCalledWith(
