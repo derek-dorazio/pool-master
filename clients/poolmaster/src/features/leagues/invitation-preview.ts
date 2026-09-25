@@ -1,11 +1,11 @@
 import {
   getInvitationPreview,
-  type GetInvitationPreviewResponses,
+  type InvitationPreviewResponse,
 } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 
-export type InvitationPreview = GetInvitationPreviewResponses[200]['invitation'];
+export type InvitationPreview = InvitationPreviewResponse['invitation'];
 
 export function getInvitationPreviewQueryKey(inviteCode: string) {
   return QueryKeys.invitations.leaguePreview(inviteCode);

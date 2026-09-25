@@ -5,7 +5,6 @@ import type {
   DeleteLeagueResponses,
   GenerateInviteLinkResponses,
   GetCurrentUserResponses,
-  GetInvitationPreviewResponses,
   SquadDto,
   SquadListResponse,
   LeagueDetailDto,
@@ -13,11 +12,12 @@ import type {
   LeagueListResponse,
   LeagueResponse,
   SquadResponse,
+  InvitationPreviewResponse,
 } from '@/lib/api';
 
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
-export type InvitationPreview = GetInvitationPreviewResponses[200]['invitation'];
+export type InvitationPreview = InvitationPreviewResponse['invitation'];
 export type AcceptedLeagueMembership = AcceptInvitationResponses[201]['membership'];
 export type GeneratedInviteLink = GenerateInviteLinkResponses[201]['invitation'];
 
@@ -350,7 +350,7 @@ export function generateInviteLinkData(
 
 export function getInvitationPreviewData(
   invitation: InvitationPreview,
-): GetInvitationPreviewResponses[200] {
+): InvitationPreviewResponse {
   return { invitation };
 }
 

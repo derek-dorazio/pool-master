@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListLeagues, type AdminListLeaguesResponses } from "@/lib/api";
+import { adminListLeagues, type LeagueSummaryDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import {
   ManagementListPage,
@@ -10,13 +10,12 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
-type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
-const columnHelper = createColumnHelper<ManagedLeague>();
+const columnHelper = createColumnHelper<LeagueSummaryDto>();
 
 export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageLeagues,
-    queryFn: async (): Promise<ManagedLeague[]> => {
+    queryFn: async (): Promise<LeagueSummaryDto[]> => {
       const response = await adminListLeagues({
         query: {},
       });
