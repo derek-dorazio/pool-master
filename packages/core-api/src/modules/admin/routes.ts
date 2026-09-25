@@ -6,6 +6,11 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components these routes $ref (#192). The DTOs live in
+// leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
+import '@poolmaster/shared/dto/leagues.dto';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
@@ -57,9 +62,6 @@ import {
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
   ContestConfigTemplateListResponseSchema,
-  DeleteLeagueRequestSchema,
-  LeagueListResponseSchema,
-  LeagueResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
   SetUserRootAdminRequestSchema,
   UserListResponseSchema,
@@ -129,6 +131,8 @@ export async function adminModule(
   fastify: FastifyInstance,
   opts: AdminModuleOptions = {},
 ): Promise<void> {
+  void fastify.register(schemaComponentsPlugin);
+
   await fastify.register(adminAuth);
 
   // --- Shared Prisma client for all admin services ---
@@ -340,7 +344,7 @@ export async function adminModule(
       description: 'Returns root-admin league search results by league name for manage-page lifecycle actions.',
       operationId: 'adminListLeagues',
       querystring: zodToJsonSchema(AdminListLeaguesQuerySchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(LeagueListResponseSchema) }),
+      response: withAdminErrorResponses({ 200: schemaRef('LeagueListResponse') }),
     },
     handler: leagues.listLeagues,
   });
@@ -363,7 +367,7 @@ export async function adminModule(
       summary: 'Inactivate a league as root admin',
       description: 'Allows root-admins to inactivate a league before permanent deletion. This reuses the truthful league lifecycle behavior.',
       operationId: 'adminInactivateLeague',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(LeagueResponseSchema) }, [400, 404]),
+      response: withAdminErrorResponses({ 200: schemaRef('LeagueResponse') }, [400, 404]),
     },
     handler: leagues.inactivateLeague,
   });
@@ -374,7 +378,7 @@ export async function adminModule(
       summary: 'Delete an inactive league as root admin',
       description: 'Allows root-admins to permanently delete an inactive league after confirming the exact league code. This reuses the truthful cascade-delete lifecycle behavior.',
       operationId: 'adminDeleteLeague',
-      body: zodToJsonSchema(DeleteLeagueRequestSchema),
+      body: schemaRef('DeleteLeagueRequest'),
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404]),
     },
     handler: leagues.deleteLeague,

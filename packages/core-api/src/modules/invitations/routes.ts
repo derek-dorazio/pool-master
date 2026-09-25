@@ -6,11 +6,13 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components these routes $ref (#192). The DTOs live in
+// leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
+import '@poolmaster/shared/dto/leagues.dto';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
-  AcceptInvitationRequestSchema,
-  InvitationPreviewResponseSchema,
-  LeagueMembershipResponseSchema,
 } from '@poolmaster/shared/dto/leagues.dto';
 import {
   PrismaLeagueRepository,
@@ -29,6 +31,8 @@ import {
 } from '../email';
 
 export function invitationsModule(fastify: FastifyInstance): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const prisma = getAppPrisma(fastify);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
@@ -62,7 +66,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
         'Returns the minimal league identity and invitation state needed to render the public `/invite/<inviteCode>` entry flow before or after authentication.',
       operationId: 'getInvitationPreview',
       response: {
-        200: zodToJsonSchema(InvitationPreviewResponseSchema),
+        200: schemaRef('InvitationPreviewResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -77,9 +81,9 @@ export function invitationsModule(fastify: FastifyInstance): void {
       description:
         'Accepts an invitation for the authenticated user and creates or reactivates a MEMBER membership in the target league.',
       operationId: 'acceptInvitation',
-      body: zodToJsonSchema(AcceptInvitationRequestSchema),
+      body: schemaRef('AcceptInvitationRequest'),
       response: {
-        201: zodToJsonSchema(LeagueMembershipResponseSchema),
+        201: schemaRef('LeagueMembershipResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),

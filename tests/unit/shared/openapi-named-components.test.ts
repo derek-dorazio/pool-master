@@ -1,144 +1,125 @@
 /**
- * #192 — the published contract must carry named components, and the generated client
- * must turn them into importable named types.
+ * #192 — the published contract must carry named components, the generator must turn
+ * them into importable types, and converted modules must leave no derivations behind.
  *
- * This asserts on the COMMITTED artifacts rather than on the registry, because the
- * failure this guards against is silent: the registry can be perfectly correct while
- * the document still publishes `def-0` (no refResolver), or inlines the shape at the
- * route (no $ref), or the generator emits nothing importable. Each of those happened
- * while building the plumbing, and each looked fine one layer up.
+ * EVERY ASSERTION HERE IS DERIVED FROM THE COMMITTED ARTIFACTS. There is no hand-kept
+ * list of converted modules, deliberately: a list is maintenance that gets forgotten,
+ * and a forgotten entry makes the guard quietly stop covering a module. `api:check`
+ * keeps the artifacts fresh, so deriving from them is not deriving from a stale
+ * snapshot.
  *
- * `api:check` keeps these artifacts fresh, so asserting on them is not asserting on a
- * stale snapshot.
+ * This file exists because two failures during the leagues slice both looked like
+ * success:
+ *
+ *   - Item derivations were deleted while ENVELOPE derivations (`Responses[200]` as a
+ *     function return type) survived in test fixtures — a half-converted module.
+ *   - A blanket rewrite matched `ListLeaguesResponses` inside
+ *     `AdminListLeaguesResponses` and renamed a type belonging to an unconverted
+ *     module. Overreach reads as progress unless something asserts the opposite.
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(__dirname, '../../..');
-const openapi = JSON.parse(
-  readFileSync(join(ROOT, 'packages/shared/generated/openapi.json'), 'utf8'),
-) as {
+
+interface OpenApiDoc {
   components?: { schemas?: Record<string, unknown> };
   paths: Record<string, Record<string, {
+    operationId?: string;
     responses?: Record<string, { content?: Record<string, { schema?: { $ref?: string } }> }>;
   }>>;
-};
+}
+
+const openapi = JSON.parse(
+  readFileSync(join(ROOT, 'packages/shared/generated/openapi.json'), 'utf8'),
+) as OpenApiDoc;
 const generatedTypes = readFileSync(
   join(ROOT, 'packages/shared/generated/hey-api/types.gen.ts'),
   'utf8',
 );
 
-/** Modules converted to named components so far. Extend as each slice lands. */
-const CONVERTED_COMPONENTS = [
-  // squads — the first converted module. The `version` module is deliberately NOT
-  // here: it is operational plumbing with no frontend consumers, and its conversion
-  // is deferred to #180, which already owns how /version reports build identity.
-  'SquadDto',
-  'SquadListResponse',
-  'SquadResponse',
-  'SquadMembershipDto',
-  'SquadMembershipResponse',
-  'TeamRelationshipDto',
-  'CreateSquadRequest',
-  'UpdateSquadRequest',
-  'AddSquadMemberRequest',
-  // leagues — the highest-derivation module (18 sites across 3 names)
-  'LeagueSummaryDto',
-  'LeagueDetailDto',
-  'LeagueMemberDto',
-  'LeagueResponse',
-  'LeagueListResponse',
-  'LeagueMembersResponse',
-];
+const componentNames = Object.keys(openapi.components?.schemas ?? {});
 
 /**
- * Response maps that no frontend file may index into any more, because the module
- * that owns them has been converted. Each entry is a module's derivations being gone
- * for good — a new one anywhere re-opens the drift the conversion closed.
+ * Response-map names for operations already converted to a `$ref`.
+ *
+ * hey-api derives the map name from the operationId, so this is computable rather
+ * than listed: `listLeagues` -> `ListLeaguesResponses`. An operation whose 200 is
+ * still an inline schema is NOT here, which is what keeps the guard off unconverted
+ * modules.
  */
-const RETIRED_RESPONSE_MAPS = [
-  'ListLeagueSquadsResponses',
-  'GetLeagueResponses',
-  'GetLeagueByCodeResponses',
-  'ListLeaguesResponses',
-  'ListLeagueMembersResponses',
-];
+function retiredResponseMaps(): string[] {
+  const maps = new Set<string>();
+  for (const ops of Object.values(openapi.paths)) {
+    for (const op of Object.values(ops)) {
+      if (typeof op !== 'object' || op === null) continue;
+      const ref = op.responses?.['200']?.content?.['application/json']?.schema?.$ref;
+      if (ref === undefined || op.operationId === undefined) continue;
+      maps.add(`${op.operationId.charAt(0).toUpperCase()}${op.operationId.slice(1)}Responses`);
+    }
+  }
+  return [...maps].sort();
+}
+
+/** Files under features/ that index into a response map, word-boundary matched. */
+function filesIndexing(responseMap: string): string {
+  try {
+    return execFileSync('grep', [
+      '-rlE', `\\b${responseMap}\\[`,
+      'clients/poolmaster/src',
+      '--include=*.ts', '--include=*.tsx',
+    ], { cwd: ROOT, encoding: 'utf8' }).trim();
+  } catch {
+    return ''; // grep exits 1 when nothing matches
+  }
+}
 
 describe('#192: DTOs publish as named OpenAPI components', () => {
   it('rule: the document declares components.schemas', () => {
     // Was 0 before #192 — every shape inlined per-operation.
-    expect(Object.keys(openapi.components?.schemas ?? {}).length).toBeGreaterThan(0);
+    expect(componentNames.length).toBeGreaterThan(0);
   });
-
-  it.each(CONVERTED_COMPONENTS)(
-    'rule: %s is published under its own name, not def-N',
-    (name) => {
-      expect(openapi.components?.schemas ?? {}).toHaveProperty(name);
-    },
-  );
 
   it('rule: no component is published as a def-N placeholder', () => {
     // @fastify/swagger names hoisted schemas def-0, def-1, ... without a refResolver.
-    // Components exist but generate as `Def0`, which is useless as an import.
-    const names = Object.keys(openapi.components?.schemas ?? {});
-    expect(names.filter((n) => /^def-\d+$/.test(n))).toEqual([]);
+    // They exist, and generate as `Def0`, which is useless as an import.
+    expect(componentNames.filter((n) => /^def-\d+$/.test(n))).toEqual([]);
   });
 
-  it('rule: a converted route $refs its component instead of inlining the shape', () => {
-    const squadListPaths = Object.entries(openapi.paths)
-      .filter(([, ops]) => ops.get?.responses?.['200']?.content?.['application/json']?.schema?.$ref
-        === '#/components/schemas/SquadListResponse');
-    expect(squadListPaths.length).toBeGreaterThan(0);
+  it.each(componentNames)('rule: %s generates as an importable named type', (name) => {
+    // The whole point: the frontend imports this instead of deriving from a
+    // response map. A component that does not generate a type buys nothing.
+    expect(generatedTypes).toMatch(new RegExp(`^export type ${name} =`, 'm'));
   });
-
-  it.each(CONVERTED_COMPONENTS)(
-    'rule: %s generates as an importable named type',
-    (name) => {
-      // The whole point: the frontend imports this instead of deriving
-      // `GetVersionResponses[200][...]`.
-      expect(generatedTypes).toMatch(new RegExp(`^export type ${name} =`, 'm'));
-    },
-  );
 });
 
-describe('#192: converted modules leave no derived types behind', () => {
-  // Deleting the derivations is the deliverable, not cleanup. A module that adds the
-  // import but leaves `type X = ListFooResponses[200][...]` in place has made things
-  // worse: two ways to name one shape, and no signal which is current.
-  const featureSources = readFileSync(
-    join(ROOT, 'clients/poolmaster/src/features/teams/teams-page.tsx'),
-    'utf8',
-  );
+describe('#192: converted modules leave no derivations behind', () => {
+  const retired = retiredResponseMaps();
 
-  it('rule: squads consumers import SquadDto rather than deriving it', () => {
-    expect(featureSources).toMatch(/SquadDto/);
+  it('rule: at least one operation is converted, so the guard is not vacuous', () => {
+    expect(retired.length).toBeGreaterThan(0);
   });
 
-  it.each(RETIRED_RESPONSE_MAPS)(
-    'rule: no frontend file indexes into %s any more',
-    (responseMap) => {
-      // Guards the whole tree. The word boundary matters: an unanchored match would
-      // also hit AdminListLeaguesResponses, a different endpoint that is NOT yet
-      // converted — a blanket rewrite did exactly that during the leagues slice and
-      // renamed an admin type out from under itself.
-      const { execSync } = require('node:child_process') as typeof import('node:child_process');
-      const hits = execSync(
-        `grep -rlE "\\b${responseMap}\\[" clients/poolmaster/src --include=*.ts --include=*.tsx || true`,
-        { cwd: ROOT, encoding: 'utf8' },
-      ).trim();
-      expect(hits).toBe('');
-    },
-  );
+  it.each(retired)('rule: no frontend file indexes into %s', (responseMap) => {
+    // Deleting the derivations is the deliverable, not cleanup. Leaving one beside
+    // the import gives two ways to name one shape and no signal which is current.
+    expect(filesIndexing(responseMap)).toBe('');
+  });
 
-  it('rule: an unconverted module keeps its response map untouched', () => {
-    // AdminListLeaguesResponses belongs to the admin module, which has not been
-    // converted. It must still be there — its absence would mean a conversion
-    // reached past its own module.
-    const { execSync } = require('node:child_process') as typeof import('node:child_process');
-    const hits = execSync(
-      'grep -rl "AdminListLeaguesResponses" clients/poolmaster/src --include=*.tsx || true',
-      { cwd: ROOT, encoding: 'utf8' },
-    ).trim();
-    expect(hits).not.toBe('');
+  it('rule: unconverted modules keep their response maps', () => {
+    // The mirror of the above, and the one that catches OVERREACH: a rewrite that
+    // matched a converted map's name as a substring of an unconverted one would
+    // otherwise look like extra progress. At least one unconverted operation's map
+    // must still be indexed somewhere, or this conversion has reached too far.
+    const stillInline = Object.values(openapi.paths)
+      .flatMap((ops) => Object.values(ops))
+      .filter((op): op is { operationId: string } =>
+        typeof op === 'object' && op !== null
+        && typeof op.operationId === 'string'
+        && op.responses?.['200']?.content?.['application/json']?.schema?.$ref === undefined)
+      .map((op) => `${op.operationId.charAt(0).toUpperCase()}${op.operationId.slice(1)}Responses`);
+    const anyStillIndexed = stillInline.some((m) => filesIndexing(m) !== '');
+    expect(anyStillIndexed).toBe(true);
   });
 });

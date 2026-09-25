@@ -6,13 +6,13 @@ import type {
   GenerateInviteLinkResponses,
   GetCurrentUserResponses,
   GetInvitationPreviewResponses,
-  UpdateLeagueSquadResponses,
   SquadDto,
   SquadListResponse,
   LeagueDetailDto,
   LeagueSummaryDto,
   LeagueListResponse,
   LeagueResponse,
+  SquadResponse,
 } from '@/lib/api';
 
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
@@ -337,8 +337,8 @@ export function listLeagueSquadsData(
 }
 
 export function updateLeagueSquadData(
-  squad: UpdateLeagueSquadResponses[200]['squad'],
-): UpdateLeagueSquadResponses[200] {
+  squad: SquadDto,
+): SquadResponse {
   return { squad };
 }
 

@@ -9771,64 +9771,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "invitation": {
-                      "type": "object",
-                      "properties": {
-                        "inviteCode": {
-                          "type": "string",
-                          "description": "Invitation code currently being previewed."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "PENDING",
-                            "ACCEPTED",
-                            "EXPIRED",
-                            "REVOKED"
-                          ],
-                          "description": "Current invitation lifecycle state."
-                        },
-                        "league": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "description": "League ID associated with the invitation."
-                            },
-                            "leagueCode": {
-                              "type": "string",
-                              "description": "Bookmarkable short code for the invited league."
-                            },
-                            "name": {
-                              "type": "string",
-                              "description": "Display name for the invited league."
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "leagueCode",
-                            "name"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Minimal league identity shown before accepting the invite."
-                        }
-                      },
-                      "required": [
-                        "inviteCode",
-                        "status",
-                        "league"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Public invitation preview shown before or after authentication."
-                    }
-                  },
-                  "required": [
-                    "invitation"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Invitation preview payload used by `/invite/<inviteCode>` flows."
+                  "$ref": "#/components/schemas/InvitationPreviewResponse"
                 }
               }
             }
@@ -9927,23 +9870,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "inviteCode": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "Invite code from the invite URL or invitation email."
-                  }
-                },
-                "required": [
-                  "inviteCode"
-                ],
-                "additionalProperties": false,
-                "description": "Authenticated invitation-acceptance payload."
+                "$ref": "#/components/schemas/AcceptInvitationRequest"
               }
             }
-          },
-          "description": "Authenticated invitation-acceptance payload."
+          }
         },
         "responses": {
           "201": {
@@ -9951,74 +9881,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "membership": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Membership record identifier."
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "description": "League that owns the membership."
-                        },
-                        "userId": {
-                          "type": "string",
-                          "description": "User account attached to the membership."
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "COMMISSIONER",
-                            "MEMBER"
-                          ],
-                          "description": "Current league role for the user."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Membership lifecycle state."
-                        },
-                        "joinedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the user joined the league."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the membership record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the membership record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "userId",
-                        "role",
-                        "status",
-                        "joinedAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Detailed league membership record."
-                    }
-                  },
-                  "required": [
-                    "membership"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single league-membership response."
+                  "$ref": "#/components/schemas/LeagueMembershipResponse"
                 }
               }
             }
@@ -25469,133 +25332,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "leagues": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Internal league identifier used for authenticated management APIs."
-                          },
-                          "leagueCode": {
-                            "type": "string",
-                            "description": "Stable short code used in bookmarkable league-home routes and invite context."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Primary display name for the league."
-                          },
-                          "description": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional short league description."
-                          },
-                          "isActive": {
-                            "type": "boolean",
-                            "description": "Whether the league is currently active for normal write interactions."
-                          },
-                          "iconKey": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF_FLAG",
-                              "GOLF_BALL",
-                              "FOOTBALL",
-                              "FOOTBALL_HELMET",
-                              "BASKETBALL",
-                              "BASKETBALL_HOOP",
-                              "CHECKERED_FLAG",
-                              "RACING_WHEEL",
-                              "TENNIS_BALL",
-                              "TENNIS_RACKET",
-                              "HORSESHOE",
-                              "SOCCER_BALL",
-                              "HOCKEY_STICK",
-                              "HOCKEY_PUCK",
-                              "BASEBALL",
-                              "BASEBALL_BAT",
-                              "FIGHT_GLOVE",
-                              "TROPHY",
-                              "WHISTLE",
-                              "STOPWATCH"
-                            ],
-                            "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
-                          },
-                          "memberCount": {
-                            "type": "number",
-                            "description": "Current number of memberships in the league."
-                          },
-                          "activeContestCount": {
-                            "type": "number",
-                            "description": "Number of currently active contests associated with the league."
-                          },
-                          "memberType": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "enum": [
-                              "COMMISSIONER",
-                              "MEMBER",
-                              null
-                            ],
-                            "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
-                          },
-                          "leagueRelationship": {
-                            "type": "object",
-                            "properties": {
-                              "leagueMember": {
-                                "type": "boolean",
-                                "description": "Whether the current requester is an active member of this league."
-                              },
-                              "commissioner": {
-                                "type": "boolean",
-                                "description": "Whether the current requester is an active commissioner of this league."
-                              }
-                            },
-                            "required": [
-                              "leagueMember",
-                              "commissioner"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
-                          },
-                          "isRootAdmin": {
-                            "type": "boolean",
-                            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "League creation timestamp in ISO 8601 format."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "leagueCode",
-                          "name",
-                          "isActive",
-                          "iconKey",
-                          "memberCount",
-                          "activeContestCount",
-                          "memberType",
-                          "leagueRelationship",
-                          "isRootAdmin"
-                        ],
-                        "additionalProperties": false,
-                        "description": "League list item used for selectors, welcome screens, and league overviews."
-                      }
-                    }
-                  },
-                  "required": [
-                    "leagues"
-                  ],
-                  "additionalProperties": false,
-                  "description": "League-list response."
+                  "$ref": "#/components/schemas/LeagueListResponse"
                 }
               }
             }
@@ -25958,140 +25695,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "league": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Internal league identifier used for authenticated management APIs."
-                        },
-                        "leagueCode": {
-                          "type": "string",
-                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Primary display name for the league."
-                        },
-                        "description": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "description": "Optional short league description."
-                        },
-                        "isActive": {
-                          "type": "boolean",
-                          "description": "Whether the league is currently active for normal write interactions."
-                        },
-                        "iconKey": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF_FLAG",
-                            "GOLF_BALL",
-                            "FOOTBALL",
-                            "FOOTBALL_HELMET",
-                            "BASKETBALL",
-                            "BASKETBALL_HOOP",
-                            "CHECKERED_FLAG",
-                            "RACING_WHEEL",
-                            "TENNIS_BALL",
-                            "TENNIS_RACKET",
-                            "HORSESHOE",
-                            "SOCCER_BALL",
-                            "HOCKEY_STICK",
-                            "HOCKEY_PUCK",
-                            "BASEBALL",
-                            "BASEBALL_BAT",
-                            "FIGHT_GLOVE",
-                            "TROPHY",
-                            "WHISTLE",
-                            "STOPWATCH"
-                          ],
-                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
-                        },
-                        "memberCount": {
-                          "type": "number",
-                          "description": "Current number of memberships in the league."
-                        },
-                        "activeContestCount": {
-                          "type": "number",
-                          "description": "Number of currently active contests associated with the league."
-                        },
-                        "memberType": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "enum": [
-                            "COMMISSIONER",
-                            "MEMBER",
-                            null
-                          ],
-                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
-                        },
-                        "leagueRelationship": {
-                          "type": "object",
-                          "properties": {
-                            "leagueMember": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active member of this league."
-                            },
-                            "commissioner": {
-                              "type": "boolean",
-                              "description": "Whether the current requester is an active commissioner of this league."
-                            }
-                          },
-                          "required": [
-                            "leagueMember",
-                            "commissioner"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
-                        },
-                        "isRootAdmin": {
-                          "type": "boolean",
-                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "League creation timestamp in ISO 8601 format."
-                        },
-                        "joinPolicy": {
-                          "type": "string",
-                          "enum": [
-                            "COMMISSIONER_ONLY",
-                            "LINK_INVITE",
-                            "OPEN"
-                          ],
-                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueCode",
-                        "name",
-                        "isActive",
-                        "iconKey",
-                        "memberCount",
-                        "activeContestCount",
-                        "memberType",
-                        "leagueRelationship",
-                        "isRootAdmin",
-                        "joinPolicy"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
-                    }
-                  },
-                  "required": [
-                    "league"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single-league detail response."
+                  "$ref": "#/components/schemas/LeagueResponse"
                 }
               }
             }
@@ -26229,23 +25833,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "leagueCode": {
-                    "type": "string",
-                    "pattern": "^[A-Z0-9]{3,16}$",
-                    "description": "Exact league code confirmation required before permanently deleting an inactive league."
-                  }
-                },
-                "required": [
-                  "leagueCode"
-                ],
-                "additionalProperties": false,
-                "description": "Commissioner confirmation payload for permanently deleting an inactive league."
+                "$ref": "#/components/schemas/DeleteLeagueRequest"
               }
             }
-          },
-          "description": "Commissioner confirmation payload for permanently deleting an inactive league."
+          }
         },
         "parameters": [
           {

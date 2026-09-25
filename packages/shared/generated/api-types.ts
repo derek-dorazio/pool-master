@@ -7760,27 +7760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Public invitation preview shown before or after authentication. */
-                        invitation: {
-                            /** @description Invitation code currently being previewed. */
-                            inviteCode: string;
-                            /**
-                             * @description Current invitation lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
-                            /** @description Minimal league identity shown before accepting the invite. */
-                            league: {
-                                /** @description League ID associated with the invitation. */
-                                id: string;
-                                /** @description Bookmarkable short code for the invited league. */
-                                leagueCode: string;
-                                /** @description Display name for the invited league. */
-                                name: string;
-                            };
-                        };
-                    };
+                    "application/json": components["schemas"]["InvitationPreviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -7830,13 +7810,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Authenticated invitation-acceptance payload. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Invite code from the invite URL or invitation email. */
-                    inviteCode: string;
-                };
+                "application/json": components["schemas"]["AcceptInvitationRequest"];
             };
         };
         responses: {
@@ -7846,42 +7822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league membership record. */
-                        membership: {
-                            /** @description Membership record identifier. */
-                            id: string;
-                            /** @description League that owns the membership. */
-                            leagueId: string;
-                            /** @description User account attached to the membership. */
-                            userId: string;
-                            /**
-                             * @description Current league role for the user.
-                             * @enum {string}
-                             */
-                            role: "COMMISSIONER" | "MEMBER";
-                            /**
-                             * @description Membership lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /**
-                             * Format: date-time
-                             * @description When the user joined the league.
-                             */
-                            joinedAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the membership record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueMembershipResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -14370,48 +14311,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        leagues: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LeagueListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -14539,54 +14439,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-                        league: {
-                            /** @description Internal league identifier used for authenticated management APIs. */
-                            id: string;
-                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-                            leagueCode: string;
-                            /** @description Primary display name for the league. */
-                            name: string;
-                            /** @description Optional short league description. */
-                            description?: string | null;
-                            /** @description Whether the league is currently active for normal write interactions. */
-                            isActive: boolean;
-                            /**
-                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-                            /** @description Current number of memberships in the league. */
-                            memberCount: number;
-                            /** @description Number of currently active contests associated with the league. */
-                            activeContestCount: number;
-                            /**
-                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                             * @enum {string|null}
-                             */
-                            memberType: "COMMISSIONER" | "MEMBER" | null;
-                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                            leagueRelationship: {
-                                /** @description Whether the current requester is an active member of this league. */
-                                leagueMember: boolean;
-                                /** @description Whether the current requester is an active commissioner of this league. */
-                                commissioner: boolean;
-                            };
-                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                            isRootAdmin: boolean;
-                            /**
-                             * Format: date-time
-                             * @description League creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                             * @enum {string}
-                             */
-                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-                        };
-                    };
+                    "application/json": components["schemas"]["LeagueResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -14657,13 +14510,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Exact league code confirmation required before permanently deleting an inactive league. */
-                    leagueCode: string;
-                };
+                "application/json": components["schemas"]["DeleteLeagueRequest"];
             };
         };
         responses: {
