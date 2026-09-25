@@ -52,9 +52,12 @@ the rest of the product.
 The clearest single case: `adminInactivateLeague` and `inactivateLeague` are the same
 operation on the same object, at two endpoints, differing only in who may call it.
 
-The clearest proof it is fixable: `adminListLeagues` **already** returns
-`LeagueListResponse`, the shared registered component. One of these was already unified and
-nothing broke.
+One admin operation already returns a shared component: `adminListLeagues` returns
+`LeagueListResponse`. **That is not independent evidence — it was done in `0125a22`
+(PR #194), the leagues slice of this same refactor, and only because check 1 forced it:
+registering `LeagueListResponse` made every route inlining it fail CI.** It shows the
+collapse is mechanically possible and survives the functional suite. It does not show it
+survives time or other authors. Cite it for the mechanism, not as precedent.
 
 User is split across three surfaces:
 
@@ -114,9 +117,18 @@ copies drift further apart.
 the "member list view" and the "membership record".
 
 **`LeagueMembershipDto` is already the correct shape.** It references `userId` and carries
-only edge attributes. As with `adminListLeagues` returning the shared `LeagueListResponse`,
-the right pattern already exists in this codebase and is simply applied inconsistently.
-That is the template, not a thing to invent.
+only edge attributes. It predates this refactor — defined in `ef90117` (2026-05-30) — so
+unlike the `adminListLeagues` case above, this one *is* independent evidence that the right
+pattern existed here first. It is the template, not a thing to invent.
+
+**But `LeagueMemberDto`, the flattened one, was authored in the same commit.** Both shapes
+were born together. So the cause is not erosion over time or a later agent degrading an
+earlier design: it is the absence of a stated rule at the point of authorship. Two shapes
+for one edge looked reasonable to whoever wrote them because nothing said otherwise.
+
+That matters for the fix. A cleanup alone restores consistency once and leaves the same
+vacuum behind. The rule has to be written down, and a guard has to enforce it, or the next
+agent authors the fifth partial copy for the same reason the first four exist.
 
 Target shape for an edge:
 
