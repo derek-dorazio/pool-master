@@ -2,14 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { LeagueIconKey } from '@poolmaster/shared/domain';
-import {
-  deleteLeague,
-  getLeague,
-  inactivateLeague,
-  updateLeagueDetails,
-  updateLeagueIcon,
-  type LeagueSummaryDto,
-} from '@/lib/api';
+import { deleteLeague, getLeague, inactivateLeague, updateLeagueDetails, updateLeagueIcon, type LeagueSummaryDto } from '@/lib/api';
 import { buildLeaguePath } from './league-routing';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';

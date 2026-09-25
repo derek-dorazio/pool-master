@@ -1,7 +1,4 @@
-import {
-  adminApplyGolfLeagueRosterUpload,
-  adminPreviewGolfLeagueRosterUpload,
-} from '@/lib/api';
+import { adminApplyGolfLeagueRosterUpload, adminPreviewGolfLeagueRosterUpload } from '@/lib/api';
 import {
   BulkUploadPanel,
   StatusBadge,

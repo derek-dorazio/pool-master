@@ -1,7 +1,4 @@
-import type {
-  AdminGetIngestionScheduleResponses,
-  AdminGetPollIntervalsResponses,
-} from '@/lib/api';
+import type { AdminGetIngestionScheduleResponses, AdminGetPollIntervalsResponses } from '@/lib/api';
 import type { SyncSport } from './root-admin-sync-utils';
 
 export type PollIntervalConfig = AdminGetPollIntervalsResponses[200];

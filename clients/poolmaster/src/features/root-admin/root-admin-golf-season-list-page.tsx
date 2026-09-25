@@ -19,10 +19,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type {
-  AdminListGolfLeaguesResponses,
-  AdminListGolfSeasonsResponses,
-} from '@/lib/api';
+import type { AdminListGolfLeaguesResponses, AdminListGolfSeasonsResponses } from '@/lib/api';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 
 type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];

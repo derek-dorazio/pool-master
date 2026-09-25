@@ -9,12 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type {
-  GetManagedContestResponses,
-  ListManagedContestTemplatesResponses,
-  ListEventsResponses,
-  LeagueDetailDto,
-} from '@/lib/api';
+import type { GetManagedContestResponses, ListManagedContestTemplatesResponses, ListEventsResponses, LeagueDetailDto } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -22,16 +17,7 @@ import {
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import {
-  createManagedContest,
-  deleteContest,
-  getLeagueByCode,
-  getManagedContest,
-  listManagedContestTemplates,
-  listEvents,
-  updateContest,
-  updateManagedContestConfiguration,
-} from '@/lib/api';
+import { createManagedContest, deleteContest, getLeagueByCode, getManagedContest, listManagedContestTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';

@@ -2,16 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import {
-  getLeagueByCode,
-  listContestEntries,
-  listContests,
-  listLeagueSquads,
-  type ListContestEntriesResponses,
-  type ListContestsResponses,
-  type SquadDto,
-  type LeagueDetailDto,
-} from '@/lib/api';
+import { getLeagueByCode, listContestEntries, listContests, listLeagueSquads, type SquadDto, type LeagueDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -31,8 +22,6 @@ import {
   Tile,
 } from '@/features/shared/ui';
 
-type ContestSummary = ListContestsResponses[200]['contests'][number];
-type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
 
 export function MyTeamHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -98,7 +87,7 @@ export function MyTeamHistoryPage() {
 
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestSummary[]> => {
+    queryFn: async (): Promise<ContestSummaryDto[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {
@@ -128,7 +117,7 @@ export function MyTeamHistoryPage() {
       myTeam?.id,
       contestsQuery.data?.map((contest) => contest.id).join(','),
     ),
-    queryFn: async (): Promise<Record<string, ListContestEntriesResponses[200]>> => {
+    queryFn: async (): Promise<Record<string, ContestEntryListResponse>> => {
       if (!myTeam || !contestsQuery.data) {
         return {};
       }
@@ -276,7 +265,7 @@ export function MyTeamHistoryPage() {
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  {teamEntries.map((entry: ContestEntrySummary) => (
+                  {teamEntries.map((entry: ContestEntryDetailDto) => (
                     <div
                       className="rounded-2xl border border-border bg-card px-4 py-4"
                       data-testid={`my-team-history-entry-${entry.id}`}

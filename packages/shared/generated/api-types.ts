@@ -3507,6 +3507,1862 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Tier definition used in contest create and update flows. */
+        TierDefinitionRequest: {
+            /** @description Stable tier identifier. */
+            tierId: string;
+            /** @description Tier label shown in commissioner and draft UI. */
+            tierName: string;
+            /** @description Tier order number. */
+            tierNumber: number;
+            /** @description How many picks each entry must make from the tier. */
+            picksFromTier: number;
+            /** @description Optional ranking range that produced the tier. */
+            rankingRange?: [
+                number,
+                number
+            ];
+            /** @description Optional pricing range that produced the tier. */
+            priceRange?: [
+                number,
+                number
+            ];
+            /** @description Optional cap on how many participants can live in the tier. */
+            maxParticipants?: number;
+            /** @description Participants assigned to the tier. */
+            participantIds: string[];
+        };
+        /** @description Contest-configuration payload used by contest create and update endpoints. */
+        ContestCrudConfigurationRequest: {
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: {
+                /** @description Stable tier identifier. */
+                tierId: string;
+                /** @description Tier label shown in commissioner and draft UI. */
+                tierName: string;
+                /** @description Tier order number. */
+                tierNumber: number;
+                /** @description How many picks each entry must make from the tier. */
+                picksFromTier: number;
+                /** @description Optional ranking range that produced the tier. */
+                rankingRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional pricing range that produced the tier. */
+                priceRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional cap on how many participants can live in the tier. */
+                maxParticipants?: number;
+                /** @description Participants assigned to the tier. */
+                participantIds: string[];
+            }[];
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: number[];
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+        };
+        /** @description Request payload for creating a contest. */
+        CreateContestRequest: {
+            name: string;
+            eventId?: string;
+            /**
+             * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+             * @enum {string}
+             */
+            contestFormat: "ROSTER";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
+            /** @description Contest-configuration payload used by contest create and update endpoints. */
+            contestConfiguration?: {
+                draftMode?: string;
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: {
+                    /** @description Stable tier identifier. */
+                    tierId: string;
+                    /** @description Tier label shown in commissioner and draft UI. */
+                    tierName: string;
+                    /** @description Tier order number. */
+                    tierNumber: number;
+                    /** @description How many picks each entry must make from the tier. */
+                    picksFromTier: number;
+                    /** @description Optional ranking range that produced the tier. */
+                    rankingRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional pricing range that produced the tier. */
+                    priceRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional cap on how many participants can live in the tier. */
+                    maxParticipants?: number;
+                    /** @description Participants assigned to the tier. */
+                    participantIds: string[];
+                }[];
+                tierAssignmentMethod?: string;
+                budget?: number;
+                pricingMethod?: string;
+                rosterSize?: number;
+                pickCount?: number;
+                picksPerPeriod?: number;
+                roundValues?: number[];
+                startRound?: string;
+                isExclusive?: boolean;
+                bestBallN?: number;
+                missedCutPenalty?: number;
+                captainSlot?: boolean;
+                captainMultiplier?: number;
+            };
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            lockAt?: string;
+            isExclusive?: boolean;
+            /** @description Whether eliminated entries stop accumulating score events. */
+            scoringStopsOnElimination?: boolean;
+        };
+        /** @description Patch payload for updating editable contest metadata. */
+        UpdateContestRequest: {
+            name?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            lockAt?: string;
+            /** @description Whether the contest should continue to enforce exclusive picks. */
+            isExclusive?: boolean;
+        };
+        /** @description Request payload for updating a contest entry while the contest is still joinable. */
+        UpdateContestEntryRequest: {
+            /** @description Unique entry name shown anywhere the team entry is listed. */
+            name?: string;
+            /** @description Optional tiebreaker prediction saved on the contest entry. */
+            tiebreakerValue?: number | null;
+        };
+        /** @description Commissioner request payload for undoing a contest draft selection. */
+        UndoContestDraftSelectionRequest: {
+            /** @description Draft pick to undo. */
+            pickId: string;
+            /** @description Commissioner reason recorded for the undo action. */
+            reason: string;
+        };
+        /** @description Commissioner request payload for pausing a draft. */
+        PauseContestDraftRequest: {
+            /** @description Reason recorded for pausing the draft. */
+            reason: string;
+        };
+        /** @description Commissioner request payload for extending the current draft turn. */
+        ExtendPickClockRequest: {
+            /** @description How many seconds to add to the current draft pick clock. */
+            additionalSeconds: number;
+        };
+        /** @description Request payload for reopening a closed contest. */
+        ReopenContestRequest: {
+            /** @description Reason recorded for reopening the contest. */
+            reason: string;
+        };
+        /** @description Request payload for force-closing a contest. */
+        CloseContestRequest: {
+            /** @description Reason recorded for closing the contest. */
+            reason: string;
+        };
+        /** @description Request payload for extending a contest end time. */
+        ExtendContestDeadlineRequest: {
+            /**
+             * Format: date-time
+             * @description Replacement contest end timestamp.
+             */
+            newEnd: string;
+            /** @description Reason recorded for the deadline extension. */
+            reason: string;
+        };
+        /** @description Request payload for updating a contest lock time. */
+        UpdateContestLockTimeRequest: {
+            /**
+             * Format: date-time
+             * @description Replacement contest lock timestamp.
+             */
+            newLock: string;
+            /** @description Reason recorded for changing the lock time. */
+            reason: string;
+        };
+        /** @description Contest list item used in contest indexes and league home summaries. */
+        ContestSummaryDto: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            /** @enum {string} */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            leagueId: string;
+            sportEventId?: string | null;
+            sport?: string | null;
+            /** @description Number of entries currently in the contest. */
+            entryCount?: number;
+            /** Format: date-time */
+            startsAt?: string | null;
+            /** Format: date-time */
+            endsAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        /** @description Contest detail returned by contest detail endpoints. */
+        ContestDetailDto: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+            /** @enum {string} */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @enum {string} */
+            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+            /** @enum {string} */
+            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+            leagueId: string;
+            sportEventId?: string | null;
+            sport?: string | null;
+            /** @description Number of entries currently in the contest. */
+            entryCount?: number;
+            /** Format: date-time */
+            startsAt?: string | null;
+            /** Format: date-time */
+            endsAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            lockAt?: string | null;
+            isExclusive?: boolean;
+        };
+        /** @description Contest entry summary. */
+        ContestEntryDto: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            /** @enum {string} */
+            status: "ACTIVE" | "INACTIVE";
+            tiebreakerValue?: number | null;
+            isEliminated: boolean;
+            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+            picksCount: number;
+            /**
+             * Format: date-time
+             * @description When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the contest entry was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description Raw ContestEntryPick row used by persistence-aware surfaces. */
+        ContestEntryPickDto: {
+            /** @description Pick identifier. */
+            id: string;
+            /** @description Owning contest entry identifier. */
+            entryId: string;
+            /** @description Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant). */
+            sportEventParticipantId: string;
+            /**
+             * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
+             * @enum {string}
+             */
+            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+            /** @description Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1. */
+            period: number | null;
+            /** @description Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1. */
+            slot: number | null;
+            /** @description Selection tier (tiered ROSTER); null otherwise. */
+            tier: string | null;
+            /** @description Budget cost (budget ROSTER); null otherwise. */
+            cost: number | null;
+            /** @description Whether this pick was auto-assigned (snake-draft auto-pick, Survivor missed-week auto-loss, etc.). */
+            isAutoPicked: boolean;
+            /** @description Snake-draft round; null outside snake-draft mechanism. */
+            draftRound: number | null;
+            /** @description Snake-draft pick order; null outside snake-draft mechanism. */
+            draftPickNumber: number | null;
+            /**
+             * Format: date-time
+             * @description When the pick was made (or auto-picked).
+             */
+            pickedAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint. */
+        ContestEntryParticipantDetailDto: {
+            pickId: string;
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            participantStatus?: string | null;
+            position?: string | null;
+            teamAffiliation?: string | null;
+            /**
+             * Format: date-time
+             * @description When the participant was added to the contest entry.
+             */
+            pickedAt: string;
+        };
+        /** @description Expanded contest entry detail. */
+        ContestEntryDetailDto: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            /** @enum {string} */
+            status: "ACTIVE" | "INACTIVE";
+            tiebreakerValue?: number | null;
+            isEliminated: boolean;
+            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+            picksCount: number;
+            /**
+             * Format: date-time
+             * @description When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the contest entry was last updated.
+             */
+            updatedAt: string;
+            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+            participants?: {
+                pickId: string;
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                participantStatus?: string | null;
+                position?: string | null;
+                teamAffiliation?: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the participant was added to the contest entry.
+                 */
+                pickedAt: string;
+            }[];
+        };
+        /** @description Single R1/R2/R3/R4 Golf leaderboard cell for a picked golfer. */
+        GolfLeaderboardRoundCellDto: {
+            /** @description Golf round number represented by this leaderboard column. */
+            round: number;
+            /**
+             * @description Normalized status for this round cell.
+             * @enum {string}
+             */
+            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+            strokes: number | null;
+            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+            scoreToPar: number | null;
+            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+            thru: number | null;
+            /**
+             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+             * @enum {string}
+             */
+            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+            displayValue: string | null;
+        };
+        /** @description Fixed four-round Golf leaderboard columns. */
+        GolfLeaderboardRoundColumnsDto: {
+            /** @description Round 1 leaderboard column. */
+            r1: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 2 leaderboard column. */
+            r2: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 3 leaderboard column. */
+            r3: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+            /** @description Round 4 leaderboard column. */
+            r4: {
+                /** @description Golf round number represented by this leaderboard column. */
+                round: number;
+                /**
+                 * @description Normalized status for this round cell.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                strokes: number | null;
+                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                scoreToPar: number | null;
+                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                thru: number | null;
+                /**
+                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                 * @enum {string}
+                 */
+                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                displayValue: string | null;
+            } | null;
+        };
+        /** @description Golf event participant read model used by the contest leaderboard. This is loaded once per event and joined to entry picks in memory. */
+        GolfLeaderboardParticipantDto: {
+            /** @description SportEventParticipant row selected by contest picks. */
+            sportEventParticipantId: string;
+            /** @description Canonical participant identifier. */
+            participantId: string;
+            /** @description Golfer display name. */
+            name: string;
+            /** @description Optional shorter golfer display name. */
+            shortName: string | null;
+            /** @description Whether this golfer is currently eligible/available for this tournament. */
+            isActive: boolean;
+            /**
+             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+             * @enum {string|null}
+             */
+            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+            /** @description Latest copied global world ranking on this event participant. */
+            worldRanking: number | null;
+            /** @description Event-scoped odds-to-win for this golfer. */
+            oddsToWin: number | null;
+            /** @description Event seed/order when supplied by the provider. */
+            seedNumber: number | null;
+            /** @description TOT column value: current event total relative to par. Lower is better. */
+            totalScoreToPar: number | null;
+            /** @description Current event total strokes across persisted Golf rounds. */
+            totalStrokes: number | null;
+            /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+            thru: number | null;
+            /** @description Current or latest round represented by the standing. */
+            currentRound: number | null;
+            /**
+             * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+             * @enum {string}
+             */
+            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+            /** @description Event leaderboard position for this golfer when available. */
+            position: number | null;
+            /** @description Provider/display position such as T2 when available. */
+            displayPosition: string | null;
+            /**
+             * Format: date-time
+             * @description Provider timestamp for the current Golf standing.
+             */
+            asOf: string | null;
+            /** @description R1 through R4 detail for expanded member leaderboard rows. */
+            rounds: {
+                /** @description Round 1 leaderboard column. */
+                r1: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 2 leaderboard column. */
+                r2: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 3 leaderboard column. */
+                r3: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+                /** @description Round 4 leaderboard column. */
+                r4: {
+                    /** @description Golf round number represented by this leaderboard column. */
+                    round: number;
+                    /**
+                     * @description Normalized status for this round cell.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                    strokes: number | null;
+                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                    scoreToPar: number | null;
+                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                    thru: number | null;
+                    /**
+                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     * @enum {string}
+                     */
+                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                    displayValue: string | null;
+                } | null;
+            };
+        };
+        /** @description Expanded Golf pick row for a contest leaderboard entry. */
+        GolfLeaderboardEntryPickDto: {
+            /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+            pickId: string;
+            /** @description Selected SportEventParticipant. */
+            sportEventParticipantId: string;
+            /**
+             * Format: date-time
+             * @description When this golfer was selected.
+             */
+            pickedAt: string;
+            /** @description Optional roster slot from the pick row. */
+            slot: number | null;
+            /** @description Optional tier/category from the pick row. */
+            tier: string | null;
+            /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+            isCounting: boolean;
+            /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+            isDropped: boolean;
+            /** @description Expanded golfer event data for this pick. */
+            participant: {
+                /** @description SportEventParticipant row selected by contest picks. */
+                sportEventParticipantId: string;
+                /** @description Canonical participant identifier. */
+                participantId: string;
+                /** @description Golfer display name. */
+                name: string;
+                /** @description Optional shorter golfer display name. */
+                shortName: string | null;
+                /** @description Whether this golfer is currently eligible/available for this tournament. */
+                isActive: boolean;
+                /**
+                 * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                 * @enum {string|null}
+                 */
+                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                /** @description Latest copied global world ranking on this event participant. */
+                worldRanking: number | null;
+                /** @description Event-scoped odds-to-win for this golfer. */
+                oddsToWin: number | null;
+                /** @description Event seed/order when supplied by the provider. */
+                seedNumber: number | null;
+                /** @description TOT column value: current event total relative to par. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Current event total strokes across persisted Golf rounds. */
+                totalStrokes: number | null;
+                /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                thru: number | null;
+                /** @description Current or latest round represented by the standing. */
+                currentRound: number | null;
+                /**
+                 * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Event leaderboard position for this golfer when available. */
+                position: number | null;
+                /** @description Provider/display position such as T2 when available. */
+                displayPosition: string | null;
+                /**
+                 * Format: date-time
+                 * @description Provider timestamp for the current Golf standing.
+                 */
+                asOf: string | null;
+                /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                rounds: {
+                    /** @description Round 1 leaderboard column. */
+                    r1: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 2 leaderboard column. */
+                    r2: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 3 leaderboard column. */
+                    r3: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 4 leaderboard column. */
+                    r4: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                };
+            };
+        };
+        /** @description Single Team row in the Golf contest leaderboard. */
+        GolfLeaderboardEntryDto: {
+            /** @description Contest entry identifier. */
+            entryId: string;
+            /** @description Team entry display name. */
+            entryName: string;
+            /** @description Entry number for squads allowed to submit multiple entries. */
+            entryNumber: number;
+            /** @description Squad/team identifier. */
+            squadId: string;
+            /** @description Squad/team display name. */
+            squadName: string;
+            /**
+             * @description Contest entry lifecycle status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
+            totalScoreToPar: number | null;
+            /** @description Computed contest leaderboard rank for this entry. */
+            position: number | null;
+            /** @description Computed display rank, including T-prefix for ties. */
+            displayPosition: string | null;
+            /** @description How many selected golfers count toward this entry under the contest configuration. */
+            countingPickCount: number;
+            /** @description How many selected golfers currently have event standings. */
+            scoredPickCount: number;
+            /** @description Selected golfers with counting/dropped flags computed at read time. */
+            picks: {
+                /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+                pickId: string;
+                /** @description Selected SportEventParticipant. */
+                sportEventParticipantId: string;
+                /**
+                 * Format: date-time
+                 * @description When this golfer was selected.
+                 */
+                pickedAt: string;
+                /** @description Optional roster slot from the pick row. */
+                slot: number | null;
+                /** @description Optional tier/category from the pick row. */
+                tier: string | null;
+                /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+                isCounting: boolean;
+                /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+                isDropped: boolean;
+                /** @description Expanded golfer event data for this pick. */
+                participant: {
+                    /** @description SportEventParticipant row selected by contest picks. */
+                    sportEventParticipantId: string;
+                    /** @description Canonical participant identifier. */
+                    participantId: string;
+                    /** @description Golfer display name. */
+                    name: string;
+                    /** @description Optional shorter golfer display name. */
+                    shortName: string | null;
+                    /** @description Whether this golfer is currently eligible/available for this tournament. */
+                    isActive: boolean;
+                    /**
+                     * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                     * @enum {string|null}
+                     */
+                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                    /** @description Latest copied global world ranking on this event participant. */
+                    worldRanking: number | null;
+                    /** @description Event-scoped odds-to-win for this golfer. */
+                    oddsToWin: number | null;
+                    /** @description Event seed/order when supplied by the provider. */
+                    seedNumber: number | null;
+                    /** @description TOT column value: current event total relative to par. Lower is better. */
+                    totalScoreToPar: number | null;
+                    /** @description Current event total strokes across persisted Golf rounds. */
+                    totalStrokes: number | null;
+                    /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                    thru: number | null;
+                    /** @description Current or latest round represented by the standing. */
+                    currentRound: number | null;
+                    /**
+                     * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                     * @enum {string}
+                     */
+                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                    /** @description Event leaderboard position for this golfer when available. */
+                    position: number | null;
+                    /** @description Provider/display position such as T2 when available. */
+                    displayPosition: string | null;
+                    /**
+                     * Format: date-time
+                     * @description Provider timestamp for the current Golf standing.
+                     */
+                    asOf: string | null;
+                    /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                    rounds: {
+                        /** @description Round 1 leaderboard column. */
+                        r1: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 2 leaderboard column. */
+                        r2: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 3 leaderboard column. */
+                        r3: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                        /** @description Round 4 leaderboard column. */
+                        r4: {
+                            /** @description Golf round number represented by this leaderboard column. */
+                            round: number;
+                            /**
+                             * @description Normalized status for this round cell.
+                             * @enum {string}
+                             */
+                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                            strokes: number | null;
+                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                            scoreToPar: number | null;
+                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                            thru: number | null;
+                            /**
+                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             * @enum {string}
+                             */
+                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                            displayValue: string | null;
+                        } | null;
+                    };
+                };
+            }[];
+        };
+        /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
+        GolfLeaderboardCountingRuleDto: {
+            /**
+             * @description Golf roster rule: sum the best N selected golfer totals for the entry.
+             * @enum {string}
+             */
+            type: "BEST_N_GOLFERS";
+            /** @description Number of selected golfers that currently count toward each entry total. */
+            count: number;
+        };
+        /** @description Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound. */
+        GolfLeaderboardResponse: {
+            /** @description Contest whose leaderboard was requested. */
+            contestId: string;
+            /** @description Golf sport event backing this contest leaderboard. */
+            sportEventId: string;
+            /**
+             * @description Golf leaderboard totals are relative to par and lower is better.
+             * @enum {string}
+             */
+            scoringMode: "GOLF_TO_PAR";
+            /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
+            countingRule: {
+                /**
+                 * @description Golf roster rule: sum the best N selected golfer totals for the entry.
+                 * @enum {string}
+                 */
+                type: "BEST_N_GOLFERS";
+                /** @description Number of selected golfers that currently count toward each entry total. */
+                count: number;
+            };
+            /** @description All event participants for the contest event, loaded once for UI joins and filtering. */
+            participants: {
+                /** @description SportEventParticipant row selected by contest picks. */
+                sportEventParticipantId: string;
+                /** @description Canonical participant identifier. */
+                participantId: string;
+                /** @description Golfer display name. */
+                name: string;
+                /** @description Optional shorter golfer display name. */
+                shortName: string | null;
+                /** @description Whether this golfer is currently eligible/available for this tournament. */
+                isActive: boolean;
+                /**
+                 * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                 * @enum {string|null}
+                 */
+                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                /** @description Latest copied global world ranking on this event participant. */
+                worldRanking: number | null;
+                /** @description Event-scoped odds-to-win for this golfer. */
+                oddsToWin: number | null;
+                /** @description Event seed/order when supplied by the provider. */
+                seedNumber: number | null;
+                /** @description TOT column value: current event total relative to par. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Current event total strokes across persisted Golf rounds. */
+                totalStrokes: number | null;
+                /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                thru: number | null;
+                /** @description Current or latest round represented by the standing. */
+                currentRound: number | null;
+                /**
+                 * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                 * @enum {string}
+                 */
+                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                /** @description Event leaderboard position for this golfer when available. */
+                position: number | null;
+                /** @description Provider/display position such as T2 when available. */
+                displayPosition: string | null;
+                /**
+                 * Format: date-time
+                 * @description Provider timestamp for the current Golf standing.
+                 */
+                asOf: string | null;
+                /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                rounds: {
+                    /** @description Round 1 leaderboard column. */
+                    r1: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 2 leaderboard column. */
+                    r2: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 3 leaderboard column. */
+                    r3: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                    /** @description Round 4 leaderboard column. */
+                    r4: {
+                        /** @description Golf round number represented by this leaderboard column. */
+                        round: number;
+                        /**
+                         * @description Normalized status for this round cell.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                        strokes: number | null;
+                        /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                        scoreToPar: number | null;
+                        /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                        thru: number | null;
+                        /**
+                         * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                         * @enum {string}
+                         */
+                        displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                        /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                        displayValue: string | null;
+                    } | null;
+                };
+            }[];
+            /** @description Contest entries ordered by computed Golf total. */
+            entries: {
+                /** @description Contest entry identifier. */
+                entryId: string;
+                /** @description Team entry display name. */
+                entryName: string;
+                /** @description Entry number for squads allowed to submit multiple entries. */
+                entryNumber: number;
+                /** @description Squad/team identifier. */
+                squadId: string;
+                /** @description Squad/team display name. */
+                squadName: string;
+                /**
+                 * @description Contest entry lifecycle status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
+                totalScoreToPar: number | null;
+                /** @description Computed contest leaderboard rank for this entry. */
+                position: number | null;
+                /** @description Computed display rank, including T-prefix for ties. */
+                displayPosition: string | null;
+                /** @description How many selected golfers count toward this entry under the contest configuration. */
+                countingPickCount: number;
+                /** @description How many selected golfers currently have event standings. */
+                scoredPickCount: number;
+                /** @description Selected golfers with counting/dropped flags computed at read time. */
+                picks: {
+                    /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
+                    pickId: string;
+                    /** @description Selected SportEventParticipant. */
+                    sportEventParticipantId: string;
+                    /**
+                     * Format: date-time
+                     * @description When this golfer was selected.
+                     */
+                    pickedAt: string;
+                    /** @description Optional roster slot from the pick row. */
+                    slot: number | null;
+                    /** @description Optional tier/category from the pick row. */
+                    tier: string | null;
+                    /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
+                    isCounting: boolean;
+                    /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
+                    isDropped: boolean;
+                    /** @description Expanded golfer event data for this pick. */
+                    participant: {
+                        /** @description SportEventParticipant row selected by contest picks. */
+                        sportEventParticipantId: string;
+                        /** @description Canonical participant identifier. */
+                        participantId: string;
+                        /** @description Golfer display name. */
+                        name: string;
+                        /** @description Optional shorter golfer display name. */
+                        shortName: string | null;
+                        /** @description Whether this golfer is currently eligible/available for this tournament. */
+                        isActive: boolean;
+                        /**
+                         * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                         * @enum {string|null}
+                         */
+                        inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                        /** @description Latest copied global world ranking on this event participant. */
+                        worldRanking: number | null;
+                        /** @description Event-scoped odds-to-win for this golfer. */
+                        oddsToWin: number | null;
+                        /** @description Event seed/order when supplied by the provider. */
+                        seedNumber: number | null;
+                        /** @description TOT column value: current event total relative to par. Lower is better. */
+                        totalScoreToPar: number | null;
+                        /** @description Current event total strokes across persisted Golf rounds. */
+                        totalStrokes: number | null;
+                        /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
+                        thru: number | null;
+                        /** @description Current or latest round represented by the standing. */
+                        currentRound: number | null;
+                        /**
+                         * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                         * @enum {string}
+                         */
+                        status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                        /** @description Event leaderboard position for this golfer when available. */
+                        position: number | null;
+                        /** @description Provider/display position such as T2 when available. */
+                        displayPosition: string | null;
+                        /**
+                         * Format: date-time
+                         * @description Provider timestamp for the current Golf standing.
+                         */
+                        asOf: string | null;
+                        /** @description R1 through R4 detail for expanded member leaderboard rows. */
+                        rounds: {
+                            /** @description Round 1 leaderboard column. */
+                            r1: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 2 leaderboard column. */
+                            r2: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 3 leaderboard column. */
+                            r3: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                            /** @description Round 4 leaderboard column. */
+                            r4: {
+                                /** @description Golf round number represented by this leaderboard column. */
+                                round: number;
+                                /**
+                                 * @description Normalized status for this round cell.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
+                                strokes: number | null;
+                                /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
+                                scoreToPar: number | null;
+                                /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
+                                thru: number | null;
+                                /**
+                                 * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                                 * @enum {string}
+                                 */
+                                displayType: "EMPTY" | "TO_PAR" | "STROKES";
+                                /** @description Preformatted member-facing value for this round column using Golf display rules. */
+                                displayValue: string | null;
+                            } | null;
+                        };
+                    };
+                }[];
+            }[];
+            /**
+             * Format: date-time
+             * @description Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
+             */
+            asOf: string | null;
+        };
+        /** @description Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob. */
+        ContestConfigurationDetailDto: {
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: {
+                /** @description Stable tier identifier. */
+                tierId: string;
+                /** @description Tier label shown in commissioner and draft UI. */
+                tierName: string;
+                /** @description Tier order number. */
+                tierNumber: number;
+                /** @description How many picks each entry must make from the tier. */
+                picksFromTier: number;
+                /** @description Optional ranking range that produced the tier. */
+                rankingRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional pricing range that produced the tier. */
+                priceRange?: [
+                    number,
+                    number
+                ];
+                /** @description Optional cap on how many participants can live in the tier. */
+                maxParticipants?: number;
+                /** @description Participants assigned to the tier. */
+                participantIds: string[];
+            }[];
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: number[];
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /** @description Optional typed configuration mode for golf-first managed contests. */
+            mode?: string;
+            /**
+             * Format: date-time
+             * @description Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string | null;
+            /** @description Maximum entries a Team may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description How many roster scores count toward the entry total in managed golf contests. */
+            countedScores?: number;
+            /** @description Tier source used for managed golf contests. */
+            tierSource?: string;
+            tierGeneration?: {
+                /** @description Default managed tier size used to seed tier generation. */
+                defaultTierSize: number;
+            };
+            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+            tiers?: {
+                /** @description Stable tier key such as A, B, or C. */
+                tierKey: string;
+                /** @description Commissioner-facing tier label. */
+                label: string;
+                /** @description How many golfers must be picked from the tier. */
+                pickCount: number;
+                /** @description Starting resolved rank/odds position for the tier. */
+                startPosition: number;
+                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                endPosition: number | null;
+            }[];
+            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+            cutRule?: {
+                /** @enum {string} */
+                type: "FIXED_SCORE";
+                /** @description Fallback score assigned when a golfer misses the cut. */
+                fixedScore: number;
+            };
+            /** @description Managed-golf playoff handling strategy. */
+            playoffHandling?: string;
+            /** @description Managed-golf leaderboard display scoring mode. */
+            displayScoring?: string;
+            /** @description Managed-golf tiebreaker configuration. */
+            tiebreaker?: {
+                /** @enum {string} */
+                type: "PREDICT_WINNING_SCORE";
+            };
+            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+            categories?: {
+                /** @enum {string} */
+                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                /** @description Commissioner-facing category label. */
+                label: string;
+                /** @description How many golfers must be picked for the category. */
+                pickCount: number;
+            }[];
+        };
+        /** @description Single-contest response. */
+        ContestResponse: {
+            /** @description Contest detail returned by contest detail endpoints. */
+            contest: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                /** @enum {string} */
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @enum {string} */
+                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                /** @enum {string} */
+                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                leagueId: string;
+                sportEventId?: string | null;
+                sport?: string | null;
+                /** @description Number of entries currently in the contest. */
+                entryCount?: number;
+                /** Format: date-time */
+                startsAt?: string | null;
+                /** Format: date-time */
+                endsAt?: string | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+                /** Format: date-time */
+                lockAt?: string | null;
+                isExclusive?: boolean;
+            };
+            /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
+            contestConfiguration?: {
+                draftMode?: string;
+                rounds?: number;
+                timePerPickSeconds?: number;
+                autoPickPolicy?: string;
+                tierConfig?: {
+                    /** @description Stable tier identifier. */
+                    tierId: string;
+                    /** @description Tier label shown in commissioner and draft UI. */
+                    tierName: string;
+                    /** @description Tier order number. */
+                    tierNumber: number;
+                    /** @description How many picks each entry must make from the tier. */
+                    picksFromTier: number;
+                    /** @description Optional ranking range that produced the tier. */
+                    rankingRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional pricing range that produced the tier. */
+                    priceRange?: [
+                        number,
+                        number
+                    ];
+                    /** @description Optional cap on how many participants can live in the tier. */
+                    maxParticipants?: number;
+                    /** @description Participants assigned to the tier. */
+                    participantIds: string[];
+                }[];
+                tierAssignmentMethod?: string;
+                budget?: number;
+                pricingMethod?: string;
+                rosterSize?: number;
+                pickCount?: number;
+                picksPerPeriod?: number;
+                roundValues?: number[];
+                startRound?: string;
+                isExclusive?: boolean;
+                bestBallN?: number;
+                missedCutPenalty?: number;
+                captainSlot?: boolean;
+                captainMultiplier?: number;
+                /** @description Optional typed configuration mode for golf-first managed contests. */
+                mode?: string;
+                /**
+                 * Format: date-time
+                 * @description Contest entry lock timestamp stored on the contest configuration record.
+                 */
+                locksAt?: string | null;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description How many roster scores count toward the entry total in managed golf contests. */
+                countedScores?: number;
+                /** @description Tier source used for managed golf contests. */
+                tierSource?: string;
+                tierGeneration?: {
+                    /** @description Default managed tier size used to seed tier generation. */
+                    defaultTierSize: number;
+                };
+                /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                tiers?: {
+                    /** @description Stable tier key such as A, B, or C. */
+                    tierKey: string;
+                    /** @description Commissioner-facing tier label. */
+                    label: string;
+                    /** @description How many golfers must be picked from the tier. */
+                    pickCount: number;
+                    /** @description Starting resolved rank/odds position for the tier. */
+                    startPosition: number;
+                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                    endPosition: number | null;
+                }[];
+                /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                cutRule?: {
+                    /** @enum {string} */
+                    type: "FIXED_SCORE";
+                    /** @description Fallback score assigned when a golfer misses the cut. */
+                    fixedScore: number;
+                };
+                /** @description Managed-golf playoff handling strategy. */
+                playoffHandling?: string;
+                /** @description Managed-golf leaderboard display scoring mode. */
+                displayScoring?: string;
+                /** @description Managed-golf tiebreaker configuration. */
+                tiebreaker?: {
+                    /** @enum {string} */
+                    type: "PREDICT_WINNING_SCORE";
+                };
+                /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                categories?: {
+                    /** @enum {string} */
+                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                    /** @description Commissioner-facing category label. */
+                    label: string;
+                    /** @description How many golfers must be picked for the category. */
+                    pickCount: number;
+                }[];
+            } | null;
+        };
+        /** @description Contest-list response. */
+        ContestListResponse: {
+            contests: {
+                id: string;
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                /** @enum {string} */
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @enum {string} */
+                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                /** @enum {string} */
+                scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                leagueId: string;
+                sportEventId?: string | null;
+                sport?: string | null;
+                /** @description Number of entries currently in the contest. */
+                entryCount?: number;
+                /** Format: date-time */
+                startsAt?: string | null;
+                /** Format: date-time */
+                endsAt?: string | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+            }[];
+        };
+        /** @description Single contest-entry response. */
+        ContestEntryResponse: {
+            /** @description Contest that owns the entry. */
+            contestId: string;
+            /** @description Contest entry summary. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Expanded contest-entry detail response. */
+        ContestEntryDetailResponse: {
+            /** @description Contest that owns the entry. */
+            contestId: string;
+            /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            picksRevealed: boolean;
+            /** @description Expanded contest entry detail. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    position?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            };
+        };
+        /** @description Contest-entry list response. */
+        ContestEntryListResponse: {
+            /** @description Contest whose entries are being returned. */
+            contestId: string;
+            /** @description Total number of entries in the contest. */
+            total: number;
+            /** @description Whether the current user has at least one active entry in the contest. */
+            isJoined: boolean;
+            /** @description Primary current-user entry when the contest allows a single active entry. */
+            myEntryId: string | null;
+            /** @description All current-user entry identifiers when multiple entries are allowed. */
+            myEntryIds?: string[];
+            /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+            picksRevealed: boolean;
+            /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
+            entries: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+                /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                participants?: {
+                    pickId: string;
+                    sportEventParticipantId: string;
+                    participantId: string;
+                    participantName: string;
+                    participantStatus?: string | null;
+                    position?: string | null;
+                    teamAffiliation?: string | null;
+                    /**
+                     * Format: date-time
+                     * @description When the participant was added to the contest entry.
+                     */
+                    pickedAt: string;
+                }[];
+            }[];
+        };
+        /** @description Current-user contest-entry response. */
+        MyContestEntryResponse: {
+            /** @description Contest being queried. */
+            contestId: string;
+            /** @description Current user entry, or null when the user has not joined the contest. */
+            entry: {
+                id: string;
+                contestId: string;
+                squadId: string;
+                squadName: string;
+                entryNumber: number;
+                name: string;
+                /** @enum {string} */
+                status: "ACTIVE" | "INACTIVE";
+                tiebreakerValue?: number | null;
+                isEliminated: boolean;
+                /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                picksCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest entry was last updated.
+                 */
+                updatedAt: string;
+            } | null;
+        };
+        /** @description Contest-entry deletion response. */
+        ContestEntryDeletionResponse: {
+            /** @description Contest from which the entry was removed. */
+            contestId: string;
+            /**
+             * @description Confirms that the delete operation succeeded.
+             * @enum {boolean}
+             */
+            deleted: true;
+        };
+        /** @description Commissioner audit-log entry. */
+        ContestAuditLogEntryDto: {
+            /** @description Audit-log entry id. */
+            id: string;
+            /** @description League this entry belongs to. */
+            leagueId: string;
+            /** @description Contest this entry references when the action is contest-scoped. */
+            contestId?: string;
+            /** @description User id of the commissioner / actor that performed the action. */
+            actorId: string;
+            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+            action: string;
+            /**
+             * @description Audit-log entry category — broad classification of the action that produced this entry.
+             * @enum {string}
+             */
+            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+            /** @description Human-readable description of what happened. */
+            description: string;
+            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+            beforeState?: {
+                [key: string]: unknown;
+            };
+            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+            afterState?: {
+                [key: string]: unknown;
+            };
+            /** @description Optional human-supplied reason / justification for the action. */
+            reason?: string;
+            /** @description IP address from which the action originated, when available. */
+            ipAddress?: string;
+            /**
+             * Format: date-time
+             * @description When the audit entry was recorded.
+             */
+            createdAt: string;
+        };
+        /** @description Contest audit-log response. */
+        ContestAuditLogResponse: {
+            entries: {
+                /** @description Audit-log entry id. */
+                id: string;
+                /** @description League this entry belongs to. */
+                leagueId: string;
+                /** @description Contest this entry references when the action is contest-scoped. */
+                contestId?: string;
+                /** @description User id of the commissioner / actor that performed the action. */
+                actorId: string;
+                /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                action: string;
+                /**
+                 * @description Audit-log entry category — broad classification of the action that produced this entry.
+                 * @enum {string}
+                 */
+                category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                /** @description Human-readable description of what happened. */
+                description: string;
+                /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                beforeState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                afterState?: {
+                    [key: string]: unknown;
+                };
+                /** @description Optional human-supplied reason / justification for the action. */
+                reason?: string;
+                /** @description IP address from which the action originated, when available. */
+                ipAddress?: string;
+                /**
+                 * Format: date-time
+                 * @description When the audit entry was recorded.
+                 */
+                createdAt: string;
+            }[];
+        };
         /** @description Commissioner request payload for creating a new private league. */
         CreateLeagueRequest: {
             /** @description Primary league name shown in selectors, invites, and league home. */
@@ -8118,33 +9974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        contests: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestListResponse"];
                 };
             };
         };
@@ -8158,75 +9988,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for creating a contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    name: string;
-                    eventId?: string;
-                    /**
-                     * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
-                     * @enum {string}
-                     */
-                    contestFormat: "ROSTER";
-                    /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                    /** @description Contest-configuration payload used by contest create and update endpoints. */
-                    contestConfiguration?: {
-                        draftMode?: string;
-                        rounds?: number;
-                        timePerPickSeconds?: number;
-                        autoPickPolicy?: string;
-                        tierConfig?: {
-                            /** @description Stable tier identifier. */
-                            tierId: string;
-                            /** @description Tier label shown in commissioner and draft UI. */
-                            tierName: string;
-                            /** @description Tier order number. */
-                            tierNumber: number;
-                            /** @description How many picks each entry must make from the tier. */
-                            picksFromTier: number;
-                            /** @description Optional ranking range that produced the tier. */
-                            rankingRange?: [
-                                number,
-                                number
-                            ];
-                            /** @description Optional pricing range that produced the tier. */
-                            priceRange?: [
-                                number,
-                                number
-                            ];
-                            /** @description Optional cap on how many participants can live in the tier. */
-                            maxParticipants?: number;
-                            /** @description Participants assigned to the tier. */
-                            participantIds: string[];
-                        }[];
-                        tierAssignmentMethod?: string;
-                        budget?: number;
-                        pricingMethod?: string;
-                        rosterSize?: number;
-                        pickCount?: number;
-                        picksPerPeriod?: number;
-                        roundValues?: number[];
-                        startRound?: string;
-                        isExclusive?: boolean;
-                        bestBallN?: number;
-                        missedCutPenalty?: number;
-                        captainSlot?: boolean;
-                        captainMultiplier?: number;
-                    };
-                    /** @enum {string} */
-                    scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                    /** Format: date-time */
-                    lockAt?: string;
-                    isExclusive?: boolean;
-                    /** @description Whether eliminated entries stop accumulating score events. */
-                    scoringStopsOnElimination?: boolean;
-                };
+                "application/json": components["schemas"]["CreateContestRequest"];
             };
         };
         responses: {
@@ -8236,136 +10000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9187,136 +10822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9349,20 +10855,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Patch payload for updating editable contest metadata. */
         requestBody: {
             content: {
-                "application/json": {
-                    name?: string;
-                    /** Format: date-time */
-                    startsAt?: string;
-                    /** Format: date-time */
-                    endsAt?: string;
-                    /** Format: date-time */
-                    lockAt?: string;
-                    /** @description Whether the contest should continue to enforce exclusive picks. */
-                    isExclusive?: boolean;
-                };
+                "application/json": components["schemas"]["UpdateContestRequest"];
             };
         };
         responses: {
@@ -9372,136 +10867,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9627,60 +10993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest whose entries are being returned. */
-                        contestId: string;
-                        /** @description Total number of entries in the contest. */
-                        total: number;
-                        /** @description Whether the current user has at least one active entry in the contest. */
-                        isJoined: boolean;
-                        /** @description Primary current-user entry when the contest allows a single active entry. */
-                        myEntryId: string | null;
-                        /** @description All current-user entry identifiers when multiple entries are allowed. */
-                        myEntryIds?: string[];
-                        /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
-                        picksRevealed: boolean;
-                        /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
-                        entries: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
-                            participants?: {
-                                pickId: string;
-                                sportEventParticipantId: string;
-                                participantId: string;
-                                participantName: string;
-                                participantStatus?: string | null;
-                                position?: string | null;
-                                teamAffiliation?: string | null;
-                                /**
-                                 * Format: date-time
-                                 * @description When the participant was added to the contest entry.
-                                 */
-                                pickedAt: string;
-                            }[];
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestEntryListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9741,52 +11054,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
-                        picksRevealed: boolean;
-                        /** @description Expanded contest entry detail. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
-                            participants?: {
-                                pickId: string;
-                                sportEventParticipantId: string;
-                                participantId: string;
-                                participantName: string;
-                                participantStatus?: string | null;
-                                position?: string | null;
-                                teamAffiliation?: string | null;
-                                /**
-                                 * Format: date-time
-                                 * @description When the participant was added to the contest entry.
-                                 */
-                                pickedAt: string;
-                            }[];
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryDetailResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9839,15 +11107,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for updating a contest entry while the contest is still joinable. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Unique entry name shown anywhere the team entry is listed. */
-                    name?: string;
-                    /** @description Optional tiebreaker prediction saved on the contest entry. */
-                    tiebreakerValue?: number | null;
-                };
+                "application/json": components["schemas"]["UpdateContestEntryRequest"];
             };
         };
         responses: {
@@ -9857,35 +11119,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Contest entry summary. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -9945,362 +11179,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest whose leaderboard was requested. */
-                        contestId: string;
-                        /** @description Golf sport event backing this contest leaderboard. */
-                        sportEventId: string;
-                        /**
-                         * @description Golf leaderboard totals are relative to par and lower is better.
-                         * @enum {string}
-                         */
-                        scoringMode: "GOLF_TO_PAR";
-                        /** @description Contest scoring interpretation used by the Golf leaderboard read API. */
-                        countingRule: {
-                            /**
-                             * @description Golf roster rule: sum the best N selected golfer totals for the entry.
-                             * @enum {string}
-                             */
-                            type: "BEST_N_GOLFERS";
-                            /** @description Number of selected golfers that currently count toward each entry total. */
-                            count: number;
-                        };
-                        /** @description All event participants for the contest event, loaded once for UI joins and filtering. */
-                        participants: {
-                            /** @description SportEventParticipant row selected by contest picks. */
-                            sportEventParticipantId: string;
-                            /** @description Canonical participant identifier. */
-                            participantId: string;
-                            /** @description Golfer display name. */
-                            name: string;
-                            /** @description Optional shorter golfer display name. */
-                            shortName: string | null;
-                            /** @description Whether this golfer is currently eligible/available for this tournament. */
-                            isActive: boolean;
-                            /**
-                             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
-                             * @enum {string|null}
-                             */
-                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                            /** @description Latest copied global world ranking on this event participant. */
-                            worldRanking: number | null;
-                            /** @description Event-scoped odds-to-win for this golfer. */
-                            oddsToWin: number | null;
-                            /** @description Event seed/order when supplied by the provider. */
-                            seedNumber: number | null;
-                            /** @description TOT column value: current event total relative to par. Lower is better. */
-                            totalScoreToPar: number | null;
-                            /** @description Current event total strokes across persisted Golf rounds. */
-                            totalStrokes: number | null;
-                            /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
-                            thru: number | null;
-                            /** @description Current or latest round represented by the standing. */
-                            currentRound: number | null;
-                            /**
-                             * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
-                             * @enum {string}
-                             */
-                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                            /** @description Event leaderboard position for this golfer when available. */
-                            position: number | null;
-                            /** @description Provider/display position such as T2 when available. */
-                            displayPosition: string | null;
-                            /**
-                             * Format: date-time
-                             * @description Provider timestamp for the current Golf standing.
-                             */
-                            asOf: string | null;
-                            /** @description R1 through R4 detail for expanded member leaderboard rows. */
-                            rounds: {
-                                /** @description Round 1 leaderboard column. */
-                                r1: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 2 leaderboard column. */
-                                r2: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 3 leaderboard column. */
-                                r3: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                                /** @description Round 4 leaderboard column. */
-                                r4: {
-                                    /** @description Golf round number represented by this leaderboard column. */
-                                    round: number;
-                                    /**
-                                     * @description Normalized status for this round cell.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                    strokes: number | null;
-                                    /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                    scoreToPar: number | null;
-                                    /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                    thru: number | null;
-                                    /**
-                                     * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                     * @enum {string}
-                                     */
-                                    displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                    /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                    displayValue: string | null;
-                                } | null;
-                            };
-                        }[];
-                        /** @description Contest entries ordered by computed Golf total. */
-                        entries: {
-                            /** @description Contest entry identifier. */
-                            entryId: string;
-                            /** @description Team entry display name. */
-                            entryName: string;
-                            /** @description Entry number for squads allowed to submit multiple entries. */
-                            entryNumber: number;
-                            /** @description Squad/team identifier. */
-                            squadId: string;
-                            /** @description Squad/team display name. */
-                            squadName: string;
-                            /**
-                             * @description Contest entry lifecycle status.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
-                            /** @description Entry leaderboard total computed from currently counting golfer TOT values. Lower is better. */
-                            totalScoreToPar: number | null;
-                            /** @description Computed contest leaderboard rank for this entry. */
-                            position: number | null;
-                            /** @description Computed display rank, including T-prefix for ties. */
-                            displayPosition: string | null;
-                            /** @description How many selected golfers count toward this entry under the contest configuration. */
-                            countingPickCount: number;
-                            /** @description How many selected golfers currently have event standings. */
-                            scoredPickCount: number;
-                            /** @description Selected golfers with counting/dropped flags computed at read time. */
-                            picks: {
-                                /** @description ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model. */
-                                pickId: string;
-                                /** @description Selected SportEventParticipant. */
-                                sportEventParticipantId: string;
-                                /**
-                                 * Format: date-time
-                                 * @description When this golfer was selected.
-                                 */
-                                pickedAt: string;
-                                /** @description Optional roster slot from the pick row. */
-                                slot: number | null;
-                                /** @description Optional tier/category from the pick row. */
-                                tier: string | null;
-                                /** @description Whether this pick currently counts toward the entry score under the contest configuration. */
-                                isCounting: boolean;
-                                /** @description Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots. */
-                                isDropped: boolean;
-                                /** @description Expanded golfer event data for this pick. */
-                                participant: {
-                                    /** @description SportEventParticipant row selected by contest picks. */
-                                    sportEventParticipantId: string;
-                                    /** @description Canonical participant identifier. */
-                                    participantId: string;
-                                    /** @description Golfer display name. */
-                                    name: string;
-                                    /** @description Optional shorter golfer display name. */
-                                    shortName: string | null;
-                                    /** @description Whether this golfer is currently eligible/available for this tournament. */
-                                    isActive: boolean;
-                                    /**
-                                     * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
-                                     * @enum {string|null}
-                                     */
-                                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                                    /** @description Latest copied global world ranking on this event participant. */
-                                    worldRanking: number | null;
-                                    /** @description Event-scoped odds-to-win for this golfer. */
-                                    oddsToWin: number | null;
-                                    /** @description Event seed/order when supplied by the provider. */
-                                    seedNumber: number | null;
-                                    /** @description TOT column value: current event total relative to par. Lower is better. */
-                                    totalScoreToPar: number | null;
-                                    /** @description Current event total strokes across persisted Golf rounds. */
-                                    totalStrokes: number | null;
-                                    /** @description THR column value while the golfer is currently on course; null after round completion or before play. */
-                                    thru: number | null;
-                                    /** @description Current or latest round represented by the standing. */
-                                    currentRound: number | null;
-                                    /**
-                                     * @description Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
-                                     * @enum {string}
-                                     */
-                                    status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                    /** @description Event leaderboard position for this golfer when available. */
-                                    position: number | null;
-                                    /** @description Provider/display position such as T2 when available. */
-                                    displayPosition: string | null;
-                                    /**
-                                     * Format: date-time
-                                     * @description Provider timestamp for the current Golf standing.
-                                     */
-                                    asOf: string | null;
-                                    /** @description R1 through R4 detail for expanded member leaderboard rows. */
-                                    rounds: {
-                                        /** @description Round 1 leaderboard column. */
-                                        r1: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 2 leaderboard column. */
-                                        r2: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 3 leaderboard column. */
-                                        r3: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                        /** @description Round 4 leaderboard column. */
-                                        r4: {
-                                            /** @description Golf round number represented by this leaderboard column. */
-                                            round: number;
-                                            /**
-                                             * @description Normalized status for this round cell.
-                                             * @enum {string}
-                                             */
-                                            status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
-                                            /** @description Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete. */
-                                            strokes: number | null;
-                                            /** @description Round score relative to par. Used as the visible round value while the round is in progress. */
-                                            scoreToPar: number | null;
-                                            /** @description Completed holes for an in-progress round. Null when the golfer is not currently on course for this round. */
-                                            thru: number | null;
-                                            /**
-                                             * @description How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
-                                             * @enum {string}
-                                             */
-                                            displayType: "EMPTY" | "TO_PAR" | "STROKES";
-                                            /** @description Preformatted member-facing value for this round column using Golf display rules. */
-                                            displayValue: string | null;
-                                        } | null;
-                                    };
-                                };
-                            }[];
-                        }[];
-                        /**
-                         * Format: date-time
-                         * @description Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
-                         */
-                        asOf: string | null;
-                    };
+                    "application/json": components["schemas"]["GolfLeaderboardResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10360,35 +11239,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest being queried. */
-                        contestId: string;
-                        /** @description Current user entry, or null when the user has not joined the contest. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["MyContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10448,35 +11299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Contest entry summary. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            tiebreakerValue?: number | null;
-                            isEliminated: boolean;
-                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
-                            picksCount: number;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
+                    "application/json": components["schemas"]["ContestEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10555,15 +11378,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest from which the entry was removed. */
-                        contestId: string;
-                        /**
-                         * @description Confirms that the delete operation succeeded.
-                         * @enum {boolean}
-                         */
-                        deleted: true;
-                    };
+                    "application/json": components["schemas"]["ContestEntryDeletionResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -10615,15 +11430,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for undoing a contest draft selection. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Draft pick to undo. */
-                    pickId: string;
-                    /** @description Commissioner reason recorded for the undo action. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["UndoContestDraftSelectionRequest"];
             };
         };
         responses: {
@@ -10653,13 +11462,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for pausing a draft. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for pausing the draft. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["PauseContestDraftRequest"];
             };
         };
         responses: {
@@ -10717,13 +11522,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for extending the current draft turn. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description How many seconds to add to the current draft pick clock. */
-                    additionalSeconds: number;
-                };
+                "application/json": components["schemas"]["ExtendPickClockRequest"];
             };
         };
         responses: {
@@ -10753,13 +11554,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for reopening a closed contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for reopening the contest. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["ReopenContestRequest"];
             };
         };
         responses: {
@@ -10769,136 +11566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -10912,13 +11580,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for force-closing a contest. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Reason recorded for closing the contest. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["CloseContestRequest"];
             };
         };
         responses: {
@@ -10928,136 +11592,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11071,18 +11606,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for extending a contest end time. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: date-time
-                     * @description Replacement contest end timestamp.
-                     */
-                    newEnd: string;
-                    /** @description Reason recorded for the deadline extension. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["ExtendContestDeadlineRequest"];
             };
         };
         responses: {
@@ -11092,136 +11618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11235,18 +11632,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request payload for updating a contest lock time. */
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Format: date-time
-                     * @description Replacement contest lock timestamp.
-                     */
-                    newLock: string;
-                    /** @description Reason recorded for changing the lock time. */
-                    reason: string;
-                };
+                "application/json": components["schemas"]["UpdateContestLockTimeRequest"];
             };
         };
         responses: {
@@ -11256,136 +11644,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Contest detail returned by contest detail endpoints. */
-                        contest: {
-                            id: string;
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @enum {string} */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /** @enum {string} */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @enum {string} */
-                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-                            leagueId: string;
-                            sportEventId?: string | null;
-                            sport?: string | null;
-                            /** @description Number of entries currently in the contest. */
-                            entryCount?: number;
-                            /** Format: date-time */
-                            startsAt?: string | null;
-                            /** Format: date-time */
-                            endsAt?: string | null;
-                            /** Format: date-time */
-                            createdAt?: string;
-                            /** Format: date-time */
-                            updatedAt?: string;
-                            /** Format: date-time */
-                            lockAt?: string | null;
-                            isExclusive?: boolean;
-                        };
-                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
-                        contestConfiguration?: {
-                            draftMode?: string;
-                            rounds?: number;
-                            timePerPickSeconds?: number;
-                            autoPickPolicy?: string;
-                            tierConfig?: {
-                                /** @description Stable tier identifier. */
-                                tierId: string;
-                                /** @description Tier label shown in commissioner and draft UI. */
-                                tierName: string;
-                                /** @description Tier order number. */
-                                tierNumber: number;
-                                /** @description How many picks each entry must make from the tier. */
-                                picksFromTier: number;
-                                /** @description Optional ranking range that produced the tier. */
-                                rankingRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional pricing range that produced the tier. */
-                                priceRange?: [
-                                    number,
-                                    number
-                                ];
-                                /** @description Optional cap on how many participants can live in the tier. */
-                                maxParticipants?: number;
-                                /** @description Participants assigned to the tier. */
-                                participantIds: string[];
-                            }[];
-                            tierAssignmentMethod?: string;
-                            budget?: number;
-                            pricingMethod?: string;
-                            rosterSize?: number;
-                            pickCount?: number;
-                            picksPerPeriod?: number;
-                            roundValues?: number[];
-                            startRound?: string;
-                            isExclusive?: boolean;
-                            bestBallN?: number;
-                            missedCutPenalty?: number;
-                            captainSlot?: boolean;
-                            captainMultiplier?: number;
-                            /** @description Optional typed configuration mode for golf-first managed contests. */
-                            mode?: string;
-                            /**
-                             * Format: date-time
-                             * @description Contest entry lock timestamp stored on the contest configuration record.
-                             */
-                            locksAt?: string | null;
-                            /** @description Maximum entries a Team may create. Null means unlimited. */
-                            maxEntriesPerSquad?: number | null;
-                            /** @description How many roster scores count toward the entry total in managed golf contests. */
-                            countedScores?: number;
-                            /** @description Tier source used for managed golf contests. */
-                            tierSource?: string;
-                            tierGeneration?: {
-                                /** @description Default managed tier size used to seed tier generation. */
-                                defaultTierSize: number;
-                            };
-                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
-                            tiers?: {
-                                /** @description Stable tier key such as A, B, or C. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description How many golfers must be picked from the tier. */
-                                pickCount: number;
-                                /** @description Starting resolved rank/odds position for the tier. */
-                                startPosition: number;
-                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                endPosition: number | null;
-                            }[];
-                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
-                            cutRule?: {
-                                /** @enum {string} */
-                                type: "FIXED_SCORE";
-                                /** @description Fallback score assigned when a golfer misses the cut. */
-                                fixedScore: number;
-                            };
-                            /** @description Managed-golf playoff handling strategy. */
-                            playoffHandling?: string;
-                            /** @description Managed-golf leaderboard display scoring mode. */
-                            displayScoring?: string;
-                            /** @description Managed-golf tiebreaker configuration. */
-                            tiebreaker?: {
-                                /** @enum {string} */
-                                type: "PREDICT_WINNING_SCORE";
-                            };
-                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
-                            categories?: {
-                                /** @enum {string} */
-                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                /** @description Commissioner-facing category label. */
-                                label: string;
-                                /** @description How many golfers must be picked for the category. */
-                                pickCount: number;
-                            }[];
-                        } | null;
-                    };
+                    "application/json": components["schemas"]["ContestResponse"];
                 };
             };
         };
@@ -11407,44 +11666,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        entries: {
-                            /** @description Audit-log entry id. */
-                            id: string;
-                            /** @description League this entry belongs to. */
-                            leagueId: string;
-                            /** @description Contest this entry references when the action is contest-scoped. */
-                            contestId?: string;
-                            /** @description User id of the commissioner / actor that performed the action. */
-                            actorId: string;
-                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                            action: string;
-                            /**
-                             * @description Audit-log entry category — broad classification of the action that produced this entry.
-                             * @enum {string}
-                             */
-                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                            /** @description Human-readable description of what happened. */
-                            description: string;
-                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            beforeState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            afterState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional human-supplied reason / justification for the action. */
-                            reason?: string;
-                            /** @description IP address from which the action originated, when available. */
-                            ipAddress?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the audit entry was recorded.
-                             */
-                            createdAt: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["ContestAuditLogResponse"];
                 };
             };
         };

@@ -91,13 +91,41 @@ try {
 // --- 4. schemaRef() requires the components plugin on that instance -------------
 // Without it the route fails at BOOT with `Cannot resolve ref`, and only in whatever
 // app-building path exercises that module. A module with no such test ships broken.
+//
+// Checked PER EXPORTED MODULE FUNCTION, not per file. One file can export several —
+// contests/routes.ts exports both contestsModule and contestsByIdModule — and each
+// gets its own encapsulated Fastify instance, so each needs its own registration. A
+// file-level check passes as soon as ONE function registers the plugin, which is
+// exactly how contestsByIdModule shipped unregistered and failed at boot.
+function moduleFunctionBodies(text) {
+  const bodies = [];
+  const header = /^export (?:async )?function (\w+Module)\([^)]*\)[^{]*\{/gm;
+  for (const m of text.matchAll(header)) {
+    let i = m.index + m[0].length - 1;
+    let depth = 0;
+    for (; i < text.length; i += 1) {
+      if (text[i] === '{') depth += 1;
+      else if (text[i] === '}') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    bodies.push({ name: m[1], body: text.slice(m.index + m[0].length, i) });
+  }
+  return bodies;
+}
+
 for (const file of walk(ROUTES_ROOT)) {
   const text = readFileSync(file, 'utf8');
-  if (text.includes('schemaRef(') && !text.includes('schemaComponentsPlugin')) {
-    structural.push(
-      `${relative(process.cwd(), file)}: calls schemaRef() without registering `
-      + 'schemaComponentsPlugin. The route will fail at boot with "Cannot resolve ref".',
-    );
+  if (!text.includes('schemaRef(')) continue;
+  for (const { name, body } of moduleFunctionBodies(text)) {
+    if (body.includes('schemaRef(') && !body.includes('schemaComponentsPlugin')) {
+      structural.push(
+        `${relative(process.cwd(), file)}: ${name}() calls schemaRef() without registering `
+        + 'schemaComponentsPlugin on its own instance. It will fail at boot with '
+        + '"Cannot resolve ref". Each exported module function needs its own registration.',
+      );
+    }
   }
 }
 

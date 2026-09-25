@@ -1,7 +1,4 @@
-import type {
-  AdminGetGolfTournamentFieldResponses,
-  AdminUpdateGolfFieldEntriesData,
-} from '@/lib/api';
+import type { AdminGetGolfTournamentFieldResponses, AdminUpdateGolfFieldEntriesData } from '@/lib/api';
 
 export type GolfFieldEntry =
   AdminGetGolfTournamentFieldResponses[200]['entries'][number];

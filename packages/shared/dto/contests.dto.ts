@@ -2,6 +2,7 @@
  * Contest DTOs — request/response schemas for contest endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import {
   ContestStatus,
   ContestFormat,
@@ -460,3 +461,42 @@ export const ContestAuditLogResponseSchema = z.object({
   entries: z.array(ContestAuditLogEntryDtoSchema),
 }).describe('Contest audit-log response.');
 export type ContestAuditLogResponse = z.infer<typeof ContestAuditLogResponseSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// Each name becomes `components.schemas.<name>` and an importable generated type.
+// The frontend imports these; it must not re-derive a shape from a response map.
+registerSchema('TierDefinitionRequest', TierDefinitionRequestSchema);
+registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationRequestSchema);
+registerSchema('CreateContestRequest', CreateContestRequestSchema);
+registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
+registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
+registerSchema('UndoContestDraftSelectionRequest', UndoContestDraftSelectionRequestSchema);
+registerSchema('PauseContestDraftRequest', PauseContestDraftRequestSchema);
+registerSchema('ExtendPickClockRequest', ExtendPickClockRequestSchema);
+registerSchema('ReopenContestRequest', ReopenContestRequestSchema);
+registerSchema('CloseContestRequest', CloseContestRequestSchema);
+registerSchema('ExtendContestDeadlineRequest', ExtendContestDeadlineRequestSchema);
+registerSchema('UpdateContestLockTimeRequest', UpdateContestLockTimeRequestSchema);
+registerSchema('ContestSummaryDto', ContestSummaryDtoSchema);
+registerSchema('ContestDetailDto', ContestDetailDtoSchema);
+registerSchema('ContestEntryDto', ContestEntryDtoSchema);
+registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);
+registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetailDtoSchema);
+registerSchema('ContestEntryDetailDto', ContestEntryDetailDtoSchema);
+registerSchema('GolfLeaderboardRoundCellDto', GolfLeaderboardRoundCellDtoSchema);
+registerSchema('GolfLeaderboardRoundColumnsDto', GolfLeaderboardRoundColumnsDtoSchema);
+registerSchema('GolfLeaderboardParticipantDto', GolfLeaderboardParticipantDtoSchema);
+registerSchema('GolfLeaderboardEntryPickDto', GolfLeaderboardEntryPickDtoSchema);
+registerSchema('GolfLeaderboardEntryDto', GolfLeaderboardEntryDtoSchema);
+registerSchema('GolfLeaderboardCountingRuleDto', GolfLeaderboardCountingRuleDtoSchema);
+registerSchema('GolfLeaderboardResponse', GolfLeaderboardResponseSchema);
+registerSchema('ContestConfigurationDetailDto', ContestConfigurationDetailDtoSchema);
+registerSchema('ContestResponse', ContestResponseSchema);
+registerSchema('ContestListResponse', ContestListResponseSchema);
+registerSchema('ContestEntryResponse', ContestEntryResponseSchema);
+registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
+registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);
+registerSchema('MyContestEntryResponse', MyContestEntryResponseSchema);
+registerSchema('ContestEntryDeletionResponse', ContestEntryDeletionResponseSchema);
+registerSchema('ContestAuditLogEntryDto', ContestAuditLogEntryDtoSchema);
+registerSchema('ContestAuditLogResponse', ContestAuditLogResponseSchema);

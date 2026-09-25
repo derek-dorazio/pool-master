@@ -4,14 +4,7 @@ import {
   parseDelimitedRecords,
   type BulkUploadFormat,
 } from '@/features/shared/ui/bulk-upload-parse';
-import type {
-  AdminApplyGolfRoundScoresData,
-  AdminGetGolfTournamentResponses,
-  AdminGetGolfTournamentRoundsResponses,
-  AdminListGolfPlayersResponses,
-  AdminListGolfTournamentsResponses,
-  AdminPreviewGolfLeagueRosterUploadData,
-} from '@/lib/api';
+import type { AdminApplyGolfRoundScoresData, AdminGetGolfTournamentResponses, AdminGetGolfTournamentRoundsResponses, AdminListGolfPlayersResponses, AdminListGolfTournamentsResponses, AdminPreviewGolfLeagueRosterUploadData } from '@/lib/api';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament

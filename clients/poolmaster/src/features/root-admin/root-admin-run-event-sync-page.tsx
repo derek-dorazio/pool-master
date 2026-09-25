@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListProviders,
-  adminSyncProviderEventData,
-  listEvents,
-  type ListEventsResponses,
-} from '@/lib/api';
+import { adminListProviders, adminSyncProviderEventData, listEvents, type ListEventsResponses } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,

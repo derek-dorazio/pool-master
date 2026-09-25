@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-  adminTransitionGolfTournament,
-  adminUpdateGolfTournament,
-} from '@/lib/api';
+import { adminTransitionGolfTournament, adminUpdateGolfTournament } from '@/lib/api';
 import {
   Button,
   Callout,

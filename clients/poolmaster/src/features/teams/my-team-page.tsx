@@ -2,23 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  createSquadOwnerInvitation,
-  createLeagueSquad,
-  deleteLeagueSquad,
-  getLeagueByCode,
-  inactivateLeagueSquad,
-  listLeagueMembers,
-  listLeagueSquads,
-  listSquadOwnerInvitations,
-  replaceSquadOwner,
-  revokeSquadOwnerInvitation,
-  updateLeagueSquad,
-  type ListSquadOwnerInvitationsResponses,
-  type SquadDto,
-  type LeagueDetailDto,
-  type LeagueMemberDto,
-} from '@/lib/api';
+import { createSquadOwnerInvitation, createLeagueSquad, deleteLeagueSquad, getLeagueByCode, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad, type ListSquadOwnerInvitationsResponses, type SquadDto, type LeagueDetailDto, type LeagueMemberDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,

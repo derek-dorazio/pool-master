@@ -2,15 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  adminDeleteUser,
-  adminDisableUser,
-  adminEnableUser,
-  adminGetUserDetail,
-  adminResetUserPassword,
-  adminSetUserRootAdmin,
-  type AdminGetUserDetailResponses,
-} from '@/lib/api';
+import { adminDeleteUser, adminDisableUser, adminEnableUser, adminGetUserDetail, adminResetUserPassword, adminSetUserRootAdmin, type AdminGetUserDetailResponses } from '@/lib/api';
 import {
   ActionList,
   ActionTile,

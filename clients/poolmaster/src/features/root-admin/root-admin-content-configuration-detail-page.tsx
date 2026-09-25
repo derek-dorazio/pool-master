@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import {
-  adminListContestConfigTemplates,
-  adminUpdateContestConfigTemplate,
-  type AdminUpdateContestConfigTemplateResponses,
-} from '@/lib/api';
+import { adminListContestConfigTemplates, adminUpdateContestConfigTemplate, type AdminUpdateContestConfigTemplateResponses } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,

@@ -2,16 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import {
-  getLeagueByCode,
-  listLeagueMembers,
-  listLeagueSquads,
-  listSquadOwnerInvitations,
-  type ListSquadOwnerInvitationsResponses,
-  type SquadDto,
-  type LeagueDetailDto,
-  type LeagueMemberDto,
-} from '@/lib/api';
+import { getLeagueByCode, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, type ListSquadOwnerInvitationsResponses, type SquadDto, type LeagueDetailDto, type LeagueMemberDto } from '@/lib/api';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {

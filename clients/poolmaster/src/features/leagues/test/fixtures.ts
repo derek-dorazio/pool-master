@@ -1,19 +1,5 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type {
-  AcceptInvitationResponses,
-  CreateLeagueResponses,
-  DeleteLeagueResponses,
-  GenerateInviteLinkResponses,
-  GetCurrentUserResponses,
-  SquadDto,
-  SquadListResponse,
-  LeagueDetailDto,
-  LeagueSummaryDto,
-  LeagueListResponse,
-  LeagueResponse,
-  SquadResponse,
-  InvitationPreviewResponse,
-} from '@/lib/api';
+import type { AcceptInvitationResponses, CreateLeagueResponses, DeleteLeagueResponses, GenerateInviteLinkResponses, GetCurrentUserResponses, SquadDto, SquadListResponse, LeagueDetailDto, LeagueSummaryDto, LeagueListResponse, LeagueResponse, SquadResponse, InvitationPreviewResponse } from '@/lib/api';
 
 export type CurrentUser = GetCurrentUserResponses[200]['user'];
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];

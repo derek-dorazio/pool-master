@@ -2,20 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  activateLeague,
-  deleteLeague,
-  generateInviteLink,
-  getLeagueByCode,
-  inactivateLeague,
-  leaveLeague,
-  sendLeagueInvitations,
-  updateLeagueDetails,
-  updateLeagueIcon,
-  type LeaveLeagueResponses,
-  type LeagueDetailDto,
-  type LeagueSummaryDto,
-} from '@/lib/api';
+import { activateLeague, deleteLeague, generateInviteLink, getLeagueByCode, inactivateLeague, leaveLeague, sendLeagueInvitations, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDetailDto, type LeagueSummaryDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,

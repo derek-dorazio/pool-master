@@ -1,7 +1,4 @@
-import {
-  getInvitationPreview,
-  type InvitationPreviewResponse,
-} from '@/lib/api';
+import { getInvitationPreview, type InvitationPreviewResponse } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 

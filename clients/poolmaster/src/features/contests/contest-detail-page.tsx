@@ -2,16 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-  enterContest,
-  getContest,
-  listContestEntries,
-  listLeagueSquads,
-  updateContestEntry,
-  type GetContestResponses,
-  type ListContestEntriesResponses,
-  type SquadDto,
-} from '@/lib/api';
+import { enterContest, getContest, listContestEntries, listLeagueSquads, updateContestEntry, type SquadDto, type ContestDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
@@ -41,9 +32,7 @@ import { shouldPollContestEntries } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ContestDetail = GetContestResponses[200]['contest'];
-type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
-type ContestEntryParticipant = NonNullable<ContestEntryDetail['participants']>[number];
+type ContestEntryParticipant = NonNullable<ContestEntryDetailDto['participants']>[number];
 
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
   // pool-master-eux.5 removed the legacy score blob that previously implied
@@ -127,7 +116,7 @@ export function ContestDetailPage() {
 
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDetail> => {
+    queryFn: async (): Promise<ContestDetailDto> => {
       const response = await getContest({ path: { contestId } });
 
       if (!response.data?.contest) {
@@ -142,7 +131,7 @@ export function ContestDetailPage() {
 
   const contestEntriesQuery = useQuery({
     queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: async (): Promise<ListContestEntriesResponses[200]> => {
+    queryFn: async (): Promise<ContestEntryListResponse> => {
       const response = await listContestEntries({ path: { contestId } });
 
       if (!response.data) {
@@ -304,7 +293,7 @@ export function ContestDetailPage() {
       ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
       : null;
 
-  function startRenameEntry(entry: ContestEntryDetail) {
+  function startRenameEntry(entry: ContestEntryDetailDto) {
     setRenameEntryId(entry.id);
     setRenameDraft(entry.name);
     renameEntryMutation.reset();

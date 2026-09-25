@@ -1,12 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  adminListEventParticipants,
-  adminListEvents,
-  type AdminListEventParticipantsResponses,
-  type AdminListEventsResponses,
-} from '@/lib/api';
+import { adminListEventParticipants, adminListEvents, type AdminListEventParticipantsResponses, type AdminListEventsResponses } from '@/lib/api';
 import {
   Button,
   DataGrid,

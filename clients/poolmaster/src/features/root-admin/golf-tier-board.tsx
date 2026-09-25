@@ -16,10 +16,7 @@ import {
   type TierCard,
   type TierColumn,
 } from './golf-tier-board-utils';
-import type {
-  AdminGetGolfTournamentFieldResponses,
-  AdminGetGolfTournamentTiersResponses,
-} from '@/lib/api';
+import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses } from '@/lib/api';
 
 type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
 type FieldEntry =
