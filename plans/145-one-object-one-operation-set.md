@@ -373,7 +373,21 @@ Every slice runs the same three stages, in order, and does not skip ahead.
 
 ### Stage 1 — Review the model and its shadows
 
-For the slice's entity cluster, and only that cluster:
+**1.0 — Draw the DAO domain model first.** Before any shadow-hunting, produce a diagram of
+the cluster as the schema and ports actually define it: entities, attributes that carry
+meaning, associations, cardinalities, and the constraints that encode business rules. A
+Mermaid `erDiagram` in the slice issue is the format — it renders in GitHub and travels with
+the work.
+
+This grounds everything that follows. It is also where the cheapest findings surface:
+drawing the identity cluster immediately exposed a foreign key with no relation, a uniqueness
+constraint nobody had written down, and the reason one DTO field is called `owners`. Those
+came from drawing it, not from searching for them.
+
+The diagram is reviewed with the repo owner **before** stage 1 continues. Everything after
+this step is measured against it.
+
+Then, for the slice's entity cluster and only that cluster:
 
 - **Inventory the real model.** The entities and edges in `schema.prisma`, and what the DAO
   ports actually offer for them.
