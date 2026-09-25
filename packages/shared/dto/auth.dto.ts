@@ -100,34 +100,25 @@ export const UserProfileDtoSchema = z.object({
 }).describe('Frontend-facing user profile summary derived from the authenticated account.');
 export type UserProfileDto = z.infer<typeof UserProfileDtoSchema>;
 
-export const AuthenticatedSessionUserDtoSchema = UserProfileDtoSchema.extend({
-  sessionId: z
-    .string()
-    .uuid()
-    .nullable()
-    .describe('Safe non-secret session correlation identifier for the authenticated browser session.'),
-}).describe('Authenticated user profile summary enriched with the safe session correlation identifier.');
-export type AuthenticatedSessionUserDto = z.infer<typeof AuthenticatedSessionUserDtoSchema>;
-
 // --- Responses ---
 
 export const AuthResponseSchema = z.object({
-  user: AuthenticatedSessionUserDtoSchema,
+  user: UserProfileDtoSchema,
   tokens: AuthTokensDtoSchema,
 }).describe('Successful authentication response returned after registration or login.');
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
 export const MeResponseSchema = z.object({
-  user: AuthenticatedSessionUserDtoSchema,
+  user: UserProfileDtoSchema,
 }).describe('Authenticated current-user profile response.');
 export type MeResponse = z.infer<typeof MeResponseSchema>;
 
-export const TokenRefreshResponseSchema = AuthTokensDtoSchema.extend({
-  sessionId: z
-    .string()
-    .uuid()
-    .describe('Safe non-secret session correlation identifier that remains stable across refresh rotation.'),
-}).describe('Token refresh response including the stable session correlation identifier.');
+// #206 — no `sessionId`. The session correlation id stays server-side in the JWT's
+// `sid` claim; the browser never receives it and never needs to, because the only
+// consumer was the client logger and the ingest route now reads it from the token.
+export const TokenRefreshResponseSchema = AuthTokensDtoSchema.describe(
+  'Token refresh response carrying the rotated access, refresh and CSRF tokens.',
+);
 export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 
 export const LogoutResponseSchema = SuccessSchema;
@@ -138,12 +129,12 @@ export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;
 // LogoutResponseSchema are not referenced by any route, so registering them would
 // publish components nothing serves (check 2).
 //
-// AuthenticatedSessionUserDto is the payoff here: getCurrentUser's `user` was derived in
-// three frontend files under three different names (AuthSessionUser, PostAuthUser,
-// CurrentUser).
+// UserProfileDto is the payoff here: getCurrentUser's `user` was derived in three
+// frontend files under three different names (AuthSessionUser, PostAuthUser,
+// CurrentUser). It was briefly wrapped in an AuthenticatedSessionUserDto variant that
+// added a `sessionId`; #206 removed both the variant and the field.
 registerSchema('AuthTokensDto', AuthTokensDtoSchema);
 registerSchema('UserProfileDto', UserProfileDtoSchema);
-registerSchema('AuthenticatedSessionUserDto', AuthenticatedSessionUserDtoSchema);
 registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);

@@ -64,7 +64,6 @@ function createUserBase(): AuthSessionUser {
     isActive: true,
     isRootAdmin: false,
     createdAt: '2026-04-22T00:00:00.000Z',
-    sessionId: 'session-1',
   };
 }
 
@@ -74,7 +73,6 @@ function AuthProbe() {
   return (
     <div>
       <div data-testid="auth-state">{auth.user?.id ?? 'guest'}</div>
-      <div data-testid="auth-session-id">{auth.user?.sessionId ?? 'none'}</div>
       <button
         data-testid="auth-clear-session"
         onClick={() => {
@@ -153,15 +151,15 @@ describe('AuthProvider', () => {
       .mockRejectedValueOnce(new Error('Unauthorized'))
       .mockResolvedValueOnce({
         data: {
-          user: buildUser({
-            id: 'user-2',
-            sessionId: 'session-2',
-          }),
+          user: buildUser({ id: 'user-2' }),
         },
       });
     refreshTokenMock.mockResolvedValue({
       data: {
-        sessionId: 'session-2',
+        accessToken: 'access-2',
+        refreshToken: 'refresh-2',
+        csrfToken: 'csrf-2',
+        expiresIn: 900,
       },
     });
 
@@ -169,13 +167,14 @@ describe('AuthProvider', () => {
 
     await screen.findByText('user-2');
 
-    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.sessionId).toBe('session-2');
+    // Issue 206 — the recovered user is the evidence of recovery; there is no session id
+    // in any response body any more.
+    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-2');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.refresh.succeeded',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
         data: expect.objectContaining({
-          sessionId: 'session-2',
           userId: 'user-2',
         }),
       }),

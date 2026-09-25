@@ -96,7 +96,6 @@ function buildUser() {
     isActive: true,
     isRootAdmin: false,
     createdAt: '2026-04-22T00:00:00.000Z',
-    sessionId: 'session-1',
   };
 }
 

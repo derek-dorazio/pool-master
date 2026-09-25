@@ -3295,52 +3295,6 @@ export interface components {
              */
             createdAt?: string;
         };
-        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-        AuthenticatedSessionUserDto: {
-            /** @description Stable user identifier. */
-            id: string;
-            /** @description Primary email address for the user account. */
-            email: string;
-            /** @description Unique login identifier for the account. */
-            username: string;
-            /** @description First name shown in account and member-management surfaces. */
-            firstName: string;
-            /** @description Last name shown in account and member-management surfaces. */
-            lastName: string;
-            /** @description Whether the account is currently active for normal sign-in and product usage. */
-            isActive: boolean;
-            /** @description Whether the user has platform-level root-admin access. */
-            isRootAdmin: boolean;
-            /**
-             * @description Authentication provider used for the account when known.
-             * @enum {string}
-             */
-            authProvider?: "email" | "google" | "apple";
-            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-            timezone?: string;
-            /** @description Preferred locale for formatting and localized copy. */
-            locale?: string;
-            /**
-             * @description Preferred clock display used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            timeFormat?: "12H" | "24H";
-            /**
-             * @description Preferred date display format used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            dateFormat?: "MDY" | "DMY" | "YMD";
-            /**
-             * Format: date-time
-             * @description Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Format: uuid
-             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
-        };
         /** @description Create-account payload for a new username/email/password user. */
         RegisterRequest: {
             /** @description Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field. */
@@ -3366,7 +3320,7 @@ export interface components {
         };
         /** @description Successful authentication response returned after registration or login. */
         AuthResponse: {
-            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+            /** @description Frontend-facing user profile summary derived from the authenticated account. */
             user: {
                 /** @description Stable user identifier. */
                 id: string;
@@ -3406,11 +3360,6 @@ export interface components {
                  * @description Account creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
-                /**
-                 * Format: uuid
-                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                 */
-                sessionId: string | null;
             };
             /** @description Authentication token bundle returned after login or registration. */
             tokens: {
@@ -3426,7 +3375,7 @@ export interface components {
         };
         /** @description Authenticated current-user profile response. */
         MeResponse: {
-            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+            /** @description Frontend-facing user profile summary derived from the authenticated account. */
             user: {
                 /** @description Stable user identifier. */
                 id: string;
@@ -3466,14 +3415,9 @@ export interface components {
                  * @description Account creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
-                /**
-                 * Format: uuid
-                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                 */
-                sessionId: string | null;
             };
         };
-        /** @description Token refresh response including the stable session correlation identifier. */
+        /** @description Token refresh response carrying the rotated access, refresh and CSRF tokens. */
         TokenRefreshResponse: {
             /** @description Short-lived bearer token used for authenticated API requests. */
             accessToken: string;
@@ -3483,11 +3427,6 @@ export interface components {
             csrfToken: string;
             /** @description Access-token lifetime in seconds from the time it was issued. */
             expiresIn: number;
-            /**
-             * Format: uuid
-             * @description Safe non-secret session correlation identifier that remains stable across refresh rotation.
-             */
-            sessionId: string;
         };
         /** @description Tier definition used in contest create and update flows. */
         TierDefinitionRequest: {
@@ -7377,10 +7316,6 @@ export interface components {
             ts: string;
             route?: string;
             /** Format: uuid */
-            sessionId?: string | null;
-            /** Format: uuid */
-            userId?: string | null;
-            /** Format: uuid */
             clientRequestId?: string | null;
             data?: {
                 [key: string]: unknown;
@@ -7401,10 +7336,6 @@ export interface components {
                 /** Format: date-time */
                 ts: string;
                 route?: string;
-                /** Format: uuid */
-                sessionId?: string | null;
-                /** Format: uuid */
-                userId?: string | null;
                 /** Format: uuid */
                 clientRequestId?: string | null;
                 data?: {
@@ -7606,7 +7537,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Token refresh response including the stable session correlation identifier. */
+            /** @description Token refresh response carrying the rotated access, refresh and CSRF tokens. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12283,7 +12214,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
@@ -12323,11 +12254,6 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
                         };
                     };
                 };
@@ -12422,7 +12348,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
@@ -12462,11 +12388,6 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
                         };
                     };
                 };
@@ -12573,7 +12494,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
@@ -12613,11 +12534,6 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
                         };
                     };
                 };
@@ -12736,7 +12652,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
@@ -12776,11 +12692,6 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
                         };
                     };
                 };
@@ -12974,7 +12885,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
@@ -13014,11 +12925,6 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
                         };
                     };
                 };

@@ -3,7 +3,6 @@
  */
 import type {
   AuthResponse,
-  AuthenticatedSessionUserDto,
   MeResponse,
   TokenRefreshResponse,
   UserProfileDto,
@@ -50,19 +49,9 @@ export function toUserProfileDto(user: UserRow): UserProfileDto {
   };
 }
 
-export function toAuthenticatedSessionUserDto(
-  user: UserRow,
-  sessionId: string,
-): AuthenticatedSessionUserDto {
-  return {
-    ...toUserProfileDto(user),
-    sessionId,
-  };
-}
-
 export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
   return {
-    user: toAuthenticatedSessionUserDto(user, tokens.sessionId),
+    user: toUserProfileDto(user),
     tokens: {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -72,18 +61,20 @@ export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
   };
 }
 
-export function toMeResponse(user: UserRow, sessionId: string): MeResponse {
+export function toMeResponse(user: UserRow): MeResponse {
   return {
-    user: toAuthenticatedSessionUserDto(user, sessionId),
+    user: toUserProfileDto(user),
   };
 }
 
+// #206 — `tokens.sessionId` is deliberately not mapped out. It lives in the access
+// token's `sid` claim, which the browser cannot read (httpOnly) and does not need:
+// the client-log ingest route reads it from the token server-side.
 export function toTokenRefreshResponse(tokens: TokenPair): TokenRefreshResponse {
   return {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     csrfToken: tokens.csrfToken,
     expiresIn: tokens.expiresIn,
-    sessionId: tokens.sessionId,
   };
 }

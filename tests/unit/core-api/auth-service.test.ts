@@ -61,8 +61,9 @@ describe('AuthService', () => {
     expect(prisma.refreshToken.create).toHaveBeenCalled();
     expect(result.user.email).toBe('new@example.com');
     expect(result.user.username).toBe('newuser');
-    expect(result.user.sessionId).toBeTruthy();
-    expect(result.user.sessionId).toBe(result.tokens.sessionId);
+    // #206 — the session id lives on the token pair only; it is no longer duplicated
+    // onto the user, and never reaches a response body.
+    expect(result.tokens.sessionId).toBeTruthy();
     expect(result.tokens.accessToken).toBeTruthy();
   });
 

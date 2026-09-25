@@ -49,7 +49,6 @@ export interface UserProfile {
   timeFormat?: TimeFormat | null;
   dateFormat?: DateFormat | null;
   createdAt: Date;
-  sessionId?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,10 +134,7 @@ export class AuthService {
     }, 'Registered user account');
 
     return {
-      user: {
-        ...mapUserProfile(user),
-        sessionId: tokens.sessionId,
-      },
+      user: mapUserProfile(user),
       tokens,
     };
   }
@@ -209,10 +205,7 @@ export class AuthService {
     }, 'Authenticated user');
 
     return {
-      user: {
-        ...mapUserProfile(user),
-        sessionId: tokens.sessionId,
-      },
+      user: mapUserProfile(user),
       tokens,
     };
   }
@@ -317,7 +310,7 @@ export class AuthService {
   /**
    * Returns the user profile for a given user ID.
    */
-  async getProfile(userId: string, sessionId?: string | null): Promise<UserProfile> {
+  async getProfile(userId: string): Promise<UserProfile> {
     this.logger?.debug({
       action: 'authService.getProfile.start',
       data: { userId },
@@ -334,10 +327,7 @@ export class AuthService {
       action: 'authService.getProfile.success',
       data: { userId },
     }, 'Loaded authenticated user profile');
-    return {
-      ...mapUserProfile(user),
-      sessionId: sessionId ?? null,
-    };
+    return mapUserProfile(user);
   }
 
   async issueSessionForUser(userId: string): Promise<TokenPair> {

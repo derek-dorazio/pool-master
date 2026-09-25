@@ -197,7 +197,6 @@ describe('poolmaster API client correlation headers', () => {
             accessToken: 'access-2',
             refreshToken: 'refresh-2',
             csrfToken: 'csrf-2',
-            sessionId: 'session-2',
           }),
           {
             status: 200,
@@ -258,7 +257,6 @@ describe('poolmaster API client correlation headers', () => {
             accessToken: 'access-2',
             refreshToken: 'refresh-2',
             csrfToken: 'csrf-2',
-            sessionId: 'session-2',
           }),
           {
             status: 200,

@@ -85,68 +85,6 @@ export type UserProfileDto = {
 };
 
 /**
- * Authenticated user profile summary enriched with the safe session correlation identifier.
- */
-export type AuthenticatedSessionUserDto = {
-    /**
-     * Stable user identifier.
-     */
-    id: string;
-    /**
-     * Primary email address for the user account.
-     */
-    email: string;
-    /**
-     * Unique login identifier for the account.
-     */
-    username: string;
-    /**
-     * First name shown in account and member-management surfaces.
-     */
-    firstName: string;
-    /**
-     * Last name shown in account and member-management surfaces.
-     */
-    lastName: string;
-    /**
-     * Whether the account is currently active for normal sign-in and product usage.
-     */
-    isActive: boolean;
-    /**
-     * Whether the user has platform-level root-admin access.
-     */
-    isRootAdmin: boolean;
-    /**
-     * Authentication provider used for the account when known.
-     */
-    authProvider?: 'email' | 'google' | 'apple';
-    /**
-     * Preferred IANA timezone for user-facing scheduling and reminders.
-     */
-    timezone?: string;
-    /**
-     * Preferred locale for formatting and localized copy.
-     */
-    locale?: string;
-    /**
-     * Preferred clock display used in account and scheduling surfaces.
-     */
-    timeFormat?: '12H' | '24H';
-    /**
-     * Preferred date display format used in account and scheduling surfaces.
-     */
-    dateFormat?: 'MDY' | 'DMY' | 'YMD';
-    /**
-     * Account creation timestamp in ISO 8601 format.
-     */
-    createdAt?: string;
-    /**
-     * Safe non-secret session correlation identifier for the authenticated browser session.
-     */
-    sessionId: string | null;
-};
-
-/**
  * Create-account payload for a new username/email/password user.
  */
 export type RegisterRequest = {
@@ -191,7 +129,7 @@ export type LoginRequest = {
  */
 export type AuthResponse = {
     /**
-     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     * Frontend-facing user profile summary derived from the authenticated account.
      */
     user: {
         /**
@@ -246,10 +184,6 @@ export type AuthResponse = {
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
-        /**
-         * Safe non-secret session correlation identifier for the authenticated browser session.
-         */
-        sessionId: string | null;
     };
     /**
      * Authentication token bundle returned after login or registration.
@@ -279,7 +213,7 @@ export type AuthResponse = {
  */
 export type MeResponse = {
     /**
-     * Authenticated user profile summary enriched with the safe session correlation identifier.
+     * Frontend-facing user profile summary derived from the authenticated account.
      */
     user: {
         /**
@@ -334,15 +268,11 @@ export type MeResponse = {
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
-        /**
-         * Safe non-secret session correlation identifier for the authenticated browser session.
-         */
-        sessionId: string | null;
     };
 };
 
 /**
- * Token refresh response including the stable session correlation identifier.
+ * Token refresh response carrying the rotated access, refresh and CSRF tokens.
  */
 export type TokenRefreshResponse = {
     /**
@@ -361,10 +291,6 @@ export type TokenRefreshResponse = {
      * Access-token lifetime in seconds from the time it was issued.
      */
     expiresIn: number;
-    /**
-     * Safe non-secret session correlation identifier that remains stable across refresh rotation.
-     */
-    sessionId: string;
 };
 
 /**
@@ -5735,8 +5661,6 @@ export type ClientLogEntry = {
     msg?: string;
     ts: string;
     route?: string;
-    sessionId?: string | null;
-    userId?: string | null;
     clientRequestId?: string | null;
     data?: {
         [key: string]: unknown;
@@ -5755,8 +5679,6 @@ export type ClientLogBatch = {
         msg?: string;
         ts: string;
         route?: string;
-        sessionId?: string | null;
-        userId?: string | null;
         clientRequestId?: string | null;
         data?: {
             [key: string]: unknown;
@@ -6008,7 +5930,7 @@ export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
 
 export type RefreshTokenResponses = {
     /**
-     * Token refresh response including the stable session correlation identifier.
+     * Token refresh response carrying the rotated access, refresh and CSRF tokens.
      */
     200: TokenRefreshResponse;
 };
@@ -11170,7 +11092,7 @@ export type ReactivateAccountResponses = {
      */
     200: {
         /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         * Frontend-facing user profile summary derived from the authenticated account.
          */
         user: {
             /**
@@ -11225,10 +11147,6 @@ export type ReactivateAccountResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
     };
 };
@@ -11357,7 +11275,7 @@ export type UpdateAccountProfileResponses = {
      */
     200: {
         /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         * Frontend-facing user profile summary derived from the authenticated account.
          */
         user: {
             /**
@@ -11412,10 +11330,6 @@ export type UpdateAccountProfileResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
     };
 };
@@ -11536,7 +11450,7 @@ export type UpdateAccountUsernameResponses = {
      */
     200: {
         /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         * Frontend-facing user profile summary derived from the authenticated account.
          */
         user: {
             /**
@@ -11591,10 +11505,6 @@ export type UpdateAccountUsernameResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
     };
 };
@@ -11705,7 +11615,7 @@ export type UpdateAccountPreferencesResponses = {
      */
     200: {
         /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         * Frontend-facing user profile summary derived from the authenticated account.
          */
         user: {
             /**
@@ -11760,10 +11670,6 @@ export type UpdateAccountPreferencesResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
     };
 };
@@ -11984,7 +11890,7 @@ export type InactivateAccountResponses = {
      */
     200: {
         /**
-         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         * Frontend-facing user profile summary derived from the authenticated account.
          */
         user: {
             /**
@@ -12039,10 +11945,6 @@ export type InactivateAccountResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
-            /**
-             * Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
     };
 };

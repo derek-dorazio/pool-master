@@ -28,32 +28,31 @@ function buildUser(overrides?: Partial<AuthSessionUser>): AuthSessionUser {
     isActive: true,
     isRootAdmin: false,
     createdAt: '2026-04-22T00:00:00.000Z',
-    sessionId: 'session-1',
     ...overrides,
   };
 }
 
 describe('pool-master-rop.78.11 auth session cache', () => {
-  it('pool-master-rop.78.11 preserves the cached session id when account updates omit it', () => {
+  // Issue 206 — this used to assert that a `sessionId` absent from an account response was
+  // preserved from the previously cached user. No response carries a session id now, so
+  // the behaviour under test is the plain replacement that remains.
+  it('pool-master-rop.78.11 caches the user an account update returns', () => {
     const queryClient = createQueryClient();
-    queryClient.setQueryData(AUTH_ME_QUERY_KEY, buildUser({ sessionId: 'session-1' }));
+    queryClient.setQueryData(AUTH_ME_QUERY_KEY, buildUser());
 
-    const updatedUser = setAuthSessionUser(queryClient, buildUser({
-      firstName: 'Dee',
-      sessionId: undefined,
-    }));
+    const updatedUser = setAuthSessionUser(queryClient, buildUser({ firstName: 'Dee' }));
 
-    expect(updatedUser.sessionId).toBe('session-1');
+    expect(updatedUser.firstName).toBe('Dee');
     expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+      id: 'user-1',
       firstName: 'Dee',
-      sessionId: 'session-1',
     });
   });
 
   it('pool-master-rop.78.11 clears auth server-state without a Zustand mirror', () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(AUTH_ME_QUERY_KEY, buildUser());
-    queryClient.setQueryData(AUTH_REFRESH_QUERY_KEY, { sessionId: 'session-1' });
+    queryClient.setQueryData(AUTH_REFRESH_QUERY_KEY, { expiresIn: 900 });
 
     clearAuthSession(queryClient);
 

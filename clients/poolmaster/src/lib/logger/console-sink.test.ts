@@ -7,7 +7,6 @@ const META = {
   webappVersion: '0.1.0',
   userAgent: 'vitest',
   route: '/test',
-  sessionId: null,
   userId: 'user-1',
 } as const;
 

@@ -57,7 +57,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
         },
       }, 'Account reactivation response ready');
       reply.header('Set-Cookie', createSessionCookieHeaders(tokens));
-      return reply.send(mapAccountResponse(user, tokens.sessionId));
+      return reply.send(mapAccountResponse(user));
     } catch (error) {
       if (error instanceof AccountLifecycleError) {
         logger.warn({
@@ -120,7 +120,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
           userId: user.id,
         },
       }, 'Updated account profile');
-      return reply.send(mapAccountResponse(user, request.authUser?.sessionId ?? null));
+      return reply.send(mapAccountResponse(user));
     } catch (error) {
       if (error instanceof AccountLifecycleError) {
         logger.warn({
@@ -170,7 +170,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
           userId: user.id,
         },
       }, 'Updated account username');
-      return reply.send(mapAccountResponse(user, request.authUser?.sessionId ?? null));
+      return reply.send(mapAccountResponse(user));
     } catch (error) {
       if (error instanceof AccountLifecycleError) {
         logger.warn({
@@ -228,7 +228,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
           userId: user.id,
         },
       }, 'Updated account preferences');
-      return reply.send(mapAccountResponse(user, request.authUser?.sessionId ?? null));
+      return reply.send(mapAccountResponse(user));
     } catch (error) {
       if (error instanceof AccountLifecycleError) {
         logger.warn({
@@ -333,7 +333,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
           isActive: user.isActive,
         },
       }, 'Inactivated account');
-      return reply.send(mapAccountResponse(user, request.authUser?.sessionId ?? null));
+      return reply.send(mapAccountResponse(user));
     } catch (error) {
       if (error instanceof AccountLifecycleError) {
         logger.warn({

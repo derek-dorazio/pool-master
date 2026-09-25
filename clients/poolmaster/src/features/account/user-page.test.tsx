@@ -129,7 +129,6 @@ function buildCurrentUser({
     timeFormat: '12H',
     dateFormat: 'MDY',
     createdAt: '2026-04-13T00:00:00.000Z',
-    sessionId: 'session-1',
     ...overrides,
   };
 }
@@ -304,7 +303,6 @@ describe('UserPage', () => {
         email: 'updated@example.com',
         firstName: 'Updated',
         lastName: 'Person',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -365,7 +363,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         username: 'derekd',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -427,7 +424,6 @@ describe('UserPage', () => {
         timezone: 'America/Chicago',
         timeFormat: '24H',
         dateFormat: 'YMD',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -496,7 +492,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: false,
-        sessionId: 'session-1',
       }),
     );
   });
@@ -540,7 +535,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: true,
-        sessionId: 'session-1',
       }),
     );
   });

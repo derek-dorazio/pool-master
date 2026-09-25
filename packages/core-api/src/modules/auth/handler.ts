@@ -11,6 +11,15 @@ import {
   createSessionCookieHeaders,
   readRefreshCookie,
 } from '../../core/session-cookies';
+// #206 — these five sends used to pass service results straight to reply.send, so the
+// response DTO was enforced only by Fastify's serializer stripping undeclared fields.
+// That is how `sessionId` reached three response bodies without a compile error. Going
+// through the mappers makes the contract type-checked.
+import {
+  toAuthResponse,
+  toMeResponse,
+  toTokenRefreshResponse,
+} from '../../mappers';
 
 export function createAuthHandlers(authService: AuthService) {
   return {
@@ -57,7 +66,7 @@ export function createAuthHandlers(authService: AuthService) {
         },
       }, 'Auth registration response ready');
       reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
-      return reply.status(201).send(result);
+      return reply.status(201).send(toAuthResponse(result.user, result.tokens));
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({
@@ -108,7 +117,7 @@ export function createAuthHandlers(authService: AuthService) {
         },
       }, 'Auth login response ready');
       reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
-      return reply.send(result);
+      return reply.send(toAuthResponse(result.user, result.tokens));
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({
@@ -166,7 +175,7 @@ export function createAuthHandlers(authService: AuthService) {
         },
       }, 'Auth refresh response ready');
       reply.header('Set-Cookie', createSessionCookieHeaders(tokens));
-      return reply.send(tokens);
+      return reply.send(toTokenRefreshResponse(tokens));
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({
@@ -244,10 +253,7 @@ export function createAuthHandlers(authService: AuthService) {
         }, 'Current-user request rejected');
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
-      const profile = await authService.getProfile(
-        request.authUser.userId,
-        request.authUser.sessionId,
-      );
+      const profile = await authService.getProfile(request.authUser.userId);
       logger.info({
         action: 'auth.me.succeeded',
         data: {
@@ -261,7 +267,7 @@ export function createAuthHandlers(authService: AuthService) {
           statusCode: 200,
         },
       }, 'Current-user response ready');
-      return reply.send({ user: profile });
+      return reply.send(toMeResponse(profile));
     } catch (err) {
       if (err instanceof AuthError) {
         logger.warn({

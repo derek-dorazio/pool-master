@@ -55,6 +55,14 @@ export class ClientLogService {
     batch: ClientLogBatch;
     ip: string | null;
     requestLogger: ClientLogEmitter;
+    /**
+     * Session and user identity for the whole batch, read by the handler from the
+     * verified JWT on the ingesting request (#206). Never taken from the batch body:
+     * a client-supplied value would let any caller attribute log lines to any
+     * session or user. Null for an anonymous caller.
+     */
+    sessionId: string | null;
+    userId: string | null;
   }): void {
     this.logger?.debug({
       action: 'clientLogs.ingest.start',
@@ -84,8 +92,8 @@ export class ClientLogService {
           clientRequestId: entry.clientRequestId ?? null,
           clientRoute: entry.route ?? null,
           clientTs: entry.ts,
-          clientSessionId: entry.sessionId ?? null,
-          clientUserId: entry.userId ?? null,
+          clientSessionId: params.sessionId,
+          clientUserId: params.userId,
           webappVersion: params.batch.webappVersion,
           userAgent: params.batch.userAgent,
           ...(entry.data ?? {}),

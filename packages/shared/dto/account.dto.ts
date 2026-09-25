@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { SuccessSchema } from './common.dto';
-import { AuthenticatedSessionUserDtoSchema } from './auth.dto';
+import { UserProfileDtoSchema } from './auth.dto';
 
 export const AccountProfileUpdateRequestSchema = z.object({
   email: z
@@ -93,7 +93,7 @@ export const AccountDeleteRequestSchema = z.object({
 export type AccountDeleteRequest = z.infer<typeof AccountDeleteRequestSchema>;
 
 export const AccountResponseSchema = z.object({
-  user: AuthenticatedSessionUserDtoSchema,
+  user: UserProfileDtoSchema,
 }).describe('Self-service account response envelope for authenticated account lifecycle actions.');
 export type AccountResponse = z.infer<typeof AccountResponseSchema>;
 
