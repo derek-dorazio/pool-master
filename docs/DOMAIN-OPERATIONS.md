@@ -227,12 +227,11 @@ of the create operation — it is the userId that becomes the first commissioner
 
 ## Open items
 
-One remains, and it is narrower than it looked:
+None. The catalog above was reviewed and accepted.
 
-- **May a member hard-delete their own inactive squad?** A5 settles that they cannot delete
-  a peer's, and A7 gives the commissioner the operation regardless. What is open is whether
-  permanent deletion is a member operation at all, given it destroys contest history.
-  Currently listed as `commissioner` only.
+**Permanent deletion is `commissioner` only** — a member inactivates their own squad but
+does not destroy contest history. Low-stakes to revisit: A7 already gives the commissioner
+the operation, and a member always has inactivate.
 
 ### Soft and hard delete both exist, and hard delete is gated
 
