@@ -1,8 +1,9 @@
-import type { AdminGetIngestionScheduleResponses, AdminGetPollIntervalsResponses } from '@/lib/api';
+import type { IngestionScheduleConfig, PollIntervalConfig } from '@/lib/api';
 import type { SyncSport } from './root-admin-sync-utils';
 
-export type PollIntervalConfig = AdminGetPollIntervalsResponses[200];
-export type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
+// Re-exported so the three root-admin config pages keep importing these from one place;
+// the shapes themselves are the generated named components (see plans/143).
+export type { IngestionScheduleConfig, PollIntervalConfig };
 
 export const INGESTION_POLICY_FIELDS = [
   {

@@ -32,7 +32,6 @@ import { contestManagementModule } from '../../packages/core-api/src/modules/con
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { accountConsentModule } from '../../packages/core-api/src/modules/account-consent/routes';
 import { accountModule } from '../../packages/core-api/src/modules/account/routes';
-import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
@@ -99,7 +98,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(accountModule, { prefix: '/api/v1/account' });
   testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
-  testApp.register(configModule, { prefix: '/api/v1/config' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });

@@ -11572,6 +11572,670 @@
         "additionalProperties": false,
         "description": "Single admin audit-entry response."
       },
+      "PollIntervalConfig": {
+        "type": "object",
+        "properties": {
+          "standings": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for standings and leaderboard surfaces."
+          },
+          "draft": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+          },
+          "contestStatus": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+          },
+          "notifications": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for unread notifications and similar badge counts."
+          },
+          "default": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
+          }
+        },
+        "required": [
+          "standings",
+          "draft",
+          "contestStatus",
+          "notifications",
+          "default"
+        ],
+        "additionalProperties": false,
+        "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
+      },
+      "PollIntervalConfigPatch": {
+        "type": "object",
+        "properties": {
+          "standings": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for standings and leaderboard surfaces."
+          },
+          "draft": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for draft state and pick-clock surfaces."
+          },
+          "contestStatus": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for contest status and lifecycle surfaces."
+          },
+          "notifications": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Recommended refresh interval for unread notifications and similar badge counts."
+          },
+          "default": {
+            "type": "integer",
+            "minimum": 1000,
+            "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Partial poll-interval update payload used by root-admin configuration tools."
+      },
+      "IngestionScheduleConfigOverride": {
+        "type": "object",
+        "properties": {
+          "scheduledSports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "minItems": 1
+          },
+          "healthCheck": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventSchedule": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventParticipants": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "participantRankings": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventLiveScores": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventResults": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+      },
+      "IngestionScheduleConfig": {
+        "type": "object",
+        "properties": {
+          "scheduledSports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "minItems": 1,
+            "default": [
+              "GOLF"
+            ],
+            "description": "Sports that scheduled ingestion is allowed to run automatically."
+          },
+          "healthCheck": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for provider health checks."
+          },
+          "eventSchedule": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
+          },
+          "eventParticipants": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+          },
+          "participantRankings": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for ranking refreshes."
+          },
+          "eventLiveScores": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for live score polling."
+          },
+          "eventResults": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for completed-event result refreshes."
+          },
+          "perSportOverrides": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "scheduledSports": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "NFL",
+                      "NBA",
+                      "F1",
+                      "NASCAR",
+                      "NCAA_BASKETBALL",
+                      "NCAA_HOCKEY",
+                      "NCAA_FOOTBALL",
+                      "TENNIS",
+                      "HORSE_RACING",
+                      "SOCCER",
+                      "NHL",
+                      "MLB",
+                      "UFC"
+                    ]
+                  },
+                  "minItems": 1
+                },
+                "healthCheck": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventSchedule": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventParticipants": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "participantRankings": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventLiveScores": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventResults": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+            },
+            "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+          }
+        },
+        "required": [
+          "healthCheck",
+          "eventSchedule",
+          "eventParticipants",
+          "participantRankings",
+          "eventLiveScores",
+          "eventResults",
+          "perSportOverrides"
+        ],
+        "additionalProperties": false,
+        "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+      },
       "ClientLogLevel": {
         "type": "string",
         "enum": [
@@ -42917,43 +43581,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "standings": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                    },
-                    "draft": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                    },
-                    "contestStatus": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                    },
-                    "notifications": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                    },
-                    "default": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                    }
-                  },
-                  "required": [
-                    "standings",
-                    "draft",
-                    "contestStatus",
-                    "notifications",
-                    "default"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
+                  "$ref": "#/components/schemas/PollIntervalConfig"
                 }
               }
             }
@@ -43011,40 +43639,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "standings": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                  },
-                  "draft": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                  },
-                  "contestStatus": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                  },
-                  "notifications": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                  },
-                  "default": {
-                    "type": "integer",
-                    "minimum": 1000,
-                    "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Partial poll-interval update payload used by root-admin configuration tools."
+                "$ref": "#/components/schemas/PollIntervalConfigPatch"
               }
             }
-          },
-          "description": "Partial poll-interval update payload used by root-admin configuration tools."
+          }
         },
         "responses": {
           "200": {
@@ -43052,43 +43650,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "standings": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                    },
-                    "draft": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                    },
-                    "contestStatus": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                    },
-                    "notifications": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                    },
-                    "default": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                    }
-                  },
-                  "required": [
-                    "standings",
-                    "draft",
-                    "contestStatus",
-                    "notifications",
-                    "default"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
+                  "$ref": "#/components/schemas/PollIntervalConfig"
                 }
               }
             }
@@ -43149,43 +43711,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "standings": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                    },
-                    "draft": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                    },
-                    "contestStatus": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                    },
-                    "notifications": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                    },
-                    "default": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                    }
-                  },
-                  "required": [
-                    "standings",
-                    "draft",
-                    "contestStatus",
-                    "notifications",
-                    "default"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
+                  "$ref": "#/components/schemas/PollIntervalConfig"
                 }
               }
             }
@@ -43246,411 +43772,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "scheduledSports": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF",
-                          "NFL",
-                          "NBA",
-                          "F1",
-                          "NASCAR",
-                          "NCAA_BASKETBALL",
-                          "NCAA_HOCKEY",
-                          "NCAA_FOOTBALL",
-                          "TENNIS",
-                          "HORSE_RACING",
-                          "SOCCER",
-                          "NHL",
-                          "MLB",
-                          "UFC"
-                        ]
-                      },
-                      "minItems": 1,
-                      "default": [
-                        "GOLF"
-                      ],
-                      "description": "Sports that scheduled ingestion is allowed to run automatically."
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for provider health checks."
-                    },
-                    "eventSchedule": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
-                    },
-                    "eventParticipants": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                    },
-                    "participantRankings": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for ranking refreshes."
-                    },
-                    "eventLiveScores": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for live score polling."
-                    },
-                    "eventResults": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for completed-event result refreshes."
-                    },
-                    "perSportOverrides": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "scheduledSports": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF",
-                                "NFL",
-                                "NBA",
-                                "F1",
-                                "NASCAR",
-                                "NCAA_BASKETBALL",
-                                "NCAA_HOCKEY",
-                                "NCAA_FOOTBALL",
-                                "TENNIS",
-                                "HORSE_RACING",
-                                "SOCCER",
-                                "NHL",
-                                "MLB",
-                                "UFC"
-                              ]
-                            },
-                            "minItems": 1
-                          },
-                          "healthCheck": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventSchedule": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventParticipants": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "participantRankings": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventLiveScores": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventResults": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          }
-                        },
-                        "additionalProperties": false,
-                        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-                      },
-                      "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-                    }
-                  },
-                  "required": [
-                    "healthCheck",
-                    "eventSchedule",
-                    "eventParticipants",
-                    "participantRankings",
-                    "eventLiveScores",
-                    "eventResults",
-                    "perSportOverrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+                  "$ref": "#/components/schemas/IngestionScheduleConfig"
                 }
               }
             }
@@ -43708,194 +43830,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "scheduledSports": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
-                      ]
-                    },
-                    "minItems": 1
-                  },
-                  "healthCheck": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventSchedule": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventParticipants": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "participantRankings": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventResults": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                "$ref": "#/components/schemas/IngestionScheduleConfigOverride"
               }
             }
-          },
-          "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+          }
         },
         "responses": {
           "200": {
@@ -43903,411 +43841,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "scheduledSports": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF",
-                          "NFL",
-                          "NBA",
-                          "F1",
-                          "NASCAR",
-                          "NCAA_BASKETBALL",
-                          "NCAA_HOCKEY",
-                          "NCAA_FOOTBALL",
-                          "TENNIS",
-                          "HORSE_RACING",
-                          "SOCCER",
-                          "NHL",
-                          "MLB",
-                          "UFC"
-                        ]
-                      },
-                      "minItems": 1,
-                      "default": [
-                        "GOLF"
-                      ],
-                      "description": "Sports that scheduled ingestion is allowed to run automatically."
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for provider health checks."
-                    },
-                    "eventSchedule": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
-                    },
-                    "eventParticipants": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                    },
-                    "participantRankings": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for ranking refreshes."
-                    },
-                    "eventLiveScores": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for live score polling."
-                    },
-                    "eventResults": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for completed-event result refreshes."
-                    },
-                    "perSportOverrides": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "scheduledSports": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF",
-                                "NFL",
-                                "NBA",
-                                "F1",
-                                "NASCAR",
-                                "NCAA_BASKETBALL",
-                                "NCAA_HOCKEY",
-                                "NCAA_FOOTBALL",
-                                "TENNIS",
-                                "HORSE_RACING",
-                                "SOCCER",
-                                "NHL",
-                                "MLB",
-                                "UFC"
-                              ]
-                            },
-                            "minItems": 1
-                          },
-                          "healthCheck": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventSchedule": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventParticipants": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "participantRankings": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventLiveScores": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventResults": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          }
-                        },
-                        "additionalProperties": false,
-                        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-                      },
-                      "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-                    }
-                  },
-                  "required": [
-                    "healthCheck",
-                    "eventSchedule",
-                    "eventParticipants",
-                    "participantRankings",
-                    "eventLiveScores",
-                    "eventResults",
-                    "perSportOverrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+                  "$ref": "#/components/schemas/IngestionScheduleConfig"
                 }
               }
             }
@@ -44367,194 +43901,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "scheduledSports": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "GOLF",
-                        "NFL",
-                        "NBA",
-                        "F1",
-                        "NASCAR",
-                        "NCAA_BASKETBALL",
-                        "NCAA_HOCKEY",
-                        "NCAA_FOOTBALL",
-                        "TENNIS",
-                        "HORSE_RACING",
-                        "SOCCER",
-                        "NHL",
-                        "MLB",
-                        "UFC"
-                      ]
-                    },
-                    "minItems": 1
-                  },
-                  "healthCheck": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventSchedule": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventParticipants": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "participantRankings": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  },
-                  "eventResults": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                      },
-                      "intervalSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                      },
-                      "lookaheadDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                      }
-                    },
-                    "additionalProperties": false,
-                    "description": "Partial feed-scheduling override payload."
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+                "$ref": "#/components/schemas/IngestionScheduleConfigOverride"
               }
             }
-          },
-          "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+          }
         },
         "parameters": [
           {
@@ -44572,411 +43922,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "scheduledSports": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF",
-                          "NFL",
-                          "NBA",
-                          "F1",
-                          "NASCAR",
-                          "NCAA_BASKETBALL",
-                          "NCAA_HOCKEY",
-                          "NCAA_FOOTBALL",
-                          "TENNIS",
-                          "HORSE_RACING",
-                          "SOCCER",
-                          "NHL",
-                          "MLB",
-                          "UFC"
-                        ]
-                      },
-                      "minItems": 1,
-                      "default": [
-                        "GOLF"
-                      ],
-                      "description": "Sports that scheduled ingestion is allowed to run automatically."
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for provider health checks."
-                    },
-                    "eventSchedule": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
-                    },
-                    "eventParticipants": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                    },
-                    "participantRankings": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for ranking refreshes."
-                    },
-                    "eventLiveScores": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for live score polling."
-                    },
-                    "eventResults": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for completed-event result refreshes."
-                    },
-                    "perSportOverrides": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "scheduledSports": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF",
-                                "NFL",
-                                "NBA",
-                                "F1",
-                                "NASCAR",
-                                "NCAA_BASKETBALL",
-                                "NCAA_HOCKEY",
-                                "NCAA_FOOTBALL",
-                                "TENNIS",
-                                "HORSE_RACING",
-                                "SOCCER",
-                                "NHL",
-                                "MLB",
-                                "UFC"
-                              ]
-                            },
-                            "minItems": 1
-                          },
-                          "healthCheck": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventSchedule": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventParticipants": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "participantRankings": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventLiveScores": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventResults": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          }
-                        },
-                        "additionalProperties": false,
-                        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-                      },
-                      "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-                    }
-                  },
-                  "required": [
-                    "healthCheck",
-                    "eventSchedule",
-                    "eventParticipants",
-                    "participantRankings",
-                    "eventLiveScores",
-                    "eventResults",
-                    "perSportOverrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+                  "$ref": "#/components/schemas/IngestionScheduleConfig"
                 }
               }
             }
@@ -45047,411 +43993,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "scheduledSports": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF",
-                          "NFL",
-                          "NBA",
-                          "F1",
-                          "NASCAR",
-                          "NCAA_BASKETBALL",
-                          "NCAA_HOCKEY",
-                          "NCAA_FOOTBALL",
-                          "TENNIS",
-                          "HORSE_RACING",
-                          "SOCCER",
-                          "NHL",
-                          "MLB",
-                          "UFC"
-                        ]
-                      },
-                      "minItems": 1,
-                      "default": [
-                        "GOLF"
-                      ],
-                      "description": "Sports that scheduled ingestion is allowed to run automatically."
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for provider health checks."
-                    },
-                    "eventSchedule": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
-                    },
-                    "eventParticipants": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                    },
-                    "participantRankings": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for ranking refreshes."
-                    },
-                    "eventLiveScores": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for live score polling."
-                    },
-                    "eventResults": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for completed-event result refreshes."
-                    },
-                    "perSportOverrides": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "scheduledSports": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF",
-                                "NFL",
-                                "NBA",
-                                "F1",
-                                "NASCAR",
-                                "NCAA_BASKETBALL",
-                                "NCAA_HOCKEY",
-                                "NCAA_FOOTBALL",
-                                "TENNIS",
-                                "HORSE_RACING",
-                                "SOCCER",
-                                "NHL",
-                                "MLB",
-                                "UFC"
-                              ]
-                            },
-                            "minItems": 1
-                          },
-                          "healthCheck": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventSchedule": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventParticipants": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "participantRankings": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventLiveScores": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventResults": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          }
-                        },
-                        "additionalProperties": false,
-                        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-                      },
-                      "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-                    }
-                  },
-                  "required": [
-                    "healthCheck",
-                    "eventSchedule",
-                    "eventParticipants",
-                    "participantRankings",
-                    "eventLiveScores",
-                    "eventResults",
-                    "perSportOverrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+                  "$ref": "#/components/schemas/IngestionScheduleConfig"
                 }
               }
             }
@@ -45512,469 +44054,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "scheduledSports": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF",
-                          "NFL",
-                          "NBA",
-                          "F1",
-                          "NASCAR",
-                          "NCAA_BASKETBALL",
-                          "NCAA_HOCKEY",
-                          "NCAA_FOOTBALL",
-                          "TENNIS",
-                          "HORSE_RACING",
-                          "SOCCER",
-                          "NHL",
-                          "MLB",
-                          "UFC"
-                        ]
-                      },
-                      "minItems": 1,
-                      "default": [
-                        "GOLF"
-                      ],
-                      "description": "Sports that scheduled ingestion is allowed to run automatically."
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for provider health checks."
-                    },
-                    "eventSchedule": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change."
-                    },
-                    "eventParticipants": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                    },
-                    "participantRankings": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for ranking refreshes."
-                    },
-                    "eventLiveScores": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for live score polling."
-                    },
-                    "eventResults": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether the feed should be scheduled automatically."
-                        },
-                        "intervalMinutes": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                        },
-                        "intervalSeconds": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                        },
-                        "lookaheadDays": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Scheduling policy for completed-event result refreshes."
-                    },
-                    "perSportOverrides": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                          "scheduledSports": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF",
-                                "NFL",
-                                "NBA",
-                                "F1",
-                                "NASCAR",
-                                "NCAA_BASKETBALL",
-                                "NCAA_HOCKEY",
-                                "NCAA_FOOTBALL",
-                                "TENNIS",
-                                "HORSE_RACING",
-                                "SOCCER",
-                                "NHL",
-                                "MLB",
-                                "UFC"
-                              ]
-                            },
-                            "minItems": 1
-                          },
-                          "healthCheck": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventSchedule": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventParticipants": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "participantRankings": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventLiveScores": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          },
-                          "eventResults": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether the feed should be scheduled automatically."
-                              },
-                              "intervalMinutes": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                              },
-                              "intervalSeconds": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                              },
-                              "lookaheadDays": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies."
-                              }
-                            },
-                            "additionalProperties": false,
-                            "description": "Partial feed-scheduling override payload."
-                          }
-                        },
-                        "additionalProperties": false,
-                        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-                      },
-                      "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-                    }
-                  },
-                  "required": [
-                    "healthCheck",
-                    "eventSchedule",
-                    "eventParticipants",
-                    "participantRankings",
-                    "eventLiveScores",
-                    "eventResults",
-                    "perSportOverrides"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/config/poll-intervals": {
-      "get": {
-        "operationId": "getPollIntervals",
-        "summary": "Get recommended poll intervals for clients",
-        "tags": [
-          "Config"
-        ],
-        "description": "Returns runtime poll-interval guidance for client surfaces such as standings, drafts, notifications, and other refresh-driven views.",
-        "responses": {
-          "200": {
-            "description": "Poll-interval configuration payload exposed to clients and root-admin tools.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "standings": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for standings and leaderboard surfaces."
-                    },
-                    "draft": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for draft state and pick-clock surfaces."
-                    },
-                    "contestStatus": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for contest status and lifecycle surfaces."
-                    },
-                    "notifications": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Recommended refresh interval for unread notifications and similar badge counts."
-                    },
-                    "default": {
-                      "type": "integer",
-                      "minimum": 1000,
-                      "description": "Fallback refresh interval for pollable surfaces without a more specific recommendation."
-                    }
-                  },
-                  "required": [
-                    "standings",
-                    "draft",
-                    "contestStatus",
-                    "notifications",
-                    "default"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Poll-interval configuration payload exposed to clients and root-admin tools."
+                  "$ref": "#/components/schemas/IngestionScheduleConfig"
                 }
               }
             }

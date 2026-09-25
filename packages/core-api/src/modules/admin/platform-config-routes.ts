@@ -6,16 +6,12 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import {
-  PollIntervalConfigPatchSchema,
-  PollIntervalConfigSchema,
-  zodToJsonSchema,
-} from '@poolmaster/shared/dto';
-import {
-  IngestionScheduleConfigOverrideSchema,
-  IngestionScheduleConfigSchema,
-} from '@poolmaster/shared/dto/config.dto';
+import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import type { IngestionScheduleConfigOverride } from '@poolmaster/shared/dto/config.dto';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
+import { schemaComponentsPlugin } from '../../plugins/schema-components';
+// Registers the named components this module's routes $ref (#192).
+import '@poolmaster/shared/dto/config.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
@@ -32,6 +28,8 @@ export function registerPlatformConfigRoutes(
     ingestionConfig: IngestionConfigService;
   },
 ): void {
+  void fastify.register(schemaComponentsPlugin);
+
   const { pollConfig, ingestionConfig } = services;
 
   // -------------------------------------------------------------------------
@@ -46,7 +44,7 @@ export function registerPlatformConfigRoutes(
         'Returns the root-admin poll interval configuration that governs recommended client refresh timing.',
       operationId: 'adminGetPollIntervals',
       response: {
-        200: zodToJsonSchema(PollIntervalConfigSchema),
+        200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -63,10 +61,10 @@ export function registerPlatformConfigRoutes(
         'Updates the root-admin poll interval configuration used by client polling guidance.',
       operationId: 'adminUpdatePollIntervals',
       response: {
-        200: zodToJsonSchema(PollIntervalConfigSchema),
+        200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: zodToJsonSchema(PollIntervalConfigPatchSchema),
+      body: schemaRef('PollIntervalConfigPatch'),
     },
     handler: async (
       request: FastifyRequest<{
@@ -92,7 +90,7 @@ export function registerPlatformConfigRoutes(
         'Resets poll interval configuration back to the platform defaults.',
       operationId: 'adminResetPollIntervals',
       response: {
-        200: zodToJsonSchema(PollIntervalConfigSchema),
+        200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -114,7 +112,7 @@ export function registerPlatformConfigRoutes(
         'Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.',
       operationId: 'adminGetIngestionSchedule',
       response: {
-        200: zodToJsonSchema(IngestionScheduleConfigSchema),
+        200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -131,10 +129,10 @@ export function registerPlatformConfigRoutes(
         'Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.',
       operationId: 'adminUpdateIngestionSchedule',
       response: {
-        200: zodToJsonSchema(IngestionScheduleConfigSchema),
+        200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: zodToJsonSchema(IngestionScheduleConfigOverrideSchema),
+      body: schemaRef('IngestionScheduleConfigOverride'),
     },
     handler: async (
       request: FastifyRequest<{
@@ -154,10 +152,10 @@ export function registerPlatformConfigRoutes(
         'Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.',
       operationId: 'adminSetSportIngestionOverride',
       response: {
-        200: zodToJsonSchema(IngestionScheduleConfigSchema),
+        200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: zodToJsonSchema(IngestionScheduleConfigOverrideSchema),
+      body: schemaRef('IngestionScheduleConfigOverride'),
     },
     handler: async (
       request: FastifyRequest<{
@@ -184,7 +182,7 @@ export function registerPlatformConfigRoutes(
         'Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.',
       operationId: 'adminResetSportIngestionOverride',
       response: {
-        200: zodToJsonSchema(IngestionScheduleConfigSchema),
+        200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -210,7 +208,7 @@ export function registerPlatformConfigRoutes(
       description:
         'Resets ingestion scheduling back to the platform defaults.',
       operationId: 'adminResetIngestionSchedule',
-      response: { 200: zodToJsonSchema(IngestionScheduleConfigSchema) },
+      response: { 200: schemaRef('IngestionScheduleConfig') },
     },
     handler: async (request: FastifyRequest) => {
       const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);

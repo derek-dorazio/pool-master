@@ -29,7 +29,6 @@ import { IngestionConfigService } from './modules/admin/ingestion-config-service
 import { PollConfigService } from './modules/admin/poll-config-service';
 import { PrismaPlatformRuntimeConfigRepository } from './modules/admin/platform-runtime-config-repository';
 import { ProviderService } from './modules/admin/provider-service';
-import { configModule } from './modules/config/routes';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
 
@@ -227,7 +226,6 @@ export function buildApp() {
     ingestionConfigService,
     eventLifecycleService,
   });
-  app.register(configModule, { prefix: '/api/v1/config' });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
   // =========================================================================

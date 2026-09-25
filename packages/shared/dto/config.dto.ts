@@ -3,6 +3,7 @@
  * runtime configuration endpoints.
  */
 import { z } from 'zod';
+import { registerSchema } from './schema-registry';
 import { Sport } from '@poolmaster/shared/domain';
 
 const SportSchema = z.enum([
@@ -117,3 +118,12 @@ export const IngestionScheduleConfigSchema = IngestionScheduleConfigBodySchema.e
   ),
 }).describe('Feed-aware ingestion scheduling configuration exposed to root-admin tooling.');
 export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
+
+// --- Published contract (#192) -------------------------------------------------
+// Served by BOTH config/routes.ts and admin/platform-config-routes.ts, so both convert
+// together. IngestionFeedSchedulePolicy is not registered directly: it appears only
+// nested inside IngestionScheduleConfig, and no route serves it on its own (check 2).
+registerSchema('PollIntervalConfig', PollIntervalConfigSchema);
+registerSchema('PollIntervalConfigPatch', PollIntervalConfigPatchSchema);
+registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
+registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);
