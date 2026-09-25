@@ -347,50 +347,79 @@ sensible duplicate threshold.
 exactly why it survived this long. Any guard built for this epic must detect subset and
 rename relationships, not just near-identical field sets.
 
-## Execution Sequence — bottom-up, one layer at a time
+## How a slice runs — Review, Clarify, Execute
 
-Reversed from the earlier draft. #192 was driving from the DTO layer down; that layer is
-downstream of the problem, and converting it first only publishes the shadow copies with
-official names. **#192 is paused as a driver** and resumes as the export step below.
+**The findings recorded above are not a backlog to work through. They are evidence that the
+approach is needed.** Exhaustively auditing the whole model up front does not work — every
+pass through it has turned up something the previous pass missed, including two
+classification errors of my own. Discovery belongs *inside* each slice, where the context is
+loaded and the answer is checkable.
 
-**Pass 1 — schema and DAO.** Extend the repository ports to cover the model and the full
-operation set, including the unscoped reads admin needs (`findAll`, list, search,
-pagination). Resolve schema-level conflicts first (open questions below). This is where the
-model becomes finite and knowable.
+Every slice runs the same three stages, in order, and does not skip ahead.
 
-**Pass 2 — services onto the DAO.** Move the repo=0 services onto ports. `admin/*` and
-`golf/*` are the bulk. No new shapes; a service returns entities.
+### Stage 1 — Review the model and its shadows
 
-**Pass 3 — DTOs and routes.** One DTO per entity and per edge, named for the schema.
-One operation set per object, permissioned. Admin-only fields annotated, not enforced
-(rule 4). Duplicate routes collapse here.
+For the slice's entity cluster, and only that cluster:
 
-**Pass 4 — export.** #192 resumes: register the now-canonical DTOs as named components,
-regenerate the client SDK. Cheap, because there is one shape per concept to register.
+- **Inventory the real model.** The entities and edges in `schema.prisma`, and what the DAO
+  ports actually offer for them.
+- **Find the shadows.** Every DTO, route shape and projection claiming to represent those
+  entities. Compare **semantics, not field names** — a renamed 3-field projection of a
+  10-field object scores ~0.3 on any similarity measure and will be missed (§5).
+- **Decide the single model.** One DTO per entity, one per edge, named for the schema.
+- **Decide how deep the change goes.** Does this cluster need schema changes, or only DAO
+  additions? Or is the schema right and only routes and DTOs are wrong? **Say which, with
+  evidence, before writing anything.**
 
-**Pass 5 — UI.** One pass over every surface that touches an object or a shadow of it,
-moving it onto the generated type. Full objects, per rule 3.
+Output: the canonical model for the cluster, the list of shadows it replaces, and the layer
+the change starts at.
 
-Each pass completes before the next begins. The end state is one flow — UI → route → DTO →
-service → DAO → schema — over one set of objects and one set of operations.
+### Stage 2 — Clarify what might be wrong or misunderstood
+
+Stage 1 will surface concepts that are ambiguous, overloaded, or possibly modelled wrong.
+**These stop the slice and come to the repo owner** (working rule 1) — with a proposal, not
+just a question.
+
+The kinds of thing that belong here, from what stage 1 has already produced elsewhere:
+overloaded names (`League` the fantasy league vs `SportLeague` the tour), an entity called
+one thing and exposed as another (`Squad` vs `teams[]`), two models that may be one idea
+(`AdminAuditEntry` vs `CommissionerAuditLog`), sport particulars sitting in the cross-sport
+core (Q0).
+
+Output: answered questions, and a model the owner has agreed to.
+
+### Stage 3 — Execute bottom-up
+
+Only once stages 1 and 2 are settled, and strictly in this order:
+
+| Step | Layer |
+|---|---|
+| 3.1 | **Schema** — migrations, if stage 1 said the schema is wrong |
+| 3.2 | **DAO** — repository ports covering the cluster's entities and its full operation set, including the unscoped reads admin needs |
+| 3.3 | **Services** — moved onto those ports; no service returns a shape it invented |
+| 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) |
+| 3.5 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) |
+| 3.6 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) |
+
+A slice is done when that flow is unbroken for its cluster and nothing in the codebase names
+those entities any other way.
 
 ## Slices — grouped by related objects
 
-Each slice takes a cluster of related entities through all of passes 1–3 (DAO → services →
-DTOs/routes) before the next begins. Ordering is by dependency: later clusters reference
-earlier ones.
+Ordered by dependency: later clusters reference earlier ones.
 
 ### Slice 1 — Identity and membership
 `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, `LeagueInvitation`,
 `SquadOwnerInvitation`
 
 **All seven already have repository ports** — the best-covered cluster, and the one whose
-repo-backed services already produce the cleanest DTOs. Work here is mostly completion
-rather than construction: add the missing operations (`UserRepository` has no list or
-search), move `admin/user-service.ts` and `admin/league-service.ts` off raw Prisma, and
-collapse the duplicate DTOs and routes — `LeagueMemberDto`/`LeagueMembershipDto`,
-`adminListUsers` vs `UserProfileDto`, `/account/*` vs `/admin/users/*`,
-`adminInactivateLeague` vs `inactivateLeague`, `adminListTeams` vs `SquadDto`.
+repo-backed services already produce the cleanest DTOs. Likely a stage-1 finding of "schema
+is right, DAO needs operations added, routes and DTOs are wrong". Known shadows to confirm:
+`LeagueMemberDto`/`LeagueMembershipDto`, `adminListUsers` vs `UserProfileDto`, `/account/*`
+vs `/admin/users/*`, `adminInactivateLeague` vs `inactivateLeague`, `adminListTeams` vs
+`SquadDto`.
+
+First because it is the smallest real test of the whole workflow.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
@@ -400,51 +429,36 @@ Golf instances: `SportEventGolfTier`, `SportEventParticipantGolfRound`,
 `SportEventParticipantGolfStanding`, `SportEventParticipantGolfValuation`
 
 **The largest gap.** `SportEvent`, `SportEventParticipant`, `SportEventRound` and every golf
-table have **no repository port**, which is why all 40 golf admin operations and the whole
-`golf/*` service layer run on raw Prisma and produce projections.
+table have no repository port, which is why all 40 golf admin operations and the whole
+`golf/*` service layer run on raw Prisma and emit projections.
 
 **The schema already models the specialization correctly.** `SportEvent.sport` is the
 discriminator — a golf event *is* a `SportEvent` with `sport = 'GOLF'` — and the golf tables
 are extension rows keyed to the core (`SportEventParticipantGolfValuation` is `@unique` on
-`sportEventParticipantId`, a true 1:1). Core row plus optional sport extension. **That is
-the pattern; sport particulars must stay in the extension and never migrate into the core.**
+`sportEventParticipantId`, a true 1:1). **Core row plus optional sport extension is the
+pattern. Sport particulars stay in the extension and never migrate into the core** — stage 1
+for this slice must check that in both directions, since Q0 found one that already did.
 
 ### Slice 3 — Contests and entries
 `Contest`, `ContestEntry`, `ContestEntryPick`, `ContestConfiguration`,
 `ContestConfigTemplate`, `ContestPrizeDefinition`, `ContestTimingPolicy`,
 `ContestEntryAggregationRule`, `ParticipantContestScoringRule`, `ContestEntryGolfStanding`
 
-`Contest` and `ContestEntry` have ports; nothing else in the cluster does. Overlaps #198
-(selection engine) — that epic's `SelectionEngine` sits on this cluster's DAO, so #198's
-first slice should follow this one.
+`Contest` and `ContestEntry` have ports; nothing else in the cluster does. Overlaps #198 —
+that epic's `SelectionEngine` sits on this cluster's DAO, so #198's first slice follows this
+one.
 
 ### Slice 4 — Platform and operations
 Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
 
-The genuinely admin-only 32 operations. No shared objects, no collapse — this slice is
-naming (stop calling it "admin") and bringing it onto ports for consistency.
+The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
+(stop calling it "admin") and bringing services onto ports for consistency.
 
-## Prior Execution Sequence (superseded)
+## Open Questions — found so far
 
-Ordering is driven by one constraint: **#192 must not publish the duplicates as official
-named components.** Its remaining modules are `admin` and `admin-golf`, which is precisely
-where the shadow copies concentrate.
-
-1. **Settle the viewer-scope model** (open question below). Everything else depends on how
-   scope is expressed.
-2. **User** — collapse `/auth/me`, `/account/*` and `/admin/users/*` into one operation set.
-   The highest-confidence duplicates and the smallest object.
-3. **League** — 12 admin operations, one of which (`adminListLeagues`) is already unified and
-   serves as the template.
-4. **Event and Team** — 6 operations between them.
-5. **Rename the 68 remaining administrative operations** for what they are — platform,
-   catalog, ingestion, ops — rather than "admin".
-6. **#192 conversion** of the consolidated surface.
-
-`account` under #192 becomes trivial at step 2: `$ref` the existing component, zero new
-components published.
-
-## Open Questions
+These surfaced while establishing the approach. **The rest are expected to surface in each
+slice's stage 2**, which is the point of the workflow: they are discovered with the cluster's
+context loaded, not guessed at up front.
 
 ### Q0. Golf has leaked into the cross-sport core — rename the enum?
 
