@@ -82,6 +82,60 @@ Verified field-by-field against the published contract:
 - `ParticipantDto` has projections at 5, 6, 13 and 14 fields across six admin-golf
   operations.
 
+### 2a. User is the object. Member and owner are relationships.
+
+This is the model, stated by the repo owner, and it is the key to the whole epic:
+
+> A user is the user principal. Once invited to a league, that user is now a **member**.
+> Once they name their squad, that member is also the **owner** of that squad. Owner is
+> based on the relationship to a squad. Member is based on the relationship to a league.
+> But the object is User.
+
+So `member` and `owner` are not types. They are **edges** — User↔League and User↔Squad.
+A relationship DTO should reference the User and carry the attributes of the edge. It
+should not flatten an arbitrary subset of User into itself.
+
+The current contract does exactly that, and with no rule — **four different answers to
+"how much User do I copy in?"**:
+
+| DTO | User identity flattened in | Relationship attributes |
+|---|---|---|
+| `LeagueMemberDto` | `email`, `firstName`, `lastName` | `role`, `joinedAt` |
+| `SquadMembershipDto` | `firstName`, `lastName` — **no `email`** | `status`, `joinedAt`, `createdAt`, `updatedAt` |
+| admin `owners[]` | `firstName`, `lastName` | — |
+| `LeagueMembershipDto` | **none** — just `userId` | `role`, `status`, `joinedAt`, `createdAt`, `updatedAt` |
+
+The consequence is concrete: **the same person's email is reachable through their league
+membership and not through their squad membership.** Any consumer needing it from a squad
+context has to make a second call, or someone adds `email` to `SquadMembershipDto` and the
+copies drift further apart.
+
+`LeagueMemberDto` and `LeagueMembershipDto` are additionally **two DTOs for one edge** —
+the "member list view" and the "membership record".
+
+**`LeagueMembershipDto` is already the correct shape.** It references `userId` and carries
+only edge attributes. As with `adminListLeagues` returning the shared `LeagueListResponse`,
+the right pattern already exists in this codebase and is simply applied inconsistently.
+That is the template, not a thing to invent.
+
+Target shape for an edge:
+
+```
+LeagueMembership { leagueId, userId, role, status, joinedAt, … }   // the edge
+SquadMembership  { squadId, userId, status, joinedAt, … }          // the edge
+```
+
+with the User resolved from `userId` — either embedded as the canonical `UserDto` where a
+consumer needs it inline, or fetched. **Which of those two, and when, is an open question
+below.** What is settled: there is one User shape, and an edge never redefines a subset of
+it.
+
+Note the separate concern: `TeamRelationshipDto { leagueMember, owner, commissioner }` and
+`LeagueRelationshipDto { leagueMember, commissioner }` are **viewer-scoped** descriptors —
+what the *caller's* relationship is — not edges between arbitrary users and objects. They
+belong to the viewer-scope question in §4, and they overlap each other
+(`LeagueRelationshipDto` is a strict subset of `TeamRelationshipDto`).
+
 ### 3. The four kinds of difference — none of which is "a different object"
 
 1. **Row visibility.** Which leagues or users you can see. A query and authorization
@@ -141,6 +195,11 @@ components published.
 
 ## Open Questions
 
+- **Embed or reference?** An edge carries `userId`. When a consumer needs the person's
+  name inline — a member list, a squad roster — does the edge embed the canonical `UserDto`,
+  or does the client resolve it? Embedding is one round trip and risks re-introducing
+  partial copies if anyone embeds a subset; referencing is strictly normalised but chattier
+  for list views. Decide once; the answer shapes every edge DTO.
 - **Viewer-scoped fields: one sub-object or computed top-level fields?** A
   `viewer: { relationship, canEdit, … }` block is explicit and greppable; top-level fields
   read more naturally. Decide once, apply everywhere.
