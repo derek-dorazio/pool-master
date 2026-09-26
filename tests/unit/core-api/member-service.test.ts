@@ -14,49 +14,36 @@ import {
   MemberService,
 } from '../../../packages/core-api/src/modules/leagues/member-service';
 import { buildMembership } from '../../factories';
+import {
+  fakeLeagueMembershipRepo,
+  fakeSquadMembershipRepo,
+  fakeSquadRepo,
+} from '../../support/repo-fakes';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
-  return {
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
-    findByLeague: jest.fn().mockResolvedValue([]),
-    findByUser: jest.fn().mockResolvedValue([]),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
-    create: jest.fn(),
+  return fakeLeagueMembershipRepo({
     update: jest.fn().mockImplementation(async (id, updates) => ({
       ...buildMembership({ id }),
       ...updates,
     })),
-    delete: jest.fn(),
     ...overrides,
-  };
+  });
 }
 
 function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
-  return {
-    findByLeagueAndName: jest.fn().mockResolvedValue(null),
-    findById: jest.fn(),
-    findByLeague: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeSquadRepo({
     ...overrides,
-  };
+  });
 }
 
 function createSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
-  return {
-    findBySquad: jest.fn().mockResolvedValue([]),
-    findBySquadAndUser: jest.fn(),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeSquadMembershipRepo({
     ...overrides,
-  };
+  });
 }
 
 function createPrisma() {

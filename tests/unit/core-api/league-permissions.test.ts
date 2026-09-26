@@ -1,25 +1,10 @@
-import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 import {
   LeagueMembershipStatus,
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { requireCommissioner, requireLeagueMembership } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildMembership } from '../../factories';
-
-function createMockMembershipRepo(
-  overrides: Partial<LeagueMembershipRepository> = {},
-): LeagueMembershipRepository {
-  return {
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
-    findByLeague: jest.fn().mockResolvedValue([]),
-    findByUser: jest.fn().mockResolvedValue([]),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    ...overrides,
-  } as LeagueMembershipRepository;
-}
+import { fakeLeagueMembershipRepo } from '../../support/repo-fakes';
 
 function createReply() {
   let statusCode = 200;
@@ -71,7 +56,7 @@ function createLogger() {
 describe('league permissions', () => {
   it('allows any member through requireLeagueMembership', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
-    const repo = createMockMembershipRepo({
+    const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
     const hook = requireLeagueMembership(repo);
@@ -90,7 +75,7 @@ describe('league permissions', () => {
   });
 
   it('rejects non-members on requireLeagueMembership', async () => {
-    const repo = createMockMembershipRepo({
+    const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     });
     const hook = requireLeagueMembership(repo);
@@ -113,7 +98,7 @@ describe('league permissions', () => {
   });
 
   it('rejects inactive memberships on requireLeagueMembership', async () => {
-    const repo = createMockMembershipRepo({
+    const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest
         .fn()
         .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
@@ -134,7 +119,7 @@ describe('league permissions', () => {
   });
 
   it('rejects requests without a user identity on requireLeagueMembership', async () => {
-    const repo = createMockMembershipRepo();
+    const repo = fakeLeagueMembershipRepo();
     const hook = requireLeagueMembership(repo);
     const reply = createReply();
     await hook.call(
@@ -151,7 +136,7 @@ describe('league permissions', () => {
   });
 
   it('rejects requests without a league id on requireCommissioner', async () => {
-    const repo = createMockMembershipRepo();
+    const repo = fakeLeagueMembershipRepo();
     const hook = requireCommissioner(repo);
     const reply = createReply();
     await hook.call(
@@ -171,7 +156,7 @@ describe('league permissions', () => {
     const membership = buildMembership({
       role: LeagueRole.COMMISSIONER,
     });
-    const repo = createMockMembershipRepo({
+    const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
     const hook = requireCommissioner(repo);
@@ -191,7 +176,7 @@ describe('league permissions', () => {
 
   it('rejects regular members on requireCommissioner', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
-    const repo = createMockMembershipRepo({
+    const repo = fakeLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
     });
     const hook = requireCommissioner(repo);

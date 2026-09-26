@@ -5,21 +5,22 @@ import type {
 } from '@poolmaster/shared/db';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
 import { buildContest } from '../../factories';
+import {
+  fakeContestRepo,
+  fakeDraftSessionRepo,
+} from '../../support/repo-fakes';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
-  return {
+  return fakeContestRepo({
     findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.ACTIVE })),
-    findByLeague: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildContest()),
     update: jest.fn().mockImplementation(async (id, updates) => ({ ...buildContest({ id }), ...updates })),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockDraftSessionRepo(overrides: Partial<DraftSessionRepository> = {}): DraftSessionRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
+  return fakeDraftSessionRepo({
     findByContest: jest.fn().mockResolvedValue({
       id: 'session-1',
       contestId: 'contest-1',
@@ -31,10 +32,9 @@ function createMockDraftSessionRepo(overrides: Partial<DraftSessionRepository> =
     }),
     create: jest.fn().mockResolvedValue({}),
     update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
-    getPickHistories: jest.fn().mockResolvedValue([]),
     addPickHistory: jest.fn().mockResolvedValue({}),
     ...overrides,
-  };
+  });
 }
 
 describe('OverrideService', () => {

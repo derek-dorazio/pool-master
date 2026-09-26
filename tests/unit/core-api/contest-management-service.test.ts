@@ -19,11 +19,18 @@ import {
   ContestManagementService,
 } from '../../../packages/core-api/src/modules/contest-management/service';
 import type { GolfTierService } from '../../../packages/core-api/src/modules/golf/golf-tier-service';
+import {
+  fakeContestCoreRepo,
+  fakeContestEntryAggregationRuleRepo,
+  fakeContestPrizeDefinitionRepo,
+  fakeParticipantContestScoringRuleRepo,
+  fakeSportEventParticipantRepo,
+} from '../../support/repo-fakes';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
 function createContestCoreRepo(): ContestCoreRepository {
-  return {
+  return fakeContestCoreRepo({
     findById: jest.fn().mockResolvedValue({
       id: 'contest-1',
       leagueId: 'league-1',
@@ -36,18 +43,19 @@ function createContestCoreRepo(): ContestCoreRepository {
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
-    findByLeague: jest.fn(),
     create: jest.fn().mockImplementation(async (contest) => ({
       id: 'contest-1',
       ...contest,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     })),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
+  });
 }
 
+// NOT migrated to tests/support/repo-fakes.ts (#208), deliberately. This is a stateful
+// in-memory stub, not a fake: it holds a mutable `state` so the service can read back what
+// it wrote. The shared builders exist to remove duplicated METHOD LISTS; replacing this
+// with neutral defaults would delete the behaviour the test depends on.
 function createContestConfigurationRepo(): ContestConfigurationRepository {
   const state = {
     id: 'config-1',
@@ -137,8 +145,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
 }
 
 function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleRepository {
-  return {
-    findById: jest.fn(),
+  return fakeParticipantContestScoringRuleRepo({
     findByContestConfiguration: jest.fn().mockResolvedValue([
       {
         id: 'rule-old',
@@ -157,14 +164,11 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
       createdAt: new Date('2026-04-07T12:00:02.000Z'),
       updatedAt: new Date('2026-04-07T12:00:02.000Z'),
     })),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
+  });
 }
 
 function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
-  return {
-    findById: jest.fn(),
+  return fakeContestEntryAggregationRuleRepo({
     findByContestConfiguration: jest.fn().mockResolvedValue({
       id: 'agg-existing',
       contestConfigurationId: 'config-1',
@@ -190,22 +194,15 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
       createdAt: new Date('2026-04-07T12:00:03.000Z'),
       updatedAt: new Date('2026-04-07T12:00:03.000Z'),
     })),
-  };
+  });
 }
 
 function createPrizeDefinitionRepo(): ContestPrizeDefinitionRepository {
-  return {
-    findById: jest.fn(),
-    findByContestConfiguration: jest.fn().mockResolvedValue([]),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  };
+  return fakeContestPrizeDefinitionRepo();
 }
 
 function createSportEventParticipantRepo(): SportEventParticipantRepository {
-  return {
-    findById: jest.fn(),
+  return fakeSportEventParticipantRepo({
     findBySportEvent: jest.fn().mockResolvedValue([
       {
         id: 'sep-1',
@@ -217,9 +214,7 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
         updatedAt: new Date(),
       },
     ]),
-    create: jest.fn(),
-    update: jest.fn(),
-  };
+  });
 }
 
 /**

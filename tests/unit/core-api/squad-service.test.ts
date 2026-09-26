@@ -9,46 +9,32 @@ import type {
   SquadRepository,
 } from '../../../packages/shared/db';
 import { SquadOperationError, SquadService } from '../../../packages/core-api/src/modules/squads/service';
+import {
+  fakeLeagueMembershipRepo,
+  fakeSquadMembershipRepo,
+  fakeSquadRepo,
+} from '../../support/repo-fakes';
 
 function createLeagueMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
-  return {
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
-    findByLeague: jest.fn(),
-    findByUser: jest.fn(),
-    findByLeagueAndUser: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeLeagueMembershipRepo({
     ...overrides,
-  };
+  });
 }
 
 function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
-  return {
-    findByLeagueAndName: jest.fn().mockResolvedValue(null),
-    findById: jest.fn(),
-    findByLeague: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeSquadRepo({
     ...overrides,
-  };
+  });
 }
 
 function createSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
-  return {
-    findBySquad: jest.fn(),
-    findBySquadAndUser: jest.fn(),
-    findByLeagueAndUser: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeSquadMembershipRepo({
     ...overrides,
-  };
+  });
 }
 
 describe('SquadService', () => {

@@ -8,41 +8,39 @@ import type {
 } from '@poolmaster/shared/db';
 import { ContestStatus, InvitationStatus } from '@poolmaster/shared/domain';
 import { buildContest, buildInvitation, buildLeague, buildMembership } from '../../factories';
+import {
+  fakeActionItemRepo,
+  fakeContestRepo,
+  fakeLeagueInvitationRepo,
+  fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
+} from '../../support/repo-fakes';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
-  return {
-    findByUser: jest.fn().mockResolvedValue([]),
+  return fakeLeagueRepo({
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
-    findByCode: jest.fn().mockResolvedValue(null),
-    findAll: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
-  return {
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
+  return fakeLeagueMembershipRepo({
     findByLeague: jest.fn().mockResolvedValue([
       buildMembership({ userId: 'user-1' }),
       buildMembership({ userId: 'user-2' }),
     ]),
-    findByUser: jest.fn().mockResolvedValue([]),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue(buildMembership()),
     update: jest.fn().mockResolvedValue(buildMembership()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
+  return fakeContestRepo({
     findByLeague: jest.fn().mockResolvedValue([
       buildContest({ name: 'Active Pool', status: ContestStatus.ACTIVE }),
       buildContest({
@@ -54,35 +52,29 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
     ]),
     create: jest.fn().mockResolvedValue(buildContest()),
     update: jest.fn().mockResolvedValue(buildContest()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
 ): LeagueInvitationRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
+  return fakeLeagueInvitationRepo({
     findByLeague: jest.fn().mockResolvedValue([
       buildInvitation({ status: InvitationStatus.PENDING }),
       buildInvitation({ status: InvitationStatus.PENDING }),
       buildInvitation({ status: InvitationStatus.ACCEPTED }),
     ]),
-    findByCode: jest.fn().mockResolvedValue(null),
-    findByEmail: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue(buildInvitation()),
     update: jest.fn().mockResolvedValue(buildInvitation()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockActionItemRepo(
   overrides: Partial<ActionItemRepository> = {},
 ): ActionItemRepository {
-  return {
-    findByLeague: jest.fn().mockResolvedValue([]),
+  return fakeActionItemRepo({
     findUnresolved: jest.fn().mockResolvedValue([
       {
         id: 'ai-1',
@@ -108,9 +100,8 @@ function createMockActionItemRepo(
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 describe('DashboardService', () => {

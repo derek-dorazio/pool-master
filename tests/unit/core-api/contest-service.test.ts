@@ -24,11 +24,18 @@ import {
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
+import {
+  fakeContestConfigurationRepo,
+  fakeContestEntryRepo,
+  fakeContestRepo,
+  fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
+  fakeSquadMembershipRepo,
+  fakeSquadRepo,
+} from '../../support/repo-fakes';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
-    findByLeague: jest.fn().mockResolvedValue([]),
+  return fakeContestRepo({
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'new-contest-id',
@@ -39,17 +46,14 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
       ...buildContest({ id }),
       ...updates,
     })),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockContestConfigurationRepo(
   overrides: Partial<ContestConfigurationRepository> = {},
 ): ContestConfigurationRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
-    findByContest: jest.fn().mockResolvedValue(null),
+  return fakeContestConfigurationRepo({
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'new-config-id',
@@ -58,29 +62,21 @@ function createMockContestConfigurationRepo(
     })),
     update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
     ...overrides,
-  };
+  });
 }
 
 function createMockMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
-  return {
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
-    findByLeague: jest.fn().mockResolvedValue([]),
-    findByUser: jest.fn().mockResolvedValue([]),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+  return fakeLeagueMembershipRepo({
     create: jest.fn().mockResolvedValue(buildMembership()),
     update: jest.fn().mockResolvedValue(buildMembership()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): ContestEntryRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
-    findByContest: jest.fn().mockResolvedValue([]),
-    findBySquad: jest.fn().mockResolvedValue([]),
+  return fakeContestEntryRepo({
     create: jest.fn().mockImplementation(async (input) => ({
       ...input,
       id: 'entry-1',
@@ -99,27 +95,21 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       updatedAt: new Date('2026-01-01'),
       ...updates,
     })),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
-  return {
-    findByUser: jest.fn().mockResolvedValue([]),
+  return fakeLeagueRepo({
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
-    findByCode: jest.fn().mockResolvedValue(null),
-    findAll: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue(buildLeague()),
     update: jest.fn().mockResolvedValue(buildLeague()),
-    delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
-  };
+  });
 }
 
 function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
-  return {
-    findByLeagueAndName: jest.fn().mockResolvedValue(null),
+  return fakeSquadRepo({
     findById: jest.fn().mockResolvedValue({
       id: 'squad-1',
       leagueId: 'league-1',
@@ -130,7 +120,6 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     }),
-    findByLeague: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockResolvedValue({
       id: 'squad-1',
       leagueId: 'league-1',
@@ -141,19 +130,14 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     }),
-    update: jest.fn(),
-    delete: jest.fn(),
     ...overrides,
-  };
+  });
 }
 
 function createMockSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
-  return {
-    findBySquad: jest.fn().mockResolvedValue([]),
-    findBySquadAndUser: jest.fn().mockResolvedValue(null),
-    findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+  return fakeSquadMembershipRepo({
     create: jest.fn().mockResolvedValue({
       id: 'squad-membership-1',
       squadId: 'squad-1',
@@ -164,10 +148,8 @@ function createMockSquadMembershipRepo(
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     }),
-    update: jest.fn(),
-    delete: jest.fn(),
     ...overrides,
-  };
+  });
 }
 
 function createMockPrisma(overrides: Record<string, unknown> = {}) {

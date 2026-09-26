@@ -10,33 +10,23 @@
 import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
 import { AdminLeagueService } from '../../../packages/core-api/src/modules/admin/league-service';
 import { buildLeague } from '../../factories';
+import {
+  fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
+} from '../../support/repo-fakes';
 
 function createLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
-  return {
-    findById: jest.fn(),
-    findByCode: jest.fn(),
-    findAll: jest.fn().mockResolvedValue([]),
-    findByUser: jest.fn().mockResolvedValue([]),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeLeagueRepo({
     ...overrides,
-  };
+  });
 }
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
-  return {
-    findByLeague: jest.fn(),
-    findByUser: jest.fn(),
-    findByLeagueAndUser: jest.fn(),
-    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+  return fakeLeagueMembershipRepo({
     ...overrides,
-  };
+  });
 }
 
 function createPrisma(contestRows: Array<{ leagueId: string; _count: { _all: number } }> = []) {
