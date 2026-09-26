@@ -493,6 +493,26 @@ split below. A slice is done, for phase-1 purposes, when its schema, DAO, servic
 and tests name the cluster's entities one way, the sweep is clean, and the phase-1 gates
 are green.
 
+### Tests follow the code they test
+
+Codified as §1D of `rules/testing-rules.md`, set by the repo owner 2026-09-26. It changes how
+the remaining steps handle tests, and it is the reason #209 shrinks rather than grows:
+
+- **Removing code removes its tests.** Not repaired, not ported. A test against code being
+  deleted is testing the wrong thing, whether or not it passes.
+- **Migrating code replaces its tests.** The new implementation's test *is* the replacement.
+  Its cases come from the shadow comparison already done in stage 1 — and must cover the
+  **union** of the shadows' cases, not just the surviving implementation's.
+- **A defect-referenced test** (§1A) still gets deleted with its code, but check whether the
+  new implementation can exhibit the same defect; if so the case moves into the new test.
+- **The count is an outcome.** N implementations collapsing to one should leave about one
+  implementation's worth of tests covering N implementations' worth of cases. A count that
+  does not fall means tests are propagating independently of the code.
+
+The practical effect on the remaining work: for every DTO and operation collapse in steps 3.3
+and 3.4, the deleted implementation's tests go with it in the same commit, and the new test
+is written from the stage-1 case comparison rather than from the old assertions.
+
 ### Test layering — what each layer may assert
 
 Set with the repo owner 2026-09-26, after four commits in this slice repaired

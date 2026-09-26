@@ -234,6 +234,66 @@ from ordinary control flow — so it stays a review item:
 
 ---
 
+## 1D. Tests Follow The Code They Test
+
+Set by the repo owner, 2026-09-26. Test propagation is reduced the same way implementation
+propagation is: **a test belongs to exactly one implementation, and it goes where that
+implementation goes.**
+
+### Removing code removes its tests
+
+If the code is being deleted, delete its tests in the same change. Do not repair them, do
+not port them to the replacement, do not leave them asserting something that no longer
+exists. A test written against code you are removing is testing the wrong thing by
+definition.
+
+This includes tests that still pass. Passing is not evidence a test is worth keeping.
+
+### Migrating code replaces its tests
+
+When a function or query moves to its correct implementation, write the test for the new
+implementation as part of that change. **That new test is the replacement for the one you
+deleted** — not an addition to it.
+
+Deciding what the new test must cover is work you have already done: consolidating shadow
+implementations means comparing their use cases, and those cases are the specification. So
+the new test is written from that comparison, not from the old test's assertions.
+
+**Cover the UNION of the shadows' cases, not the surviving implementation's.** This is the
+failure mode to watch. When two implementations collapse into one, each usually handled a
+case the other did not — `admin/user-service`'s delete checked a `LEAGUE_CREATOR`
+dependency while `account/service`'s checked email confirmation. A new test written only
+against the implementation that "won" silently drops the other's case, and the deleted test
+was the only record it existed.
+
+### Carry a defect case forward even when its test goes
+
+A test carrying a defect reference — `#142`, `pool-master-<suffix>`, or an older `UC-`/`BR-`
+id (§1A) — encodes a case someone found the hard way. Deleting the test with its code is
+still correct, but **check whether the new implementation can exhibit the same defect**, and
+if it can, the case belongs in the new test.
+
+This is the reason §1A requires the reference in the first place: so a reader deleting a
+test can see what it was protecting against. Use it.
+
+### What this rule rules out
+
+- Repairing an assertion during a refactor so it matches the new code. That converts a
+  mirror of the old implementation into a mirror of the new one and produces no safety.
+- Keeping a test "for coverage" when the code under it is gone.
+- Adding a test during a migration that has no deleted counterpart and asserts no behaviour
+  the migration changed — it has not earned its place. An invented call-count or efficiency
+  assertion is the usual form.
+
+### The test count is an outcome, not a target
+
+Consolidating N implementations into one should leave roughly one implementation's worth of
+tests, covering N implementations' worth of cases. If the count is not falling as
+implementations collapse, tests are propagating independently of the code — which is the
+same defect as a shadow object, one layer out.
+
+Do not set a count as a goal in either direction. Let it fall out, then explain the delta.
+
 ## 2. Test Layers
 
 ### Backend
