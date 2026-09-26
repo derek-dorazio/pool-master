@@ -7,6 +7,12 @@ import {
 import bcrypt from 'bcryptjs';
 import type { FastifyBaseLogger } from 'fastify';
 import { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import {
+  countUserDeleteDependencies,
+  deleteUserCascade,
+  hasUserDeleteDependencies,
+  revokeUserSessions,
+} from '../users/user-lifecycle';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -190,6 +196,9 @@ export class AccountService {
         data: { passwordHash },
       });
 
+      // NOT revokeUserSessions: a password change keeps the caller's own session alive and
+      // revokes every other one. Deliberately different from the blanket revoke, so do not
+      // collapse the two.
       await tx.refreshToken.updateMany({
         where: {
           userId: user.id,
@@ -282,10 +291,7 @@ export class AccountService {
         data: { isActive: false },
       });
 
-      await tx.refreshToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await revokeUserSessions(tx, userId);
 
       return nextUser;
     });
@@ -338,24 +344,12 @@ export class AccountService {
       );
     }
 
-    // #202 — no `league.createdBy` count. Every league creator holds a COMMISSIONER
-    // LeagueMembership, which `leagueCount` already counts.
-    const [leagueCount, squadMembershipCount, createdSquadCount] =
-      await Promise.all([
-        this.prisma.leagueMembership.count({ where: { userId } }),
-        this.prisma.squadMembership.count({ where: { userId } }),
-        this.prisma.squad.count({ where: { createdBy: userId } }),
-      ]);
+    const counts = await countUserDeleteDependencies(this.prisma, userId);
 
-    if (leagueCount > 0 || squadMembershipCount > 0 || createdSquadCount > 0) {
+    if (hasUserDeleteDependencies(counts)) {
       this.logger?.warn({
         action: 'accountService.delete.dependenciesExist',
-        data: {
-          userId,
-          leagueCount,
-          squadMembershipCount,
-          createdSquadCount,
-        },
+        data: { userId, ...counts },
       }, 'Rejected account delete due to remaining dependencies');
       throw new AccountLifecycleError(
         'Account still owns or belongs to league-scoped data. Remove those relationships before deleting the account.',
@@ -364,20 +358,7 @@ export class AccountService {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.refreshToken.deleteMany({ where: { userId } });
-      await tx.notification.deleteMany({ where: { userId } });
-      await tx.consentRecord.deleteMany({ where: { userId } });
-      await tx.leagueInvitation.deleteMany({
-        where: {
-          OR: [{ invitedBy: userId }, { acceptedBy: userId }],
-        },
-      });
-      await tx.commissionerAuditLog.deleteMany({ where: { actorId: userId } });
-      await tx.adminAuditEntry.deleteMany({ where: { actorId: userId } });
-      await tx.migrationRun.deleteMany({ where: { startedById: userId } });
-      await tx.user.delete({ where: { id: userId } });
-    });
+    await this.prisma.$transaction((tx) => deleteUserCascade(tx, userId));
     this.logger?.info({
       action: 'accountService.delete.success',
       data: { userId },

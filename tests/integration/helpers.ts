@@ -65,6 +65,7 @@ const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
   'CLN68',
   'MISSING',
   'IDREPO',
+  'ULIFE',
 ] as const;
 
 let app: FastifyInstance;

@@ -16,6 +16,14 @@ import bcrypt from 'bcryptjs';
 import type { FastifyBaseLogger } from 'fastify';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
+import {
+  countUserDeleteDependencies,
+  deleteUserCascade,
+  findUserDeleteDependencyDetails,
+  hasUserDeleteDependencies,
+  revokeUserSessions,
+  type UserDeleteDependencyDetails,
+} from '../users/user-lifecycle';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -96,25 +104,9 @@ export class UserDeleteRequiresInactiveError extends Error {
   }
 }
 
-export type UserDeleteDependencyDetails = {
-  // #202 — 'LEAGUE_CREATOR' is gone with League.createdBy. Every league creator holds
-  // a COMMISSIONER LeagueMembership (createLeague writes it in the same operation), so
-  // 'LEAGUE_MEMBER' already covers them.
-  dependencyType:
-    | 'TEAM_OWNER'
-    | 'TEAM_MEMBER'
-    | 'LEAGUE_MEMBER';
-  userId: string;
-  team?: {
-    id: string;
-    name: string;
-  };
-  league?: {
-    id: string;
-    name: string;
-    leagueCode: string;
-  };
-};
+// UserDeleteDependencyDetails now lives in modules/users/user-lifecycle.ts (#202),
+// shared with the self-service path that reports the same blockers.
+export type { UserDeleteDependencyDetails };
 
 export class UserDeleteDependenciesExistError extends Error {
   constructor(userId: string, readonly details?: UserDeleteDependencyDetails) {
@@ -241,10 +233,7 @@ export class UserService {
       throw new UserNotFoundError(userId);
     }
 
-    const result = await this.prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    const revokedCount = await revokeUserSessions(this.prisma, userId);
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -258,7 +247,7 @@ export class UserService {
       action: 'adminUserService.forceLogout.success',
       data: {
         userId,
-        revokedCount: result.count,
+        revokedCount,
       },
     }, 'Force-logged out user');
   }
@@ -300,10 +289,7 @@ export class UserService {
       data: { isActive: false },
     });
 
-    await this.prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    await revokeUserSessions(this.prisma, userId);
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -387,10 +373,7 @@ export class UserService {
         where: { id: userId },
         data: { passwordHash },
       });
-      await tx.refreshToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await revokeUserSessions(tx, userId);
       await logAdminAction({
         actorUserId: rootAdminUserId,
         actorEmail: rootAdminEmail,
@@ -477,10 +460,8 @@ export class UserService {
       });
 
       if (!nextValue) {
-        await tx.refreshToken.updateMany({
-          where: { userId, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
+        // Demotion revokes sessions so the removed authority cannot be used until re-login.
+        await revokeUserSessions(tx, userId);
       }
 
       await logAdminAction({
@@ -565,29 +546,18 @@ export class UserService {
       }
     }
 
-    const [leagueCount, squadMembershipCount, createdSquadCount] =
-      await Promise.all([
-        this.prisma.leagueMembership.count({ where: { userId } }),
-        this.prisma.squadMembership.count({ where: { userId } }),
-        this.prisma.squad.count({ where: { createdBy: userId } }),
-      ]);
+    const counts = await countUserDeleteDependencies(this.prisma, userId);
 
-    if (leagueCount > 0 || squadMembershipCount > 0 || createdSquadCount > 0) {
-      const dependencyDetails = await this.findDeleteDependencyDetails(userId, {
-        createdSquadCount,
-        leagueCount,
-        squadMembershipCount,
-      });
+    if (hasUserDeleteDependencies(counts)) {
+      const dependencyDetails = await findUserDeleteDependencyDetails(
+        this.prisma,
+        userId,
+        counts,
+      );
 
       this.logger?.warn({
         action: 'adminUserService.delete.dependenciesExist',
-        data: {
-          userId,
-          leagueCount,
-          squadMembershipCount,
-          createdSquadCount,
-          dependencyDetails,
-        },
+        data: { userId, ...counts, dependencyDetails },
       }, 'Rejected delete due to remaining dependencies');
       throw new UserDeleteDependenciesExistError(userId, dependencyDetails);
     }
@@ -595,18 +565,7 @@ export class UserService {
     const trimmedReason = reason?.trim() || undefined;
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.refreshToken.deleteMany({ where: { userId } });
-      await tx.notification.deleteMany({ where: { userId } });
-      await tx.consentRecord.deleteMany({ where: { userId } });
-      await tx.leagueInvitation.deleteMany({
-        where: {
-          OR: [{ invitedBy: userId }, { acceptedBy: userId }],
-        },
-      });
-      await tx.commissionerAuditLog.deleteMany({ where: { actorId: userId } });
-      await tx.adminAuditEntry.deleteMany({ where: { actorId: userId } });
-      await tx.migrationRun.deleteMany({ where: { startedById: userId } });
-      await tx.user.delete({ where: { id: userId } });
+      await deleteUserCascade(tx, userId);
 
       await logAdminAction({
         actorUserId: rootAdminUserId,
@@ -627,101 +586,6 @@ export class UserService {
     }, 'Deleted user');
   }
 
-  private async findDeleteDependencyDetails(
-    userId: string,
-    counts: {
-      createdSquadCount: number;
-      leagueCount: number;
-      squadMembershipCount: number;
-    },
-  ): Promise<UserDeleteDependencyDetails | undefined> {
-    if (counts.createdSquadCount > 0) {
-      const team = await this.prisma.squad.findFirst({
-        where: { createdBy: userId },
-        select: {
-          id: true,
-          name: true,
-          league: {
-            select: {
-              id: true,
-              leagueCode: true,
-              name: true,
-            },
-          },
-        },
-      });
-
-      if (team) {
-        return {
-          dependencyType: 'TEAM_OWNER',
-          userId,
-          team: {
-            id: team.id,
-            name: team.name,
-          },
-          league: team.league,
-        };
-      }
-    }
-
-    if (counts.squadMembershipCount > 0) {
-      const membership = await this.prisma.squadMembership.findFirst({
-        where: { userId },
-        select: {
-          squad: {
-            select: {
-              id: true,
-              name: true,
-              league: {
-                select: {
-                  id: true,
-                  leagueCode: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (membership?.squad) {
-        return {
-          dependencyType: 'TEAM_MEMBER',
-          userId,
-          team: {
-            id: membership.squad.id,
-            name: membership.squad.name,
-          },
-          league: membership.squad.league,
-        };
-      }
-    }
-
-    if (counts.leagueCount > 0) {
-      const membership = await this.prisma.leagueMembership.findFirst({
-        where: { userId },
-        select: {
-          league: {
-            select: {
-              id: true,
-              leagueCode: true,
-              name: true,
-            },
-          },
-        },
-      });
-
-      if (membership?.league) {
-        return {
-          dependencyType: 'LEAGUE_MEMBER',
-          userId,
-          league: membership.league,
-        };
-      }
-    }
-
-    return undefined;
-  }
 }
 
 function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): AuthProvider | undefined {
