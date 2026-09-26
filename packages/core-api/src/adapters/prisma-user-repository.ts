@@ -56,6 +56,18 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map(mapToUser);
   }
 
+  async findByIdentifier(identifier: string): Promise<User | null> {
+    // Email and username are both @unique, so at most one row can match either.
+    const row = await this.prisma.user.findFirst({
+      where: { OR: [{ email: identifier }, { username: identifier }] },
+    });
+    return row ? mapToUser(row) : null;
+  }
+
+  async countRootAdmins(): Promise<number> {
+    return this.prisma.user.count({ where: { isRootAdmin: true } });
+  }
+
   /**
    * `credentials` is a second parameter rather than a field on `User` because the domain
    * `User` deliberately carries no `passwordHash` — it is a secret, and no caller that

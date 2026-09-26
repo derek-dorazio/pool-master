@@ -281,12 +281,48 @@ Deciding what the new test must cover is work you have already done: consolidati
 implementations means comparing their use cases, and those cases are the specification. So
 the new test is written from that comparison, not from the old test's assertions.
 
-**Cover the UNION of the shadows' cases, not the surviving implementation's.** This is the
-failure mode to watch. When two implementations collapse into one, each usually handled a
-case the other did not — `admin/user-service`'s delete checked a `LEAGUE_CREATOR`
-dependency while `account/service`'s checked email confirmation. A new test written only
-against the implementation that "won" silently drops the other's case, and the deleted test
-was the only record it existed.
+**The documented operation set is the specification — not the shadows.** Set by the repo
+owner, 2026-09-26: *"the shadow tests don't necessarily represent something that must be
+tested. The existing code isn't necessarily correct. We have a documented domain model and
+set of operations for this domain model. So tests should reflect the actual carry forward
+operations. We don't have to preserve bad use cases."*
+
+So the new test's cases come from `docs/DOMAIN-OPERATIONS.md` and the access rules, and the
+shadows are read as **evidence of what the code does, not a statement of what it should
+do**. A case the shadows cover that no documented operation calls for is a candidate to
+drop, and dropping it is the default.
+
+### The procedure
+
+Set by the repo owner, 2026-09-26, after it was run on the User cluster:
+
+> "Mine the superset of use cases, but try to justify if they are worth carrying them forward
+> or not. If so, add them to the documentation and implement in the correct place with the
+> correct tests. If not worthwhile, delete the code and tests and don't bother implementing at
+> all in the new implementation."
+
+1. **Mine the superset.** Enumerate every case the shadow implementations and their tests
+   cover — all of them, not just the surviving implementation's. This is evidence gathering,
+   so be exhaustive and do not filter yet.
+2. **Justify each one.** For every case, say why it exists and whether it should survive.
+   "Why it exists" is usually recoverable: a defect tag, a guard that predates a better guard,
+   a fix applied to one surface and not its twin. That history is the argument for or against
+   carrying it.
+3. **Surface the ones with no documented basis and ask.** A case the documented operation set
+   does not call for is a candidate to drop, and dropping is the default — but whether a given
+   guard is a real requirement or accumulated habit is the repo owner's call. Present the
+   case, the reason it probably exists, and a recommendation.
+4. **Carried forward → document it, then implement it.** The case goes into
+   `docs/DOMAIN-OPERATIONS.md` (or the relevant rule) *before* or alongside the code, so the
+   documented operation set is what the next reader consults, not the implementation. Then
+   implement once, in the right place, with the test at the right layer.
+5. **Not carried forward → delete the code and the test, and do not reimplement.** No
+   stub, no TODO, no "kept for reference." It is gone, and the decision is recorded in the
+   commit that removes it.
+
+The point of step 4 is that the documentation accumulates the spec. Each slice leaves
+`DOMAIN-OPERATIONS.md` a more complete statement of what the product does, so the next slice
+mines shadows against a stronger reference and has fewer open questions than the last.
 
 ### Drop the defect reference; do not carry it
 

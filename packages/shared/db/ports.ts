@@ -69,6 +69,28 @@ export interface UserRepository {
   findByLeague(leagueId: string): Promise<User[]>;
 
   /**
+   * Resolves a user by an identifier that may be either their email or their username.
+   *
+   * Login accepts either, and both are `@unique`, so "is this string taken" is one question
+   * rather than two. Written out by hand in FOUR places before #202: `auth-service`'s login,
+   * its registration collision check, and `account/service`'s two near-identical
+   * email- and username-availability checks.
+   *
+   * Callers excluding themselves — an availability check during a rename — compare the
+   * returned id, because "not me" is the caller's business, not the query's.
+   */
+  findByIdentifier(identifier: string): Promise<User | null>;
+
+  /**
+   * How many users hold `isRootAdmin`.
+   *
+   * Exists so the platform cannot be left with nobody able to administer it. The count was
+   * written inline three times in `admin/user-service` — on disable, on demotion and on
+   * delete — each time as `prisma.user.count({ where: { isRootAdmin: true } })`.
+   */
+  countRootAdmins(): Promise<number>;
+
+  /**
    * `credentials` is a second parameter rather than a field on `User` because the domain
    * `User` deliberately carries no `passwordHash` — it is a secret, and nothing that reads
    * a user should be handed one. Registration still has to set it, so the create operation

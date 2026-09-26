@@ -107,6 +107,8 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     findByEmail: one(),
     findAll: many(),
     findByLeague: many(),
+    findByIdentifier: one(),
+    countRootAdmins: jest.fn().mockResolvedValue(0),
     create: echoCreate('user'),
     update: echoUpdate(),
     delete: nothing(),
