@@ -1,3 +1,25 @@
+/**
+ * #202 step 3.3 — `UserService` against the `UserRepository` port.
+ *
+ * Per plans/145 "Test layering", no test here asserts a positive repository call. What is
+ * asserted is what this service owns and nothing else can observe: the returned value, the
+ * typed error, the ABSENCE of a write (which is how idempotence and a short-circuiting guard
+ * are visible at all), the atomicity of the writes that must land together, and the audit
+ * entry’s content. Query shapes and filters belong to the adapter and are covered against
+ * real Postgres in `tests/integration/core-api/identity-repositories.integration.ts`.
+ *
+ * Every read and single-entity write now goes through the port, so the fake repo IS the
+ * database as far as this suite is concerned; `prisma` is mocked only for the three things
+ * that legitimately stay on it — `$transaction`, the delete cascade, and the refresh-token
+ * revoke.
+ *
+ * That is why these tests no longer stub `prisma.user.findUnique` and then assert on
+ * `prisma.user.count`: those assertions pinned the service's *query shapes*, which is the
+ * adapter's business and is covered against a real database in
+ * `tests/integration/core-api/identity-repositories.integration.ts`. What is left here is
+ * what this service actually owns: the guards, the idempotence, the ordering, and the audit
+ * entries.
+ */
 import bcrypt from 'bcryptjs';
 import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import {
@@ -8,6 +30,8 @@ import {
   UserNotFoundError,
   UserService,
 } from '../../../packages/core-api/src/modules/admin/user-service';
+import { fakeUserRepo } from '../../support/repo-fakes';
+import type { User } from '../../../packages/shared/domain';
 
 jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
   logAdminAction: jest.fn().mockResolvedValue(undefined),
@@ -23,6 +47,21 @@ function createLogger() {
   };
 }
 
+function buildUser(overrides: Partial<User> = {}): User {
+  return {
+    id: 'user-1',
+    email: 'target@example.com',
+    username: 'target',
+    firstName: 'Target',
+    lastName: 'User',
+    isActive: true,
+    isRootAdmin: false,
+    createdAt: new Date('2026-04-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
 function createPrismaMock() {
   const tx = {
     user: {
@@ -33,54 +72,21 @@ function createPrismaMock() {
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
-    notification: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    consentRecord: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    leagueInvitation: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    commissionerAuditLog: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    adminAuditEntry: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    migrationRun: {
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
+    notification: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    consentRecord: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    commissionerAuditLog: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    adminAuditEntry: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    migrationRun: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
   };
 
   const prisma = {
-    user: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-      // #202 — enableUser writes through the non-transactional client. It was absent from
-      // this mock, so enableUser had no coverage at all.
-      update: jest.fn().mockResolvedValue(undefined),
-    },
-    refreshToken: {
-      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-    },
-    leagueMembership: {
-      count: jest.fn().mockResolvedValue(0),
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
-    squadMembership: {
-      count: jest.fn().mockResolvedValue(0),
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
-    league: {
-      count: jest.fn().mockResolvedValue(0),
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
-    squad: {
-      count: jest.fn().mockResolvedValue(0),
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
+    // The non-transactional revoke, used by force-logout.
+    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 3 }) },
+    // The delete-dependency counts. Zero means "nothing blocks the delete".
+    leagueMembership: { count: jest.fn().mockResolvedValue(0) },
+    squadMembership: { count: jest.fn().mockResolvedValue(0) },
+    squad: { count: jest.fn().mockResolvedValue(0) },
     $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) => callback(tx)),
   } as any;
 
@@ -92,177 +98,67 @@ describe('admin user service', () => {
     jest.clearAllMocks();
   });
 
-  it('searches users by username in addition to other profile fields', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findMany.mockResolvedValue([]);
-    prisma.user.count.mockResolvedValue(0);
+  describe('reads', () => {
+    it('returns the canonical user, with no viewer context attached', async () => {
+      // #202 — this used to return a `UserDetailView` with a `viewerAuthority` block the
+      // service computed from a viewer id. Who is asking is request context (A8), so the
+      // service answers "what is this user" and nothing else.
+      const user = buildUser();
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(user) });
+      const service = new UserService(users, createPrismaMock().prisma, createLogger() as any);
 
-    const service = new UserService(prisma, createLogger() as any);
+      await expect(service.getUser('user-1')).resolves.toEqual(user);
+    });
 
-    await service.searchUsers({ search: 'captain' });
+    it('throws UserNotFoundError for a missing user', async () => {
+      const service = new UserService(fakeUserRepo(), createPrismaMock().prisma, createLogger() as any);
 
-    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        OR: expect.arrayContaining([
-          { username: { contains: 'captain', mode: 'insensitive' } },
-        ]),
-      }),
-    }));
+      await expect(service.getUser('missing')).rejects.toBeInstanceOf(UserNotFoundError);
+    });
+
   });
 
-  it('returns root-admin viewerAuthority flags on admin user detail reads', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-1',
-      email: 'target@example.com',
-      username: 'target',
-      firstName: 'Target',
-      lastName: 'User',
-      isRootAdmin: false,
-      authProvider: 'EMAIL',
-      isActive: true,
-      timezone: 'America/New_York',
-      locale: 'en-US',
-      timeFormat: 'TWELVE_HOUR',
-      dateFormat: 'MDY',
-      createdAt: new Date('2026-04-01T00:00:00.000Z'),
+  describe('force logout', () => {
+    it('revokes every live session and records the audit entry', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await service.forceUserLogout('user-1', 'admin-1', 'admin@example.com');
+
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'user.force_logout',
+        resourceId: 'user-1',
+      }));
     });
 
-    const service = new UserService(prisma, createLogger() as any);
+    it('rejects a missing user before revoking anything', async () => {
+      const { prisma } = createPrismaMock();
+      const service = new UserService(fakeUserRepo(), prisma, createLogger() as any);
 
-    await expect(service.getUserDetail('user-1', 'admin-1')).resolves.toMatchObject({
-      id: 'user-1',
-      viewerAuthority: {
-        self: false,
-        rootAdmin: true,
-        viewer: false,
-      },
+      await expect(
+        service.forceUserLogout('missing', 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(UserNotFoundError);
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+      expect(logAdminAction).not.toHaveBeenCalled();
     });
   });
 
-  it('promotes a user to root admin and records the audit entry', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-1',
-      isRootAdmin: false,
-    });
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('user-1', true, 'admin-1', 'admin@example.com', 'Operational coverage'),
-    ).resolves.toBeUndefined();
-
-    expect(prisma.$transaction).toHaveBeenCalled();
-    expect(tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: { isRootAdmin: true },
-    });
-    expect(tx.refreshToken.updateMany).not.toHaveBeenCalled();
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'user.set_root_admin',
-      resourceId: 'user-1',
-      beforeState: { isRootAdmin: false },
-      afterState: { isRootAdmin: true },
-      reason: 'Operational coverage',
-    }));
-  });
-
-  it('demotes a root admin, revokes refresh tokens, and records the audit entry', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-2',
-      isRootAdmin: true,
-    });
-    prisma.user.count.mockResolvedValue(2);
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('user-2', false, 'admin-1', 'admin@example.com', 'Role cleanup'),
-    ).resolves.toBeUndefined();
-
-    expect(prisma.user.count).toHaveBeenCalledWith({
-      where: { isRootAdmin: true },
-    });
-    expect(tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-2' },
-      data: { isRootAdmin: false },
-    });
-    expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-2', revokedAt: null },
-      data: { revokedAt: expect.any(Date) },
-    });
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      beforeState: { isRootAdmin: true },
-      afterState: { isRootAdmin: false },
-      reason: 'Role cleanup',
-    }));
-  });
-
-  it('rejects removal of the last remaining root admin', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-3',
-      isRootAdmin: true,
-    });
-    prisma.user.count.mockResolvedValue(1);
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('user-3', false, 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(LastRootAdminError);
-
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(tx.refreshToken.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('treats unchanged root-admin requests as a no-op', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-4',
-      isRootAdmin: true,
-    });
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('user-4', true, 'admin-1', 'admin@example.com'),
-    ).resolves.toBeUndefined();
-
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(tx.user.update).not.toHaveBeenCalled();
-    expect(logAdminAction).not.toHaveBeenCalled();
-  });
-
-  it('rejects missing users', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue(null);
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('missing-user', true, 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(UserNotFoundError);
-  });
-
-  // #202 — disable and enable are idempotent, and disable is atomic. Neither had coverage.
   describe('disable and enable', () => {
     it('disables an active user atomically, writing state and revoke in one transaction', async () => {
       const { prisma, tx } = createPrismaMock();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: true,
-        isRootAdmin: false,
-      });
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-      const service = new UserService(prisma, createLogger() as any);
       await service.disableUser('user-1', 'abuse', 'root-1', 'root@example.com');
 
       // Both writes go through the SAME transaction client. Previously they were two
-      // separate statements, so a failure between them left the user flagged inactive
-      // with live refresh tokens.
+      // separate statements, so a failure between them left the user flagged inactive with
+      // live refresh tokens.
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(tx.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
@@ -271,163 +167,272 @@ describe('admin user service', () => {
       expect(tx.refreshToken.updateMany).toHaveBeenCalled();
       // The non-transactional client must not be the one doing the revoke.
       expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'user.disable',
+        reason: 'abuse',
+      }));
     });
 
     it('treats disabling an already-inactive user as a no-op', async () => {
       const { prisma } = createPrismaMock();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: false,
-        isRootAdmin: false,
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isActive: false })),
       });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-      const service = new UserService(prisma, createLogger() as any);
       await expect(
         service.disableUser('user-1', 'abuse', 'root-1', 'root@example.com'),
       ).resolves.toBeUndefined();
 
-      // No write at all — asserted against BOTH clients, so this stays meaningful whether
-      // or not the write path is transactional, and no duplicate audit entry is produced
-      // for a change that did not happen.
+      // No write at all, through either client, and no audit entry for a change that did
+      // not happen.
       expect(prisma.$transaction).not.toHaveBeenCalled();
-      expect(prisma.user.update).not.toHaveBeenCalled();
-      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+      expect(users.update).not.toHaveBeenCalled();
+      expect(logAdminAction).not.toHaveBeenCalled();
+    });
+
+    it('refuses to disable the last remaining root admin', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isRootAdmin: true })),
+        countRootAdmins: jest.fn().mockResolvedValue(1),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await expect(
+        service.disableUser('user-1', 'abuse', 'root-1', 'root@example.com'),
+      ).rejects.toBeInstanceOf(LastRootAdminError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('enables an inactive user through the port', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isActive: false })),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await service.enableUser('user-1', 'root-1', 'root@example.com');
+
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'user.enable',
+        afterState: { isActive: true },
+      }));
     });
 
     it('treats enabling an already-active user as a no-op', async () => {
       const { prisma } = createPrismaMock();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: true,
-        isRootAdmin: false,
-      });
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-      const service = new UserService(prisma, createLogger() as any);
       await expect(
         service.enableUser('user-1', 'root-1', 'root@example.com'),
       ).resolves.toBeUndefined();
 
-      expect(prisma.user.update).not.toHaveBeenCalled();
-    });
-
-    it('enables an inactive user', async () => {
-      const { prisma } = createPrismaMock();
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: false,
-        isRootAdmin: false,
-      });
-
-      const service = new UserService(prisma, createLogger() as any);
-      await service.enableUser('user-1', 'root-1', 'root@example.com');
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-        data: { isActive: true },
-      });
+      expect(users.update).not.toHaveBeenCalled();
+      expect(logAdminAction).not.toHaveBeenCalled();
     });
   });
 
-  it('resets a user password, revokes sessions, and returns a temporary password', async () => {
+  it('resets a password to a temporary credential and revokes sessions in the same transaction', async () => {
     const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-5',
-      passwordHash: await bcrypt.hash('OldPassword123!', 10),
-    });
+    const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
+    const service = new UserService(users, prisma, createLogger() as any);
 
-    const service = new UserService(prisma, createLogger() as any);
-
-    const result = await service.resetUserPassword('user-5', 'admin-1', 'admin@example.com', 'Support recovery');
+    const result = await service.resetUserPassword('user-1', 'admin-1', 'admin@example.com', 'Support recovery');
 
     expect(result.temporaryPassword).toMatch(/^Pm-/);
-    expect(tx.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-5' },
-      data: { passwordHash: expect.any(String) },
-    });
+    // The returned credential must be the one actually stored, hashed.
     const nextHash = tx.user.update.mock.calls[0]?.[0]?.data?.passwordHash;
-    expect(typeof nextHash).toBe('string');
     await expect(bcrypt.compare(result.temporaryPassword, nextHash)).resolves.toBe(true);
     expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'user-5', revokedAt: null },
+      where: { userId: 'user-1', revokedAt: null },
       data: { revokedAt: expect.any(Date) },
     });
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'user.reset_password',
-      resourceId: 'user-5',
-      reason: 'Support recovery',
-    }));
+    // The event is audited; the credential state either side of it is not.
+    const audited = (logAdminAction as jest.Mock).mock.calls[0][0];
+    expect(audited).toMatchObject({ action: 'user.reset_password', reason: 'Support recovery' });
+    expect(audited).not.toHaveProperty('beforeState');
+    expect(audited).not.toHaveProperty('afterState');
   });
 
-  it('deletes an inactive user after exact email confirmation', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-6',
+  describe('root-admin role', () => {
+    it('promotes a user without revoking their sessions', async () => {
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await service.setRootAdmin('user-1', true, 'admin-1', 'admin@example.com', 'Operational coverage');
+
+      expect(tx.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isRootAdmin: true },
+      });
+      // Gaining authority does not invalidate the session that already exists.
+      expect(tx.refreshToken.updateMany).not.toHaveBeenCalled();
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'user.set_root_admin',
+        beforeState: { isRootAdmin: false },
+        afterState: { isRootAdmin: true },
+        reason: 'Operational coverage',
+      }));
+    });
+
+    it('demotes a root admin and revokes their sessions, so the lost authority cannot be used', async () => {
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isRootAdmin: true })),
+        countRootAdmins: jest.fn().mockResolvedValue(2),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await service.setRootAdmin('user-1', false, 'admin-1', 'admin@example.com', 'Role cleanup');
+
+      expect(tx.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isRootAdmin: false },
+      });
+      expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        beforeState: { isRootAdmin: true },
+        afterState: { isRootAdmin: false },
+      }));
+    });
+
+    it('lets a root admin demote THEMSELVES while another remains', async () => {
+      // #202 — the self-demotion block is gone. The only rule is that the platform keeps an
+      // administrator, and that is the count below; with two, one stepping down is a
+      // legitimate operation.
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ id: 'admin-1', isRootAdmin: true })),
+        countRootAdmins: jest.fn().mockResolvedValue(2),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await expect(
+        service.setRootAdmin('admin-1', false, 'admin-1', 'admin@example.com'),
+      ).resolves.toBeUndefined();
+      expect(tx.user.update).toHaveBeenCalled();
+    });
+
+    it('refuses to remove the last remaining root admin, whoever asks', async () => {
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isRootAdmin: true })),
+        countRootAdmins: jest.fn().mockResolvedValue(1),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await expect(
+        service.setRootAdmin('user-1', false, 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(LastRootAdminError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(tx.refreshToken.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('treats an unchanged role as a no-op, without counting or writing', async () => {
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ isRootAdmin: true })),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await expect(
+        service.setRootAdmin('user-1', true, 'admin-1', 'admin@example.com'),
+      ).resolves.toBeUndefined();
+
+      expect(users.countRootAdmins).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(tx.user.update).not.toHaveBeenCalled();
+      expect(logAdminAction).not.toHaveBeenCalled();
+    });
+
+    it('rejects a missing user', async () => {
+      const service = new UserService(fakeUserRepo(), createPrismaMock().prisma, createLogger() as any);
+
+      await expect(
+        service.setRootAdmin('missing', true, 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(UserNotFoundError);
+    });
+  });
+
+  describe('permanent delete', () => {
+    const inactive = () => buildUser({
       email: 'delete.me@example.com',
       isActive: false,
-      isRootAdmin: false,
     });
 
-    const service = new UserService(prisma, createLogger() as any);
+    it('cascades the delete after exact email confirmation, then audits', async () => {
+      const { prisma, tx } = createPrismaMock();
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(inactive()) });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-    await expect(
-      service.deleteUser('user-6', 'delete.me@example.com', 'admin-1', 'admin@example.com', 'Cleanup'),
-    ).resolves.toBeUndefined();
+      await service.deleteUser('user-1', 'delete.me@example.com', 'admin-1', 'admin@example.com', 'Cleanup');
 
-    expect(tx.user.delete).toHaveBeenCalledWith({ where: { id: 'user-6' } });
-    expect(tx.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-6' } });
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'user.delete',
-      resourceId: 'user-6',
-      reason: 'Cleanup',
-    }));
-  });
-
-  it('rejects admin delete when the confirmation email does not match', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-7',
-      email: 'actual@example.com',
-      isActive: false,
-      isRootAdmin: false,
+      expect(tx.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(tx.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+      expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'user.delete',
+        reason: 'Cleanup',
+      }));
     });
 
-    const service = new UserService(prisma, createLogger() as any);
+    it('rejects a confirmation email that does not match exactly', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(inactive()) });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-    await expect(
-      service.deleteUser('user-7', 'wrong@example.com', 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(UserDeleteConfirmationMismatchError);
-  });
-
-  it('rejects admin delete for active users', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-8',
-      email: 'active@example.com',
-      isActive: true,
-      isRootAdmin: false,
+      await expect(
+        service.deleteUser('user-1', 'wrong@example.com', 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(UserDeleteConfirmationMismatchError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
-    const service = new UserService(prisma, createLogger() as any);
+    it('rejects an ACTIVE user — the one place isActive gates a write (A9)', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({ email: 'active@example.com' })),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-    await expect(
-      service.deleteUser('user-8', 'active@example.com', 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(UserDeleteRequiresInactiveError);
-  });
-
-  it('rejects admin delete when league-scoped dependencies remain', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-9',
-      email: 'linked@example.com',
-      isActive: false,
-      isRootAdmin: false,
+      await expect(
+        service.deleteUser('user-1', 'active@example.com', 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(UserDeleteRequiresInactiveError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
-    prisma.leagueMembership.count.mockResolvedValue(1);
 
-    const service = new UserService(prisma, createLogger() as any);
+    it('refuses to delete the last remaining root admin', async () => {
+      const { prisma } = createPrismaMock();
+      const users = fakeUserRepo({
+        findById: jest.fn().mockResolvedValue(buildUser({
+          email: 'delete.me@example.com',
+          isActive: false,
+          isRootAdmin: true,
+        })),
+        countRootAdmins: jest.fn().mockResolvedValue(1),
+      });
+      const service = new UserService(users, prisma, createLogger() as any);
 
-    await expect(
-      service.deleteUser('user-9', 'linked@example.com', 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(UserDeleteDependenciesExistError);
+      await expect(
+        service.deleteUser('user-1', 'delete.me@example.com', 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(LastRootAdminError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('rejects a user who still holds league-scoped data', async () => {
+      const { prisma } = createPrismaMock();
+      prisma.leagueMembership.count.mockResolvedValue(1);
+      const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(inactive()) });
+      const service = new UserService(users, prisma, createLogger() as any);
+
+      await expect(
+        service.deleteUser('user-1', 'delete.me@example.com', 'admin-1', 'admin@example.com'),
+      ).rejects.toBeInstanceOf(UserDeleteDependenciesExistError);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
   });
 });

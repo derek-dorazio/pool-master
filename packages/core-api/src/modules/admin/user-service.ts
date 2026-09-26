@@ -1,71 +1,34 @@
 /**
- * UserService — business logic for root-admin user management operations.
+ * UserService — the root-admin caller's half of the `User` operations (#202 step 3.3).
  *
- * Root-admin reads should reflect the same underlying User model used by the
- * rest of the product rather than inventing a parallel admin-user shape.
+ * Reads and single-entity writes go through `UserRepository`. Before #202 this file held 36
+ * raw `prisma.user.*` calls and its own row→view mapping, which is how a service with no
+ * repository port ends up owning a second copy of the User model (§2y, §15). The port was
+ * declared and never implemented; `PrismaUserRepository` now implements it, and this is one
+ * of its two consumers.
+ *
+ * `prisma` is still a constructor parameter, and that is deliberate rather than a leftover.
+ * Three things here are not single-aggregate operations and so do not belong behind a port:
+ * `$transaction`, the eight-table delete cascade, and the refresh-token revoke. They live in
+ * `modules/users/user-lifecycle.ts`, shared with the self-service path.
  */
 
 import { randomBytes } from 'node:crypto';
-import type {
-  PrismaClient,
-  UserAuthProvider as PrismaUserAuthProvider,
-  UserDateFormat as PrismaUserDateFormat,
-  UserTimeFormat as PrismaUserTimeFormat,
-} from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import type { FastifyBaseLogger } from 'fastify';
-import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
+import type { User } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
   hasUserDeleteDependencies,
+  isLastRootAdmin,
   revokeUserSessions,
 } from '../users/user-lifecycle';
 
 const BCRYPT_ROUNDS = 12;
-
-export interface UserSearchQuery {
-  search?: string;
-  isActive?: boolean;
-}
-
-export interface UserListItem {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isRootAdmin: boolean;
-  authProvider?: AuthProvider;
-  isActive: boolean;
-  timezone?: string;
-  locale?: string;
-  timeFormat?: TimeFormat;
-  dateFormat?: DateFormat;
-  createdAt: Date;
-}
-
-export interface UserDetailView {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isRootAdmin: boolean;
-  authProvider?: AuthProvider;
-  isActive: boolean;
-  timezone?: string;
-  locale?: string;
-  timeFormat?: TimeFormat;
-  dateFormat?: DateFormat;
-  createdAt: Date;
-  viewerAuthority: {
-    self: boolean;
-    rootAdmin: boolean;
-    viewer: boolean;
-  };
-}
 
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
@@ -104,102 +67,45 @@ export class UserDeleteDependenciesExistError extends Error {
 
 export class UserService {
   constructor(
+    private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  // #202 — not paged (§16). Filters narrow the set; nothing slices it.
-  async searchUsers(query: UserSearchQuery): Promise<UserListItem[]> {
-    const trimmedSearch = query.search?.trim();
-    this.logger?.debug({
-      action: 'adminUserService.search.start',
-      data: {
-        hasSearch: Boolean(trimmedSearch),
-        isActive: query.isActive ?? null,
-      },
-    }, 'Searching users');
-
-    const where: Record<string, unknown> = {};
-
-    if (trimmedSearch) {
-      where.OR = [
-        { email: { contains: trimmedSearch, mode: 'insensitive' } },
-        { username: { contains: trimmedSearch, mode: 'insensitive' } },
-        { firstName: { contains: trimmedSearch, mode: 'insensitive' } },
-        { lastName: { contains: trimmedSearch, mode: 'insensitive' } },
-      ];
-    }
-    if (typeof query.isActive === 'boolean') {
-      where.isActive = query.isActive;
-    }
-
-    const rows = await this.prisma.user.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const items: UserListItem[] = rows.map((row) => ({
-      id: row.id,
-      email: row.email,
-      username: row.username,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      isRootAdmin: row.isRootAdmin,
-      authProvider: mapAuthProvider(row.authProvider),
-      isActive: row.isActive,
-      timezone: row.timezone ?? undefined,
-      locale: row.locale ?? undefined,
-      timeFormat: mapTimeFormat(row.timeFormat),
-      dateFormat: mapDateFormat(row.dateFormat),
-      createdAt: row.createdAt,
-    }));
-
+  /**
+   * The unscoped user read — access rule A1, root admin only, enforced by the route.
+   *
+   * Not paged (§16). Filters narrow the set; nothing slices it.
+   */
+  async searchUsers(filters: UserSearchFilters): Promise<User[]> {
+    const users = await this.users.findAll(filters);
     this.logger?.info({
       action: 'adminUserService.search.success',
-      data: { count: items.length },
+      data: { count: users.length },
     }, 'Searched users');
-    return items;
+    return users;
   }
 
-  async getUserDetail(userId: string, viewerUserId: string): Promise<UserDetailView> {
-    this.logger?.debug({
-      action: 'adminUserService.detail.start',
-      data: { userId },
-    }, 'Loading admin user detail');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  /**
+   * Reads one user as the canonical `User`.
+   *
+   * #202 — this returned a `UserDetailView` carrying a `viewerAuthority` block the service
+   * computed from a `viewerUserId` parameter. Who is asking is request context, not a
+   * property of the user being read, so it is assembled in the handler that already has the
+   * caller. A8: viewer context is delivered once, by the surface that knows the viewer.
+   */
+  async getUser(userId: string): Promise<User> {
+    const user = await this.users.findById(userId);
 
     if (!user) {
       this.logger?.warn({
-        action: 'adminUserService.detail.notFound',
+        action: 'adminUserService.read.notFound',
         data: { userId },
-      }, 'Admin user detail not found');
+      }, 'Admin user read not found');
       throw new UserNotFoundError(userId);
     }
 
-    this.logger?.info({
-      action: 'adminUserService.detail.success',
-      data: { userId },
-    }, 'Loaded admin user detail');
-    return {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isRootAdmin: user.isRootAdmin,
-      authProvider: mapAuthProvider(user.authProvider),
-      isActive: user.isActive,
-      timezone: user.timezone ?? undefined,
-      locale: user.locale ?? undefined,
-      timeFormat: mapTimeFormat(user.timeFormat),
-      dateFormat: mapDateFormat(user.dateFormat),
-      createdAt: user.createdAt,
-      viewerAuthority: {
-        self: userId === viewerUserId,
-        rootAdmin: true,
-        viewer: false,
-      },
-    };
+    return user;
   }
 
   async forceUserLogout(
@@ -207,18 +113,7 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'adminUserService.forceLogout.start',
-      data: { userId },
-    }, 'Force-logging out user');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.forceLogout.notFound',
-        data: { userId },
-      }, 'Cannot force logout missing user');
-      throw new UserNotFoundError(userId);
-    }
+    await this.getUser(userId);
 
     const revokedCount = await revokeUserSessions(this.prisma, userId);
 
@@ -245,18 +140,7 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'adminUserService.disable.start',
-      data: { userId },
-    }, 'Disabling user');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.disable.notFound',
-        data: { userId },
-      }, 'Cannot disable missing user');
-      throw new UserNotFoundError(userId);
-    }
+    const user = await this.getUser(userId);
 
     // #202 — idempotent. Already inactive means the desired state holds, so this succeeds
     // without re-revoking sessions or writing a second audit entry for a change that did
@@ -270,17 +154,12 @@ export class UserService {
       return;
     }
 
-    if (user.isRootAdmin) {
-      const rootAdminCount = await this.prisma.user.count({
-        where: { isRootAdmin: true },
-      });
-      if (rootAdminCount <= 1) {
-        this.logger?.warn({
-          action: 'adminUserService.disable.lastRejected',
-          data: { userId, rootAdminCount },
-        }, 'Rejected disable of the last root admin');
-        throw new LastRootAdminError(userId);
-      }
+    if (await isLastRootAdmin(this.users, user)) {
+      this.logger?.warn({
+        action: 'adminUserService.disable.lastRejected',
+        data: { userId },
+      }, 'Rejected disable of the last root admin');
+      throw new LastRootAdminError(userId);
     }
 
     // #202 — one transaction. These were two statements, so a failure between them left
@@ -317,18 +196,7 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'adminUserService.enable.start',
-      data: { userId },
-    }, 'Enabling user');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.enable.notFound',
-        data: { userId },
-      }, 'Cannot enable missing user');
-      throw new UserNotFoundError(userId);
-    }
+    const user = await this.getUser(userId);
 
     // #202 — idempotent, matching disable.
     if (user.isActive) {
@@ -339,10 +207,7 @@ export class UserService {
       return;
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive: true },
-    });
+    await this.users.update(userId, { isActive: true });
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -359,24 +224,20 @@ export class UserService {
     }, 'Enabled user');
   }
 
+  /**
+   * Resets another user's password — access rule A6, `rootAdmin`. Distinct from a self-serve
+   * change by SUBJECT, not just by precondition, which is why it is its own operation.
+   *
+   * The write stays on the transaction client: `passwordHash` is the one column
+   * `UserRepository` deliberately never exposes, and it has to be atomic with the revoke.
+   */
   async resetUserPassword(
     userId: string,
     rootAdminUserId: string,
     rootAdminEmail: string,
     reason?: string,
   ): Promise<{ temporaryPassword: string }> {
-    this.logger?.debug({
-      action: 'adminUserService.resetPassword.start',
-      data: { userId },
-    }, 'Resetting user password');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.resetPassword.notFound',
-        data: { userId },
-      }, 'Cannot reset password for missing user');
-      throw new UserNotFoundError(userId);
-    }
+    await this.getUser(userId);
 
     const temporaryPassword = buildTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, BCRYPT_ROUNDS);
@@ -402,10 +263,8 @@ export class UserService {
       resourceId: userId,
       description: `Reset password for user ${userId}`,
       // #202 — the EVENT is audited, not the credential state either side of it. The
-      // before/after pair recorded `hadPassword` and `hasTemporaryPassword`, which meant
-      // this read needed `user.passwordHash` — a column the canonical `User` deliberately
-      // does not carry, so it was the one thing keeping this method off UserRepository.
-      // Neither value told a reader anything the action name does not.
+      // before/after pair recorded `hadPassword` and `hasTemporaryPassword`, and neither
+      // told a reader anything the action name does not.
       reason: trimmedReason,
     });
 
@@ -424,45 +283,28 @@ export class UserService {
     rootAdminEmail: string,
     reason?: string,
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'adminUserService.setRootAdmin.start',
-      data: {
-        userId,
-        nextValue,
-      },
-    }, 'Updating root-admin role');
+    const user = await this.getUser(userId);
+    const currentValue = user.isRootAdmin === true;
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.setRootAdmin.notFound',
-        data: { userId },
-      }, 'Cannot change root-admin role for missing user');
-      throw new UserNotFoundError(userId);
-    }
-
-    if (nextValue === user.isRootAdmin) {
+    if (nextValue === currentValue) {
       this.logger?.debug({
         action: 'adminUserService.setRootAdmin.noop',
         data: {
           userId,
-          isRootAdmin: user.isRootAdmin,
+          isRootAdmin: currentValue,
         },
       }, 'Skipping no-op root-admin role change');
       return;
     }
 
-    if (!nextValue && user.isRootAdmin) {
-      const rootAdminCount = await this.prisma.user.count({
-        where: { isRootAdmin: true },
-      });
-      if (rootAdminCount <= 1) {
-        this.logger?.warn({
-          action: 'adminUserService.setRootAdmin.lastRejected',
-          data: { userId, rootAdminCount },
-        }, 'Rejected removal of the last root admin');
-        throw new LastRootAdminError(userId);
-      }
+    // Self-demotion is permitted (#202): the only rule here is that the platform keeps an
+    // administrator, and that is this count — for every caller, not just for the self case.
+    if (!nextValue && await isLastRootAdmin(this.users, user)) {
+      this.logger?.warn({
+        action: 'adminUserService.setRootAdmin.lastRejected',
+        data: { userId },
+      }, 'Rejected removal of the last root admin');
+      throw new LastRootAdminError(userId);
     }
 
     const trimmedReason = reason?.trim() || undefined;
@@ -480,9 +322,6 @@ export class UserService {
     });
 
     // #202 — audit is written AFTER the transaction commits, not inside the callback.
-    // logAdminAction writes through its own client and takes no transaction, so a call
-    // inside the callback was never enrolled in it: the entry committed immediately and
-    // would have survived a rollback, recording an action that did not happen.
     await logAdminAction({
       actorUserId: rootAdminUserId,
       actorEmail: rootAdminEmail,
@@ -492,7 +331,7 @@ export class UserService {
       description: nextValue
         ? `Granted root-admin role to user ${userId}`
         : `Revoked root-admin role from user ${userId}`,
-      beforeState: { isRootAdmin: user.isRootAdmin },
+      beforeState: { isRootAdmin: currentValue },
       afterState: { isRootAdmin: nextValue },
       reason: trimmedReason,
     });
@@ -513,28 +352,10 @@ export class UserService {
     rootAdminEmail: string,
     reason?: string,
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'adminUserService.delete.start',
-      data: { userId },
-    }, 'Deleting user');
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-        isRootAdmin: true,
-      },
-    });
+    const user = await this.getUser(userId);
 
-    if (!user) {
-      this.logger?.warn({
-        action: 'adminUserService.delete.notFound',
-        data: { userId },
-      }, 'Cannot delete missing user');
-      throw new UserNotFoundError(userId);
-    }
-
+    // The one place `isActive` IS a precondition on a write rather than a read filter —
+    // permanent deletion is gated on it (access rule A9, "the one exception").
     if (user.isActive) {
       this.logger?.warn({
         action: 'adminUserService.delete.activeRejected',
@@ -551,17 +372,12 @@ export class UserService {
       throw new UserDeleteConfirmationMismatchError(userId);
     }
 
-    if (user.isRootAdmin) {
-      const rootAdminCount = await this.prisma.user.count({
-        where: { isRootAdmin: true },
-      });
-      if (rootAdminCount <= 1) {
-        this.logger?.warn({
-          action: 'adminUserService.delete.lastRejected',
-          data: { userId, rootAdminCount },
-        }, 'Rejected delete of the last root admin');
-        throw new LastRootAdminError(userId);
-      }
+    if (await isLastRootAdmin(this.users, user)) {
+      this.logger?.warn({
+        action: 'adminUserService.delete.lastRejected',
+        data: { userId },
+      }, 'Rejected delete of the last root admin');
+      throw new LastRootAdminError(userId);
     }
 
     const counts = await countUserDeleteDependencies(this.prisma, userId);
@@ -579,9 +395,6 @@ export class UserService {
     await this.prisma.$transaction((tx) => deleteUserCascade(tx, userId));
 
     // #202 — audit is written AFTER the transaction commits, not inside the callback.
-    // logAdminAction writes through its own client and takes no transaction, so a call
-    // inside the callback was never enrolled in it: the entry committed immediately and
-    // would have survived a rollback, recording an action that did not happen.
     await logAdminAction({
       actorUserId: rootAdminUserId,
       actorEmail: rootAdminEmail,
@@ -589,7 +402,7 @@ export class UserService {
       resourceType: 'USER',
       resourceId: userId,
       description: `Deleted inactive user ${userId}`,
-      beforeState: { isActive: false, isRootAdmin: user.isRootAdmin },
+      beforeState: { isActive: false, isRootAdmin: user.isRootAdmin === true },
       afterState: { deleted: true },
       reason: trimmedReason,
     });
@@ -599,27 +412,6 @@ export class UserService {
       data: { userId },
     }, 'Deleted user');
   }
-
-}
-
-function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): AuthProvider | undefined {
-  if (provider === 'EMAIL') return AuthProvider.EMAIL;
-  if (provider === 'GOOGLE') return AuthProvider.GOOGLE;
-  if (provider === 'APPLE') return AuthProvider.APPLE;
-  return undefined;
-}
-
-function mapTimeFormat(value: PrismaUserTimeFormat | null | undefined): TimeFormat | undefined {
-  if (value === 'TWELVE_HOUR') return TimeFormat.TWELVE_HOUR;
-  if (value === 'TWENTY_FOUR_HOUR') return TimeFormat.TWENTY_FOUR_HOUR;
-  return undefined;
-}
-
-function mapDateFormat(value: PrismaUserDateFormat | null | undefined): DateFormat | undefined {
-  if (value === 'MDY') return DateFormat.MDY;
-  if (value === 'DMY') return DateFormat.DMY;
-  if (value === 'YMD') return DateFormat.YMD;
-  return undefined;
 }
 
 function buildTemporaryPassword(): string {

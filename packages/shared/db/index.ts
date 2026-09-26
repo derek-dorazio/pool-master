@@ -26,4 +26,5 @@ export type {
   SquadRepository,
   UserRepository,
   UserSearchFilters,
+  UserUpdate,
 } from './ports';

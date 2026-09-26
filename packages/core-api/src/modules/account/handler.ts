@@ -7,9 +7,15 @@ import {
 import { sendError } from '../../core/error-handler';
 import { mapAccountResponse } from '../../mappers';
 import { AuthError, AuthService } from '../auth/auth-service';
-import { AccountLifecycleError, AccountService } from './service';
+import { UserOperationError } from '../users/user-errors';
+import type { UserProfileService, UserWriteActor } from '../users/user-profile-service';
+import { AccountService } from './service';
 
-export function createAccountHandlers(accountService: AccountService, authService: AuthService) {
+export function createAccountHandlers(
+  accountService: AccountService,
+  authService: AuthService,
+  profileService: UserProfileService,
+) {
   return {
     reactivate: handleReactivate,
     updateProfile: handleUpdateProfile,
@@ -59,7 +65,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       reply.header('Set-Cookie', createSessionCookieHeaders(tokens));
       return reply.send(mapAccountResponse(user));
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.reactivate.rejected',
           errorCode: error.code,
@@ -113,7 +119,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
 
-      const user = await accountService.updateOwnProfile(userId, request.body);
+      const user = await profileService.updateProfile(actorFrom(request, userId), userId, request.body);
       logger.info({
         action: 'account.profile_update.succeeded',
         data: {
@@ -122,7 +128,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       }, 'Updated account profile');
       return reply.send(mapAccountResponse(user));
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.profile_update.rejected',
           errorCode: error.code,
@@ -163,7 +169,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
 
-      const user = await accountService.updateOwnUsername(userId, request.body.username);
+      const user = await profileService.updateUsername(actorFrom(request, userId), userId, request.body.username);
       logger.info({
         action: 'account.username_update.succeeded',
         data: {
@@ -172,7 +178,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       }, 'Updated account username');
       return reply.send(mapAccountResponse(user));
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.username_update.rejected',
           errorCode: error.code,
@@ -221,7 +227,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
 
-      const user = await accountService.updateOwnPreferences(userId, request.body);
+      const user = await profileService.updatePreferences(actorFrom(request, userId), userId, request.body);
       logger.info({
         action: 'account.preferences_update.succeeded',
         data: {
@@ -230,7 +236,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       }, 'Updated account preferences');
       return reply.send(mapAccountResponse(user));
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.preferences_update.rejected',
           errorCode: error.code,
@@ -290,7 +296,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       }, 'Changed account password');
       return reply.send({ success: true });
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.password_change.rejected',
           errorCode: error.code,
@@ -335,7 +341,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       }, 'Inactivated account');
       return reply.send(mapAccountResponse(user));
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.inactivate.rejected',
           errorCode: error.code,
@@ -384,7 +390,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
       reply.header('Set-Cookie', createClearedSessionCookieHeaders());
       return reply.send({ success: true });
     } catch (error) {
-      if (error instanceof AccountLifecycleError) {
+      if (error instanceof UserOperationError) {
         logger.warn({
           action: 'account.delete.rejected',
           errorCode: error.code,
@@ -398,4 +404,13 @@ export function createAccountHandlers(accountService: AccountService, authServic
       throw error;
     }
   }
+}
+
+/**
+ * The actor for an `/account/*` route: always the authenticated caller, writing to their own
+ * user. `isRootAdmin` is carried anyway because the operation's authority rule is A6's
+ * "self, or rootAdmin" — the route decides the subject, not the rule.
+ */
+function actorFrom(request: FastifyRequest, userId: string): UserWriteActor {
+  return { userId, isRootAdmin: request.authUser?.isRootAdmin === true };
 }

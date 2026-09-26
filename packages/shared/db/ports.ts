@@ -24,7 +24,7 @@ import type {
   User,
 } from '../domain';
 
-import type { ParticipantStatus, Sport } from '../domain';
+import type { DateFormat, ParticipantStatus, Sport, TimeFormat } from '../domain';
 
 // --- Identity ---
 
@@ -36,6 +36,31 @@ export interface UserSearchFilters {
    */
   search?: string;
   isActive?: boolean;
+}
+
+/**
+ * The writable fields of a `User`, as an update.
+ *
+ * `passwordHash` is absent by design — it is a secret, set through `create`'s separate
+ * `credentials` parameter and rotated by the password operations, never by a general update.
+ * `email` and `username` are here because they are ordinary profile fields; uniqueness is
+ * the caller's check, via `findByIdentifier`.
+ */
+export interface UserUpdate {
+  email?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+  isRootAdmin?: boolean;
+  /** `null` clears it. */
+  timezone?: string | null;
+  /** `null` clears it. */
+  locale?: string | null;
+  /** `null` clears it. */
+  timeFormat?: TimeFormat | null;
+  /** `null` clears it. */
+  dateFormat?: DateFormat | null;
 }
 
 export interface UserRepository {
@@ -100,7 +125,17 @@ export interface UserRepository {
     user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
     credentials?: { passwordHash?: string },
   ): Promise<User>;
-  update(id: string, updates: Partial<User>): Promise<User>;
+
+  /**
+   * Applies the given fields. A field left out is untouched; a nullable field set to `null`
+   * is CLEARED.
+   *
+   * That distinction is why this takes `UserUpdate` rather than `Partial<User>`. On the
+   * domain type the optional preferences are `string | undefined`, so `Partial<User>` has no
+   * way to say "clear my timezone" — and clearing them is a real operation the preferences
+   * surface offers.
+   */
+  update(id: string, updates: UserUpdate): Promise<User>;
   delete(id: string): Promise<void>;
 }
 

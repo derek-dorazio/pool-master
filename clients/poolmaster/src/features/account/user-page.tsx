@@ -385,10 +385,13 @@ export function UserPage() {
   const activeUser = user;
   const isInactive = activeUser.isActive === false;
   const memberSince = formatMemberSince(activeUser.createdAt, activeUser.dateFormat);
-  const disableProfileEditing = isInactive || profileMutation.isPending;
-  const disableUsernameEditing = isInactive || usernameMutation.isPending;
-  const disablePreferencesEditing = isInactive || preferencesMutation.isPending;
-  const disablePasswordEditing = isInactive || passwordMutation.isPending;
+  // #202 — NOT gated on `isInactive`. An inactive account is filtered out of views and
+  // cannot sign in; its own details stay editable, which is the precondition for fixing them
+  // and reactivating (access rule A9). The server dropped the matching 409 guard.
+  const disableProfileEditing = profileMutation.isPending;
+  const disableUsernameEditing = usernameMutation.isPending;
+  const disablePreferencesEditing = preferencesMutation.isPending;
+  const disablePasswordEditing = passwordMutation.isPending;
   const activeLifecycleAction = isInactive ? reactivateAccountAction : inactivateAccountAction;
 
   function openProfileDialog() {
@@ -445,8 +448,8 @@ export function UserPage() {
             data-testid="user-page-inactive-banner"
             tone="warning"
           >
-            Your account is inactive. Self-service actions stay available here, but profile,
-            preferences, and password edits remain read-only until you reactivate.
+            Your account is inactive. You are hidden from your leagues and cannot sign in
+            normally, but you can still update your details here and reactivate when ready.
           </Alert>
         ) : null}
       </Tile>
@@ -912,7 +915,7 @@ export function UserPage() {
           <p className="text-sm text-muted-foreground">
             {isInactive
               ? 'Reactivating your account restores normal Prime Time Commissioner usage immediately.'
-              : 'Inactivating your account turns profile, preferences, and password management read-only until you reactivate or permanently delete the account.'}
+              : 'Inactivating your account signs you out everywhere and hides you from your leagues. You can still edit your details, and reactivate or permanently delete the account later.'}
           </p>
           {activeLifecycleAction.isError ? (
             <Alert tone="danger">

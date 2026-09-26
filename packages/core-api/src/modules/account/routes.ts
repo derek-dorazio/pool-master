@@ -12,15 +12,19 @@ import {
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import { getAppPrisma } from '../../core/prisma-context';
+import { PrismaUserRepository } from '../../adapters';
 import { createAccountHandlers } from './handler';
 import { AccountService } from './service';
+import { UserProfileService } from '../users/user-profile-service';
 import { AuthService } from '../auth/auth-service';
 
 export function accountModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
-  const service = new AccountService(prisma, fastify.log);
+  const users = new PrismaUserRepository(prisma);
+  const service = new AccountService(users, prisma, fastify.log);
+  const profileService = new UserProfileService(users, fastify.log);
   const authService = new AuthService(prisma, fastify.log);
-  const handlers = createAccountHandlers(service, authService);
+  const handlers = createAccountHandlers(service, authService, profileService);
 
   fastify.post('/reactivate', {
     schema: {

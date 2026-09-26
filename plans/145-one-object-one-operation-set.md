@@ -732,6 +732,50 @@ Eight duplicate operation pairs collapse to eight operations; the list is in
   against the mutation" only established that the mirror matched the new code, which is
   not coverage.
 
+**Step 3.3 outcome, recorded 2026-09-26.** Both zero-port services are on
+`UserRepository`. What the migration actually changed, beyond the injection:
+
+- **Three one-sided guards dropped**, each present in exactly one of the two write paths:
+  the self-demotion block on `setRootAdmin`, the dependency-detail payload on a blocked hard
+  delete, and the read-only lock on inactive accounts (A9). Reasoning and evidence are in
+  `docs/DOMAIN-OPERATIONS.md`, "Three guards dropped while implementing slice 1".
+- **The profile/username/preferences write became one operation for both callers**, in
+  `modules/users/user-profile-service.ts`. The document had always defined it for `self` OR
+  `rootAdmin`; only the `self` half existed, with the authority rule implicit in the route
+  prefix, so the rule had never been tested. It is now `requireWritableUser`, and the two
+  identity-availability checks that differed only in the order of their `OR` arms are one
+  check over `findByIdentifier`.
+- **`isLastRootAdmin` takes the port and the already-loaded user.** It was written inline
+  three times in `admin/user-service.ts` plus once here, and re-read the user only to learn
+  `isRootAdmin` — which every caller already had.
+- **`UserUpdate` replaced `Partial<User>` on the port.** `Partial<User>` could not express
+  "clear my timezone", because the optional preferences are `string | undefined` on the
+  domain type; worse, a `null` mapped through the enum `Record` returns `undefined`, which
+  Prisma reads as "no change", so a clear would have silently done nothing.
+- **Three hand-rolled shapes deleted**: `UserListItem`, `UserDetailView` and
+  `AccountUserRow`, along with the three copies of the row→domain enum mapping they needed.
+  `viewerAuthority` is assembled in the handler that knows the viewer (A8), and
+  `account.mapper.ts` is now a projection with no mapping in it.
+- **The client-side mirror of the inactive lock went too.** `user-page.tsx` disabled its four
+  edit forms on `isInactive`; that is gone, and the two strings telling the user their
+  account is read-only now describe what inactive actually means.
+
+Test counts across the step: unit 90 suites/1045 tests → 91/1052, integration 18/76 → 18/83,
+webapp 120/499 → 120/498. The unit count did not fall, and that is the honest outcome rather
+than the predicted one: 7 tests were deleted with the guards and 3 duplicate `UserService`
+tests were removed from `admin-support-services.test.ts`, but the operation that previously
+had NO tests for its `rootAdmin` half — and no test of its authority rule at all — needed 16. FAPI 10/60 → 10/59.
+The integration rise is `findByIdentifier`, `countRootAdmins` and `update`, none of which had
+a DAO test before.
+
+**One tension worth recording.** "Test layering" above says no layer asserts which method was
+called with what. `user-profile-service.test.ts` does, for the normalization cases, and the
+file says why: that service holds no state and issues no query, so the `UserUpdate` it hands
+the port is its entire output — there is no lower layer to move to. The rule held everywhere
+else: the `searchUsers` filter pass-through test was deleted rather than re-pointed, and what
+survives at the service layer is returned values, typed errors, the *absence* of a write, and
+transaction atomicity.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,

@@ -6,7 +6,7 @@ import type {
   UserDateFormat as PrismaUserDateFormat,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
-import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
+import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
 import { AuthProvider, DateFormat, TimeFormat, type User } from '@poolmaster/shared/domain';
 
 /**
@@ -106,7 +106,14 @@ export class PrismaUserRepository implements UserRepository {
     return mapToUser(row);
   }
 
-  async update(id: string, updates: Partial<User>): Promise<User> {
+  /**
+   * A field left out is untouched; a nullable field set to `null` is cleared.
+   *
+   * The `=== null ? null : toPrisma…` arms are the point of `UserUpdate`. Mapping a `null`
+   * through the enum `Record` would return `undefined`, which Prisma reads as "no change" —
+   * so clearing a preference would have silently done nothing.
+   */
+  async update(id: string, updates: UserUpdate): Promise<User> {
     const row = await this.prisma.user.update({
       where: { id },
       data: {
@@ -116,17 +123,13 @@ export class PrismaUserRepository implements UserRepository {
         ...(updates.lastName !== undefined && { lastName: updates.lastName }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.isRootAdmin !== undefined && { isRootAdmin: updates.isRootAdmin }),
-        ...(updates.authProvider !== undefined && {
-          authProvider: toPrismaAuthProvider(updates.authProvider),
-        }),
-        ...(updates.authId !== undefined && { authId: updates.authId }),
         ...(updates.timezone !== undefined && { timezone: updates.timezone }),
         ...(updates.locale !== undefined && { locale: updates.locale }),
         ...(updates.timeFormat !== undefined && {
-          timeFormat: toPrismaTimeFormat(updates.timeFormat),
+          timeFormat: updates.timeFormat === null ? null : toPrismaTimeFormat(updates.timeFormat),
         }),
         ...(updates.dateFormat !== undefined && {
-          dateFormat: toPrismaDateFormat(updates.dateFormat),
+          dateFormat: updates.dateFormat === null ? null : toPrismaDateFormat(updates.dateFormat),
         }),
       },
     });

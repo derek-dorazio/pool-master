@@ -19,7 +19,14 @@ import {
   PrismaLeagueRepository,
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
-import { JoinPolicy, LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import {
+  DateFormat,
+  JoinPolicy,
+  LeagueIconKey,
+  LeagueRole,
+  LeagueMembershipStatus,
+  TimeFormat,
+} from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'IDREPO';
 
@@ -200,6 +207,122 @@ describe('identity cluster repositories (#202)', () => {
       const users = await repo.findByLeague(league.id);
 
       expect(users.map((user) => user.id)).toContain(former.user.id);
+    });
+  });
+
+  // #202 step 3.3 — the identifier lookup that was written out by hand FOUR times: login,
+  // the registration collision check, and the two near-identical availability checks in
+  // `account/service.ts`.
+  describe('UserRepository.findByIdentifier', () => {
+    it('resolves the same user by either email or username', async () => {
+      const repo = new PrismaUserRepository(getPrisma());
+      const marker = `ident${Date.now().toString(36)}`;
+      const created = await createTestUser({ email: `${marker}@integration.test` });
+
+      const byEmail = await repo.findByIdentifier(created.user.email);
+      const byUsername = await repo.findByIdentifier(created.user.username);
+
+      expect(byEmail?.id).toBe(created.user.id);
+      expect(byUsername?.id).toBe(created.user.id);
+    });
+
+    it('finds a user whose USERNAME matches a string offered as an email, and vice versa', async () => {
+      // This cross-column match is the whole point. Login accepts either, so a username
+      // colliding with somebody else's email is just as unusable as a duplicate username —
+      // which is why the availability check is one question, not two.
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+      const marker = `cross${Date.now().toString(36)}`;
+      const created = await createTestUser({ email: `${marker}@integration.test` });
+      await prisma.user.update({
+        where: { id: created.user.id },
+        data: { username: `${marker}-name@integration.test` },
+      });
+
+      const found = await repo.findByIdentifier(`${marker}-name@integration.test`);
+
+      expect(found?.id).toBe(created.user.id);
+    });
+
+    it('returns null for an identifier nobody holds', async () => {
+      const repo = new PrismaUserRepository(getPrisma());
+
+      await expect(repo.findByIdentifier(`nobody-${Date.now()}@integration.test`))
+        .resolves.toBeNull();
+    });
+  });
+
+  // #202 step 3.3 — the platform-lockout guard's count. Written inline three times in
+  // `admin/user-service.ts` before this.
+  describe('UserRepository.countRootAdmins', () => {
+    it('counts root admins and nobody else', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+
+      const before = await repo.countRootAdmins();
+
+      // A plain user must not move the count; a root admin must move it by exactly one.
+      await createTestUser({ lastName: 'NotAnAdmin' });
+      expect(await repo.countRootAdmins()).toBe(before);
+
+      await createTestUser({ lastName: 'AnAdmin', isRootAdmin: true });
+      expect(await repo.countRootAdmins()).toBe(before + 1);
+    });
+  });
+
+  describe('UserRepository.update', () => {
+    it('applies the given fields and leaves the rest alone', async () => {
+      const repo = new PrismaUserRepository(getPrisma());
+      const created = await createTestUser({ firstName: 'Before', lastName: 'Change' });
+
+      const updated = await repo.update(created.user.id, { firstName: 'After' });
+
+      expect(updated.firstName).toBe('After');
+      expect(updated.lastName).toBe('Change');
+      expect(updated.email).toBe(created.user.email);
+    });
+
+    it('CLEARS a nullable preference passed as null, and leaves one passed as undefined', async () => {
+      // This is the case `UserUpdate` exists for. Under `Partial<User>` the optional
+      // preferences are `string | undefined`, so "clear my timezone" was inexpressible — and
+      // mapping a null through the enum Record returns undefined, which Prisma reads as "no
+      // change", so a clear would have silently done nothing.
+      const repo = new PrismaUserRepository(getPrisma());
+      const created = await createTestUser({ lastName: 'Preferences' });
+
+      const set = await repo.update(created.user.id, {
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        timeFormat: TimeFormat.TWELVE_HOUR,
+        dateFormat: DateFormat.MDY,
+      });
+      expect(set).toMatchObject({
+        timezone: 'America/New_York',
+        locale: 'en-US',
+        timeFormat: TimeFormat.TWELVE_HOUR,
+        dateFormat: DateFormat.MDY,
+      });
+
+      const cleared = await repo.update(created.user.id, {
+        timezone: null,
+        timeFormat: null,
+        dateFormat: null,
+      });
+
+      expect(cleared.timezone).toBeUndefined();
+      expect(cleared.timeFormat).toBeUndefined();
+      expect(cleared.dateFormat).toBeUndefined();
+      // Not named in the update, so untouched.
+      expect(cleared.locale).toBe('en-US');
+    });
+
+    it('never returns a password hash on the updated user', async () => {
+      const repo = new PrismaUserRepository(getPrisma());
+      const created = await createTestUser({ lastName: 'Hashless', password: 'TestPass123' });
+
+      const updated = await repo.update(created.user.id, { firstName: 'Still' });
+
+      expect(updated).not.toHaveProperty('passwordHash');
     });
   });
 

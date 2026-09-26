@@ -99,6 +99,7 @@ import {
   PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { LeagueService } from '../leagues/service';
 
@@ -149,7 +150,7 @@ export async function adminModule(
   setAuditQueryLogger(fastify.log);
 
   // --- Services ---
-  const userService = new UserService(prisma, fastify.log);
+  const userService = new UserService(new PrismaUserRepository(prisma), prisma, fastify.log);
   const leagueRepository = new PrismaLeagueRepository(prisma);
   const leagueMembershipRepository = new PrismaLeagueMembershipRepository(prisma);
   const leagueService = new LeagueService(

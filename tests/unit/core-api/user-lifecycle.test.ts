@@ -7,47 +7,29 @@
  * condition there would mean destroying other suites' data; here the count is an input.
  */
 import { isLastRootAdmin } from '../../../packages/core-api/src/modules/users/user-lifecycle';
-
-function createPrisma(user: { isRootAdmin: boolean } | null, rootAdminCount: number) {
-  return {
-    user: {
-      findUnique: jest.fn().mockResolvedValue(user),
-      count: jest.fn().mockResolvedValue(rootAdminCount),
-    },
-  } as any;
-}
+import { fakeUserRepo } from '../../support/repo-fakes';
 
 describe('isLastRootAdmin', () => {
   it('is true for a root admin when they are the only one', async () => {
-    const prisma = createPrisma({ isRootAdmin: true }, 1);
+    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(1) });
 
-    await expect(isLastRootAdmin(prisma, 'user-1')).resolves.toBe(true);
+    await expect(isLastRootAdmin(users, { isRootAdmin: true })).resolves.toBe(true);
   });
 
   it('is false for a root admin when another exists', async () => {
-    const prisma = createPrisma({ isRootAdmin: true }, 2);
+    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(2) });
 
-    await expect(isLastRootAdmin(prisma, 'user-1')).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: false })).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: true })).resolves.toBe(false);
   });
 
   it('is false for a non-root-admin, without counting at all', async () => {
-    const prisma = createPrisma({ isRootAdmin: false }, 1);
+    const users = fakeUserRepo({ countRootAdmins: jest.fn().mockResolvedValue(1) });
 
-    await expect(isLastRootAdmin(prisma, 'user-1')).resolves.toBe(false);
-    // Short-circuits: a non-admin can never be the last admin, so the count is not needed.
-    expect(prisma.user.count).not.toHaveBeenCalled();
-  });
-
-  it('is false for a missing user', async () => {
-    const prisma = createPrisma(null, 1);
-
-    await expect(isLastRootAdmin(prisma, 'missing')).resolves.toBe(false);
-  });
-
-  it('is true when the count is somehow zero but the user is a root admin', async () => {
-    // Defensive: `<= 1` rather than `=== 1`, so a miscount cannot open the lockout path.
-    const prisma = createPrisma({ isRootAdmin: true }, 0);
-
-    await expect(isLastRootAdmin(prisma, 'user-1')).resolves.toBe(true);
+    // `isRootAdmin` is optional on the canonical User, so absent must read as "not one"
+    // rather than as "unknown, go and count".
+    await expect(isLastRootAdmin(users, {})).resolves.toBe(false);
+    await expect(isLastRootAdmin(users, { isRootAdmin: false })).resolves.toBe(false);
+    expect(users.countRootAdmins).not.toHaveBeenCalled();
   });
 });

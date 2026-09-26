@@ -19,6 +19,7 @@ import {
   isLastRootAdmin,
   revokeUserSessions,
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
+import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { JoinPolicy, LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
@@ -141,7 +142,9 @@ describe('shared user delete cascade (#202)', () => {
       const prisma = getPrisma();
       const plainUser = await createTestUser({ lastName: 'Plain' });
 
-      await expect(isLastRootAdmin(prisma, plainUser.user.id)).resolves.toBe(false);
+      await expect(
+        isLastRootAdmin(new PrismaUserRepository(prisma), plainUser.user),
+      ).resolves.toBe(false);
     });
 
     it('does not report a root admin as the last one while others exist', async () => {
@@ -149,8 +152,10 @@ describe('shared user delete cascade (#202)', () => {
       const first = await createTestUser({ lastName: 'AdminOne', isRootAdmin: true });
       const second = await createTestUser({ lastName: 'AdminTwo', isRootAdmin: true });
 
-      await expect(isLastRootAdmin(prisma, first.user.id)).resolves.toBe(false);
-      await expect(isLastRootAdmin(prisma, second.user.id)).resolves.toBe(false);
+      const users = new PrismaUserRepository(prisma);
+
+      await expect(isLastRootAdmin(users, first.user)).resolves.toBe(false);
+      await expect(isLastRootAdmin(users, second.user)).resolves.toBe(false);
     });
   });
 

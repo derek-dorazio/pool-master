@@ -1,48 +1,15 @@
-import {
-  UserAuthProvider as PrismaUserAuthProvider,
-  UserDateFormat as PrismaUserDateFormat,
-  UserTimeFormat as PrismaUserTimeFormat,
-} from '@prisma/client';
 import type { AccountResponse, UserProfileDto } from '@poolmaster/shared/dto';
-import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import type { User } from '@poolmaster/shared/domain';
 
-interface UserRow {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isRootAdmin: boolean;
-  authProvider?: PrismaUserAuthProvider | null;
-  timezone?: string | null;
-  locale?: string | null;
-  timeFormat?: PrismaUserTimeFormat | null;
-  dateFormat?: PrismaUserDateFormat | null;
-  createdAt: Date;
-}
-
-function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): UserProfileDto['authProvider'] {
-  if (provider === PrismaUserAuthProvider.EMAIL) return AuthProvider.EMAIL;
-  if (provider === PrismaUserAuthProvider.GOOGLE) return AuthProvider.GOOGLE;
-  if (provider === PrismaUserAuthProvider.APPLE) return AuthProvider.APPLE;
-  return undefined;
-}
-
-function mapTimeFormat(format: PrismaUserTimeFormat | null | undefined): UserProfileDto['timeFormat'] {
-  if (format === PrismaUserTimeFormat.TWELVE_HOUR) return TimeFormat.TWELVE_HOUR;
-  if (format === PrismaUserTimeFormat.TWENTY_FOUR_HOUR) return TimeFormat.TWENTY_FOUR_HOUR;
-  return undefined;
-}
-
-function mapDateFormat(format: PrismaUserDateFormat | null | undefined): UserProfileDto['dateFormat'] {
-  if (format === PrismaUserDateFormat.MDY) return DateFormat.MDY;
-  if (format === PrismaUserDateFormat.DMY) return DateFormat.DMY;
-  if (format === PrismaUserDateFormat.YMD) return DateFormat.YMD;
-  return undefined;
-}
-
-export function mapAccountUserToDto(user: UserRow): UserProfileDto {
+/**
+ * Canonical `User` → the profile DTO.
+ *
+ * #202 — this took a Prisma row and held the THIRD copy of the row→domain enum mapping
+ * (after `admin/user-service.ts` and `prisma-user-repository.ts`). Enum mapping belongs at
+ * the row boundary, which is the adapter; by the time a user reaches a mapper it already
+ * carries domain enums, so this is now a projection and nothing else.
+ */
+export function mapAccountUserToDto(user: User): UserProfileDto {
   return {
     id: user.id,
     email: user.email,
@@ -50,17 +17,17 @@ export function mapAccountUserToDto(user: UserRow): UserProfileDto {
     firstName: user.firstName,
     lastName: user.lastName,
     isActive: user.isActive,
-    isRootAdmin: user.isRootAdmin,
-    authProvider: mapAuthProvider(user.authProvider),
-    timezone: user.timezone ?? undefined,
-    locale: user.locale ?? undefined,
-    timeFormat: mapTimeFormat(user.timeFormat),
-    dateFormat: mapDateFormat(user.dateFormat),
+    isRootAdmin: user.isRootAdmin === true,
+    authProvider: user.authProvider,
+    timezone: user.timezone,
+    locale: user.locale,
+    timeFormat: user.timeFormat,
+    dateFormat: user.dateFormat,
     createdAt: user.createdAt.toISOString(),
   };
 }
 
-export function mapAccountResponse(user: UserRow): AccountResponse {
+export function mapAccountResponse(user: User): AccountResponse {
   return {
     user: mapAccountUserToDto(user),
   };

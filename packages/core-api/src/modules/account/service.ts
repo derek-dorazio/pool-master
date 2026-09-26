@@ -1,12 +1,25 @@
-import {
-  PrismaClient,
-  UserAuthProvider as PrismaUserAuthProvider,
-  UserDateFormat as PrismaUserDateFormat,
-  UserTimeFormat as PrismaUserTimeFormat,
-} from '@prisma/client';
+/**
+ * AccountService — the self-service caller's half of the `User` lifecycle operations.
+ *
+ * #202 step 3.3: reads and single-entity writes go through `UserRepository`, which this file
+ * previously bypassed entirely — 26 raw `prisma.user.*` calls and its own row shape and enum
+ * mapping, a second copy of the User model living beside the admin one (§2y, §15).
+ *
+ * The profile, username and preference writes have LEFT this file. They are one operation
+ * with two callers — `self` or `rootAdmin`, per A6 — and now live once in
+ * `modules/users/user-profile-service.ts`. What stays here is what is genuinely
+ * self-service: the password change, which requires the caller's current password, and the
+ * lifecycle pair that carries session and cascade side effects.
+ *
+ * `prisma` remains a constructor parameter for the three things that are not
+ * single-aggregate operations — `$transaction`, the delete cascade, the refresh-token
+ * revoke — plus the one column the port deliberately never exposes, `passwordHash`.
+ */
+import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import type { FastifyBaseLogger } from 'fastify';
-import { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import type { UserRepository } from '@poolmaster/shared/db';
+import type { User } from '@poolmaster/shared/domain';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
@@ -14,126 +27,22 @@ import {
   isLastRootAdmin,
   revokeUserSessions,
 } from '../users/user-lifecycle';
+import { UserOperationError } from '../users/user-errors';
 
 const BCRYPT_ROUNDS = 12;
 
-type AccountUserRow = {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isRootAdmin: boolean;
-  authProvider: PrismaUserAuthProvider | null;
-  timezone: string | null;
-  locale: string | null;
-  timeFormat: PrismaUserTimeFormat | null;
-  dateFormat: PrismaUserDateFormat | null;
-  createdAt: Date;
-};
-
-export class AccountLifecycleError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly statusCode: number,
-  ) {
-    super(message);
-    this.name = 'AccountLifecycleError';
-  }
-}
-
 export class AccountService {
   constructor(
+    private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async updateOwnProfile(
-    userId: string,
-    updates: { firstName: string; lastName: string; email: string },
-  ): Promise<AccountUserRow> {
-    const normalizedEmail = normalizeEmail(updates.email);
-    this.logger?.debug({
-      action: 'accountService.updateProfile.start',
-      data: { userId, emailDomain: normalizedEmail.split('@')[1] ?? null },
-    }, 'Updating account profile');
-    const user = await this.requireAccountUser(userId);
-    await this.assertEmailAvailableForUser(user.id, normalizedEmail);
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        email: normalizedEmail,
-        firstName: updates.firstName.trim(),
-        lastName: updates.lastName.trim(),
-      },
-    });
-    this.logger?.info({
-      action: 'accountService.updateProfile.success',
-      data: { userId: updatedUser.id },
-    }, 'Updated account profile');
-    return updatedUser;
-  }
-
-  async updateOwnUsername(userId: string, username: string): Promise<AccountUserRow> {
-    const normalizedUsername = normalizeUsername(username);
-    this.logger?.debug({
-      action: 'accountService.updateUsername.start',
-      data: { userId, requestedUsernameLength: normalizedUsername.length },
-    }, 'Updating account username');
-    const user = await this.requireAccountUser(userId);
-    await this.assertUsernameAvailableForUser(user.id, normalizedUsername);
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        username: normalizedUsername,
-      },
-    });
-    this.logger?.info({
-      action: 'accountService.updateUsername.success',
-      data: { userId: updatedUser.id },
-    }, 'Updated account username');
-    return updatedUser;
-  }
-
-  async updateOwnPreferences(
-    userId: string,
-    updates: {
-      timezone?: string | null;
-      locale?: string | null;
-      timeFormat?: TimeFormat | null;
-      dateFormat?: DateFormat | null;
-    },
-  ): Promise<AccountUserRow> {
-    this.logger?.debug({
-      action: 'accountService.updatePreferences.start',
-      data: { userId },
-    }, 'Updating account preferences');
-    const user = await this.requireAccountUser(userId);
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        ...(updates.timezone !== undefined && { timezone: normalizeOptionalString(updates.timezone) }),
-        ...(updates.locale !== undefined && { locale: normalizeOptionalString(updates.locale) }),
-        ...(updates.timeFormat !== undefined && {
-          timeFormat: mapTimeFormatToPrisma(updates.timeFormat),
-        }),
-        ...(updates.dateFormat !== undefined && {
-          dateFormat: mapDateFormatToPrisma(updates.dateFormat),
-        }),
-      },
-    });
-    this.logger?.info({
-      action: 'accountService.updatePreferences.success',
-      data: { userId: updatedUser.id },
-    }, 'Updated account preferences');
-    return updatedUser;
-  }
-
+  /**
+   * Changes the caller's own password — `self` only, per A6, because it requires the current
+   * one. Resetting somebody else's is a different operation with a different subject, and
+   * lives on the admin service.
+   */
   async changeOwnPassword(
     userId: string,
     request: {
@@ -143,21 +52,14 @@ export class AccountService {
       currentRefreshToken?: string | null;
     },
   ): Promise<void> {
-    this.logger?.debug({
-      action: 'accountService.changePassword.start',
-      data: {
-        userId,
-        retainsCurrentRefreshToken: Boolean(request.currentRefreshToken),
-      },
-    }, 'Changing account password');
-    const user = await this.requireAccountUser(userId);
+    const credentials = await this.requireCredentials(userId);
 
-    if (!user.passwordHash) {
+    if (!credentials.passwordHash) {
       this.logger?.warn({
         action: 'accountService.changePassword.unavailable',
         data: { userId },
       }, 'Rejected password change for passwordless account');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'Password change is unavailable for this account.',
         'ACCOUNT_PASSWORD_UNAVAILABLE',
         409,
@@ -169,20 +71,20 @@ export class AccountService {
         action: 'accountService.changePassword.confirmationMismatch',
         data: { userId },
       }, 'Rejected password change due to confirmation mismatch');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'New password confirmation does not match.',
         'PASSWORD_CONFIRMATION_MISMATCH',
         400,
       );
     }
 
-    const currentMatches = await bcrypt.compare(request.currentPassword, user.passwordHash);
+    const currentMatches = await bcrypt.compare(request.currentPassword, credentials.passwordHash);
     if (!currentMatches) {
       this.logger?.warn({
         action: 'accountService.changePassword.invalidCurrentPassword',
         data: { userId },
       }, 'Rejected password change due to invalid current password');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'Current password is incorrect.',
         'INVALID_CURRENT_PASSWORD',
         400,
@@ -193,7 +95,7 @@ export class AccountService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
-        where: { id: user.id },
+        where: { id: userId },
         data: { passwordHash },
       });
 
@@ -202,7 +104,7 @@ export class AccountService {
       // collapse the two.
       await tx.refreshToken.updateMany({
         where: {
-          userId: user.id,
+          userId,
           revokedAt: null,
           ...(request.currentRefreshToken
             ? { NOT: { token: request.currentRefreshToken } }
@@ -217,22 +119,8 @@ export class AccountService {
     }, 'Changed account password');
   }
 
-  async reactivateOwnAccount(userId: string): Promise<AccountUserRow> {
-    this.logger?.debug({
-      action: 'accountService.reactivate.start',
-      data: { userId },
-    }, 'Reactivating account');
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      this.logger?.warn({
-        action: 'accountService.reactivate.notFound',
-        data: { userId },
-      }, 'Cannot reactivate missing account');
-      throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
-    }
+  async reactivateOwnAccount(userId: string): Promise<User> {
+    const user = await this.requireUser(userId);
 
     // #202 — idempotent. The desired state already holds, so this succeeds and returns the
     // account unchanged rather than raising ACCOUNT_ALREADY_ACTIVE. A retry after a network
@@ -245,33 +133,16 @@ export class AccountService {
       return user;
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive: true },
-    });
+    const updated = await this.users.update(userId, { isActive: true });
     this.logger?.info({
       action: 'accountService.reactivate.success',
-      data: { userId: updatedUser.id },
+      data: { userId: updated.id },
     }, 'Reactivated account');
-    return updatedUser;
+    return updated;
   }
 
-  async inactivateOwnAccount(userId: string): Promise<AccountUserRow> {
-    this.logger?.debug({
-      action: 'accountService.inactivate.start',
-      data: { userId },
-    }, 'Inactivating account');
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      this.logger?.warn({
-        action: 'accountService.inactivate.notFound',
-        data: { userId },
-      }, 'Cannot inactivate missing account');
-      throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
-    }
+  async inactivateOwnAccount(userId: string): Promise<User> {
+    const user = await this.requireUser(userId);
 
     // #202 — idempotent, as for reactivate. Returning early also means no second session
     // revoke for an account whose sessions were already revoked when it went inactive.
@@ -287,59 +158,49 @@ export class AccountService {
     // inactivate their own account and leave the platform with nobody able to administer
     // it; inactivate is also the precondition for self-delete, so this is the first of the
     // two gates on that path.
-    if (await isLastRootAdmin(this.prisma, userId)) {
+    if (await isLastRootAdmin(this.users, user)) {
       this.logger?.warn({
         action: 'accountService.inactivate.lastRootAdminRejected',
         data: { userId },
       }, 'Rejected self-inactivate by the last root admin');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'You are the only root admin. Promote another root admin before deactivating your account.',
         'ACCOUNT_LAST_ROOT_ADMIN',
         409,
       );
     }
 
-    const updatedUser = await this.prisma.$transaction(async (tx) => {
-      const nextUser = await tx.user.update({
+    // The flag and the session revoke must land together, or the account reads as inactive
+    // while its refresh tokens still work — so the write goes through the transaction client
+    // rather than the port, and the caller gets the resulting user from the port afterwards
+    // rather than from a hand-assembled row.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: { isActive: false },
       });
 
       await revokeUserSessions(tx, userId);
-
-      return nextUser;
     });
 
     this.logger?.info({
       action: 'accountService.inactivate.success',
-      data: { userId: updatedUser.id },
+      data: { userId },
     }, 'Inactivated account');
-    return updatedUser;
+    return this.requireUser(userId);
   }
 
   async deleteOwnInactiveAccount(userId: string, confirmationEmail: string): Promise<void> {
-    this.logger?.debug({
-      action: 'accountService.delete.start',
-      data: { userId },
-    }, 'Deleting inactive account');
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await this.requireUser(userId);
 
-    if (!user) {
-      this.logger?.warn({
-        action: 'accountService.delete.notFound',
-        data: { userId },
-      }, 'Cannot delete missing account');
-      throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
-    }
-
+    // The one place `isActive` IS a write precondition rather than a read filter — permanent
+    // deletion is gated on it (access rule A9, "the one exception").
     if (user.isActive) {
       this.logger?.warn({
         action: 'accountService.delete.requiresInactive',
         data: { userId },
       }, 'Rejected account delete for active account');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'Account must be inactive before it can be permanently deleted',
         'ACCOUNT_DELETE_REQUIRES_INACTIVE',
         409,
@@ -351,7 +212,7 @@ export class AccountService {
         action: 'accountService.delete.confirmationMismatch',
         data: { userId },
       }, 'Rejected account delete due to confirmation mismatch');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'Delete confirmation email must match the account email exactly',
         'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
         400,
@@ -361,12 +222,12 @@ export class AccountService {
     // #202 — the same guard admin-delete applies. Belt and braces with the inactivate
     // gate above: a root admin demoted to inactive before this rule existed can still
     // reach delete, and that must not be the path that empties the root-admin set.
-    if (await isLastRootAdmin(this.prisma, userId)) {
+    if (await isLastRootAdmin(this.users, user)) {
       this.logger?.warn({
         action: 'accountService.delete.lastRootAdminRejected',
         data: { userId },
       }, 'Rejected self-delete by the last root admin');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'You are the only root admin. Promote another root admin before deleting your account.',
         'ACCOUNT_LAST_ROOT_ADMIN',
         409,
@@ -380,7 +241,7 @@ export class AccountService {
         action: 'accountService.delete.dependenciesExist',
         data: { userId, ...counts },
       }, 'Rejected account delete due to remaining dependencies');
-      throw new AccountLifecycleError(
+      throw new UserOperationError(
         'Account still owns or belongs to league-scoped data. Remove those relationships before deleting the account.',
         'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
         409,
@@ -394,164 +255,34 @@ export class AccountService {
     }, 'Deleted inactive account');
   }
 
-  /**
-   * Loads the account being written to, or 404s.
-   *
-   * #202 — this used to reject every write to an INACTIVE account with a 409
-   * `ACCOUNT_INACTIVE_READ_ONLY`. That guard is gone: `isActive` is a read filter, not a
-   * write lock (access rule A9). An inactive account is filtered out of views and cannot
-   * sign in; it does not need its own columns frozen on top of that, and freezing them
-   * made the obvious recovery — fix your details, then reactivate — impossible.
-   *
-   * `passwordHash` is the one column read directly off Prisma rather than through
-   * `UserRepository`: the port deliberately never exposes it, and the password change has
-   * to compare against it.
-   */
-  private async requireAccountUser(userId: string): Promise<{
-    id: string;
-    passwordHash: string | null;
-  }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        passwordHash: true,
-      },
-    });
-
+  private async requireUser(userId: string): Promise<User> {
+    const user = await this.users.findById(userId);
     if (!user) {
       this.logger?.warn({
-        action: 'accountService.requireAccountUser.notFound',
+        action: 'accountService.requireUser.notFound',
         data: { userId },
-      }, 'Account write rejected because user was not found');
-      throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
+      }, 'Account operation rejected because the user was not found');
+      throw new UserOperationError('User not found', 'USER_NOT_FOUND', 404);
     }
-
     return user;
   }
 
-  private async assertEmailAvailableForUser(userId: string, normalizedEmail: string): Promise<void> {
-    const collision = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedEmail },
-          { username: normalizedEmail },
-        ],
-        NOT: {
-          id: userId,
-        },
-      },
-      select: {
-        id: true,
-      },
+  /**
+   * The one read that stays on Prisma: `passwordHash` is a secret, so `UserRepository`
+   * deliberately never returns it, and the password change has to compare against it.
+   */
+  private async requireCredentials(userId: string): Promise<{ passwordHash: string | null }> {
+    const credentials = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
     });
-
-    if (!collision) {
-      return;
+    if (!credentials) {
+      this.logger?.warn({
+        action: 'accountService.requireCredentials.notFound',
+        data: { userId },
+      }, 'Account operation rejected because the user was not found');
+      throw new UserOperationError('User not found', 'USER_NOT_FOUND', 404);
     }
-
-    this.logger?.warn({
-      action: 'accountService.updateProfile.emailTaken',
-      data: {
-        userId,
-        conflictingUserId: collision.id,
-      },
-    }, 'Rejected account profile update because the email is already in use');
-    throw new AccountLifecycleError(
-      'That email address is already in use. Choose another email address.',
-      'ACCOUNT_EMAIL_TAKEN',
-      409,
-    );
+    return credentials;
   }
-
-  private async assertUsernameAvailableForUser(userId: string, normalizedUsername: string): Promise<void> {
-    const collision = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: normalizedUsername },
-          { email: normalizedUsername },
-        ],
-        NOT: {
-          id: userId,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!collision) {
-      return;
-    }
-
-    this.logger?.warn({
-      action: 'accountService.updateUsername.usernameTaken',
-      data: {
-        userId,
-        conflictingUserId: collision.id,
-      },
-    }, 'Rejected account username update because the username is already in use');
-    throw new AccountLifecycleError(
-      'That username is already taken. Choose another username.',
-      'ACCOUNT_USERNAME_TAKEN',
-      409,
-    );
-  }
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function normalizeUsername(username: string): string {
-  return username.trim().toLowerCase();
-}
-
-function normalizeOptionalString(value: string | null | undefined): string | null | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (value === null) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function mapTimeFormatToPrisma(value: TimeFormat | null): PrismaUserTimeFormat | null {
-  if (value === null) {
-    return null;
-  }
-
-  if (value === TimeFormat.TWELVE_HOUR) {
-    return PrismaUserTimeFormat.TWELVE_HOUR;
-  }
-
-  if (value === TimeFormat.TWENTY_FOUR_HOUR) {
-    return PrismaUserTimeFormat.TWENTY_FOUR_HOUR;
-  }
-
-  return null;
-}
-
-function mapDateFormatToPrisma(value: DateFormat | null): PrismaUserDateFormat | null {
-  if (value === null) {
-    return null;
-  }
-
-  if (value === DateFormat.MDY) {
-    return PrismaUserDateFormat.MDY;
-  }
-
-  if (value === DateFormat.DMY) {
-    return PrismaUserDateFormat.DMY;
-  }
-
-  if (value === DateFormat.YMD) {
-    return PrismaUserDateFormat.YMD;
-  }
-
-  return null;
 }

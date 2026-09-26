@@ -21,15 +21,19 @@ function createLogger() {
 describe('account handlers', () => {
   const accountService = {
     reactivateOwnAccount: jest.fn(),
-    updateOwnProfile: jest.fn(),
-    updateOwnUsername: jest.fn(),
-    updateOwnPreferences: jest.fn(),
     changeOwnPassword: jest.fn(),
     inactivateOwnAccount: jest.fn(),
     deleteOwnInactiveAccount: jest.fn(),
   } as any;
   const authService = {
     issueSessionForUser: jest.fn(),
+  } as any;
+  // #202 — profile, username and preference writes are one self-or-rootAdmin operation now,
+  // owned by modules/users, so the handler holds both services.
+  const profileService = {
+    updateProfile: jest.fn(),
+    updateUsername: jest.fn(),
+    updatePreferences: jest.fn(),
   } as any;
 
   beforeEach(() => {
@@ -45,7 +49,7 @@ describe('account handlers', () => {
     ['inactivate', () => ({})],
     ['deleteAccount', () => ({ body: { email: 'user@example.com' } })],
   ] as const)('returns AUTH_SESSION_REQUIRED when %s is called without an authenticated user', async (handlerName, requestFactory) => {
-    const handlers = createAccountHandlers(accountService, authService);
+    const handlers = createAccountHandlers(accountService, authService, profileService);
     const reply = createReply();
     const logger = createLogger();
     const request = {

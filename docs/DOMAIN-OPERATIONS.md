@@ -225,7 +225,7 @@ are wider — see the league-scoped row.
 | Read one | `self`, `rootAdmin` | A6 · `me` resolves to the caller |
 | **Read league peers** | `member` | **A4 + A6** · scoped through the `LeagueMembership` join; returns users sharing a league with the caller, as the canonical `UserDto` |
 | List / search *(unscoped)* | `rootAdmin` | **A1** |
-| Update profile, username, preferences | `self`, `rootAdmin` | A6 |
+| Update profile, username, preferences | `self`, `rootAdmin` | A6 · **one operation, either caller** — `modules/users/user-profile-service.ts`; the authority rule is `requireWritableUser`, and a caller who is neither gets 403 `USER_WRITE_FORBIDDEN` |
 | Change own password | `self` | A6 · requires the current password |
 | Reset another's password | `rootAdmin` | A6 · no current password; the subject differs, not just the precondition |
 | Disable *(set `isActive = false`)* | `self`, `rootAdmin` | A6 · self-inactivate and admin-disable are **one operation** |
@@ -233,6 +233,12 @@ are wider — see the league-scoped row.
 | Delete | `self`, `rootAdmin` | A6 |
 | Revoke sessions | `self`, `rootAdmin` | A6 · self-logout and admin force-logout are **one operation** |
 | Grant / revoke root admin | `rootAdmin` | A6 |
+
+**The scope is a parameter, not a second operation.** The account routes pass the
+authenticated caller as both actor and subject; an admin route passes a `userId`. That is the
+only difference between the two callers, and it is an argument — which is why there is one
+implementation. Before #202 the `self` half lived in `account/service.ts` with the authority
+rule implicit in the route prefix, and the `rootAdmin` half did not exist.
 
 **A member reads peers' `User` data — name and email — through the league join, never
 unscoped.** The canonical `UserDto` travels on the `LeagueMembership` / `SquadMembership`

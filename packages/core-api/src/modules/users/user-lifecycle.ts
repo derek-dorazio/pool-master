@@ -22,6 +22,8 @@
  * inside one transaction. Reads and single-entity writes DO go through `UserRepository`.
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
+import type { UserRepository } from '@poolmaster/shared/db';
+import type { User } from '@poolmaster/shared/domain';
 
 /** The subset of Prisma usable inside or outside a transaction. */
 type PrismaLike = PrismaClient | Prisma.TransactionClient;
@@ -96,19 +98,21 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
 /**
  * True when this user is the only root admin left.
  *
- * The guard exists so a platform cannot be left with nobody able to administer it.
- * `admin/user-service.ts` applies it on disable and delete; the self-service equivalents in
- * `account/service.ts` do not, which is how the sole root admin can inactivate and then
- * delete their own account. Exported here so both paths can use one implementation.
+ * The guard exists so the platform cannot be left with nobody able to administer it. It was
+ * written inline three times in `admin/user-service.ts` — on disable, on demotion and on
+ * delete — as `prisma.user.count({ where: { isRootAdmin: true } })`, and a fourth time here
+ * for the self-service path, which re-read the user to get `isRootAdmin`.
+ *
+ * It takes the already-loaded user rather than an id because every caller has one: they all
+ * had to read the user to get this far, and re-reading it was the only reason this needed a
+ * `PrismaClient` at all.
  */
-export async function isLastRootAdmin(prisma: PrismaClient, userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isRootAdmin: true },
-  });
-  if (!user?.isRootAdmin) {
+export async function isLastRootAdmin(
+  users: UserRepository,
+  user: Pick<User, 'isRootAdmin'>,
+): Promise<boolean> {
+  if (user.isRootAdmin !== true) {
     return false;
   }
-  const rootAdminCount = await prisma.user.count({ where: { isRootAdmin: true } });
-  return rootAdminCount <= 1;
+  return (await users.countRootAdmins()) <= 1;
 }

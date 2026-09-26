@@ -10,7 +10,6 @@ import { IngestionConfigService } from '../../../packages/core-api/src/modules/a
 import { PollConfigService } from '../../../packages/core-api/src/modules/admin/poll-config-service';
 import { ProviderService, SportEventSyncScopeError } from '../../../packages/core-api/src/modules/admin/provider-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import { UserNotFoundError, UserService } from '../../../packages/core-api/src/modules/admin/user-service';
 import { Sport } from '../../../packages/shared/domain';
 
 jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
@@ -34,118 +33,6 @@ async function flushMicrotasks(times = 5): Promise<void> {
 }
 
 describe('admin support services', () => {
-  describe('UserService', () => {
-    it('searches users unpaged, with mapped profile fields', async () => {
-      const prisma = {
-        user: {
-          findMany: jest.fn().mockResolvedValue([
-            {
-              id: 'user-1',
-              email: 'user@example.com',
-              username: 'userone',
-              firstName: 'User',
-              lastName: 'One',
-              isRootAdmin: false,
-              authProvider: 'EMAIL',
-              isActive: true,
-              timezone: null,
-              locale: null,
-              timeFormat: null,
-              dateFormat: null,
-              createdAt: new Date('2026-04-21T00:00:00.000Z'),
-            },
-          ]),
-          count: jest.fn().mockResolvedValue(1),
-        },
-      } as any;
-
-      const service = new UserService(prisma, createLogger() as any);
-
-      // §16 — searchUsers returns a plain list; there is no paging and no total.
-      await expect(service.searchUsers({ search: 'user' })).resolves.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: 'user-1',
-            email: 'user@example.com',
-            username: 'userone',
-            authProvider: 'email',
-          }),
-        ]),
-      );
-      // §16 — assert the absence positively: no slicing reaches the database, and no
-      // parallel count query is issued for a total nobody returns.
-      const [findManyArgs] = (prisma.user.findMany as jest.Mock).mock.calls[0];
-      expect(findManyArgs).not.toHaveProperty('skip');
-      expect(findManyArgs).not.toHaveProperty('take');
-      expect(prisma.user.count).not.toHaveBeenCalled();
-    });
-
-    it('loads user detail and throws when the user is missing', async () => {
-      const prisma = {
-        user: {
-          findUnique: jest.fn()
-            .mockResolvedValueOnce({
-              id: 'user-1',
-              email: 'user@example.com',
-              username: 'userone',
-              firstName: 'User',
-              lastName: 'One',
-              isRootAdmin: false,
-              authProvider: 'EMAIL',
-              isActive: true,
-              timezone: null,
-              locale: null,
-              timeFormat: null,
-              dateFormat: null,
-              createdAt: new Date('2026-04-21T00:00:00.000Z'),
-            })
-            .mockResolvedValueOnce(null),
-        },
-      } as any;
-
-      const service = new UserService(prisma, createLogger() as any);
-
-      await expect(service.getUserDetail('user-1', 'admin-1')).resolves.toEqual(
-        expect.objectContaining({
-          id: 'user-1',
-          username: 'userone',
-          viewerAuthority: {
-            self: false,
-            rootAdmin: true,
-            viewer: false,
-          },
-        }),
-      );
-      await expect(service.getUserDetail('missing-user', 'admin-1')).rejects.toBeInstanceOf(UserNotFoundError);
-    });
-
-    it('force-logs out a user and rejects missing users', async () => {
-      const prisma = {
-        user: {
-          findUnique: jest.fn()
-            .mockResolvedValueOnce({ id: 'user-1' })
-            .mockResolvedValueOnce(null),
-        },
-        refreshToken: {
-          updateMany: jest.fn().mockResolvedValue({ count: 3 }),
-        },
-      } as any;
-
-      const service = new UserService(prisma, createLogger() as any);
-
-      await expect(
-        service.forceUserLogout('user-1', 'admin-1', 'admin@example.com'),
-      ).resolves.toBeUndefined();
-      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1', revokedAt: null },
-        data: { revokedAt: expect.any(Date) },
-      });
-      await expect(
-        service.forceUserLogout('missing-user', 'admin-1', 'admin@example.com'),
-      ).rejects.toBeInstanceOf(UserNotFoundError);
-    });
-  });
-
   describe('audit query service', () => {
     beforeEach(() => {
       setAuditQueryLogger(createLogger() as any);
