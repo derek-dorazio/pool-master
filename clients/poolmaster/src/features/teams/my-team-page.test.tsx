@@ -89,7 +89,7 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
               )}
               path="/league/:leagueCode/team"
             />
-            <Route element={<div data-testid="manage-teams-route-destination" />} path="/manage/teams" />
+            <Route element={<div data-testid="league-route-destination" />} path="/league/:leagueCode" />
             <Route element={<div data-testid="user-route-destination" />} path="/users/:userId" />
           </Routes>
         </MemoryRouter>
@@ -1247,7 +1247,9 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         path: { id: 'league-1', squadId: 'team-1' },
       }),
     );
-    expect(await screen.findByTestId('manage-teams-route-destination')).toBeInTheDocument();
+    // #202 step 3.4 — deleting your own squad returns you to its league, not to the
+    // root-admin cross-league teams console, which A8 retired.
+    expect(await screen.findByTestId('league-route-destination')).toBeInTheDocument();
   });
 
   it('pool-master-zi0 removes duplicate active entry management links from Team Details', async () => {

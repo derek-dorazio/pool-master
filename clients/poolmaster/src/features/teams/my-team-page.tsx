@@ -420,7 +420,9 @@ export function MyTeamPage() {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
       setCoOwnerEmail('');
-      navigate('/manage/teams');
+      // #202 step 3.4 — the root-admin cross-league teams console is gone (A8: one league
+      // at a time). Deleting your own squad returns you to the league it was in.
+      navigate(buildLeaguePath(leagueCode));
     },
     invalidates: [
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),

@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import {
   EventReadinessReasonDtoSchema,
@@ -28,7 +28,6 @@ const SportSchema = z.enum([
   Sport.MLB,
   Sport.UFC,
 ]);
-const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 // --- Response Sub-schemas ---
 
 export const MetricValueDtoSchema = z.object({
@@ -89,52 +88,17 @@ export const AdminListLeaguesQuerySchema = z.object({
 }).describe('Root-admin league search query.');
 export type AdminListLeaguesQuery = z.infer<typeof AdminListLeaguesQuerySchema>;
 
-export const AdminTeamOwnerSummaryDtoSchema = z.object({
-  userId: z.string().uuid(),
-  firstName: z.string().optional().describe('First name for the active team owner.'),
-  lastName: z.string().optional().describe('Last name for the active team owner.'),
-}).describe('Thin owner summary row emitted for root-admin team management surfaces.');
-export type AdminTeamOwnerSummaryDto = z.infer<typeof AdminTeamOwnerSummaryDtoSchema>;
-
-export const AdminTeamSummaryDtoSchema = z.object({
-  id: z.string().uuid(),
-  leagueId: z.string().uuid(),
-  leagueCode: z.string().describe('Canonical league code for routing and filtering.'),
-  leagueName: z.string().describe('Display name for the team’s parent league.'),
-  name: z.string().describe('Team display name.'),
-  iconKey: z.enum(TeamIconKeyValues).describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
-  isActive: z.boolean().describe('Whether the team is currently active. This is the lifecycle source of truth for root-admin team management surfaces.'),
-  ownerCount: z.number().int().describe('Count of active owners attached to the team.'),
-  owners: z.array(AdminTeamOwnerSummaryDtoSchema).describe('Active owners attached to the team.'),
-  createdAt: z.string().datetime().describe('When the team was created.'),
-  updatedAt: z.string().datetime().describe('When the team was last updated.'),
-}).describe('Cross-league team summary row for root-admin management surfaces.');
-export type AdminTeamSummaryDto = z.infer<typeof AdminTeamSummaryDtoSchema>;
-
-export const AdminListTeamsQuerySchema = z.object({
-  search: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe('Optional case-insensitive team-name search for root-admin management surfaces.'),
-  leagueCode: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe('Optional canonical league-code filter for cross-league team management.'),
-  isActive: z
-    .boolean()
-    .optional()
-    .describe('Optional active/inactive filter for root-admin team management surfaces.'),
-}).describe('Root-admin team search query.');
-export type AdminListTeamsQuery = z.infer<typeof AdminListTeamsQuerySchema>;
-
-export const AdminTeamListResponseSchema = z.object({
-  teams: z.array(AdminTeamSummaryDtoSchema),
-}).describe('Cross-league team list response for root-admin management surfaces.');
-export type AdminTeamListResponse = z.infer<typeof AdminTeamListResponseSchema>;
+// #202 step 3.4 — `adminListTeams` and its four schemas are deleted, not unified.
+//
+// `AdminTeamSummaryDto` was a squad with its league flattened onto it (`leagueCode`,
+// `leagueName`) and an `owners` array of `AdminTeamOwnerSummaryDto` — a userId plus two name
+// fields, the second `User` view this pass exists to remove. `SquadDto` with the membership
+// edge is the same information, canonically.
+//
+// The ROUTE goes too, rather than being re-pointed at `SquadDto`: access rule A8 settles that
+// the product works one league at a time, so a cross-league squad search has no caller. What
+// a root admin needs is the league (A1's unscoped league list), then that league's squads —
+// which `listLeagueSquads` already serves, and which A1 already lets them read.
 
 export const AdminEventListQuerySchema = z.object({
   sport: SportSchema.optional().describe('Optional sport filter for root-admin event browsing.'),

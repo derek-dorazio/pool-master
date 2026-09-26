@@ -19,8 +19,6 @@ import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
 import { AdminLeagueService } from './league-service';
 import { createLeagueAdminHandlers } from './league-handler';
-import { AdminTeamService } from './team-service';
-import { createTeamAdminHandlers } from './team-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -53,8 +51,6 @@ import {
   AdminEventParticipantsParamsSchema,
   AdminEventParticipantListResponseSchema,
   AdminListLeaguesQuerySchema,
-  AdminListTeamsQuerySchema,
-  AdminTeamListResponseSchema,
   AdminDeleteUserRequestSchema,
   AdminResetUserPasswordRequestSchema,
   AdminResetUserPasswordResponseSchema,
@@ -169,7 +165,6 @@ export async function adminModule(
     leagueMembershipRepository,
     fastify.log,
   );
-  const adminTeamService = new AdminTeamService(prisma, fastify.log);
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
@@ -205,7 +200,6 @@ export async function adminModule(
   // --- Handlers ---
   const user = createUserHandlers(userService);
   const leagues = createLeagueAdminHandlers(adminLeagueService, leagueMembershipRepository, adminUserRepository);
-  const teams = createTeamAdminHandlers(adminTeamService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
@@ -340,7 +334,7 @@ export async function adminModule(
     schema: {
       tags: ['Admin'],
       summary: 'Delete an inactive user account as root admin',
-      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.',
+      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN.',
       operationId: 'adminDeleteUser',
       body: zodToJsonSchema(AdminDeleteUserRequestSchema),
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
@@ -360,17 +354,6 @@ export async function adminModule(
     handler: leagues.listLeagues,
   });
 
-  fastify.get('/teams', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List teams for root-admin management',
-      description: 'Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.',
-      operationId: 'adminListTeams',
-      querystring: zodToJsonSchema(AdminListTeamsQuerySchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminTeamListResponseSchema) }),
-    },
-    handler: teams.listTeams,
-  });
 
   fastify.post('/leagues/:leagueId/inactivate', {
     schema: {

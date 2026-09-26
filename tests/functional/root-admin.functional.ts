@@ -8,7 +8,6 @@ import {
   adminGetPollIntervals,
   adminInactivateLeague,
   adminListLeagues,
-  adminListTeams,
   adminPrepareSportSync,
   adminSetUserRootAdmin,
   adminListContestConfigTemplates,
@@ -79,15 +78,6 @@ describe('SDK Functional: Root Admin', () => {
     });
 
     expectFunctionalError(leagueResponse, {
-      status: 403,
-      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
-    });
-
-    const teamResponse = await adminListTeams({
-      client: user.client,
-    });
-
-    expectFunctionalError(teamResponse, {
       status: 403,
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
@@ -511,37 +501,6 @@ describe('SDK Functional: Root Admin', () => {
     expect(await getFunctionalPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
   });
 
-  it('allows a promoted root-admin user to search teams across leagues with optional filters', async () => {
-    const rootAdmin = await buildRegisteredUser({
-      displayName: 'Root Admin Team Search User',
-    });
-    await promoteToRootAdmin(rootAdmin.userId);
-
-    const { league } = await buildLeagueWithCommissioner({
-      leagueName: 'Root Admin Team Search League',
-    });
-
-    const squad = await getFunctionalPrisma().squad.findFirstOrThrow({
-      where: {
-        leagueId: league.id,
-      },
-    });
-
-    const response = await adminListTeams({
-      client: rootAdmin.client,
-      query: {
-        search: 'Team',
-        leagueCode: league.leagueCode,
-        isActive: true,
-      },
-    });
-
-    expect(response.data?.teams.some((team) => team.id === squad.id)).toBe(true);
-    const team = response.data?.teams.find((item) => item.id === squad.id);
-    expect(team?.leagueCode).toBe(league.leagueCode);
-    expect(team?.isActive).toBe(true);
-    expect(team?.ownerCount).toBeGreaterThan(0);
-  });
 
   it('allows a promoted root-admin user to manage persisted contest templates', async () => {
     const user = await buildRegisteredUser({

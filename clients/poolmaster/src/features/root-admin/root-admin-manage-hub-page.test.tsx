@@ -22,10 +22,9 @@ describe('RootAdminManageHubPage', () => {
       'href',
       '/manage/sync',
     );
-    expect(screen.getByTestId('root-admin-manage-link-teams')).toHaveAttribute(
-      'href',
-      '/manage/teams',
-    );
+    // #202 step 3.4 — there is no cross-league teams console. A8 settles that the product
+    // works one league at a time: a root admin opens the league, then its squads.
+    expect(screen.queryByTestId('root-admin-manage-link-teams')).not.toBeInTheDocument();
     expect(screen.queryByText('Live now')).not.toBeInTheDocument();
     expect(screen.queryByText('Temporary scaffold')).not.toBeInTheDocument();
     expect(screen.queryByText('Blocked by backend')).not.toBeInTheDocument();

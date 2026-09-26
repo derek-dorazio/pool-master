@@ -76,7 +76,6 @@ const operationDefinitions = {
   adminListProviderCatalogEvents: { method: 'get', path: '/api/v1/admin/providers/{providerId}/catalog-events' },
   adminListProviderSyncRuns: { method: 'get', path: '/api/v1/admin/providers/sync-runs' },
   adminListProviders: { method: 'get', path: '/api/v1/admin/providers/health' },
-  adminListTeams: { method: 'get', path: '/api/v1/admin/teams' },
   adminListUsers: { method: 'get', path: '/api/v1/admin/users' },
   adminPrepareSportSync: { method: 'post', path: '/api/v1/admin/providers/sync/{sport}' },
   adminResetIngestionSchedule: { method: 'post', path: '/api/v1/admin/config/ingestion-schedule/reset' },
