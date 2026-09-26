@@ -493,6 +493,26 @@ split below. A slice is done, for phase-1 purposes, when its schema, DAO, servic
 and tests name the cluster's entities one way, the sweep is clean, and the phase-1 gates
 are green.
 
+### Test layering — what each layer may assert
+
+Set with the repo owner 2026-09-26, after four commits in this slice repaired
+implementation mirrors instead of deleting them. The goal is a correctly-factored service
+with correct coverage, not a suite that pins the shape of code being replaced.
+
+| Layer | Asserts | Against |
+|---|---|---|
+| **DAO** | the query returns the right rows; scoping actually scopes | real Postgres, no mocks |
+| **Service** | returned value, thrown typed error, resulting persisted state | behavioural unit tests for pure logic; integration where state matters |
+| **Route** | the published contract — status, shape, permission | FAPI through the generated SDK |
+
+**No layer asserts which method was called with what.** Where an effect has no observable,
+the test moves *down* a layer until it does — not sideways into a mock assertion. A test
+that can only be written as `expect(dep.method).toHaveBeenCalledWith(...)` is a signal the
+assertion belongs at a lower layer, or that the effect is not worth asserting.
+
+Deleting such a test is the default. Repairing one during a refactor is the thing to avoid:
+it converts a mirror of the old code into a mirror of the new code and produces no safety.
+
 ### Step 3.6 — the residue sweep, in detail
 
 Not a review of the diff. A **search of the cluster**, because the residue is by definition
@@ -671,10 +691,20 @@ Eight duplicate operation pairs collapse to eight operations; the list is in
 - **210 assertions on mock call shape, 105 of them on raw Prisma — #209.** The fakes are a
   shadow; these are worse, because they mirror the implementation rather than specifying
   behaviour. They break on every refactor that changes nothing, and one of them was found
-  passing *vacuously* in this slice. Sequenced after #208, and unlike #208 the test counts
-  are expected to move: fewer unit tests, more integration tests. The two must not be done
-  together — changing scaffolding and assertions at once removes the only signal that
-  either was inert.
+  passing *vacuously* in this slice. Unlike #208 the test counts are expected to move:
+  fewer unit tests, more integration tests.
+
+  **#209 runs BEFORE the rest of step 3.3 and all of step 3.4.** Set by the repo owner
+  2026-09-26: *"All of these tests enforcing poorly implemented code is just tax and in the
+  way of the refactor."* The original order put it last, which guaranteed every remaining
+  migration step would repair mirrors instead of deleting them — and the biggest chunk
+  left, the 17 `UserService`/`AccountService` tests that mock `PrismaClient` directly, is
+  the most mirror-heavy of all.
+
+  Four commits on this branch added or repaired mirrors rather than deleting them
+  (`c4a1dab`, `b1d7c9d`, `384128d`, `183bed8`); those are in #209's scope too. "Verified
+  against the mutation" only established that the mirror matched the new code, which is
+  not coverage.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
