@@ -26,22 +26,107 @@ import type {
 
 import type { ParticipantStatus, Sport } from '../domain';
 
+/**
+ * One page of rows plus the total matching count. `page`, `pageSize` and `totalPages`
+ * belong to the response envelope (`PaginatedSchema` in dto/common.dto.ts), which the
+ * caller already knows — a port returns what only the database can answer.
+ */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+}
+
+/** 1-based paging, matching the query parameters the routes accept. */
+export interface PageRequest {
+  page?: number;
+  pageSize?: number;
+}
+
 // --- Identity ---
+
+/** Filters for the unscoped user read. Access rule A1 restricts that read to rootAdmin. */
+export interface UserSearchFilters {
+  /**
+   * Case-insensitive substring matched against email, username, firstName and lastName.
+   * One `search` term across all four, because that is what the management UI offers.
+   */
+  search?: string;
+  isActive?: boolean;
+}
 
 export interface UserRepository {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
-  create(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
+
+  /**
+   * Every user, optionally filtered and paged, newest first.
+   *
+   * **This is the unscoped read — access rule A1 permits it to rootAdmin only.** The port
+   * does not enforce that; the route does. Added in #202 because its absence is what sent
+   * `admin/user-service.ts` straight to `prisma.user.findMany`, and from there to a
+   * hand-rolled result shape (§2y).
+   */
+  findAll(filters?: UserSearchFilters, page?: PageRequest): Promise<PagedResult<User>>;
+
+  /**
+   * Users holding a `LeagueMembership` in the given league, ordered by name.
+   *
+   * This is the **scoped** peer read that access rules A4 and A6 require: a league member
+   * may read other members' user data, but only indirectly, through the league join. The
+   * league is the scope, so it is a parameter rather than a filter — there is no way to
+   * call this without one.
+   *
+   * Returns every membership status. Callers that want active members only filter on the
+   * membership, which they must already load to know the role.
+   */
+  findByLeague(leagueId: string): Promise<User[]>;
+
+  /**
+   * `credentials` is a second parameter rather than a field on `User` because the domain
+   * `User` deliberately carries no `passwordHash` — it is a secret, and nothing that reads
+   * a user should be handed one. Registration still has to set it, so the create operation
+   * takes it separately. Omit it for a provider-authenticated account.
+   */
+  create(
+    user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
+    credentials?: { passwordHash?: string },
+  ): Promise<User>;
   update(id: string, updates: Partial<User>): Promise<User>;
   delete(id: string): Promise<void>;
 }
 
 // --- League ---
 
+/** Filters for the unscoped league read. Access rule A1 restricts that read to rootAdmin. */
+export interface LeagueSearchFilters {
+  /** Case-insensitive substring matched against the league name. */
+  search?: string;
+  isActive?: boolean;
+}
+
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
   findByCode(code: string): Promise<League | null>;
-  findAll(): Promise<League[]>;
+
+  /**
+   * Every league, optionally filtered. **Unscoped — A1 permits it to rootAdmin only.**
+   *
+   * Not paged, unlike `UserRepository.findAll`: the admin league surface does not page,
+   * and adding an unused page parameter would be a shape nobody asked for.
+   */
+  findAll(filters?: LeagueSearchFilters): Promise<League[]>;
+
+  /**
+   * Leagues the user holds a `LeagueMembership` in — the scoped read access rule A2
+   * requires, where a member sees only their own leagues.
+   *
+   * Added in #202. `LeagueService.findByUser` already existed and did this join in
+   * application code: `membershipRepo.findByUser` followed by a `findById` per membership,
+   * which is N+1 and had to log and skip memberships whose league had vanished. One query
+   * cannot produce that orphan case, because the join only returns rows that exist.
+   */
+  findByUser(userId: string): Promise<League[]>;
+
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
   delete(id: string): Promise<void>;

@@ -15,6 +15,9 @@ export type {
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearchFilters,
+  PagedResult,
+  PageRequest,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
@@ -24,4 +27,5 @@ export type {
   SquadOwnerInvitationRepository,
   SquadRepository,
   UserRepository,
+  UserSearchFilters,
 } from './ports';

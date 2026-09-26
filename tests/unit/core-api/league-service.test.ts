@@ -10,6 +10,7 @@ import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
+    findByUser: jest.fn().mockResolvedValue([]),
     findById: jest.fn().mockResolvedValue(null),
     findByCode: jest.fn().mockResolvedValue(null),
     findAll: jest.fn().mockResolvedValue([]),

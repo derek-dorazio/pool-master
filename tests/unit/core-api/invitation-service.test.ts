@@ -65,6 +65,7 @@ function createMockMembershipRepo(
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return {
+    findByUser: jest.fn().mockResolvedValue([]),
     findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
     findByCode: jest.fn().mockResolvedValue(null),
     findAll: jest.fn().mockResolvedValue([]),
