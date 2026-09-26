@@ -59,6 +59,9 @@ function createPrismaMock() {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
+      // #202 — enableUser writes through the non-transactional client. It was absent from
+      // this mock, so enableUser had no coverage at all.
+      update: jest.fn().mockResolvedValue(undefined),
     },
     refreshToken: {
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -261,6 +264,87 @@ describe('admin user service', () => {
     await expect(
       service.setRootAdmin('missing-user', true, 'admin-1', 'admin@example.com'),
     ).rejects.toBeInstanceOf(UserNotFoundError);
+  });
+
+  // #202 — disable and enable are idempotent, and disable is atomic. Neither had coverage.
+  describe('disable and enable', () => {
+    it('disables an active user atomically, writing state and revoke in one transaction', async () => {
+      const { prisma, tx } = createPrismaMock();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        isRootAdmin: false,
+      });
+
+      const service = new UserService(prisma, createLogger() as any);
+      await service.disableUser('user-1', 'abuse', 'root-1', 'root@example.com');
+
+      // Both writes go through the SAME transaction client. Previously they were two
+      // separate statements, so a failure between them left the user flagged inactive
+      // with live refresh tokens.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(tx.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: false },
+      });
+      expect(tx.refreshToken.updateMany).toHaveBeenCalled();
+      // The non-transactional client must not be the one doing the revoke.
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('treats disabling an already-inactive user as a no-op', async () => {
+      const { prisma } = createPrismaMock();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: false,
+        isRootAdmin: false,
+      });
+
+      const service = new UserService(prisma, createLogger() as any);
+      await expect(
+        service.disableUser('user-1', 'abuse', 'root-1', 'root@example.com'),
+      ).resolves.toBeUndefined();
+
+      // No write at all — asserted against BOTH clients, so this stays meaningful whether
+      // or not the write path is transactional, and no duplicate audit entry is produced
+      // for a change that did not happen.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('treats enabling an already-active user as a no-op', async () => {
+      const { prisma } = createPrismaMock();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        isRootAdmin: false,
+      });
+
+      const service = new UserService(prisma, createLogger() as any);
+      await expect(
+        service.enableUser('user-1', 'root-1', 'root@example.com'),
+      ).resolves.toBeUndefined();
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('enables an inactive user', async () => {
+      const { prisma } = createPrismaMock();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: false,
+        isRootAdmin: false,
+      });
+
+      const service = new UserService(prisma, createLogger() as any);
+      await service.enableUser('user-1', 'root-1', 'root@example.com');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { isActive: true },
+      });
+    });
   });
 
   it('resets a user password, revokes sessions, and returns a temporary password', async () => {

@@ -271,6 +271,18 @@ export class UserService {
       throw new UserNotFoundError(userId);
     }
 
+    // #202 — idempotent. Already inactive means the desired state holds, so this succeeds
+    // without re-revoking sessions or writing a second audit entry for a change that did
+    // not happen. Returning early also means the last-root-admin guard below cannot reject
+    // a no-op.
+    if (!user.isActive) {
+      this.logger?.info({
+        action: 'adminUserService.disable.alreadyInactive',
+        data: { userId },
+      }, 'User already inactive; disable is a no-op');
+      return;
+    }
+
     if (user.isRootAdmin) {
       const rootAdminCount = await this.prisma.user.count({
         where: { isRootAdmin: true },
@@ -284,13 +296,19 @@ export class UserService {
       }
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive: false },
+    // #202 — one transaction. These were two statements, so a failure between them left
+    // the user flagged inactive with live refresh tokens: disabled in the UI, still able
+    // to refresh a session for up to the refresh-token lifetime.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { isActive: false },
+      });
+      await revokeUserSessions(tx, userId);
     });
 
-    await revokeUserSessions(this.prisma, userId);
-
+    // Deliberately outside the transaction. logAdminAction writes through its own client
+    // and takes no transaction, so placing it inside a callback only looks atomic (#202).
     await logAdminAction({
       actorUserId: rootAdminUserId,
       actorEmail: rootAdminEmail,
@@ -323,6 +341,15 @@ export class UserService {
         data: { userId },
       }, 'Cannot enable missing user');
       throw new UserNotFoundError(userId);
+    }
+
+    // #202 — idempotent, matching disable.
+    if (user.isActive) {
+      this.logger?.info({
+        action: 'adminUserService.enable.alreadyActive',
+        data: { userId },
+      }, 'User already active; enable is a no-op');
+      return;
     }
 
     await this.prisma.user.update({
@@ -374,17 +401,22 @@ export class UserService {
         data: { passwordHash },
       });
       await revokeUserSessions(tx, userId);
-      await logAdminAction({
-        actorUserId: rootAdminUserId,
-        actorEmail: rootAdminEmail,
-        action: 'user.reset_password',
-        resourceType: 'USER',
-        resourceId: userId,
-        description: `Reset password for user ${userId}`,
-        beforeState: { hadPassword: Boolean(user.passwordHash) },
-        afterState: { hasTemporaryPassword: true },
-        reason: trimmedReason,
-      });
+    });
+
+    // #202 — audit is written AFTER the transaction commits, not inside the callback.
+    // logAdminAction writes through its own client and takes no transaction, so a call
+    // inside the callback was never enrolled in it: the entry committed immediately and
+    // would have survived a rollback, recording an action that did not happen.
+    await logAdminAction({
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
+      action: 'user.reset_password',
+      resourceType: 'USER',
+      resourceId: userId,
+      description: `Reset password for user ${userId}`,
+      beforeState: { hadPassword: Boolean(user.passwordHash) },
+      afterState: { hasTemporaryPassword: true },
+      reason: trimmedReason,
     });
 
     this.logger?.info({
@@ -463,20 +495,24 @@ export class UserService {
         // Demotion revokes sessions so the removed authority cannot be used until re-login.
         await revokeUserSessions(tx, userId);
       }
+    });
 
-      await logAdminAction({
-        actorUserId: rootAdminUserId,
-        actorEmail: rootAdminEmail,
-        action: 'user.set_root_admin',
-        resourceType: 'USER',
-        resourceId: userId,
-        description: nextValue
-          ? `Granted root-admin role to user ${userId}`
-          : `Revoked root-admin role from user ${userId}`,
-        beforeState: { isRootAdmin: user.isRootAdmin },
-        afterState: { isRootAdmin: nextValue },
-        reason: trimmedReason,
-      });
+    // #202 — audit is written AFTER the transaction commits, not inside the callback.
+    // logAdminAction writes through its own client and takes no transaction, so a call
+    // inside the callback was never enrolled in it: the entry committed immediately and
+    // would have survived a rollback, recording an action that did not happen.
+    await logAdminAction({
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
+      action: 'user.set_root_admin',
+      resourceType: 'USER',
+      resourceId: userId,
+      description: nextValue
+        ? `Granted root-admin role to user ${userId}`
+        : `Revoked root-admin role from user ${userId}`,
+      beforeState: { isRootAdmin: user.isRootAdmin },
+      afterState: { isRootAdmin: nextValue },
+      reason: trimmedReason,
     });
 
     this.logger?.info({
@@ -564,20 +600,22 @@ export class UserService {
 
     const trimmedReason = reason?.trim() || undefined;
 
-    await this.prisma.$transaction(async (tx) => {
-      await deleteUserCascade(tx, userId);
+    await this.prisma.$transaction((tx) => deleteUserCascade(tx, userId));
 
-      await logAdminAction({
-        actorUserId: rootAdminUserId,
-        actorEmail: rootAdminEmail,
-        action: 'user.delete',
-        resourceType: 'USER',
-        resourceId: userId,
-        description: `Deleted inactive user ${userId}`,
-        beforeState: { isActive: false, isRootAdmin: user.isRootAdmin },
-        afterState: { deleted: true },
-        reason: trimmedReason,
-      });
+    // #202 — audit is written AFTER the transaction commits, not inside the callback.
+    // logAdminAction writes through its own client and takes no transaction, so a call
+    // inside the callback was never enrolled in it: the entry committed immediately and
+    // would have survived a rollback, recording an action that did not happen.
+    await logAdminAction({
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
+      action: 'user.delete',
+      resourceType: 'USER',
+      resourceId: userId,
+      description: `Deleted inactive user ${userId}`,
+      beforeState: { isActive: false, isRootAdmin: user.isRootAdmin },
+      afterState: { deleted: true },
+      reason: trimmedReason,
     });
 
     this.logger?.info({

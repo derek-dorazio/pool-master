@@ -479,25 +479,31 @@ describe('AccountService', () => {
     });
   });
 
-  it('rejects inactivation when the account is already inactive', async () => {
+  // #202 — idempotent. This used to reject with ACCOUNT_ALREADY_INACTIVE / 409. A retry
+  // after a network timeout must not fail when the change it asked for already holds.
+  it('treats inactivating an already-inactive account as a no-op', async () => {
     const prisma = {
       user: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'user-1',
           isActive: false,
         }),
+        count: jest.fn().mockResolvedValue(0),
       },
+      $transaction: jest.fn(),
     } as any;
 
     const service = new AccountService(prisma);
 
-    await expect(service.inactivateOwnAccount('user-1')).rejects.toMatchObject({
-      code: 'ACCOUNT_ALREADY_INACTIVE',
-      statusCode: 409,
-    } satisfies Partial<AccountLifecycleError>);
+    await expect(service.inactivateOwnAccount('user-1')).resolves.toMatchObject({
+      id: 'user-1',
+      isActive: false,
+    });
+    // No second session revoke for an account whose sessions went when it was inactivated.
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it('reactivates an inactive account and rejects an already active one', async () => {
+  it('reactivates an inactive account, and re-reactivating is a no-op', async () => {
     const prisma = {
       user: {
         findUnique: jest.fn()
@@ -530,10 +536,13 @@ describe('AccountService', () => {
       id: 'user-1',
       isActive: true,
     });
-    await expect(service.reactivateOwnAccount('user-1')).rejects.toMatchObject({
-      code: 'ACCOUNT_ALREADY_ACTIVE',
-      statusCode: 409,
-    } satisfies Partial<AccountLifecycleError>);
+    // #202 — idempotent: previously ACCOUNT_ALREADY_ACTIVE / 409.
+    await expect(service.reactivateOwnAccount('user-1')).resolves.toMatchObject({
+      id: 'user-1',
+      isActive: true,
+    });
+    // Only the first call wrote; the second short-circuited.
+    expect(prisma.user.update).toHaveBeenCalledTimes(1);
   });
 
   it('rejects account delete while the account is still active', async () => {

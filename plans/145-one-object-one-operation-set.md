@@ -694,6 +694,31 @@ one.
 ### Slice 4 — Platform and operations
 Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
 
+**Carried in from slice 1, 2026-09-26: there are two audit tables for one concept.**
+`AdminAuditEntry` and `CommissionerAuditLog` share nine columns — `id`, `actorId`,
+`action`, `description`, `beforeState`, `afterState`, `reason`, `ipAddress`, `createdAt`.
+They differ only in that the admin one adds `actorEmail`, `resourceType`, `resourceId` and
+`userAgent`, and the commissioner one adds a required `leagueId` FK, an optional
+`contestId`, and `category`.
+
+They are split **by actor role** — the same mistake this whole pass exists to undo, one
+layer down, in the schema. `AdminAuditEntry`'s relation is literally named
+`RootAdminAuditActor`.
+
+Slice 1 asked whether self-service user actions should be audited and the repo owner
+deferred it here, which is right: the answer depends on how many audit tables there should
+be. Writing self actions into `AdminAuditEntry` would give that table a third meaning, and
+a new `UserAuditLog` would be a third table for one concept, which working rule 5 forbids.
+So **self-service user lifecycle actions are currently not audited**, deliberately, pending
+this slice.
+
+One related defect found while looking: `logAdminAction` writes through a module-level
+Prisma singleton and takes no transaction client, so calls placed inside a
+`$transaction` callback were never enrolled in it — the entry committed immediately and
+would have survived a rollback. Slice 1 moved those calls after their transactions
+(#202); whether the audit write *should* be atomic is this slice's call, and there is a
+real argument that a record of a failed attempt is worth keeping.
+
 The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
 (stop calling it "admin") and bringing services onto ports for consistency.
 

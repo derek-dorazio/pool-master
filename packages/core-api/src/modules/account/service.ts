@@ -234,16 +234,15 @@ export class AccountService {
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
+    // #202 — idempotent. The desired state already holds, so this succeeds and returns the
+    // account unchanged rather than raising ACCOUNT_ALREADY_ACTIVE. A retry after a network
+    // timeout must not fail when the change it asked for is already in place.
     if (user.isActive) {
-      this.logger?.warn({
+      this.logger?.info({
         action: 'accountService.reactivate.alreadyActive',
         data: { userId },
-      }, 'Cannot reactivate account that is already active');
-      throw new AccountLifecycleError(
-        'Account is already active',
-        'ACCOUNT_ALREADY_ACTIVE',
-        409,
-      );
+      }, 'Account already active; reactivate is a no-op');
+      return user;
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -274,16 +273,14 @@ export class AccountService {
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
+    // #202 — idempotent, as for reactivate. Returning early also means no second session
+    // revoke for an account whose sessions were already revoked when it went inactive.
     if (!user.isActive) {
-      this.logger?.warn({
+      this.logger?.info({
         action: 'accountService.inactivate.alreadyInactive',
         data: { userId },
-      }, 'Cannot inactivate account that is already inactive');
-      throw new AccountLifecycleError(
-        'Account is already inactive',
-        'ACCOUNT_ALREADY_INACTIVE',
-        409,
-      );
+      }, 'Account already inactive; inactivate is a no-op');
+      return user;
     }
 
     // #202 — the same guard admin-disable applies. Without it the sole root admin could
