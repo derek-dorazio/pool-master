@@ -414,8 +414,11 @@ export class UserService {
       resourceType: 'USER',
       resourceId: userId,
       description: `Reset password for user ${userId}`,
-      beforeState: { hadPassword: Boolean(user.passwordHash) },
-      afterState: { hasTemporaryPassword: true },
+      // #202 — the EVENT is audited, not the credential state either side of it. The
+      // before/after pair recorded `hadPassword` and `hasTemporaryPassword`, which meant
+      // this read needed `user.passwordHash` — a column the canonical `User` deliberately
+      // does not carry, so it was the one thing keeping this method off UserRepository.
+      // Neither value told a reader anything the action name does not.
       reason: trimmedReason,
     });
 

@@ -663,6 +663,11 @@ Eight duplicate operation pairs collapse to eight operations; the list is in
 - `admin/routes.ts` carries the `#192-mixed:` opt-out from
   `check-dto-conversion-complete.mjs` check 5. Re-examine whether it still needs it once
   the admin DTOs above are gone.
+- **Repository test fakes: 50 factories across 13 files — #208.** Pulled out of the sweep
+  into its own epic because it is not residue to find at the end, it is a tax being paid
+  *now*: three consecutive commits in this slice edited 7, 5 and 10 fakes respectively to
+  add one port method each. Sequenced **before** the `UserRepository` service injection,
+  since that step needs 17 fakes built from scratch and would otherwise write them twice.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
