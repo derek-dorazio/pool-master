@@ -150,15 +150,23 @@ export async function adminModule(
 
   // --- Services ---
   const userService = new UserService(prisma, fastify.log);
+  const leagueRepository = new PrismaLeagueRepository(prisma);
+  const leagueMembershipRepository = new PrismaLeagueMembershipRepository(prisma);
   const leagueService = new LeagueService(
-    new PrismaLeagueRepository(prisma),
-    new PrismaLeagueMembershipRepository(prisma),
+    leagueRepository,
+    leagueMembershipRepository,
     new PrismaSquadRepository(prisma),
     new PrismaSquadMembershipRepository(prisma),
     prisma,
     fastify.log,
   );
-  const adminLeagueService = new AdminLeagueService(prisma, leagueService, fastify.log);
+  const adminLeagueService = new AdminLeagueService(
+    prisma,
+    leagueService,
+    leagueRepository,
+    leagueMembershipRepository,
+    fastify.log,
+  );
   const adminTeamService = new AdminTeamService(prisma, fastify.log);
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);

@@ -15,6 +15,7 @@ import {
   createTestUser,
 } from '../helpers';
 import {
+  PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
@@ -237,6 +238,57 @@ describe('identity cluster repositories (#202)', () => {
       const loner = await createTestUser({ lastName: 'Loner' });
 
       expect(await repo.findByUser(loner.user.id)).toEqual([]);
+    });
+  });
+
+  // #202 — new in step 3.3, backing the admin league list. Asserted against a real
+  // database because it is a grouped query: the FAPI suite proves adminListLeagues still
+  // responds, but asserts nothing about the counts themselves.
+  describe('LeagueMembershipRepository.countActiveByLeagues', () => {
+    it('counts active members per league and omits leagues with none', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueMembershipRepository(prisma);
+
+      const busy = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}D1`, 'Busy');
+      const quiet = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}D2`, 'Quiet');
+
+      const [a, b, c] = await Promise.all([
+        createTestUser({ lastName: 'CountA' }),
+        createTestUser({ lastName: 'CountB' }),
+        createTestUser({ lastName: 'CountC' }),
+      ]);
+
+      for (const user of [a, b]) {
+        await prisma.leagueMembership.create({
+          data: {
+            leagueId: busy.id,
+            userId: user.user.id,
+            role: LeagueRole.MEMBER,
+            status: LeagueMembershipStatus.ACTIVE,
+          },
+        });
+      }
+      // Inactive membership must NOT be counted.
+      await prisma.leagueMembership.create({
+        data: {
+          leagueId: busy.id,
+          userId: c.user.id,
+          role: LeagueRole.MEMBER,
+          status: LeagueMembershipStatus.INACTIVE,
+        },
+      });
+
+      const counts = await repo.countActiveByLeagues([busy.id, quiet.id]);
+
+      expect(counts.get(busy.id)).toBe(2);
+      // Absent rather than present with 0 — the caller defaults it.
+      expect(counts.has(quiet.id)).toBe(false);
+    });
+
+    it('returns an empty map for no league ids, without querying', async () => {
+      const repo = new PrismaLeagueMembershipRepository(getPrisma());
+
+      await expect(repo.countActiveByLeagues([])).resolves.toEqual(new Map());
     });
   });
 

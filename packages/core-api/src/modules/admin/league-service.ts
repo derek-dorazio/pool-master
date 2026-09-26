@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
 import {
   ContestStatus,
   JoinPolicy,
@@ -45,6 +46,8 @@ export class AdminLeagueService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly leagueService: LeagueService,
+    private readonly leagueRepo: LeagueRepository,
+    private readonly membershipRepo: LeagueMembershipRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -59,87 +62,56 @@ export class AdminLeagueService {
       },
     }, 'Searching leagues for root-admin management');
 
-    const rows = await this.prisma.league.findMany({
-      where: {
-        ...(trimmedSearch
-          ? {
-            name: {
-              contains: trimmedSearch,
-              mode: 'insensitive',
-            },
-          }
-          : {}),
-        ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
-      },
-      orderBy: [
-        { updatedAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      select: {
-        id: true,
-        leagueCode: true,
-        name: true,
-        description: true,
-        isActive: true,
-        iconKey: true,
-        joinPolicy: true,
-        createdAt: true,
-        updatedAt: true,
-        memberships: {
-          where: {
-            status: LeagueMembershipStatus.ACTIVE,
-          },
-          select: {
-            id: true,
-          },
-        },
-        contests: {
-          where: {
-            status: {
-              in: [...ACTIVE_LEAGUE_CONTEST_STATUSES],
-            },
-          },
-          select: {
-            id: true,
-          },
-        },
-      },
+    // #202 — composed from ports instead of one hand-written findMany with nested
+    // selects. That query is what let this service invent its own row shape (§2y).
+    // Three reads rather than one: the leagues, their active-member counts, and the
+    // active-contest counts. Contest has no port for this yet — that is slice 3 — so it
+    // is the one raw query left here, and it is marked.
+    const leagues = await this.leagueRepo.findAll({
+      search: trimmedSearch,
+      isActive: query.isActive,
     });
+    const leagueIds = leagues.map((league) => league.id);
 
-    const leagues = rows.map((row) => toLeagueSummaryDto(
-      {
-        id: row.id,
-        leagueCode: row.leagueCode,
-        name: row.name,
-        description: row.description,
-        isActive: row.isActive,
-        iconKey: row.iconKey as LeagueIconKey,
-        joinPolicy: row.joinPolicy as JoinPolicy,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
+    const [memberCounts, contestRows] = await Promise.all([
+      this.membershipRepo.countActiveByLeagues(leagueIds),
+      // SLICE 3 — replace with a ContestRepository count once that cluster has ports.
+      leagueIds.length
+        ? this.prisma.contest.groupBy({
+          by: ['leagueId'],
+          where: {
+            leagueId: { in: leagueIds },
+            status: { in: [...ACTIVE_LEAGUE_CONTEST_STATUSES] },
+          },
+          _count: { _all: true },
+        })
+        : Promise.resolve([]),
+    ]);
+    const contestCountByLeagueId = new Map(
+      contestRows.map((row) => [row.leagueId, row._count._all]),
+    );
+
+    const summaries = leagues.map((league) => toLeagueSummaryDto(league, {
+      memberCount: memberCounts.get(league.id) ?? 0,
+      activeContestCount: contestCountByLeagueId.get(league.id) ?? 0,
+      memberType: null,
+      leagueRelationship: {
+        leagueMember: false,
+        commissioner: false,
       },
-      {
-        memberCount: row.memberships.length,
-        activeContestCount: row.contests.length,
-        memberType: null,
-        leagueRelationship: {
-          leagueMember: false,
-          commissioner: false,
-        },
-        isRootAdmin: true,
-      },
-    ));
+      isRootAdmin: true,
+    }));
 
     this.logger?.info({
       action: 'adminLeagueService.search.success',
       data: {
         hasSearch: Boolean(trimmedSearch),
-        returnedCount: leagues.length,
+        returnedCount: summaries.length,
         isActive: query.isActive ?? null,
       },
     }, 'Loaded leagues for root-admin management');
 
-    return leagues;
+    return summaries;
   }
 
   async inactivateLeague(

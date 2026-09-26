@@ -33,6 +33,7 @@ function createMockMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return {
+    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
     findByLeague: jest.fn().mockResolvedValue([]),
     findByUser: jest.fn().mockResolvedValue([]),
     findByLeagueAndUser: jest.fn().mockResolvedValue(null),
@@ -229,7 +230,7 @@ describe('LeagueService', () => {
       const expectedLeague = buildLeague({ id: 'league-1' });
       const expectedMembership = buildMembership({ leagueId: 'league-1', userId: 'user-1' });
       const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(expectedLeague),
+        findByUser: jest.fn().mockResolvedValue([expectedLeague]),
       });
       const membershipRepo = createMockMembershipRepo({
         findByUser: jest.fn().mockResolvedValue([expectedMembership]),
@@ -239,13 +240,37 @@ describe('LeagueService', () => {
       const result = await service.findByUser('user-1');
 
       expect(membershipRepo.findByUser).toHaveBeenCalledWith('user-1');
-      expect(leagueRepo.findById).toHaveBeenCalledWith('league-1');
+      // #202 — one scoped league read, not a findById per membership.
+      expect(leagueRepo.findByUser).toHaveBeenCalledWith('user-1');
+      expect(leagueRepo.findById).not.toHaveBeenCalled();
       expect(result).toEqual([
         {
           league: expectedLeague,
           membership: expectedMembership,
         },
       ]);
+    });
+
+    it('issues a fixed number of reads however many leagues the user belongs to', async () => {
+      // #202 — the guard against the N+1 returning. Three memberships used to mean three
+      // findById calls on top of the membership read.
+      const leagues = ['league-1', 'league-2', 'league-3'].map((id) => buildLeague({ id }));
+      const memberships = leagues.map((league) =>
+        buildMembership({ leagueId: league.id, userId: 'user-1' }));
+      const leagueRepo = createMockLeagueRepo({
+        findByUser: jest.fn().mockResolvedValue(leagues),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByUser: jest.fn().mockResolvedValue(memberships),
+      });
+      const service = new LeagueService(leagueRepo, membershipRepo);
+
+      const result = await service.findByUser('user-1');
+
+      expect(result).toHaveLength(3);
+      expect(leagueRepo.findByUser).toHaveBeenCalledTimes(1);
+      expect(membershipRepo.findByUser).toHaveBeenCalledTimes(1);
+      expect(leagueRepo.findById).not.toHaveBeenCalled();
     });
   });
 

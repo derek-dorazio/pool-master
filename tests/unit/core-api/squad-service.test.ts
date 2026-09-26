@@ -14,6 +14,7 @@ function createLeagueMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return {
+    countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
     findByLeague: jest.fn(),
     findByUser: jest.fn(),
     findByLeagueAndUser: jest.fn(),

@@ -122,6 +122,17 @@ export interface LeagueRepository {
 export interface LeagueMembershipRepository {
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
+
+  /**
+   * Active member counts for several leagues at once, keyed by league id. Leagues with no
+   * active members are absent from the map rather than present with 0.
+   *
+   * One grouped query for a list, instead of a count per row. Added in #202 so the admin
+   * league list can be assembled from `LeagueRepository.findAll` plus this, rather than
+   * from one hand-written `findMany` with nested `select`s — which is what produced the
+   * shape that service invented (§2y).
+   */
+  countActiveByLeagues(leagueIds: string[]): Promise<Map<string, number>>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;

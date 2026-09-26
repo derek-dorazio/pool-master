@@ -118,13 +118,22 @@ export class LeagueService {
       action: 'league.findByUser.enter',
       data: { userId },
     }, 'Listing leagues for user');
-    const memberships = await this.membershipRepo.findByUser(userId);
-    const leagues = await Promise.all(
-      memberships.map((membership) => this.leagueRepo.findById(membership.leagueId)),
-    );
-    const result = memberships.flatMap((membership, index) => {
-      const league = leagues[index];
+    // #202 — two queries, not 1+N. This fetched the memberships and then issued a
+    // findById per membership; both sides are now single reads and the pairing happens in
+    // memory. LeagueRepository.findByUser resolves the same join the membership rows
+    // describe, so the two sets cover the same leagues.
+    const [memberships, leagues] = await Promise.all([
+      this.membershipRepo.findByUser(userId),
+      this.leagueRepo.findByUser(userId),
+    ]);
+    const leagueById = new Map(leagues.map((league) => [league.id, league]));
+
+    const result = memberships.flatMap((membership) => {
+      const league = leagueById.get(membership.leagueId);
       if (!league) {
+        // Defensive only: LeagueMembership.leagueId is a foreign key, so a membership
+        // whose league is missing cannot exist. Kept so a future schema change that
+        // relaxes that cannot silently produce an undefined league.
         this.logger?.warn({
           action: 'league.findByUser.membershipOrphaned',
           data: {

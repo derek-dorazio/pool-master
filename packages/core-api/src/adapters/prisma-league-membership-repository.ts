@@ -22,6 +22,18 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     return rows.map(mapToMembership);
   }
 
+  async countActiveByLeagues(leagueIds: string[]): Promise<Map<string, number>> {
+    if (leagueIds.length === 0) {
+      return new Map();
+    }
+    const grouped = await this.prisma.leagueMembership.groupBy({
+      by: ['leagueId'],
+      where: { leagueId: { in: leagueIds }, status: MembershipStatus.ACTIVE },
+      _count: { _all: true },
+    });
+    return new Map(grouped.map((row) => [row.leagueId, row._count._all]));
+  }
+
   async findByUser(userId: string): Promise<LeagueMembership[]> {
     const rows = await this.prisma.leagueMembership.findMany({
       where: { userId, status: MembershipStatus.ACTIVE },
