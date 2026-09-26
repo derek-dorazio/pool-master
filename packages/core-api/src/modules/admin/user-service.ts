@@ -19,10 +19,8 @@ import { logAdminAction } from './admin-audit-service';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
-  findUserDeleteDependencyDetails,
   hasUserDeleteDependencies,
   revokeUserSessions,
-  type UserDeleteDependencyDetails,
 } from '../users/user-lifecycle';
 
 const BCRYPT_ROUNDS = 12;
@@ -76,13 +74,6 @@ export class UserNotFoundError extends Error {
   }
 }
 
-export class SelfRootAdminChangeError extends Error {
-  constructor(userId: string) {
-    super(`Root admins cannot change their own root-admin role: ${userId}`);
-    this.name = 'SelfRootAdminChangeError';
-  }
-}
-
 export class LastRootAdminError extends Error {
   constructor(userId: string) {
     super(`Cannot remove the last remaining root admin: ${userId}`);
@@ -104,12 +95,8 @@ export class UserDeleteRequiresInactiveError extends Error {
   }
 }
 
-// UserDeleteDependencyDetails now lives in modules/users/user-lifecycle.ts (#202),
-// shared with the self-service path that reports the same blockers.
-export type { UserDeleteDependencyDetails };
-
 export class UserDeleteDependenciesExistError extends Error {
-  constructor(userId: string, readonly details?: UserDeleteDependencyDetails) {
+  constructor(userId: string) {
     super(`Account still owns or belongs to league-scoped data: ${userId}`);
     this.name = 'UserDeleteDependenciesExistError';
   }
@@ -465,14 +452,6 @@ export class UserService {
       return;
     }
 
-    if (!nextValue && userId === rootAdminUserId) {
-      this.logger?.warn({
-        action: 'adminUserService.setRootAdmin.selfRejected',
-        data: { userId },
-      }, 'Rejected self root-admin role change');
-      throw new SelfRootAdminChangeError(userId);
-    }
-
     if (!nextValue && user.isRootAdmin) {
       const rootAdminCount = await this.prisma.user.count({
         where: { isRootAdmin: true },
@@ -588,17 +567,11 @@ export class UserService {
     const counts = await countUserDeleteDependencies(this.prisma, userId);
 
     if (hasUserDeleteDependencies(counts)) {
-      const dependencyDetails = await findUserDeleteDependencyDetails(
-        this.prisma,
-        userId,
-        counts,
-      );
-
       this.logger?.warn({
         action: 'adminUserService.delete.dependenciesExist',
-        data: { userId, ...counts, dependencyDetails },
+        data: { userId, ...counts },
       }, 'Rejected delete due to remaining dependencies');
-      throw new UserDeleteDependenciesExistError(userId, dependencyDetails);
+      throw new UserDeleteDependenciesExistError(userId);
     }
 
     const trimmedReason = reason?.trim() || undefined;

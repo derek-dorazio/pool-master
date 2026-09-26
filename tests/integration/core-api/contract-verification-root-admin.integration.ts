@@ -954,18 +954,6 @@ describe('Contract verification (root admin)', () => {
     expect(ErrorEnvelopeSchema.safeParse(missingDeleteUserRes.json()).success).toBe(true);
     expect(missingDeleteUserRes.json().error.code).toBe('USER_NOT_FOUND');
 
-    const selfRoleChangeRes = await getApp().inject({
-      method: 'POST',
-      url: `/api/v1/admin/users/${rootAdmin.user.id}/root-admin`,
-      headers: rootAdmin.headers,
-      payload: {
-        isRootAdmin: false,
-      },
-    });
-    expect(selfRoleChangeRes.statusCode).toBe(400);
-    expect(ErrorEnvelopeSchema.safeParse(selfRoleChangeRes.json()).success).toBe(true);
-    expect(selfRoleChangeRes.json().error.code).toBe('SELF_ROOT_ADMIN_CHANGE');
-
     const providerRes = await getApp().inject({
       method: 'GET',
       url: '/api/v1/admin/providers/missing-provider',

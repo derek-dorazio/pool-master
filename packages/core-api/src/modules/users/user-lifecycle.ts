@@ -32,20 +32,6 @@ export interface UserDeleteDependencyCounts {
   createdSquadCount: number;
 }
 
-export interface UserDeleteDependencyDetails {
-  dependencyType: 'TEAM_OWNER' | 'TEAM_MEMBER' | 'LEAGUE_MEMBER';
-  userId: string;
-  team?: {
-    id: string;
-    name: string;
-  };
-  league?: {
-    id: string;
-    leagueCode: string;
-    name: string;
-  };
-}
-
 /**
  * Counts the league-scoped rows that block a hard delete.
  *
@@ -68,71 +54,6 @@ export function hasUserDeleteDependencies(counts: UserDeleteDependencyCounts): b
   return counts.leagueCount > 0
     || counts.squadMembershipCount > 0
     || counts.createdSquadCount > 0;
-}
-
-/**
- * Resolves the first blocking dependency into something a caller can show a human.
- *
- * Ordered most-specific first: owning a squad explains the block better than merely
- * belonging to a league.
- */
-export async function findUserDeleteDependencyDetails(
-  prisma: PrismaClient,
-  userId: string,
-  counts: UserDeleteDependencyCounts,
-): Promise<UserDeleteDependencyDetails | undefined> {
-  if (counts.createdSquadCount > 0) {
-    const team = await prisma.squad.findFirst({
-      where: { createdBy: userId },
-      select: {
-        id: true,
-        name: true,
-        league: { select: { id: true, leagueCode: true, name: true } },
-      },
-    });
-    if (team) {
-      return {
-        dependencyType: 'TEAM_OWNER',
-        userId,
-        team: { id: team.id, name: team.name },
-        league: team.league,
-      };
-    }
-  }
-
-  if (counts.squadMembershipCount > 0) {
-    const membership = await prisma.squadMembership.findFirst({
-      where: { userId },
-      select: {
-        squad: { select: { id: true, name: true } },
-        league: { select: { id: true, leagueCode: true, name: true } },
-      },
-    });
-    if (membership) {
-      return {
-        dependencyType: 'TEAM_MEMBER',
-        userId,
-        team: membership.squad,
-        league: membership.league,
-      };
-    }
-  }
-
-  if (counts.leagueCount > 0) {
-    const membership = await prisma.leagueMembership.findFirst({
-      where: { userId },
-      select: { league: { select: { id: true, leagueCode: true, name: true } } },
-    });
-    if (membership) {
-      return {
-        dependencyType: 'LEAGUE_MEMBER',
-        userId,
-        league: membership.league,
-      };
-    }
-  }
-
-  return undefined;
 }
 
 /**

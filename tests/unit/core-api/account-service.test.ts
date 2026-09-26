@@ -173,31 +173,6 @@ describe('AccountService', () => {
     });
   });
 
-  it('rejects profile changes for inactive accounts', async () => {
-    const prisma = {
-      user: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'user-1',
-          passwordHash: '$2b$12$placeholder',
-          isActive: false,
-        }),
-      },
-    } as any;
-
-    const service = new AccountService(prisma);
-
-    await expect(
-      service.updateOwnProfile('user-1', {
-        firstName: 'Derek',
-        lastName: 'Dorazio',
-        email: 'user@example.com',
-      }),
-    ).rejects.toMatchObject({
-      code: 'ACCOUNT_INACTIVE_READ_ONLY',
-      statusCode: 409,
-    } satisfies Partial<AccountLifecycleError>);
-  });
-
   it('rejects mutable account actions when the user does not exist', async () => {
     const prisma = {
       user: {

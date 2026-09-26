@@ -1605,7 +1605,7 @@ export interface paths {
         put?: never;
         /**
          * Grant or revoke the root-admin role for a user
-         * @description Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.
+         * @description Allows an existing root admin to grant or revoke the platform-level root-admin role for any user, including themselves. At least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND and 409 LAST_ROOT_ADMIN.
          */
         post: operations["adminSetUserRootAdmin"];
         delete?: never;
@@ -13717,25 +13717,6 @@ export interface operations {
                          * @enum {boolean}
                          */
                         success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
                     };
                 };
             };

@@ -59,7 +59,7 @@ export class AccountService {
       action: 'accountService.updateProfile.start',
       data: { userId, emailDomain: normalizedEmail.split('@')[1] ?? null },
     }, 'Updating account profile');
-    const user = await this.requireUserForMutableAccountAction(userId);
+    const user = await this.requireAccountUser(userId);
     await this.assertEmailAvailableForUser(user.id, normalizedEmail);
 
     const updatedUser = await this.prisma.user.update({
@@ -83,7 +83,7 @@ export class AccountService {
       action: 'accountService.updateUsername.start',
       data: { userId, requestedUsernameLength: normalizedUsername.length },
     }, 'Updating account username');
-    const user = await this.requireUserForMutableAccountAction(userId);
+    const user = await this.requireAccountUser(userId);
     await this.assertUsernameAvailableForUser(user.id, normalizedUsername);
 
     const updatedUser = await this.prisma.user.update({
@@ -112,7 +112,7 @@ export class AccountService {
       action: 'accountService.updatePreferences.start',
       data: { userId },
     }, 'Updating account preferences');
-    const user = await this.requireUserForMutableAccountAction(userId);
+    const user = await this.requireAccountUser(userId);
 
     const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
@@ -150,7 +150,7 @@ export class AccountService {
         retainsCurrentRefreshToken: Boolean(request.currentRefreshToken),
       },
     }, 'Changing account password');
-    const user = await this.requireUserForMutableAccountAction(userId);
+    const user = await this.requireAccountUser(userId);
 
     if (!user.passwordHash) {
       this.logger?.warn({
@@ -394,48 +394,39 @@ export class AccountService {
     }, 'Deleted inactive account');
   }
 
-  private async requireUserForMutableAccountAction(userId: string): Promise<{
+  /**
+   * Loads the account being written to, or 404s.
+   *
+   * #202 — this used to reject every write to an INACTIVE account with a 409
+   * `ACCOUNT_INACTIVE_READ_ONLY`. That guard is gone: `isActive` is a read filter, not a
+   * write lock (access rule A9). An inactive account is filtered out of views and cannot
+   * sign in; it does not need its own columns frozen on top of that, and freezing them
+   * made the obvious recovery — fix your details, then reactivate — impossible.
+   *
+   * `passwordHash` is the one column read directly off Prisma rather than through
+   * `UserRepository`: the port deliberately never exposes it, and the password change has
+   * to compare against it.
+   */
+  private async requireAccountUser(userId: string): Promise<{
     id: string;
     passwordHash: string | null;
-    isActive: boolean;
   }> {
-    this.logger?.debug({
-      action: 'accountService.requireMutable.start',
-      data: { userId },
-    }, 'Checking mutable-account preconditions');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         passwordHash: true,
-        isActive: true,
       },
     });
 
     if (!user) {
       this.logger?.warn({
-        action: 'accountService.requireMutable.notFound',
+        action: 'accountService.requireAccountUser.notFound',
         data: { userId },
-      }, 'Mutable account action rejected because user was not found');
+      }, 'Account write rejected because user was not found');
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
-    if (!user.isActive) {
-      this.logger?.warn({
-        action: 'accountService.requireMutable.inactive',
-        data: { userId },
-      }, 'Mutable account action rejected for inactive account');
-      throw new AccountLifecycleError(
-        'Inactive accounts are read-only. Reactivate the account before editing profile, preferences, or password.',
-        'ACCOUNT_INACTIVE_READ_ONLY',
-        409,
-      );
-    }
-
-    this.logger?.debug({
-      action: 'accountService.requireMutable.success',
-      data: { userId },
-    }, 'Mutable-account preconditions satisfied');
     return user;
   }
 

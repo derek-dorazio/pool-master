@@ -1168,7 +1168,7 @@ export const adminResetUserPassword = <ThrowOnError extends boolean = false>(opt
 /**
  * Grant or revoke the root-admin role for a user
  *
- * Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.
+ * Allows an existing root admin to grant or revoke the platform-level root-admin role for any user, including themselves. At least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND and 409 LAST_ROOT_ADMIN.
  */
 export const adminSetUserRootAdmin = <ThrowOnError extends boolean = false>(options: Options<AdminSetUserRootAdminData, ThrowOnError>) => (options.client ?? client).post<AdminSetUserRootAdminResponses, AdminSetUserRootAdminErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

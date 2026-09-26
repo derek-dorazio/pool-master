@@ -6,7 +6,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
 import {
   LastRootAdminError,
-  SelfRootAdminChangeError,
   UserDeleteConfirmationMismatchError,
   UserDeleteDependenciesExistError,
   UserDeleteRequiresInactiveError,
@@ -185,9 +184,6 @@ export function createUserHandlers(userService: UserService) {
       if (err instanceof UserNotFoundError) {
         return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
       }
-      if (err instanceof SelfRootAdminChangeError) {
-        return sendError(reply, 400, 'SELF_ROOT_ADMIN_CHANGE', err.message);
-      }
       if (err instanceof LastRootAdminError) {
         return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);
       }
@@ -220,7 +216,7 @@ export function createUserHandlers(userService: UserService) {
         return sendError(reply, 409, 'ACCOUNT_DELETE_REQUIRES_INACTIVE', err.message);
       }
       if (err instanceof UserDeleteDependenciesExistError) {
-        return sendError(reply, 409, 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', err.message, err.details);
+        return sendError(reply, 409, 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', err.message);
       }
       if (err instanceof LastRootAdminError) {
         return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);

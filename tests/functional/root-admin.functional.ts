@@ -252,28 +252,6 @@ describe('SDK Functional: Root Admin', () => {
     });
   });
 
-  it('rejects self-demotion for root-admin users', async () => {
-    const rootAdmin = await buildRegisteredUser({
-      displayName: 'Root Admin Self Demote',
-    });
-    await promoteToRootAdmin(rootAdmin.userId);
-
-    const response = await adminSetUserRootAdmin({
-      client: rootAdmin.client,
-      path: {
-        userId: rootAdmin.userId,
-      },
-      body: {
-        isRootAdmin: false,
-      },
-    });
-
-    expectFunctionalError(response, {
-      status: 400,
-      code: 'SELF_ROOT_ADMIN_CHANGE',
-    });
-  });
-
   it('allows a root admin to reset another user password and delete an inactive account', async () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin Password Reset',

@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import {
   LastRootAdminError,
-  SelfRootAdminChangeError,
   UserDeleteConfirmationMismatchError,
   UserDeleteDependenciesExistError,
   UserDeleteRequiresInactiveError,
@@ -199,24 +198,6 @@ describe('admin user service', () => {
       afterState: { isRootAdmin: false },
       reason: 'Role cleanup',
     }));
-  });
-
-  it('rejects self-demotion before any write work happens', async () => {
-    const { prisma, tx } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'admin-1',
-      isRootAdmin: true,
-    });
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.setRootAdmin('admin-1', false, 'admin-1', 'admin@example.com'),
-    ).rejects.toBeInstanceOf(SelfRootAdminChangeError);
-
-    expect(prisma.user.count).not.toHaveBeenCalled();
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(tx.user.update).not.toHaveBeenCalled();
   });
 
   it('rejects removal of the last remaining root admin', async () => {
@@ -448,44 +429,5 @@ describe('admin user service', () => {
     await expect(
       service.deleteUser('user-9', 'linked@example.com', 'admin-1', 'admin@example.com'),
     ).rejects.toBeInstanceOf(UserDeleteDependenciesExistError);
-  });
-
-  it('pool-master-6nl describes the blocking team dependency when admin delete is rejected', async () => {
-    const { prisma } = createPrismaMock();
-    prisma.user.findUnique.mockResolvedValue({
-      id: 'user-10',
-      email: 'team.owner@example.com',
-      isActive: false,
-      isRootAdmin: false,
-    });
-    prisma.squad.count.mockResolvedValue(1);
-    prisma.squad.findFirst.mockResolvedValue({
-      id: 'team-1',
-      name: 'Birdie Hunters',
-      league: {
-        id: 'league-1',
-        name: 'Masters League',
-        leagueCode: 'MASTERS',
-      },
-    });
-
-    const service = new UserService(prisma, createLogger() as any);
-
-    await expect(
-      service.deleteUser('user-10', 'team.owner@example.com', 'admin-1', 'admin@example.com'),
-    ).rejects.toMatchObject({
-      details: {
-        dependencyType: 'TEAM_OWNER',
-        team: {
-          id: 'team-1',
-          name: 'Birdie Hunters',
-        },
-        league: {
-          id: 'league-1',
-          name: 'Masters League',
-          leagueCode: 'MASTERS',
-        },
-      },
-    });
   });
 });

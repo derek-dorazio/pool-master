@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { adminDeleteUser, adminDisableUser, adminEnableUser, adminGetUserDetail, adminResetUserPassword, adminSetUserRootAdmin, type AdminGetUserDetailResponses } from '@/lib/api';
 import {
   ActionList,
@@ -19,7 +19,6 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -78,100 +77,6 @@ function extractAdminError(error: unknown, fallback: string) {
   return fallback;
 }
 
-type DeleteDependencyDetails = {
-  dependencyType?: unknown;
-  team?: {
-    id?: unknown;
-    name?: unknown;
-  };
-  league?: {
-    leagueCode?: unknown;
-    name?: unknown;
-  };
-};
-
-function extractDeleteDependencyDetails(error: unknown): DeleteDependencyDetails | null {
-  if (!error || typeof error !== 'object') {
-    return null;
-  }
-
-  const candidate = error as {
-    error?: {
-      code?: unknown;
-      details?: unknown;
-    };
-  };
-
-  if (
-    candidate.error?.code !== 'ACCOUNT_DELETE_DEPENDENCIES_EXIST' ||
-    !candidate.error.details ||
-    typeof candidate.error.details !== 'object'
-  ) {
-    return null;
-  }
-
-  return candidate.error.details as DeleteDependencyDetails;
-}
-
-function formatLeagueLinkText(league: { leagueCode?: unknown; name?: unknown }) {
-  if (typeof league.name !== 'string' || typeof league.leagueCode !== 'string') {
-    return null;
-  }
-
-  return `${league.name}-${league.leagueCode}`;
-}
-
-function AccountDeleteDependencyMessage({ error }: { error: unknown }) {
-  const details = extractDeleteDependencyDetails(error);
-  const team = details?.team;
-  const league = details?.league;
-
-  if (
-    !details ||
-    typeof league?.leagueCode !== 'string' ||
-    typeof league.name !== 'string'
-  ) {
-    return <>{extractAdminError(error, 'We could not delete this account.')}</>;
-  }
-
-  const leagueLinkText = formatLeagueLinkText(league);
-
-  if (
-    typeof team?.id === 'string' &&
-    typeof team.name === 'string' &&
-    leagueLinkText
-  ) {
-    const relationship =
-      details.dependencyType === 'TEAM_OWNER' ? 'an owner of team' : 'a member of team';
-
-    return (
-      <>
-        Account cannot be deleted because it&apos;s still {relationship}{' '}
-        <Link
-          className="font-semibold underline"
-          to={buildLeagueTeamHomePath(league.leagueCode, team.id)}
-        >
-          {team.name}
-        </Link>{' '}
-        in league{' '}
-        <Link className="font-semibold underline" to={buildLeaguePath(league.leagueCode)}>
-          {leagueLinkText}
-        </Link>
-        .
-      </>
-    );
-  }
-
-  return (
-    <>
-      Account cannot be deleted because it still belongs to league{' '}
-      <Link className="font-semibold underline" to={buildLeaguePath(league.leagueCode)}>
-        {leagueLinkText}
-      </Link>
-      .
-    </>
-  );
-}
 
 function UserActionDialog({
   open,
@@ -684,7 +589,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           </FormField>
           {deleteMutation.isError ? (
             <Alert tone="danger">
-              <AccountDeleteDependencyMessage error={deleteMutation.error} />
+              {extractAdminError(deleteMutation.error, 'We could not delete this account.')}
             </Alert>
           ) : null}
         </div>

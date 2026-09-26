@@ -360,7 +360,8 @@ and was later removed from it — who under §12 has no remaining relationship t
 `LEAGUE_CREATOR` dependency type is removed with the column.
 
 `Squad.createdBy` is unaffected. It is a real relation (`@relation("SquadCreatedBy")`) and
-stays, along with the `createdSquadCount` guard and the `TEAM_OWNER` dependency type.
+stays, along with the `createdSquadCount` guard. The `TEAM_OWNER` dependency *type* is gone
+with the rest of the dependency-detail payload — see below.
 
 Creator provenance is not a concept this product needs. Who runs a league is the
 `LeagueMembership` with `role = COMMISSIONER`, which league creation already writes.
@@ -369,6 +370,34 @@ Dropping it: remove the column (migration), the field from `League` in
 `packages/shared/domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the
 DTO field emitted by `admin/league-service.ts`. `input.createdBy` **stays** as a parameter
 of the create operation — it is the userId that becomes the first commissioner.
+
+### Three guards dropped while implementing slice 1 (2026-09-26)
+
+Each existed in exactly one of the two User write paths, which is what made them worth
+looking at: a rule that only half the callers enforce is not a rule.
+
+**1. The self-demotion block on `setRootAdmin` is gone.** `admin/user-service.ts` rejected
+`isRootAdmin = false` when the subject was the caller, with a 400
+`SELF_ROOT_ADMIN_CHANGE`, *before* the last-root-admin count ran. The rule it was reaching
+for is "the platform must keep at least one root admin", and that is what the
+last-root-admin guard already enforces — for every caller, not just for the self case. With
+two root admins, one stepping down is a legitimate operation and the count permits it; with
+one, the count rejects it whoever asks. The self check added no protection, only a second
+error code the UI had to handle and a rule the account path did not have.
+
+**2. The dependency-detail payload on a blocked hard delete is gone.** `deleteUser` resolved
+the first blocking row into `{ dependencyType, team, league }` and shipped it in the error
+envelope, so the UI could render "still an owner of team X in league Y" with links. Three
+extra queries, a payload shape, a client-side parser and a discriminated type, to name one
+of possibly many blockers — and only on the admin path; self-delete returned the typed 409
+alone and always had. A typed 409 `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract; the
+blockers themselves are visible in the league and squad views that A9 already governs.
+
+**3. The read-only lock on inactive accounts is gone.** See A9: `isActive` is a read filter,
+not a write lock. `account/service.ts` rejected profile, username, preference and password
+writes to an inactive account with a 409 `ACCOUNT_INACTIVE_READ_ONLY`; the admin path
+imposed no such thing, and the lock blocked the obvious recovery — correct your details,
+then reactivate.
 
 ## Open items
 
