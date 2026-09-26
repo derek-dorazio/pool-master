@@ -59,6 +59,15 @@ export interface LeagueMembershipRepository {
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  /**
+   * Resolves a squad by its name within a league. Squad names are unique per league
+   * (`@@unique([leagueId, name])`, #202), so this returns at most one row, and it
+   * spans active AND inactive squads because the constraint does.
+   *
+   * The predicate belongs here rather than in a caller scanning `findByLeague`: the
+   * database holds the constraint, so the database should answer the question.
+   */
+  findByLeagueAndName(leagueId: string, name: string): Promise<Squad | null>;
   create(squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>): Promise<Squad>;
   update(id: string, updates: Partial<Squad>): Promise<Squad>;
   delete(id: string): Promise<void>;

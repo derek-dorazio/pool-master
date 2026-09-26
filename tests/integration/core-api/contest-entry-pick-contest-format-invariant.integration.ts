@@ -58,7 +58,6 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
     data: {
       leagueCode: `PIN${suffix.toUpperCase()}`,
       name: `Invariant League ${suffix}`,
-      createdBy: user.id,
       iconKey: 'TROPHY',
       joinPolicy: 'COMMISSIONER_ONLY',
     },

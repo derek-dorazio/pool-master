@@ -14,7 +14,6 @@ interface LeagueRow {
   leagueCode: string;
   name: string;
   description?: string | null;
-  createdBy: string;
   isActive: boolean;
   iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;

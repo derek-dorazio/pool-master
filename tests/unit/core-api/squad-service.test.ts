@@ -26,6 +26,7 @@ function createLeagueMembershipRepo(
 
 function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return {
+    findByLeagueAndName: jest.fn().mockResolvedValue(null),
     findById: jest.fn(),
     findByLeague: jest.fn(),
     create: jest.fn(),
@@ -346,6 +347,129 @@ describe('SquadService', () => {
     await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Updated Team' });
 
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { name: 'Updated Team' });
+  });
+
+  // #202 — squad names are unique within a league (@@unique([leagueId, name])). These four
+  // cases cover the split: a name the user typed is rejected on collision, a default name
+  // they did not choose is disambiguated instead of blocking them.
+  describe('squad name uniqueness within a league', () => {
+    function buildSquadRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: 'Existing Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        isActive: true,
+        createdAt: new Date('2026-04-07T00:00:00Z'),
+        updatedAt: new Date('2026-04-07T00:00:00Z'),
+        ...overrides,
+      };
+    }
+
+    it('rejects a user-chosen name another squad in the league already holds', async () => {
+      const squadRepo = createSquadRepo({
+        findByLeagueAndName: jest.fn().mockResolvedValue(buildSquadRow({ id: 'squad-other' })),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+      });
+      const leagueMembershipRepo = createLeagueMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
+      });
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
+
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+
+      await expect(
+        service.createSquad('league-1', 'user-1', { name: 'Existing Team' }),
+      ).rejects.toMatchObject({ code: 'SQUAD_NAME_TAKEN' });
+      expect(squadRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('disambiguates a colliding DEFAULT name rather than blocking the create', async () => {
+      // Two members of one league who share a name would otherwise both want
+      // "Derek Dorazio's Team". The second must still get a squad.
+      const findByLeagueAndName = jest.fn()
+        .mockResolvedValueOnce(buildSquadRow({ id: 'squad-other', name: "Derek Dorazio's Team" }))
+        .mockResolvedValueOnce(null);
+      const squadRepo = createSquadRepo({
+        findByLeagueAndName,
+        create: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio's Team 2" })),
+        findById: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio's Team 2" })),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+        findBySquad: jest.fn().mockResolvedValue([]),
+        create: jest.fn().mockResolvedValue({
+          id: 'squad-membership-1',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date('2026-04-07T00:00:00Z'),
+          createdAt: new Date('2026-04-07T00:00:00Z'),
+          updatedAt: new Date('2026-04-07T00:00:00Z'),
+        }),
+      });
+      const leagueMembershipRepo = createLeagueMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
+      });
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
+      prisma.user.findMany.mockResolvedValue([]);
+
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+
+      await service.createSquad('league-1', 'user-1', {});
+
+      expect(findByLeagueAndName).toHaveBeenNthCalledWith(1, 'league-1', "Derek Dorazio's Team");
+      expect(findByLeagueAndName).toHaveBeenNthCalledWith(2, 'league-1', "Derek Dorazio's Team 2");
+      expect(squadRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Derek Dorazio's Team 2" }),
+      );
+    });
+
+    it('rejects renaming a squad onto a name another squad holds', async () => {
+      const squadRepo = createSquadRepo({
+        findById: jest.fn().mockResolvedValue(buildSquadRow({ name: 'Original Team' })),
+        findByLeagueAndName: jest.fn().mockResolvedValue(buildSquadRow({ id: 'squad-other' })),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo({
+        findBySquad: jest.fn().mockResolvedValue([]),
+      });
+      const leagueMembershipRepo = createLeagueMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
+      });
+
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+
+      await expect(
+        service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' }),
+      ).rejects.toMatchObject({ code: 'SQUAD_NAME_TAKEN' });
+      expect(squadRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('allows a squad to keep its own name on update', async () => {
+      // The uniqueness check must exclude the squad being renamed, or a no-op rename
+      // would collide with itself.
+      const squadRepo = createSquadRepo({
+        findById: jest.fn().mockResolvedValue(buildSquadRow()),
+        findByLeagueAndName: jest.fn().mockResolvedValue(buildSquadRow({ id: 'squad-1' })),
+        update: jest.fn().mockResolvedValue(buildSquadRow()),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo({
+        findBySquad: jest.fn().mockResolvedValue([]),
+      });
+      const leagueMembershipRepo = createLeagueMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
+      });
+
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+
+      await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' });
+
+      expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { name: 'Existing Team' });
+    });
   });
 
   it('inactivates a team, removes active owners from the league, and inactivates users with no other leagues', async () => {

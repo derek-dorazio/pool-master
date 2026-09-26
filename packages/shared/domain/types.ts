@@ -67,7 +67,6 @@ export interface League extends DomainEntity {
   leagueCode: string;
   name: string;
   description?: string;
-  createdBy: string;
   isActive: boolean;
   iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;

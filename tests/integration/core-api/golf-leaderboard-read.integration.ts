@@ -33,7 +33,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       data: {
         leagueCode: `GLB${suffix.toUpperCase()}`,
         name: `Golf Leaderboard League ${suffix}`,
-        createdBy: owner.user.id,
       },
     });
     await prisma.leagueMembership.create({

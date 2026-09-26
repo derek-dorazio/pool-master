@@ -487,10 +487,14 @@ load-bearing; do not "clean it up".**
 ### League creation establishes the first commissioner
 
 Creating a league must also create a `LeagueMembership` for the creator with
-`role = COMMISSIONER`. That membership — not `League.createdBy` — is the authoritative
-statement of who runs a league.
+`role = COMMISSIONER`. That membership is the authoritative statement of who runs a league,
+and it is the **only** record of it: `League` has no `createdBy` column.
 
-`League.createdBy` is provenance only. No functionality depends on it.
+It had one until #202. It was a bare uuid with no relation, and because the membership is
+written in the same operation as the league, any query over it was answerable from
+`LeagueMembership` instead — including the two user-hard-delete guards that counted it.
+Do not reintroduce a creator column on an entity whose creator already holds a membership
+or ownership row; that row is the fact, and a parallel column is a second source for it.
 
 ---
 

@@ -72,11 +72,13 @@ export class LeagueService {
       }, 'Rejected duplicate league code');
       throw new LeagueCodeConflictError(input.leagueCode);
     }
+    // #202 — `input.createdBy` is not written to the League. It is the userId that
+    // becomes the first COMMISSIONER membership below, which is the authoritative
+    // record of who runs the league (§12).
     const league = await this.leagueRepo.create({
       leagueCode: input.leagueCode,
       name: input.name,
       description: input.description,
-      createdBy: input.createdBy,
       isActive: true,
       iconKey: LeagueIconKey.TROPHY,
       joinPolicy: DEFAULT_JOIN_POLICY,

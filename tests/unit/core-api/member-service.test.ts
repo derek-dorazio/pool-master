@@ -34,6 +34,7 @@ function createMembershipRepo(
 
 function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return {
+    findByLeagueAndName: jest.fn().mockResolvedValue(null),
     findById: jest.fn(),
     findByLeague: jest.fn(),
     create: jest.fn(),

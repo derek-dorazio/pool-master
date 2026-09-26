@@ -499,12 +499,9 @@ export async function cleanupTestData(): Promise<void> {
 
   const leagues = userIds.length
     ? await prisma.league.findMany({
-        where: {
-          OR: [
-            { createdBy: { in: userIds } },
-            { memberships: { some: { userId: { in: userIds } } } },
-          ],
-        },
+        // #202 — no `createdBy` arm. League creation always writes the creator's
+        // COMMISSIONER membership, so the membership filter already covers them.
+        where: { memberships: { some: { userId: { in: userIds } } } },
         select: { id: true },
       })
     : [];

@@ -58,7 +58,6 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
     data: {
       leagueCode: `PUL${suffix.toUpperCase()}`,
       name: `Partial Uniques League ${suffix}`,
-      createdBy: user.id,
       iconKey: 'TROPHY',
       joinPolicy: 'COMMISSIONER_ONLY',
     },

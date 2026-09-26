@@ -303,8 +303,24 @@ off `LeagueDto` and `SquadDto`. Settled 2026-09-26; A8 carries the reasoning and
 evidence.
 
 **`League.createdBy` is dropped.** It was a bare `String @db.Uuid` with no relation — no
-referential integrity, no traversal — and nothing read it for a decision. Its only two
-readers passed it through: the repository row→domain mapper, and an admin DTO field.
+referential integrity, no traversal.
+
+**Correction (2026-09-26, while implementing).** This section previously said "nothing read
+it for a decision. Its only two readers passed it through." That was wrong. Four call sites
+*queried* it, and two of them gated a destructive operation: the user hard-delete dependency
+guards in `admin/user-service.ts` and `account/service.ts` both counted
+`league.createdBy = userId`, and the admin guard reported a `LEAGUE_CREATOR` dependency type
+from it.
+
+Dropping it is still correct, for a better reason than "nothing reads it": **those counts are
+redundant.** Both guards already count the user's `LeagueMembership` rows, and `createLeague`
+writes the creator's `COMMISSIONER` membership in the same operation, so every creator is
+already caught by that count. The only case `createdBy` added was a user who created a league
+and was later removed from it — who under §12 has no remaining relationship to it. The
+`LEAGUE_CREATOR` dependency type is removed with the column.
+
+`Squad.createdBy` is unaffected. It is a real relation (`@relation("SquadCreatedBy")`) and
+stays, along with the `createdSquadCount` guard and the `TEAM_OWNER` dependency type.
 
 Creator provenance is not a concept this product needs. Who runs a league is the
 `LeagueMembership` with `role = COMMISSIONER`, which league creation already writes.

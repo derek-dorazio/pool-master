@@ -338,22 +338,22 @@ export class AccountService {
       );
     }
 
-    const [leagueCount, squadMembershipCount, createdLeagueCount, createdSquadCount] =
+    // #202 — no `league.createdBy` count. Every league creator holds a COMMISSIONER
+    // LeagueMembership, which `leagueCount` already counts.
+    const [leagueCount, squadMembershipCount, createdSquadCount] =
       await Promise.all([
         this.prisma.leagueMembership.count({ where: { userId } }),
         this.prisma.squadMembership.count({ where: { userId } }),
-        this.prisma.league.count({ where: { createdBy: userId } }),
         this.prisma.squad.count({ where: { createdBy: userId } }),
       ]);
 
-    if (leagueCount > 0 || squadMembershipCount > 0 || createdLeagueCount > 0 || createdSquadCount > 0) {
+    if (leagueCount > 0 || squadMembershipCount > 0 || createdSquadCount > 0) {
       this.logger?.warn({
         action: 'accountService.delete.dependenciesExist',
         data: {
           userId,
           leagueCount,
           squadMembershipCount,
-          createdLeagueCount,
           createdSquadCount,
         },
       }, 'Rejected account delete due to remaining dependencies');

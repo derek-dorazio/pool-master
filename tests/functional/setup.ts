@@ -386,23 +386,16 @@ export async function cleanupFunctionalData(): Promise<void> {
       .filter((sportId): sportId is string => Boolean(sportId)),
   )];
   const leagues = await database.league.findMany({
+    // #202 — no `createdBy` arm. League creation always writes the creator's
+    // COMMISSIONER membership, so the membership filter already covers them.
     where: {
-      OR: [
-        {
-          createdBy: {
+      memberships: {
+        some: {
+          userId: {
             in: userIds,
           },
         },
-        {
-          memberships: {
-            some: {
-              userId: {
-                in: userIds,
-              },
-            },
-          },
-        },
-      ],
+      },
     },
     select: {
       id: true,

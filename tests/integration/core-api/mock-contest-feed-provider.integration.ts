@@ -280,7 +280,6 @@ async function createGolfLiveVerificationContests(input: {
     data: {
       leagueCode: `GLE${suffix}`,
       name: `Golf Live E2E League ${suffix}`,
-      createdBy: input.ownerUserId,
     },
   });
   await prisma.leagueMembership.create({

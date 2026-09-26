@@ -99,11 +99,13 @@ export class UserDeleteRequiresInactiveError extends Error {
 }
 
 export type UserDeleteDependencyDetails = {
+  // #202 — 'LEAGUE_CREATOR' is gone with League.createdBy. Every league creator holds
+  // a COMMISSIONER LeagueMembership (createLeague writes it in the same operation), so
+  // 'LEAGUE_MEMBER' already covers them.
   dependencyType:
     | 'TEAM_OWNER'
     | 'TEAM_MEMBER'
-    | 'LEAGUE_MEMBER'
-    | 'LEAGUE_CREATOR';
+    | 'LEAGUE_MEMBER';
   userId: string;
   team?: {
     id: string;
@@ -581,17 +583,15 @@ export class UserService {
       }
     }
 
-    const [leagueCount, squadMembershipCount, createdLeagueCount, createdSquadCount] =
+    const [leagueCount, squadMembershipCount, createdSquadCount] =
       await Promise.all([
         this.prisma.leagueMembership.count({ where: { userId } }),
         this.prisma.squadMembership.count({ where: { userId } }),
-        this.prisma.league.count({ where: { createdBy: userId } }),
         this.prisma.squad.count({ where: { createdBy: userId } }),
       ]);
 
-    if (leagueCount > 0 || squadMembershipCount > 0 || createdLeagueCount > 0 || createdSquadCount > 0) {
+    if (leagueCount > 0 || squadMembershipCount > 0 || createdSquadCount > 0) {
       const dependencyDetails = await this.findDeleteDependencyDetails(userId, {
-        createdLeagueCount,
         createdSquadCount,
         leagueCount,
         squadMembershipCount,
@@ -603,7 +603,6 @@ export class UserService {
           userId,
           leagueCount,
           squadMembershipCount,
-          createdLeagueCount,
           createdSquadCount,
           dependencyDetails,
         },
@@ -649,7 +648,6 @@ export class UserService {
   private async findDeleteDependencyDetails(
     userId: string,
     counts: {
-      createdLeagueCount: number;
       createdSquadCount: number;
       leagueCount: number;
       squadMembershipCount: number;
@@ -736,25 +734,6 @@ export class UserService {
           dependencyType: 'LEAGUE_MEMBER',
           userId,
           league: membership.league,
-        };
-      }
-    }
-
-    if (counts.createdLeagueCount > 0) {
-      const league = await this.prisma.league.findFirst({
-        where: { createdBy: userId },
-        select: {
-          id: true,
-          leagueCode: true,
-          name: true,
-        },
-      });
-
-      if (league) {
-        return {
-          dependencyType: 'LEAGUE_CREATOR',
-          userId,
-          league,
         };
       }
     }

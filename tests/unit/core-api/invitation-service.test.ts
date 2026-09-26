@@ -77,6 +77,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
 
 function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return {
+    findByLeagueAndName: jest.fn().mockResolvedValue(null),
     findById: jest.fn().mockResolvedValue(null),
     findByLeague: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (input) => ({

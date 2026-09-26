@@ -13,7 +13,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
-import { buildDefaultSquadName } from '../../core/user-name';
+import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
 import { inactivateLeagueMemberUnit } from '../leagues/member-lifecycle';
 
 interface SquadViewerContext {
@@ -86,10 +86,25 @@ export class SquadService {
     await this.ensureUserCanJoinLeagueSquad(leagueId, userId);
 
     const user = await this.requireUser(userId);
+    // #202 — squad names are unique per league. A name the user typed must be rejected on
+    // collision; the default name must not be able to block them, so it disambiguates.
+    const requestedName = input.name?.trim();
+    let name: string;
+    if (requestedName) {
+      await assertSquadNameAvailable(this.squadRepo, leagueId, requestedName);
+      name = requestedName;
+    } else {
+      name = await resolveAvailableDefaultSquadName(
+        this.squadRepo,
+        leagueId,
+        user.firstName,
+        user.lastName,
+      );
+    }
     const squad = await this.squadRepo.create({
       leagueId,
       createdBy: userId,
-      name: input.name?.trim() || buildDefaultSquadName(user.firstName, user.lastName),
+      name,
       iconKey: input.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
       isActive: true,
     });
@@ -137,8 +152,15 @@ export class SquadService {
       },
     }, 'Updating squad');
     const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
+    const nextName = input.name?.trim();
+    if (nextName !== undefined) {
+      // excludeSquadId so a no-op rename does not collide with itself (#202).
+      await assertSquadNameAvailable(this.squadRepo, leagueId, nextName, {
+        excludeSquadId: squadId,
+      });
+    }
     await this.squadRepo.update(squadId, {
-      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+      ...(nextName !== undefined ? { name: nextName } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
     const squad = await this.loadSquadDto(squadId, viewerContext);

@@ -40,7 +40,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       data: {
         leagueCode: `GST${suffix.toUpperCase()}`,
         name: `Golf Settlement League ${suffix}`,
-        createdBy: owner.user.id,
       },
     });
     await prisma.leagueMembership.create({

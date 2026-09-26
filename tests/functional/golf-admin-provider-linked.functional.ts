@@ -635,7 +635,6 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
     data: {
       leagueCode: `CS8${suffix.toUpperCase()}`,
       name: `Provider Linked ${RUN} ${suffix}`,
-      createdBy: owner.userId,
     },
   });
   created.leagueIds.add(league.id);
