@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminDeleteUser, adminDisableUser, adminEnableUser, adminGetUserDetail, adminResetUserPassword, adminSetUserRootAdmin, type AdminGetUserDetailResponses } from '@/lib/api';
+import { adminDeleteUser, adminDisableUser, adminEnableUser, adminGetUserDetail, adminResetUserPassword, adminSetUserRootAdmin, type UserDto } from '@/lib/api';
 import {
   ActionList,
   ActionTile,
@@ -24,7 +24,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { throwApiError } from '@/lib/errors';
 
-type RootAdminViewedUser = AdminGetUserDetailResponses[200];
+// #202 step 3.4 — the canonical named component, not an index into the response map.
+type RootAdminViewedUser = UserDto;
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
 
 function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD') {

@@ -186,6 +186,9 @@ describe('pool-master-m32 — committed generated artifacts are 3.1-clean and ca
     // plain nullable string, nullable number, nullable enum
     expect(heyApiTypes).toMatch(/matchKeyword:\s*string\s*\|\s*null/);
     expect(heyApiTypes).toMatch(/price:\s*number\s*\|\s*null/);
-    expect(heyApiTypes).toMatch(/memberType:\s*'COMMISSIONER'\s*\|\s*'MEMBER'\s*\|\s*null/);
+    // The representative nullable enum was `LeagueSummaryDto.memberType` until #202 step 3.4
+    // deleted it under access rule A8 (viewer context does not travel on the entity). What
+    // this test is about is the GENERATOR, not that field, so any nullable enum serves.
+    expect(heyApiTypes).toMatch(/inactiveReason:\s*'WITHDRAWN'\s*\|\s*'CUT'\s*\|\s*'ELIMINATED'\s*\|\s*null/);
   });
 });

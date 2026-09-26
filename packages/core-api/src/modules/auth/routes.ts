@@ -13,6 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import { PrismaUserRepository } from '../../adapters';
 import { ErrorEnvelopeSchema, SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
@@ -23,7 +24,8 @@ export function authModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const authService = new AuthService(prisma, fastify.log);
+  const users = new PrismaUserRepository(prisma);
+  const authService = new AuthService(users, prisma, fastify.log);
   const handlers = createAuthHandlers(authService);
 
   // --- Registration ---

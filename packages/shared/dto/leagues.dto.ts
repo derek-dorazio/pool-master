@@ -14,6 +14,8 @@ import {
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { ContestSummaryDtoSchema } from './contests.dto';
 import { LeagueAuditEntryDtoSchema } from './audit.dto';
+import { SquadMembershipDtoSchema } from './squads.dto';
+import { UserDtoSchema } from './users.dto';
 
 export {
   LeagueAuditCategorySchema,
@@ -135,17 +137,26 @@ export type ImportLeagueMembersRequest = z.infer<typeof ImportLeagueMembersReque
 
 // --- Response Sub-schemas ---
 
-export const LeagueRelationshipDtoSchema = z.object({
-  leagueMember: z
-    .boolean()
-    .describe('Whether the current requester is an active member of this league.'),
-  commissioner: z
-    .boolean()
-    .describe('Whether the current requester is an active commissioner of this league.'),
-}).describe('Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.');
-export type LeagueRelationshipDto = z.infer<typeof LeagueRelationshipDtoSchema>;
-
-export const LeagueSummaryDtoSchema = z.object({
+/**
+ * A league. The canonical League shape (#202 step 3.4).
+ *
+ * This was two schemas and five viewer fields. `LeagueDetailDto` was
+ * `LeagueSummaryDto.extend({ joinPolicy })` — a pure view variant, and the reason the webapp
+ * grew a `toLeagueSummary()` that hand-projected one down to the other field by field. One
+ * schema now carries `joinPolicy`.
+ *
+ * **It carries no viewer context** (access rule A8). Gone: `memberType`,
+ * `leagueRelationship` and `isRootAdmin`. Those made the DTO a function of *who asked* —
+ * two requesters got different values for the same league, which is not a value of the
+ * entity, defeats caching, and was the seed of the admin/member DTO split this pass exists
+ * to undo. `isRootAdmin` was the worst of the three: a global property of the User,
+ * repeated on every row of every list.
+ *
+ * The viewer's context arrives once per league, on the league-context call
+ * (`LeagueContextResponse`), and once for the leagues list, as `LeagueMembership[]` beside
+ * the leagues.
+ */
+export const LeagueDtoSchema = z.object({
   id: z.string().describe('Internal league identifier used for authenticated management APIs.'),
   leagueCode: z.string().describe('Stable short code used in bookmarkable league-home routes and invite context.'),
   name: z.string().describe('Primary display name for the league.'),
@@ -177,38 +188,26 @@ export const LeagueSummaryDtoSchema = z.object({
     .describe('Selected built-in league icon key from the curated PoolMaster icon catalog.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
-  memberType: z
-    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
-    .nullable()
-    .describe('Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.'),
-  leagueRelationship: LeagueRelationshipDtoSchema,
-  isRootAdmin: z
-    .boolean()
-    .describe('Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.'),
-  createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
-}).describe('League list item used for selectors, welcome screens, and league overviews.');
-export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;
-
-export const LeagueDetailDtoSchema = LeagueSummaryDtoSchema.extend({
   joinPolicy: z
     .enum([JoinPolicy.COMMISSIONER_ONLY, JoinPolicy.LINK_INVITE, JoinPolicy.OPEN])
     .describe('League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.'),
-}).describe('Detailed league payload used by league-home and commissioner-management surfaces.');
-export type LeagueDetailDto = z.infer<typeof LeagueDetailDtoSchema>;
+  createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
+}).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
+export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
-export const LeagueMemberDtoSchema = z.object({
-  id: z.string().describe('Membership record identifier.'),
-  userId: z.string().describe('User account identifier for the member.'),
-  email: z.string().email().describe('Email address for the member account.'),
-  firstName: z.string().describe('First name shown in member-management surfaces.'),
-  lastName: z.string().describe('Last name shown in member-management surfaces.'),
-  role: z
-    .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
-    .describe('League role for the member, such as COMMISSIONER or MEMBER.'),
-  joinedAt: z.string().datetime().optional().describe('When the user joined or was activated in the league.'),
-}).describe('League membership summary shown in member-management views.');
-export type LeagueMemberDto = z.infer<typeof LeagueMemberDtoSchema>;
-
+/**
+ * The User↔League edge (#202 step 3.4).
+ *
+ * `LeagueMemberDto` is gone: it was this edge with three `User` columns flattened onto it
+ * (`email`, `firstName`, `lastName`) and the rest of the user dropped, produced by a service
+ * with no repository ports doing a raw Prisma join. Two shapes for one edge, and the flat one
+ * could not answer "is this member active" or "what is their timezone" without a second call.
+ *
+ * The edge now **embeds the canonical `UserDto`**, which is what
+ * `docs/DOMAIN-OPERATIONS.md` says an edge does: a member reads peer users through the league
+ * join, and returns the full object per working rule 3. This is not viewer context — whose
+ * league it is does not change who its members are — so A8 does not apply to it.
+ */
 export const LeagueMembershipDtoSchema = z.object({
   id: z.string().describe('Membership record identifier.'),
   leagueId: z.string().describe('League that owns the membership.'),
@@ -222,7 +221,9 @@ export const LeagueMembershipDtoSchema = z.object({
   joinedAt: DateTimeSchema.describe('When the user joined the league.'),
   createdAt: DateTimeSchema.describe('When the membership record was created.'),
   updatedAt: DateTimeSchema.describe('When the membership record was last updated.'),
-}).describe('Detailed league membership record.');
+  user: UserDtoSchema.describe('The member, as the canonical UserDto.'),
+}).describe('A membership of a user in a league, with the member embedded.');
+export type LeagueMembershipDto = z.infer<typeof LeagueMembershipDtoSchema>;
 
 export const LeagueInvitationDtoSchema = z.object({
   id: z.string().describe('Invitation record identifier.'),
@@ -304,18 +305,47 @@ export type UpcomingEventDto = z.infer<typeof UpcomingEventDtoSchema>;
 // --- Responses ---
 
 export const LeagueResponseSchema = z.object({
-  league: LeagueDetailDtoSchema,
-}).describe('Single-league detail response.');
+  league: LeagueDtoSchema,
+}).describe('Single-league response.');
 export type LeagueResponse = z.infer<typeof LeagueResponseSchema>;
 
+/**
+ * The league-context call (#202 step 3.4, access rule A8).
+ *
+ * This is the ONE response that carries the viewer's relationship to a league, and it carries
+ * it as the canonical edges rather than as flags: the viewer's `LeagueMembership` in this
+ * league, and their `SquadMembership` in it. The client fetches this once on league selection
+ * and holds it for the session, so every league-scoped response after it — squads, members,
+ * contests, entries — carries none.
+ *
+ * `null` for either edge means the viewer has none. A root admin reading a league they do not
+ * belong to is the case that produces a null membership.
+ */
+export const LeagueContextResponseSchema = z.object({
+  league: LeagueDtoSchema,
+  membership: LeagueMembershipDtoSchema.nullable()
+    .describe("The viewer's membership in this league, or null when they have none."),
+  squadMembership: SquadMembershipDtoSchema.nullable()
+    .describe("The viewer's squad membership within this league, or null when they hold none."),
+}).describe("A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context.");
+export type LeagueContextResponse = z.infer<typeof LeagueContextResponseSchema>;
+
+/**
+ * The leagues list — the one inherently multi-league surface, and so the one exception A8
+ * allows. The viewer's relationship differs per league, and the selector must show which of
+ * your leagues you run, so the relationship travels as a SET: one `LeagueMembership[]`
+ * beside the leagues, not a field repeated on every row.
+ */
 export const LeagueListResponseSchema = z.object({
-  leagues: z.array(LeagueSummaryDtoSchema),
-}).describe('League-list response.');
+  leagues: z.array(LeagueDtoSchema),
+  memberships: z.array(LeagueMembershipDtoSchema)
+    .describe("The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to."),
+}).describe('League-list response, with the viewer\'s memberships once as an array.');
 export type LeagueListResponse = z.infer<typeof LeagueListResponseSchema>;
 
 export const LeagueMembersResponseSchema = z.object({
-  members: z.array(LeagueMemberDtoSchema),
-}).describe('League-members response.');
+  members: z.array(LeagueMembershipDtoSchema),
+}).describe('League-members response. Each member is the membership edge with the user embedded.');
 export type LeagueMembersResponse = z.infer<typeof LeagueMembersResponseSchema>;
 
 export const LeagueMembershipResponseSchema = z.object({
@@ -339,13 +369,12 @@ export const LeagueAuditEntriesResponseSchema = z.object({
 }).describe('League audit-log response.');
 
 /**
- * Commissioner dashboard response. Per pool-master-rop.78.5 (folds in
- * pool-master-rop.14.2 and rop.14.3) the `league` and `contests` fields
- * are now typed against the canonical `LeagueSummaryDtoSchema` and
- * `ContestSummaryDtoSchema` rather than `JsonObjectSchema` placeholders.
+ * Commissioner dashboard response. The `league` and `contests` fields are typed against the
+ * canonical `LeagueDtoSchema` and `ContestSummaryDtoSchema` rather than `JsonObjectSchema`
+ * placeholders. It is league-scoped, so it carries no viewer context (A8).
  */
 export const LeagueDashboardResponseSchema = z.object({
-  league: LeagueSummaryDtoSchema.describe('League summary payload driving the dashboard header.'),
+  league: LeagueDtoSchema.describe('League payload driving the dashboard header.'),
   actionItems: z.array(LeagueActionItemDtoSchema).describe('Outstanding commissioner action items.'),
   contests: z.array(ContestSummaryDtoSchema).describe('Contest summaries included in the dashboard payload.'),
   memberCount: z.number().int().describe('Current league member count.'),
@@ -363,10 +392,9 @@ export type ResolveActionItemResponse = z.infer<typeof ResolveActionItemResponse
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
 
 // --- Published contract (#192) -------------------------------------------------
-// Each name becomes `components.schemas.<name>` and an importable generated type.
-// LeagueDetailDto extends LeagueSummaryDto, so the detail shape is a superset of the
-// list shape by construction — the frontend imports whichever it actually needs and
-// must not re-derive either from a response map.
+// Each name becomes `components.schemas.<name>` and an importable generated type. There is
+// one league shape to import — `LeagueDto` — because #202 step 3.4 collapsed the summary and
+// detail variants into it.
 registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
 registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
 registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
@@ -378,10 +406,7 @@ registerSchema('AcceptInvitationRequest', AcceptInvitationRequestSchema);
 registerSchema('CopySeasonRequest', CopySeasonRequestSchema);
 registerSchema('CsvImportRow', CsvImportRowSchema);
 registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
-registerSchema('LeagueRelationshipDto', LeagueRelationshipDtoSchema);
-registerSchema('LeagueSummaryDto', LeagueSummaryDtoSchema);
-registerSchema('LeagueDetailDto', LeagueDetailDtoSchema);
-registerSchema('LeagueMemberDto', LeagueMemberDtoSchema);
+registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
 registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
@@ -389,6 +414,7 @@ registerSchema('LeagueActionItemDto', LeagueActionItemDtoSchema);
 registerSchema('MemberActivityEventDto', MemberActivityEventDtoSchema);
 registerSchema('UpcomingEventDto', UpcomingEventDtoSchema);
 registerSchema('LeagueResponse', LeagueResponseSchema);
+registerSchema('LeagueContextResponse', LeagueContextResponseSchema);
 registerSchema('LeagueListResponse', LeagueListResponseSchema);
 registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
 registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);

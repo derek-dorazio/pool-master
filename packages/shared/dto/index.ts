@@ -1,4 +1,5 @@
 export * from './common.dto';
+export * from './users.dto';
 export * from './auth.dto';
 export * from './leagues.dto';
 export * from './squads.dto';

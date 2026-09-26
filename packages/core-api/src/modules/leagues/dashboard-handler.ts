@@ -1,16 +1,14 @@
 /**
  * Dashboard route handlers — commissioner dashboard data.
  *
- * pool-master-rop.78.5 (folds rop.14.2 + rop.14.3) — the dashboard now
- * emits typed `LeagueSummaryDto` and `ContestSummaryDto[]` payloads
- * instead of raw domain objects, matching the typed
- * `LeagueDashboardResponseSchema`.
+ * Emits typed `LeagueDto` and `ContestSummaryDto[]` payloads rather than raw domain objects,
+ * matching `LeagueDashboardResponseSchema`. League-scoped, so no viewer context (A8).
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { DashboardService } from './dashboard-service';
 import { sendError } from '../../core/error-handler';
-import { toLeagueSummaryDto } from '../../mappers/leagues.mapper';
+import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { toContestSummaryDto } from '../../mappers/contests.mapper';
 
 export function createDashboardHandlers(dashboardService: DashboardService) {
@@ -28,7 +26,7 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
     return reply.send({
-      league: toLeagueSummaryDto(dashboard.league, {
+      league: toLeagueDto(dashboard.league, {
         memberCount: dashboard.memberCount,
         activeContestCount: dashboard.contests.length,
       }),

@@ -485,11 +485,35 @@ Only once stages 1 and 2 are settled, and strictly in this order:
 | 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) | 1 |
 | 3.5 | **Tests** — the slice's unit, integration and functional-api tests moved onto the canonical shapes | 1 |
 | 3.6 | **Residue sweep** — search the cluster for shadows and bypasses the forward work did not happen to touch (working rule 6, §15) | 1 |
-| 3.7 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
-| 3.8 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
+| 3.7 | **Architecture write-up** — one new document: the service layers and the webapp layers, what goes in each and why, the dependencies between them (exported SDK, generated TS types), and the tests that apply to each layer, with fresh diagrams and flows | 1 |
+| 3.8 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
+| 3.9 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
 
-**A slice's stage 3 stops at 3.6.** Steps 3.7 and 3.8 do not run per slice — see the phase
-split below. A slice is done, for phase-1 purposes, when its schema, DAO, services, routes
+**A slice's stage 3 stops at 3.7.** Steps 3.8 and 3.9 do not run per slice — see the phase
+split below.
+
+### Step 3.7 — the architecture write-up
+
+Set by the repo owner 2026-09-26, after slice 1's step 3.4: *"a separate, new architecture doc
+& diagram for the layers and rules for where each piece of service code goes, and why. Along
+with all the layers of the webapp and what goes where and why. With dependencies such as
+exported SDK and TS types... And do the same for the test organization. What type of tests go
+into which folders of which test suites, and why."*
+
+Constraints, as set:
+
+- **One new document.** Not an edit to an existing one.
+- **Written fresh.** Do not consult or mirror the existing rules and docs while writing it —
+  the point is to describe the structure this refactor actually produced, so that the owner
+  can review it against what they expected. A description that inherits the old documents'
+  framing cannot serve that purpose.
+- **Tests sit beside the layer they test.** Not a separate testing section: each layer is
+  described together with the tests that apply to it, which folder and suite they live in,
+  and why there rather than elsewhere.
+- **Fresh diagrams and flows**, not prose alone.
+
+It runs once, after slice 1, and is for review and discussion rather than as an input to
+slices 2–4. A slice is done, for phase-1 purposes, when its schema, DAO, services, routes
 and tests name the cluster's entities one way, the sweep is clean, and the phase-1 gates
 are green.
 
@@ -577,10 +601,10 @@ within that branch, not separate branches or separate PRs.
 > types and client SDK's are exported."
 
 **Phase 1 — every slice, backend only.** Slices 1 through 4 each run stages 1, 2 and steps
-3.1–3.6. The webapp is not touched and is *expected to be broken* for the duration: routes
+3.1–3.6; step 3.7 runs once, after slice 1. The webapp is not touched and is *expected to be broken* for the duration: routes
 and DTOs are changing underneath it and the generated client has not been regenerated yet.
 
-**The boundary — export once.** After the last slice's backend is green, run 3.7 for
+**The boundary — export once.** After the last slice's backend is green, run 3.8 for
 everything at once: register the canonical DTOs as named OpenAPI components, `npm run
 api:refresh`, and regenerate the client SDK. One regeneration over a settled model, not four
 over a moving one.
@@ -835,7 +859,7 @@ The genuinely admin-only operations. No shared objects and no collapse: this sli
 (stop calling it "admin") and bringing services onto ports for consistency.
 
 ### Phase 2 — the frontend, once
-Not a fifth slice. Runs after all four slices' backends are green and step 3.7 has exported
+Not a fifth slice. Runs after all four slices' backends are green and step 3.8 has exported
 the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
 in slices 1–4 moves onto the generated type, using the full object (rule 3).
 

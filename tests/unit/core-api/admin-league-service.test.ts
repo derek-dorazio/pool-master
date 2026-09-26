@@ -90,7 +90,7 @@ describe('AdminLeagueService.searchLeagues', () => {
     expect(prisma.contest.groupBy).not.toHaveBeenCalled();
   });
 
-  it('marks every row as root-admin scope with no viewer relationship', async () => {
+  it('returns leagues with no viewer context on them at all (A8)', async () => {
     const leagueRepo = createLeagueRepo({
       findAll: jest.fn().mockResolvedValue([buildLeague({ id: 'league-1' })]),
     });
@@ -103,12 +103,13 @@ describe('AdminLeagueService.searchLeagues', () => {
 
     const [row] = await service.searchLeagues({});
 
-    // A8 will remove these fields from the DTO entirely; until then the admin list states
-    // the caller is root admin and holds no membership in the league.
-    expect(row).toMatchObject({
-      isRootAdmin: true,
-      memberType: null,
-      leagueRelationship: { leagueMember: false, commissioner: false },
-    });
+    // #202 step 3.4 — A8 landed, so this is now asserted as an absence. The admin list used
+    // to hard-code `isRootAdmin: true`, `memberType: null` and an all-false
+    // `leagueRelationship` on every row: a caller having to INVENT values for three fields is
+    // what proved they were never properties of the league.
+    expect(row?.id).toBe('league-1');
+    expect(row).not.toHaveProperty('isRootAdmin');
+    expect(row).not.toHaveProperty('memberType');
+    expect(row).not.toHaveProperty('leagueRelationship');
   });
 });

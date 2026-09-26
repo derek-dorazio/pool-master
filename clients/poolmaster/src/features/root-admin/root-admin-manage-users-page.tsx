@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
+import { adminListUsers, type UserDto } from "@/lib/api";
 import { throwApiError } from "@/lib/errors";
 import {
   DataGridPage,
@@ -9,7 +9,8 @@ import {
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
 
-type RootAdminUser = AdminListUsersResponses[200]["users"][number];
+// #202 step 3.4 — the canonical named component, not an index into the response map.
+type RootAdminUser = UserDto;
 const columnHelper = createColumnHelper<RootAdminUser>();
 
 function buildUserDisplayName(user: RootAdminUser) {

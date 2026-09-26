@@ -140,12 +140,10 @@ describe('SDK Functional: Root Admin', () => {
         userId: user.userId,
       },
     });
-    expect(detailResponse.data?.id).toBe(user.userId);
-    expect(detailResponse.data?.viewerAuthority).toEqual({
-      self: true,
-      rootAdmin: true,
-      viewer: false,
-    });
+    // #202 step 3.4 — `{ user }`, the same envelope getCurrentUser uses, and no
+    // `viewerAuthority` block (A8).
+    expect(detailResponse.data?.user.id).toBe(user.userId);
+    expect(detailResponse.data?.user.email).toBe(user.email);
   });
 
   it('returns stable not-found codes for root-admin user detail reads', async () => {

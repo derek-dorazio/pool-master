@@ -3,8 +3,14 @@ import type { AdminLeagueService } from './league-service';
 import { LeagueNotFoundError, LeagueOperationError } from './league-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
+import type { LeagueMembershipRepository, UserRepository } from '@poolmaster/shared/db';
+import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 
-export function createLeagueAdminHandlers(adminLeagueService: AdminLeagueService) {
+export function createLeagueAdminHandlers(
+  adminLeagueService: AdminLeagueService,
+  membershipRepo: LeagueMembershipRepository,
+  userRepo: UserRepository,
+) {
   return {
     listLeagues,
     inactivateLeague,
@@ -20,13 +26,31 @@ export function createLeagueAdminHandlers(adminLeagueService: AdminLeagueService
     }>,
     _reply: FastifyReply,
   ) {
+    const { rootAdminUserId } = extractRootAdminContext(request);
     const leagues = await adminLeagueService.searchLeagues({
       search: request.query.search,
       isActive: request.query.isActive,
     });
 
+    // #202 step 3.4 — `memberships` means "the viewer's own memberships among these
+    // leagues" (A8's one exception, the multi-league surface). For a root admin listing
+    // leagues they do not belong to it is legitimately empty; it is COMPUTED rather than
+    // sent as `[]`, because inventing a value for a viewer field is the exact mistake this
+    // step removed from `searchLeagues` — it used to hard-code `isRootAdmin: true` and an
+    // all-false relationship on every row.
+    const leagueIds = new Set(leagues.map((league) => league.id));
+    const [ownMemberships, viewer] = await Promise.all([
+      membershipRepo.findByUser(rootAdminUserId),
+      userRepo.findById(rootAdminUserId),
+    ]);
+
     return {
       leagues,
+      memberships: viewer
+        ? ownMemberships
+          .filter((membership) => leagueIds.has(membership.leagueId))
+          .map((membership) => mapLeagueMembershipToDto(membership, viewer))
+        : [],
     };
   }
 

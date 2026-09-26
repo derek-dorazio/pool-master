@@ -1,3 +1,4 @@
+export * from './users.mapper';
 export * from './auth.mapper';
 export * from './leagues.mapper';
 export * from './contests.mapper';

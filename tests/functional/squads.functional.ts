@@ -71,12 +71,6 @@ describe('SDK Functional: Squads', () => {
     expect(commissionerTeam?.leagueId).toBe(league.id);
     expect(commissionerTeam?.isActive).toBe(true);
     expect(commissionerTeam?.memberCount).toBe(1);
-    expect(commissionerTeam?.teamRelationship).toEqual({
-      leagueMember: true,
-      owner: true,
-      commissioner: true,
-    });
-    expect(commissionerTeam?.isRootAdmin).toBe(false);
 
     const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
       where: {
@@ -183,11 +177,5 @@ describe('SDK Functional: Squads', () => {
     });
 
     expect(response.data?.squads).toHaveLength(1);
-    expect(response.data?.squads[0]?.teamRelationship).toEqual({
-      leagueMember: false,
-      owner: false,
-      commissioner: false,
-    });
-    expect(response.data?.squads[0]?.isRootAdmin).toBe(true);
   });
 });

@@ -112,7 +112,7 @@ export const getVersion = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * List leagues for the current user
  *
- * Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.
+ * Returns the leagues visible to the authenticated user, together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.
  */
 export const listLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguesResponses, ListLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -164,7 +164,7 @@ export const getLeague = <ThrowOnError extends boolean = false>(options: Options
 /**
  * Get league details by league code
  *
- * Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.
+ * The league-context call. Returns a league by its stable league code together with the viewer's own membership edges in it — their LeagueMembership and their SquadMembership. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation, it allows root-admin override access without faking league membership, and it is the one response that carries viewer context: every other league-scoped response omits it because the client already holds this one (access rule A8).
  */
 export const getLeagueByCode = <ThrowOnError extends boolean = false>(options: Options<GetLeagueByCodeData, ThrowOnError>) => (options.client ?? client).get<GetLeagueByCodeResponses, GetLeagueByCodeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1105,7 +1105,7 @@ export const adminDeleteUser = <ThrowOnError extends boolean = false>(options: O
 /**
  * Get user detail
  *
- * Returns the administrative detail view for a specific user account.
+ * Returns one user account as the canonical UserDto. Carries no viewer context: who is asking is not a property of the user being read (access rule A8).
  */
 export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetUserDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetUserDetailResponses, AdminGetUserDetailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -136,12 +136,6 @@ describe('SDK Functional: Auth', () => {
     });
 
     expect(successfulCreate.data?.league.id).toBeTruthy();
-    expect(successfulCreate.data?.league.memberType).toBe('COMMISSIONER');
-    expect(successfulCreate.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: true,
-    });
-    expect(successfulCreate.data?.league.isRootAdmin).toBe(false);
   });
 
   it('revokes the refresh token on logout and rejects subsequent refresh attempts', async () => {

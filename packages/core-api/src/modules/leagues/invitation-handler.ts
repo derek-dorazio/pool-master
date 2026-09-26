@@ -10,8 +10,13 @@ import {
   InvitationNotFoundError,
 } from './invitation-service';
 import { sendError } from '../../core/error-handler';
+import type { UserRepository } from '@poolmaster/shared/db';
+import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 
-export function createInvitationHandlers(invitationService: InvitationService) {
+export function createInvitationHandlers(
+  invitationService: InvitationService,
+  userRepo: UserRepository,
+) {
   return {
     getInvitationPreview,
     sendInvitations,
@@ -166,7 +171,15 @@ export function createInvitationHandlers(invitationService: InvitationService) {
         action: 'leagueInvitationRoute.accept.success',
         data: { userId, leagueId: membership.leagueId },
       }, 'Accepted league invitation');
-      return reply.status(201).send({ membership });
+      // #202 step 3.4 — mapped, not sent raw. This used to `send({ membership })` with the
+      // domain object and let the serializer decide what came out, which is the
+      // "contract enforced only at runtime" pattern: `LeagueMembershipResponse` was a
+      // registered component with nothing type-checked against it.
+      const member = await userRepo.findById(userId);
+      if (!member) {
+        return sendError(reply, 404, 'USER_NOT_FOUND', `User not found: ${userId}`);
+      }
+      return reply.status(201).send({ membership: mapLeagueMembershipToDto(membership, member) });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
         logger.warn({

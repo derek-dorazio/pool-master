@@ -20,6 +20,7 @@ import {
   PrismaSquadRepository,
   PrismaContestRepository,
   PrismaActionItemRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { LeagueService } from './service';
 import { InvitationService } from './invitation-service';
@@ -52,6 +53,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
+  const userRepo = new PrismaUserRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
   const mailDelivery = createMailDeliveryProvider(
@@ -86,7 +88,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
     squadMembershipRepo,
     fastify.log,
   );
-  const memberDirectoryService = new MemberDirectoryService(prisma);
+  const memberDirectoryService = new MemberDirectoryService(membershipRepo, userRepo);
   const dashboardService = new DashboardService(
     leagueRepo,
     membershipRepo,
@@ -102,9 +104,9 @@ export function leaguesModule(fastify: FastifyInstance): void {
     invitationRepo,
   );
 
-  const league = createLeagueHandlers(leagueService, membershipRepo);
-  const invitation = createInvitationHandlers(invitationService);
-  const member = createMemberHandlers(memberService, memberDirectoryService);
+  const league = createLeagueHandlers(leagueService, membershipRepo, squadMembershipRepo, userRepo);
+  const invitation = createInvitationHandlers(invitationService, userRepo);
+  const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const dashboard = createDashboardHandlers(dashboardService);
   const audit = createAuditHandlers(auditService);
   const bulk = createBulkHandlers(bulkService);
@@ -116,7 +118,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'List leagues for the current user',
       description:
-        'Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.',
+        'Returns the leagues visible to the authenticated user, together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.',
       operationId: 'listLeagues',
       response: {
         200: schemaRef('LeagueListResponse'),
@@ -163,10 +165,10 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Get league details by league code',
       description:
-        'Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.',
+        'The league-context call. Returns a league by its stable league code together with the viewer\'s own membership edges in it — their LeagueMembership and their SquadMembership. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation, it allows root-admin override access without faking league membership, and it is the one response that carries viewer context: every other league-scoped response omits it because the client already holds this one (access rule A8).',
       operationId: 'getLeagueByCode',
       response: {
-        200: schemaRef('LeagueResponse'),
+        200: schemaRef('LeagueContextResponse'),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

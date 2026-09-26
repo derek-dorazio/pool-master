@@ -7,11 +7,8 @@ import {
   LeagueIconKey,
   LeagueMembershipStatus,
 } from '@poolmaster/shared/domain';
-import type {
-  LeagueDetailDto,
-  LeagueSummaryDto,
-} from '@poolmaster/shared/dto';
-import { toLeagueDetailDto, toLeagueSummaryDto } from '../../mappers/leagues.mapper';
+import type { LeagueDto } from '@poolmaster/shared/dto';
+import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { logAdminAction } from './admin-audit-service';
 import { LeagueNotFoundError, LeagueOperationError, LeagueService } from '../leagues/service';
 
@@ -51,7 +48,7 @@ export class AdminLeagueService {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async searchLeagues(query: AdminLeagueSearchQuery): Promise<LeagueSummaryDto[]> {
+  async searchLeagues(query: AdminLeagueSearchQuery): Promise<LeagueDto[]> {
     const trimmedSearch = query.search?.trim();
 
     this.logger?.debug({
@@ -91,15 +88,12 @@ export class AdminLeagueService {
       contestRows.map((row) => [row.leagueId, row._count._all]),
     );
 
-    const summaries = leagues.map((league) => toLeagueSummaryDto(league, {
+    // #202 step 3.4 — no viewer fields. This used to hard-code `isRootAdmin: true` and an
+    // all-false `leagueRelationship` on every row, which is the clearest evidence they were
+    // never properties of the league: the admin caller had to invent values for them.
+    const summaries = leagues.map((league) => toLeagueDto(league, {
       memberCount: memberCounts.get(league.id) ?? 0,
       activeContestCount: contestCountByLeagueId.get(league.id) ?? 0,
-      memberType: null,
-      leagueRelationship: {
-        leagueMember: false,
-        commissioner: false,
-      },
-      isRootAdmin: true,
     }));
 
     this.logger?.info({
@@ -118,7 +112,7 @@ export class AdminLeagueService {
     leagueId: string,
     rootAdminUserId: string,
     rootAdminEmail: string,
-  ): Promise<LeagueDetailDto> {
+  ): Promise<LeagueDto> {
     const before = await this.loadLeagueSummaryRow(leagueId);
     const league = await this.leagueService.inactivateLeague(leagueId);
     const updated = await this.loadLeagueSummaryRow(leagueId);
@@ -147,7 +141,7 @@ export class AdminLeagueService {
       },
     }, 'Root-admin inactivated league');
 
-    return toLeagueDetailDto(
+    return toLeagueDto(
       {
         id: league.id,
         leagueCode: league.leagueCode,
@@ -162,12 +156,6 @@ export class AdminLeagueService {
       {
         memberCount: updated.memberCount,
         activeContestCount: updated.activeContestCount,
-        memberType: null,
-        leagueRelationship: {
-          leagueMember: false,
-          commissioner: false,
-        },
-        isRootAdmin: true,
       },
     );
   }

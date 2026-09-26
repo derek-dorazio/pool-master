@@ -13,7 +13,27 @@ import {
   fakeLeagueMembershipRepo,
   fakeSquadMembershipRepo,
   fakeSquadRepo,
+  fakeUserRepo,
 } from '../../support/repo-fakes';
+import type { User } from '../../../packages/shared/domain';
+
+/**
+ * #202 step 3.4 — members come off `UserRepository` now, not a raw `prisma.user` select of
+ * three columns, because the squad edge embeds the canonical `UserDto`.
+ */
+function buildUser(overrides: Partial<User> & { id: string }): User {
+  return {
+    email: `${overrides.id}@example.com`,
+    username: overrides.id,
+    firstName: 'Member',
+    lastName: 'User',
+    isActive: true,
+    isRootAdmin: false,
+    createdAt: new Date('2026-04-07T00:00:00Z'),
+    updatedAt: new Date('2026-04-07T00:00:00Z'),
+    ...overrides,
+  };
+}
 
 function createLeagueMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -49,12 +69,18 @@ describe('SquadService', () => {
     updatedAt: new Date('2026-04-07T00:00:00Z'),
   };
 
+  // What is left on prisma: nothing this suite drives. The service still holds it for the
+  // squad-delete transaction, which the delete tests exercise through their own mock.
   const prisma = {
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
     },
   } as any;
+
+  const userRepo = fakeUserRepo({ findById: jest.fn(), findByLeague: jest.fn() });
+  const userFindById = userRepo.findById as jest.Mock;
+  const userFindByLeague = userRepo.findByLeague as jest.Mock;
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -111,13 +137,14 @@ describe('SquadService', () => {
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
     });
-    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
-    prisma.user.findMany.mockResolvedValue([{ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }]);
+    userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
+    userFindByLeague.mockResolvedValue([buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })]);
 
     const service = new SquadService(
       squadRepo,
       squadMembershipRepo,
       leagueMembershipRepo,
+      userRepo,
       prisma,
     );
 
@@ -148,6 +175,7 @@ describe('SquadService', () => {
       createLeagueMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
       }),
+      userRepo,
       prisma,
     );
 
@@ -156,7 +184,7 @@ describe('SquadService', () => {
     );
   });
 
-  it('allows a root admin outsider to list squads and emits team relationship truth', async () => {
+  it('lets a root admin who is not a league member list its squads, with no viewer fields on them', async () => {
     const squadRepo = createSquadRepo({
       findByLeague: jest.fn().mockResolvedValue([
         {
@@ -198,24 +226,28 @@ describe('SquadService', () => {
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     });
-    prisma.user.findMany.mockResolvedValue([{ id: 'user-2', firstName: 'Fran', lastName: 'Lane' }]);
+    userFindByLeague.mockResolvedValue([buildUser({ id: 'user-2', firstName: 'Fran', lastName: 'Lane' })]);
 
     const service = new SquadService(
       squadRepo,
       squadMembershipRepo,
       leagueMembershipRepo,
+      userRepo,
       prisma,
     );
 
+    // findByLeagueAndUser resolves null, so this caller holds no membership in the league.
+    // A1 lets a root admin read it anyway.
     const result = await service.listSquads('league-1', 'root-admin-1', true);
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.teamRelationship).toEqual({
-      leagueMember: false,
-      owner: false,
-      commissioner: false,
-    });
-    expect(result[0]?.isRootAdmin).toBe(true);
+    expect(result[0]?.id).toBe('squad-1');
+    // #202 step 3.4 — asserted as an absence, because that is the rule. Under A8 the squad
+    // is a value of the entity: `teamRelationship` and `isRootAdmin` used to make it a
+    // function of who asked, and this caller is precisely the one that had to invent values
+    // for them.
+    expect(result[0]).not.toHaveProperty('teamRelationship');
+    expect(result[0]).not.toHaveProperty('isRootAdmin');
   });
 
   it('rejects removing the last active owner and requires team inactivation instead', async () => {
@@ -271,12 +303,13 @@ describe('SquadService', () => {
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
     });
-    prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
+    userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
 
     const service = new SquadService(
       squadRepo,
       squadMembershipRepo,
       leagueMembershipRepo,
+      userRepo,
       prisma,
     );
 
@@ -328,6 +361,7 @@ describe('SquadService', () => {
       squadRepo,
       squadMembershipRepo,
       leagueMembershipRepo,
+      userRepo,
       prisma,
     );
 
@@ -364,9 +398,9 @@ describe('SquadService', () => {
       const leagueMembershipRepo = createLeagueMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
       });
-      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
+      userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
 
       await expect(
         service.createSquad('league-1', 'user-1', { name: 'Existing Team' }),
@@ -402,10 +436,10 @@ describe('SquadService', () => {
       const leagueMembershipRepo = createLeagueMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
       });
-      prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
-      prisma.user.findMany.mockResolvedValue([]);
+      userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
+      userFindByLeague.mockResolvedValue([]);
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
 
       await service.createSquad('league-1', 'user-1', {});
 
@@ -428,7 +462,7 @@ describe('SquadService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
       });
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
 
       await expect(
         service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' }),
@@ -451,7 +485,7 @@ describe('SquadService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'COMMISSIONER' }),
       });
 
-      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+      const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, userRepo, prisma);
 
       await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Existing Team' });
 
@@ -558,7 +592,7 @@ describe('SquadService', () => {
     prisma.user.findUnique
       .mockResolvedValueOnce({ id: 'user-1', isActive: true, isRootAdmin: false })
       .mockResolvedValueOnce({ id: 'user-2', isActive: true, isRootAdmin: false });
-    prisma.user.findMany.mockResolvedValue([]);
+    userFindByLeague.mockResolvedValue([]);
     prisma.$transaction = jest.fn().mockImplementation(async (callback) =>
       callback({
         user: { update: jest.fn().mockResolvedValue(undefined) },
@@ -569,6 +603,7 @@ describe('SquadService', () => {
       squadRepo,
       squadMembershipRepo,
       leagueMembershipRepo,
+      userRepo,
       prisma,
     );
 

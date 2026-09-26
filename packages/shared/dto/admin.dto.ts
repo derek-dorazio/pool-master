@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
-import { UserProfileDtoSchema } from './auth.dto';
 import {
   EventReadinessReasonDtoSchema,
   EventReadinessStatusDtoSchema,
@@ -47,23 +46,16 @@ export const PlatformMetricsResponseSchema = z.object({
 }).describe('Top-line platform metrics response.');
 export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSchema>;
 
-// #202 — not paged (§16), and named for its entity like LeagueListResponse and
-// SquadListResponse rather than the generic `items`/`total` envelope it used to share
-// with the audit and error-log surfaces.
-export const UserListResponseSchema = z.object({
-  users: z.array(UserProfileDtoSchema),
-}).describe('User-list response.');
-export type UserListResponse = z.infer<typeof UserListResponseSchema>;
-export const UserViewerAuthorityDtoSchema = z.object({
-  self: z.boolean().describe('Whether the current requester is viewing their own user account.'),
-  rootAdmin: z.boolean().describe('Whether the current requester has root-admin authority on this account page.'),
-  viewer: z.boolean().describe('Fallback viewer state when the requester is neither self nor root admin on this account page.'),
-}).describe('Account-page authority flags emitted for the viewed user.');
-export type UserViewerAuthorityDto = z.infer<typeof UserViewerAuthorityDtoSchema>;
-export const UserDetailResponseSchema = UserProfileDtoSchema.extend({
-  viewerAuthority: UserViewerAuthorityDtoSchema,
-}).describe('Root-admin user-detail response.');
-export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
+// #202 step 3.4 — `UserListResponse` and the root-admin user-detail response are both
+// `UserDto`, and now live in users.dto.ts with it. What used to be here:
+//
+//   - `UserDetailResponse` = `UserProfileDto` + a `viewerAuthority` block of
+//     `{ self, rootAdmin, viewer }`. Deleted under access rule A8 — the requester’s
+//     relationship to what they are reading is not a field on the thing being read, and two
+//     of those three flags were constants on a root-admin-only route. `self` is
+//     `user.id === me.id`, which the client can see; `isRootAdmin` is a property of the
+//     cached `UserDto`.
+//   - `UserViewerAuthorityDto`, which existed only to give that block a name.
 export const SetUserRootAdminRequestSchema = z.object({
   isRootAdmin: z.boolean().describe('Whether the target user should hold the platform-level root-admin role after the change.'),
   reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),

@@ -11,6 +11,8 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192). The DTOs live in
 // leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
 import '@poolmaster/shared/dto/leagues.dto';
+// Registers the canonical UserDto and its response envelopes (#202 step 3.4).
+import '@poolmaster/shared/dto/users.dto';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
@@ -64,8 +66,6 @@ import {
   ContestConfigTemplateListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
   SetUserRootAdminRequestSchema,
-  UserListResponseSchema,
-  UserDetailResponseSchema,
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
@@ -150,7 +150,8 @@ export async function adminModule(
   setAuditQueryLogger(fastify.log);
 
   // --- Services ---
-  const userService = new UserService(new PrismaUserRepository(prisma), prisma, fastify.log);
+  const adminUserRepository = new PrismaUserRepository(prisma);
+  const userService = new UserService(adminUserRepository, prisma, fastify.log);
   const leagueRepository = new PrismaLeagueRepository(prisma);
   const leagueMembershipRepository = new PrismaLeagueMembershipRepository(prisma);
   const leagueService = new LeagueService(
@@ -203,7 +204,7 @@ export async function adminModule(
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
-  const leagues = createLeagueAdminHandlers(adminLeagueService);
+  const leagues = createLeagueAdminHandlers(adminLeagueService, leagueMembershipRepository, adminUserRepository);
   const teams = createTeamAdminHandlers(adminTeamService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
@@ -218,7 +219,7 @@ export async function adminModule(
       summary: 'List users with filters',
       description: 'Returns the administrative user list with filter support for platform operations and support workflows.',
       operationId: 'adminListUsers',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserListResponseSchema) }),
+      response: withAdminErrorResponses({ 200: schemaRef('UserListResponse') }),
       querystring: {
         type: 'object',
         properties: {
@@ -234,9 +235,9 @@ export async function adminModule(
     schema: {
       tags: ['Admin'],
       summary: 'Get user detail',
-      description: 'Returns the administrative detail view for a specific user account.',
+      description: 'Returns one user account as the canonical UserDto. Carries no viewer context: who is asking is not a property of the user being read (access rule A8).',
       operationId: 'adminGetUserDetail',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserDetailResponseSchema) }, [404]),
+      response: withAdminErrorResponses({ 200: schemaRef('UserResponse') }, [404]),
     },
     handler: user.getUserDetail,
   });

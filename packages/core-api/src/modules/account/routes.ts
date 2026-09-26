@@ -23,7 +23,7 @@ export function accountModule(fastify: FastifyInstance): void {
   const users = new PrismaUserRepository(prisma);
   const service = new AccountService(users, prisma, fastify.log);
   const profileService = new UserProfileService(users, fastify.log);
-  const authService = new AuthService(prisma, fastify.log);
+  const authService = new AuthService(users, prisma, fastify.log);
   const handlers = createAccountHandlers(service, authService, profileService);
 
   fastify.post('/reactivate', {

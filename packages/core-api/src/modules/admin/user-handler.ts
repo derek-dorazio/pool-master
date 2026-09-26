@@ -3,7 +3,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { User } from '@poolmaster/shared/domain';
+import { toUserDto } from '../../mappers/users.mapper';
 import type { UserService } from './user-service';
 import {
   LastRootAdminError,
@@ -44,7 +44,7 @@ export function createUserHandlers(userService: UserService) {
       isActive: query.isActive,
     });
 
-    return { users: users.map(mapAdminUserToDto) };
+    return { users: users.map(toUserDto) };
   }
 
   async function getUserDetail(
@@ -52,18 +52,12 @@ export function createUserHandlers(userService: UserService) {
     reply: FastifyReply,
   ) {
     try {
-      const { rootAdminUserId } = extractRootAdminContext(request);
       const user = await userService.getUser(request.params.userId);
-      return reply.send({
-        ...mapAdminUserToDto(user),
-        // #202 — assembled here, not in the service. Who is asking is request context; it
-        // is not a property of the user being read (A8).
-        viewerAuthority: {
-          self: user.id === rootAdminUserId,
-          rootAdmin: true,
-          viewer: false,
-        },
-      });
+      // #202 step 3.4 — `{ user }`, the same envelope getCurrentUser uses, and no
+      // `viewerAuthority` block. A8: the requester's relationship to the user is not a
+      // field on the user. `self` is `user.id === me.id`, which the client can see, and
+      // `isRootAdmin` is a property of the cached UserDto.
+      return reply.send({ user: toUserDto(user) });
     } catch (err) {
       if (err instanceof UserNotFoundError) {
         return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
@@ -215,29 +209,4 @@ export function createUserHandlers(userService: UserService) {
       throw err;
     }
   }
-}
-
-/**
- * Canonical `User` → the DTO both admin user routes emit.
- *
- * #202 — the service used to hand back two hand-rolled view types (`UserListItem` and
- * `UserDetailView`) that were the same fields twice. One projection, at the boundary that
- * needs one.
- */
-function mapAdminUserToDto(user: User) {
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    isRootAdmin: user.isRootAdmin === true,
-    authProvider: user.authProvider,
-    isActive: user.isActive,
-    timezone: user.timezone,
-    locale: user.locale,
-    timeFormat: user.timeFormat,
-    dateFormat: user.dateFormat,
-    createdAt: user.createdAt.toISOString(),
-  };
 }

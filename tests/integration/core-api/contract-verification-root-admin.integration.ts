@@ -30,7 +30,7 @@ import {
   ProviderManualSyncSubmissionResponseSchema,
   ProviderSyncRunListResponseSchema,
   SuccessSchema,
-  UserDetailResponseSchema,
+  UserResponseSchema,
   UserListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -416,12 +416,11 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
     });
     expect(detailRes.statusCode).toBe(200);
-    expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
-    expect(detailRes.json().viewerAuthority).toEqual({
-      self: true,
-      rootAdmin: true,
-      viewer: false,
-    });
+    expect(UserResponseSchema.safeParse(detailRes.json()).success).toBe(true);
+    // #202 step 3.4 — `{ user }`, and no `viewerAuthority` block (A8). Of its three flags two
+    // were constants on a root-admin-only route, and `self` is `user.id === me.id`.
+    expect(detailRes.json().user.id).toBe(rootAdmin.user.id);
+    expect(detailRes.json()).not.toHaveProperty('viewerAuthority');
 
     const setRootAdminRes = await getApp().inject({
       method: 'POST',
