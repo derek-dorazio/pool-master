@@ -16,6 +16,7 @@ import {
   countUserDeleteDependencies,
   deleteUserCascade,
   hasUserDeleteDependencies,
+  isLastRootAdmin,
   revokeUserSessions,
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
 import { JoinPolicy, LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
@@ -125,6 +126,32 @@ describe('shared user delete cascade (#202)', () => {
 
     expect(counts).toEqual({ leagueCount: 0, squadMembershipCount: 0, createdSquadCount: 0 });
     expect(hasUserDeleteDependencies(counts)).toBe(false);
+  });
+
+  // #202 — the lockout. Before this, neither self path carried the last-root-admin guard
+  // that both admin paths did, so the sole root admin could inactivate their own account
+  // and then delete it, leaving nobody able to administer the platform.
+  describe('last root admin', () => {
+    // The count branch is NOT asserted here on purpose. Integration suites share one
+    // database and leave root admins behind — there are already well over a dozen — so no
+    // test can arrange "exactly one root admin exists" without destroying other suites'
+    // fixtures. The count logic is unit-tested against a mocked client where it can be
+    // controlled; what this covers is the branch that holds regardless of the count.
+    it('never reports a non-root-admin as the last root admin', async () => {
+      const prisma = getPrisma();
+      const plainUser = await createTestUser({ lastName: 'Plain' });
+
+      await expect(isLastRootAdmin(prisma, plainUser.user.id)).resolves.toBe(false);
+    });
+
+    it('does not report a root admin as the last one while others exist', async () => {
+      const prisma = getPrisma();
+      const first = await createTestUser({ lastName: 'AdminOne', isRootAdmin: true });
+      const second = await createTestUser({ lastName: 'AdminTwo', isRootAdmin: true });
+
+      await expect(isLastRootAdmin(prisma, first.user.id)).resolves.toBe(false);
+      await expect(isLastRootAdmin(prisma, second.user.id)).resolves.toBe(false);
+    });
   });
 
   it('revokes only live sessions and reports how many', async () => {

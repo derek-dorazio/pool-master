@@ -11,6 +11,7 @@ import {
   countUserDeleteDependencies,
   deleteUserCascade,
   hasUserDeleteDependencies,
+  isLastRootAdmin,
   revokeUserSessions,
 } from '../users/user-lifecycle';
 
@@ -285,6 +286,22 @@ export class AccountService {
       );
     }
 
+    // #202 — the same guard admin-disable applies. Without it the sole root admin could
+    // inactivate their own account and leave the platform with nobody able to administer
+    // it; inactivate is also the precondition for self-delete, so this is the first of the
+    // two gates on that path.
+    if (await isLastRootAdmin(this.prisma, userId)) {
+      this.logger?.warn({
+        action: 'accountService.inactivate.lastRootAdminRejected',
+        data: { userId },
+      }, 'Rejected self-inactivate by the last root admin');
+      throw new AccountLifecycleError(
+        'You are the only root admin. Promote another root admin before deactivating your account.',
+        'ACCOUNT_LAST_ROOT_ADMIN',
+        409,
+      );
+    }
+
     const updatedUser = await this.prisma.$transaction(async (tx) => {
       const nextUser = await tx.user.update({
         where: { id: userId },
@@ -341,6 +358,21 @@ export class AccountService {
         'Delete confirmation email must match the account email exactly',
         'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
         400,
+      );
+    }
+
+    // #202 — the same guard admin-delete applies. Belt and braces with the inactivate
+    // gate above: a root admin demoted to inactive before this rule existed can still
+    // reach delete, and that must not be the path that empties the root-admin set.
+    if (await isLastRootAdmin(this.prisma, userId)) {
+      this.logger?.warn({
+        action: 'accountService.delete.lastRootAdminRejected',
+        data: { userId },
+      }, 'Rejected self-delete by the last root admin');
+      throw new AccountLifecycleError(
+        'You are the only root admin. Promote another root admin before deleting your account.',
+        'ACCOUNT_LAST_ROOT_ADMIN',
+        409,
       );
     }
 

@@ -655,4 +655,90 @@ describe('AccountService', () => {
     expect(tx.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     expect(tx.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
   });
+
+  // #202 — the lockout. Admin-disable and admin-delete both refused to remove the last
+  // root admin; the self-service equivalents did not, so the sole root admin could
+  // inactivate their own account and then delete it, leaving nobody able to administer the
+  // platform. These assert the guard is wired into both self paths, not merely available.
+  describe('last root admin cannot remove themselves', () => {
+    function createSoleRootAdminPrisma(overrides: Record<string, unknown> = {}) {
+      return {
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            isActive: true,
+            isRootAdmin: true,
+          }),
+          count: jest.fn().mockResolvedValue(1),
+          update: jest.fn(),
+        },
+        leagueMembership: { count: jest.fn().mockResolvedValue(0) },
+        squadMembership: { count: jest.fn().mockResolvedValue(0) },
+        squad: { count: jest.fn().mockResolvedValue(0) },
+        $transaction: jest.fn(),
+        ...overrides,
+      } as any;
+    }
+
+    it('refuses self-inactivate', async () => {
+      const prisma = createSoleRootAdminPrisma();
+      const service = new AccountService(prisma);
+
+      await expect(service.inactivateOwnAccount('user-1')).rejects.toMatchObject({
+        code: 'ACCOUNT_LAST_ROOT_ADMIN',
+        statusCode: 409,
+      } satisfies Partial<AccountLifecycleError>);
+      // Nothing was written — the guard runs before the transaction.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('refuses self-delete', async () => {
+      const prisma = createSoleRootAdminPrisma({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            isActive: false,
+            isRootAdmin: true,
+          }),
+          count: jest.fn().mockResolvedValue(1),
+          update: jest.fn(),
+        },
+      });
+      const service = new AccountService(prisma);
+
+      await expect(
+        service.deleteOwnInactiveAccount('user-1', 'user@example.com'),
+      ).rejects.toMatchObject({
+        code: 'ACCOUNT_LAST_ROOT_ADMIN',
+        statusCode: 409,
+      } satisfies Partial<AccountLifecycleError>);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('allows self-inactivate once another root admin exists', async () => {
+      const prisma = createSoleRootAdminPrisma({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'user-1',
+            email: 'user@example.com',
+            isActive: true,
+            isRootAdmin: true,
+          }),
+          count: jest.fn().mockResolvedValue(2),
+          update: jest.fn().mockResolvedValue({ id: 'user-1', isActive: false }),
+        },
+        $transaction: jest.fn().mockImplementation(async (callback) => callback({
+          user: { update: jest.fn().mockResolvedValue({ id: 'user-1', isActive: false }) },
+          refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        })),
+      });
+      const service = new AccountService(prisma);
+
+      await expect(service.inactivateOwnAccount('user-1')).resolves.toMatchObject({
+        id: 'user-1',
+      });
+    });
+  });
 });
