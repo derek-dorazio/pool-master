@@ -13106,8 +13106,6 @@ export interface operations {
             query?: {
                 search?: string;
                 isActive?: boolean;
-                page?: number;
-                pageSize?: number;
             };
             header?: never;
             path?: never;
@@ -13115,15 +13113,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Generic paginated response envelope. */
+            /** @description User-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @description Current result page items. */
-                        items: {
+                        users: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
@@ -13163,14 +13160,6 @@ export interface operations {
                              */
                             createdAt?: string;
                         }[];
-                        /** @description Total number of matching records. */
-                        total: number;
-                        /** @description Current page number. */
-                        page: number;
-                        /** @description Number of items requested per page. */
-                        pageSize: number;
-                        /** @description Total page count for the current query. */
-                        totalPages: number;
                     };
                 };
             };

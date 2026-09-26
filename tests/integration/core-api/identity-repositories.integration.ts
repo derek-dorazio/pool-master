@@ -57,13 +57,12 @@ describe('identity cluster repositories (#202)', () => {
       const byFirstName = await createTestUser({ firstName: `Fore${marker}` });
       const byEmail = await createTestUser({ email: `mail${marker}@integration.test` });
 
-      const result = await repo.findAll({ search: marker }, { page: 1, pageSize: 50 });
+      const users = await repo.findAll({ search: marker });
 
-      const ids = result.items.map((user) => user.id);
+      const ids = users.map((user) => user.id);
       expect(ids).toContain(byLastName.user.id);
       expect(ids).toContain(byFirstName.user.id);
       expect(ids).toContain(byEmail.user.id);
-      expect(result.total).toBe(result.items.length);
     });
 
     it('matches case-insensitively', async () => {
@@ -72,29 +71,23 @@ describe('identity cluster repositories (#202)', () => {
       const marker = `Mixed${Date.now().toString(36)}`;
       const created = await createTestUser({ lastName: marker });
 
-      const result = await repo.findAll({ search: marker.toUpperCase() });
+      const users = await repo.findAll({ search: marker.toUpperCase() });
 
-      expect(result.items.map((user) => user.id)).toContain(created.user.id);
+      expect(users.map((user) => user.id)).toContain(created.user.id);
     });
 
-    it('reports the full total alongside a single page, not the page length', async () => {
+    it('returns every match, unpaged', async () => {
+      // §16 — the API does not page. A filter narrows the set; nothing slices it.
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);
-      const marker = `page${Date.now().toString(36)}`;
+      const marker = `all${Date.now().toString(36)}`;
       await createTestUser({ lastName: marker });
       await createTestUser({ lastName: marker });
       await createTestUser({ lastName: marker });
 
-      const firstPage = await repo.findAll({ search: marker }, { page: 1, pageSize: 2 });
-      const secondPage = await repo.findAll({ search: marker }, { page: 2, pageSize: 2 });
+      const users = await repo.findAll({ search: marker });
 
-      expect(firstPage.items).toHaveLength(2);
-      expect(firstPage.total).toBe(3);
-      expect(secondPage.items).toHaveLength(1);
-      expect(secondPage.total).toBe(3);
-      // Pages must not overlap.
-      const firstIds = firstPage.items.map((user) => user.id);
-      expect(secondPage.items.every((user) => !firstIds.includes(user.id))).toBe(true);
+      expect(users).toHaveLength(3);
     });
 
     it('filters on isActive', async () => {
@@ -108,8 +101,8 @@ describe('identity cluster repositories (#202)', () => {
       const activeOnly = await repo.findAll({ search: marker, isActive: true });
       const inactiveOnly = await repo.findAll({ search: marker, isActive: false });
 
-      expect(activeOnly.items.map((user) => user.id)).toEqual([active.user.id]);
-      expect(inactiveOnly.items.map((user) => user.id)).toEqual([inactive.user.id]);
+      expect(activeOnly.map((user) => user.id)).toEqual([active.user.id]);
+      expect(inactiveOnly.map((user) => user.id)).toEqual([inactive.user.id]);
     });
 
     it('never returns a password hash on the domain user', async () => {
@@ -118,10 +111,10 @@ describe('identity cluster repositories (#202)', () => {
       const marker = `secret${Date.now().toString(36)}`;
       await createTestUser({ lastName: marker, password: 'TestPass123' });
 
-      const result = await repo.findAll({ search: marker });
+      const users = await repo.findAll({ search: marker });
 
-      expect(result.items).toHaveLength(1);
-      expect(result.items[0]).not.toHaveProperty('passwordHash');
+      expect(users).toHaveLength(1);
+      expect(users[0]).not.toHaveProperty('passwordHash');
     });
   });
 

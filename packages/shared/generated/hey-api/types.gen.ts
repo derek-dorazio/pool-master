@@ -12079,8 +12079,6 @@ export type AdminListUsersData = {
     query?: {
         search?: string;
         isActive?: boolean;
-        page?: number;
-        pageSize?: number;
     };
     url: '/api/v1/admin/users';
 };
@@ -12114,13 +12112,10 @@ export type AdminListUsersError = AdminListUsersErrors[keyof AdminListUsersError
 
 export type AdminListUsersResponses = {
     /**
-     * Generic paginated response envelope.
+     * User-list response.
      */
     200: {
-        /**
-         * Current result page items.
-         */
-        items: Array<{
+        users: Array<{
             /**
              * Stable user identifier.
              */
@@ -12174,22 +12169,6 @@ export type AdminListUsersResponses = {
              */
             createdAt?: string;
         }>;
-        /**
-         * Total number of matching records.
-         */
-        total: number;
-        /**
-         * Current page number.
-         */
-        page: number;
-        /**
-         * Number of items requested per page.
-         */
-        pageSize: number;
-        /**
-         * Total page count for the current query.
-         */
-        totalPages: number;
     };
 };
 

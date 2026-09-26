@@ -97,7 +97,7 @@ describe('admin user service', () => {
 
     const service = new UserService(prisma, createLogger() as any);
 
-    await service.searchUsers({ search: 'captain', page: 1, pageSize: 25 });
+    await service.searchUsers({ search: 'captain' });
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({

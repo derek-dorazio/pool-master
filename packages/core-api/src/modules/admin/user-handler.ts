@@ -33,24 +33,19 @@ export function createUserHandlers(userService: UserService) {
         search?: string;
         tenant?: string;
         isActive?: boolean;
-        page?: number;
-        pageSize?: number;
       };
     }>,
     _reply: FastifyReply,
   ) {
     const query = request.query;
-    const result = await userService.searchUsers({
+    // #202 — no paging (§16). `search` and `isActive` narrow the result; nothing slices it.
+    const users = await userService.searchUsers({
       search: query.search,
       isActive: query.isActive,
-      page: query.page,
-      pageSize: query.pageSize,
     });
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 25;
 
     return {
-      items: result.items.map((item) => ({
+      users: users.map((item) => ({
         id: item.id,
         email: item.email,
         username: item.username,
@@ -65,10 +60,6 @@ export function createUserHandlers(userService: UserService) {
         dateFormat: item.dateFormat,
         createdAt: item.createdAt.toISOString(),
       })),
-      total: result.total,
-      page,
-      pageSize,
-      totalPages: Math.max(1, Math.ceil(result.total / pageSize)),
     };
   }
 

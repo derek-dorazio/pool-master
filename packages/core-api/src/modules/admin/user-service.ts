@@ -22,8 +22,6 @@ const BCRYPT_ROUNDS = 12;
 export interface UserSearchQuery {
   search?: string;
   isActive?: boolean;
-  page?: number;
-  pageSize?: number;
 }
 
 export interface UserListItem {
@@ -131,22 +129,16 @@ export class UserService {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async searchUsers(
-    query: UserSearchQuery,
-  ): Promise<{ items: UserListItem[]; total: number }> {
+  // #202 — not paged (§16). Filters narrow the set; nothing slices it.
+  async searchUsers(query: UserSearchQuery): Promise<UserListItem[]> {
     const trimmedSearch = query.search?.trim();
     this.logger?.debug({
       action: 'adminUserService.search.start',
       data: {
         hasSearch: Boolean(trimmedSearch),
         isActive: query.isActive ?? null,
-        page: query.page ?? 1,
-        pageSize: query.pageSize ?? 25,
       },
     }, 'Searching users');
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 25;
-    const skip = (page - 1) * pageSize;
 
     const where: Record<string, unknown> = {};
 
@@ -162,15 +154,10 @@ export class UserService {
       where.isActive = query.isActive;
     }
 
-    const [rows, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: pageSize,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+    const rows = await this.prisma.user.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
 
     const items: UserListItem[] = rows.map((row) => ({
       id: row.id,
@@ -190,14 +177,9 @@ export class UserService {
 
     this.logger?.info({
       action: 'adminUserService.search.success',
-      data: {
-        total,
-        count: items.length,
-        page,
-        pageSize,
-      },
+      data: { count: items.length },
     }, 'Searched users');
-    return { items, total };
+    return items;
   }
 
   async getUserDetail(userId: string, viewerUserId: string): Promise<UserDetailView> {

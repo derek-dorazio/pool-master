@@ -23601,36 +23601,17 @@
             "in": "query",
             "name": "isActive",
             "required": false
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "in": "query",
-            "name": "page",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            },
-            "in": "query",
-            "name": "pageSize",
-            "required": false
           }
         ],
         "responses": {
           "200": {
-            "description": "Generic paginated response envelope.",
+            "description": "User-list response.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "items": {
+                    "users": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -23714,35 +23695,14 @@
                         ],
                         "additionalProperties": false,
                         "description": "Frontend-facing user profile summary derived from the authenticated account."
-                      },
-                      "description": "Current result page items."
-                    },
-                    "total": {
-                      "type": "number",
-                      "description": "Total number of matching records."
-                    },
-                    "page": {
-                      "type": "number",
-                      "description": "Current page number."
-                    },
-                    "pageSize": {
-                      "type": "number",
-                      "description": "Number of items requested per page."
-                    },
-                    "totalPages": {
-                      "type": "number",
-                      "description": "Total page count for the current query."
+                      }
                     }
                   },
                   "required": [
-                    "items",
-                    "total",
-                    "page",
-                    "pageSize",
-                    "totalPages"
+                    "users"
                   ],
                   "additionalProperties": false,
-                  "description": "Generic paginated response envelope."
+                  "description": "User-list response."
                 }
               }
             }

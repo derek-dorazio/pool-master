@@ -45,6 +45,28 @@ const INTEGRATION_TEST_PROVIDER_IDS = [
   'PGA',
 ] as const;
 
+/**
+ * League codes that integration tests insert DIRECTLY with `prisma.league.create`, giving
+ * them no membership and therefore no link to a test user.
+ *
+ * Needed since #202 dropped `League.createdBy`. The league sweep below used to find these
+ * through `createdBy: { in: userIds }`; the membership arm that remains cannot, because
+ * these leagues have no members. Left uncleaned they leak between runs and the next run
+ * fails on the unique `league_code` — which only reproduces on a second run against a
+ * database that was not reset, so it is easy to miss.
+ *
+ * Prefer cleaning up in the suite that creates the league (see
+ * identity-repositories.integration.ts, which deletes by code prefix in `afterAll`). This
+ * list is the safety net for the suites that do not.
+ */
+const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
+  'ADMINLIFE',
+  'ADMINTEAM',
+  'CLN68',
+  'MISSING',
+  'IDREPO',
+] as const;
+
 let app: FastifyInstance;
 let prisma: PrismaClient;
 let integrationSmtpServer: SmtpSinkServer | undefined;
@@ -497,14 +519,20 @@ export async function cleanupTestData(): Promise<void> {
     : [];
   const providerSportEventParticipantIds = providerSportEventParticipants.map((participant) => participant.id);
 
-  const leagues = userIds.length
-    ? await prisma.league.findMany({
-        // #202 — no `createdBy` arm. League creation always writes the creator's
-        // COMMISSIONER membership, so the membership filter already covers them.
-        where: { memberships: { some: { userId: { in: userIds } } } },
-        select: { id: true },
-      })
-    : [];
+  // #202 — no `createdBy` arm. Leagues created through the service always carry the
+  // creator's COMMISSIONER membership, so the membership filter covers those. Leagues a
+  // test inserts directly have no membership at all, so they are matched by code prefix.
+  const leagues = await prisma.league.findMany({
+    where: {
+      OR: [
+        ...(userIds.length ? [{ memberships: { some: { userId: { in: userIds } } } }] : []),
+        ...INTEGRATION_TEST_LEAGUE_CODE_PREFIXES.map((prefix) => ({
+          leagueCode: { startsWith: prefix },
+        })),
+      ],
+    },
+    select: { id: true },
+  });
   const leagueIds = leagues.map((league) => league.id);
   const contests = (leagueIds.length || providerSportEventIds.length)
     ? await prisma.contest.findMany({

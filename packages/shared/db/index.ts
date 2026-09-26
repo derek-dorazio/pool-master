@@ -16,8 +16,6 @@ export type {
   LeagueMembershipRepository,
   LeagueRepository,
   LeagueSearchFilters,
-  PagedResult,
-  PageRequest,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,

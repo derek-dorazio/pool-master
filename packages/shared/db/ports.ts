@@ -26,22 +26,6 @@ import type {
 
 import type { ParticipantStatus, Sport } from '../domain';
 
-/**
- * One page of rows plus the total matching count. `page`, `pageSize` and `totalPages`
- * belong to the response envelope (`PaginatedSchema` in dto/common.dto.ts), which the
- * caller already knows — a port returns what only the database can answer.
- */
-export interface PagedResult<T> {
-  items: T[];
-  total: number;
-}
-
-/** 1-based paging, matching the query parameters the routes accept. */
-export interface PageRequest {
-  page?: number;
-  pageSize?: number;
-}
-
 // --- Identity ---
 
 /** Filters for the unscoped user read. Access rule A1 restricts that read to rootAdmin. */
@@ -59,14 +43,17 @@ export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
-   * Every user, optionally filtered and paged, newest first.
+   * Every user, optionally filtered, newest first.
    *
    * **This is the unscoped read — access rule A1 permits it to rootAdmin only.** The port
    * does not enforce that; the route does. Added in #202 because its absence is what sent
    * `admin/user-service.ts` straight to `prisma.user.findMany`, and from there to a
    * hand-rolled result shape (§2y).
+   *
+   * Not paged, by product decision — see §16, "No paging in the API". Filter to narrow a
+   * result set; do not slice it.
    */
-  findAll(filters?: UserSearchFilters, page?: PageRequest): Promise<PagedResult<User>>;
+  findAll(filters?: UserSearchFilters): Promise<User[]>;
 
   /**
    * Users holding a `LeagueMembership` in the given league, ordered by name.

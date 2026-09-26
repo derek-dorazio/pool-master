@@ -269,11 +269,7 @@ describe('poolmaster API client correlation headers', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            items: [],
-            page: 1,
-            pageSize: 25,
-            total: 0,
-            totalPages: 1,
+            users: [],
           }),
           {
             status: 200,
@@ -292,12 +288,10 @@ describe('poolmaster API client correlation headers', () => {
       const response = await adminListUsers({
         query: {
           search: 'Commis',
-          page: 1,
-          pageSize: 25,
         },
       });
 
-      expect(response.data?.items).toEqual([]);
+      expect(response.data?.users).toEqual([]);
       expect(fetchSpy).toHaveBeenCalledTimes(3);
       expect(new URL(fetchCallUrl(fetchSpy.mock.calls[1]?.[0])).pathname).toBe('/api/v1/auth/refresh');
       expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/admin/users');

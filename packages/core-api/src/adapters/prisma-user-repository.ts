@@ -6,15 +6,8 @@ import type {
   UserDateFormat as PrismaUserDateFormat,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
-import type {
-  PagedResult,
-  PageRequest,
-  UserRepository,
-  UserSearchFilters,
-} from '@poolmaster/shared/db';
+import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import { AuthProvider, DateFormat, TimeFormat, type User } from '@poolmaster/shared/domain';
-
-const DEFAULT_PAGE_SIZE = 25;
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -45,27 +38,13 @@ export class PrismaUserRepository implements UserRepository {
     return row ? mapToUser(row) : null;
   }
 
-  async findAll(
-    filters: UserSearchFilters = {},
-    page: PageRequest = {},
-  ): Promise<PagedResult<User>> {
-    const where = buildUserWhere(filters);
-    const pageNumber = Math.max(1, page.page ?? 1);
-    const pageSize = Math.max(1, page.pageSize ?? DEFAULT_PAGE_SIZE);
-
-    // One round trip for the page and one for the total — the envelope needs both, and
-    // the caller cannot derive `total` from a page.
-    const [rows, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (pageNumber - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
-
-    return { items: rows.map(mapToUser), total };
+  async findAll(filters: UserSearchFilters = {}): Promise<User[]> {
+    // Not paged — §16. Narrowing is the filter's job; the caller gets the whole result.
+    const rows = await this.prisma.user.findMany({
+      where: buildUserWhere(filters),
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map(mapToUser);
   }
 
   async findByLeague(leagueId: string): Promise<User[]> {

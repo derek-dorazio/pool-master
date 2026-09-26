@@ -215,8 +215,6 @@ export async function adminModule(
         properties: {
           search: { type: 'string' },
           isActive: { type: 'boolean' },
-          page: { type: 'integer', minimum: 1 },
-          pageSize: { type: 'integer', minimum: 1, maximum: 100 },
         },
       },
     },

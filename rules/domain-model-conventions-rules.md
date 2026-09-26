@@ -623,3 +623,56 @@ The last phase-1 step of every slice is a deliberate sweep of the cluster for re
 derivations that the slice's forward work did not happen to touch — not a review of the
 diff, a search of the cluster. It is a numbered step in the workflow precisely because
 it will not happen if it is left to judgement at the end of a long slice.
+
+---
+
+## 16. No Paging In The API
+
+Set by the repo owner, 2026-09-26: **no API operation takes `page`, `pageSize`, `limit`,
+`offset` or a cursor, and no response carries a paging envelope.**
+
+A list operation returns its whole result. Narrowing is the job of a **filter** — a league,
+a status, a search term — which answers "which rows do I want", a question the caller can
+actually answer. Paging answers "how many at a time", which is a transport concern that
+leaks into the contract, forces a second parallel count query, and makes every consumer
+reassemble a result the server already had.
+
+This repo's scale makes it unnecessary: leagues have tens of members, not thousands, and
+the product shows one league at a time (A8). Where a set could genuinely grow without
+bound, the answer is a tighter filter or a retention policy, not a page parameter.
+
+### What this rules out
+
+- Query parameters `page`, `pageSize`, `limit`, `offset`, `perPage`, `cursor`.
+- Response envelopes carrying `total`, `page`, `pageSize` or `totalPages` beside `items`.
+  Use an entity-named array — `{ users: [...] }`, `{ leagues: [...] }`, `{ squads: [...] }`
+  — matching `LeagueListResponse` and `SquadListResponse`.
+- Repository ports that take paging arguments or return `{ items, total }`. A port is not
+  a place to hide a page either: `UserRepository.findAll` takes filters and returns
+  `User[]`.
+
+### Still to be removed
+
+`adminListUsers` was converted with this rule (#202). Seven operations still page, each
+belonging to a later slice, and each slice removes its own:
+
+| Operation | Paging | Slice |
+|---|---|---|
+| `listEvents` | `limit` | 2 |
+| `listParticipants` | `limit`, `offset` | 2 |
+| `adminListEvents` | `limit` | 2 |
+| `adminListProviderSyncRuns` | `limit` | 4 |
+| `adminSearchErrors` | `page`, `pageSize` | 4 |
+| `adminListAuditLog` | `page`, `pageSize` | 4 |
+| `adminExportAuditLog` | `page`, `pageSize` | 4 |
+
+`PaginatedSchema` in `dto/common.dto.ts` and `AuditListResponse` survive only because the
+slice-4 surfaces above still reference them. Both go with the last of those; do not add a
+new caller.
+
+`ParticipantRepository.search` still takes `limit`/`offset` and returns
+`{ participants, total }` — slice 2 removes it.
+
+**Audit and error logs are the one place to think before deleting the parameter.** They are
+append-only and unbounded by nature, so slice 4's answer may be a retention window or a
+date-range filter rather than simply returning everything. That is a filter, not a page.

@@ -57,7 +57,7 @@ describe('RootAdminManageUsersPage', () => {
   beforeEach(() => {
     adminListUsersMock.mockResolvedValue({
       data: {
-        items: [
+        users: [
           {
             id: 'user-1',
             email: 'alex@example.com',
@@ -79,10 +79,6 @@ describe('RootAdminManageUsersPage', () => {
             createdAt: '2026-04-12T12:00:00.000Z',
           },
         ],
-        total: 2,
-        page: 1,
-        pageSize: 25,
-        totalPages: 1,
       },
     });
   });
@@ -120,12 +116,9 @@ describe('RootAdminManageUsersPage', () => {
 
     await screen.findByTestId('root-admin-manage-user-row-user-1');
     expect(screen.queryByTestId('root-admin-manage-users-search')).not.toBeInTheDocument();
-    expect(adminListUsersMock).toHaveBeenLastCalledWith({
-      query: {
-        page: 1,
-        pageSize: 100,
-      },
-    });
+    // §16 — the MSW harness rebuilds `options` from the real request, so an empty object
+    // is the assertion that NO query string was sent: no page, no pageSize.
+    expect(adminListUsersMock).toHaveBeenLastCalledWith({});
 
     fireEvent.change(screen.getByTestId('data-grid-filter-username'), {
       target: {

@@ -9,7 +9,7 @@ import {
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
 
-type RootAdminUser = AdminListUsersResponses[200]["items"][number];
+type RootAdminUser = AdminListUsersResponses[200]["users"][number];
 const columnHelper = createColumnHelper<RootAdminUser>();
 
 function buildUserDisplayName(user: RootAdminUser) {
@@ -21,12 +21,8 @@ export function RootAdminManageUsersPage() {
   const usersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageUsers,
     queryFn: async () => {
-      const response = await adminListUsers({
-        query: {
-          page: 1,
-          pageSize: 100,
-        },
-      });
+      // No paging (§16) — the API returns every user, narrowed by filters if needed.
+      const response = await adminListUsers();
 
       if (!response.data) {
         throwApiError(response.error, "User list response is missing data.");
@@ -94,7 +90,7 @@ export function RootAdminManageUsersPage() {
   return (
     <DataGridPage
       columns={columns}
-      data={usersQuery.data?.items ?? []}
+      data={usersQuery.data?.users ?? []}
       emptyMessage="No users matched the current filters."
       error={usersQuery.error}
       errorBody="We could not load users right now."

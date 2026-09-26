@@ -132,7 +132,7 @@ describe('SDK Functional: Root Admin', () => {
     const usersResponse = await adminListUsers({
       client: user.client,
     });
-    expect(usersResponse.data?.items.some((item) => item.id === user.userId)).toBe(true);
+    expect(usersResponse.data?.users.some((item) => item.id === user.userId)).toBe(true);
 
     const detailResponse = await adminGetUserDetail({
       client: user.client,

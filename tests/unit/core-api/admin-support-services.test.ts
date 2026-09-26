@@ -35,7 +35,7 @@ async function flushMicrotasks(times = 5): Promise<void> {
 
 describe('admin support services', () => {
   describe('UserService', () => {
-    it('searches users with pagination and mapped profile fields', async () => {
+    it('searches users unpaged, with mapped profile fields', async () => {
       const prisma = {
         user: {
           findMany: jest.fn().mockResolvedValue([
@@ -61,23 +61,23 @@ describe('admin support services', () => {
 
       const service = new UserService(prisma, createLogger() as any);
 
-      await expect(service.searchUsers({ search: 'user', page: 2, pageSize: 10 })).resolves.toEqual(
-        expect.objectContaining({
-          items: expect.arrayContaining([
-            expect.objectContaining({
-              id: 'user-1',
-              email: 'user@example.com',
-              username: 'userone',
-              authProvider: 'email',
-            }),
-          ]),
-          total: 1,
-        }),
+      // §16 — searchUsers returns a plain list; there is no paging and no total.
+      await expect(service.searchUsers({ search: 'user' })).resolves.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'user-1',
+            email: 'user@example.com',
+            username: 'userone',
+            authProvider: 'email',
+          }),
+        ]),
       );
-      expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        skip: 10,
-        take: 10,
-      }));
+      // §16 — assert the absence positively: no slicing reaches the database, and no
+      // parallel count query is issued for a total nobody returns.
+      const [findManyArgs] = (prisma.user.findMany as jest.Mock).mock.calls[0];
+      expect(findManyArgs).not.toHaveProperty('skip');
+      expect(findManyArgs).not.toHaveProperty('take');
+      expect(prisma.user.count).not.toHaveBeenCalled();
     });
 
     it('loads user detail and throws when the user is missing', async () => {

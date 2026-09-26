@@ -47,7 +47,12 @@ export const PlatformMetricsResponseSchema = z.object({
 }).describe('Top-line platform metrics response.');
 export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSchema>;
 
-export const UserListResponseSchema = PaginatedSchema(UserProfileDtoSchema);
+// #202 — not paged (§16), and named for its entity like LeagueListResponse and
+// SquadListResponse rather than the generic `items`/`total` envelope it used to share
+// with the audit and error-log surfaces.
+export const UserListResponseSchema = z.object({
+  users: z.array(UserProfileDtoSchema),
+}).describe('User-list response.');
 export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 export const UserViewerAuthorityDtoSchema = z.object({
   self: z.boolean().describe('Whether the current requester is viewing their own user account.'),
