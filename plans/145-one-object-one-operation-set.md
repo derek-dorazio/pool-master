@@ -668,6 +668,13 @@ Eight duplicate operation pairs collapse to eight operations; the list is in
   *now*: three consecutive commits in this slice edited 7, 5 and 10 fakes respectively to
   add one port method each. Sequenced **before** the `UserRepository` service injection,
   since that step needs 17 fakes built from scratch and would otherwise write them twice.
+- **210 assertions on mock call shape, 105 of them on raw Prisma — #209.** The fakes are a
+  shadow; these are worse, because they mirror the implementation rather than specifying
+  behaviour. They break on every refactor that changes nothing, and one of them was found
+  passing *vacuously* in this slice. Sequenced after #208, and unlike #208 the test counts
+  are expected to move: fewer unit tests, more integration tests. The two must not be done
+  together — changing scaffolding and assertions at once removes the only signal that
+  either was inert.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
