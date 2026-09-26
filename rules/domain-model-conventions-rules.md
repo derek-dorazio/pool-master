@@ -563,3 +563,59 @@ per-page DTO variants since the repository's first commit, naming
 `LeagueSummaryDto` / `LeagueDetailDto` as the explicit counter-example — and both exist
 in the published contract today. Treat this section as a hard stop, not guidance, and
 prefer a mechanical guard over a restated rule.
+
+---
+
+## 15. Residue — The Right Mechanism, Built Then Bypassed
+
+§14 covers the shadow object someone *created*. This section covers its twin, which has
+been the more common finding by far: the correct mechanism **already existed and was not
+used**, so a second path grew beside it and both now ship.
+
+This is not a milder version of §14. It is worse in one specific way: the codebase
+contains proof that someone already understood the problem, so the next reader finds two
+plausible paths with no signal that one is abandoned. "Does it exist?" is the wrong
+question — the answer is usually yes.
+
+### Measured instances
+
+All found in one pass over the identity cluster (#201, #202, #206):
+
+| The mechanism that existed | What bypassed it |
+|---|---|
+| `auth.mapper.ts` — all four exports | The auth handler shaped all five responses inline. **The entire mapper was dead code.** Response DTOs were enforced only by Fastify's serializer dropping undeclared fields, which is how `sessionId` reached three response bodies with no compile error |
+| `tryAttachOptionalAuthUser` populating `request.authUser` on the client-logs route | The handler read session and user identity from the request **body** instead, making both forgeable (#206) |
+| `auth.isRootAdmin`, exposed at `auth-provider.tsx:175` | ~12 sites read the same global boolean off a league or squad. `app-shell.tsx` uses both sources in one file — `auth.isRootAdmin` at line 49, `activeLeague?.isRootAdmin` at line 64 |
+| `UserRepository` | `admin/user-service.ts` (36 raw Prisma calls) and `account/service.ts` (26) bypass it entirely |
+| `SquadRepository.findByLeague` | `admin/team-service.ts` hand-rolls `prisma.squad.findMany` with an inline `select`, then maps to a shape it invented |
+| `UserProfileDto` — the canonical user shape | `AdminTeamOwnerSummaryDto` was invented as a 3-field projection of it |
+| The URL-scoped, client-cached league context | Viewer relationship fields duplicated onto every league and squad row (A8 in `docs/DOMAIN-OPERATIONS.md`) |
+
+Seven instances, one cluster. Assume more.
+
+### The rule
+
+**Finding that the correct mechanism exists does not close the finding. Removing the
+bypass does.** A slice is not done while both paths ship. Specifically:
+
+1. **Check for an existing mechanism before adding one** — a repository port, a mapper, a
+   provider, a cached query, a request decorator. Search for the capability, not the name
+   you would have given it.
+2. **When you find one unused, the unused-ness is the defect.** Wire the callers to it and
+   delete the bypass in the same change. Leaving a correct-but-dead mechanism in place is
+   how it stays dead.
+3. **Dead code that encodes a convention is worse than absent code.** `auth.mapper.ts`
+   looked like the convention was being followed. Delete it or use it; never leave it.
+4. **Prefer the compiler over the serializer.** A contract enforced only by a runtime
+   stripping unknown fields is not enforced. That single gap produced three of the rows
+   above.
+
+### Every slice ends with a residue sweep
+
+Set by the repo owner, 2026-09-26: *"So many times your answer is yes that already exists,
+but it wasn't used. I want all of the residue removed."*
+
+The last phase-1 step of every slice is a deliberate sweep of the cluster for residue and
+derivations that the slice's forward work did not happen to touch — not a review of the
+diff, a search of the cluster. It is a numbered step in the workflow precisely because
+it will not happen if it is left to judgement at the end of a long slice.

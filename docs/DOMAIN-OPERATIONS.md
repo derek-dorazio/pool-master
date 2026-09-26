@@ -27,7 +27,8 @@ everything, and repeating it on every row adds noise.
 
 ## Access rules
 
-**These six rules decide every row in the tables below.** Where a table and a rule
+**These rules decide every row in the tables below.** A1–A7 decide *who may call* an
+operation; A8 decides *what viewer context the response carries*. Where a table and a rule
 disagree, the rule wins and the table is a bug. New operations are assigned a role by
 applying these rules, not by precedent from a similar-looking route.
 
@@ -79,6 +80,89 @@ the client must resolve with a second call it is not permitted to make unscoped.
 
 Secrets are not a redaction concern here — `passwordHash` and `authId` are not on the
 canonical `UserDto` at all, for any caller.
+
+## A8. Viewer context is delivered once per league, never per row
+
+**Settled 2026-09-26 with the repo owner.** This is the answer to "where does viewer
+context live", and it is load-bearing for every DTO below.
+
+### The problem it solves
+
+`LeagueDto` and `SquadDto` carried the requester's relationship to the object *as fields on
+the object*, in five different encodings:
+
+| Field | On | Shape |
+|---|---|---|
+| `leagueRelationship` | `LeagueSummaryDto` | `{ leagueMember, commissioner }` |
+| `memberType` | `LeagueSummaryDto` | nullable `LeagueRole` |
+| `isRootAdmin` | `LeagueSummaryDto`, `SquadDto` | `boolean`, repeated on every row |
+| `teamRelationship` | `SquadDto` | `{ leagueMember, owner, commissioner }` |
+| `viewerAuthority` | `UserDetailResponse` | `{ self, rootAdmin, viewer }` |
+
+Two requesters therefore got **different `LeagueDto` values for the same league**, which
+makes the DTO not a value of the entity, breaks caching, and was the seed of the
+admin/member DTO split this whole pass exists to undo.
+
+### Why "one round trip per league" is the answer
+
+The webapp is a single-page app whose league context is already URL-scoped and already
+cached client-side. This is not a new mechanism to build — it exists:
+
+- every league route is `/league/:leagueCode/…`
+- `resolveDefaultLeagueCode()` (`league-routing.ts`) picks the landing league — the
+  `poolmaster_recent_league` cookie if it still matches a membership, else newest
+- `LeagueSelector` navigates to a new league and `rememberRecentLeagueCode()` persists it
+- selecting a league fetches `getLeagueByCode` once, cached at
+  `QueryKeys.leagues.detail(leagueCode)`
+- TanStack Query is the state store, deliberately, with no Zustand mirror
+  (`auth-state-ownership.test.ts` enforces this)
+
+So the client already receives the viewer's league context in one round trip on league
+selection and holds it for the session. **Every other response repeating it is
+duplication, not delivery.**
+
+### The rule
+
+| Surface | Viewer context it carries |
+|---|---|
+| League-scoped responses — league detail, squads, members, contests, entries | **none.** The client has it from the league-context call |
+| The league-context call (`getLeagueByCode`) | the viewer's `LeagueMembership` for that league **and** their `SquadMembership` in it |
+| The leagues list — the one inherently multi-league surface | the viewer's `LeagueMembership[]`, once, as an array beside the leagues |
+| `isRootAdmin` | **neither.** It is a property of the `User`, read from the cached `UserDto` |
+
+`LeagueDto` and `SquadDto` become pure entity values. No new DTO is invented: the viewer's
+context *is* `UserDto` + `LeagueMembership[]` + `SquadMembership[]`, all of which already
+exist as canonical shapes. This satisfies working rule 5 — the apparent gap turned out to
+already exist under another name.
+
+### Why the leagues list is the one exception
+
+It is inherently N leagues and the viewer's relationship differs per league:
+`getLeagueSelectorOptions()` filters on `leagueRelationship.commissioner` and
+`sortLeaguesForOverview()` sorts by it, because the selector must show which of your
+leagues you run. That needs the relationship **as a set** — which is
+`LeagueMembership[]`, one array, not a field repeated on every row.
+
+### Evidence that these were already residue, not design
+
+- `app-shell.tsx` reads **both sources in one file** — line 49 uses `auth.isRootAdmin`
+  from the cached user, line 64 uses `activeLeague?.isRootAdmin`. Around twelve call sites
+  read that global boolean off a league or squad while `auth-provider.tsx:175` has exposed
+  it all along.
+- `my-team-page.tsx:149` identifies the viewer's own squad with
+  `teamsQuery.data?.find(team => team.teamRelationship.owner)` — it fetches every squad in
+  the league and scans a per-row viewer flag. With the viewer's `SquadMembership` in the
+  league context this is `find(t => t.id === viewer.squadId)`, and `teamRelationship` comes
+  off `SquadDto` entirely.
+- `league-cache.ts:6` has a `toLeagueSummary()` that hand-projects `LeagueDetailDto` down
+  to `LeagueSummaryDto` field by field — the shadow-projection problem replicated in the
+  **client**. Collapsing the two into one `LeagueDto` deletes the function.
+
+### What this does not change
+
+Working rule 4 still holds: admin-only *fields* are noted, not enforced. A8 is about
+**whose relationship to the object** travels in the payload, not about trimming fields per
+caller. Nothing here authorises a redacted variant.
 
 ---
 
@@ -212,6 +296,11 @@ the DAO already expresses it, where `LeagueRepository.findAll()` is the unscoped
 `findByUser` the scoped one.
 
 ## Settled during review
+
+**Viewer context moves out of the domain DTOs — see A8 above.** `leagueRelationship`,
+`memberType`, `teamRelationship`, `viewerAuthority` and the per-row `isRootAdmin` all come
+off `LeagueDto` and `SquadDto`. Settled 2026-09-26; A8 carries the reasoning and the
+evidence.
 
 **`League.createdBy` is dropped.** It was a bare `String @db.Uuid` with no relation — no
 referential integrity, no traversal — and nothing read it for a decision. Its only two

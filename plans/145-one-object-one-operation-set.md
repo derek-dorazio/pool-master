@@ -51,7 +51,20 @@ Set by the repo owner. They bound what this work may and may not do.
    duplicate documented in this plan came to exist.
 
    This rule outlives the pass. It is a candidate for `rules/*.md` codification before this
-   plan is deleted (ADR-0002).
+   plan is deleted (ADR-0002). **Codified** as §14 of
+   `rules/domain-model-conventions-rules.md`.
+
+6. **Residue must be removed, not just identified.** Repeatedly the finding has been *"the
+   correct mechanism already exists — it just wasn't used."* That does not close the
+   finding; removing the bypass does. A slice is not done while both paths ship.
+
+   > "So many times your answer is yes that already exists, but it wasn't used. I want all
+   > of the residue removed." — repo owner, 2026-09-26
+
+   Seven measured instances in the identity cluster alone, from a dead mapper to a
+   forgeable identity read. **Codified** as §15 of
+   `rules/domain-model-conventions-rules.md`, which carries the table; the last phase-1
+   step of every slice is a residue sweep (step 3.6 below).
 
 The goal of this pass is a single end-to-end flow — UI → route → DTO → service → DAO →
 schema — over one set of objects and one set of operations. Everything else waits.
@@ -330,8 +343,41 @@ it.
 Note the separate concern: `TeamRelationshipDto { leagueMember, owner, commissioner }` and
 `LeagueRelationshipDto { leagueMember, commissioner }` are **viewer-scoped** descriptors —
 what the *caller's* relationship is — not edges between arbitrary users and objects. They
-belong to the viewer-scope question in §4, and they overlap each other
-(`LeagueRelationshipDto` is a strict subset of `TeamRelationshipDto`).
+overlap each other (`LeagueRelationshipDto` is a strict subset of `TeamRelationshipDto`),
+and both are resolved by §2b.
+
+### 2b. Viewer context is delivered once per league — SETTLED, and it is A8
+
+Settled with the repo owner 2026-09-26. **The full reasoning, the evidence and the rule live
+in `docs/DOMAIN-OPERATIONS.md` under A8**, which survives this plan's deletion (ADR-0002).
+Recorded here because it is the largest model decision in slice 1 and half the shadow
+inventory depends on it.
+
+The short version. Five encodings of one idea — `leagueRelationship`, `memberType`,
+`isRootAdmin`, `teamRelationship`, `viewerAuthority` — sat as fields *on the domain object*,
+so two requesters got different `LeagueDto` values for the same league. That makes the DTO
+not a value of the entity, and it is the same mistake as the admin/member DTO split, one
+layer down.
+
+What resolved it was the repo owner's observation that the webapp is a single-page app
+holding league context in client state, and that **the mechanism already exists**: every
+route is `/league/:leagueCode/…`, `resolveDefaultLeagueCode()` picks the landing league from
+a cookie, `LeagueSelector` switches it, and selecting a league already fetches
+`getLeagueByCode` once into `QueryKeys.leagues.detail(leagueCode)`. TanStack Query is the
+store, deliberately, with no Zustand mirror.
+
+So the viewer's league context is **already delivered in one round trip and cached**. Every
+other response carrying it is duplication. A8's table says which surface carries what; the
+only genuine exception is the leagues *list*, which is inherently N leagues and takes the
+viewer's `LeagueMembership[]` as one array rather than a field per row.
+
+No new DTO is invented — the viewer's context is `UserDto` + `LeagueMembership[]` +
+`SquadMembership[]`, all canonical already. That is working rule 5 landing the way it is
+supposed to: the apparent gap already existed under another name.
+
+`isRootAdmin` needs no new mechanism at all. `auth-provider.tsx:175` has exposed
+`auth.isRootAdmin` from the cached user the whole time, and `app-shell.tsx` reads it at line
+49 while reading `activeLeague?.isRootAdmin` at line 64. It is pure residue (rule 6, §15).
 
 ### 3. The four kinds of difference — none of which is "a different object"
 
@@ -350,8 +396,10 @@ belong to the viewer-scope question in §4, and they overlap each other
 - One operation set per object. `DELETE /users/{id}` is the delete; root-admin-only is a
   permission on it. `me` resolves to the caller.
 - Projections deleted.
-- Viewer-scoped fields consolidated into one consistently named sub-object, so scope is
-  explicit in the model rather than implied by which URL was called.
+- Viewer-scoped fields **off the domain DTOs entirely**, delivered once per league context
+  as the viewer's own `UserDto` + memberships (§2b, A8). Superseded the earlier target of
+  "consolidated into one consistently named sub-object" — that would still have left
+  `LeagueDto` varying by requester.
 - Field visibility resolved by one stated rule.
 - Row scoping stays in the query and authorization layer.
 
@@ -436,12 +484,42 @@ Only once stages 1 and 2 are settled, and strictly in this order:
 | 3.3 | **Services** — moved onto those ports; no service returns a shape it invented | 1 |
 | 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) | 1 |
 | 3.5 | **Tests** — the slice's unit, integration and functional-api tests moved onto the canonical shapes | 1 |
-| 3.6 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
-| 3.7 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
+| 3.6 | **Residue sweep** — search the cluster for shadows and bypasses the forward work did not happen to touch (working rule 6, §15) | 1 |
+| 3.7 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
+| 3.8 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
 
-**A slice's stage 3 stops at 3.5.** Steps 3.6 and 3.7 do not run per slice — see the phase
+**A slice's stage 3 stops at 3.6.** Steps 3.7 and 3.8 do not run per slice — see the phase
 split below. A slice is done, for phase-1 purposes, when its schema, DAO, services, routes
-and tests name the cluster's entities one way and the phase-1 gates are green.
+and tests name the cluster's entities one way, the sweep is clean, and the phase-1 gates
+are green.
+
+### Step 3.6 — the residue sweep, in detail
+
+Not a review of the diff. A **search of the cluster**, because the residue is by definition
+what the forward work did not touch. It is a numbered step rather than a judgement call at
+the end of a long slice precisely because it will not otherwise happen.
+
+For every entity and edge in the cluster, and every layer from schema to frontend:
+
+- **Derived and projected shapes.** Any type that is a subset, rename or reshape of a
+  canonical DTO. Compare semantics, not field names (§5). Include **client-side**
+  projections — `league-cache.ts`'s `toLeagueSummary()` hand-projects one DTO down to
+  another, field by field, in the webapp.
+- **Bypassed mechanisms.** For each repository port, mapper, provider, cached query and
+  request decorator touching the cluster: is anything reaching past it? Raw Prisma beside a
+  port, inline response shaping beside a mapper, a value re-fetched beside a cached one.
+- **Duplicated facts.** The same value delivered by two paths, especially viewer identity:
+  a global flag repeated per row, a relationship derivable from a membership the client
+  already holds, an id echoed back that the server can read from the token.
+- **Dead code that encodes a convention.** An unused mapper or unused DTO is worse than an
+  absent one — it looks like the convention is being followed. Delete or wire it.
+- **Contracts enforced only at runtime.** A response shape held together by the serializer
+  dropping unknown fields is not type-checked. Route it through a mapper so the compiler
+  owns it.
+
+Output: every instance either removed in this slice, or recorded with the reason it is not.
+"Already exists" is not a closure. Finish by re-reading §15's table and asking which of
+those seven patterns this cluster also has.
 
 ## Two phases — backend first, then the frontend in one pass
 
@@ -453,10 +531,10 @@ within that branch, not separate branches or separate PRs.
 > types and client SDK's are exported."
 
 **Phase 1 — every slice, backend only.** Slices 1 through 4 each run stages 1, 2 and steps
-3.1–3.5. The webapp is not touched and is *expected to be broken* for the duration: routes
+3.1–3.6. The webapp is not touched and is *expected to be broken* for the duration: routes
 and DTOs are changing underneath it and the generated client has not been regenerated yet.
 
-**The boundary — export once.** After the last slice's backend is green, run 3.6 for
+**The boundary — export once.** After the last slice's backend is green, run 3.7 for
 everything at once: register the canonical DTOs as named OpenAPI components, `npm run
 api:refresh`, and regenerate the client SDK. One regeneration over a settled model, not four
 over a moving one.
@@ -511,7 +589,7 @@ before phase 2 is done.
 ## Slices — grouped by related objects
 
 Ordered by dependency: later clusters reference earlier ones. **Slices 1–4 are phase-1
-(backend) units** — each runs stages 1 and 2 and steps 3.1–3.5, and none of them touches the
+(backend) units** — each runs stages 1 and 2 and steps 3.1–3.6, and none of them touches the
 webapp. The frontend is a single pass after all four, listed last.
 
 ### Slice 1 — Identity and membership
@@ -527,17 +605,64 @@ vs `/admin/users/*`, `adminInactivateLeague` vs `inactivateLeague`, `adminListTe
 
 First because it is the smallest real test of the whole workflow.
 
-**Stage 1.0 and stage 2 are already done for this slice** — the ER diagram is in #202 and the
-repo owner's answers are recorded in `docs/DOMAIN-OPERATIONS.md` (access rules A1–A7). Two
-schema changes came out of that review and are step 3.1 for this slice:
+**Stages 1 and 2 are done for this slice.** The ER diagram is in #202, the stage-1 shadow
+inventory is in #202 (2026-09-25), and every model question is answered in
+`docs/DOMAIN-OPERATIONS.md` — access rules A1–A7 (who may call) and **A8 (viewer context
+is delivered once per league, never per row)**.
+
+Two schema changes, step 3.1:
 
 - Add `@@unique([leagueId, name])` to `Squad` — squad names are unique within a league.
+  `SquadMembership` already carries `@@unique([leagueId, userId])`, so one squad per user
+  per league is already enforced in the database.
 - Drop `League.createdBy` — not a concept the model needs. Removes the column, the field in
   `domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the DTO field in
   `admin/league-service.ts`.
 
-Stage 1's shadow inventory has not been run yet. Known starting points to confirm are listed
-above.
+Four DAO gaps, step 3.2 — each one a requirement from an access rule (working rule 2, §14):
+
+| Gap | Required by |
+|---|---|
+| `UserRepository` has no `findAll`/search | A1 — only rootAdmin reads across all users |
+| `UserRepository` has no `findByLeague` | A4 + A6 — members read peer users through the league join |
+| `LeagueRepository` has no `findByUser` | A2 — a member sees only their own leagues |
+| `SquadRepository` needs no cross-league search | **Retired.** A8's "one league at a time" means there is no unscoped squad list; `adminListTeams` is deleted, not unified |
+
+DTO collapses, step 3.4:
+
+| Shadow | Becomes |
+|---|---|
+| `UserProfileDto` | renamed `UserDto`, moved from `auth.dto.ts` to a new `users.dto.ts` |
+| `AdminTeamSummaryDto` | `SquadDto` |
+| `AdminTeamOwnerSummaryDto` | `UserDto` |
+| `LeagueMemberDto` | `LeagueMembershipDto` with an embedded `UserDto` |
+| `LeagueDetailDto` | merged into `LeagueDto` — it is `LeagueSummaryDto` + `joinPolicy`, a pure view variant |
+| `LeagueRelationshipDto`, `TeamRelationshipDto`, `UserViewerAuthorityDto` | deleted — A8 |
+| `SquadMembershipDto.firstName`/`lastName` | embedded `UserDto` |
+
+Eight duplicate operation pairs collapse to eight operations; the list is in
+`docs/DOMAIN-OPERATIONS.md` under *What this document settles*.
+
+**Known step 3.6 sweep targets**, recorded now so they are not lost:
+
+- `account/service.ts` — 26 raw Prisma calls, **zero repository ports**. Not in the
+  original §2y diagnosis, which implicated only `admin/*` and `golf/*`. It is half of the
+  `/account/*` vs `/admin/users/*` split, and the reason the two drifted: neither side goes
+  through `UserRepository`, so nothing constrained them to agree.
+- `admin/user-service.ts` (36 raw calls), `admin/league-service.ts` (2),
+  `admin/team-service.ts` (1) — all zero ports.
+- `league-cache.ts`'s `toLeagueSummary()` — a client-side hand projection of one DTO down
+  to another, field by field. Deleted by the `LeagueDto` collapse.
+- `my-team-page.tsx:149` — finds the viewer's own squad by scanning
+  `team.teamRelationship.owner` across every squad in the league. Becomes a lookup against
+  the viewer's `SquadMembership` from the league context.
+- ~12 sites reading `isRootAdmin` off a league or squad while `auth-provider.tsx:175`
+  exposes `auth.isRootAdmin`. `app-shell.tsx` uses both, at lines 49 and 64.
+- `account.dto.ts` registers **no** named components at all, so `AccountResponse` is
+  published as an inline anonymous schema. Pre-existing on main, a #192 gap.
+- `admin/routes.ts` carries the `#192-mixed:` opt-out from
+  `check-dto-conversion-complete.mjs` check 5. Re-examine whether it still needs it once
+  the admin DTOs above are gone.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
@@ -573,7 +698,7 @@ The genuinely admin-only operations. No shared objects and no collapse: this sli
 (stop calling it "admin") and bringing services onto ports for consistency.
 
 ### Phase 2 — the frontend, once
-Not a fifth slice. Runs after all four slices' backends are green and step 3.6 has exported
+Not a fifth slice. Runs after all four slices' backends are green and step 3.7 has exported
 the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
 in slices 1–4 moves onto the generated type, using the full object (rule 3).
 
