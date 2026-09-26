@@ -28,7 +28,8 @@ everything, and repeating it on every row adds noise.
 ## Access rules
 
 **These rules decide every row in the tables below.** A1–A7 decide *who may call* an
-operation; A8 decides *what viewer context the response carries*. Where a table and a rule
+operation; A8 decides *what viewer context the response carries*; A9 decides what
+`isActive` does and does not constrain. Where a table and a rule
 disagree, the rule wins and the table is a bug. New operations are assigned a role by
 applying these rules, not by precedent from a similar-looking route.
 
@@ -163,6 +164,45 @@ leagues you run. That needs the relationship **as a set** — which is
 Working rule 4 still holds: admin-only *fields* are noted, not enforced. A8 is about
 **whose relationship to the object** travels in the payload, not about trimming fields per
 caller. Nothing here authorises a redacted variant.
+
+---
+
+## A9. `isActive` is a read filter, not a write lock
+
+**Settled 2026-09-26 with the repo owner**, after this was got wrong while planning slice 1's
+service migration.
+
+Inactivating anything — a `User`, `Squad`, `League`, `SportEvent` — means it is **excluded
+from views and from use**. That is the whole of what it means, and it is enforced where
+reads happen:
+
+- `SquadRepository.findByLeague(leagueId, includeInactive = false)`
+- `SquadMembershipRepository.findBySquad(squadId, includeInactive = false)`
+- `LeagueMembershipRepository.findByLeague` / `findByUser` / `countActiveByLeagues`, all
+  filtering `status = ACTIVE`
+
+**It does not freeze the row against writes.** An inactive object can still be edited; the
+edit simply is not visible anywhere, because the reads exclude it. So a guard that refuses a
+*write* because the target is inactive is not protecting anything — it is a second,
+weaker version of a rule the read layer already enforces completely.
+
+### The one exception, and why it is not the same thing
+
+**Permanent delete requires the row to be inactive already.** That is a genuine write
+precondition, and the rules that state it (`deleteInactiveSquad`, `deleteInactiveLeague`,
+admin and self user delete) stay exactly as they are.
+
+The difference: that gate exists so a destructive, irreversible operation cannot be reached
+in one step from the normal state. It is sequencing, not freezing. Blocking a *profile edit*
+on an inactive account protects nothing by comparison — nothing renders it either way.
+
+### What this ruled out in slice 1
+
+`account/service`'s `requireUserForMutableAccountAction` refused profile, username and
+preference updates whenever the account was inactive. It reads as a generalisation of the
+delete gate, applied to all writes. It was dropped: nothing in the operation set makes an
+inactive account read-only, and a user must be able to sign in while inactive in order to
+reactivate, so the account was never actually frozen.
 
 ---
 
