@@ -199,7 +199,7 @@ An issue's comments are the slice's execution record. Two comments per slice is 
 
 - Planned approach: which files will change, which patterns will be applied, which contract surfaces are touched.
 - Risk callouts: anything the slice is being asked to be careful about.
-- Validation plan: which gates will be run, which test layers will be added or updated, and which use-case / defect IDs the new tests will reference.
+- Validation plan: which gates will be run, and which test layers will be added, updated or **deleted** — see `rules/testing-rules.md` §1D, which makes deletion the default when the code under a test is going away. No use-case or defect ids are required.
 
 **Closing comment** (added when the issue is closed):
 

@@ -99,24 +99,28 @@ it('rejects DELETE on an archived league with 409 LEAGUE_ARCHIVED', ...)
 
 That is the whole rule for ordinary tests. No ID is required.
 
-### The one exception: defect-fix tests
+### Struck: the defect-reference requirement
 
-**A regression test written to fix a defect must reference that defect's issue number**, in
-the describe block, the test name, or a leading comment:
+Until 2026-09 this section **required** a regression test to reference its defect's issue
+number, on the grounds that it linked the test to the incident that motivated it.
 
-```typescript
-it('#142: does not race when two participants upsert the same round', ...)
-```
+**That requirement is struck.** Set by the repo owner: the product is pre-launch and not yet
+functional end to end, so a defect id on a test records the history of code that is still
+being written. It is a tax, and the id adds a lookup rather than information — a test name
+that states the behaviour and what breaking it would mean already tells a reader everything
+they need.
 
-This is cheap and genuinely valuable: it links a regression test to the incident that
-motivated it, so a future reader deleting the test can see what it was protecting against.
-It is also the half that survives, because **issue numbers live in the tracker, which is
-permanent** — see `§3` *Defect Verification Protocol*, which carries the same requirement
-from the other direction.
+No new test needs an id. A test name meeting the requirement above is sufficient, for
+regression tests and ordinary tests alike.
 
-Tests written before September 2026 carry `pool-master-<suffix>` defect IDs, and tests
-predating that carry `UC-`/`BR-` use-case and business-rule IDs. Both remain valid and
-useful. They are **not** to be retrofitted or stripped — they simply stop being required.
+**Existing ids stay.** Around 739 tests carry `pool-master-<suffix>`, `UC-` or `BR-` ids, and
+mass-renaming them would be its own pointless churn. Leave them where they are; they are
+harmless. But when a test is **deleted or rewritten**, its id goes with it rather than moving
+into the replacement — see §1D.
+
+Note this is the *second* generation of this convention to be dropped: the `UC-`/`BR-`
+use-case and business-rule requirement was struck before it, for reasons the next section
+records. Two rounds of the same outcome is the argument against adding a third.
 
 ### Why the use-case/business-rule requirement was dropped
 
@@ -240,6 +244,24 @@ Set by the repo owner, 2026-09-26. Test propagation is reduced the same way impl
 propagation is: **a test belongs to exactly one implementation, and it goes where that
 implementation goes.**
 
+### Tests must earn their place
+
+> "Tests must earn their place. If they have no value, don't carry them forward. If they
+> represent a good use case and test case, layer them into the correct test class accordingly.
+> But stop trying to preserve tests that exist only to enforce code we are deleting."
+
+That is the governing principle, and it decides the three cases:
+
+| The old test | Do this |
+|---|---|
+| Exists only to enforce the shape of code being deleted | **Delete it.** No replacement owed |
+| Describes a use case that still holds | **Re-express it** at the layer where it is observable (see *Test layering*), written against the new implementation |
+| Cannot be placed at any layer without asserting which method was called | It was never testing behaviour. **Delete it** |
+
+The default is delete. A test survives by being a case worth asserting, not by having existed.
+Preserving a test because deleting it feels like losing coverage is how a suite ends up
+enforcing the code it was meant to outlive.
+
 ### Removing code removes its tests
 
 If the code is being deleted, delete its tests in the same change. Do not repair them, do
@@ -266,15 +288,19 @@ dependency while `account/service`'s checked email confirmation. A new test writ
 against the implementation that "won" silently drops the other's case, and the deleted test
 was the only record it existed.
 
-### Carry a defect case forward even when its test goes
+### Drop the defect reference; do not carry it
 
-A test carrying a defect reference — `#142`, `pool-master-<suffix>`, or an older `UC-`/`BR-`
-id (§1A) — encodes a case someone found the hard way. Deleting the test with its code is
-still correct, but **check whether the new implementation can exhibit the same defect**, and
-if it can, the case belongs in the new test.
+A deleted or rewritten test's defect id — `#142`, `pool-master-<suffix>`, `UC-`/`BR-` — goes
+with it. Do not migrate the reference into the replacement test and do not record it in a
+comment.
 
-This is the reason §1A requires the reference in the first place: so a reader deleting a
-test can see what it was protecting against. Use it.
+Set by the repo owner, 2026-09-26: *"I don't care about carrying defect references forward if
+the test case is moved. This code is not even functional yet. Logging defects in code comments
+and test cases is not helpful. It's just an unnecessary tax."*
+
+If the behaviour still matters, the replacement test asserts it and its **name** says what
+breaking it would mean — which is what §1A asks for and is the whole of what a reader needs.
+The id adds a lookup, not information.
 
 ### What this rule rules out
 
@@ -393,7 +419,7 @@ For any slice whose purpose is to fix a defect (a bug, a regression, a wrong-beh
 
 The slice must make both halves visible in its history:
 
-- **Preferred:** two commits — `commit 1` adds the failing test (and may temporarily mark it `it.skip` only if absolutely required to keep `main` green; this is rare). `commit 2` lands the fix and unmarks the test. Both reference the same defect ID (e.g., `#NN`).
+- **Preferred:** two commits — `commit 1` adds the failing test (and may temporarily mark it `it.skip` only if absolutely required to keep `main` green; this is rare). `commit 2` lands the fix and unmarks the test. Both name the same defect in their test names; no id is required (§1A).
 - **Acceptable:** one commit when adding the failing test alone would block other work. The PR description must then explicitly state that the test was written first and observed to fail before the fix landed, and the issue's closing comment must record the failing-then-passing observation.
 
 The intent is reviewable proof that the test actually catches the defect — not retrofit confidence after the fact.
@@ -420,7 +446,12 @@ Adding the test only at a layer where it cannot actually catch the defect (e.g.,
 
 ### Traceability
 
-The failing/passing test must reference the defect ID per §1A — `pool-master-NNN — <one-line defect description>`.
+**No defect id is required.** §1A's reference requirement was struck in 2026-09; this section
+used to carry it from the other direction and no longer does.
+
+What the failing test must do is **name the defect's behaviour** — what was wrong and what
+correct looks like — specifically enough that a reader knows what breaking it would mean. That
+is §1A's ordinary requirement, and it is the whole of it.
 
 ### When this rule does not apply
 
@@ -573,7 +604,7 @@ For example, a commissioner contest setup flow may need:
 
 ### Use-Case Traceability
 
-Smoke and E2E tests must follow §1A *Test Self-Documentation*. Reference the use-case ID, business-rule ID, or defect ID in the describe block, test name, or a leading comment (e.g., `// UC-CO-003 — Member creates contest entry`).
+Smoke and E2E tests must follow §1A *Test Self-Documentation*: the name states the behaviour and what breaking it would mean. No use-case, business-rule or defect id is required (§1A struck that in 2026-09).
 
 Additional E2E-specific guidance:
 - If a test covers behavior not yet documented and the behavior is product-significant, document the use case before expanding that suite further.
@@ -1006,7 +1037,8 @@ when you need a clean migrated schema.
 - Do not skip OpenAPI validation after changing route schemas.
 - Do not modify application code to make a test pass — see §1B *Forbidden Application-Code Patterns*. The conclusion is never "add a hardcoded response, fallback, or test-only branch to production code."
 - Do not write a defect-fix slice without first writing a failing test that catches the defect — see §3 *Defect Verification Protocol*.
-- Do not add a test whose name does not say what behavior it proves — see §1A *Test Self-Documentation*. Defect-fix tests additionally reference their issue number.
+- Do not add a test whose name does not say what behavior it proves — see §1A *Test Self-Documentation*. No id is required, for defect-fix tests or any other.
+- Do not carry a deleted test's defect id into its replacement, and do not preserve a test that exists only to enforce code being deleted — see §1D *Tests Follow The Code They Test*.
 
 ---
 

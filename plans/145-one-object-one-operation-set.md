@@ -503,8 +503,14 @@ the remaining steps handle tests, and it is the reason #209 shrinks rather than 
 - **Migrating code replaces its tests.** The new implementation's test *is* the replacement.
   Its cases come from the shadow comparison already done in stage 1 — and must cover the
   **union** of the shadows' cases, not just the surviving implementation's.
-- **A defect-referenced test** (§1A) still gets deleted with its code, but check whether the
-  new implementation can exhibit the same defect; if so the case moves into the new test.
+- **Tests must earn their place.** Delete is the default. A test survives by being a case
+  worth asserting, not by having existed — and a test that exists only to enforce the shape
+  of code being deleted has no replacement owed. A case that still holds gets re-expressed at
+  the layer where it is observable.
+- **Defect ids are not carried forward, and are no longer required at all.** §1A's reference
+  requirement is struck: the product is pre-launch, so an id on a test records the history of
+  code still being written. The ~739 existing ids stay where they are rather than being
+  mass-renamed, but a deleted or rewritten test's id goes with it.
 - **The count is an outcome.** N implementations collapsing to one should leave about one
   implementation's worth of tests covering N implementations' worth of cases. A count that
   does not fall means tests are propagating independently of the code.
