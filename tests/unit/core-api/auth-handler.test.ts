@@ -69,30 +69,6 @@ describe('auth handlers', () => {
     expect(reply.send).toHaveBeenCalledWith({ success: true });
   });
 
-  it('returns AUTH_SESSION_REQUIRED when /me is called without an authenticated user', async () => {
-    const authService = {
-      getProfile: jest.fn(),
-    } as any;
-
-    const handlers = createAuthHandlers(authService);
-    const reply = createReply();
-    const logger = createLogger();
-    const request = {
-      contextLogger: logger,
-      log: logger,
-    } as unknown as FastifyRequest;
-
-    await handlers.me(request, reply);
-
-    expect(authService.getProfile).not.toHaveBeenCalled();
-    expect((reply.status as jest.Mock).mock.calls[0][0]).toBe(401);
-    expect((reply.send as jest.Mock).mock.calls[0][0]).toEqual({
-      error: {
-        code: 'AUTH_SESSION_REQUIRED',
-        message: 'Authenticated session required',
-      },
-    });
-  });
 
   it('maps AuthError branches from login into the standard error envelope', async () => {
     const authService = {

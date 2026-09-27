@@ -80,10 +80,8 @@ export const AuthResponseSchema = z.object({
 }).describe('Successful authentication response returned after registration or login.');
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
-export const MeResponseSchema = z.object({
-  user: UserDtoSchema,
-}).describe('Authenticated current-user profile response.');
-export type MeResponse = z.infer<typeof MeResponseSchema>;
+// #202 step 3.4 — `MeResponse` is gone with `GET /auth/me`. Reading a user is one operation,
+// `GET /users/:userId`, whose `me` resolves to the caller; it returns `UserResponse`.
 
 // #206 — no `sessionId`. The session correlation id stays server-side in the JWT's
 // `sid` claim; the browser never receives it and never needs to, because the only
@@ -108,5 +106,4 @@ registerSchema('AuthTokensDto', AuthTokensDtoSchema);
 registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);
-registerSchema('MeResponse', MeResponseSchema);
 registerSchema('TokenRefreshResponse', TokenRefreshResponseSchema);

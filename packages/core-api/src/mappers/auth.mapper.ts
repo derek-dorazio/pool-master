@@ -5,7 +5,7 @@
  * `UserRow` interface, one of four copies; `users.mapper.ts` owns the only one now, over the
  * canonical domain `User`.
  */
-import type { AuthResponse, MeResponse, TokenRefreshResponse } from '@poolmaster/shared/dto';
+import type { AuthResponse, TokenRefreshResponse } from '@poolmaster/shared/dto';
 import type { User } from '@poolmaster/shared/domain';
 import { toUserDto } from './users.mapper';
 
@@ -26,12 +26,6 @@ export function toAuthResponse(user: User, tokens: TokenPair): AuthResponse {
       csrfToken: tokens.csrfToken,
       expiresIn: tokens.expiresIn,
     },
-  };
-}
-
-export function toMeResponse(user: User): MeResponse {
-  return {
-    user: toUserDto(user),
   };
 }
 

@@ -35,6 +35,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
+  const userRepo = new PrismaUserRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
@@ -57,7 +58,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
     mailDelivery,
     appBaseUrl,
   );
-  const handlers = createInvitationHandlers(invitationService, new PrismaUserRepository(prisma));
+  const handlers = createInvitationHandlers(invitationService, userRepo);
 
   fastify.get('/:inviteCode', {
     schema: {

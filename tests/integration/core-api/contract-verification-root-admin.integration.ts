@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
-  AdminResetUserPasswordResponseSchema,
+  UserResetPasswordResponseSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
@@ -348,15 +348,28 @@ describe('Contract verification (root admin)', () => {
     await teardownIntegrationTests();
   });
 
-  it('admin routes reject missing root-admin identity with ErrorEnvelopeSchema', async () => {
-    const res = await getApp().inject({
+  // #202 step 3.4 — the user list moved out from under `/api/v1/admin`, so the two failures
+  // are now distinguishable, which they were not before: an anonymous caller is not
+  // authenticated, and an authenticated caller who is not a root admin is not authorized. The
+  // old admin prefix answered ROOT_ADMIN_SESSION_REQUIRED to both.
+  it('separates "not signed in" from "not a root admin" on the unscoped user list (A1)', async () => {
+    const anonymous = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users',
+      url: '/api/v1/users',
     });
+    expect(anonymous.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(anonymous.json()).success).toBe(true);
+    expect(anonymous.json().error.code).toBe('AUTH_SESSION_REQUIRED');
 
-    expect(res.statusCode).toBe(401);
-    expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-    expect(res.json().error.code).toBe('ROOT_ADMIN_SESSION_REQUIRED');
+    const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin User' });
+    const forbidden = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/users',
+      headers: ordinaryUser.headers,
+    });
+    expect(forbidden.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
+    expect(forbidden.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
   it('root-admin user reads match their DTOs on happy paths', async () => {
@@ -403,7 +416,7 @@ describe('Contract verification (root admin)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users',
+      url: '/api/v1/users',
       headers: rootAdmin.headers,
     });
     expect(listRes.statusCode).toBe(200);
@@ -411,7 +424,7 @@ describe('Contract verification (root admin)', () => {
 
     const detailRes = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/admin/users/${rootAdmin.user.id}`,
+      url: `/api/v1/users/${rootAdmin.user.id}`,
       headers: rootAdmin.headers,
     });
     expect(detailRes.statusCode).toBe(200);
@@ -423,7 +436,7 @@ describe('Contract verification (root admin)', () => {
 
     const setRootAdminRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/admin/users/${targetUser.user.id}/root-admin`,
+      url: `/api/v1/users/${targetUser.user.id}/root-admin`,
       headers: rootAdmin.headers,
       payload: {
         isRootAdmin: true,
@@ -435,14 +448,14 @@ describe('Contract verification (root admin)', () => {
 
     const resetPasswordRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/admin/users/${targetUser.user.id}/reset-password`,
+      url: `/api/v1/users/${targetUser.user.id}/reset-password`,
       headers: rootAdmin.headers,
       payload: {
         reason: 'Contract verification',
       },
     });
     expect(resetPasswordRes.statusCode).toBe(200);
-    expect(AdminResetUserPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
+    expect(UserResetPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
     expect(typeof resetPasswordRes.json().temporaryPassword).toBe('string');
 
     await getPrisma().user.update({
@@ -452,7 +465,7 @@ describe('Contract verification (root admin)', () => {
 
     const deleteUserRes = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/admin/users/${targetUser.user.id}`,
+      url: `/api/v1/users/${targetUser.user.id}`,
       headers: rootAdmin.headers,
       payload: {
         email: targetUser.user.email,
@@ -857,7 +870,7 @@ describe('Contract verification (root admin)', () => {
 
     const userRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000',
       headers: rootAdmin.headers,
     });
     expect(userRes.statusCode).toBe(404);
@@ -866,7 +879,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingRoleChangeRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/root-admin',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000/root-admin',
       headers: rootAdmin.headers,
       payload: {
         isRootAdmin: true,
@@ -878,7 +891,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingResetPasswordRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/reset-password',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000/reset-password',
       headers: rootAdmin.headers,
       payload: {},
     });
@@ -888,7 +901,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingDeleteUserRes = await getApp().inject({
       method: 'DELETE',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000',
       headers: rootAdmin.headers,
       payload: {
         email: 'missing@example.com',

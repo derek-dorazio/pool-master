@@ -55,24 +55,10 @@ export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSche
 //     `user.id === me.id`, which the client can see; `isRootAdmin` is a property of the
 //     cached `UserDto`.
 //   - `UserViewerAuthorityDto`, which existed only to give that block a name.
-export const SetUserRootAdminRequestSchema = z.object({
-  isRootAdmin: z.boolean().describe('Whether the target user should hold the platform-level root-admin role after the change.'),
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
-}).describe('Root-admin role-change request payload.');
-export type SetUserRootAdminRequest = z.infer<typeof SetUserRootAdminRequestSchema>;
-export const AdminResetUserPasswordRequestSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
-}).describe('Root-admin initiated password-reset request.');
-export type AdminResetUserPasswordRequest = z.infer<typeof AdminResetUserPasswordRequestSchema>;
-export const AdminResetUserPasswordResponseSchema = z.object({
-  temporaryPassword: z.string().min(8).describe('Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in.'),
-}).describe('Root-admin password-reset response.');
-export type AdminResetUserPasswordResponse = z.infer<typeof AdminResetUserPasswordResponseSchema>;
-export const AdminDeleteUserRequestSchema = z.object({
-  email: z.string().email().describe('Exact target email confirmation required before permanently deleting the account.'),
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
-}).describe('Root-admin delete-account confirmation payload.');
-export type AdminDeleteUserRequest = z.infer<typeof AdminDeleteUserRequestSchema>;
+// #202 step 3.4 — the root-admin user payloads live in users.dto.ts now, beside the object
+// they act on and beside the self-service payloads they were duplicating. `SetUserRootAdmin`,
+// `AdminResetUserPassword` and `AdminDeleteUser` were the admin halves of operations the
+// account module also implemented; there is one of each, and one route for each.
 
 export const AdminListLeaguesQuerySchema = z.object({
   search: z

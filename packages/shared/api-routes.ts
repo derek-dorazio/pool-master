@@ -20,7 +20,24 @@ export const API_ROUTES = {
     register: '/api/v1/auth/register',
     refresh: '/api/v1/auth/refresh',
     logout: '/api/v1/auth/logout',
-    me: '/api/v1/auth/me',
+  },
+
+  // Users — #202 step 3.4. One operation set. `me` resolves to the authenticated caller, so
+  // these paths serve both a user acting on themselves and a root admin acting on somebody;
+  // access rule A6 decides which is allowed. They replaced `/api/v1/auth/me`,
+  // `/api/v1/account/*` and `/api/v1/admin/users/*`.
+  users: {
+    list: '/api/v1/users',
+    detail: (userId: string) => `/api/v1/users/${userId}`,
+    profile: (userId: string) => `/api/v1/users/${userId}/profile`,
+    username: (userId: string) => `/api/v1/users/${userId}/username`,
+    preferences: (userId: string) => `/api/v1/users/${userId}/preferences`,
+    password: (userId: string) => `/api/v1/users/${userId}/password`,
+    resetPassword: (userId: string) => `/api/v1/users/${userId}/reset-password`,
+    disable: (userId: string) => `/api/v1/users/${userId}/disable`,
+    enable: (userId: string) => `/api/v1/users/${userId}/enable`,
+    revokeSessions: (userId: string) => `/api/v1/users/${userId}/revoke-sessions`,
+    rootAdmin: (userId: string) => `/api/v1/users/${userId}/root-admin`,
   },
 
   // Leagues
@@ -105,23 +122,12 @@ export const API_ROUTES = {
 
   // Admin
   admin: {
-    users: '/api/v1/admin/users',
     health: '/api/v1/admin/health',
     audit: '/api/v1/admin/audit',
   },
 
   observability: {
     clientLogs: '/api/v1/client-logs',
-  },
-
-  // Account / Compliance
-  account: {
-    reactivate: '/api/v1/account/reactivate',
-    inactivate: '/api/v1/account/inactivate',
-    profile: '/api/v1/account/profile',
-    preferences: '/api/v1/account/preferences',
-    password: '/api/v1/account/password',
-    detail: '/api/v1/account',
   },
 
   // Health

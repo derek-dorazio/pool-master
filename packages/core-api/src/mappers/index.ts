@@ -4,7 +4,6 @@ export * from './leagues.mapper';
 export * from './contests.mapper';
 export * from './contest-entry-picks.mapper';
 export * from './participants.mapper';
-export * from './account.mapper';
 export * from './admin-events.mapper';
 export * from './admin-golf.mapper';
 export * from './admin-provider-cleanup.mapper';

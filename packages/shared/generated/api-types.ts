@@ -137,7 +137,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/me": {
+    "/api/v1/users/": {
         parameters: {
             query?: never;
             header?: never;
@@ -145,12 +145,216 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current user profile from JWT
-         * @description Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.
+         * List users
+         * @description Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
          */
-        get: operations["getCurrentUser"];
+        get: operations["listUsers"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read one user
+         * @description Returns one user as the canonical UserDto. `me` resolves to the authenticated caller. Access rule A6: the subject themselves, or a root admin. Carries no viewer context (A8).
+         */
+        get: operations["getUser"];
+        put?: never;
+        post?: never;
+        /**
+         * Permanently delete an inactive user
+         * @description Removes the user row and the user-owned data that references it, in one transaction. Self-delete and admin-delete are ONE operation (A6). Gated: the account must already be inactive — the one place isActive is a write precondition rather than a read filter (A9) — the exact email must be confirmed, no league-scoped data may remain, and the last root admin cannot be removed.
+         */
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a user profile
+         * @description Updates email, first name and last name. One operation for either caller — the subject themselves or a root admin (A6). The email must be unique across account emails and usernames.
+         */
+        put: operations["updateUserProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a user login username
+         * @description Updates the login username after confirming it is unique across usernames AND emails, because login accepts either.
+         */
+        put: operations["updateUserUsername"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update user preferences
+         * @description Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.
+         */
+        put: operations["updateUserPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change your own password
+         * @description Changes the password after validating the current one. Self only (A6): a root admin resetting somebody else uses the reset operation, which has a different subject rather than merely a different precondition. Other sessions are revoked while the caller stays signed in.
+         */
+        post: operations["changeUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset another user's password
+         * @description Generates a temporary password for the target user, revokes their live sessions, and returns the credential for the root admin to relay. Root admin only (A6).
+         */
+        post: operations["resetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disable a user
+         * @description Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+         */
+        post: operations["disableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable a user
+         * @description Sets isActive = true. Self-reactivation and admin-enable are ONE operation (A6). Idempotent. Re-enabling yourself rotates a fresh session so the account is immediately usable.
+         */
+        post: operations["enableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/revoke-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke every live session for a user
+         * @description Revokes all refresh tokens, forcing re-authentication. Self sign-out-everywhere and admin force-logout are ONE operation (A6).
+         */
+        post: operations["revokeUserSessions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/root-admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant or revoke the root-admin role
+         * @description Root admin only (A6). Self-demotion is permitted: the only rule is that the platform keeps an administrator, which the last-root-admin guard enforces for every caller. A demotion also revokes the subject's sessions so the removed authority cannot be used until re-login.
+         */
+        post: operations["setUserRootAdmin"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1328,290 +1532,6 @@ export interface paths {
          * @description Updates mutable participant fields such as display metadata and identifiers.
          */
         patch: operations["updateParticipant"];
-        trace?: never;
-    };
-    "/api/v1/account/reactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reactivate the authenticated account
-         * @description Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.
-         */
-        post: operations["reactivateAccount"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update the authenticated account profile
-         * @description Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.
-         */
-        put: operations["updateAccountProfile"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/username": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update the authenticated account username
-         * @description Updates the authenticated account login username after confirming it is unique across account usernames and emails.
-         */
-        put: operations["updateAccountUsername"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/preferences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update authenticated account preferences
-         * @description Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.
-         */
-        put: operations["updateAccountPreferences"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change the authenticated account password
-         * @description Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.
-         */
-        post: operations["changeAccountPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/inactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Inactivate the authenticated account
-         * @description Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.
-         */
-        post: operations["inactivateAccount"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete the authenticated inactive account permanently
-         * @description Permanently deletes the authenticated account after the user has already inactivated it and provides exact email confirmation. This removes the user row and user-owned account data.
-         */
-        delete: operations["deleteAccount"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List users with filters
-         * @description Returns the administrative user list with filter support for platform operations and support workflows.
-         */
-        get: operations["adminListUsers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user detail
-         * @description Returns one user account as the canonical UserDto. Carries no viewer context: who is asking is not a property of the user being read (access rule A8).
-         */
-        get: operations["adminGetUserDetail"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete an inactive user account as root admin
-         * @description Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN.
-         */
-        delete: operations["adminDeleteUser"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/force-logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Force logout a user from all sessions
-         * @description Revokes every active session for the target user so they are forced to authenticate again.
-         */
-        post: operations["adminForceLogout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Disable a user account
-         * @description Disables the target user account at the platform level.
-         */
-        post: operations["adminDisableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/enable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-enable a disabled user account
-         * @description Re-enables a previously disabled user account.
-         */
-        post: operations["adminEnableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset a user password as root admin
-         * @description Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.
-         */
-        post: operations["adminResetUserPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/root-admin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Grant or revoke the root-admin role for a user
-         * @description Allows an existing root admin to grant or revoke the platform-level root-admin role for any user, including themselves. At least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND and 409 LAST_ROOT_ADMIN.
-         */
-        post: operations["adminSetUserRootAdmin"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/events": {
@@ -3351,6 +3271,86 @@ export interface components {
                 createdAt?: string;
             }[];
         };
+        /** @description Profile update payload. Sent by the user themselves or by a root admin (access rule A6). */
+        UserProfileUpdateRequest: {
+            /**
+             * Format: email
+             * @description Updated primary contact email address.
+             */
+            email: string;
+            /** @description Updated first name. */
+            firstName: string;
+            /** @description Updated last name. */
+            lastName: string;
+        };
+        /** @description Username update payload. */
+        UserUsernameUpdateRequest: {
+            /** @description Updated unique login username. */
+            username: string;
+        };
+        /** @description Preferences update payload. Omitted fields are untouched; null clears a field. */
+        UserPreferencesUpdateRequest: {
+            /** @description Preferred IANA timezone. Omit to leave unchanged; null to clear it. */
+            timezone?: string | null;
+            /** @description Preferred locale. Omit to leave unchanged; null to clear it. */
+            locale?: string | null;
+            /**
+             * @description Preferred clock display format. Omit to leave unchanged; null to clear it.
+             * @enum {string|null}
+             */
+            timeFormat?: "12H" | "24H" | null;
+            /**
+             * @description Preferred date display format. Omit to leave unchanged; null to clear it.
+             * @enum {string|null}
+             */
+            dateFormat?: "MDY" | "DMY" | "YMD" | null;
+        };
+        /** @description Password-change payload. Self only, because it requires the current password (A6). */
+        UserPasswordChangeRequest: {
+            /** @description Existing password, which must match before the password can be changed. */
+            currentPassword: string;
+            /** @description New password to persist for future sign-in attempts. */
+            newPassword: string;
+            /** @description Repeat of the new password to guard against confirmation mistakes. */
+            confirmNewPassword: string;
+        };
+        /** @description Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition. */
+        UserResetPasswordRequest: {
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Password-reset response. */
+        UserResetPasswordResponse: {
+            /** @description Temporary password to relay to the user. Existing sessions are revoked and the user should change this after signing in. */
+            temporaryPassword: string;
+        };
+        /** @description Disable payload. The reason is optional because self-inactivation has nobody to explain itself to. */
+        UserDisableRequest: {
+            /** @description Optional human reason captured in the root-admin audit log when an admin disables somebody else. */
+            reason?: string;
+        };
+        /** @description Permanent-delete confirmation payload. */
+        UserDeleteRequest: {
+            /**
+             * Format: email
+             * @description Exact email confirmation required before permanently deleting the inactive account.
+             */
+            email: string;
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Root-admin role-change payload. */
+        SetUserRootAdminRequest: {
+            /** @description Whether the target user should hold the platform-level root-admin role after the change. */
+            isRootAdmin: boolean;
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Session-revocation response. */
+        RevokeUserSessionsResponse: {
+            /** @description How many live sessions were revoked. */
+            revokedCount: number;
+        };
         /** @description Authentication token bundle returned after login or registration. */
         AuthTokensDto: {
             /** @description Short-lived bearer token used for authenticated API requests. */
@@ -3438,50 +3438,6 @@ export interface components {
                 csrfToken: string;
                 /** @description Access-token lifetime in seconds from the time it was issued. */
                 expiresIn: number;
-            };
-        };
-        /** @description Authenticated current-user profile response. */
-        MeResponse: {
-            /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-            user: {
-                /** @description Stable user identifier. */
-                id: string;
-                /** @description Primary email address for the user account. */
-                email: string;
-                /** @description Unique login identifier for the account. */
-                username: string;
-                /** @description First name shown in account and member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in account and member-management surfaces. */
-                lastName: string;
-                /** @description Whether the account is currently active for normal sign-in and product usage. */
-                isActive: boolean;
-                /** @description Whether the user has platform-level root-admin access. */
-                isRootAdmin: boolean;
-                /**
-                 * @description Authentication provider used for the account when known.
-                 * @enum {string}
-                 */
-                authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
-                locale?: string;
-                /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
-                /**
-                 * Format: date-time
-                 * @description Account creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
             };
         };
         /** @description Token refresh response carrying the rotated access, refresh and CSRF tokens. */
@@ -8090,26 +8046,1214 @@ export interface operations {
             };
         };
     };
-    getCurrentUser: {
+    listUsers: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string;
+                isActive?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Authenticated current-user profile response. */
+            /** @description User-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MeResponse"];
+                    "application/json": components["schemas"]["UserListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserUsername: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUsernameUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPreferencesUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    changeUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resetUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Password-reset response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResetPasswordResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    disableUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserDisableRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    enableUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    revokeUserSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session-revocation response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokeUserSessionsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    setUserRootAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserRootAdminRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12657,1498 +13801,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    reactivateAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service profile update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Updated primary contact email address for the account profile.
-                     */
-                    email: string;
-                    /** @description Updated first name for the account profile. */
-                    firstName: string;
-                    /** @description Updated last name for the account profile. */
-                    lastName: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountUsername: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service username update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Updated unique login username for the authenticated account. */
-                    username: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountPreferences: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service preferences update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Preferred IANA timezone, or null to clear it. */
-                    timezone?: string | null;
-                    /** @description Preferred locale, or null to clear it. */
-                    locale?: string | null;
-                    /**
-                     * @description Preferred clock display format, or null to clear it.
-                     * @enum {string|null}
-                     */
-                    timeFormat?: "12H" | "24H" | null;
-                    /**
-                     * @description Preferred date display format, or null to clear it.
-                     * @enum {string|null}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD" | null;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    changeAccountPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service password-change payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Existing password that must match before the password can be changed. */
-                    currentPassword: string;
-                    /** @description New password to persist for future sign-in attempts. */
-                    newPassword: string;
-                    /** @description Repeat of the new password to guard against confirmation mistakes. */
-                    confirmNewPassword: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response returned after changing the authenticated account password. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    inactivateAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    deleteAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service confirmation payload for permanently deleting an inactive account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Exact email confirmation required before permanently deleting the inactive account.
-                     */
-                    email: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response returned after permanently deleting an inactive account. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListUsers: {
-        parameters: {
-            query?: {
-                search?: string;
-                isActive?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User-list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetUserDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-user response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin delete-account confirmation payload. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Exact target email confirmation required before permanently deleting the account.
-                     */
-                    email: string;
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminForceLogout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDisableUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminEnableUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminResetUserPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin initiated password-reset request. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Root-admin password-reset response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in. */
-                        temporaryPassword: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminSetUserRootAdmin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin role-change request payload. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Whether the target user should hold the platform-level root-admin role after the change. */
-                    isRootAdmin: boolean;
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

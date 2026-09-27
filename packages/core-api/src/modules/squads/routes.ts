@@ -43,6 +43,7 @@ export function squadsModule(fastify: FastifyInstance): void {
     leagueMembershipRepo,
     squadRepo,
     squadMembershipRepo,
+    userRepo,
     prisma,
   );
   const ownerInvitationHandler = createSquadOwnerInvitationHandlers(ownerInvitationService);

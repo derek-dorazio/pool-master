@@ -1,23 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import {
-  adminDeleteUser,
+  deleteUser,
   adminDeleteLeague,
-  adminDisableUser,
-  adminEnableUser,
+  disableUser,
+  enableUser,
   adminGetIngestionSchedule,
   adminGetPollIntervals,
   adminInactivateLeague,
   adminListLeagues,
   adminPrepareSportSync,
-  adminSetUserRootAdmin,
+  setUserRootAdmin,
   adminListContestConfigTemplates,
   adminListProviderSyncRuns,
   adminReIngestEvent,
-  adminResetUserPassword,
+  resetUserPassword,
   adminResetSportIngestionOverride,
   adminTriggerHealthCheck,
-  adminGetUserDetail,
-  adminListUsers,
+  getUser,
+  listUsers,
   adminUpdateContestConfigTemplate,
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
@@ -31,6 +31,7 @@ import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  createAuthenticatedClient,
   getSdkClient,
 } from './setup';
 
@@ -42,11 +43,34 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function promoteToRootAdmin(userId: string): Promise<void> {
+/**
+ * Promotes a user AND re-issues their session.
+ *
+ * #202 step 3.4 — the user routes take the actor from the authenticated request, so
+ * `isRootAdmin` comes off the access-token claim. A promotion written straight to the database
+ * therefore does not take effect until the next token is issued. That is the real contract of
+ * `/api/v1/users/*`, and it is a change: the old `/api/v1/admin/*` prefix sat behind
+ * `adminAuth`, which re-read the user row on every request (#195), so a mid-session promotion
+ * appeared to take effect immediately.
+ *
+ * The context is mutated in place so the existing call sites keep using `user.client`.
+ */
+async function promoteToRootAdmin(user: { userId: string; username: string; password: string; client: unknown; token: string }): Promise<void> {
   await getFunctionalPrisma().user.update({
-    where: { id: userId },
+    where: { id: user.userId },
     data: { isRootAdmin: true },
   });
+
+  const login = await loginUser({
+    client: getSdkClient(),
+    body: { identifier: user.username, password: user.password },
+  });
+  const token = login.data?.tokens.accessToken;
+  if (!token) {
+    throw new Error(`Could not re-issue a session after promoting ${user.userId}`);
+  }
+  user.token = token;
+  user.client = createAuthenticatedClient(token);
 }
 
 describe('SDK Functional: Root Admin', () => {
@@ -55,7 +79,7 @@ describe('SDK Functional: Root Admin', () => {
       displayName: 'Root Admin Denial User',
     });
 
-    const response = await adminListUsers({
+    const response = await listUsers({
       client: user.client,
     });
 
@@ -97,7 +121,7 @@ describe('SDK Functional: Root Admin', () => {
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
 
-    const roleResponse = await adminSetUserRootAdmin({
+    const roleResponse = await setUserRootAdmin({
       client: user.client,
       path: {
         userId: user.userId,
@@ -117,14 +141,14 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Service User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
 
-    const usersResponse = await adminListUsers({
+    const usersResponse = await listUsers({
       client: user.client,
     });
     expect(usersResponse.data?.users.some((item) => item.id === user.userId)).toBe(true);
 
-    const detailResponse = await adminGetUserDetail({
+    const detailResponse = await getUser({
       client: user.client,
       path: {
         userId: user.userId,
@@ -140,9 +164,9 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Detail User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
 
-    const response = await adminGetUserDetail({
+    const response = await getUser({
       client: user.client,
       path: {
         userId: '00000000-0000-0000-0000-000000000000',
@@ -159,13 +183,13 @@ describe('SDK Functional: Root Admin', () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin Role Manager',
     });
-    await promoteToRootAdmin(rootAdmin.userId);
+    await promoteToRootAdmin(rootAdmin);
 
     const targetUser = await buildRegisteredUser({
       displayName: 'Root Admin Role Target',
     });
 
-    const promoteResponse = await adminSetUserRootAdmin({
+    const promoteResponse = await setUserRootAdmin({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
@@ -185,7 +209,7 @@ describe('SDK Functional: Root Admin', () => {
       isRootAdmin: true,
     });
 
-    const demoteResponse = await adminSetUserRootAdmin({
+    const demoteResponse = await setUserRootAdmin({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
@@ -244,14 +268,14 @@ describe('SDK Functional: Root Admin', () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin Password Reset',
     });
-    await promoteToRootAdmin(rootAdmin.userId);
+    await promoteToRootAdmin(rootAdmin);
 
     const targetUser = await buildRegisteredUser({
       displayName: 'Root Admin Password Target',
       password: 'OriginalPass123!',
     });
 
-    const resetResponse = await adminResetUserPassword({
+    const resetResponse = await resetUserPassword({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
@@ -272,7 +296,7 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(reloginResponse.data?.user.id).toBe(targetUser.userId);
 
-    const disableResponse = await adminDisableUser({
+    const disableResponse = await disableUser({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
@@ -281,22 +305,26 @@ describe('SDK Functional: Root Admin', () => {
         reason: 'Cleanup path',
       },
     });
-    expect(disableResponse.response.status).toBe(204);
+    // #202 step 3.4 — 200 with the user, not 204. The admin half used to return no content
+    // while the self-service half returned the account; one operation, one response shape.
+    expect(disableResponse.response.status).toBe(200);
+    expect(disableResponse.data?.user.isActive).toBe(false);
 
-    const enableResponse = await adminEnableUser({
+    const enableResponse = await enableUser({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
       },
     });
-    expect(enableResponse.response.status).toBe(204);
+    expect(enableResponse.response.status).toBe(200);
+    expect(enableResponse.data?.user.isActive).toBe(true);
 
     await getFunctionalPrisma().user.update({
       where: { id: targetUser.userId },
       data: { isActive: false },
     });
 
-    const deleteResponse = await adminDeleteUser({
+    const deleteResponse = await deleteUser({
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
@@ -319,7 +347,7 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Sync History User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
     const providerId = `functional-provider-${randomUUID()}`;
 
     await getFunctionalPrisma().providerSyncRun.createMany({
@@ -372,7 +400,7 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Provider Error User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
 
     const healthCheckResponse = await adminTriggerHealthCheck({
       client: user.client,
@@ -419,7 +447,7 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Config User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
 
     const pollResponse = await adminUpdatePollIntervals({
       client: user.client,
@@ -462,7 +490,7 @@ describe('SDK Functional: Root Admin', () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin League User',
     });
-    await promoteToRootAdmin(rootAdmin.userId);
+    await promoteToRootAdmin(rootAdmin);
 
     const { league } = await buildLeagueWithCommissioner({
       leagueName: 'Root Admin Search League',
@@ -506,7 +534,7 @@ describe('SDK Functional: Root Admin', () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Contest Template User',
     });
-    await promoteToRootAdmin(user.userId);
+    await promoteToRootAdmin(user);
 
     const listResponse = await adminListContestConfigTemplates({
       client: user.client,

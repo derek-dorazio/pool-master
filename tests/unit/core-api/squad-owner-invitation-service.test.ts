@@ -1,3 +1,4 @@
+import { buildUser } from '../../factories';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -19,6 +20,7 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadOwnerInvitationRepo,
   fakeSquadRepo,
+  fakeUserRepo,
 } from '../../support/repo-fakes';
 
 function createMembershipRepo(
@@ -174,16 +176,15 @@ describe('SquadOwnerInvitationService', () => {
         return null;
       }),
     });
-    const prisma = createPrisma({
-      user: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'user-2', email: 'member@example.com' }),
-      },
-    });
+    const prisma = createPrisma();
+    // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
+    const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-2', email: 'member@example.com' }) });
     const service = new SquadOwnerInvitationService(
       createInvitationRepo(),
       membershipRepo,
       createSquadRepo(),
       createSquadMembershipRepo(),
+      users,
       prisma,
     );
 
@@ -217,16 +218,15 @@ describe('SquadOwnerInvitationService', () => {
     });
     const invitationRepo = createInvitationRepo();
     const squadMembershipRepo = createSquadMembershipRepo();
-    const prisma = createPrisma({
-      user: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'user-9', email: 'outside@example.com' }),
-      },
-    });
+    const prisma = createPrisma();
+    // #202 step 3.6 — the email lookup goes through `UserRepository.findByEmail`.
+    const users = fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue({ id: 'user-9', email: 'outside@example.com' }) });
     const service = new SquadOwnerInvitationService(
       invitationRepo,
       membershipRepo,
       createSquadRepo(),
       squadMembershipRepo,
+      users,
       prisma,
     );
 
@@ -283,6 +283,7 @@ describe('SquadOwnerInvitationService', () => {
       membershipRepo,
       createSquadRepo(),
       createSquadMembershipRepo(),
+      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       createPrisma(),
     );
 
@@ -344,6 +345,7 @@ describe('SquadOwnerInvitationService', () => {
           },
         ]),
       }),
+      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       createPrisma(),
     );
 
@@ -399,6 +401,7 @@ describe('SquadOwnerInvitationService', () => {
           },
         ]),
       }),
+      fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       createPrisma(),
     );
 

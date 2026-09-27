@@ -186,6 +186,142 @@ export type UserListResponse = {
 };
 
 /**
+ * Profile update payload. Sent by the user themselves or by a root admin (access rule A6).
+ */
+export type UserProfileUpdateRequest = {
+    /**
+     * Updated primary contact email address.
+     */
+    email: string;
+    /**
+     * Updated first name.
+     */
+    firstName: string;
+    /**
+     * Updated last name.
+     */
+    lastName: string;
+};
+
+/**
+ * Username update payload.
+ */
+export type UserUsernameUpdateRequest = {
+    /**
+     * Updated unique login username.
+     */
+    username: string;
+};
+
+/**
+ * Preferences update payload. Omitted fields are untouched; null clears a field.
+ */
+export type UserPreferencesUpdateRequest = {
+    /**
+     * Preferred IANA timezone. Omit to leave unchanged; null to clear it.
+     */
+    timezone?: string | null;
+    /**
+     * Preferred locale. Omit to leave unchanged; null to clear it.
+     */
+    locale?: string | null;
+    /**
+     * Preferred clock display format. Omit to leave unchanged; null to clear it.
+     */
+    timeFormat?: '12H' | '24H' | null;
+    /**
+     * Preferred date display format. Omit to leave unchanged; null to clear it.
+     */
+    dateFormat?: 'MDY' | 'DMY' | 'YMD' | null;
+};
+
+/**
+ * Password-change payload. Self only, because it requires the current password (A6).
+ */
+export type UserPasswordChangeRequest = {
+    /**
+     * Existing password, which must match before the password can be changed.
+     */
+    currentPassword: string;
+    /**
+     * New password to persist for future sign-in attempts.
+     */
+    newPassword: string;
+    /**
+     * Repeat of the new password to guard against confirmation mistakes.
+     */
+    confirmNewPassword: string;
+};
+
+/**
+ * Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition.
+ */
+export type UserResetPasswordRequest = {
+    /**
+     * Optional human reason captured in the root-admin audit log.
+     */
+    reason?: string;
+};
+
+/**
+ * Password-reset response.
+ */
+export type UserResetPasswordResponse = {
+    /**
+     * Temporary password to relay to the user. Existing sessions are revoked and the user should change this after signing in.
+     */
+    temporaryPassword: string;
+};
+
+/**
+ * Disable payload. The reason is optional because self-inactivation has nobody to explain itself to.
+ */
+export type UserDisableRequest = {
+    /**
+     * Optional human reason captured in the root-admin audit log when an admin disables somebody else.
+     */
+    reason?: string;
+};
+
+/**
+ * Permanent-delete confirmation payload.
+ */
+export type UserDeleteRequest = {
+    /**
+     * Exact email confirmation required before permanently deleting the inactive account.
+     */
+    email: string;
+    /**
+     * Optional human reason captured in the root-admin audit log.
+     */
+    reason?: string;
+};
+
+/**
+ * Root-admin role-change payload.
+ */
+export type SetUserRootAdminRequest = {
+    /**
+     * Whether the target user should hold the platform-level root-admin role after the change.
+     */
+    isRootAdmin: boolean;
+    /**
+     * Optional human reason captured in the root-admin audit log.
+     */
+    reason?: string;
+};
+
+/**
+ * Session-revocation response.
+ */
+export type RevokeUserSessionsResponse = {
+    /**
+     * How many live sessions were revoked.
+     */
+    revokedCount: number;
+};
+
+/**
  * Authentication token bundle returned after login or registration.
  */
 export type AuthTokensDto = {
@@ -328,69 +464,6 @@ export type AuthResponse = {
          * Access-token lifetime in seconds from the time it was issued.
          */
         expiresIn: number;
-    };
-};
-
-/**
- * Authenticated current-user profile response.
- */
-export type MeResponse = {
-    /**
-     * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-     */
-    user: {
-        /**
-         * Stable user identifier.
-         */
-        id: string;
-        /**
-         * Primary email address for the user account.
-         */
-        email: string;
-        /**
-         * Unique login identifier for the account.
-         */
-        username: string;
-        /**
-         * First name shown in account and member-management surfaces.
-         */
-        firstName: string;
-        /**
-         * Last name shown in account and member-management surfaces.
-         */
-        lastName: string;
-        /**
-         * Whether the account is currently active for normal sign-in and product usage.
-         */
-        isActive: boolean;
-        /**
-         * Whether the user has platform-level root-admin access.
-         */
-        isRootAdmin: boolean;
-        /**
-         * Authentication provider used for the account when known.
-         */
-        authProvider?: 'email' | 'google' | 'apple';
-        /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
-         */
-        timezone?: string;
-        /**
-         * Preferred locale for formatting and localized copy.
-         */
-        locale?: string;
-        /**
-         * Preferred clock display used in account and scheduling surfaces.
-         */
-        timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
-        /**
-         * Account creation timestamp in ISO 8601 format.
-         */
-        createdAt?: string;
     };
 };
 
@@ -6581,14 +6654,17 @@ export type LogoutUserResponses = {
 
 export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
 
-export type GetCurrentUserData = {
+export type ListUsersData = {
     body?: never;
     path?: never;
-    query?: never;
-    url: '/api/v1/auth/me';
+    query?: {
+        search?: string;
+        isActive?: boolean;
+    };
+    url: '/api/v1/users/';
 };
 
-export type GetCurrentUserErrors = {
+export type ListUsersErrors = {
     /**
      * Standard API error envelope.
      */
@@ -6611,18 +6687,1320 @@ export type GetCurrentUserErrors = {
             details?: unknown;
         };
     };
-};
-
-export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
-
-export type GetCurrentUserResponses = {
     /**
-     * Authenticated current-user profile response.
+     * Standard API error envelope.
      */
-    200: MeResponse;
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
-export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
+
+export type ListUsersResponses = {
+    /**
+     * User-list response.
+     */
+    200: UserListResponse;
+};
+
+export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
+
+export type DeleteUserData = {
+    body: UserDeleteRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}';
+};
+
+export type DeleteUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type DeleteUserError = DeleteUserErrors[keyof DeleteUserErrors];
+
+export type DeleteUserResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
+
+export type GetUserData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}';
+};
+
+export type GetUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type GetUserError = GetUserErrors[keyof GetUserErrors];
+
+export type GetUserResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
+
+export type UpdateUserProfileData = {
+    body: UserProfileUpdateRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/profile';
+};
+
+export type UpdateUserProfileErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateUserProfileError = UpdateUserProfileErrors[keyof UpdateUserProfileErrors];
+
+export type UpdateUserProfileResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type UpdateUserProfileResponse = UpdateUserProfileResponses[keyof UpdateUserProfileResponses];
+
+export type UpdateUserUsernameData = {
+    body: UserUsernameUpdateRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/username';
+};
+
+export type UpdateUserUsernameErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateUserUsernameError = UpdateUserUsernameErrors[keyof UpdateUserUsernameErrors];
+
+export type UpdateUserUsernameResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type UpdateUserUsernameResponse = UpdateUserUsernameResponses[keyof UpdateUserUsernameResponses];
+
+export type UpdateUserPreferencesData = {
+    body: UserPreferencesUpdateRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/preferences';
+};
+
+export type UpdateUserPreferencesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateUserPreferencesError = UpdateUserPreferencesErrors[keyof UpdateUserPreferencesErrors];
+
+export type UpdateUserPreferencesResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type UpdateUserPreferencesResponse = UpdateUserPreferencesResponses[keyof UpdateUserPreferencesResponses];
+
+export type ChangeUserPasswordData = {
+    body: UserPasswordChangeRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/password';
+};
+
+export type ChangeUserPasswordErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ChangeUserPasswordError = ChangeUserPasswordErrors[keyof ChangeUserPasswordErrors];
+
+export type ChangeUserPasswordResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type ChangeUserPasswordResponse = ChangeUserPasswordResponses[keyof ChangeUserPasswordResponses];
+
+export type ResetUserPasswordData = {
+    body: UserResetPasswordRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/reset-password';
+};
+
+export type ResetUserPasswordErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ResetUserPasswordError = ResetUserPasswordErrors[keyof ResetUserPasswordErrors];
+
+export type ResetUserPasswordResponses = {
+    /**
+     * Password-reset response.
+     */
+    200: UserResetPasswordResponse;
+};
+
+export type ResetUserPasswordResponse = ResetUserPasswordResponses[keyof ResetUserPasswordResponses];
+
+export type DisableUserData = {
+    body: UserDisableRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/disable';
+};
+
+export type DisableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type DisableUserError = DisableUserErrors[keyof DisableUserErrors];
+
+export type DisableUserResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type DisableUserResponse = DisableUserResponses[keyof DisableUserResponses];
+
+export type EnableUserData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/enable';
+};
+
+export type EnableUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type EnableUserError = EnableUserErrors[keyof EnableUserErrors];
+
+export type EnableUserResponses = {
+    /**
+     * Single-user response.
+     */
+    200: UserResponse;
+};
+
+export type EnableUserResponse = EnableUserResponses[keyof EnableUserResponses];
+
+export type RevokeUserSessionsData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/revoke-sessions';
+};
+
+export type RevokeUserSessionsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type RevokeUserSessionsError = RevokeUserSessionsErrors[keyof RevokeUserSessionsErrors];
+
+export type RevokeUserSessionsResponses = {
+    /**
+     * Session-revocation response.
+     */
+    200: RevokeUserSessionsResponse;
+};
+
+export type RevokeUserSessionsResponse2 = RevokeUserSessionsResponses[keyof RevokeUserSessionsResponses];
+
+export type SetUserRootAdminData = {
+    body: SetUserRootAdminRequest;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/root-admin';
+};
+
+export type SetUserRootAdminErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type SetUserRootAdminError = SetUserRootAdminErrors[keyof SetUserRootAdminErrors];
+
+export type SetUserRootAdminResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type SetUserRootAdminResponse = SetUserRootAdminResponses[keyof SetUserRootAdminResponses];
 
 export type GetVersionData = {
     body?: never;
@@ -11603,1716 +12981,6 @@ export type UpdateParticipantResponses = {
 };
 
 export type UpdateParticipantResponse = UpdateParticipantResponses[keyof UpdateParticipantResponses];
-
-export type ReactivateAccountData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/reactivate';
-};
-
-export type ReactivateAccountErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type ReactivateAccountError = ReactivateAccountErrors[keyof ReactivateAccountErrors];
-
-export type ReactivateAccountResponses = {
-    /**
-     * Self-service account response envelope for authenticated account lifecycle actions.
-     */
-    200: {
-        /**
-         * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-    };
-};
-
-export type ReactivateAccountResponse = ReactivateAccountResponses[keyof ReactivateAccountResponses];
-
-export type UpdateAccountProfileData = {
-    /**
-     * Self-service profile update payload for the authenticated account.
-     */
-    body: {
-        /**
-         * Updated primary contact email address for the account profile.
-         */
-        email: string;
-        /**
-         * Updated first name for the account profile.
-         */
-        firstName: string;
-        /**
-         * Updated last name for the account profile.
-         */
-        lastName: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/profile';
-};
-
-export type UpdateAccountProfileErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type UpdateAccountProfileError = UpdateAccountProfileErrors[keyof UpdateAccountProfileErrors];
-
-export type UpdateAccountProfileResponses = {
-    /**
-     * Self-service account response envelope for authenticated account lifecycle actions.
-     */
-    200: {
-        /**
-         * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-    };
-};
-
-export type UpdateAccountProfileResponse = UpdateAccountProfileResponses[keyof UpdateAccountProfileResponses];
-
-export type UpdateAccountUsernameData = {
-    /**
-     * Self-service username update payload for the authenticated account.
-     */
-    body: {
-        /**
-         * Updated unique login username for the authenticated account.
-         */
-        username: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/username';
-};
-
-export type UpdateAccountUsernameErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type UpdateAccountUsernameError = UpdateAccountUsernameErrors[keyof UpdateAccountUsernameErrors];
-
-export type UpdateAccountUsernameResponses = {
-    /**
-     * Self-service account response envelope for authenticated account lifecycle actions.
-     */
-    200: {
-        /**
-         * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-    };
-};
-
-export type UpdateAccountUsernameResponse = UpdateAccountUsernameResponses[keyof UpdateAccountUsernameResponses];
-
-export type UpdateAccountPreferencesData = {
-    /**
-     * Self-service preferences update payload for the authenticated account.
-     */
-    body: {
-        /**
-         * Preferred IANA timezone, or null to clear it.
-         */
-        timezone?: string | null;
-        /**
-         * Preferred locale, or null to clear it.
-         */
-        locale?: string | null;
-        /**
-         * Preferred clock display format, or null to clear it.
-         */
-        timeFormat?: '12H' | '24H' | null;
-        /**
-         * Preferred date display format, or null to clear it.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD' | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/preferences';
-};
-
-export type UpdateAccountPreferencesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type UpdateAccountPreferencesError = UpdateAccountPreferencesErrors[keyof UpdateAccountPreferencesErrors];
-
-export type UpdateAccountPreferencesResponses = {
-    /**
-     * Self-service account response envelope for authenticated account lifecycle actions.
-     */
-    200: {
-        /**
-         * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-    };
-};
-
-export type UpdateAccountPreferencesResponse = UpdateAccountPreferencesResponses[keyof UpdateAccountPreferencesResponses];
-
-export type ChangeAccountPasswordData = {
-    /**
-     * Self-service password-change payload for the authenticated account.
-     */
-    body: {
-        /**
-         * Existing password that must match before the password can be changed.
-         */
-        currentPassword: string;
-        /**
-         * New password to persist for future sign-in attempts.
-         */
-        newPassword: string;
-        /**
-         * Repeat of the new password to guard against confirmation mistakes.
-         */
-        confirmNewPassword: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/password';
-};
-
-export type ChangeAccountPasswordErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type ChangeAccountPasswordError = ChangeAccountPasswordErrors[keyof ChangeAccountPasswordErrors];
-
-export type ChangeAccountPasswordResponses = {
-    /**
-     * Minimal success response returned after changing the authenticated account password.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type ChangeAccountPasswordResponse = ChangeAccountPasswordResponses[keyof ChangeAccountPasswordResponses];
-
-export type InactivateAccountData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/inactivate';
-};
-
-export type InactivateAccountErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type InactivateAccountError = InactivateAccountErrors[keyof InactivateAccountErrors];
-
-export type InactivateAccountResponses = {
-    /**
-     * Self-service account response envelope for authenticated account lifecycle actions.
-     */
-    200: {
-        /**
-         * A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.
-         */
-        user: {
-            /**
-             * Stable user identifier.
-             */
-            id: string;
-            /**
-             * Primary email address for the user account.
-             */
-            email: string;
-            /**
-             * Unique login identifier for the account.
-             */
-            username: string;
-            /**
-             * First name shown in account and member-management surfaces.
-             */
-            firstName: string;
-            /**
-             * Last name shown in account and member-management surfaces.
-             */
-            lastName: string;
-            /**
-             * Whether the account is currently active for normal sign-in and product usage.
-             */
-            isActive: boolean;
-            /**
-             * Whether the user has platform-level root-admin access.
-             */
-            isRootAdmin: boolean;
-            /**
-             * Authentication provider used for the account when known.
-             */
-            authProvider?: 'email' | 'google' | 'apple';
-            /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
-             */
-            timezone?: string;
-            /**
-             * Preferred locale for formatting and localized copy.
-             */
-            locale?: string;
-            /**
-             * Preferred clock display used in account and scheduling surfaces.
-             */
-            timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
-            /**
-             * Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-    };
-};
-
-export type InactivateAccountResponse = InactivateAccountResponses[keyof InactivateAccountResponses];
-
-export type DeleteAccountData = {
-    /**
-     * Self-service confirmation payload for permanently deleting an inactive account.
-     */
-    body: {
-        /**
-         * Exact email confirmation required before permanently deleting the inactive account.
-         */
-        email: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/v1/account/';
-};
-
-export type DeleteAccountErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type DeleteAccountError = DeleteAccountErrors[keyof DeleteAccountErrors];
-
-export type DeleteAccountResponses = {
-    /**
-     * Minimal success response returned after permanently deleting an inactive account.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type DeleteAccountResponse = DeleteAccountResponses[keyof DeleteAccountResponses];
-
-export type AdminListUsersData = {
-    body?: never;
-    path?: never;
-    query?: {
-        search?: string;
-        isActive?: boolean;
-    };
-    url: '/api/v1/admin/users';
-};
-
-export type AdminListUsersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminListUsersError = AdminListUsersErrors[keyof AdminListUsersErrors];
-
-export type AdminListUsersResponses = {
-    /**
-     * User-list response.
-     */
-    200: UserListResponse;
-};
-
-export type AdminListUsersResponse = AdminListUsersResponses[keyof AdminListUsersResponses];
-
-export type AdminDeleteUserData = {
-    /**
-     * Root-admin delete-account confirmation payload.
-     */
-    body: {
-        /**
-         * Exact target email confirmation required before permanently deleting the account.
-         */
-        email: string;
-        /**
-         * Optional human reason captured in the root-admin audit log.
-         */
-        reason?: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}';
-};
-
-export type AdminDeleteUserErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminDeleteUserError = AdminDeleteUserErrors[keyof AdminDeleteUserErrors];
-
-export type AdminDeleteUserResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminDeleteUserResponse = AdminDeleteUserResponses[keyof AdminDeleteUserResponses];
-
-export type AdminGetUserDetailData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}';
-};
-
-export type AdminGetUserDetailErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminGetUserDetailError = AdminGetUserDetailErrors[keyof AdminGetUserDetailErrors];
-
-export type AdminGetUserDetailResponses = {
-    /**
-     * Single-user response.
-     */
-    200: UserResponse;
-};
-
-export type AdminGetUserDetailResponse = AdminGetUserDetailResponses[keyof AdminGetUserDetailResponses];
-
-export type AdminForceLogoutData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/force-logout';
-};
-
-export type AdminForceLogoutErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminForceLogoutError = AdminForceLogoutErrors[keyof AdminForceLogoutErrors];
-
-export type AdminForceLogoutResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminForceLogoutResponse = AdminForceLogoutResponses[keyof AdminForceLogoutResponses];
-
-export type AdminDisableUserData = {
-    body: {
-        reason: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/disable';
-};
-
-export type AdminDisableUserErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminDisableUserError = AdminDisableUserErrors[keyof AdminDisableUserErrors];
-
-export type AdminDisableUserResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminDisableUserResponse = AdminDisableUserResponses[keyof AdminDisableUserResponses];
-
-export type AdminEnableUserData = {
-    body?: never;
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/enable';
-};
-
-export type AdminEnableUserErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminEnableUserError = AdminEnableUserErrors[keyof AdminEnableUserErrors];
-
-export type AdminEnableUserResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
-
-export type AdminResetUserPasswordData = {
-    /**
-     * Root-admin initiated password-reset request.
-     */
-    body: {
-        /**
-         * Optional human reason captured in the root-admin audit log.
-         */
-        reason?: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/reset-password';
-};
-
-export type AdminResetUserPasswordErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminResetUserPasswordError = AdminResetUserPasswordErrors[keyof AdminResetUserPasswordErrors];
-
-export type AdminResetUserPasswordResponses = {
-    /**
-     * Root-admin password-reset response.
-     */
-    200: {
-        /**
-         * Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in.
-         */
-        temporaryPassword: string;
-    };
-};
-
-export type AdminResetUserPasswordResponse = AdminResetUserPasswordResponses[keyof AdminResetUserPasswordResponses];
-
-export type AdminSetUserRootAdminData = {
-    /**
-     * Root-admin role-change request payload.
-     */
-    body: {
-        /**
-         * Whether the target user should hold the platform-level root-admin role after the change.
-         */
-        isRootAdmin: boolean;
-        /**
-         * Optional human reason captured in the root-admin audit log.
-         */
-        reason?: string;
-    };
-    path: {
-        userId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/users/{userId}/root-admin';
-};
-
-export type AdminSetUserRootAdminErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    409: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminSetUserRootAdminError = AdminSetUserRootAdminErrors[keyof AdminSetUserRootAdminErrors];
-
-export type AdminSetUserRootAdminResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminSetUserRootAdminResponse = AdminSetUserRootAdminResponses[keyof AdminSetUserRootAdminResponses];
 
 export type AdminListEventsData = {
     body?: never;

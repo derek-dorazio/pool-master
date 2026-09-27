@@ -1,6 +1,6 @@
 import {
   createLeague,
-  getCurrentUser,
+  getUser,
   logoutUser,
   refreshToken,
 } from '@poolmaster/shared/generated/hey-api';
@@ -35,8 +35,9 @@ describe('SDK Functional: Auth', () => {
     expect(user.registration.tokens.accessToken).toBeTruthy();
     expect(user.login.tokens.refreshToken).toBeTruthy();
 
-    const { data: currentUser } = await getCurrentUser({
+    const { data: currentUser } = await getUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
     expect(currentUser).toBeDefined();
@@ -62,8 +63,9 @@ describe('SDK Functional: Auth', () => {
       },
     });
 
-    const currentUser = await getCurrentUser({
+    const currentUser = await getUser({
       client: cookieClient,
+      path: { userId: 'me' },
     });
 
     expect(currentUser.data?.user.id).toBe(user.userId);

@@ -17,7 +17,6 @@ import {
 // through the mappers makes the contract type-checked.
 import {
   toAuthResponse,
-  toMeResponse,
   toTokenRefreshResponse,
 } from '../../mappers';
 
@@ -27,7 +26,6 @@ export function createAuthHandlers(authService: AuthService) {
     login: handleLogin,
     refresh: handleRefresh,
     logout: handleLogout,
-    me: handleMe,
   };
 
   async function handleRegister(
@@ -230,58 +228,6 @@ export function createAuthHandlers(authService: AuthService) {
     }, 'Auth logout response ready');
     reply.header('Set-Cookie', createClearedSessionCookieHeaders());
     return reply.send({ success: true });
-  }
-
-  async function handleMe(
-    request: FastifyRequest,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = request.contextLogger ?? request.log;
-
-    try {
-      logger.debug({
-        action: 'auth.me.request',
-        data: {
-          hasAuthUser: request.authUser?.userId != null,
-        },
-      }, 'Handling current-user request');
-      if (!request.authUser?.userId) {
-        logger.warn({
-          action: 'auth.me.rejected',
-          errorCode: 'AUTH_SESSION_REQUIRED',
-          statusCode: 401,
-        }, 'Current-user request rejected');
-        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      }
-      const profile = await authService.getProfile(request.authUser.userId);
-      logger.info({
-        action: 'auth.me.succeeded',
-        data: {
-          userId: profile.id,
-        },
-      }, 'Loaded current user profile');
-      logger.debug({
-        action: 'auth.me.response_ready',
-        data: {
-          userId: profile.id,
-          statusCode: 200,
-        },
-      }, 'Current-user response ready');
-      return reply.send(toMeResponse(profile));
-    } catch (err) {
-      if (err instanceof AuthError) {
-        logger.warn({
-          action: 'auth.me.rejected',
-          errorCode: err.code,
-          statusCode: err.statusCode,
-          data: {
-            userId: request.authUser?.userId ?? null,
-          },
-        }, 'Current-user request rejected');
-        return sendError(reply, err.statusCode, err.code, err.message);
-      }
-      throw err;
-    }
   }
 }
 

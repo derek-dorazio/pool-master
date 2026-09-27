@@ -30,7 +30,7 @@ import { invitationsModule } from '../../packages/core-api/src/modules/invitatio
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
-import { accountModule } from '../../packages/core-api/src/modules/account/routes';
+import { usersModule } from '../../packages/core-api/src/modules/users/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
@@ -116,7 +116,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
-  testApp.register(accountModule, { prefix: '/api/v1/account' });
+  testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
@@ -244,8 +244,13 @@ export async function createTestUser(overrides: {
     },
   });
 
+  // #202 step 3.4 — `isRootAdmin` is signed into the token, as `AuthService.issueTokens`
+  // does. It was omitted here because every root-admin route sat behind `adminAuth`, which
+  // re-read the user from the database on every request (#195). The user operations take the
+  // actor from the authenticated request instead, so the claim has to be present for a test
+  // fixture to be a root admin at all.
   const accessToken = jwt.sign(
-    { sub: user.id, email: user.email },
+    { sub: user.id, email: user.email, isRootAdmin: user.isRootAdmin },
     JWT_SECRET,
     { expiresIn: '15m' },
   );

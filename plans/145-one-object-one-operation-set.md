@@ -800,6 +800,72 @@ else: the `searchUsers` filter pass-through test was deleted rather than re-poin
 survives at the service layer is returned values, typed errors, the *absence* of a write, and
 transaction atomicity.
 
+**Step 3.4 and 3.6 outcome, recorded 2026-09-27.**
+
+Step 3.4 ran in three parts. **A8** took the viewer context off the entities: `memberType`,
+`leagueRelationship`, `isRootAdmin`, `teamRelationship` and `viewerAuthority` are gone, along
+with the three DTOs that existed only to name those blocks. It now travels once, on
+`getLeagueByCode` as `LeagueContextResponse` (the league plus the viewer's own
+`LeagueMembership` and `SquadMembership`), and once per leagues list as a `LeagueMembership[]`
+beside the leagues. **The DTO collapse** merged `LeagueSummaryDto` + `LeagueDetailDto` into
+`LeagueDto`, renamed `UserProfileDto` to `UserDto` in its own `users.dto.ts`, replaced
+`LeagueMemberDto` with `LeagueMembershipDto` embedding the canonical `UserDto`, did the same
+for `SquadMembershipDto`'s loose name columns, and deleted `adminListTeams` with its four
+schemas rather than re-pointing them. **The operation collapse** replaced `/api/v1/account/*`
+(7 routes), `/api/v1/admin/users/*` (8) and `/api/v1/auth/me` with `/api/v1/users` (11),
+where `:userId` accepts `me`: sixteen routes over two DTO families became eleven over one.
+
+The thing that made the collapse worth doing is what it forced into the open. Each of the
+eight "pairs" disagreed about its guards, and nobody could see it because the two halves lived
+in different files:
+
+- only the admin half had the last-root-admin guard on disable;
+- only the account half had a read-only lock on inactive accounts (dropped under A9);
+- only the admin half wrote an audit entry — now the rule is stated: the entry records an
+  exercise of root-admin authority, so it is keyed on the ACTOR, not on the route prefix;
+- only the admin half blocked self-demotion, which the last-root-admin count already covered.
+
+Moving the user list out from under `/api/v1/admin` also separated two failures that the admin
+prefix had answered identically: an anonymous caller is not authenticated (401), and an
+authenticated caller who is not a root admin is not authorized (403).
+
+### Step 3.6 — the sweep, and what it did NOT convert
+
+Converted: `AuthService`, `SquadService`, `MemberDirectoryService` and
+`SquadOwnerInvitationService` onto `UserRepository`; four `User → UserDto` projections and four
+copies of the row→domain enum mapping collapsed into one `users.mapper.ts`; two contracts that
+were enforced only at runtime (`mapLeagueMembershipToDto` had no declared return type, and
+accepting an invitation sent the raw domain object) now compile.
+
+**Five user reads were NOT converted, and the reason is one finding, not five.** They are in
+`leagues/invitation-service.ts` (×2), `leagues/member-lifecycle.ts`,
+`squads/default-squad.ts` and `contests/service.ts`. Each is a plain user-by-id read that
+`UserRepository.findById` covers exactly. What blocks them is the shape of the constructors
+they hang off: `ContestService` takes twelve positional parameters with three trailing
+optionals, `InvitationService` nine, `LeagueService` seven. Adding a parameter mid-list
+silently shifts every existing argument; appending it means every call that stops early has to
+pad with `undefined`.
+
+That is not a hypothesis. Converting them and threading the port through produced exactly that
+breakage — a test passing a Prisma mock into the logger slot, another passing a repository into
+`appBaseUrl`, and a league-creation test that silently skipped default-squad provisioning
+because the port arrived as `undefined` — and the failures were type errors and wrong-call
+assertions rather than anything about users. The conversion was reverted.
+
+**The fix is to replace those three positional lists with an options object**, and that is its
+own change with its own risk, not a step inside a DTO refactor. Recorded here rather than left
+in the diff. Two other user reads stay on Prisma by design: `admin/health-service.ts` counts
+users for a platform metric, which is not an aggregate read, and `plugins/admin-auth.ts`
+re-reads the user per request — which is #195, and now inconsistent with the user routes, since
+those take `isRootAdmin` from the token claim.
+
+**Three route maps exist for the same routes.** The Fastify registrations are the truth; the
+OpenAPI document is generated from them; and then `packages/shared/api-routes.ts` and
+`clients/poolmaster/src/test/msw-api.ts` are hand-maintained copies. Both were stale in this
+slice's favour — they still listed `/api/v1/account/*` and `/api/v1/auth/me` after the routes
+were gone. Updated here, but two hand-maintained mirrors of a generated artifact is the §15
+pattern and should be a follow-up.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
