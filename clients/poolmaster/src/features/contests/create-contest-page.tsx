@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { EventSummaryDto, GetManagedContestResponses, LeagueDetailDto, ListManagedContestTemplatesResponses } from '@/lib/api';
+import type { EventSummaryDto, GetManagedContestResponses, ListManagedContestTemplatesResponses } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -17,7 +17,7 @@ import {
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { createManagedContest, deleteContest, getLeagueByCode, getManagedContest, listManagedContestTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
+import { createManagedContest, deleteContest, getManagedContest, listManagedContestTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -50,6 +50,7 @@ import {
 } from './contest-configuration-sections';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ManagedContest = GetManagedContestResponses[200]['contest'];
@@ -257,20 +258,8 @@ export function CreateContestPage() {
     });
   }, [contestForm]);
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
-
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
@@ -310,10 +299,10 @@ export function CreateContestPage() {
       : selectedContestFormats[0] ?? ContestFormat.ROSTER;
 
   const managedContestQuery = useQuery({
-    queryKey: QueryKeys.managedContests.byLeagueAndContest(leagueQuery.data?.id, contestId),
+    queryKey: QueryKeys.managedContests.byLeagueAndContest(league?.id, contestId),
     queryFn: async (): Promise<ManagedContest> => {
       const response = await getManagedContest({
-        path: { id: leagueQuery.data!.id, contestId: contestId! },
+        path: { id: league!.id, contestId: contestId! },
       });
 
       if (!response.data?.contest) {
@@ -322,19 +311,19 @@ export function CreateContestPage() {
 
       return response.data.contest;
     },
-    enabled: Boolean(contestId && leagueQuery.data?.id),
+    enabled: Boolean(contestId && league?.id),
     retry: false,
   });
 
   const templatesQuery = useQuery({
     queryKey: QueryKeys.managedContests.templates(
-      leagueQuery.data?.id,
+      league?.id,
       selectedEventSport,
       selectedContestFormat,
     ),
     queryFn: async (): Promise<ManagedContestTemplate[]> => {
       const response = await listManagedContestTemplates({
-        path: { id: leagueQuery.data!.id },
+        path: { id: league!.id },
         query: {
           sport: selectedEventSport,
           contestFormat: selectedContestFormat,
@@ -347,7 +336,7 @@ export function CreateContestPage() {
 
       return response.data.templates;
     },
-    enabled: Boolean(leagueQuery.data?.id && selectedContestFormat),
+    enabled: Boolean(league?.id && selectedContestFormat),
     retry: false,
   });
 
@@ -539,7 +528,7 @@ export function CreateContestPage() {
   }, [eligibleEvents.length, eventsQuery.data, leagueCode, logger, unavailableEvents.length]);
 
   useEffect(() => {
-    if (!leagueQuery.data || !eventsQuery.data) {
+    if (!league || !eventsQuery.data) {
       return;
     }
 
@@ -548,7 +537,7 @@ export function CreateContestPage() {
         action: 'contestCreate.page.loaded',
         data: {
           leagueCode,
-          leagueId: leagueQuery.data.id,
+          leagueId: league.id,
           eventCount: eventsQuery.data.length,
           eligibleEventCount: eligibleEvents.length,
           unavailableEventCount: unavailableEvents.length,
@@ -563,7 +552,7 @@ export function CreateContestPage() {
     eventsQuery.data,
     isEditMode,
     leagueCode,
-    leagueQuery.data,
+    league,
     logger,
     unavailableEvents.length,
     visibleTemplates.length,
@@ -571,7 +560,7 @@ export function CreateContestPage() {
 
   const saveContestMutation = useInvalidatingMutation({
     mutationFn: async (values: ContestSetupFormValues) => {
-      if (!leagueQuery.data?.id) {
+      if (!league?.id) {
         throw new Error('League detail is still loading.');
       }
 
@@ -650,7 +639,7 @@ export function CreateContestPage() {
         };
 
         const response = await createManagedContest({
-          path: { id: leagueQuery.data.id },
+          path: { id: league.id },
           body: body as never,
         });
 
@@ -675,7 +664,7 @@ export function CreateContestPage() {
       }
 
       const configurationResponse = await updateManagedContestConfiguration({
-        path: { id: leagueQuery.data.id, contestId: contestId! },
+        path: { id: league.id, contestId: contestId! },
         body: configuration as never,
       });
 
@@ -715,7 +704,7 @@ export function CreateContestPage() {
       });
     },
     invalidates: (savedContestId) => [
-      QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
+      QueryKeys.contests.list({ leagueId: league?.id }),
       QueryKeys.contests.detail(savedContestId),
       QueryKeys.managedContests.detail(savedContestId),
     ],
@@ -782,7 +771,7 @@ export function CreateContestPage() {
       );
       navigate(buildLeaguePath(leagueCode));
     },
-    invalidates: [QueryKeys.contests.list({ leagueId: leagueQuery.data?.id })],
+    invalidates: [QueryKeys.contests.list({ leagueId: league?.id })],
     onError: (error) => {
       const payload = {
         action: 'contest.delete.failed',
@@ -807,7 +796,7 @@ export function CreateContestPage() {
   });
 
   const isCommissioner =
-    Boolean(leagueQuery.data?.leagueRelationship.commissioner) || Boolean(leagueQuery.data?.isRootAdmin);
+    viewer.isCommissioner || viewer.isRootAdmin;
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
   const isManagedContestHydrating =
@@ -830,7 +819,7 @@ export function CreateContestPage() {
 
   if (
     leagueQuery.isError
-    || !leagueQuery.data
+    || !league
     || managedContestQuery.isError
     || templatesQuery.isError
   ) {
@@ -848,7 +837,7 @@ export function CreateContestPage() {
     return (
       <ErrorState
         action={(
-          <LinkButton to={buildLeaguePath(leagueQuery.data.leagueCode)} variant="secondary">
+          <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
             Back to league home
           </LinkButton>
         )}
@@ -883,13 +872,13 @@ export function CreateContestPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <LinkButton
-              to={buildLeaguePath(leagueQuery.data.leagueCode)}
+              to={buildLeaguePath(league.leagueCode)}
               variant="secondary"
             >
               Back to league
             </LinkButton>
             <LinkButton
-              to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
+              to={buildLeagueTeamPath(league.leagueCode)}
               variant="secondary"
             >
               My Team
@@ -1108,7 +1097,7 @@ export function CreateContestPage() {
                 </Button>
               ) : null}
               <LinkButton
-                to={buildLeaguePath(leagueQuery.data.leagueCode)}
+                to={buildLeaguePath(league.leagueCode)}
                 variant="secondary"
               >
                 Cancel
@@ -1121,7 +1110,7 @@ export function CreateContestPage() {
           <>
           <ContestSetupSummary
             items={[
-              { id: 'league', label: 'League', value: leagueQuery.data.name },
+              { id: 'league', label: 'League', value: league.name },
               { id: 'mode', label: 'Mode', value: 'Golf tiered contest' },
               { id: 'event', label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
               {

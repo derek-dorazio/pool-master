@@ -51,7 +51,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -85,7 +85,18 @@ function renderTeamsPage() {
   );
 }
 
-function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER', isRootAdmin = false) {
+const VIEWER_USER = {
+  id: 'user-1',
+  email: 'derek@example.com',
+  username: 'derek@example.com',
+  firstName: 'Derek',
+  lastName: 'Dorazio',
+  isActive: true,
+  isRootAdmin: false,
+  createdAt: '2026-04-16T00:00:00.000Z',
+} as const;
+
+function buildLeague() {
   return {
     id: 'league-1',
     leagueCode: 'BIGDAWGS',
@@ -94,15 +105,42 @@ function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER', isR
     iconKey: 'TROPHY',
     memberCount: 2,
     activeContestCount: 0,
-    memberType: role,
-    leagueRelationship: {
-      leagueMember: true,
-      commissioner: role === 'COMMISSIONER',
-    },
-    isRootAdmin,
     joinPolicy: 'COMMISSIONER_ONLY',
     createdAt: '2026-04-16T00:00:00.000Z',
   } as const;
+}
+
+/**
+ * #202 (A8) — the league-context read: the league plus the viewer's own edges in it, once. The
+ * viewer's role used to be `memberType` and `leagueRelationship` on the league, and their own
+ * squad a `teamRelationship.owner` flag repeated on every squad in the directory.
+ */
+function leagueContext(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER') {
+  return {
+    league: buildLeague(),
+    membership: {
+      id: 'league-member-1',
+      leagueId: 'league-1',
+      userId: VIEWER_USER.id,
+      user: VIEWER_USER,
+      role,
+      status: 'ACTIVE',
+      joinedAt: '2026-04-16T00:00:00.000Z',
+      createdAt: '2026-04-16T00:00:00.000Z',
+      updatedAt: '2026-04-16T00:00:00.000Z',
+    },
+    squadMembership: {
+      id: 'membership-1',
+      squadId: 'team-1',
+      leagueId: 'league-1',
+      userId: VIEWER_USER.id,
+      user: VIEWER_USER,
+      status: 'ACTIVE',
+      joinedAt: '2026-04-16T00:00:00.000Z',
+      createdAt: '2026-04-16T00:00:00.000Z',
+      updatedAt: '2026-04-16T00:00:00.000Z',
+    },
+  };
 }
 
 function buildTeamSummary(overrides: Record<string, unknown> = {}) {
@@ -116,20 +154,13 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
     memberCount: 1,
     createdAt: '2026-04-16T00:00:00.000Z',
     updatedAt: '2026-04-16T00:00:00.000Z',
-    teamRelationship: {
-      leagueMember: true,
-      owner: true,
-      commissioner: true,
-    },
-    isRootAdmin: false,
     members: [
       {
         id: 'membership-1',
         squadId: 'team-1',
         leagueId: 'league-1',
         userId: 'user-1',
-        firstName: 'Derek',
-        lastName: 'Dorazio',
+        user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
         status: 'ACTIVE',
         joinedAt: '2026-04-16T00:00:00.000Z',
         createdAt: '2026-04-16T00:00:00.000Z',
@@ -156,21 +187,21 @@ function primeAuthenticatedLeague(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONE
   });
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue({
-    data: {
-      league: buildLeagueDetail(role),
-    },
+    data: leagueContext(role),
   });
   listLeagueMembersMock.mockResolvedValue({
     data: {
       members: [
         {
           id: 'league-member-1',
+          leagueId: 'league-1',
           userId: 'user-1',
-          email: 'derek@example.com',
-          firstName: 'Derek',
-          lastName: 'Dorazio',
-          role,
+          user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
+          role: role,
+          status: 'ACTIVE',
           joinedAt: '2026-04-16T00:00:00.000Z',
+          createdAt: '2026-04-16T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
         },
       ],
     },
@@ -241,9 +272,7 @@ describe('TeamsPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('COMMISSIONER'),
-      },
+      data: leagueContext('COMMISSIONER'),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -255,12 +284,14 @@ describe('TeamsPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'COMMISSIONER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-16T00:00:00.000Z',
+            createdAt: '2026-04-16T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
           },
         ],
       },
@@ -323,9 +354,7 @@ describe('TeamsPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('COMMISSIONER'),
-      },
+      data: leagueContext('COMMISSIONER'),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -338,8 +367,7 @@ describe('TeamsPage', () => {
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
+                user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-16T00:00:00.000Z',
                 createdAt: '2026-04-16T00:00:00.000Z',
@@ -350,8 +378,7 @@ describe('TeamsPage', () => {
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-2',
-                firstName: 'Fran',
-                lastName: 'Lane',
+                user: { ...VIEWER_USER, id: 'user-2', firstName: 'Fran', lastName: 'Lane' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-16T00:00:00.000Z',
                 createdAt: '2026-04-16T00:00:00.000Z',
@@ -367,21 +394,25 @@ describe('TeamsPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'COMMISSIONER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-16T00:00:00.000Z',
+            createdAt: '2026-04-16T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
           },
           {
             id: 'league-member-2',
+            leagueId: 'league-1',
             userId: 'user-2',
-            email: 'fran@example.com',
-            firstName: 'Fran',
-            lastName: 'Lane',
+            user: { ...VIEWER_USER, id: 'user-2', email: 'fran@example.com', username: 'fran@example.com', firstName: 'Fran', lastName: 'Lane' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-16T00:00:00.000Z',
+            createdAt: '2026-04-16T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
           },
         ],
       },

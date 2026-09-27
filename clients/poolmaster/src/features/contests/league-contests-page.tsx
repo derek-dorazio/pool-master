@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import type { LeagueDetailDto, ContestSummaryDto } from '@/lib/api';
+import type { ContestSummaryDto } from '@/lib/api';
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { throwApiError } from "@/lib/errors";
 import {
   getMyContestEntry,
-  getLeagueByCode,
   listContests,
 } from "@/lib/api";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
@@ -13,7 +12,6 @@ import {
   buildLeagueContestCreatePath,
   buildLeagueContestsManagePath,
   buildLeaguePath,
-  rememberRecentLeagueCode,
 } from "@/features/leagues/league-routing";
 import { getLogger } from "@/lib/logger";
 import {
@@ -31,6 +29,7 @@ import {
 import { isHistoricalContest } from "./contest-status";
 import { ContestListCard } from "./contest-list-card";
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 
 
 export function LeagueContestsPage() {
@@ -41,26 +40,9 @@ export function LeagueContestsPage() {
   });
   const isMyEntriesFilter = searchParams.get("filter") === "my-entries";
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, "League detail response is missing data.");
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -79,7 +61,7 @@ export function LeagueContestsPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? "";
+  const leagueId = league?.id ?? "";
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
     queryFn: async (): Promise<ContestSummaryDto[]> => {
@@ -135,13 +117,15 @@ export function LeagueContestsPage() {
     loadingBody: "Loading league contests...",
   });
 
-  if (leagueContext.state === "blocked") {
+  // `!league` is unreachable once the guard reports ready — it is here so the league is
+  // narrowed for everything below rather than threaded as `league?.` throughout.
+  if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
 
-  const league = leagueContext.league;
+
   const canManageContests =
-    league.leagueRelationship.commissioner || league.isRootAdmin;
+    viewer.isCommissioner || viewer.isRootAdmin;
 
   return (
     <section className="space-y-6" data-testid="league-contests-page">

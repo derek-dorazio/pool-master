@@ -13,7 +13,7 @@ const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContests: listContestsMock,
   logoutUser: logoutUserMock,
@@ -87,15 +87,32 @@ function primeCommonMocks({
         iconKey: 'TROPHY',
         memberCount: 12,
         activeContestCount: 2,
-        memberType: leagueRole,
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: leagueRole === 'COMMISSIONER',
-        },
-        isRootAdmin,
         joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
+      // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
+      // `memberType` and a `leagueRelationship` block on the league itself.
+      membership: {
+        id: 'league-membership-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        user: {
+          id: 'user-1',
+          email: 'user@example.com',
+          username: 'user@example.com',
+          firstName: 'Casey',
+          lastName: 'Commissioner',
+          isActive: true,
+          isRootAdmin,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+        role: leagueRole,
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
+      squadMembership: null,
     },
   });
 }

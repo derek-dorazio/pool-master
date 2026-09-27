@@ -1,14 +1,17 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type { UserProfileDto, DeleteLeagueResponses, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueDetailDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, LeagueSummaryDto, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
+import type { UserDto, DeleteLeagueResponses, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueContextResponse, LeagueDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
 
-export type CurrentUser = UserProfileDto;
+export type CurrentUser = UserDto;
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
 export type InvitationPreview = InvitationPreviewResponse['invitation'];
 export type AcceptedLeagueMembership = LeagueMembershipDto;
 export type GeneratedInviteLink = LeagueInvitationDto;
 
-type LeagueSummaryFixture = Pick<
-  LeagueSummaryDto,
+// #202 — one fixture shape, because there is one `LeagueDto`. This was a summary fixture and a
+// detail fixture that extended it, carrying `memberType`, `leagueRelationship` and `isRootAdmin`
+// — the viewer context that A8 moved off the entity.
+type LeagueFixture = Pick<
+  LeagueDto,
   | 'id'
   | 'leagueCode'
   | 'name'
@@ -17,13 +20,9 @@ type LeagueSummaryFixture = Pick<
   | 'iconKey'
   | 'memberCount'
   | 'activeContestCount'
-  | 'memberType'
-  | 'leagueRelationship'
-  | 'isRootAdmin'
+  | 'joinPolicy'
   | 'createdAt'
 >;
-
-type LeagueDetailFixture = LeagueSummaryFixture & Pick<LeagueDetailDto, 'joinPolicy'>;
 
 type CurrentUserFixture = Pick<
   CurrentUser,
@@ -48,8 +47,6 @@ type LeagueSquadFixture = Pick<
   | 'memberCount'
   | 'createdAt'
   | 'updatedAt'
-  | 'teamRelationship'
-  | 'isRootAdmin'
   | 'members'
 >;
 
@@ -59,8 +56,7 @@ type LeagueSquadMemberFixture = Pick<
   | 'squadId'
   | 'leagueId'
   | 'userId'
-  | 'firstName'
-  | 'lastName'
+  | 'user'
   | 'status'
   | 'joinedAt'
   | 'createdAt'
@@ -77,6 +73,7 @@ type AcceptedLeagueMembershipFixture = Pick<
   | 'id'
   | 'leagueId'
   | 'userId'
+  | 'user'
   | 'role'
   | 'status'
   | 'joinedAt'
@@ -98,29 +95,6 @@ type GeneratedInviteLinkFixture = Pick<
   | 'updatedAt'
 >;
 
-const baseLeagueSummary: LeagueSummaryFixture = {
-  id: 'league-1',
-  leagueCode: 'BIGDAWGS',
-  name: 'Big Dawgs',
-  description: 'A test league',
-  isActive: true,
-  iconKey: LeagueIconKey.TROPHY,
-  memberCount: 2,
-  activeContestCount: 1,
-  memberType: LeagueRole.COMMISSIONER,
-  leagueRelationship: {
-    leagueMember: true,
-    commissioner: true,
-  },
-  isRootAdmin: false,
-  createdAt: '2026-04-15T00:00:00.000Z',
-};
-
-const baseLeagueDetail: LeagueDetailFixture = {
-  ...baseLeagueSummary,
-  joinPolicy: 'COMMISSIONER_ONLY',
-};
-
 const baseCurrentUser: CurrentUserFixture = {
   id: 'user-1',
   email: 'commissioner@example.com',
@@ -132,13 +106,25 @@ const baseCurrentUser: CurrentUserFixture = {
   createdAt: '2026-04-15T00:00:00.000Z',
 };
 
+const baseLeague: LeagueFixture = {
+  id: 'league-1',
+  leagueCode: 'BIGDAWGS',
+  name: 'Big Dawgs',
+  description: 'A test league',
+  isActive: true,
+  iconKey: LeagueIconKey.TROPHY,
+  memberCount: 2,
+  activeContestCount: 1,
+  joinPolicy: 'COMMISSIONER_ONLY',
+  createdAt: '2026-04-15T00:00:00.000Z',
+};
+
 const baseSquadMember: LeagueSquadMemberFixture = {
   id: 'team-membership-1',
   squadId: 'team-1',
   leagueId: 'league-1',
   userId: 'user-1',
-  firstName: 'Casey',
-  lastName: 'Commissioner',
+  user: baseCurrentUser,
   status: 'ACTIVE',
   joinedAt: '2026-04-15T00:00:00.000Z',
   createdAt: '2026-04-15T00:00:00.000Z',
@@ -155,12 +141,6 @@ const baseLeagueSquad: LeagueSquadFixture = {
   memberCount: 1,
   createdAt: '2026-04-15T00:00:00.000Z',
   updatedAt: '2026-04-15T00:00:00.000Z',
-  teamRelationship: {
-    leagueMember: true,
-    owner: true,
-    commissioner: true,
-  },
-  isRootAdmin: false,
   members: [baseSquadMember],
 };
 
@@ -178,6 +158,7 @@ const baseAcceptedMembership: AcceptedLeagueMembershipFixture = {
   id: 'membership-1',
   leagueId: 'league-1',
   userId: 'user-1',
+  user: baseCurrentUser,
   role: LeagueRole.MEMBER,
   status: 'ACTIVE',
   joinedAt: '2026-04-16T00:00:00.000Z',
@@ -202,16 +183,24 @@ export function apiSuccess<TData>(data: TData): { data: TData } {
   return { data };
 }
 
-export function buildLeagueSummary(overrides: Partial<LeagueSummaryDto> = {}): LeagueSummaryDto {
+export function buildLeague(overrides: Partial<LeagueDto> = {}): LeagueDto {
   return {
-    ...baseLeagueSummary,
+    ...baseLeague,
     ...overrides,
   };
 }
 
-export function buildLeagueDetail(overrides: Partial<LeagueDetailDto> = {}): LeagueDetailDto {
+/**
+ * #202 (A8) — the viewer's membership, which used to be a `leagueRelationship` block on the
+ * league. `buildLeagueMembership()` is a commissioner because that is what the league fixtures
+ * assumed; a member or a non-member is an override or its absence.
+ */
+export function buildLeagueMembership(
+  overrides: Partial<LeagueMembershipDto> = {},
+): LeagueMembershipDto {
   return {
-    ...baseLeagueDetail,
+    ...baseAcceptedMembership,
+    role: LeagueRole.COMMISSIONER,
     ...overrides,
   };
 }
@@ -266,46 +255,61 @@ export function buildGeneratedInviteLink(
   };
 }
 
-export function listLeaguesData(leagues: LeagueSummaryDto[]): LeagueListResponse {
-  return { leagues };
+export function listLeaguesData(
+  leagues: LeagueDto[],
+  memberships: LeagueMembershipDto[] = [],
+): LeagueListResponse {
+  return { leagues, memberships };
 }
 
-export function getLeagueData(league: LeagueDetailDto): LeagueResponse {
+export function getLeagueData(league: LeagueDto): LeagueResponse {
   return { league };
 }
 
+/**
+ * #202 (A8) — the league-context read. It returns the league together with the viewer's own
+ * edges in it, once, so nothing downstream repeats them.
+ */
 export function getLeagueByCodeData(
-  league: LeagueDetailDto,
-): LeagueResponse {
-  return { league };
+  league: LeagueDto,
+  context: {
+    membership?: LeagueMembershipDto | null;
+    squadMembership?: LeagueSquadMember | null;
+  } = {},
+): LeagueContextResponse {
+  return {
+    league,
+    membership: context.membership ?? buildLeagueMembership({ leagueId: league.id }),
+    squadMembership: context.squadMembership ?? null,
+  };
 }
 
 export function createLeagueData(
-  league: LeagueDetailDto,
+  league: LeagueDto,
 ): LeagueResponse {
   return { league };
 }
 
 export function updateLeagueDetailsData(
-  league: LeagueDetailDto,
+  league: LeagueDto,
 ): LeagueResponse {
   return { league };
 }
 
 export function updateLeagueIconData(
-  league: LeagueDetailDto,
+  league: LeagueDto,
 ): LeagueResponse {
   return { league };
 }
 
 export function inactivateLeagueData(
-  league: LeagueDetailDto,
+  league: LeagueDto,
 ): LeagueResponse {
   return { league };
 }
 
 export function activateLeagueData(
-  league: LeagueDetailDto,
+  league: LeagueDto,
 ): LeagueResponse {
   return { league };
 }

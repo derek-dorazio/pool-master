@@ -39,6 +39,7 @@ describe('LeagueSelector', () => {
       <MemoryRouter>
         <LeagueSelector
           activeLeagueCode="LEAGUE1"
+          commissionerLeagueIds={new Set()}
           leagues={[
             {
               id: 'league-1',
@@ -48,9 +49,7 @@ describe('LeagueSelector', () => {
               iconKey: 'GOLF_FLAG',
               memberCount: 12,
               activeContestCount: 3,
-              memberType: 'MEMBER',
-              leagueRelationship: { leagueMember: true, commissioner: false },
-              isRootAdmin: false,
+              joinPolicy: 'COMMISSIONER_ONLY',
             },
             {
               id: 'league-2',
@@ -60,9 +59,7 @@ describe('LeagueSelector', () => {
               iconKey: 'FOOTBALL',
               memberCount: 10,
               activeContestCount: 1,
-              memberType: 'MEMBER',
-              leagueRelationship: { leagueMember: true, commissioner: false },
-              isRootAdmin: false,
+              joinPolicy: 'COMMISSIONER_ONLY',
             },
           ]}
           onCreateLeague={() => undefined}
@@ -90,6 +87,7 @@ describe('LeagueSelector', () => {
       <MemoryRouter>
         <LeagueSelector
           activeLeagueCode={null}
+          commissionerLeagueIds={new Set()}
           leagues={[]}
           onCreateLeague={onCreateLeague}
           onNavigate={() => undefined}

@@ -172,9 +172,20 @@ describe('AppShell', () => {
             name: 'League One',
             isActive: true,
             iconKey: 'clubhouse',
-            memberType: 'COMMISSIONER',
-            leagueRelationship: { leagueMember: true, commissioner: true },
-            isRootAdmin: false,
+          },
+        ],
+        // #202 (A8) — the viewer's memberships travel beside the list, once, instead of a
+        // `leagueRelationship` block repeated on every league.
+        memberships: [
+          {
+            id: 'league-membership-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            role: 'COMMISSIONER',
+            status: 'ACTIVE',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },

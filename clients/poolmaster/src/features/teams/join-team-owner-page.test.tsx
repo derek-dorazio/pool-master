@@ -43,7 +43,7 @@ vi.mock('@/lib/logger', () => ({
 
 bindApiMocks({
   acceptTeamOwnerInvitation: acceptTeamOwnerInvitationMock,
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getTeamOwnerInvitationPreview: getTeamOwnerInvitationPreviewMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,

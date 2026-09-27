@@ -26,7 +26,7 @@ const {
 });
 
 bindApiMocks({
-  adminListUsers: adminListUsersMock,
+  listUsers: adminListUsersMock,
 });
 
 vi.mock('@/lib/logger', () => ({

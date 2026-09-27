@@ -9,12 +9,12 @@ import { z } from 'zod';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  AccountPasswordChangeRequestSchema,
-  AccountProfileUpdateRequestSchema,
-  AccountPreferencesUpdateRequestSchema,
-  AccountUsernameUpdateRequestSchema,
+  UserPasswordChangeRequestSchema,
+  UserPreferencesUpdateRequestSchema,
+  UserProfileUpdateRequestSchema,
+  UserUsernameUpdateRequestSchema,
 } from '@poolmaster/shared/dto';
-import { changeAccountPassword, deleteAccount, inactivateAccount, reactivateAccount, updateAccountPreferences, updateAccountProfile, updateAccountUsername } from '@/lib/api';
+import { changeUserPassword, deleteUser, disableUser, enableUser, updateUserPreferences, updateUserProfile, updateUserUsername } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   AUTH_ME_QUERY_KEY,
@@ -41,14 +41,14 @@ import { getLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
-import { buildUserPath } from './user-routing';
+import { buildUserPath, SELF_USER_ID } from './user-routing';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type AccountProfileFormValues = z.infer<typeof AccountProfileUpdateRequestSchema>;
-type AccountUsernameFormValues = z.infer<typeof AccountUsernameUpdateRequestSchema>;
-type AccountPreferencesFormValues = z.infer<typeof AccountPreferencesUpdateRequestSchema>;
-type AccountPasswordFormValues = z.infer<typeof AccountPasswordChangeRequestSchema>;
+type AccountProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
+type AccountUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
+type AccountPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSchema>;
+type AccountPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
 
@@ -119,7 +119,7 @@ export function UserPage() {
   const [emailConfirmation, setEmailConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const profileForm = useForm<AccountProfileFormValues>({
-    resolver: zodResolver(AccountProfileUpdateRequestSchema),
+    resolver: zodResolver(UserProfileUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
       email: '',
@@ -128,14 +128,14 @@ export function UserPage() {
     },
   });
   const usernameForm = useForm<AccountUsernameFormValues>({
-    resolver: zodResolver(AccountUsernameUpdateRequestSchema),
+    resolver: zodResolver(UserUsernameUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
       username: '',
     },
   });
   const preferencesForm = useForm<AccountPreferencesFormValues>({
-    resolver: zodResolver(AccountPreferencesUpdateRequestSchema),
+    resolver: zodResolver(UserPreferencesUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
       timezone: null,
@@ -145,7 +145,7 @@ export function UserPage() {
     },
   });
   const passwordForm = useForm<AccountPasswordFormValues>({
-    resolver: zodResolver(AccountPasswordChangeRequestSchema),
+    resolver: zodResolver(UserPasswordChangeRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
       currentPassword: '',
@@ -192,7 +192,8 @@ export function UserPage() {
 
   const profileMutation = useInvalidatingMutation({
     mutationFn: async (values: AccountProfileFormValues) => {
-      const response = await updateAccountProfile({
+      const response = await updateUserProfile({
+        path: { userId: SELF_USER_ID },
         body: {
           email: values.email.trim().toLowerCase(),
           firstName: values.firstName.trim(),
@@ -212,7 +213,8 @@ export function UserPage() {
 
   const usernameMutation = useInvalidatingMutation({
     mutationFn: async (values: AccountUsernameFormValues) => {
-      const response = await updateAccountUsername({
+      const response = await updateUserUsername({
+        path: { userId: SELF_USER_ID },
         body: {
           username: values.username.trim().toLowerCase(),
         },
@@ -230,7 +232,8 @@ export function UserPage() {
 
   const preferencesMutation = useInvalidatingMutation({
     mutationFn: async (values: AccountPreferencesFormValues) => {
-      const response = await updateAccountPreferences({
+      const response = await updateUserPreferences({
+        path: { userId: SELF_USER_ID },
         body: {
           timezone: values.timezone?.trim() || undefined,
           locale: values.locale?.trim() || undefined,
@@ -251,7 +254,8 @@ export function UserPage() {
 
   const passwordMutation = useInvalidatingMutation({
     mutationFn: async (values: AccountPasswordFormValues) => {
-      const response = await changeAccountPassword({
+      const response = await changeUserPassword({
+        path: { userId: SELF_USER_ID },
         body: {
           currentPassword: values.currentPassword,
           newPassword: values.newPassword,
@@ -275,7 +279,7 @@ export function UserPage() {
 
   const inactivateAccountAction = useMutationActionWorkflow({
     action: async () => {
-      const response = await inactivateAccount();
+      const response = await disableUser({ path: { userId: SELF_USER_ID }, body: {} });
       if (!response.data?.user) {
         throwApiError(response.error, 'Inactivate-account response is missing data.');
       }
@@ -295,7 +299,7 @@ export function UserPage() {
 
   const reactivateAccountAction = useMutationActionWorkflow({
     action: async () => {
-      const response = await reactivateAccount();
+      const response = await enableUser({ path: { userId: SELF_USER_ID } });
       if (!response.data?.user) {
         throwApiError(response.error, 'Reactivate-account response is missing data.');
       }
@@ -315,7 +319,8 @@ export function UserPage() {
 
   const deleteAccountAction = useMutationActionWorkflow({
     action: async (confirmationEmail: string) => {
-      const response = await deleteAccount({
+      const response = await deleteUser({
+        path: { userId: SELF_USER_ID },
         body: {
           email: confirmationEmail,
         },

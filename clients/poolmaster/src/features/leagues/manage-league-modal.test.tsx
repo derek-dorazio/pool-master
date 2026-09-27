@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import type { LeagueSummaryDto } from '@/lib/api';
+import type { LeagueListCache } from './league-cache';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { ManageLeagueModal } from './manage-league-modal';
+import type { LeagueViewer } from './use-league-context';
 import {
   apiSuccess,
-  buildLeagueDetail,
-  buildLeagueSummary,
+  buildLeague,
+  buildLeagueMembership,
   deleteLeagueData,
   getLeagueData,
   inactivateLeagueData,
@@ -30,7 +31,10 @@ bindApiMocks({
   updateLeagueIcon: updateLeagueIconMock,
 });
 
-function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDto[]> }) {
+// #202 — the league-list cache holds `{ leagues, memberships }`: the leagues plus the viewer's
+// own memberships among them, once (access rule A8's one set-shaped exception). This probe stands
+// in for the app shell's own list query, so it holds that shape too.
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueListCache> }) {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.leagues.list,
     queryFn,
@@ -45,7 +49,7 @@ function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDt
     return <div data-testid="league-list-state">error</div>;
   }
 
-  const leagues = leaguesQuery.data ?? [];
+  const leagues = leaguesQuery.data?.leagues ?? [];
 
   return (
     <div data-testid="league-list-state">
@@ -56,11 +60,21 @@ function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDt
   );
 }
 
-const commissionerLeague = buildLeagueSummary({
+const commissionerLeague = buildLeague({
   description: 'Neighborhood league',
   memberCount: 4,
   createdAt: '2026-04-15T10:00:00.000Z',
 });
+
+// #202 (A8) — the viewer's standing is handed to the modal, not read off the league.
+const commissionerViewer: LeagueViewer = {
+  isRootAdmin: false,
+  isMember: true,
+  isCommissioner: true,
+  membership: buildLeagueMembership({ leagueId: commissionerLeague.id }),
+  squadMembership: null,
+  mySquadId: null,
+};
 
 describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   afterEach(() => {
@@ -72,8 +86,8 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: opens on the lifecycle tab and inactivates the league', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
-    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeagueDetail({
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
+    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeague({
       ...commissionerLeague,
       isActive: false,
     }))));
@@ -88,6 +102,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={commissionerLeague}
           onClose={vi.fn()}
           onDeleted={vi.fn()}
@@ -105,7 +120,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: keeps delete disabled until the confirmation code matches', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -116,6 +131,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={{
             ...commissionerLeague,
             isActive: false,
@@ -142,7 +158,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: deletes an inactive league and shows success state', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
     deleteLeagueMock.mockResolvedValue(apiSuccess(deleteLeagueData()));
 
     const onDeleted = vi.fn();
@@ -156,6 +172,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={{
             ...commissionerLeague,
             isActive: false,
@@ -187,8 +204,8 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: updates league details from the details tab', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
-    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
       ...commissionerLeague,
       name: 'Edited Dawgs',
       description: 'Updated description',
@@ -204,6 +221,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={commissionerLeague}
           onClose={vi.fn()}
           onDeleted={vi.fn()}
@@ -229,27 +247,28 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
         },
       }),
     );
-    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
-      name: 'Edited Dawgs',
-      description: 'Updated description',
+    // The league-context cache is only updated where one exists; this test renders the modal
+    // alone, so the edit lands in the list cache.
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toBeUndefined();
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({
+      leagues: [
+        expect.objectContaining({
+          id: 'league-1',
+          name: 'Edited Dawgs',
+        }),
+      ],
     });
-    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
-      expect.objectContaining({
-        id: 'league-1',
-        name: 'Edited Dawgs',
-      }),
-    ]);
   });
 
   it('pool-master-rop.23: updates the league icon by syncing the shell league list without refetching it', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
-    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeague({
       ...commissionerLeague,
       iconKey: 'GOLF_BALL',
     }))));
     const leaguesQueryFn = vi
-      .fn<() => Promise<LeagueSummaryDto[]>>()
-      .mockResolvedValue([commissionerLeague]);
+      .fn<() => Promise<LeagueListCache>>()
+      .mockResolvedValue({ leagues: [commissionerLeague], memberships: [commissionerViewer.membership!] });
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -262,6 +281,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
         <LeaguesQueryProbe queryFn={leaguesQueryFn} />
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={commissionerLeague}
           onClose={vi.fn()}
           onDeleted={vi.fn()}
@@ -287,19 +307,18 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
     );
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS:GOLF_BALL'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
-      iconKey: 'GOLF_BALL',
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({
+      leagues: [
+        expect.objectContaining({
+          id: 'league-1',
+          iconKey: 'GOLF_BALL',
+        }),
+      ],
     });
-    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
-      expect.objectContaining({
-        id: 'league-1',
-        iconKey: 'GOLF_BALL',
-      }),
-    ]);
   });
 
   it('pool-master-rop.23: shows details as read-only when the league is inactive', () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail({
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague({
       ...commissionerLeague,
       isActive: false,
     }))));
@@ -314,6 +333,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={{
             ...commissionerLeague,
             isActive: false,
@@ -332,8 +352,8 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: updates league icon from the curated catalog', async () => {
-    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
-    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeague(commissionerLeague))));
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeague({
       ...commissionerLeague,
       iconKey: 'SOCCER_BALL',
     }))));
@@ -348,6 +368,7 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
       <QueryClientProvider client={queryClient}>
         <ManageLeagueModal
           isOpen
+          viewer={commissionerViewer}
           league={commissionerLeague}
           onClose={vi.fn()}
           onDeleted={vi.fn()}

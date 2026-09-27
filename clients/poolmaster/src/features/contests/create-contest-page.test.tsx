@@ -117,15 +117,32 @@ function primeCommonMocks() {
         iconKey: 'TROPHY',
         memberCount: 2,
         activeContestCount: 0,
-        memberType: 'COMMISSIONER',
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: true,
-        },
-        isRootAdmin: false,
         joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
+      // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
+      // `memberType` and a `leagueRelationship` block on the league itself.
+      membership: {
+        id: 'league-membership-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        user: {
+          id: 'user-1',
+          email: 'commissioner@example.com',
+          username: 'commissioner@example.com',
+          firstName: 'Casey',
+          lastName: 'Commissioner',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+        role: 'COMMISSIONER',
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
+      squadMembership: null,
     },
   });
   listEventsMock.mockResolvedValue({

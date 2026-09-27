@@ -42,7 +42,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
 });

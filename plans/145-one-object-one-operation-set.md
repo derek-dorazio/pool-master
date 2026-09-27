@@ -883,6 +883,67 @@ the webapp; and `clients/poolmaster/src/test/msw-api.ts` plus `packages/shared/a
 are two hand-maintained mirrors of a generated artifact — the shadow pattern of this whole
 refactor, one level up.
 
+### Slice 1 frontend reconnection — outcome, 2026-09-27
+
+Not a numbered step. Phase 2 was planned as one pass after all four slices, on the reasoning
+that the webapp should move once, onto a settled SDK. The repo owner reduced that to its actual
+requirement — *"I just wanted to get the backend refactored and then re-export out the SDK
+before beginning the front-end so the front-end wouldn't be using old exports"* — which slice 1
+had already satisfied: the DTOs are registered as named components and the SDK is regenerated.
+So the webapp was reconnected to slice 1's contract now, with slices 2–4 still to come.
+
+**83 type errors across 37 files, all of them the same four changes.** `LeagueDetailDto` and
+`LeagueSummaryDto` becoming one `LeagueDto`; `getCurrentUser` becoming `getUser({ userId: 'me' })`;
+viewer context coming off the entities (A8); and a squad or league member's flattened
+`firstName`/`lastName` becoming the embedded `UserDto`. Nothing needed a design decision that
+slice 1 had not already made — which is the evidence that deferring the frontend bought nothing.
+
+**`useLeagueContext` is A8 realised on the client.** Eight pages each had a byte-identical
+`useQuery` for the league, four of them with their own copy of the `rememberRecentLeagueCode`
+effect. They now share one hook returning `{ query, league, viewer }`, where `LeagueViewer` is
+`{ isRootAdmin, isMember, isCommissioner, membership, squadMembership, mySquadId }`. It reads
+`isRootAdmin` from the cached session user and everything else from the league-context response.
+The line A8 cited as proof the per-row flag was residue —
+`teams.find(t => t.teamRelationship.owner)`, which fetched every squad in a league to scan a
+per-row viewer flag — became `teams.find(t => t.id === viewer.mySquadId)`.
+
+**The leagues list is the one place viewer context is a set, and it needed its own shape.**
+`LeagueListResponse` carries `{ leagues, memberships }`. `getCommissionerLeagueIds(memberships)`
+reduces that to the only question callers asked of the old `leagueRelationship` block, and
+`getLeagueSelectorOptions` takes the set. `sortLeaguesForOverview` had no caller outside its own
+test and was deleted with it (§1D).
+
+**Two query caches changed shape, and one of them changed behaviour.** `QueryKeys.leagues.list`
+now holds `{ leagues, memberships }` and `QueryKeys.leagues.detail(leagueCode)` holds the
+league-context response, so `syncLeagueCaches` replaces only the league part of each rather than
+overwriting the entry. The behavioural consequence is that **creating a league no longer seeds
+its context cache**: `createLeague` returns `LeagueResponse`, and the client cannot invent the
+membership that belongs beside it. The new league's page reads its own context on arrival — one
+extra request. `LeagueService.createLeague` already returns `{ league, membership }` and the
+handler discards the membership, so having create return `LeagueContextResponse` would remove
+that request and is the A8-consistent shape; left as a follow-up rather than reopening the
+merged backend.
+
+**What the collapse exposed in the tests.** `user-page.test.tsx` bound two mocks to each of
+`getUser`, `disableUser`, `enableUser` and `deleteUser` — an `admin*` one and an `*Account` one —
+so whichever was registered second silently won for both callers. With one operation there is one
+mock, and the root-admin tests had to dispatch on the path (`me` versus a user id) because the
+signed-in user and the viewed user are now the same read. That is not test mechanics: it is the
+same "two halves of one operation" shape the service collapse removed, sitting in the test
+harness.
+
+**Residue swept along the way.** `ManageSectionKey` still listed `'teams'` after step 3.4 deleted
+the cross-league team console, and a scaffold test still asserted that section was live — both
+gone. `teams-page.tsx` had a local `getOwnerLabel` with an "Unknown owner" fallback that existed
+only because the flattened name fields were optional; it now uses the shared `formatUserName`.
+`ManageLeagueModal` has no caller outside its own test — flagged, not deleted, since deleting a
+whole surface is the repo owner's call.
+
+**Counts.** Webapp 119 suites / 495 tests (was 120/499 — one suite and one test removed as the
+code they covered went, the rest net-neutral). Backend unchanged and green: unit 88/1046,
+integration 18/82, FAPI 10/58. `npm run api:refresh` produced no diff, confirming the contract
+was already current.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
@@ -941,14 +1002,21 @@ real argument that a record of a failed attempt is worth keeping.
 The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
 (stop calling it "admin") and bringing services onto ports for consistency.
 
-### Phase 2 — the frontend, once
-Not a fifth slice. Runs after all four slices' backends are green and step 3.8 has exported
-the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
-in slices 1–4 moves onto the generated type, using the full object (rule 3).
+### Phase 2 — the frontend, per slice
 
-Its gates are the ones phase 1 deliberately skips: `npm run lint:webapp`,
-`npm run typecheck:webapp`, `npm run test:poolmaster:unit`, and green `poolmaster-build` /
-`poolmaster-unit-tests` in CI.
+**Revised 2026-09-27.** This was "the frontend, once": one pass after all four slices' backends
+were green. The repo owner's actual requirement was narrower — the frontend must not be written
+against stale exports, so a slice's backend and its SDK re-export must land first. That is
+satisfied per slice, not per epic. So the webapp is reconnected **after each slice's boundary
+export**, starting with slice 1 (see its outcome above). Reconnecting slice 1 found 83 errors and
+not one design decision the slice had not already made, which is the evidence for the change.
+
+Every webapp surface touching the slice's objects moves onto the generated type, using the full
+object (rule 3).
+
+Its gates are the ones a slice's phase 1 deliberately skips: `npm run lint` (whole repo,
+including the webapp), `npx turbo typecheck --force`, `npm run test:poolmaster:unit`, and green
+`poolmaster-build` / `poolmaster-unit-tests` in CI.
 
 ## Open Questions — found so far
 

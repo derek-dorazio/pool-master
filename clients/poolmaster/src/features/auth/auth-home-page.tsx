@@ -11,7 +11,7 @@ import {
 import {
   loginUser,
   registerUser,
-  type UserProfileDto,
+  type UserDto,
 } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
@@ -83,7 +83,7 @@ function parseTeamInviteCode(path: string | undefined) {
   return match?.[1] ?? null;
 }
 
-type PostAuthUser = Pick<UserProfileDto, "isRootAdmin">;
+type PostAuthUser = Pick<UserDto, "isRootAdmin">;
 
 export function resolvePostAuthDestination(
   user: PostAuthUser,

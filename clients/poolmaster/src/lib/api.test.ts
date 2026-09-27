@@ -32,9 +32,9 @@ describe('poolmaster API client correlation headers', () => {
       .mockReturnValueOnce('22222222-2222-4222-8222-222222222222');
 
     try {
-      const { getCurrentUser } = await import('./api');
+      const { getUser } = await import('./api');
 
-      await getCurrentUser();
+      await getUser({ path: { userId: 'me' } });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const request = fetchSpy.mock.calls[0]?.[0];
@@ -61,9 +61,9 @@ describe('poolmaster API client correlation headers', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     try {
-      const { getCurrentUser } = await import('./api');
+      const { getUser } = await import('./api');
 
-      await getCurrentUser();
+      await getUser({ path: { userId: 'me' } });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const request = fetchSpy.mock.calls[0]?.[0];
@@ -90,15 +90,15 @@ describe('poolmaster API client correlation headers', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     try {
-      const { getCurrentUser } = await import('./api');
+      const { getUser } = await import('./api');
 
-      await getCurrentUser();
+      await getUser({ path: { userId: 'me' } });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const request = fetchSpy.mock.calls[0]?.[0];
       expect(request).toBeInstanceOf(Request);
       expect(new URL((request as Request).url).origin).toBe('https://api.example.test');
-      expect((request as Request).url).toContain('/api/v1/auth/me');
+      expect((request as Request).url).toContain('/api/v1/users/me');
     } finally {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();
@@ -121,15 +121,15 @@ describe('poolmaster API client correlation headers', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     try {
-      const { getCurrentUser, resolveBaseUrl } = await import('./api');
+      const { getUser, resolveBaseUrl } = await import('./api');
 
       expect(resolveBaseUrl()).toBe('https://api.example.test');
-      await getCurrentUser();
+      await getUser({ path: { userId: 'me' } });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const request = fetchSpy.mock.calls[0]?.[0];
       expect(request).toBeInstanceOf(Request);
-      expect((request as Request).url).toBe('https://api.example.test/api/v1/auth/me');
+      expect((request as Request).url).toBe('https://api.example.test/api/v1/users/me');
     } finally {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();
@@ -283,9 +283,9 @@ describe('poolmaster API client correlation headers', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     try {
-      const { adminListUsers } = await import('./api');
+      const { listUsers } = await import('./api');
 
-      const response = await adminListUsers({
+      const response = await listUsers({
         query: {
           search: 'Commis',
         },
@@ -294,7 +294,7 @@ describe('poolmaster API client correlation headers', () => {
       expect(response.data?.users).toEqual([]);
       expect(fetchSpy).toHaveBeenCalledTimes(3);
       expect(new URL(fetchCallUrl(fetchSpy.mock.calls[1]?.[0])).pathname).toBe('/api/v1/auth/refresh');
-      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/admin/users');
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/users/');
     } finally {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();

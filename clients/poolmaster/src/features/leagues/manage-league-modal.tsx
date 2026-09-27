@@ -2,11 +2,12 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { LeagueIconKey } from '@poolmaster/shared/domain';
-import { deleteLeague, getLeague, inactivateLeague, updateLeagueDetails, updateLeagueIcon, type LeagueSummaryDto } from '@/lib/api';
+import { deleteLeague, getLeague, inactivateLeague, updateLeagueDetails, updateLeagueIcon, type LeagueDto } from '@/lib/api';
 import { buildLeaguePath } from './league-routing';
+import type { LeagueViewer } from './use-league-context';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
-import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
+import { type LeagueListCache, removeLeague, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { Button, Chip, formatDateDisplay, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
@@ -37,9 +38,12 @@ const MANAGE_TABS: Array<{ key: ManageTab; label: string; hint: string }> = [
 
 type ManageLeagueModalProps = {
   isOpen: boolean;
-  league: LeagueSummaryDto | null;
+  league: LeagueDto | null;
   onClose: () => void;
   onDeleted: () => void;
+  // #202 (A8) — the viewer's standing in this league is handed in from the league context that
+  // already resolved it. It used to be read off the league as `isRootAdmin` and `memberType`.
+  viewer: LeagueViewer;
 };
 
 function roleLabel(role: string | null | undefined) {
@@ -58,6 +62,7 @@ export function ManageLeagueModal({
   league,
   onClose,
   onDeleted,
+  viewer,
 }: ManageLeagueModalProps) {
   if (!isOpen || !league) {
     return null;
@@ -70,6 +75,7 @@ export function ManageLeagueModal({
       league={league}
       onClose={onClose}
       onDeleted={onDeleted}
+      viewer={viewer}
     />
   );
 }
@@ -79,11 +85,13 @@ function ManageLeagueModalContent({
   league,
   onClose,
   onDeleted,
+  viewer,
 }: {
   isOpen: boolean;
-  league: LeagueSummaryDto;
+  league: LeagueDto;
   onClose: () => void;
   onDeleted: () => void;
+  viewer: LeagueViewer;
 }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ManageTab>(MANAGE_TAB_LIFECYCLE);
@@ -197,8 +205,8 @@ function ManageLeagueModalContent({
       return response.data;
     },
     onSuccess: () => {
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
-        removeLeagueSummary(current, league?.id ?? ''),
+      queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
+        removeLeague(current, league?.id ?? ''),
       );
       queryClient.removeQueries({ queryKey: QueryKeys.leagues.detail(league?.leagueCode), exact: true });
       queryClient.removeQueries({ queryKey: QueryKeys.leagues.manage(league?.id), exact: true });
@@ -294,7 +302,7 @@ function ManageLeagueModalContent({
                   <div className="text-lg font-semibold">{league.name}</div>
                   <div className="text-sm text-muted-foreground">League code: {league.leagueCode}</div>
                   <div className="text-sm text-muted-foreground">
-                    Role: {league.isRootAdmin ? 'Root Admin' : roleLabel(league.memberType)}
+                    Role: {viewer.isRootAdmin ? 'Root Admin' : roleLabel(viewer.membership?.role)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Status: {isInactive ? 'Inactive' : 'Active'}

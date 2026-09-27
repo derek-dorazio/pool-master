@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListUsers, type UserDto } from "@/lib/api";
+import { listUsers, type UserDto } from "@/lib/api";
 import { throwApiError } from "@/lib/errors";
 import {
   DataGridPage,
@@ -23,7 +23,7 @@ export function RootAdminManageUsersPage() {
     queryKey: QueryKeys.rootAdmin.manageUsers,
     queryFn: async () => {
       // No paging (§16) — the API returns every user, narrowed by filters if needed.
-      const response = await adminListUsers();
+      const response = await listUsers();
 
       if (!response.data) {
         throwApiError(response.error, "User list response is missing data.");

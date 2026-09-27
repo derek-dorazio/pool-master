@@ -1,4 +1,5 @@
-import type { LeagueSummaryDto } from '@/lib/api';
+import { LeagueRole } from '@poolmaster/shared/domain';
+import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
 
@@ -82,7 +83,7 @@ export function rememberRecentLeagueCode(leagueCode: string) {
   document.cookie = `${RECENT_LEAGUE_COOKIE}=${encodeURIComponent(leagueCode)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
 }
 
-export function resolveDefaultLeagueCode(leagues: LeagueSummaryDto[]) {
+export function resolveDefaultLeagueCode(leagues: LeagueDto[]) {
   if (!leagues.length) {
     return null;
   }
@@ -112,34 +113,41 @@ export function getLeagueInitials(name: string) {
     .join('');
 }
 
-function getLeagueCreatedAtTime(league: LeagueSummaryDto) {
+function getLeagueCreatedAtTime(league: LeagueDto) {
   return league.createdAt ? Date.parse(league.createdAt) : 0;
 }
 
-export function sortLeaguesNewestFirst(leagues: LeagueSummaryDto[]) {
+export function sortLeaguesNewestFirst(leagues: LeagueDto[]) {
   return [...leagues].sort((left, right) => getLeagueCreatedAtTime(right) - getLeagueCreatedAtTime(left));
 }
 
-export function sortLeaguesForOverview(leagues: LeagueSummaryDto[]) {
-  return [...leagues].sort((left, right) => {
-    if (left.isActive !== right.isActive) {
-      return left.isActive ? -1 : 1;
-    }
-
-    if (left.leagueRelationship.commissioner && !right.leagueRelationship.commissioner) {
-      return -1;
-    }
-
-    if (!left.leagueRelationship.commissioner && right.leagueRelationship.commissioner) {
-      return 1;
-    }
-
-    return getLeagueCreatedAtTime(right) - getLeagueCreatedAtTime(left);
-  });
+/**
+ * #202 (A8) — the leagues list is the one surface where the viewer's context arrives as a SET
+ * rather than once per entity. `LeagueListResponse` carries `{ leagues, memberships }`: the
+ * leagues, then the viewer's own memberships among them, once. The viewer's role in a league is
+ * read out of that set here, where it used to be a `leagueRelationship` block stamped onto
+ * every league row.
+ */
+export function getCommissionerLeagueIds(
+  memberships: LeagueMembershipDto[],
+): ReadonlySet<string> {
+  return new Set(
+    memberships
+      .filter(
+        (membership) =>
+          membership.status === 'ACTIVE' && membership.role === LeagueRole.COMMISSIONER,
+      )
+      .map((membership) => membership.leagueId),
+  );
 }
 
-export function getLeagueSelectorOptions(leagues: LeagueSummaryDto[]) {
+// An inactive league stays in the selector for its commissioner, who is the one who can act
+// on it; for everyone else it drops out.
+export function getLeagueSelectorOptions(
+  leagues: LeagueDto[],
+  commissionerLeagueIds: ReadonlySet<string>,
+) {
   return sortLeaguesNewestFirst(
-    leagues.filter((league) => league.isActive || league.leagueRelationship.commissioner),
+    leagues.filter((league) => league.isActive || commissionerLeagueIds.has(league.id)),
   );
 }

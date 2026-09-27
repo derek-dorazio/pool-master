@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { activateLeague, deleteLeague, generateInviteLink, getLeagueByCode, inactivateLeague, leaveLeague, sendLeagueInvitations, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDetailDto, type LeagueSummaryDto } from '@/lib/api';
+import { activateLeague, deleteLeague, generateInviteLink, inactivateLeague, leaveLeague, sendLeagueInvitations, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
@@ -27,15 +27,17 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import {
-  removeLeagueSummary,
+  type LeagueListCache,
+  removeLeague,
   syncLeagueCaches,
 } from './league-cache';
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
-import { buildInvitePath, rememberRecentLeagueCode } from './league-routing';
+import { buildInvitePath } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeaveLeagueResult = LeaveLeagueResponses[200];
@@ -73,32 +75,15 @@ export function LeagueDetailPage() {
   const [detailsDescription, setDetailsDescription] = useState('');
   const [detailsDraftLeagueId, setDetailsDraftLeagueId] = useState<string | null>(null);
   const [iconModalOpen, setIconModalOpen] = useState(false);
-  const [iconDraftKey, setIconDraftKey] = useState<LeagueDetailDto['iconKey']>('TROPHY');
+  const [iconDraftKey, setIconDraftKey] = useState<LeagueDto['iconKey']>('TROPHY');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [activeDialog, setActiveDialog] = useState<ActiveLeagueDialog>(null);
   const [leaveCompleted, setLeaveCompleted] = useState(false);
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -117,18 +102,18 @@ export function LeagueDetailPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
   const detailsDraftSource = useMemo(() => {
-    if (!leagueQuery.data) {
+    if (!league) {
       return null;
     }
 
     return {
-      description: leagueQuery.data.description ?? '',
-      id: leagueQuery.data.id,
-      name: leagueQuery.data.name,
+      description: league.description ?? '',
+      id: league.id,
+      name: league.name,
     };
-  }, [leagueQuery.data?.description, leagueQuery.data?.id, leagueQuery.data?.name]);
+  }, [league?.description, league?.id, league?.name]);
 
   useEffect(() => {
     if (activeDialog !== 'details' || !detailsDraftSource) {
@@ -142,10 +127,10 @@ export function LeagueDetailPage() {
     }
   }, [activeDialog, detailsDraftLeagueId, detailsDraftSource]);
 
-  const canManageLeague =
-    leagueQuery.data?.leagueRelationship.commissioner === true || leagueQuery.data?.isRootAdmin === true;
-  const isInactiveLeague = leagueQuery.data?.isActive === false;
-  const currentLeagueIconKey = leagueQuery.data?.iconKey ?? iconDraftKey;
+  // #202 (A8) — from the viewer's own membership in the league context, not from the league.
+  const canManageLeague = viewer.isCommissioner || viewer.isRootAdmin;
+  const isInactiveLeague = league?.isActive === false;
+  const currentLeagueIconKey = league?.iconKey ?? iconDraftKey;
   const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
 
   const inviteLinkMutation = useInvalidatingMutation({
@@ -212,7 +197,7 @@ export function LeagueDetailPage() {
   });
 
   const updateIconMutation = useInvalidatingMutation({
-    mutationFn: async (iconKey: LeagueDetailDto['iconKey']) => {
+    mutationFn: async (iconKey: LeagueDto['iconKey']) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
         body: { iconKey },
@@ -245,11 +230,11 @@ export function LeagueDetailPage() {
       return response.data.league;
     },
     onSuccess: () => {
-      if (leagueQuery.data) {
+      if (league) {
         syncLeagueCaches(
           queryClient,
           {
-            ...leagueQuery.data,
+            ...league,
             isActive: false,
           },
         );
@@ -279,13 +264,13 @@ export function LeagueDetailPage() {
 
   const deleteLeagueMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      if (!leagueQuery.data) {
+      if (!league) {
         throw new Error('League detail response is missing data.');
       }
 
       const response = await deleteLeague({
         path: { id: leagueId },
-        body: { leagueCode: leagueQuery.data.leagueCode },
+        body: { leagueCode: league.leagueCode },
       });
 
       if (!response.data?.success) {
@@ -296,8 +281,8 @@ export function LeagueDetailPage() {
     },
     onSuccess: () => {
       setDeleteModalOpen(false);
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
-        removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
+      queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
+        removeLeague(current, league?.id ?? ''),
       );
       void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
@@ -319,8 +304,8 @@ export function LeagueDetailPage() {
     onSuccess: () => {
       setLeaveActionError(null);
       setLeaveCompleted(true);
-      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummaryDto[] | undefined) =>
-        removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
+      queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
+        removeLeague(current, league?.id ?? ''),
       );
     },
     invalidates: [],
@@ -374,7 +359,7 @@ export function LeagueDetailPage() {
   }
 
   async function handleLeaveCompletionAcknowledge() {
-    const remainingLeagues = queryClient.getQueryData<LeagueSummaryDto[]>(QueryKeys.leagues.list) ?? [];
+    const remainingLeagues = queryClient.getQueryData<LeagueListCache>(QueryKeys.leagues.list)?.leagues ?? [];
     const nextLeague = remainingLeagues.find((league) => league.isActive) ?? remainingLeagues[0];
 
     setActiveDialog(null);
@@ -395,7 +380,7 @@ export function LeagueDetailPage() {
     );
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
+  if (leagueQuery.isError || !league) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <Tile padding="lg">
@@ -412,8 +397,8 @@ export function LeagueDetailPage() {
   const canDeleteLeague =
     canManageLeague
     && isInactiveLeague
-    && deleteConfirmation.trim().toUpperCase() === leagueQuery.data.leagueCode;
-  const lifecycleStatusLabel = leagueQuery.data.isActive ? 'Active' : 'Inactive';
+    && deleteConfirmation.trim().toUpperCase() === league.leagueCode;
+  const lifecycleStatusLabel = league.isActive ? 'Active' : 'Inactive';
 
   function handleOpenIconModal() {
     setIconDraftKey(currentLeagueIconKey);
@@ -421,13 +406,13 @@ export function LeagueDetailPage() {
   }
 
   function handleOpenDetailsModal() {
-    if (!leagueQuery.data) {
+    if (!league) {
       return;
     }
 
-    setDetailsName(leagueQuery.data.name);
-    setDetailsDescription(leagueQuery.data.description ?? '');
-    setDetailsDraftLeagueId(leagueQuery.data.id);
+    setDetailsName(league.name);
+    setDetailsDescription(league.description ?? '');
+    setDetailsDraftLeagueId(league.id);
     updateDetailsMutation.reset();
     setActiveDialog('details');
   }
@@ -477,12 +462,12 @@ export function LeagueDetailPage() {
       ) : null}
 
       <LeagueSummaryCard
-        activeContestCount={leagueQuery.data.activeContestCount}
-        description={leagueQuery.data.description}
-        icon={<LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />}
-        memberCount={leagueQuery.data.memberCount}
-        name={leagueQuery.data.name}
-        roleLabel={leagueQuery.data.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.memberType)}
+        activeContestCount={league.activeContestCount}
+        description={league.description}
+        icon={<LeagueIcon iconKey={league.iconKey} size="lg" />}
+        memberCount={league.memberCount}
+        name={league.name}
+        roleLabel={viewer.isRootAdmin ? 'Root Admin' : formatRole(viewer.membership?.role)}
       />
 
       <DetailWithActionsPage
@@ -572,7 +557,7 @@ export function LeagueDetailPage() {
               </>
             ) : null}
 
-            {!leagueQuery.data.isRootAdmin ? (
+            {!viewer.isRootAdmin ? (
               <ActionTile
                 data-testid="league-leave-open"
                 disabled={isInactiveLeague}
@@ -595,7 +580,7 @@ export function LeagueDetailPage() {
             <DefinitionList
               className="mt-5"
               items={[
-                { id: 'league-name', label: 'League name', value: leagueQuery.data.name },
+                { id: 'league-name', label: 'League name', value: league.name },
                 {
                   id: 'status',
                   label: 'Status',
@@ -611,17 +596,17 @@ export function LeagueDetailPage() {
                 {
                   id: 'league-code',
                   label: 'League code',
-                  value: <span className="font-mono">{leagueQuery.data.leagueCode}</span>,
+                  value: <span className="font-mono">{league.leagueCode}</span>,
                 },
                 {
                   id: 'join-policy',
                   label: 'Join policy',
-                  value: <span data-testid="league-join-policy">{leagueQuery.data.joinPolicy}</span>,
+                  value: <span data-testid="league-join-policy">{league.joinPolicy}</span>,
                 },
                 {
                   id: 'created',
                   label: 'Created',
-                  value: formatDateDisplay(leagueQuery.data.createdAt, 'Unknown'),
+                  value: formatDateDisplay(league.createdAt, 'Unknown'),
                 },
                 {
                   id: 'league-icon',
@@ -640,7 +625,7 @@ export function LeagueDetailPage() {
                 {
                   id: 'description',
                   label: 'Description',
-                  value: leagueQuery.data.description?.trim() || 'No description',
+                  value: league.description?.trim() || 'No description',
                 },
               ]}
             />
@@ -716,7 +701,7 @@ export function LeagueDetailPage() {
       </Modal>
 
       <ActionModal
-        description={`Invite new members to join the ${leagueQuery.data.name} league.`}
+        description={`Invite new members to join the ${league.name} league.`}
         footer={(
           <Button onClick={() => setActiveDialog(null)} variant="secondary">
             Close
@@ -730,7 +715,7 @@ export function LeagueDetailPage() {
       >
         <DefinitionList
           className="sm:grid-cols-1"
-          items={[{ id: 'join-policy', label: 'Join policy', value: leagueQuery.data.joinPolicy }]}
+          items={[{ id: 'join-policy', label: 'Join policy', value: league.joinPolicy }]}
         />
 
         <FormField className="mt-5" label="Join URL">
@@ -852,7 +837,7 @@ export function LeagueDetailPage() {
         {leaveCompleted ? (
           <>
             <Alert className="mt-5" tone="success">
-              You left {leagueQuery.data.name}.
+              You left {league.name}.
             </Alert>
             <div className="mt-6 flex justify-end">
               <Button
@@ -919,7 +904,7 @@ export function LeagueDetailPage() {
             data-testid="league-delete-confirmation"
             disabled={deleteLeagueMutation.isPending}
             onChange={(event) => setDeleteConfirmation(event.target.value)}
-            placeholder={leagueQuery.data.leagueCode}
+            placeholder={league.leagueCode}
             type="text"
             value={deleteConfirmation}
           />

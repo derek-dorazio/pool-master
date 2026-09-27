@@ -10,23 +10,27 @@ import {
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { UserPage } from './user-page';
 
+/**
+ * #202 — one mock per operation.
+ *
+ * This file used to hold two mocks for each of disable, enable, delete and read-user: an
+ * `admin*` one and an `*Account` one, bound to the same generated client function so the second
+ * binding silently won. There is one operation now, reached by `me` or by a user id, so there is
+ * one mock.
+ */
 const {
-  changeAccountPasswordMock,
-  adminDeleteUserMock,
-  adminDisableUserMock,
-  adminEnableUserMock,
-  adminGetUserDetailMock,
-  adminResetUserPasswordMock,
-  adminSetUserRootAdminMock,
-  inactivateAccountMock,
-  deleteAccountMock,
-  getCurrentUserMock,
+  changeUserPasswordMock,
+  deleteUserMock,
+  disableUserMock,
+  enableUserMock,
+  getUserMock,
   logoutUserMock,
-  reactivateAccountMock,
   refreshTokenMock,
-  updateAccountPreferencesMock,
-  updateAccountProfileMock,
-  updateAccountUsernameMock,
+  resetUserPasswordMock,
+  setUserRootAdminMock,
+  updateUserPreferencesMock,
+  updateUserProfileMock,
+  updateUserUsernameMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -40,43 +44,35 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminDeleteUserMock: vi.fn(),
-    adminDisableUserMock: vi.fn(),
-    adminEnableUserMock: vi.fn(),
-    adminGetUserDetailMock: vi.fn(),
-    adminResetUserPasswordMock: vi.fn(),
-    adminSetUserRootAdminMock: vi.fn(),
-    changeAccountPasswordMock: vi.fn(),
-    inactivateAccountMock: vi.fn(),
-    deleteAccountMock: vi.fn(),
-    getCurrentUserMock: vi.fn(),
+    changeUserPasswordMock: vi.fn(),
+    deleteUserMock: vi.fn(),
+    disableUserMock: vi.fn(),
+    enableUserMock: vi.fn(),
+    getUserMock: vi.fn(),
     logoutUserMock: vi.fn(),
-    reactivateAccountMock: vi.fn(),
     refreshTokenMock: vi.fn(),
-    updateAccountPreferencesMock: vi.fn(),
-    updateAccountProfileMock: vi.fn(),
-    updateAccountUsernameMock: vi.fn(),
+    resetUserPasswordMock: vi.fn(),
+    setUserRootAdminMock: vi.fn(),
+    updateUserPreferencesMock: vi.fn(),
+    updateUserProfileMock: vi.fn(),
+    updateUserUsernameMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminDeleteUser: adminDeleteUserMock,
-  adminDisableUser: adminDisableUserMock,
-  adminEnableUser: adminEnableUserMock,
-  adminGetUserDetail: adminGetUserDetailMock,
-  adminResetUserPassword: adminResetUserPasswordMock,
-  adminSetUserRootAdmin: adminSetUserRootAdminMock,
-  changeAccountPassword: changeAccountPasswordMock,
-  inactivateAccount: inactivateAccountMock,
-  deleteAccount: deleteAccountMock,
-  getCurrentUser: getCurrentUserMock,
+  changeUserPassword: changeUserPasswordMock,
+  deleteUser: deleteUserMock,
+  disableUser: disableUserMock,
+  enableUser: enableUserMock,
+  getUser: getUserMock,
   logoutUser: logoutUserMock,
-  reactivateAccount: reactivateAccountMock,
   refreshToken: refreshTokenMock,
-  updateAccountPreferences: updateAccountPreferencesMock,
-  updateAccountProfile: updateAccountProfileMock,
-  updateAccountUsername: updateAccountUsernameMock,
+  resetUserPassword: resetUserPasswordMock,
+  setUserRootAdmin: setUserRootAdminMock,
+  updateUserPreferences: updateUserPreferencesMock,
+  updateUserProfile: updateUserProfileMock,
+  updateUserUsername: updateUserUsernameMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -133,17 +129,34 @@ function buildCurrentUser({
   };
 }
 
-function primeCurrentUser(overrides: Partial<AuthSessionUser> = {}) {
-  getCurrentUserMock.mockResolvedValue({
-    data: {
-      user: buildCurrentUser(overrides),
-    },
+/**
+ * #202 — the reads this page makes are one operation.
+ *
+ * The signed-in user and another user are both `getUser`, reached as `me` or by a user id, so a
+ * test that primes both answers by path. It used to prime two mocks bound to the same generated
+ * function, where whichever was stubbed last won.
+ */
+const primedUsersByPath = new Map<string, AuthSessionUser>();
+
+function primeUserRead(pathUserId: string, user: AuthSessionUser) {
+  primedUsersByPath.set(pathUserId, user);
+  getUserMock.mockImplementation(({ path }: { path: { userId: string } }) => {
+    const primed = primedUsersByPath.get(path.userId);
+    if (!primed) {
+      return Promise.resolve({ error: { code: 'USER_NOT_FOUND', message: 'User was not found.' } });
+    }
+
+    return Promise.resolve({ data: { user: primed } });
   });
+}
+
+function primeCurrentUser(overrides: Partial<AuthSessionUser> = {}) {
+  primeUserRead('me', buildCurrentUser(overrides));
   refreshTokenMock.mockResolvedValue({ data: null });
 }
 
 function primeCurrentUserThenRefetches(updatedUser: AuthSessionUser) {
-  getCurrentUserMock
+  getUserMock
     .mockResolvedValueOnce({
       data: {
         user: buildCurrentUser(),
@@ -166,48 +179,38 @@ function primeAdminUserDetail({
   isActive?: boolean;
   isRootAdmin?: boolean;
 } = {}) {
-  adminGetUserDetailMock.mockResolvedValue({
-    data: {
-      id,
-      email: 'target@example.com',
-      username: 'target-user',
-      firstName: 'Target',
-      lastName: 'User',
-      isActive,
-      isRootAdmin,
-      authProvider: 'EMAIL',
-      timezone: 'America/New_York',
-      locale: 'en-US',
-      timeFormat: '12H',
-      dateFormat: 'MDY',
-      createdAt: '2026-04-13T00:00:00.000Z',
-      viewerAuthority: {
-        self: false,
-        rootAdmin: true,
-        viewer: false,
-      },
-    },
+  primeUserRead(id, {
+    id,
+    email: 'target@example.com',
+    username: 'target-user',
+    firstName: 'Target',
+    lastName: 'User',
+    isActive,
+    isRootAdmin,
+    authProvider: 'email',
+    timezone: 'America/New_York',
+    locale: 'en-US',
+    timeFormat: '12H',
+    dateFormat: 'MDY',
+    createdAt: '2026-04-13T00:00:00.000Z',
   });
 }
 
 describe('UserPage', () => {
   afterEach(() => {
-    adminDeleteUserMock.mockReset();
-    adminDisableUserMock.mockReset();
-    adminEnableUserMock.mockReset();
-    adminGetUserDetailMock.mockReset();
-    adminResetUserPasswordMock.mockReset();
-    adminSetUserRootAdminMock.mockReset();
-    changeAccountPasswordMock.mockReset();
-    inactivateAccountMock.mockReset();
-    deleteAccountMock.mockReset();
-    getCurrentUserMock.mockReset();
+    changeUserPasswordMock.mockReset();
+    deleteUserMock.mockReset();
+    disableUserMock.mockReset();
+    enableUserMock.mockReset();
+    getUserMock.mockReset();
+    primedUsersByPath.clear();
     logoutUserMock.mockReset();
-    reactivateAccountMock.mockReset();
     refreshTokenMock.mockReset();
-    updateAccountPreferencesMock.mockReset();
-    updateAccountProfileMock.mockReset();
-    updateAccountUsernameMock.mockReset();
+    resetUserPasswordMock.mockReset();
+    setUserRootAdminMock.mockReset();
+    updateUserPreferencesMock.mockReset();
+    updateUserProfileMock.mockReset();
+    updateUserUsernameMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -256,7 +259,7 @@ describe('UserPage', () => {
       lastName: 'Person',
     });
     primeCurrentUserThenRefetches(updatedUser);
-    updateAccountProfileMock.mockResolvedValue({
+    updateUserProfileMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
@@ -289,7 +292,8 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-profile'));
 
     await waitFor(() =>
-      expect(updateAccountProfileMock).toHaveBeenCalledWith({
+      expect(updateUserProfileMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
         body: {
           email: 'updated@example.com',
           firstName: 'Updated',
@@ -322,12 +326,12 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-profile'));
 
     expect(await screen.findByText(/invalid email/i)).toBeVisible();
-    expect(updateAccountProfileMock).not.toHaveBeenCalled();
+    expect(updateUserProfileMock).not.toHaveBeenCalled();
   });
 
   it('pool-master-rop.78.11 changes the self username in the auth query cache', async () => {
     primeCurrentUserThenRefetches(buildCurrentUser({ username: 'derekd' }));
-    updateAccountUsernameMock.mockResolvedValue({
+    updateUserUsernameMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
@@ -353,7 +357,8 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-username'));
 
     await waitFor(() =>
-      expect(updateAccountUsernameMock).toHaveBeenCalledWith({
+      expect(updateUserUsernameMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
         body: {
           username: 'derekd',
         },
@@ -373,7 +378,7 @@ describe('UserPage', () => {
       timeFormat: '24H',
       dateFormat: 'YMD',
     }));
-    updateAccountPreferencesMock.mockResolvedValue({
+    updateUserPreferencesMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
@@ -409,7 +414,8 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-save-preferences'));
 
     await waitFor(() =>
-      expect(updateAccountPreferencesMock).toHaveBeenCalledWith({
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        path: { userId: 'me' },
         body: {
           timezone: 'America/Chicago',
           locale: 'en-US',
@@ -430,7 +436,7 @@ describe('UserPage', () => {
 
   it('pool-master-l40 tells the user when a requested username is already taken', async () => {
     primeCurrentUser();
-    updateAccountUsernameMock.mockResolvedValue({
+    updateUserUsernameMock.mockResolvedValue({
       data: null,
       error: {
         error: {
@@ -466,7 +472,7 @@ describe('UserPage', () => {
 
   it('pool-master-rop.78.11 inactivates the account in the auth query cache', async () => {
     primeCurrentUserThenRefetches(buildCurrentUser({ isActive: false }));
-    inactivateAccountMock.mockResolvedValue({
+    disableUserMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
@@ -488,7 +494,7 @@ describe('UserPage', () => {
     await screen.findByTestId('user-page-lifecycle-dialog');
     fireEvent.click(screen.getByTestId('user-page-inactivate'));
 
-    await waitFor(() => expect(inactivateAccountMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(disableUserMock).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: false,
@@ -497,7 +503,7 @@ describe('UserPage', () => {
   });
 
   it('pool-master-rop.78.11 reactivates an inactive account in the auth query cache', async () => {
-    getCurrentUserMock
+    getUserMock
       .mockResolvedValueOnce({
         data: {
           user: buildCurrentUser({ isActive: false }),
@@ -509,7 +515,7 @@ describe('UserPage', () => {
         },
       });
     refreshTokenMock.mockResolvedValue({ data: null });
-    reactivateAccountMock.mockResolvedValue({
+    enableUserMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
@@ -531,7 +537,7 @@ describe('UserPage', () => {
     await screen.findByTestId('user-page-lifecycle-dialog');
     fireEvent.click(screen.getByTestId('user-page-reactivate'));
 
-    await waitFor(() => expect(reactivateAccountMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(enableUserMock).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: true,
@@ -555,7 +561,7 @@ describe('UserPage', () => {
     renderUserPage('/users/user-2');
 
     expect(await screen.findByTestId('root-admin-user-page')).toBeVisible();
-    expect(adminGetUserDetailMock).toHaveBeenCalledWith({
+    expect(getUserMock).toHaveBeenCalledWith({
       path: {
         userId: 'user-2',
       },
@@ -569,7 +575,7 @@ describe('UserPage', () => {
   it('submits a root-admin role change from the non-self user page', async () => {
     primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
     primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
-    adminSetUserRootAdminMock.mockResolvedValue({
+    setUserRootAdminMock.mockResolvedValue({
       data: { success: true },
     });
 
@@ -584,7 +590,7 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
 
     await waitFor(() =>
-      expect(adminSetUserRootAdminMock).toHaveBeenCalledWith({
+      expect(setUserRootAdminMock).toHaveBeenCalledWith({
         path: {
           userId: 'user-2',
         },
@@ -599,7 +605,7 @@ describe('UserPage', () => {
   it('generates a temporary password for the viewed user from the root-admin page', async () => {
     primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
     primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
-    adminResetUserPasswordMock.mockResolvedValue({
+    resetUserPasswordMock.mockResolvedValue({
       data: {
         temporaryPassword: 'Pm-temp-password!9a',
       },

@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { type LeagueDetailDto, type LeagueMemberDto, type SquadDto, type TeamOwnerInvitationDto, getLeagueByCode, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
+import { type LeagueMembershipDto, type SquadDto, type TeamOwnerInvitationDto, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
+import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeaguePath,
   buildLeagueTeamHomePath,
-  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import {
@@ -24,16 +24,12 @@ import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { throwApiError } from '@/lib/errors';
 
 
 function formatInvitationStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
-}
-
-function getOwnerLabel(firstName?: string, lastName?: string) {
-  const display = [firstName, lastName].filter(Boolean).join(' ').trim();
-  return display || 'Unknown owner';
 }
 
 export function TeamsPage() {
@@ -42,25 +38,9 @@ export function TeamsPage() {
   });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -79,7 +59,7 @@ export function TeamsPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
@@ -111,7 +91,7 @@ export function TeamsPage() {
 
   const leagueMembersQuery = useQuery({
     queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMemberDto[]> => {
+    queryFn: async (): Promise<LeagueMembershipDto[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
         throwApiError(response.error, 'League members response is missing data.');
@@ -143,7 +123,7 @@ export function TeamsPage() {
   );
 
   useEffect(() => {
-    if (!leagueQuery.data || !teamsQuery.data) {
+    if (!league || !teamsQuery.data) {
       return;
     }
 
@@ -151,7 +131,7 @@ export function TeamsPage() {
       {
         action: 'teams.page.loaded',
         data: {
-          leagueCode: leagueQuery.data.leagueCode,
+          leagueCode: league.leagueCode,
           teamCount: teamsQuery.data.length,
           pendingInvitationCount: ownerInvitationsQuery.data?.filter(
             (invitation) => invitation.status === 'PENDING',
@@ -160,7 +140,7 @@ export function TeamsPage() {
       },
       'Teams and owners page loaded',
     );
-  }, [leagueQuery.data, logger, ownerInvitationsQuery.data, teamsQuery.data]);
+  }, [league, logger, ownerInvitationsQuery.data, teamsQuery.data]);
 
   useEffect(() => {
     if (!ownerInvitationsQuery.isError) {
@@ -184,11 +164,13 @@ export function TeamsPage() {
     loadingBody: 'Loading teams and owners...',
   });
 
-  if (leagueContext.state === 'blocked') {
+  // `!league` is unreachable once the guard reports ready — it is here so the league is
+  // narrowed for everything below rather than threaded as `league?.` throughout.
+  if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
 
-  const league = leagueContext.league;
+
 
   return (
     <section className="space-y-6" data-testid="teams-page">
@@ -282,11 +264,10 @@ export function TeamsPage() {
                   <div className="mt-5 space-y-3 md:mt-0">
                     {activeOwners.map((owner) => {
                       const leagueMember = leagueMembersByUserId.get(owner.userId);
-                      const canManageLeagueRole =
-                        team.teamRelationship.commissioner || team.isRootAdmin;
-                      const canRemoveOwner =
-                        canManageLeagueRole
-                        || team.teamRelationship.owner;
+                      // #202 (A8) — the viewer's authority comes from the league context, once,
+                      // not from a `teamRelationship` flag repeated on every squad row.
+                      const canManageLeagueRole = viewer.isCommissioner || viewer.isRootAdmin;
+                      const canRemoveOwner = canManageLeagueRole || team.id === viewer.mySquadId;
 
                       return (
                         <div
@@ -300,7 +281,7 @@ export function TeamsPage() {
                               data-testid={`league-team-owner-link-${team.id}-${owner.userId}`}
                               to={buildUserPath(owner.userId)}
                             >
-                              {getOwnerLabel(owner.firstName, owner.lastName)}
+                              {formatUserName(owner.user.firstName, owner.user.lastName)}
                             </Link>
                             <Chip>
                               Active owner
@@ -317,7 +298,7 @@ export function TeamsPage() {
                             canRemoveOwner={canRemoveOwner}
                             leagueCode={league.leagueCode}
                             leagueId={leagueId}
-                            ownerName={getOwnerLabel(owner.firstName, owner.lastName)}
+                            ownerName={formatUserName(owner.user.firstName, owner.user.lastName)}
                             ownerRole={leagueMember?.role}
                             ownerUserId={owner.userId}
                             surface="teams"

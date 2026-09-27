@@ -2,18 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { getLeagueByCode, listContestEntries, listContests, listLeagueSquads, type SquadDto, type LeagueDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
+import { listContestEntries, listContests, listLeagueSquads, type SquadDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestEntryPath,
   buildLeagueContestPath,
   buildLeagueTeamPath,
-  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
   EmptyState,
   ErrorState,
@@ -30,26 +30,9 @@ export function MyTeamHistoryPage() {
     feature: 'my-team-history-page',
   });
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -68,7 +51,7 @@ export function MyTeamHistoryPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
@@ -168,7 +151,7 @@ export function MyTeamHistoryPage() {
     );
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
+  if (leagueQuery.isError || !league) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (

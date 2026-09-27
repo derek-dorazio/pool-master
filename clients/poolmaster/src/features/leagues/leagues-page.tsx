@@ -12,7 +12,7 @@ import { useLeaguesQuery } from './use-leagues-query';
 export function WelcomePage() {
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const leaguesQuery = useLeaguesQuery();
+  const { query: leaguesQuery, leagues } = useLeaguesQuery();
 
   if (leaguesQuery.isLoading) {
     return (
@@ -33,7 +33,7 @@ export function WelcomePage() {
     );
   }
 
-  if (!leaguesQuery.data?.length) {
+  if (!leagues?.length) {
     return (
       <div data-testid="authenticated-landing">
         <EmptyState
@@ -71,12 +71,12 @@ export function WelcomePage() {
     );
   }
 
-  const defaultLeagueCode = resolveDefaultLeagueCode(leaguesQuery.data);
+  const defaultLeagueCode = resolveDefaultLeagueCode(leagues);
 
   return (
     <Navigate
       replace
-      to={buildLeaguePath(defaultLeagueCode ?? leaguesQuery.data[0].leagueCode)}
+      to={buildLeaguePath(defaultLeagueCode ?? leagues[0].leagueCode)}
     />
   );
 }

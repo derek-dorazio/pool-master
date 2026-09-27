@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { type LeagueDetailDto, type LeagueMemberDto, type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, getLeagueByCode, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
+import { type LeagueMembershipDto, type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
@@ -27,13 +27,14 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeaguePath, rememberRecentLeagueCode } from '@/features/leagues/league-routing';
+import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type TeamMember = NonNullable<SquadDto['members']>[number];
@@ -62,26 +63,9 @@ export function MyTeamPage() {
   const [replaceEmail, setReplaceEmail] = useState('');
   const [activeDialog, setActiveDialog] = useState<ActiveTeamDialog>(null);
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -100,7 +84,7 @@ export function MyTeamPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
@@ -133,7 +117,7 @@ export function MyTeamPage() {
 
   const leagueMembersQuery = useQuery({
     queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMemberDto[]> => {
+    queryFn: async (): Promise<LeagueMembershipDto[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
         throwApiError(response.error, 'League members response is missing data.');
@@ -145,25 +129,29 @@ export function MyTeamPage() {
     retry: false,
   });
 
+  // #202 (A8) — the viewer's own squad is named by their squad membership, delivered once with
+  // the league context. This used to scan every squad in the league for a per-row `owner` flag.
   const myTeam = useMemo(() => {
-    return teamsQuery.data?.find((team) => team.teamRelationship.owner) ?? null;
-  }, [teamsQuery.data]);
+    if (!viewer.mySquadId) {
+      return null;
+    }
+
+    return teamsQuery.data?.find((team) => team.id === viewer.mySquadId) ?? null;
+  }, [teamsQuery.data, viewer.mySquadId]);
 
   const requestedTeamId = searchParams.get('teamId');
   const requestedTeam = useMemo(
     () => teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? null,
     [requestedTeamId, teamsQuery.data],
   );
+  const canManageAnyTeam = viewer.isCommissioner || viewer.isRootAdmin;
   const selectedTeam = useMemo(() => {
-    if (
-      requestedTeam
-      && (requestedTeam.teamRelationship.commissioner || requestedTeam.isRootAdmin)
-    ) {
+    if (requestedTeam && canManageAnyTeam) {
       return requestedTeam;
     }
 
     return myTeam;
-  }, [myTeam, requestedTeam]);
+  }, [canManageAnyTeam, myTeam, requestedTeam]);
   const defaultTeamNameSeed = useMemo(
     () => buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName),
     [auth.user?.firstName, auth.user?.lastName],
@@ -432,7 +420,7 @@ export function MyTeamPage() {
 
   async function handleSaveTeam() {
     const nextTeamName = teamName.trim();
-    if (!nextTeamName || !leagueId || leagueQuery.data?.isActive === false) {
+    if (!nextTeamName || !leagueId || league?.isActive === false) {
       return;
     }
 
@@ -498,7 +486,7 @@ export function MyTeamPage() {
 
   async function handleSaveTeamIcon() {
     if (selectedTeam) {
-      if (!canManageSelectedTeam || leagueQuery.data?.isActive === false || isInactiveTeam) {
+      if (!canManageSelectedTeam || league?.isActive === false || isInactiveTeam) {
         return;
       }
 
@@ -518,7 +506,7 @@ export function MyTeamPage() {
     );
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
+  if (leagueQuery.isError || !league) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <Tile padding="lg">
@@ -533,21 +521,15 @@ export function MyTeamPage() {
     );
   }
 
-  const isInactiveLeague = leagueQuery.data.isActive === false;
+  const isInactiveLeague = league.isActive === false;
   const isInactiveTeam = selectedTeam?.isActive === false;
-  const canCreateOwnTeam = leagueQuery.data.leagueRelationship.leagueMember;
+  const canCreateOwnTeam = viewer.isMember;
   const canManageSelectedTeam = Boolean(
-    selectedTeam
-    && (selectedTeam.teamRelationship.owner
-      || selectedTeam.teamRelationship.commissioner
-      || selectedTeam.isRootAdmin),
+    selectedTeam && (selectedTeam.id === viewer.mySquadId || canManageAnyTeam),
   );
-  const canDeleteSelectedTeam = Boolean(selectedTeam && isInactiveTeam && selectedTeam.isRootAdmin);
+  const canDeleteSelectedTeam = Boolean(selectedTeam && isInactiveTeam && viewer.isRootAdmin);
   const isManagingAnotherTeam = Boolean(
-    selectedTeam
-    && myTeam
-    && selectedTeam.id !== myTeam.id
-    && (selectedTeam.teamRelationship.commissioner || selectedTeam.isRootAdmin),
+    selectedTeam && myTeam && selectedTeam.id !== myTeam.id && canManageAnyTeam,
   );
   const isBusy =
     createTeamMutation.isPending
@@ -567,7 +549,7 @@ export function MyTeamPage() {
     (invitation) => invitation.squadId === selectedTeam?.id,
   ) ?? [];
   const teamStatusClass = isInactiveTeam ? 'text-destructive' : 'text-foreground';
-  const activeOwnerNames = activeMembers.map((member) => formatUserName(member.firstName, member.lastName));
+  const activeOwnerNames = activeMembers.map((member) => formatUserName(member.user.firstName, member.user.lastName));
   const ownerManagementContent = (
     <div className="space-y-5" data-testid="my-team-owners-panel">
       {selectedTeam ? (
@@ -631,7 +613,7 @@ export function MyTeamPage() {
                     data-testid={`my-team-member-link-${member.userId}`}
                     to={buildUserPath(member.userId)}
                   >
-                    {formatUserName(member.firstName, member.lastName)}
+                    {formatUserName(member.user.firstName, member.user.lastName)}
                   </Link>
                   <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     Active owner
@@ -647,17 +629,11 @@ export function MyTeamPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <TeamOwnerActionMenu
                   activeOwnerCount={activeMembers.length}
-                  canManageLeagueRole={
-                    selectedTeam.teamRelationship.commissioner || selectedTeam.isRootAdmin
-                  }
-                  canRemoveOwner={
-                    selectedTeam.teamRelationship.owner
-                    || selectedTeam.teamRelationship.commissioner
-                    || selectedTeam.isRootAdmin
-                  }
+                  canManageLeagueRole={canManageAnyTeam}
+                  canRemoveOwner={canManageSelectedTeam}
                   leagueCode={leagueCode}
                   leagueId={leagueId}
-                  ownerName={formatUserName(member.firstName, member.lastName)}
+                  ownerName={formatUserName(member.user.firstName, member.user.lastName)}
                   ownerRole={leagueMembersByUserId.get(member.userId)?.role}
                   ownerUserId={member.userId}
                   surface="team-home"

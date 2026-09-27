@@ -16,7 +16,7 @@ const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { LeagueSummaryDto } from '@/lib/api';
+import type { LeagueDto } from '@/lib/api';
 import { getLogger } from "@/lib/logger";
 import { Button, Tile } from "@/features/shared/ui";
 import {
@@ -12,13 +12,17 @@ import { LeagueIcon } from "@/features/leagues/league-icon";
 
 type LeagueSelectorProps = {
   activeLeagueCode?: string | null;
-  leagues: LeagueSummaryDto[];
+  // #202 (A8) — which of these leagues the viewer commissions travels beside the list, not on
+  // each league row.
+  commissionerLeagueIds: ReadonlySet<string>;
+  leagues: LeagueDto[];
   onCreateLeague: () => void;
   onNavigate: (path: string) => void;
 };
 
 export function LeagueSelector({
   activeLeagueCode,
+  commissionerLeagueIds,
   leagues,
   onCreateLeague,
   onNavigate,
@@ -30,7 +34,7 @@ export function LeagueSelector({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activeLeague =
     leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
-  const selectorLeagues = getLeagueSelectorOptions(leagues);
+  const selectorLeagues = getLeagueSelectorOptions(leagues, commissionerLeagueIds);
 
   useEffect(() => {
     if (!isOpen) {

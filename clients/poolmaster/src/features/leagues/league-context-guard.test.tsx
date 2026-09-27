@@ -27,7 +27,7 @@ function GuardHarness({
     return guard.element;
   }
 
-  return <div data-testid="ready-league">{guard.league.name}</div>;
+  return <div data-testid="ready-league">{guard.data.name}</div>;
 }
 
 describe("pool-master-pjr.9: league context guard", () => {

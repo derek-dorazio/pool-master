@@ -7,7 +7,6 @@ export type ManageSectionKey =
   | 'leagues'
   | 'sync'
   | 'sync-config'
-  | 'teams'
   | 'users';
 
 export type ManageSectionDefinition = {
