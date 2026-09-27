@@ -45,10 +45,10 @@ import { buildUserPath, SELF_USER_ID } from './user-routing';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type AccountProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
-type AccountUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
-type AccountPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSchema>;
-type AccountPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
+type UserProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
+type UserUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
+type UserPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSchema>;
+type UserPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
 
@@ -118,7 +118,7 @@ export function UserPage() {
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [emailConfirmation, setEmailConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const profileForm = useForm<AccountProfileFormValues>({
+  const profileForm = useForm<UserProfileFormValues>({
     resolver: zodResolver(UserProfileUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
@@ -127,14 +127,14 @@ export function UserPage() {
       lastName: '',
     },
   });
-  const usernameForm = useForm<AccountUsernameFormValues>({
+  const usernameForm = useForm<UserUsernameFormValues>({
     resolver: zodResolver(UserUsernameUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
       username: '',
     },
   });
-  const preferencesForm = useForm<AccountPreferencesFormValues>({
+  const preferencesForm = useForm<UserPreferencesFormValues>({
     resolver: zodResolver(UserPreferencesUpdateRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
@@ -144,7 +144,7 @@ export function UserPage() {
       dateFormat: null,
     },
   });
-  const passwordForm = useForm<AccountPasswordFormValues>({
+  const passwordForm = useForm<UserPasswordFormValues>({
     resolver: zodResolver(UserPasswordChangeRequestSchema),
     mode: 'onSubmit',
     defaultValues: {
@@ -191,7 +191,7 @@ export function UserPage() {
   }, [isSelf, logger, user, userId]);
 
   const profileMutation = useInvalidatingMutation({
-    mutationFn: async (values: AccountProfileFormValues) => {
+    mutationFn: async (values: UserProfileFormValues) => {
       const response = await updateUserProfile({
         path: { userId: SELF_USER_ID },
         body: {
@@ -212,7 +212,7 @@ export function UserPage() {
   });
 
   const usernameMutation = useInvalidatingMutation({
-    mutationFn: async (values: AccountUsernameFormValues) => {
+    mutationFn: async (values: UserUsernameFormValues) => {
       const response = await updateUserUsername({
         path: { userId: SELF_USER_ID },
         body: {
@@ -231,7 +231,7 @@ export function UserPage() {
   });
 
   const preferencesMutation = useInvalidatingMutation({
-    mutationFn: async (values: AccountPreferencesFormValues) => {
+    mutationFn: async (values: UserPreferencesFormValues) => {
       const response = await updateUserPreferences({
         path: { userId: SELF_USER_ID },
         body: {
@@ -253,7 +253,7 @@ export function UserPage() {
   });
 
   const passwordMutation = useInvalidatingMutation({
-    mutationFn: async (values: AccountPasswordFormValues) => {
+    mutationFn: async (values: UserPasswordFormValues) => {
       const response = await changeUserPassword({
         path: { userId: SELF_USER_ID },
         body: {

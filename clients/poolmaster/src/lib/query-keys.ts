@@ -70,11 +70,6 @@ export const QueryKeys = {
     detail: (entryId: QueryKeyId) => ['poolmaster', 'contest-entries', entryId] as const,
     me: (contestId: QueryKeyId) => ['poolmaster', 'contest-entries', contestId, 'me'] as const,
   },
-  contestLeagueCodes: {
-    all: ['poolmaster', 'contest-league-code'] as const,
-    byLeagueId: (leagueId: QueryKeyId) =>
-      ['poolmaster', 'contest-league-code', leagueId] as const,
-  },
   draftStates: {
     all: ['poolmaster', 'draft-state'] as const,
     detail: (contestId: QueryKeyId, entryId: QueryKeyId) =>
@@ -83,7 +78,20 @@ export const QueryKeys = {
   leagues: {
     all: ['poolmaster', 'leagues'] as const,
     list: ['poolmaster', 'leagues', 'list'] as const,
-    detail: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId] as const,
+    /**
+     * The league-context entry, addressed by league CODE — the key every league-scoped page
+     * uses, because `/league/<leagueCode>` is the route.
+     */
+    detail: (leagueCode: QueryKeyId) => ['poolmaster', 'league', leagueCode] as const,
+    /**
+     * The same league context, addressed by league ID (#202).
+     *
+     * A contest-rooted surface knows the league's id and not its code, so it cannot use
+     * `detail`. Both reads return `LeagueContextResponse` and `useLeagueContext` seeds
+     * whichever address it did not fetch, so one league never sits in two entries with
+     * different content.
+     */
+    contextById: (leagueId: QueryKeyId) => ['poolmaster', 'league-by-id', leagueId] as const,
     dashboard: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'dashboard'] as const,
     manage: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'manage'] as const,
     members: (leagueId: QueryKeyId) => ['poolmaster', 'league-members', leagueId] as const,

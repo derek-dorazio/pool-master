@@ -534,7 +534,16 @@ written deliberately *after* its transaction commits: a call inside the callback
 enrolled in it, so the entry committed immediately and would have survived a rollback,
 recording an action that did not happen.
 
-**The webapp has not moved yet.** Phase 1 of the refactor is backend-only by design; the
-webapp is expected not to compile against the new contract until it is converted in one pass
-over a settled model. Anything in section 3 describing types and layering describes the
-structure the conversion targets, not a finished state.
+**The webapp has moved (updated 2026-09-27).** This section previously said phase 1 was
+backend-only and the webapp was expected not to compile. Slice 1's frontend is now reconnected
+to the contract, so section 3 describes a finished state for the objects slice 1 covers —
+`User`, `League`, `LeagueMembership`, `Squad`. Slices 2–4 have not been reconnected, so it is
+not yet a finished state for events, contests or platform operations.
+
+**There is no league-members surface.** League Home offers an invite modal and no roster: the
+webapp cannot show who is in a league, and the only path to changing a member's role runs through
+the team-owner action menu. Eight league operations — `removeMember`, `importMembers`,
+`revokeInviteLink`, `getLeagueDashboard`, `resolveActionItem`, `getLeagueAuditLog`,
+`getMemberAuditLog`, `copySeasonContests` — have no frontend caller at all. That is unbuilt
+product rather than a soft boundary, but it is worth knowing when reading the member layer:
+its tests are the only thing exercising most of it.

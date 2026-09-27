@@ -944,6 +944,88 @@ code they covered went, the rest net-neutral). Backend unchanged and green: unit
 integration 18/82, FAPI 10/58. `npm run api:refresh` produced no diff, confirming the contract
 was already current.
 
+### Slice 1 completion sweep — outcome, 2026-09-27
+
+Two things the frontend reconnection surfaced, found by auditing what was left rather than by a
+type error. Both were done on the same branch.
+
+**The League half of the operation collapse had never run.** `docs/DOMAIN-OPERATIONS.md` lists
+`listLeagues` + `adminListLeagues` and `inactivateLeague` + `adminInactivateLeague` as one
+operation split in two, alongside the five User pairs. The User pairs all landed in step 3.3;
+the League pairs did not, and `deleteLeague` + `adminDeleteLeague` was the same shape without
+being in the table. Two of the three admin routes had **zero** frontend callers.
+
+The collapse found the same class of silent disagreement as the User one, which is the argument
+for doing it rather than deleting the unused routes:
+
+- **Counts.** The member-scoped list called `toLeagueDto(league)` with no counts, so every
+  league it returned reported `memberCount: 0` and `activeContestCount: 0` while the root-admin
+  list computed them. Latent — no surface displayed the member list's counts — but two answers
+  to one question.
+- **Filters.** `search` and `isActive` existed only on the root-admin half, though they describe
+  the query rather than the caller. They narrow either scope now.
+- **Audit.** Only the root-admin half wrote an `AdminAuditEntry`. Settled the way `UserService`
+  settles it — keyed on the actor, so a commissioner administering their own league writes none
+  — rather than merged. The delete's entry reads the league's counts *before* the transaction,
+  because afterwards there is nothing to count, and is written *after* it commits, because
+  `logAdminAction` holds its own Prisma singleton (#205).
+- **Nothing else.** `requireCommissioner` already granted root admins, so the `/admin/leagues/*`
+  routes were never the only path — they added the audit entry and otherwise duplicated.
+
+**Scope had to become explicit, and that corrects the epic's own wording.**
+`docs/DOMAIN-OPERATIONS.md` said scope is "resolved from the caller's role". That works for the
+User operations, where the path names the subject and the role only decides whether you may. It
+cannot work for a list: a root admin legitimately needs **both** scopes — their own leagues for
+the selector, every league for the management page — and one request cannot mean both. So
+`GET /leagues?scope=mine|all`, with `all` returning 403 `LEAGUE_SCOPE_FORBIDDEN` to anyone who
+is not a root admin (A1). The doc is corrected rather than quietly contradicted.
+
+Gone with the routes: `AdminLeagueService` (257 lines), `admin/league-handler.ts` (112),
+`AdminListLeaguesQuerySchema`, and every league repository, service and user repository the
+admin module wired up only to serve them. `LeagueService.findByUser` and `UserLeagueView` went
+too — the collapse made them residue in the same commit that created it, since
+`listLeagues({ scope: 'mine' })` is that read with the counts it omitted. Its N+1 guard migrated
+rather than being deleted: the property it protects is still true of the replacement. `admin-league-service.test.ts` migrated into
+`league-service.test.ts` under §1D — the composition it asserted did not change, only its home
+— with new cases for scope, for filters on the member-scoped read, for the counts defect, and
+for the four audit behaviours.
+
+**Two league reads, one response shape.** `getLeague` (by id) returned a bare `LeagueResponse`
+while `getLeagueByCode` returned `LeagueContextResponse`: two reads of one object with two
+shapes, the shadow projection of this whole refactor one level up. They share one handler now,
+which also removes the duplicated membership authorization each had a copy of.
+
+That fixed the last instance of the pattern A8 was written to remove. `contest-detail-page.tsx`
+and `my-team-history-page.tsx` were still finding the viewer's own squad by fetching every squad
+in the league and scanning each one's member list for the signed-in user — the same read as
+`teams.find(t => t.teamRelationship.owner)`, written by hand rather than as a per-row flag,
+which is exactly why removing the flags from the DTOs did not flush them out. Contest-rooted
+routes hold a `leagueId` and never a `leagueCode`, so they could not use `useLeagueContext` until
+the by-id read carried the context. `useLeagueContextById` serves them, and seeds whichever of
+the two cache addresses it did not fetch so one league never sits in two entries with different
+content. The contest board's squad-list query is deleted outright: it existed only to answer
+that question.
+
+**Residue swept with it.** `sortLeaguesForOverview` and the `'teams'` manage-section key went in
+the reconnection; this pass added: the duplicated `listLeagueMembers` query and its identical
+`Map` index in both team surfaces, now `useLeagueMembersQuery`; the `contestLeagueCodes` query
+key, a contest-shaped address for a league that nothing else could reuse; and four
+`Account*FormValues` type aliases still named for the module that no longer exists.
+
+**Stale fixtures that typecheck could not see.** Three test files still built
+`memberType`, `leagueRelationship` and `teamRelationship` into their mocks — `vi.fn()` is
+untyped, so nothing failed, and the tests passed because they never read those fields. One of
+them, `my-team-history-page.test.tsx`, was missing `squadMembership` entirely, which is the field
+the page reads now. This is the cost of untyped mocks stated concretely: the contract was
+enforced only at runtime, in tests whose whole job is to check the contract.
+
+**What is still open, and is NOT residue.** There is no league-members surface in the webapp at
+all. League Home offers an "Invite members" modal and no roster: you cannot see who is in a
+league, and the only way to change a member's role is through the *team owner* action menu.
+`removeMember`, `importMembers`, `revokeInviteLink`, `getLeagueDashboard`, `resolveActionItem`,
+`getLeagueAuditLog`, `getMemberAuditLog` and `copySeasonContests` have zero frontend callers.
+That is unbuilt product, not refactor debt, and it is the repo owner's call.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,

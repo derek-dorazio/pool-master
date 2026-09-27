@@ -606,7 +606,9 @@ describe('Contract verification (root admin)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/leagues?search=Lifecycle',
+      // #202 — one league list, scope as a parameter. `scope=all` is access rule A1's
+      // unscoped read; this replaced `GET /api/v1/admin/leagues`.
+      url: '/api/v1/leagues?scope=all&search=Lifecycle',
       headers: rootAdmin.headers,
     });
     expect(listRes.statusCode).toBe(200);
@@ -615,7 +617,9 @@ describe('Contract verification (root admin)', () => {
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/admin/leagues/${league.id}/inactivate`,
+      // The league routes always served root admins — `requireCommissioner` grants them — so
+      // the `/admin/leagues/*` duplicates are gone and these are the same operations.
+      url: `/api/v1/leagues/${league.id}/inactivate`,
       headers: withoutJsonBodyHeaders(rootAdmin.headers),
     });
     expect(inactivateRes.statusCode).toBe(200);
@@ -625,7 +629,7 @@ describe('Contract verification (root admin)', () => {
 
     const deleteRes = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/admin/leagues/${league.id}`,
+      url: `/api/v1/leagues/${league.id}`,
       headers: rootAdmin.headers,
       payload: {
         leagueCode: 'ADMINLIFE1',
@@ -976,7 +980,7 @@ describe('Contract verification (root admin)', () => {
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/leagues/00000000-0000-0000-0000-000000000000/inactivate',
+        url: '/api/v1/leagues/00000000-0000-0000-0000-000000000000/inactivate',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
       });
       expect(inactivateMissingLeagueRes.statusCode).toBe(404);
@@ -985,7 +989,7 @@ describe('Contract verification (root admin)', () => {
 
       const deleteMissingLeagueRes = await getApp().inject({
         method: 'DELETE',
-        url: '/api/v1/admin/leagues/00000000-0000-0000-0000-000000000000',
+        url: '/api/v1/leagues/00000000-0000-0000-0000-000000000000',
         headers: rootAdmin.headers,
         payload: {
           leagueCode: 'MISSING01',

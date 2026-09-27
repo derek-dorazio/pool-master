@@ -6,7 +6,6 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192). The DTOs live in
 // leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
@@ -15,8 +14,6 @@ import '@poolmaster/shared/dto/leagues.dto';
 import '@poolmaster/shared/dto/users.dto';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
-import { AdminLeagueService } from './league-service';
-import { createLeagueAdminHandlers } from './league-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -48,7 +45,6 @@ import {
   AdminEventListResponseSchema,
   AdminEventParticipantsParamsSchema,
   AdminEventParticipantListResponseSchema,
-  AdminListLeaguesQuerySchema,
   AdminProviderEventCleanupRequestSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
@@ -85,13 +81,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import { PrismaContestConfigTemplateRepository } from '../../adapters';
 import {
-  PrismaLeagueMembershipRepository,
-  PrismaLeagueRepository,
-  PrismaSquadMembershipRepository,
-  PrismaSquadRepository,
-  PrismaUserRepository,
 } from '../../adapters';
-import { LeagueService } from '../leagues/service';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -140,24 +130,9 @@ export async function adminModule(
   setAuditQueryLogger(fastify.log);
 
   // --- Services ---
-  const adminUserRepository = new PrismaUserRepository(prisma);
-  const leagueRepository = new PrismaLeagueRepository(prisma);
-  const leagueMembershipRepository = new PrismaLeagueMembershipRepository(prisma);
-  const leagueService = new LeagueService(
-    leagueRepository,
-    leagueMembershipRepository,
-    new PrismaSquadRepository(prisma),
-    new PrismaSquadMembershipRepository(prisma),
-    prisma,
-    fastify.log,
-  );
-  const adminLeagueService = new AdminLeagueService(
-    prisma,
-    leagueService,
-    leagueRepository,
-    leagueMembershipRepository,
-    fastify.log,
-  );
+  // #202 — the league repositories, the `LeagueService` and the user repository that used to
+  // be built here went with the three deleted league routes. This module no longer touches
+  // leagues at all.
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
@@ -191,7 +166,6 @@ export async function adminModule(
   const golfScoreService = new GolfScoreService(prisma, fastify.log);
 
   // --- Handlers ---
-  const leagues = createLeagueAdminHandlers(adminLeagueService, leagueMembershipRepository, adminUserRepository);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
@@ -229,41 +203,21 @@ export async function adminModule(
     handler: eventBrowser.listEventParticipants,
   });
 
-  fastify.get('/leagues', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List leagues for root-admin management',
-      description: 'Returns root-admin league search results by league name for manage-page lifecycle actions.',
-      operationId: 'adminListLeagues',
-      querystring: zodToJsonSchema(AdminListLeaguesQuerySchema),
-      response: withAdminErrorResponses({ 200: schemaRef('LeagueListResponse') }),
-    },
-    handler: leagues.listLeagues,
-  });
-
-
-  fastify.post('/leagues/:leagueId/inactivate', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Inactivate a league as root admin',
-      description: 'Allows root-admins to inactivate a league before permanent deletion. This reuses the truthful league lifecycle behavior.',
-      operationId: 'adminInactivateLeague',
-      response: withAdminErrorResponses({ 200: schemaRef('LeagueResponse') }, [400, 404]),
-    },
-    handler: leagues.inactivateLeague,
-  });
-
-  fastify.delete('/leagues/:leagueId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete an inactive league as root admin',
-      description: 'Allows root-admins to permanently delete an inactive league after confirming the exact league code. This reuses the truthful cascade-delete lifecycle behavior.',
-      operationId: 'adminDeleteLeague',
-      body: schemaRef('DeleteLeagueRequest'),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404]),
-    },
-    handler: leagues.deleteLeague,
-  });
+/*
+   * #202 — the three root-admin league routes are GONE, not re-pointed.
+   *
+   * `adminListLeagues`, `adminInactivateLeague` and `adminDeleteLeague` were the admin halves
+   * of operations the leagues module already implemented, and `docs/DOMAIN-OPERATIONS.md` names
+   * the first two as one operation split in two. They are now:
+   *
+   *   GET    /api/v1/leagues?scope=all      (was GET    /api/v1/admin/leagues)
+   *   POST   /api/v1/leagues/:id/inactivate (was POST   /api/v1/admin/leagues/:id/inactivate)
+   *   DELETE /api/v1/leagues/:id            (was DELETE /api/v1/admin/leagues/:id)
+   *
+   * The league routes already served root admins — `requireCommissioner` grants them — so the
+   * duplicates added exactly one thing: the platform audit entry. That moved into the league
+   * service, keyed on the actor, the same way `UserService` audits.
+   */
 
   // --- Sports Data Provider Routes ---
   // Permission: sportsdata.view, sportsdata.configure, sportsdata.re_ingest

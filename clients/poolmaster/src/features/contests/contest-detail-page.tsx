@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { enterContest, getContest, listContestEntries, listLeagueSquads, updateContestEntry, type SquadDto, type ContestDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { enterContest, getContest, listContestEntries, updateContestEntry, type ContestDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
@@ -11,6 +10,7 @@ import {
   buildLeagueContestManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
@@ -98,7 +98,6 @@ function ParticipantsTable({
 }
 
 export function ContestDetailPage() {
-  const auth = useAuth();
   const navigate = useNavigate();
   const logger = getLogger().child({
     feature: 'contest-board',
@@ -147,34 +146,17 @@ export function ContestDetailPage() {
 
   const leagueId = contestQuery.data?.leagueId ?? '';
 
-  const teamsQuery = useQuery({
-    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
-    queryFn: async (): Promise<SquadDto[]> => {
-      const response = await listLeagueSquads({ path: { id: leagueId } });
-
-      if (!response.data?.squads) {
-        throwApiError(response.error, 'Team list response is missing data.');
-      }
-
-      return response.data.squads;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
-
-  const myTeamId = useMemo(() => {
-    const userId = auth.user?.id;
-    if (!userId) {
-      return null;
-    }
-    return (
-      teamsQuery.data?.find((team) =>
-        team.members?.some(
-          (member) => member.userId === userId && member.status === 'ACTIVE',
-        ),
-      )?.id ?? null
-    );
-  }, [auth.user?.id, teamsQuery.data]);
+  /*
+   * #202 (A8) — the viewer's own squad comes from their squad membership, which the
+   * league-context read delivers once.
+   *
+   * The squad-list query that stood here is GONE, not rewritten: this page fetched every squad
+   * in the league and scanned each one's member list for the signed-in user, for the sole
+   * purpose of learning which squad is theirs. One request replaces it, and it is one this page
+   * benefits from caching anyway.
+   */
+  const { viewer } = useLeagueContextById(leagueId || undefined);
+  const myTeamId = viewer.mySquadId;
 
   const enterContestMutation = useInvalidatingMutation({
     mutationFn: async () => {

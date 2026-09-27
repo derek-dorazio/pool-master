@@ -6,7 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminManageLeaguesPage } from './root-admin-manage-leagues-page';
 
 const {
-  adminListLeaguesMock,
+  listLeaguesMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -20,13 +20,13 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminListLeaguesMock: vi.fn(),
+    listLeaguesMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminListLeagues: adminListLeaguesMock,
+  listLeagues: listLeaguesMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -36,7 +36,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function seedLeagues() {
-  adminListLeaguesMock.mockResolvedValue({
+  listLeaguesMock.mockResolvedValue({
     data: {
       leagues: [
         {
@@ -62,6 +62,10 @@ function seedLeagues() {
           createdAt: '2026-03-01T12:00:00.000Z',
         },
       ],
+      // #202 (A8) — the viewer's own memberships among the returned leagues. Legitimately
+      // empty for a root admin listing leagues they do not belong to; the page shows the
+      // leagues, not their relationship to them.
+      memberships: [],
     },
   });
 }
@@ -84,7 +88,7 @@ function renderPage() {
 
 describe('RootAdminManageLeaguesPage', () => {
   afterEach(() => {
-    adminListLeaguesMock.mockReset();
+    listLeaguesMock.mockReset();
     mockLogger.info.mockReset();
   });
 
@@ -141,8 +145,10 @@ describe('RootAdminManageLeaguesPage', () => {
 
     renderPage();
 
+    // #202 — one league list, scope as a parameter. This page asks for `all`, which access
+    // rule A1 permits to root admins only; it used to be a separate `adminListLeagues` route.
     await waitFor(() =>
-      expect(adminListLeaguesMock).toHaveBeenLastCalledWith({}),
+      expect(listLeaguesMock).toHaveBeenLastCalledWith({ query: { scope: 'all' } }),
     );
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
@@ -160,11 +166,11 @@ describe('RootAdminManageLeaguesPage', () => {
     expect(
       screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1'),
     ).toBeInTheDocument();
-    expect(adminListLeaguesMock).toHaveBeenCalledTimes(1);
+    expect(listLeaguesMock).toHaveBeenCalledTimes(1);
   });
 
   it('renders the empty state when no leagues match the current filters', async () => {
-    adminListLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
     renderPage();
 
@@ -172,7 +178,7 @@ describe('RootAdminManageLeaguesPage', () => {
   });
 
   it('renders the error state when the admin list call fails', async () => {
-    adminListLeaguesMock.mockResolvedValue({
+    listLeaguesMock.mockResolvedValue({
       data: null,
       error: { message: 'Boom' },
     });

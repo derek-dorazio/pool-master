@@ -68,6 +68,28 @@ bindApiMocks({
   updateContestEntry: updateContestEntryMock,
 });
 
+// #202 — the league-context hook reads `isRootAdmin` from the cached session user, so this
+// page now touches auth. In the app it always renders inside `AuthProvider`; this test renders
+// the page bare, so the hook is given a session directly.
+vi.mock('@/features/auth/auth-provider', () => ({
+  useAuth: () => ({
+    isAuthenticated: true,
+    isLoading: false,
+    isRootAdmin: false,
+    user: {
+      id: 'user-1',
+      email: 'member@example.com',
+      username: 'member@example.com',
+      firstName: 'Morgan',
+      lastName: 'Member',
+      isActive: true,
+      isRootAdmin: false,
+      createdAt: '2026-04-15T00:00:00.000Z',
+    },
+    clearSession: vi.fn(),
+  }),
+}));
+
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
@@ -130,14 +152,23 @@ function primeCommonMocks(overrides?: {
     },
   });
 
+  // #202 — `getLeague` returns the league CONTEXT now, the same shape as `getLeagueByCode`.
+  // This page reads it for the league code its back link needs.
   getLeagueMock.mockResolvedValue({
     data: {
       league: {
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
-        role: 'MEMBER',
+        isActive: true,
+        iconKey: 'TROPHY',
+        memberCount: 2,
+        activeContestCount: 1,
+        joinPolicy: 'COMMISSIONER_ONLY',
+        createdAt: '2026-04-15T00:00:00.000Z',
       },
+      membership: null,
+      squadMembership: null,
     },
   });
 

@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getDraftState, getLeague, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDetailDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getDraftState, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDetailDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
@@ -199,20 +200,16 @@ export function ContestEntryPage() {
     retry: false,
   });
 
-  const leagueCodeQuery = useQuery({
-    queryKey: QueryKeys.contestLeagueCodes.byLeagueId(contestQuery.data?.leagueId),
-    queryFn: async () => {
-      const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
-
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League response is missing league data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(contestQuery.data?.leagueId),
-    retry: false,
-  });
+  /*
+   * #202 — the league-context read, by id.
+   *
+   * This was a bespoke query under a key called `contestLeagueCodes`, existing to turn the
+   * contest's `leagueId` into a `leagueCode` for the back link. `getLeague` returns the same
+   * `LeagueContextResponse` as the by-code read now, so this is the shared hook: the league (for
+   * its code) and the viewer's edges, cached under the league rather than under a
+   * contest-shaped key that nothing else could reuse.
+   */
+  const { league: contestLeague } = useLeagueContextById(contestQuery.data?.leagueId);
   const detailsSeedSource = useMemo(() => {
     if (!draftStateQuery.data) {
       return null;
@@ -525,7 +522,7 @@ export function ContestEntryPage() {
 
   const contest = contestQuery.data;
   const draftState = draftStateQuery.data;
-  const backLeagueCode = hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null;
+  const backLeagueCode = hintedLeagueCode ?? contestLeague?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
     ? buildLeagueContestPath(backLeagueCode, contestId)
     : `/contests/${contestId}`;

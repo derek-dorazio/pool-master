@@ -3,7 +3,6 @@ import { throwApiError } from '@/lib/errors';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import { listContestEntries, listContests, listLeagueSquads, type SquadDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestEntryPath,
@@ -25,13 +24,12 @@ import {
 
 export function MyTeamHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const auth = useAuth();
   const logger = getLogger().child({
     feature: 'my-team-history-page',
   });
 
   // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
-  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
 
   useEffect(() => {
@@ -83,17 +81,17 @@ export function MyTeamHistoryPage() {
     retry: false,
   });
 
+  // #202 (A8) — the viewer's own squad is named by their squad membership, which the league
+  // context delivers once. This used to scan every squad in the league and every squad's member
+  // list for the signed-in user, which is the same read A8 replaced — just written by hand
+  // rather than as a per-row flag, which is why the type change did not catch it.
   const myTeam = useMemo(() => {
-    if (!auth.user?.id) {
+    if (!viewer.mySquadId) {
       return null;
     }
 
-    return teamsQuery.data?.find((team) =>
-      team.members?.some(
-        (member) => member.userId === auth.user?.id && member.status === 'ACTIVE',
-      ),
-    ) ?? null;
-  }, [auth.user?.id, teamsQuery.data]);
+    return teamsQuery.data?.find((team) => team.id === viewer.mySquadId) ?? null;
+  }, [teamsQuery.data, viewer.mySquadId]);
 
   const contestEntriesByContestQuery = useQuery({
     queryKey: QueryKeys.myTeamHistory.byTeamAndContests(

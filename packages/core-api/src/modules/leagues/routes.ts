@@ -9,6 +9,7 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/leagues.dto';
 import {
   zodToJsonSchema,
+  LeagueListQuerySchema,
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -116,13 +117,15 @@ export function leaguesModule(fastify: FastifyInstance): void {
   fastify.get('/', {
     schema: {
       tags: ['Leagues'],
-      summary: 'List leagues for the current user',
+      summary: 'List leagues',
       description:
-        'Returns the leagues visible to the authenticated user, together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.',
+        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
       operationId: 'listLeagues',
+      querystring: zodToJsonSchema(LeagueListQuerySchema),
       response: {
         200: schemaRef('LeagueListResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: league.listLeagues,
@@ -148,12 +151,14 @@ export function leaguesModule(fastify: FastifyInstance): void {
   fastify.get('/:id', {
     schema: {
       tags: ['Leagues'],
-      summary: 'Get league details by ID',
+      summary: 'Get a league and the viewer\'s context in it, by ID',
       description:
-        'Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.',
+        'Returns a league by internal league ID together with the viewer\'s own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.\n\nThe same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).',
       operationId: 'getLeague',
       response: {
-        200: schemaRef('LeagueResponse'),
+        200: schemaRef('LeagueContextResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -169,6 +174,8 @@ export function leaguesModule(fastify: FastifyInstance): void {
       operationId: 'getLeagueByCode',
       response: {
         200: schemaRef('LeagueContextResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -216,7 +223,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Inactivate a league',
       description:
-        'Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.',
+        'Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log; a commissioner administering their own league is not an exercise of root-admin authority and writes no entry. This replaced `inactivateLeague` + `adminInactivateLeague`.',
       operationId: 'inactivateLeague',
       response: {
         200: schemaRef('LeagueResponse'),
@@ -250,7 +257,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Delete an inactive league permanently',
       description:
-        'Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.',
+        'Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log, with the league\'s member and active-contest counts captured before the delete; a commissioner administering their own league writes no entry. This replaced `deleteLeague` + `adminDeleteLeague`.',
       operationId: 'deleteLeague',
       body: schemaRef('DeleteLeagueRequest'),
       response: {

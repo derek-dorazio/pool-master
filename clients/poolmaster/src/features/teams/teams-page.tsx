@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { type LeagueMembershipDto, type SquadDto, type TeamOwnerInvitationDto, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
+import { type SquadDto, type TeamOwnerInvitationDto, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -25,6 +25,7 @@ import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { throwApiError } from '@/lib/errors';
 
 
@@ -61,6 +62,9 @@ export function TeamsPage() {
 
   const leagueId = league?.id ?? '';
 
+  // Shared with the other team surface: one roster query, one index by user.
+  const { membersByUserId: leagueMembersByUserId } = useLeagueMembersQuery(leagueId);
+
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<SquadDto[]> => {
@@ -89,19 +93,6 @@ export function TeamsPage() {
     retry: false,
   });
 
-  const leagueMembersQuery = useQuery({
-    queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMembershipDto[]> => {
-      const response = await listLeagueMembers({ path: { id: leagueId } });
-      if (!response.data?.members) {
-        throwApiError(response.error, 'League members response is missing data.');
-      }
-
-      return response.data.members;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
 
   const pendingInvitationsByTeam = useMemo(() => {
     const grouped = new Map<string, TeamOwnerInvitationDto[]>();
@@ -117,10 +108,6 @@ export function TeamsPage() {
     return grouped;
   }, [ownerInvitationsQuery.data]);
 
-  const leagueMembersByUserId = useMemo(
-    () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
-    [leagueMembersQuery.data],
-  );
 
   useEffect(() => {
     if (!league || !teamsQuery.data) {

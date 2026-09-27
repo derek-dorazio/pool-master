@@ -1,6 +1,7 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import {
+  getLeague,
   getLeagueByCode,
   type LeagueContextResponse,
   type LeagueDto,
@@ -64,11 +65,10 @@ export interface UseLeagueContextResult {
  * the league carried it. There is one copy now.
  */
 export function useLeagueContext(leagueCode: string): UseLeagueContextResult {
-  const auth = useAuth();
-
-  const query = useQuery({
+  return useLeagueContextQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueContextResponse> => {
+    enabled: Boolean(leagueCode),
+    fetch: async () => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
       if (!response.data?.league) {
@@ -77,21 +77,77 @@ export function useLeagueContext(leagueCode: string): UseLeagueContextResult {
 
       return response.data;
     },
-    enabled: Boolean(leagueCode),
+  });
+}
+
+/**
+ * The same league context, for a surface that holds a league ID rather than a league code
+ * (#202).
+ *
+ * Contest-rooted routes are the case: they resolve a contest first and learn its `leagueId`,
+ * so there is no code to look the league up by. Before the by-id read returned the context,
+ * those pages answered "which squad is mine?" by fetching every squad in the league and
+ * scanning each one's member list for the signed-in user — the exact read A8 exists to
+ * replace, and one the type change could not flag because it was written out by hand.
+ */
+export function useLeagueContextById(leagueId: string | undefined): UseLeagueContextResult {
+  return useLeagueContextQuery({
+    queryKey: QueryKeys.leagues.contextById(leagueId),
+    enabled: Boolean(leagueId),
+    fetch: async () => {
+      const response = await getLeague({ path: { id: leagueId as string } });
+
+      if (!response.data?.league) {
+        throwApiError(response.error, 'League context response is missing data.');
+      }
+
+      return response.data;
+    },
+  });
+}
+
+/**
+ * The shared body: fetch a `LeagueContextResponse`, derive the viewer from it, and keep the
+ * two addresses of one league in step.
+ */
+function useLeagueContextQuery(options: {
+  queryKey: readonly unknown[];
+  enabled: boolean;
+  fetch: () => Promise<LeagueContextResponse>;
+}): UseLeagueContextResult {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: options.queryKey,
+    queryFn: options.fetch,
+    enabled: options.enabled,
     retry: false,
   });
 
+  // One league, two addresses: whichever one this hook fetched, the other is seeded from the
+  // same response. Without this a page that navigates from a contest into its league refetches
+  // a context it already holds, and the two entries could drift apart.
+  const context = query.data;
+  useEffect(() => {
+    if (!context) {
+      return;
+    }
+    queryClient.setQueryData(QueryKeys.leagues.detail(context.league.leagueCode), context);
+    queryClient.setQueryData(QueryKeys.leagues.contextById(context.league.id), context);
+  }, [context, queryClient]);
+
   // Looking at a league IS selecting it, so this is where the recent-league cookie is
   // written. Four pages had their own copy of this effect.
-  const loadedLeagueCode = query.data?.league.leagueCode;
+  const loadedLeagueCode = context?.league.leagueCode;
   useEffect(() => {
     if (loadedLeagueCode) {
       rememberRecentLeagueCode(loadedLeagueCode);
     }
   }, [loadedLeagueCode]);
 
-  const membership = query.data?.membership ?? null;
-  const squadMembership = query.data?.squadMembership ?? null;
+  const membership = context?.membership ?? null;
+  const squadMembership = context?.squadMembership ?? null;
   const isRootAdmin = auth.user?.isRootAdmin === true;
 
   const viewer = useMemo<LeagueViewer>(() => {
@@ -108,7 +164,7 @@ export function useLeagueContext(leagueCode: string): UseLeagueContextResult {
 
   return {
     query,
-    league: query.data?.league,
+    league: context?.league,
     viewer,
   };
 }

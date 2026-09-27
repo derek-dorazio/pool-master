@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { type LeagueMembershipDto, type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, inactivateLeagueSquad, listLeagueMembers, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
+import { type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, inactivateLeagueSquad, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
@@ -35,6 +35,7 @@ import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type TeamMember = NonNullable<SquadDto['members']>[number];
@@ -86,6 +87,9 @@ export function MyTeamPage() {
 
   const leagueId = league?.id ?? '';
 
+  // Shared with the other team surface: one roster query, one index by user.
+  const { membersByUserId: leagueMembersByUserId } = useLeagueMembersQuery(leagueId);
+
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<SquadDto[]> => {
@@ -115,19 +119,6 @@ export function MyTeamPage() {
     retry: false,
   });
 
-  const leagueMembersQuery = useQuery({
-    queryKey: QueryKeys.leagues.members(leagueId),
-    queryFn: async (): Promise<LeagueMembershipDto[]> => {
-      const response = await listLeagueMembers({ path: { id: leagueId } });
-      if (!response.data?.members) {
-        throwApiError(response.error, 'League members response is missing data.');
-      }
-
-      return response.data.members;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
 
   // #202 (A8) — the viewer's own squad is named by their squad membership, delivered once with
   // the league context. This used to scan every squad in the league for a per-row `owner` flag.
@@ -167,10 +158,6 @@ export function MyTeamPage() {
     };
   }, [selectedTeam?.id, selectedTeam?.name]);
 
-  const leagueMembersByUserId = useMemo(
-    () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
-    [leagueMembersQuery.data],
-  );
 
   useEffect(() => {
     if (iconModalOpen) {

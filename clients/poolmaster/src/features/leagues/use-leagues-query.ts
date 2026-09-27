@@ -18,7 +18,10 @@ export function useLeaguesQuery({ enabled = true }: { enabled?: boolean } = {}) 
   const query = useQuery({
     queryKey: QueryKeys.leagues.list,
     queryFn: async (): Promise<LeagueListCache> => {
-      const response = await listLeagues();
+      // #202 — `scope: 'mine'` is the leagues the viewer belongs to. It is stated rather than
+      // left to the default because the other scope exists: a root admin has both, and which
+      // one this hook wants is not something the server can infer from their role.
+      const response = await listLeagues({ query: { scope: 'mine' } });
       if (!response.data) {
         throwApiError(response.error, 'League list response is missing data.');
       }
