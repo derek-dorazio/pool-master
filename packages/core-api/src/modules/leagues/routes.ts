@@ -28,14 +28,12 @@ import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
-import { AuditService } from './audit-service';
 import { BulkService } from './bulk-service';
 import { requireCommissioner, requireLeagueMembership } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
-import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import {
@@ -97,9 +95,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
     invitationRepo,
     actionItemRepo,
   );
-  const auditService = new AuditService(prisma);
   const bulkService = new BulkService(
-    contestRepo,
     leagueRepo,
     membershipRepo,
     invitationRepo,
@@ -109,7 +105,6 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const dashboard = createDashboardHandlers(dashboardService);
-  const audit = createAuditHandlers(auditService);
   const bulk = createBulkHandlers(bulkService);
 
   // --- League CRUD ---
@@ -416,75 +411,25 @@ export function leaguesModule(fastify: FastifyInstance): void {
     handler: dashboard.getDashboard,
   });
 
-  fastify.post('/:id/action-items/:itemId/resolve', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Resolve a commissioner action item',
-      description:
-        'Marks a commissioner action item as resolved and returns the updated action-item record for the league dashboard.',
-      operationId: 'resolveActionItem',
-      response: {
-        200: schemaRef('ResolveActionItemResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: dashboard.resolveActionItem,
-  });
+  /*
+   * #202 — `resolveActionItem`, `getLeagueAuditLog` and `getMemberAuditLog` are GONE.
+   *
+   * All three were read/write APIs in front of features that were never built:
+   *
+   * - Nothing in the codebase ever created a `CommissionerActionItem`, so the resolve route
+   *   could never have anything to resolve.
+   * - Nothing ever wrote to `CommissionerAuditLog` — `AuditService.logAction` had zero callers
+   *   — so both audit reads always returned an empty array. `getLeagueAuditLog` also took
+   *   `limit`/`offset`, which §16 forbids.
+   *
+   * The audit tables are slice 4's to design (#205 merges the two of them), so deleting the
+   * reads now leaves that decision open rather than pre-empting it with an unwritten shape.
+   */
 
-  // --- Audit Log ---
-
-  fastify.get('/:id/audit-log', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Get audit log for a league',
-      description:
-        'Returns the commissioner-visible audit log for league-level actions.',
-      operationId: 'getLeagueAuditLog',
-      response: {
-        200: schemaRef('LeagueAuditEntriesResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: audit.getLeagueAuditLog,
-  });
-
-  fastify.get('/:id/audit-log/member', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Get audit log for a specific member',
-      description:
-        'Returns member-scoped audit information inside the league for commissioner or permitted member review surfaces.',
-      operationId: 'getMemberAuditLog',
-      response: {
-        200: schemaRef('LeagueAuditEntriesResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireLeagueMembership(membershipRepo),
-    handler: audit.getMemberAuditLog,
-  });
-
-  // --- Bulk Operations ---
-
-  fastify.post('/:id/contests/copy-season', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Copy contests from a previous season',
-      description:
-        'Copies prior contest definitions into the current league so commissioners can bootstrap a new season from historical contests.',
-      operationId: 'copySeason',
-      body: schemaRef('CopySeasonRequest'),
-      response: {
-        201: schemaRef('LeagueBulkOperationResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: bulk.copySeason,
-  });
+  /*
+   * #202 — `copySeason` is gone. It copied prior contest definitions into a league to bootstrap
+   * a new season, had no frontend caller, and the repo owner removed it from scope.
+   */
 
   fastify.post('/:id/members/import', {
     schema: {

@@ -13,7 +13,6 @@ import type {
   LeagueRepository,
 } from '@poolmaster/shared/db';
 import type {
-  ActionItem,
   CommissionerDashboard,
   Contest,
   MemberActivityEvent,
@@ -57,16 +56,15 @@ export class DashboardService {
   }
 
   /** Creates a new action item for a league. */
-  async createActionItem(
-    item: Omit<ActionItem, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ActionItem> {
-    return this.actionItemRepo.create(item);
-  }
-
-  /** Resolves (dismisses) an action item. */
-  async resolveActionItem(id: string): Promise<ActionItem> {
-    return this.actionItemRepo.resolve(id);
-  }
+  /*
+   * #202 — `createActionItem` and `resolveActionItem` are gone.
+   *
+   * Nothing in the codebase ever created a `CommissionerActionItem` outside a unit test, so the
+   * resolve route could never have anything to resolve, and the create half had no caller
+   * either. `getDashboard` still reads unresolved action items, which means that field is
+   * permanently empty until action items are actually designed — recorded on the dashboard
+   * follow-up rather than papered over here.
+   */
 }
 
 /** Builds recent member activity from membership join dates. */

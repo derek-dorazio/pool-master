@@ -207,39 +207,7 @@ describe('DashboardService', () => {
     });
   });
 
-  describe('createActionItem', () => {
-    it('creates a new action item', async () => {
-      const actionItemRepo = createMockActionItemRepo();
-      const service = new DashboardService(
-        createMockLeagueRepo(),
-        createMockMembershipRepo(),
-        createMockContestRepo(),
-        createMockInvitationRepo(),
-        actionItemRepo,
-      );
-      const item = await service.createActionItem({
-        leagueId: 'league-1',
-        title: 'Confirm payouts for NFL Week 14',
-        resolved: false,
-      });
-      expect(actionItemRepo.create).toHaveBeenCalledTimes(1);
-      expect(item.id).toBe('new-ai-id');
-    });
-  });
-
-  describe('resolveActionItem', () => {
-    it('marks an action item as resolved', async () => {
-      const actionItemRepo = createMockActionItemRepo();
-      const service = new DashboardService(
-        createMockLeagueRepo(),
-        createMockMembershipRepo(),
-        createMockContestRepo(),
-        createMockInvitationRepo(),
-        actionItemRepo,
-      );
-      const item = await service.resolveActionItem('ai-1');
-      expect(actionItemRepo.resolve).toHaveBeenCalledWith('ai-1');
-      expect(item.resolved).toBe(true);
-    });
-  });
+  // #202 — the `createActionItem` and `resolveActionItem` suites are gone with the methods
+  // they covered (§1D). Nothing in the product ever created an action item, so the resolve
+  // route could never have anything to resolve; both halves went.
 });

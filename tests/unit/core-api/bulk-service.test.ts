@@ -54,29 +54,14 @@ function createMockInvitationRepo(overrides: Partial<LeagueInvitationRepository>
 }
 
 describe('BulkService', () => {
-  describe('copyLastSeason', () => {
-    it('copies contests with DRAFT status', async () => {
-      const contestRepo = createMockContestRepo();
-      const service = new BulkService(
-        contestRepo, createMockLeagueRepo(),
-        createMockMembershipRepo(), createMockInvitationRepo(),
-      );
-      const result = await service.copyLastSeason({
-        leagueId: 'league-1', createdBy: 'user-1',
-        sourceContestIds: ['c-1', 'c-2'],
-      });
-      expect(result.created).toHaveLength(2);
-      const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.status).toBe(ContestStatus.DRAFT);
-      expect(createArg.sportEventId).toBeUndefined();
-    });
-  });
+  // #202 — the `copyLastSeason` suite is gone with the method (§1D). The route had no frontend
+  // caller and the repo owner removed it from scope.
 
   describe('importMembersFromCsv', () => {
     it('creates invitations for valid emails', async () => {
       const invitationRepo = createMockInvitationRepo();
       const service = new BulkService(
-        createMockContestRepo(), createMockLeagueRepo(),
+        createMockLeagueRepo(),
         createMockMembershipRepo(), invitationRepo,
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [
@@ -89,7 +74,7 @@ describe('BulkService', () => {
 
     it('skips invalid emails', async () => {
       const service = new BulkService(
-        createMockContestRepo(), createMockLeagueRepo(),
+        createMockLeagueRepo(),
         createMockMembershipRepo(), createMockInvitationRepo(),
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [
@@ -108,7 +93,7 @@ describe('BulkService', () => {
         }),
       });
       const service = new BulkService(
-        createMockContestRepo(), createMockLeagueRepo(),
+        createMockLeagueRepo(),
         createMockMembershipRepo(), invitationRepo,
       );
       const result = await service.importMembersFromCsv('league-1', 'user-1', [

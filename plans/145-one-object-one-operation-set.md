@@ -1019,12 +1019,52 @@ them, `my-team-history-page.test.tsx`, was missing `squadMembership` entirely, w
 the page reads now. This is the cost of untyped mocks stated concretely: the contract was
 enforced only at runtime, in tests whose whole job is to check the contract.
 
-**What is still open, and is NOT residue.** There is no league-members surface in the webapp at
-all. League Home offers an "Invite members" modal and no roster: you cannot see who is in a
-league, and the only way to change a member's role is through the *team owner* action menu.
-`removeMember`, `importMembers`, `revokeInviteLink`, `getLeagueDashboard`, `resolveActionItem`,
-`getLeagueAuditLog`, `getMemberAuditLog` and `copySeasonContests` have zero frontend callers.
-That is unbuilt product, not refactor debt, and it is the repo owner's call.
+**The zero-caller operations, resolved with the repo owner — and a claim of mine that was wrong.**
+
+I reported that "there is no league-members surface in the webapp at all." That was wrong, and the
+correction matters because it changes what the remaining work is. **The squad list *is* the member
+roster.** `ensureDefaultSquadForLeagueMember` runs on both paths that create a `LeagueMembership`
+(league creation, invitation acceptance), and accepting a *squad-owner* invitation creates a
+`LeagueMembership` with role `MEMBER` plus a `SquadMembership` on that squad. So every league
+member has exactly one active squad, and `teams-page.tsx` already renders every squad with its
+active owners, each owner's league-role chip, and pending owner invitations. It also already
+carries remove-owner and promote/demote through `TeamOwnerActionMenu`. What is missing is the
+invite/create/inactivate group, which lives on Team Home behind a `?teamId=` hop — a surfacing
+job, not a missing screen. I had also said `changeMemberRole` had no league-level frontend; it has
+one, in that shared row menu, reachable from both surfaces.
+
+**Auditing the rest found that most of them were read/write APIs in front of features never
+built**, which is a different finding from "no frontend yet":
+
+- Nothing in the codebase ever created a `CommissionerActionItem`. `createActionItem` had one
+  caller — a unit test — and `resolveActionItem` had none, so the resolve route could never have
+  had anything to resolve.
+- Nothing ever wrote to `CommissionerAuditLog`. `AuditService.logAction` had **zero callers**, so
+  `getLeagueAuditLog` and `getMemberAuditLog` both always returned `[]`. `getLeagueAuditLog` also
+  took `limit`/`offset`, which §16 forbids.
+
+Deleted on the repo owner's decision: `resolveActionItem`, `getLeagueAuditLog`,
+`getMemberAuditLog`, `createActionItem`, and `copySeason` (contest copy-forward, no caller,
+removed from scope). `AuditService.logAction` and `getContestAuditLog` stay because the contest
+audit route is live — it has the same empty-read problem, but contests are slice 3 and #205 has to
+settle how many audit tables there should be first.
+
+Kept and ticketed: **#221** the commissioner dashboard, which is the one of the four that returns
+real data — every field except `actionItems`, which is now unpopulatable and is that ticket's
+first question. **#220** CSV/spreadsheet bulk import, deferred; note the repo owner's framing is
+"teams and owners", which the current row shape cannot express. **#219** surfacing the squad
+lifecycle actions on the squad list. **#217** inviting a co-owner who has no account yet —
+register, join league, join squad in one flow, the one item with real design in it. **#218**
+removing a co-owner must also end their league membership, decided here:
+
+> "This should also remove the league membership as well. If the desire is to have a new team,
+> they can be re-invited by the commissioner to create a new team."
+
+That last one closes the model into a checkable invariant, which is why it is worth stating:
+**every ACTIVE `LeagueMembership` has exactly one ACTIVE `SquadMembership` in that league.** Today
+`removeOwner` breaks it — it ends the squad membership and leaves the league membership, so a
+removed co-owner keeps league access while disappearing from every surface that lists people.
+#218 fixes it and gives `removeMember` its first frontend caller.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,

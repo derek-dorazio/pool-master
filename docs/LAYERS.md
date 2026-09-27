@@ -540,10 +540,29 @@ to the contract, so section 3 describes a finished state for the objects slice 1
 `User`, `League`, `LeagueMembership`, `Squad`. Slices 2–4 have not been reconnected, so it is
 not yet a finished state for events, contests or platform operations.
 
-**There is no league-members surface.** League Home offers an invite modal and no roster: the
-webapp cannot show who is in a league, and the only path to changing a member's role runs through
-the team-owner action menu. Eight league operations — `removeMember`, `importMembers`,
-`revokeInviteLink`, `getLeagueDashboard`, `resolveActionItem`, `getLeagueAuditLog`,
-`getMemberAuditLog`, `copySeasonContests` — have no frontend caller at all. That is unbuilt
-product rather than a soft boundary, but it is worth knowing when reading the member layer:
-its tests are the only thing exercising most of it.
+**The squad list is the member roster (corrected 2026-09-27).** An earlier version of this
+section said there was no league-members surface. That was wrong. `ensureDefaultSquadForLeagueMember`
+runs on both paths that create a `LeagueMembership`, and accepting a squad-owner invitation creates
+a `LeagueMembership` plus a `SquadMembership`, so every active member has exactly one active squad
+and appears on `teams-page.tsx`. Reading the member layer, expect the squad list — not a separate
+roster screen — to be its UI.
+
+**One invariant the code does not yet hold.** Every ACTIVE `LeagueMembership` should have exactly
+one ACTIVE `SquadMembership` in that league, which is what makes the line above true.
+`SquadService.removeOwner` breaks it: it ends the squad membership and leaves the league membership,
+so a removed co-owner keeps league access while vanishing from every surface that lists people.
+#218 fixes it.
+
+**Operations with no frontend caller, as of this pass.** `removeMember` (gets one in #218),
+`revokeInviteLink` (the league invite *link*, distinct from the squad-owner invitation revoke that
+is wired), `importMembers` (#220), and `getLeagueDashboard` (#221 — the only one that returns real
+data). Their siblings `resolveActionItem`, `getLeagueAuditLog`, `getMemberAuditLog` and `copySeason`
+were deleted: the first three were APIs in front of tables nothing writes to, and the fourth had no
+caller and was descoped.
+
+**Two live reads sit in front of a table nothing writes.** `AuditService.logAction` is the only
+writer to `CommissionerAuditLog` and has zero callers, so `getContestAuditLog` — still routed at
+`GET /contests/:contestId/audit-log` — always returns an empty array. Left in place because
+contests are slice 3's cluster and #205 has to decide how many audit tables there should be.
+Likewise `getLeagueDashboard`'s `actionItems` can only be populated by writing
+`CommissionerActionItem` directly, which only an integration test does.

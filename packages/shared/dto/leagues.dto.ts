@@ -13,7 +13,6 @@ import {
 } from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { ContestSummaryDtoSchema } from './contests.dto';
-import { LeagueAuditEntryDtoSchema } from './audit.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -114,10 +113,7 @@ export const AcceptInvitationRequestSchema = z.object({
 }).describe('Authenticated invitation-acceptance payload.');
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationRequestSchema>;
 
-export const CopySeasonRequestSchema = z.object({
-  sourceContestIds: z.array(z.string()).min(1).describe('Contests from the source season that should be copied forward.'),
-}).describe('Commissioner request payload for copying a prior season into a new one.');
-export type CopySeasonRequest = z.infer<typeof CopySeasonRequestSchema>;
+// #202 — `CopySeasonRequestSchema` is gone with the `copy-season` route.
 
 export const CsvImportRowSchema = z.object({
   email: z.string().describe('Email address for the imported member row.'),
@@ -396,9 +392,9 @@ export const GenerateInviteLinkResponseSchema = z.object({
 }).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
 
-export const LeagueAuditEntriesResponseSchema = z.object({
-  entries: z.array(LeagueAuditEntryDtoSchema),
-}).describe('League audit-log response.');
+// #202 — `LeagueAuditEntriesResponseSchema` is gone with the two league audit-log reads. The
+// contest audit route keeps its own response schema in `contests.dto.ts`, and both still share
+// `LeagueAuditEntryDtoSchema`.
 
 /**
  * Commissioner dashboard response. The `league` and `contests` fields are typed against the
@@ -416,10 +412,9 @@ export const LeagueDashboardResponseSchema = z.object({
 }).describe('Commissioner dashboard response.');
 export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
 
-export const ResolveActionItemResponseSchema = z.object({
-  actionItem: LeagueActionItemDtoSchema,
-}).describe('Action-item resolution response.');
-export type ResolveActionItemResponse = z.infer<typeof ResolveActionItemResponseSchema>;
+// #202 — `ResolveActionItemResponseSchema` is gone with the resolve route. `LeagueActionItemDto`
+// stays because `LeagueDashboardResponse` still declares an `actionItems` array — which is
+// permanently empty until action items are designed, and is recorded on the dashboard follow-up.
 
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
 
@@ -435,7 +430,6 @@ registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchem
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);
 registerSchema('AcceptInvitationRequest', AcceptInvitationRequestSchema);
-registerSchema('CopySeasonRequest', CopySeasonRequestSchema);
 registerSchema('CsvImportRow', CsvImportRowSchema);
 registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
 registerSchema('LeagueDto', LeagueDtoSchema);
@@ -452,7 +446,5 @@ registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
 registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);
 registerSchema('SendLeagueInvitationsResponse', SendLeagueInvitationsResponseSchema);
 registerSchema('GenerateInviteLinkResponse', GenerateInviteLinkResponseSchema);
-registerSchema('LeagueAuditEntriesResponse', LeagueAuditEntriesResponseSchema);
 registerSchema('LeagueDashboardResponse', LeagueDashboardResponseSchema);
-registerSchema('ResolveActionItemResponse', ResolveActionItemResponseSchema);
 registerSchema('LeagueBulkOperationResponse', LeagueBulkOperationResponseSchema);

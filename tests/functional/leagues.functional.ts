@@ -15,7 +15,6 @@ import {
   listLeagues,
   listLeagueSquads,
   removeMember,
-  resolveActionItem,
   updateLeagueDetails,
   updateLeagueIcon,
 } from '@poolmaster/shared/generated/hey-api';
@@ -747,7 +746,7 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
-  it('rejects non-commissioners from commissioner dashboard and action-item flows', async () => {
+  it('rejects non-commissioners and outsiders from the commissioner dashboard', async () => {
     const commissioner = await buildRegisteredUser({
       displayName: 'Dashboard Commissioner',
     });
@@ -785,15 +784,6 @@ describe('SDK Functional: Leagues', () => {
 
     expect(acceptResponse.data?.membership.userId).toBe(member.userId);
 
-    const actionItem = await getFunctionalPrisma().commissionerActionItem.create({
-      data: {
-        leagueId: leagueId as string,
-        title: 'Review pending request',
-        description: 'A member action requires commissioner review.',
-        actionUrl: `/leagues/${leagueId}`,
-      },
-    });
-
     const memberDashboardResponse = await getLeagueDashboard({
       client: member.client,
       path: {
@@ -818,18 +808,9 @@ describe('SDK Functional: Leagues', () => {
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
 
-    const memberResolveResponse = await resolveActionItem({
-      client: member.client,
-      path: {
-        id: leagueId as string,
-        itemId: actionItem.id,
-      },
-    });
-
-    expectFunctionalError(memberResolveResponse, {
-      status: 403,
-      code: 'LEAGUE_PERMISSION_DENIED',
-    });
+    // #202 — the action-item resolve assertion is gone with its route (§1D). Nothing in the
+    // product ever created an action item, so this test had to insert one via Prisma just to
+    // have something to be refused.
   });
 
   it('requires inactive-first league delete with exact leagueCode confirmation and preserves user accounts', async () => {
