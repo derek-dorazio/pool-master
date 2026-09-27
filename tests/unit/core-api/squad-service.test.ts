@@ -324,6 +324,143 @@ describe('SquadService', () => {
     expect(squadRepo.update).not.toHaveBeenCalled();
   });
 
+  /**
+   * #218 — removing a squad co-owner also ends their LEAGUE membership.
+   *
+   * Before this, the squad membership went INACTIVE and the league membership stayed ACTIVE,
+   * leaving a league member with no squad. Since every member has exactly one squad, they
+   * disappeared from every surface that lists people in the league while keeping league access.
+   */
+  describe('removeOwner ends the league membership too (#218)', () => {
+    function squadMemberships(userIds: string[]) {
+      return userIds.map((userId, index) => ({
+        id: `squad-membership-${index + 1}`,
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId,
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+    }
+
+    function primeRepos(options: { targetRole?: 'MEMBER' | 'COMMISSIONER'; leagueMemberships?: unknown[] } = {}) {
+      const owners = squadMemberships(['commissioner-1', 'co-owner-1']);
+      const target = owners[1];
+
+      const squadRepo = createSquadRepo({
+        findById: jest.fn().mockResolvedValue({
+          id: 'squad-1',
+          leagueId: 'league-1',
+          createdBy: 'commissioner-1',
+          name: 'Shared Team',
+          iconKey: 'CAPTAIN_SMILE_FIELD',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        update: jest.fn().mockResolvedValue(undefined),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo({
+        findBySquadAndUser: jest.fn().mockResolvedValue(target),
+        findByLeagueAndUser: jest.fn().mockResolvedValue(target),
+        findBySquad: jest.fn().mockResolvedValue(owners),
+        update: jest.fn().mockResolvedValue({
+          ...target,
+          status: SquadMembershipStatus.INACTIVE,
+        }),
+      });
+
+      const targetLeagueMembership = {
+        ...baseMembership,
+        id: 'league-membership-co-owner',
+        userId: 'co-owner-1',
+        role: options.targetRole ?? ('MEMBER' as const),
+      };
+      const commissionerMembership = {
+        ...baseMembership,
+        id: 'league-membership-commissioner',
+        userId: 'commissioner-1',
+        role: 'COMMISSIONER' as const,
+      };
+      const leagueMembershipRepo = createLeagueMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockImplementation(async (_leagueId, userId) =>
+          userId === 'co-owner-1' ? targetLeagueMembership : commissionerMembership),
+        findByLeague: jest.fn().mockResolvedValue(
+          options.leagueMemberships ?? [commissionerMembership, targetLeagueMembership],
+        ),
+        update: jest.fn().mockResolvedValue(targetLeagueMembership),
+      });
+
+      userFindById.mockResolvedValue(
+        buildUser({ id: 'co-owner-1', firstName: 'Fran', lastName: 'Lane' }),
+      );
+
+      return {
+        squadRepo,
+        squadMembershipRepo,
+        leagueMembershipRepo,
+        service: new SquadService(
+          squadRepo,
+          squadMembershipRepo,
+          leagueMembershipRepo,
+          userRepo,
+          prisma,
+        ),
+      };
+    }
+
+    it('ends both the squad membership and the league membership', async () => {
+      const { service, squadMembershipRepo, leagueMembershipRepo } = primeRepos();
+
+      await service.removeOwner('league-1', 'squad-1', 'commissioner-1', 'co-owner-1');
+
+      expect(squadMembershipRepo.update).toHaveBeenCalledWith(
+        'squad-membership-2',
+        expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
+      );
+      expect(leagueMembershipRepo.update).toHaveBeenCalledWith(
+        'league-membership-co-owner',
+        expect.objectContaining({ status: LeagueMembershipStatus.INACTIVE }),
+      );
+    });
+
+    it('leaves the removed owner\'s user account active so they can be re-invited', async () => {
+      const { service } = primeRepos();
+
+      await service.removeOwner('league-1', 'squad-1', 'commissioner-1', 'co-owner-1');
+
+      // The whole point of routing through the shared unit after #218 stripped its account
+      // cascade: a commissioner removing someone from a team cannot stop them signing in, so the
+      // re-invite flow the repo owner described actually works.
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('refuses to remove a co-owner who is the league\'s last active commissioner', async () => {
+      const commissionerOnly = {
+        ...baseMembership,
+        id: 'league-membership-co-owner',
+        userId: 'co-owner-1',
+        role: 'COMMISSIONER' as const,
+      };
+      const { service, squadMembershipRepo, leagueMembershipRepo } = primeRepos({
+        targetRole: 'COMMISSIONER',
+        leagueMemberships: [commissionerOnly],
+      });
+
+      // A co-owner can be the league's last commissioner while sitting on somebody else's squad.
+      // Ending their league membership would leave the league with nobody who can administer it,
+      // which is why the rule had to be shared rather than left in MemberService.
+      await expect(
+        service.removeOwner('league-1', 'squad-1', 'co-owner-1', 'co-owner-1'),
+      ).rejects.toMatchObject({ code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED' });
+
+      expect(squadMembershipRepo.update).not.toHaveBeenCalled();
+      expect(leagueMembershipRepo.update).not.toHaveBeenCalled();
+    });
+  });
+
   it('allows a commissioner to update another team in the same league', async () => {
     const squadRepo = createSquadRepo({
       findById: jest.fn().mockResolvedValue({
@@ -493,7 +630,9 @@ describe('SquadService', () => {
     });
   });
 
-  it('inactivates a team, removes active owners from the league, and inactivates users with no other leagues', async () => {
+  // #218 — was "…and inactivates users with no other leagues". Inactivating a squad ends its
+  // owners' league memberships, but no longer their accounts.
+  it('inactivates a team and removes its active owners from the league, leaving their accounts active', async () => {
     let archivedTeamReads = 0;
     const findByIdMock = jest.fn().mockImplementation(async () => {
       archivedTeamReads += 1;
@@ -589,15 +728,7 @@ describe('SquadService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]),
     });
-    prisma.user.findUnique
-      .mockResolvedValueOnce({ id: 'user-1', isActive: true, isRootAdmin: false })
-      .mockResolvedValueOnce({ id: 'user-2', isActive: true, isRootAdmin: false });
     userFindByLeague.mockResolvedValue([]);
-    prisma.$transaction = jest.fn().mockImplementation(async (callback) =>
-      callback({
-        user: { update: jest.fn().mockResolvedValue(undefined) },
-        refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
-      }));
 
     const service = new SquadService(
       squadRepo,
@@ -616,6 +747,9 @@ describe('SquadService', () => {
       status: LeagueMembershipStatus.INACTIVE,
     });
     expect(squadRepo.create).not.toHaveBeenCalled();
-    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    // No account writes: two owners lose their league membership and both keep a usable login.
+    // The old cascade read the user row to decide whether to deactivate it; nothing reads it now,
+    // and this suite's prisma fixture has no `$transaction` at all, so the absence is structural.
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 });

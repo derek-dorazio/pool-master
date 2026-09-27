@@ -11,7 +11,11 @@ import type {
 } from '@poolmaster/shared/db';
 import type { LeagueMembership, LeagueRole as LeagueRoleType } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
-import { inactivateLeagueMemberUnit } from './member-lifecycle';
+import {
+  inactivateLeagueMemberUnit,
+  LastCommissionerError,
+  requireAnotherActiveCommissioner,
+} from './member-lifecycle';
 
 export interface ChangeRoleInput {
   leagueId: string;
@@ -115,7 +119,6 @@ export class MemberService {
       leagueId,
       userId,
       membershipRepo: this.membershipRepo,
-      prisma: this.prisma,
       squadRepo: this.squadRepo,
       squadMembershipRepo: this.squadMembershipRepo,
       logger: this.logger,
@@ -126,27 +129,27 @@ export class MemberService {
     }, 'Removed league member');
   }
 
+  /**
+   * #218 — delegates to the shared rule in `member-lifecycle.ts`, translating its error into this
+   * module's `MemberOperationError` so the route's error mapping is unchanged. Squad co-owner
+   * removal can now also end a league membership, so the rule needed one home.
+   */
   private async ensureAnotherActiveCommissioner(
     leagueId: string,
     targetUserId: string,
   ): Promise<void> {
-    const memberships = await this.membershipRepo.findByLeague(leagueId);
-    const remainingActiveCommissioners = memberships.filter(
-      (membership) =>
-        membership.status === LeagueMembershipStatus.ACTIVE &&
-        membership.role === LeagueRole.COMMISSIONER &&
-        membership.userId !== targetUserId,
-    );
-
-    if (remainingActiveCommissioners.length === 0) {
-      this.logger?.warn({
-        action: 'leagueMember.ensureCommissioner.missingReplacement',
-        data: { leagueId, targetUserId },
-      }, 'Rejected operation because it would remove the last active commissioner');
-      throw new MemberOperationError(
-        'Appoint another active commissioner before removing or demoting the last commissioner.',
-        'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-      );
+    try {
+      await requireAnotherActiveCommissioner({
+        leagueId,
+        targetUserId,
+        membershipRepo: this.membershipRepo,
+        logger: this.logger,
+      });
+    } catch (err) {
+      if (err instanceof LastCommissionerError) {
+        throw new MemberOperationError(err.message, err.code);
+      }
+      throw err;
     }
   }
 }

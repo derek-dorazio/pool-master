@@ -166,7 +166,9 @@ describe('MemberService', () => {
     });
   });
 
-  it('removes an active member and deactivates the user when it was their last league', async () => {
+  // #218 — was "…and deactivates the user when it was their last league". Removal no longer
+  // touches the account, so the assertion that it did is gone and the one that it does not is here.
+  it('removes an active member and leaves their user account active', async () => {
     const membership = buildMembership({
       id: 'membership-1',
       leagueId: 'league-1',
@@ -223,7 +225,11 @@ describe('MemberService', () => {
       expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
     );
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    // The league and squad memberships end; the account does not. A commissioner removing a
+    // member must not be able to stop them signing in — that is the user's own call, or a root
+    // admin's. `findByUser` was the last-league check that gated the old cascade.
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(membershipRepo.findByUser).not.toHaveBeenCalled();
   });
 
   it('rejects removing the last active commissioner', async () => {

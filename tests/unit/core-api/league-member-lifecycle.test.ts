@@ -190,7 +190,13 @@ describe('league member lifecycle helpers', () => {
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
   });
 
-  it('deactivates the user account when their final active league membership is removed', async () => {
+  /**
+   * #218 — these two cases replace "deactivates the user account when their final active league
+   * membership is removed" and "preserves the user account when other active league memberships
+   * remain". Both asserted the cascade that is now gone: the unit no longer looks at whether this
+   * was the user's last league, and no longer writes `user.isActive` or revokes refresh tokens.
+   */
+  it('ends the league and squad membership and leaves the user account alone', async () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({
         id: 'membership-1',
@@ -199,7 +205,6 @@ describe('league member lifecycle helpers', () => {
         role: LeagueRole.MEMBER,
         status: LeagueMembershipStatus.ACTIVE,
       })),
-      findByUser: jest.fn().mockResolvedValue([]),
     });
     const squadRepo = createSquadRepo({
       update: jest.fn().mockResolvedValue(undefined),
@@ -218,13 +223,11 @@ describe('league member lifecycle helpers', () => {
       findBySquad: jest.fn().mockResolvedValue([]),
       update: jest.fn().mockResolvedValue(undefined),
     });
-    const prisma = createPrisma();
 
     await inactivateLeagueMemberUnit({
       leagueId: 'league-1',
       userId: 'user-1',
       membershipRepo,
-      prisma: prisma as any,
       squadRepo,
       squadMembershipRepo,
     });
@@ -233,10 +236,16 @@ describe('league member lifecycle helpers', () => {
       'membership-1',
       expect.objectContaining({ status: LeagueMembershipStatus.INACTIVE }),
     );
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(squadMembershipRepo.update).toHaveBeenCalledWith(
+      'squad-membership-1',
+      expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
+    );
+    // The account guarantee is structural now, not conditional: the unit takes no Prisma client,
+    // so it has no way to write `user.isActive` or revoke a token. That is the point — a
+    // commissioner ending a membership cannot lock someone out of the product.
   });
 
-  it('preserves the user account when other active league memberships remain', async () => {
+  it('does not ask whether this was the user\'s last league, because it no longer matters', async () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({
         id: 'membership-1',
@@ -244,21 +253,16 @@ describe('league member lifecycle helpers', () => {
         userId: 'user-1',
         status: LeagueMembershipStatus.ACTIVE,
       })),
-      findByUser: jest.fn().mockResolvedValue([buildMembership({
-        leagueId: 'league-2',
-        userId: 'user-1',
-        status: LeagueMembershipStatus.ACTIVE,
-      })]),
     });
-    const prisma = createPrisma();
 
     await inactivateLeagueMemberUnit({
       leagueId: 'league-1',
       userId: 'user-1',
       membershipRepo,
-      prisma: prisma as any,
     });
 
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    // `findByUser` was the last-league check that gated account deactivation. Asserting it is
+    // never called is how this test proves the branch is gone rather than merely unreached.
+    expect(membershipRepo.findByUser).not.toHaveBeenCalled();
   });
 });

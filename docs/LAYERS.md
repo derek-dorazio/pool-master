@@ -547,11 +547,29 @@ a `LeagueMembership` plus a `SquadMembership`, so every active member has exactl
 and appears on `teams-page.tsx`. Reading the member layer, expect the squad list — not a separate
 roster screen — to be its UI.
 
-**One invariant the code does not yet hold.** Every ACTIVE `LeagueMembership` should have exactly
-one ACTIVE `SquadMembership` in that league, which is what makes the line above true.
-`SquadService.removeOwner` breaks it: it ends the squad membership and leaves the league membership,
-so a removed co-owner keeps league access while vanishing from every surface that lists people.
-#218 fixes it.
+**The invariant that makes it true, now asserted (#218).** Every ACTIVE `LeagueMembership` has
+exactly one ACTIVE `SquadMembership` in that league, and no ACTIVE squad membership belongs to a
+non-member. `SquadService.removeOwner` used to break it — it ended the squad membership and left the
+league membership, so a removed co-owner kept league access while vanishing from every surface that
+lists people. It now routes through `inactivateLeagueMemberUnit` like league removal and squad
+inactivation do, and
+`tests/integration/core-api/league-squad-membership-invariant.integration.ts` checks the invariant
+against the database after each way a membership can begin or end.
+
+**League and squad management never touches a user's account (#218).**
+`inactivateLeagueMemberUnit` used to deactivate the user and revoke their refresh tokens when the
+league they were leaving was their last one. That let a relationship ending mutate the object's
+lifecycle, and it made recovery impossible: `login` refuses an inactive account, accepting an
+invitation needs a session, and only a root admin can re-enable. The unit now takes no Prisma
+client, so the guarantee is structural. Account state belongs to the user (self-service disable) and
+to a root admin.
+
+**Three model facts to know before working on squads.** `SquadMembership` is unique on
+`(leagueId, userId)`, so one member holds at most one squad per league and an existing member cannot
+join a second squad (`SQUAD_MEMBERSHIP_CONFLICT`). Co-ownership therefore only arises for somebody
+who joins the league *through* a squad-owner invitation. And `inviteOwner` auto-accepts when the
+invited email already belongs to a PoolMaster user — the pending-then-accept path is only for an
+email with no account (#217).
 
 **Operations with no frontend caller, as of this pass.** `removeMember` (gets one in #218),
 `revokeInviteLink` (the league invite *link*, distinct from the squad-owner invitation revoke that
