@@ -866,6 +866,23 @@ slice's favour — they still listed `/api/v1/account/*` and `/api/v1/auth/me` a
 were gone. Updated here, but two hand-maintained mirrors of a generated artifact is the §15
 pattern and should be a follow-up.
 
+**Step 3.7 outcome, 2026-09-27.** `docs/LAYERS.md`. Written from the code rather than from the
+existing rules and docs, as set: the point is to describe the structure this refactor produced
+so it can be reviewed against what was intended, and a description that inherits the old
+framing cannot do that. It covers the service layers (domain → ports → adapters → services →
+mappers → DTOs → routes, plus plugins and core), the webapp layers (`lib/` as the boundary,
+`features/<area>/` as the unit, the generated SDK and types as the dependency between them),
+the tests that apply to each layer with the reason they sit where they do, two end-to-end flows,
+and a closing section on the boundaries that are still soft — including the five unconverted
+user reads and the three route maps.
+
+Two structural facts it records that were not obvious before writing it down: the webapp's tests
+are colocated and vitest-run while every backend test is central and jest-run, which follows
+from the runner rather than from a testing policy and means `npm run test:unit` does not include
+the webapp; and `clients/poolmaster/src/test/msw-api.ts` plus `packages/shared/api-routes.ts`
+are two hand-maintained mirrors of a generated artifact — the shadow pattern of this whole
+refactor, one level up.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
