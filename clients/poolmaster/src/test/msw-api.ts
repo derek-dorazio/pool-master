@@ -23,6 +23,7 @@ type ApiMock = Mock<(options: Record<string, unknown>) => Promise<ApiMockResult>
 const operationDefinitions = {
   acceptInvitation: { method: 'post', path: '/api/v1/invitations/accept' },
   acceptTeamOwnerInvitation: { method: 'post', path: '/api/v1/team-invitations/accept' },
+  registerWithTeamOwnerInvitation: { method: 'post', path: '/api/v1/team-invitations/register' },
   activateLeague: { method: 'post', path: '/api/v1/leagues/{id}/activate' },
   deleteUser: { method: 'delete', path: '/api/v1/users/{userId}' },
   disableUser: { method: 'post', path: '/api/v1/users/{userId}/disable' },

@@ -256,7 +256,39 @@ export class SquadOwnerInvitationService {
     };
   }
 
-  async acceptInvitation(inviteCode: string, userId: string): Promise<TeamOwnerInvitationDto> {
+  /**
+   * Validates a pending invitation for the register-and-accept flow, and returns the email the
+   * new account must use (#217).
+   *
+   * Separate from `acceptInvitation` because the caller has no account yet, so there is no
+   * `userId` to key acceptance on. The route validates first, registers with the email this
+   * returns, then calls `acceptInvitation` with the new user's id.
+   *
+   * It refuses an email that already has an account, because that case never produces a pending
+   * invitation: `inviteOwner` provisions an existing user immediately and marks the invitation
+   * ACCEPTED. Reaching here with one means the account was created between the invite and the
+   * acceptance, and the right answer is "sign in and accept", not "register again".
+   */
+  async requireInvitationForRegistration(inviteCode: string): Promise<{
+    invitation: SquadOwnerInvitation;
+    email: string;
+  }> {
+    const invitation = await this.requirePendingInvitation(inviteCode);
+    const existingUser = await this.findUserByEmail(invitation.email);
+    if (existingUser) {
+      throw new SquadOwnerInvitationOperationError(
+        'An account already exists for this invitation. Sign in to accept it.',
+        'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS',
+      );
+    }
+
+    // The invited address, not one supplied by the caller. A squad-owner invitation grants league
+    // membership, so a forwarded link must not let a different person register into the league.
+    return { invitation, email: invitation.email };
+  }
+
+  /** The PENDING-and-unexpired check, shared by both acceptance paths. */
+  private async requirePendingInvitation(inviteCode: string): Promise<SquadOwnerInvitation> {
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
       throw new SquadOwnerInvitationNotFoundError(`Team-owner invitation not found: ${inviteCode}`);
@@ -276,6 +308,11 @@ export class SquadOwnerInvitationService {
         mapInvitationStatusCode(expired.status),
       );
     }
+    return invitation;
+  }
+
+  async acceptInvitation(inviteCode: string, userId: string): Promise<TeamOwnerInvitationDto> {
+    const invitation = await this.requirePendingInvitation(inviteCode);
 
     await this.rejectIfCurrentLeagueMember(invitation.leagueId, userId);
     await this.provisionOwnerOnSquad(invitation.leagueId, invitation.squadId, userId);

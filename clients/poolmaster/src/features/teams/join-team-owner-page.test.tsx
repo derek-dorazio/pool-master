@@ -13,6 +13,7 @@ const {
   logoutUserMock,
   mockLogger,
   refreshTokenMock,
+  registerWithTeamOwnerInvitationMock,
 } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
@@ -28,6 +29,7 @@ const {
   return {
     acceptTeamOwnerInvitationMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
+    registerWithTeamOwnerInvitationMock: vi.fn(),
     getTeamOwnerInvitationPreviewMock: vi.fn(),
     logoutUserMock: vi.fn(),
     mockLogger: logger,
@@ -47,6 +49,7 @@ bindApiMocks({
   getTeamOwnerInvitationPreview: getTeamOwnerInvitationPreviewMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
+  registerWithTeamOwnerInvitation: registerWithTeamOwnerInvitationMock,
 });
 
 function renderJoinTeamOwnerPage(initialEntry = '/team-invite/TEAM123') {
@@ -75,6 +78,7 @@ function renderJoinTeamOwnerPage(initialEntry = '/team-invite/TEAM123') {
 describe('JoinTeamOwnerPage', () => {
   afterEach(() => {
     acceptTeamOwnerInvitationMock.mockReset();
+    registerWithTeamOwnerInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
     getTeamOwnerInvitationPreviewMock.mockReset();
     logoutUserMock.mockReset();
@@ -85,7 +89,10 @@ describe('JoinTeamOwnerPage', () => {
     mockLogger.error.mockReset();
   });
 
-  it('sends unauthenticated users back through sign-in and registration', async () => {
+  // #217 — was "sends unauthenticated users back through sign-in and registration". That bounce
+  // was a dead end: `acceptTeamOwnerInvitation` needs a session, so an invited stranger had no way
+  // through. The page registers them inline now.
+  it('offers an unauthenticated invitee the registration form rather than sending them away', async () => {
     getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
     refreshTokenMock.mockResolvedValue({ data: null });
     getTeamOwnerInvitationPreviewMock.mockResolvedValue({
@@ -110,8 +117,15 @@ describe('JoinTeamOwnerPage', () => {
 
     renderJoinTeamOwnerPage();
 
-    expect(await screen.findByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
-    expect(screen.getByTestId('team-invite-create-account')).toHaveAttribute('href', '/');
+    expect(await screen.findByTestId('team-invite-register-form')).toBeVisible();
+    expect(screen.getByTestId('team-invite-register-submit')).toBeVisible();
+    // Signing in stays available for somebody who already has an account; what is gone is the
+    // "create an account and come back" round trip.
+    expect(screen.getByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
+    expect(screen.queryByTestId('team-invite-create-account')).not.toBeInTheDocument();
+    // No email field: the account uses the invited address, which the server reads off the
+    // invitation. That is the security property, so its absence is asserted.
+    expect(screen.queryByTestId('team-invite-register-email')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(getTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith({
         path: { inviteCode: 'TEAM123' },
@@ -122,6 +136,72 @@ describe('JoinTeamOwnerPage', () => {
         action: 'teamInvite.preview.loaded',
       }),
       expect.any(String),
+    );
+  });
+
+  it('registers an invited stranger and lands them on their team', async () => {
+    getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status: 'PENDING',
+          league: { id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs' },
+          team: { id: 'team-1', name: 'Beer Bellies', iconKey: 'CAPTAIN_SMILE_FIELD' },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    });
+    registerWithTeamOwnerInvitationMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-9',
+          email: 'stranger@example.com',
+          username: 'stranger',
+          firstName: 'Sam',
+          lastName: 'Stranger',
+          isActive: true,
+          isRootAdmin: false,
+        },
+        tokens: { accessToken: 'access', refreshToken: 'refresh', expiresIn: 900 },
+      },
+    });
+
+    renderJoinTeamOwnerPage();
+
+    await screen.findByTestId('team-invite-register-form');
+    fireEvent.change(screen.getByTestId('team-invite-register-first-name'), {
+      target: { value: 'Sam' },
+    });
+    fireEvent.change(screen.getByTestId('team-invite-register-last-name'), {
+      target: { value: 'Stranger' },
+    });
+    fireEvent.change(screen.getByTestId('team-invite-register-username'), {
+      target: { value: 'Stranger' },
+    });
+    fireEvent.change(screen.getByTestId('team-invite-register-password'), {
+      target: { value: 'stranger-pass-1' },
+    });
+    fireEvent.click(screen.getByTestId('team-invite-register-submit'));
+
+    await waitFor(() =>
+      expect(registerWithTeamOwnerInvitationMock).toHaveBeenCalledWith({
+        body: {
+          inviteCode: 'TEAM123',
+          // Lower-cased like the main registration form does it, and NO email — the account uses
+          // the invited address, which only the server knows.
+          username: 'stranger',
+          password: 'stranger-pass-1',
+          firstName: 'Sam',
+          lastName: 'Stranger',
+        },
+      }),
+    );
+
+    // One step: registered, joined, and taken to the team rather than back to sign-in.
+    await waitFor(() =>
+      expect(screen.getByTestId('team-destination')).toBeInTheDocument(),
     );
   });
 

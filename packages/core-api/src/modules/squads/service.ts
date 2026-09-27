@@ -15,7 +15,11 @@ import {
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
-import { inactivateLeagueMemberUnit } from '../leagues/member-lifecycle';
+import {
+  inactivateLeagueMemberUnit,
+  LastCommissionerError,
+  requireAnotherActiveCommissioner,
+} from '../leagues/member-lifecycle';
 
 /**
  * #202 step 3.4 — `SquadViewerContext` is gone. It threaded
@@ -191,8 +195,7 @@ export class SquadService {
           leagueId,
           userId: membership.userId,
           membershipRepo: this.leagueMembershipRepo,
-          prisma: this.prisma,
-          squadRepo: this.squadRepo,
+              squadRepo: this.squadRepo,
           squadMembershipRepo: this.squadMembershipRepo,
           logger: this.logger,
         })),
@@ -311,20 +314,42 @@ export class SquadService {
       );
     }
 
-    const updated = await this.squadMembershipRepo.update(membership.id, {
-      status: SquadMembershipStatus.INACTIVE,
+    /*
+     * #218 — removing a co-owner from a squad also ends their LEAGUE membership.
+     *
+     * The repo owner's decision: "This should also remove the league membership as well. If the
+     * desire is to have a new team, they can be re-invited by the commissioner to create a new
+     * team." Before this, the squad membership went INACTIVE and the league membership stayed
+     * ACTIVE — leaving a league member with no squad, who therefore vanished from every surface
+     * that lists people in the league while keeping league access.
+     *
+     * It routes through the shared unit rather than writing both rows here, so squad-owner
+     * removal, league-member removal and squad inactivation all end a membership the same way.
+     * That unit no longer touches the user's account, so the invitee can still sign in and
+     * accept a re-invitation — which restores their original squad, contest history intact.
+     */
+    await this.requireAnotherActiveCommissioner(leagueId, targetUserId);
+    await inactivateLeagueMemberUnit({
+      leagueId,
+      userId: targetUserId,
+      membershipRepo: this.leagueMembershipRepo,
+      squadRepo: this.squadRepo,
+      squadMembershipRepo: this.squadMembershipRepo,
+      logger: this.logger,
     });
 
-    const remaining = await this.squadMembershipRepo.findBySquad(squadId);
-    if (remaining.length === 0) {
-      await this.squadRepo.update(squadId, { isActive: false });
+    const updated = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
+    if (!updated) {
+      throw new SquadNotFoundError(
+        `Squad membership vanished while removing user ${targetUserId}`,
+      );
     }
 
     const membershipDto = await this.loadSquadMembershipDto(updated);
     this.logger?.info({
       action: 'squad.removeOwner.success',
-      data: { leagueId, squadId, actorUserId, targetUserId, squadInactivated: remaining.length === 0 },
-    }, 'Removed squad owner');
+      data: { leagueId, squadId, actorUserId, targetUserId },
+    }, 'Removed squad owner and ended their league membership');
     return membershipDto;
   }
 
@@ -390,6 +415,32 @@ export class SquadService {
       action: 'squad.delete.success',
       data: { leagueId, squadId, userId },
     }, 'Deleted inactive squad');
+  }
+
+  /**
+   * #218 — the same rule `MemberService` applies, translated into this module's error type.
+   *
+   * It matters here because a co-owner can be the league's last commissioner while sitting on
+   * somebody else's squad: removing them from that squad would now end their league membership
+   * and leave the league with nobody who can administer it.
+   */
+  private async requireAnotherActiveCommissioner(
+    leagueId: string,
+    targetUserId: string,
+  ): Promise<void> {
+    try {
+      await requireAnotherActiveCommissioner({
+        leagueId,
+        targetUserId,
+        membershipRepo: this.leagueMembershipRepo,
+        logger: this.logger,
+      });
+    } catch (err) {
+      if (err instanceof LastCommissionerError) {
+        throw new SquadOperationError(err.message, err.code);
+      }
+      throw err;
+    }
   }
 
   private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {

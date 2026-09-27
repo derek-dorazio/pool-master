@@ -45,10 +45,21 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
   'POST /api/v1/client-logs',
+  // #217 — registering against a squad-owner invitation. Public by necessity: the caller has no
+  // account yet, which is the entire reason this route exists alongside
+  // `POST /api/v1/team-invitations/accept`, which requires a session. It is not an open
+  // registration hole — it needs a valid PENDING invite code, and it creates the account with the
+  // email the commissioner invited rather than one the caller supplies.
+  'POST /api/v1/team-invitations/register',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [
   /^GET \/api\/v1\/invitations\/[^/?#]+$/,
+  // #217 — the team-owner invitation preview. Its own route description called it "the public
+  // team-owner invitation flow before or after authentication", but it was never actually
+  // exempted, so an invited stranger could not read it. Found while making the register route
+  // public; the league invitation preview one line above was already handled this way.
+  /^GET \/api\/v1\/team-invitations\/[^/?#]+$/,
 ];
 
 const PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS = [

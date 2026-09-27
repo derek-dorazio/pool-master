@@ -5110,6 +5110,32 @@ export type AcceptTeamOwnerInvitationRequest = {
 };
 
 /**
+ * Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request.
+ */
+export type RegisterWithTeamOwnerInvitationRequest = {
+    /**
+     * Invite code from the team-owner invitation URL.
+     */
+    inviteCode: string;
+    /**
+     * Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to.
+     */
+    username: string;
+    /**
+     * Plaintext password chosen during registration.
+     */
+    password: string;
+    /**
+     * First name captured for the account profile. Also names the invitee on the squad roster.
+     */
+    firstName: string;
+    /**
+     * Last name captured for the account profile.
+     */
+    lastName: string;
+};
+
+/**
  * Pending or historical team-owner invitation record.
  */
 export type TeamOwnerInvitationDto = {
@@ -10726,6 +10752,93 @@ export type AcceptTeamOwnerInvitationResponses = {
 };
 
 export type AcceptTeamOwnerInvitationResponse = AcceptTeamOwnerInvitationResponses[keyof AcceptTeamOwnerInvitationResponses];
+
+export type RegisterWithTeamOwnerInvitationData = {
+    body: RegisterWithTeamOwnerInvitationRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/team-invitations/register';
+};
+
+export type RegisterWithTeamOwnerInvitationErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type RegisterWithTeamOwnerInvitationError = RegisterWithTeamOwnerInvitationErrors[keyof RegisterWithTeamOwnerInvitationErrors];
+
+export type RegisterWithTeamOwnerInvitationResponses = {
+    /**
+     * Successful authentication response returned after registration or login.
+     */
+    201: AuthResponse;
+};
+
+export type RegisterWithTeamOwnerInvitationResponse = RegisterWithTeamOwnerInvitationResponses[keyof RegisterWithTeamOwnerInvitationResponses];
 
 export type ListContestsData = {
     body?: never;

@@ -26,6 +26,9 @@ import { globalErrorHandler } from '../../packages/core-api/src/core/error-handl
 import { authModule } from '../../packages/core-api/src/modules/auth/routes';
 import { leaguesModule } from '../../packages/core-api/src/modules/leagues/routes';
 import { squadsModule } from '../../packages/core-api/src/modules/squads/routes';
+// #218 — the squad-owner invitation ACCEPT route lives here. It was missing from this harness,
+// so no integration test could exercise the only flow that produces a squad co-owner.
+import { teamInvitationsModule } from '../../packages/core-api/src/modules/team-invitations/routes';
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
@@ -110,6 +113,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
+  testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
@@ -558,6 +562,12 @@ export async function cleanupTestData(): Promise<void> {
 
   if (leagueIds.length > 0) {
     await prisma.squadMembership.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
+    // #218 — squad-owner invitations hold an FK to the squad, so they must go first. This was
+    // missing because no integration test created one until the membership-invariant suite: the
+    // squad-owner invitation ACCEPT route was not even registered in this harness.
+    await prisma.squadOwnerInvitation.deleteMany({
       where: { leagueId: { in: leagueIds } },
     });
     await prisma.squad.deleteMany({

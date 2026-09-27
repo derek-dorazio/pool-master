@@ -312,8 +312,14 @@ export function TeamOwnerActionMenu({
               </>
             ) : (
               <>
+                {/*
+                  * #218 — this copy said "removes the owner relationship only", which stopped
+                  * being true: removal now also ends their league membership, because a member
+                  * with no squad is invisible on every surface that lists people in the league.
+                  */}
                 <p className="text-sm text-muted-foreground">
-                  This removes the owner relationship only. Team history stays intact.
+                  This removes them from the team and from the league. Team history stays intact,
+                  and a commissioner can invite them back — rejoining restores their original team.
                 </p>
                 {removeError ? <p className="text-sm text-destructive">{removeError}</p> : null}
                 <Button
@@ -323,7 +329,7 @@ export function TeamOwnerActionMenu({
                   onClick={() => void removeOwnerMutation.mutateAsync()}
                   type="button"
                 >
-                  {removeOwnerMutation.isPending ? 'Removing...' : 'Remove owner'}
+                  {removeOwnerMutation.isPending ? 'Removing...' : 'Remove from team and league'}
                 </Button>
               </>
             )}
