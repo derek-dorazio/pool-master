@@ -8,10 +8,10 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueService } from './service';
+import type { CreateLeagueInput, LeagueService, LeagueWriteActor } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
-import type { LeagueMembership } from '@poolmaster/shared/domain';
+import type { League, LeagueMembership } from '@poolmaster/shared/domain';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -37,6 +37,25 @@ export function createLeagueHandlers(
   };
 
   /**
+   * The actor for a league lifecycle write (#202).
+   *
+   * `requireCommissioner` already grants root admins, so these routes always served both
+   * callers; the `/api/v1/admin/leagues/*` duplicates added nothing but an audit entry. The
+   * actor travels so the service can key that entry on root-admin authority.
+   */
+  function writeActor(request: FastifyRequest): LeagueWriteActor | undefined {
+    const actor = request.authUser;
+    if (!actor) {
+      return undefined;
+    }
+    return {
+      userId: actor.userId,
+      email: actor.email,
+      isRootAdmin: actor.isRootAdmin,
+    };
+  }
+
+  /**
    * #202 step 3.4 — `getLeagueViewerShape()` is gone. It built
    * `{ memberType, leagueRelationship, isRootAdmin }` and spread it onto every league
    * payload this file produced, eight call sites' worth. Access rule A8: the viewer's
@@ -44,13 +63,21 @@ export function createLeagueHandlers(
    * themselves — see `mapLeagueMembershipToDto` below and `LeagueContextResponse`.
    */
   async function listLeagues(
-    request: FastifyRequest,
+    request: FastifyRequest<{
+      Querystring: {
+        scope?: 'mine' | 'all';
+        search?: string;
+        isActive?: boolean;
+      };
+    }>,
     reply: FastifyReply,
   ): Promise<LeagueListResponse | void> {
     const logger = request.contextLogger ?? request.log;
+    const scope = request.query.scope ?? 'mine';
     logger.debug({
       action: 'leagueRoute.list.enter',
       data: {
+        scope,
         userId: request.authUser?.userId ?? null,
         isRootAdmin: request.authUser?.isRootAdmin === true,
       },
@@ -62,22 +89,51 @@ export function createLeagueHandlers(
       }, 'Rejected list leagues request without authenticated session');
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
-    const leagues = await leagueService.findByUser(userId);
+
+    // A1 — the unscoped read is root admins only. This is the authorization that used to be
+    // the `/api/v1/admin/leagues` route's existence; making scope a parameter means it has to
+    // be stated, and it is stated here rather than in a preHandler because only one value of
+    // the parameter needs it.
+    if (scope === 'all' && request.authUser?.isRootAdmin !== true) {
+      logger.warn({
+        action: 'leagueRoute.list.scopeForbidden',
+        data: { userId, scope },
+      }, 'Rejected unscoped league list for non-root-admin');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_SCOPE_FORBIDDEN',
+        'Listing every league requires root-admin access',
+      );
+    }
+
+    const rows = await leagueService.listLeagues({
+      scope,
+      userId,
+      filters: {
+        ...(request.query.search ? { search: request.query.search } : {}),
+        ...(request.query.isActive !== undefined ? { isActive: request.query.isActive } : {}),
+      },
+    });
     // The memberships below are all the VIEWER's, so the member embedded in each is the
     // viewer — one read, not one per league.
     const viewer = await userRepo.findById(userId);
     logger.info({
       action: 'leagueRoute.list.success',
-      data: { userId, isRootAdmin: request.authUser?.isRootAdmin === true, leagueCount: leagues.length },
+      data: { scope, userId, leagueCount: rows.length },
     }, 'Listed leagues');
     // A8's one exception: the leagues list is inherently multi-league and the viewer's
     // relationship differs per league, so it travels as a SET beside the leagues rather than
-    // as fields repeated on every row.
+    // as fields repeated on every row. Under `scope: 'all'` it is legitimately shorter than
+    // the league list, and empty for a root admin who belongs to none of them.
     return {
-      leagues: leagues.map((item) => toLeagueDto(item.league)),
+      leagues: rows.map((row) => toLeagueDto(row.league, {
+        memberCount: row.memberCount,
+        activeContestCount: row.activeContestCount,
+      })),
       memberships: viewer
-        ? leagues
-          .map((item) => item.membership)
+        ? rows
+          .map((row) => row.membership)
           .filter((membership): membership is LeagueMembership => Boolean(membership))
           .map((membership) => mapLeagueMembershipToDto(membership, viewer))
         : [],
@@ -127,6 +183,17 @@ export function createLeagueHandlers(
     });
   }
 
+  /**
+   * Read a league by id.
+   *
+   * #202 — this returns `LeagueContextResponse`, the SAME shape as `getLeagueByCode`. It used
+   * to return a bare `LeagueResponse`, so two reads of one object had two shapes — the shadow
+   * projection this epic exists to remove, one level up from the DTOs.
+   *
+   * It matters beyond consistency: a contest-rooted page knows a `leagueId` and not a
+   * `leagueCode`, so without the context here it had to scan every squad in the league to find
+   * which one is the viewer's. That is the exact read A8 replaced.
+   */
   async function getLeague(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
@@ -136,57 +203,10 @@ export function createLeagueHandlers(
       action: 'leagueRoute.get.enter',
       data: { leagueId: request.params.id, userId: request.authUser?.userId ?? null },
     }, 'Handling get league request');
-    const userId = request.authUser?.userId;
-    if (!userId) {
-      logger.warn({
-        action: 'leagueRoute.get.unauthenticated',
-        data: { leagueId: request.params.id },
-      }, 'Rejected league request without authenticated session');
-      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-    }
-    const result = await leagueService.getLeagueWithMembers(request.params.id);
-    if (!result) {
-      logger.warn({
-        action: 'leagueRoute.get.notFound',
-        data: { leagueId: request.params.id },
-      }, 'League not found');
-      return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
-    }
-    const membership = result.members.find((member) => member.userId === userId);
-    const rootAdminViewer = request.authUser?.isRootAdmin === true;
-    if (!membership && !rootAdminViewer) {
-      logger.warn({
-        action: 'leagueRoute.get.membershipMissing',
-        data: { leagueId: request.params.id, userId },
-      }, 'Rejected league request for non-member');
-      return sendError(
-        reply,
-        403,
-        'LEAGUE_MEMBERSHIP_REQUIRED',
-        'You must be an active member of this league to view it',
-      );
-    }
-    if (membership && membership.status !== LeagueMembershipStatus.ACTIVE && !rootAdminViewer) {
-      logger.warn({
-        action: 'leagueRoute.get.membershipInactive',
-        data: { leagueId: request.params.id, userId, status: membership.status },
-      }, 'Rejected league request for inactive membership');
-      return sendError(
-        reply,
-        403,
-        'LEAGUE_MEMBERSHIP_INACTIVE',
-        'Your membership in this league is inactive',
-      );
-    }
-    logger.info({
-      action: 'leagueRoute.get.success',
-      data: { leagueId: request.params.id, memberCount: result.members.length },
-    }, 'Loaded league');
-    return reply.send({
-      league: toLeagueDto(result.league, {
-        memberCount: result.members.length,
-        activeContestCount: 0,
-      }),
+    return sendLeagueContext(request, reply, {
+      action: 'get',
+      load: () => leagueService.getLeagueWithMembers(request.params.id),
+      logData: { leagueId: request.params.id },
     });
   }
 
@@ -199,29 +219,60 @@ export function createLeagueHandlers(
       action: 'leagueRoute.getByCode.enter',
       data: { leagueCode: request.params.leagueCode, userId: request.authUser?.userId ?? null },
     }, 'Handling get league by code request');
+    return sendLeagueContext(request, reply, {
+      action: 'getByCode',
+      load: () => leagueService.getLeagueWithMembersByCode(request.params.leagueCode),
+      logData: { leagueCode: request.params.leagueCode },
+    });
+  }
+
+  /**
+   * The league-context read, shared by both lookups (#202).
+   *
+   * One body, because the two routes differ only in how they find the league. They had a
+   * copy each of the same membership authorization — the non-member 403 and the
+   * inactive-membership 403 — which is two places for one rule to drift.
+   *
+   * A8: this is the ONE response carrying the viewer's relationship to a league, and it
+   * carries it as the canonical edges rather than as flags. The client fetches it once on
+   * league selection and holds it, so every league-scoped response after it carries none.
+   */
+  async function sendLeagueContext(
+    request: FastifyRequest,
+    reply: FastifyReply,
+    options: {
+      action: 'get' | 'getByCode';
+      load: () => Promise<{ league: League; members: LeagueMembership[] } | null>;
+      logData: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    const { action, load, logData } = options;
     const userId = request.authUser?.userId;
     if (!userId) {
       logger.warn({
-        action: 'leagueRoute.getByCode.unauthenticated',
-        data: { leagueCode: request.params.leagueCode },
-      }, 'Rejected league-by-code request without authenticated session');
+        action: `leagueRoute.${action}.unauthenticated`,
+        data: logData,
+      }, 'Rejected league request without authenticated session');
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
-    const result = await leagueService.getLeagueWithMembersByCode(request.params.leagueCode);
+
+    const result = await load();
     if (!result) {
       logger.warn({
-        action: 'leagueRoute.getByCode.notFound',
-        data: { leagueCode: request.params.leagueCode },
-      }, 'League not found by code');
+        action: `leagueRoute.${action}.notFound`,
+        data: logData,
+      }, 'League not found');
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
+
     const membership = result.members.find((member) => member.userId === userId);
     const rootAdminViewer = request.authUser?.isRootAdmin === true;
     if (!membership && !rootAdminViewer) {
       logger.warn({
-        action: 'leagueRoute.getByCode.membershipMissing',
-        data: { leagueCode: request.params.leagueCode, leagueId: result.league.id, userId },
-      }, 'Rejected league-by-code request for non-member');
+        action: `leagueRoute.${action}.membershipMissing`,
+        data: { ...logData, leagueId: result.league.id, userId },
+      }, 'Rejected league request for non-member');
       return sendError(
         reply,
         403,
@@ -231,14 +282,9 @@ export function createLeagueHandlers(
     }
     if (membership && membership.status !== LeagueMembershipStatus.ACTIVE && !rootAdminViewer) {
       logger.warn({
-        action: 'leagueRoute.getByCode.membershipInactive',
-        data: {
-          leagueCode: request.params.leagueCode,
-          leagueId: result.league.id,
-          userId,
-          status: membership.status,
-        },
-      }, 'Rejected league-by-code request for inactive membership');
+        action: `leagueRoute.${action}.membershipInactive`,
+        data: { ...logData, leagueId: result.league.id, userId, status: membership.status },
+      }, 'Rejected league request for inactive membership');
       return sendError(
         reply,
         403,
@@ -246,22 +292,21 @@ export function createLeagueHandlers(
         'Your membership in this league is inactive',
       );
     }
-    logger.info({
-      action: 'leagueRoute.getByCode.success',
-      data: { leagueId: result.league.id, leagueCode: result.league.leagueCode, memberCount: result.members.length },
-    }, 'Loaded league by code');
-    // A8 — this is the ONE response carrying the viewer's relationship to a league, and it
-    // carries it as the canonical edges rather than as flags. The client fetches this once on
-    // league selection and holds it for the session, so every league-scoped response after it
-    // carries none.
-    const [squadMembership, viewer] = await Promise.all([
+
+    const [squadMembership, viewer, counts] = await Promise.all([
       squadMembershipRepo.findByLeagueAndUser(result.league.id, userId),
       userRepo.findById(userId),
+      leagueService.countLeagueActivity([result.league.id]),
     ]);
+
+    logger.info({
+      action: `leagueRoute.${action}.success`,
+      data: { ...logData, leagueId: result.league.id, memberCount: result.members.length },
+    }, 'Loaded league context');
     return reply.send({
       league: toLeagueDto(result.league, {
-        memberCount: result.members.length,
-        activeContestCount: 0,
+        memberCount: counts.memberCounts.get(result.league.id) ?? 0,
+        activeContestCount: counts.activeContestCounts.get(result.league.id) ?? 0,
       }),
       // Both edges are the viewer's own, so the embedded member is the viewer.
       membership: membership && viewer ? mapLeagueMembershipToDto(membership, viewer) : null,
@@ -281,7 +326,10 @@ export function createLeagueHandlers(
       data: { leagueId: request.params.id },
     }, 'Handling inactivate league request');
     try {
-      const league = await leagueService.inactivateLeague(request.params.id);
+      const league = await leagueService.inactivateLeague(
+        request.params.id,
+        writeActor(request),
+      );
       logger.info({
         action: 'leagueRoute.inactivate.success',
         data: { leagueId: request.params.id },
@@ -440,7 +488,11 @@ export function createLeagueHandlers(
       data: { leagueId: request.params.id, confirmationLeagueCode: request.body.leagueCode },
     }, 'Handling delete league request');
     try {
-      await leagueService.deleteInactiveLeague(request.params.id, request.body.leagueCode);
+      await leagueService.deleteInactiveLeague(
+        request.params.id,
+        request.body.leagueCode,
+        writeActor(request),
+      );
       logger.info({
         action: 'leagueRoute.delete.success',
         data: { leagueId: request.params.id },

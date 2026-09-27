@@ -1,29 +1,16 @@
 /**
- * BulkService — season bulk setup, copy last season, and CSV member import.
+ * BulkService — CSV member import.
+ *
+ * #202 — `copyLastSeason` and its types are gone with the `copy-season` route.
  */
 
 import type {
-  ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
 } from '@poolmaster/shared/db';
-import type { Contest } from '@poolmaster/shared/domain';
-import { ContestStatus, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
+import { InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-
-export interface BulkContestCopyResult {
-  created: Contest[];
-  errors: { eventName: string; reason: string }[];
-}
-
-// --- Copy Last Season (08-028) ---
-
-export interface CopySeasonInput {
-  leagueId: string;
-  createdBy: string;
-  sourceContestIds: string[];
-}
 
 // --- CSV Member Import (08-029) ---
 
@@ -43,41 +30,10 @@ export interface CsvImportResult {
 
 export class BulkService {
   constructor(
-    private readonly contestRepo: ContestRepository,
-    private readonly leagueRepo: LeagueRepository,
+      private readonly leagueRepo: LeagueRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
     private readonly invitationRepo: LeagueInvitationRepository,
   ) {}
-
-  /** Copies contests from a previous season, creating new DRAFT versions. */
-  async copyLastSeason(input: CopySeasonInput): Promise<BulkContestCopyResult> {
-    const created: Contest[] = [];
-    const errors: { eventName: string; reason: string }[] = [];
-    for (const sourceId of input.sourceContestIds) {
-      try {
-        const source = await this.contestRepo.findById(sourceId);
-        if (!source) {
-          errors.push({ eventName: sourceId, reason: 'Source contest not found' });
-          continue;
-        }
-        const contest = await this.contestRepo.create({
-          leagueId: input.leagueId,
-          sportEventId: source.sportEventId,
-          name: `${source.name} (Copy)`,
-          status: ContestStatus.DRAFT,
-          contestFormat: source.contestFormat,
-          selectionType: source.selectionType,
-          scoringEngine: source.scoringEngine,
-          isExclusive: source.isExclusive,
-          scoringStopsOnElimination: source.scoringStopsOnElimination,
-        } as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>);
-        created.push(contest);
-      } catch (err) {
-        errors.push({ eventName: sourceId, reason: (err as Error).message });
-      }
-    }
-    return { created, errors };
-  }
 
   /** Imports members from parsed CSV rows, creating invitations for new emails. */
   async importMembersFromCsv(

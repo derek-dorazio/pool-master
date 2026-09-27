@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LeagueSummaryDto } from '@/lib/api';
+import type { LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeagueContestEntryPath,
@@ -7,36 +7,33 @@ import {
   buildLeagueContestsPath,
   buildLeagueHistoryPath,
   buildLeagueTeamHomePath,
+  getCommissionerLeagueIds,
   getLeagueSelectorOptions,
-  sortLeaguesForOverview,
 } from './league-routing';
 import {
-  buildLeagueSummary,
+  buildLeague,
+  buildLeagueMembership,
 } from './test/fixtures';
 
-const leagues: LeagueSummaryDto[] = [
-  buildLeagueSummary({
+const leagues: LeagueDto[] = [
+  buildLeague({
     id: 'league-active-member',
     leagueCode: 'ACTIVE1',
     name: 'Active Member League',
     memberCount: 12,
     activeContestCount: 2,
-    memberType: 'MEMBER',
-    leagueRelationship: { leagueMember: true, commissioner: false },
     createdAt: '2026-04-10T12:00:00.000Z',
   }),
-  buildLeagueSummary({
+  buildLeague({
     id: 'league-inactive-member',
     leagueCode: 'INACTIVE1',
     name: 'Inactive Member League',
     isActive: false,
     memberCount: 10,
     activeContestCount: 0,
-    memberType: 'MEMBER',
-    leagueRelationship: { leagueMember: true, commissioner: false },
     createdAt: '2026-04-09T12:00:00.000Z',
   }),
-  buildLeagueSummary({
+  buildLeague({
     id: 'league-inactive-commissioner',
     leagueCode: 'COMMOFF1',
     name: 'Inactive Commissioner League',
@@ -45,7 +42,7 @@ const leagues: LeagueSummaryDto[] = [
     activeContestCount: 0,
     createdAt: '2026-04-11T12:00:00.000Z',
   }),
-  buildLeagueSummary({
+  buildLeague({
     id: 'league-active-commissioner',
     leagueCode: 'COMMON1',
     name: 'Active Commissioner League',
@@ -55,21 +52,37 @@ const leagues: LeagueSummaryDto[] = [
   }),
 ];
 
+// #202 (A8) — which leagues the viewer commissions arrives beside the list, as their own
+// memberships, rather than as a `leagueRelationship` block on each league.
+const memberships: LeagueMembershipDto[] = [
+  buildLeagueMembership({ id: 'm-1', leagueId: 'league-active-member', role: 'MEMBER' }),
+  buildLeagueMembership({ id: 'm-2', leagueId: 'league-inactive-member', role: 'MEMBER' }),
+  buildLeagueMembership({ id: 'm-3', leagueId: 'league-inactive-commissioner' }),
+  buildLeagueMembership({ id: 'm-4', leagueId: 'league-active-commissioner' }),
+];
+
 describe('pool-master-rop.23: league routing generated DTO fixtures', () => {
   it('shows inactive leagues in the selector only for commissioner contexts', () => {
-    expect(getLeagueSelectorOptions(leagues).map((league) => league.leagueCode)).toEqual([
+    const commissionerLeagueIds = getCommissionerLeagueIds(memberships);
+
+    expect(
+      getLeagueSelectorOptions(leagues, commissionerLeagueIds).map((league) => league.leagueCode),
+    ).toEqual([
       'COMMON1',
       'COMMOFF1',
       'ACTIVE1',
     ]);
   });
 
-  it('pool-master-rop.23: sorts overview tiles with active leagues first, then commissioner priority', () => {
-    expect(sortLeaguesForOverview(leagues).map((league) => league.leagueCode)).toEqual([
-      'COMMON1',
-      'ACTIVE1',
-      'COMMOFF1',
-      'INACTIVE1',
+  it('counts only an active commissioner membership as commissioning a league', () => {
+    const commissionerLeagueIds = getCommissionerLeagueIds([
+      ...memberships,
+      buildLeagueMembership({ id: 'm-5', leagueId: 'league-active-member', status: 'INACTIVE' }),
+    ]);
+
+    expect([...commissionerLeagueIds].sort()).toEqual([
+      'league-active-commissioner',
+      'league-inactive-commissioner',
     ]);
   });
 

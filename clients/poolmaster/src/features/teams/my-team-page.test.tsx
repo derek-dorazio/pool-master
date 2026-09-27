@@ -35,7 +35,7 @@ bindApiMocks({
   deleteLeagueSquad: deleteLeagueSquadMock,
   enterContest: enterContestMock,
   createSquadOwnerInvitation: createSquadOwnerInvitationMock,
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   inactivateLeagueSquad: inactivateLeagueSquadMock,
   listContestEntries: listContestEntriesMock,
@@ -103,7 +103,18 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
   };
 }
 
-function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'MEMBER', isRootAdmin = false) {
+const VIEWER_USER = {
+  id: 'user-1',
+  email: 'derek@example.com',
+  username: 'derek@example.com',
+  firstName: 'Derek',
+  lastName: 'Dorazio',
+  isActive: true,
+  isRootAdmin: false,
+  createdAt: '2026-04-15T00:00:00.000Z',
+} as const;
+
+function buildLeague(overrides: Record<string, unknown> = {}) {
   return {
     id: 'league-1',
     leagueCode: 'BIGDAWGS',
@@ -112,15 +123,57 @@ function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'MEMBER', isRootAdm
     iconKey: 'TROPHY',
     memberCount: 2,
     activeContestCount: 0,
-    memberType: role,
-    leagueRelationship: {
-      leagueMember: true,
-      commissioner: role === 'COMMISSIONER',
-    },
-    isRootAdmin,
     joinPolicy: 'COMMISSIONER_ONLY',
     createdAt: '2026-04-15T00:00:00.000Z',
-  } as const;
+    ...overrides,
+  };
+}
+
+/**
+ * #202 (A8) — the league-context read: the league plus the viewer's own edges in it, delivered
+ * once. The viewer's role used to be `memberType` and `leagueRelationship` stamped on the
+ * league, and their own squad a per-squad `teamRelationship.owner` flag.
+ */
+function leagueContext({
+  role = 'MEMBER',
+  isMember = true,
+  squadId = 'team-1',
+  league = {},
+}: {
+  role?: 'COMMISSIONER' | 'MEMBER';
+  isMember?: boolean;
+  squadId?: string | null;
+  league?: Record<string, unknown>;
+} = {}) {
+  return {
+    league: buildLeague(league),
+    membership: isMember
+      ? {
+          id: 'league-membership-1',
+          leagueId: 'league-1',
+          userId: VIEWER_USER.id,
+          user: VIEWER_USER,
+          role,
+          status: 'ACTIVE',
+          joinedAt: '2026-04-15T00:00:00.000Z',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+        }
+      : null,
+    squadMembership: squadId
+      ? {
+          id: 'membership-1',
+          squadId,
+          leagueId: 'league-1',
+          userId: VIEWER_USER.id,
+          user: VIEWER_USER,
+          status: 'ACTIVE',
+          joinedAt: '2026-04-15T00:00:00.000Z',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+        }
+      : null,
+  };
 }
 
 function buildTeamSummary(overrides: Record<string, unknown> = {}) {
@@ -134,20 +187,13 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
     memberCount: 1,
     createdAt: '2026-04-15T00:00:00.000Z',
     updatedAt: '2026-04-15T00:00:00.000Z',
-    teamRelationship: {
-      leagueMember: true,
-      owner: true,
-      commissioner: false,
-    },
-    isRootAdmin: false,
     members: [
       {
         id: 'membership-1',
         squadId: 'team-1',
         leagueId: 'league-1',
         userId: 'user-1',
-        firstName: 'Derek',
-        lastName: 'Dorazio',
+        user: VIEWER_USER,
         status: 'ACTIVE',
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
@@ -231,15 +277,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
   it('pool-master-rop.22: blocks team creation when the league relationship is not a member', async () => {
     mockCurrentUser();
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: {
-          ...buildLeagueDetail('MEMBER', true),
-          leagueRelationship: {
-            leagueMember: false,
-            commissioner: false,
-          },
-        },
-      },
+      data: leagueContext({ isMember: false, squadId: null }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -269,9 +307,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
   it('pool-master-rop.22: surfaces create-team rejection without losing the typed team name', async () => {
     mockCurrentUser();
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -283,12 +319,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -328,9 +366,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -342,12 +378,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -400,9 +438,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -418,12 +454,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -467,9 +505,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
   it('pool-master-rop.22: surfaces update-team rejection inside the name modal without losing the draft', async () => {
     mockCurrentUser();
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -485,12 +521,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -537,9 +575,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -555,12 +591,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -622,9 +660,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('COMMISSIONER'),
-      },
+      data: leagueContext({ role: 'COMMISSIONER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -632,20 +668,10 @@ describe('pool-master-rop.22: MyTeamPage', () => {
           buildTeamSummary({
             id: 'team-1',
             name: 'Original Team',
-            teamRelationship: {
-              leagueMember: true,
-              owner: true,
-              commissioner: true,
-            },
           }),
           buildTeamSummary({
             id: 'team-2',
             name: 'Other Team',
-            teamRelationship: {
-              leagueMember: true,
-              owner: false,
-              commissioner: true,
-            },
             members: [],
           }),
         ],
@@ -666,11 +692,6 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         squad: buildTeamSummary({
           id: 'team-2',
           name: 'Renamed Other Team',
-          teamRelationship: {
-            leagueMember: true,
-            owner: false,
-            commissioner: true,
-          },
           members: [],
         }),
       },
@@ -722,9 +743,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -736,12 +755,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -803,9 +824,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -817,12 +836,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -871,9 +892,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -881,19 +900,13 @@ describe('pool-master-rop.22: MyTeamPage', () => {
           buildTeamSummary({
             name: 'Original Team',
             memberCount: 2,
-            teamRelationship: {
-              leagueMember: true,
-              owner: true,
-              commissioner: true,
-            },
             members: [
               {
                 id: 'membership-1',
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
+                user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-15T00:00:00.000Z',
                 createdAt: '2026-04-15T00:00:00.000Z',
@@ -904,8 +917,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-2',
-                firstName: 'Brendan',
-                lastName: 'Haley',
+                user: { ...VIEWER_USER, id: 'user-2', firstName: 'Brendan', lastName: 'Haley' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-15T00:00:00.000Z',
                 createdAt: '2026-04-15T00:00:00.000Z',
@@ -921,21 +933,25 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'COMMISSIONER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
           {
             id: 'league-member-2',
+            leagueId: 'league-1',
             userId: 'user-2',
-            email: 'brendan@example.com',
-            firstName: 'Brendan',
-            lastName: 'Haley',
+            user: { ...VIEWER_USER, id: 'user-2', email: 'brendan@example.com', username: 'brendan@example.com', firstName: 'Brendan', lastName: 'Haley' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -1109,9 +1125,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER'),
-      },
+      data: leagueContext({ role: 'MEMBER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -1127,12 +1141,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -1189,9 +1205,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('MEMBER', true),
-      },
+      data: leagueContext(),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -1201,12 +1215,6 @@ describe('pool-master-rop.22: MyTeamPage', () => {
             isActive: false,
             memberCount: 0,
             members: [],
-            isRootAdmin: true,
-            teamRelationship: {
-              leagueMember: false,
-              owner: false,
-              commissioner: false,
-            },
           }),
         ],
       },
@@ -1268,12 +1276,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: {
-          ...buildLeagueDetail('MEMBER'),
-          activeContestCount: 2,
-        },
-      },
+      data: leagueContext({ league: { activeContestCount: 2 } }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -1289,12 +1292,14 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -1329,9 +1334,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: buildLeagueDetail('COMMISSIONER'),
-      },
+      data: leagueContext({ role: 'COMMISSIONER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -1340,19 +1343,13 @@ describe('pool-master-rop.22: MyTeamPage', () => {
             createdBy: 'user-2',
             name: 'Original Team',
             memberCount: 2,
-            teamRelationship: {
-              leagueMember: true,
-              owner: true,
-              commissioner: true,
-            },
             members: [
               {
                 id: 'membership-1',
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
+                user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-15T00:00:00.000Z',
                 createdAt: '2026-04-15T00:00:00.000Z',
@@ -1363,8 +1360,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-2',
-                firstName: 'Fran',
-                lastName: 'Lane',
+                user: { ...VIEWER_USER, id: 'user-2', firstName: 'Fran', lastName: 'Lane' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-15T00:00:00.000Z',
                 createdAt: '2026-04-15T00:00:00.000Z',
@@ -1380,21 +1376,25 @@ describe('pool-master-rop.22: MyTeamPage', () => {
         members: [
           {
             id: 'league-member-1',
+            leagueId: 'league-1',
             userId: 'user-1',
-            email: 'derek@example.com',
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
             role: 'COMMISSIONER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
           {
             id: 'league-member-2',
+            leagueId: 'league-1',
             userId: 'user-2',
-            email: 'fran@example.com',
-            firstName: 'Fran',
-            lastName: 'Lane',
+            user: { ...VIEWER_USER, id: 'user-2', email: 'fran@example.com', username: 'fran@example.com', firstName: 'Fran', lastName: 'Lane' },
             role: 'MEMBER',
+            status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },

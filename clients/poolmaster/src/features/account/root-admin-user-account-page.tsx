@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminDeleteUser, adminDisableUser, adminEnableUser, adminGetUserDetail, adminResetUserPassword, adminSetUserRootAdmin, type UserDto } from '@/lib/api';
+import { deleteUser, disableUser, enableUser, getUser, resetUserPassword, setUserRootAdmin, type UserDto } from '@/lib/api';
 import {
   ActionList,
   ActionTile,
@@ -146,15 +146,18 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   const userDetailQuery = useQuery({
     queryKey: QueryKeys.users.detail(userId),
     queryFn: async () => {
-      const response = await adminGetUserDetail({
+      const response = await getUser({
         path: { userId },
       });
 
-      if (!response.data) {
-        throwApiError(response.error, 'Admin user detail response is missing data.');
+      if (!response.data?.user) {
+        throwApiError(response.error, 'User read response is missing data.');
       }
 
-      return response.data;
+      // #202 — `{ user: UserDto }`, the same envelope the current-user read uses. The
+      // root-admin read used to return the user's fields at the top level with a
+      // `viewerAuthority` block beside them; reading a user is one operation now.
+      return response.data.user;
     },
   });
 
@@ -180,7 +183,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   const roleMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
-      const response = await adminSetUserRootAdmin({
+      const response = await setUserRootAdmin({
         path: { userId: targetUser.id },
         body: {
           isRootAdmin: !targetUser.isRootAdmin,
@@ -204,7 +207,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   const resetPasswordMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminResetUserPassword({
+      const response = await resetUserPassword({
         path: { userId },
         body: {
           reason: reason.trim() || undefined,
@@ -226,7 +229,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   const lifecycleMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       if (targetUser.isActive) {
-        await adminDisableUser({
+        await disableUser({
           path: { userId: targetUser.id },
           body: {
             reason: reason.trim() || 'Inactivated from canonical user page',
@@ -235,7 +238,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         return;
       }
 
-      await adminEnableUser({
+      await enableUser({
         path: { userId: targetUser.id },
       });
     },
@@ -251,7 +254,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   const deleteMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
-      const response = await adminDeleteUser({
+      const response = await deleteUser({
         path: { userId: targetUser.id },
         body: {
           email: deleteEmailConfirmation,

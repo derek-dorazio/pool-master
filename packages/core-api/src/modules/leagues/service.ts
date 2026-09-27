@@ -7,6 +7,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   LeagueRepository,
+  LeagueSearchFilters,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -14,8 +15,9 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ContestStatus, JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import { logAdminAction } from '../admin/admin-audit-service';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -33,10 +35,50 @@ export interface UpdateLeagueIconInput {
   iconKey: LeagueIconKey;
 }
 
-export interface UserLeagueView {
+// #202 — `UserLeagueView` and `findByUser` are gone. `listLeagues({ scope: 'mine' })` is that
+// read, and `LeagueListRow` is its row: the same league-plus-membership pairing, with the counts
+// the old one omitted and a nullable membership so the unscoped scope shares the shape.
+
+/**
+ * A league in a list, with its counts and the VIEWER's membership in it (#202).
+ *
+ * `membership` is null only under `scope: 'all'`, for a league the viewer does not belong to.
+ * The counts are always real: the member-scoped list used to omit them, so every league it
+ * returned reported `memberCount: 0` and `activeContestCount: 0` while the root-admin list
+ * reported the truth. One operation computes them once.
+ */
+export interface LeagueListRow {
   league: League;
-  membership: LeagueMembership;
+  membership: LeagueMembership | null;
+  memberCount: number;
+  activeContestCount: number;
 }
+
+export type LeagueListScope = 'mine' | 'all';
+
+/**
+ * Who is performing a league lifecycle write (#202).
+ *
+ * `inactivateLeague` and `deleteLeague` were each split into a commissioner route and a
+ * root-admin route, and the only behaviour the root-admin half added was an
+ * `AdminAuditEntry`. So the actor comes in, and the audit is keyed on it — the same rule
+ * `UserService.auditRootAdminAction` states: the entry records an exercise of root-admin
+ * authority, and a commissioner acting inside their own league is not that.
+ */
+export interface LeagueWriteActor {
+  userId: string;
+  email: string;
+  isRootAdmin: boolean;
+}
+
+/** Statuses that make a contest count as active for a league's `activeContestCount`. */
+const ACTIVE_LEAGUE_CONTEST_STATUSES = [
+  ContestStatus.DRAFT,
+  ContestStatus.OPEN,
+  ContestStatus.DRAFTING,
+  ContestStatus.LOCKED,
+  ContestStatus.ACTIVE,
+] as const;
 
 const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
@@ -113,58 +155,133 @@ export class LeagueService {
     return this.leagueRepo.findByCode(leagueCode.toUpperCase());
   }
 
-  async findByUser(userId: string): Promise<UserLeagueView[]> {
+  /**
+   * The league list — ONE operation, scope as a parameter (#202).
+   *
+   * This replaced `listLeagues` + `adminListLeagues`, which
+   * `docs/DOMAIN-OPERATIONS.md` names as one operation split in two. They disagreed in two
+   * ways beyond scope, and both are settled here rather than merged:
+   *
+   * - **Counts.** The member-scoped list called `toLeagueDto(league)` with no counts, so it
+   *   reported `memberCount: 0` and `activeContestCount: 0` for every league; only the
+   *   root-admin list computed them. They are computed once now, for both scopes.
+   * - **Filters.** `search` and `isActive` existed only on the root-admin half. They are
+   *   properties of the query, not of the caller, so they apply to both.
+   *
+   * `scope: 'all'` is access rule A1's unscoped read; the CALLER of this method is
+   * responsible for having established root-admin authority, because a service cannot see
+   * the request. The route does that.
+   */
+  async listLeagues(options: {
+    scope: LeagueListScope;
+    userId: string;
+    filters?: LeagueSearchFilters;
+  }): Promise<LeagueListRow[]> {
+    const { scope, userId, filters } = options;
     this.logger?.debug({
-      action: 'league.findByUser.enter',
-      data: { userId },
-    }, 'Listing leagues for user');
-    // #202 — two queries, not 1+N. This fetched the memberships and then issued a
-    // findById per membership; both sides are now single reads and the pairing happens in
-    // memory. LeagueRepository.findByUser resolves the same join the membership rows
-    // describe, so the two sets cover the same leagues.
-    const [memberships, leagues] = await Promise.all([
-      this.membershipRepo.findByUser(userId),
-      this.leagueRepo.findByUser(userId),
-    ]);
-    const leagueById = new Map(leagues.map((league) => [league.id, league]));
-
-    const result = memberships.flatMap((membership) => {
-      const league = leagueById.get(membership.leagueId);
-      if (!league) {
-        // Defensive only: LeagueMembership.leagueId is a foreign key, so a membership
-        // whose league is missing cannot exist. Kept so a future schema change that
-        // relaxes that cannot silently produce an undefined league.
-        this.logger?.warn({
-          action: 'league.findByUser.membershipOrphaned',
-          data: {
-            userId,
-            membershipId: membership.id,
-            leagueId: membership.leagueId,
-          },
-        }, 'Skipped membership with missing league');
-        return [];
-      }
-
-      return [{
-        league,
-        membership,
-      }];
-    });
-    this.logger?.debug({
-      action: 'league.findByUser.exit',
+      action: 'league.list.enter',
       data: {
+        scope,
         userId,
-        membershipsFound: memberships.length,
-        leaguesReturned: result.length,
+        hasSearch: Boolean(filters?.search),
+        isActive: filters?.isActive ?? null,
       },
-    }, 'Listed leagues for user');
-    return result;
+    }, 'Listing leagues');
+
+    // Under 'mine' the viewer's memberships come back with the leagues, so no second read
+    // is needed to pair them. Under 'all' the memberships are looked up separately, because
+    // most of the returned leagues will have none for this viewer.
+    const [leagues, viewerMemberships] = await Promise.all([
+      scope === 'all'
+        ? this.leagueRepo.findAll(filters)
+        : this.findLeaguesForUser(userId, filters),
+      this.membershipRepo.findByUser(userId),
+    ]);
+
+    const membershipByLeagueId = new Map(
+      viewerMemberships.map((membership) => [membership.leagueId, membership]),
+    );
+    const counts = await this.countLeagueActivity(leagues.map((league) => league.id));
+
+    const rows = leagues.map((league) => ({
+      league,
+      membership: membershipByLeagueId.get(league.id) ?? null,
+      memberCount: counts.memberCounts.get(league.id) ?? 0,
+      activeContestCount: counts.activeContestCounts.get(league.id) ?? 0,
+    }));
+
+    this.logger?.info({
+      action: 'league.list.success',
+      data: { scope, userId, leagueCount: rows.length },
+    }, 'Listed leagues');
+    return rows;
   }
 
-  async inactivateLeague(leagueId: string): Promise<League> {
+  /** `findByUser` narrowed by the same filters the unscoped read accepts. */
+  private async findLeaguesForUser(
+    userId: string,
+    filters?: LeagueSearchFilters,
+  ): Promise<League[]> {
+    const leagues = await this.leagueRepo.findByUser(userId);
+    const search = filters?.search?.trim().toLowerCase();
+
+    return leagues.filter((league) => {
+      if (filters?.isActive !== undefined && league.isActive !== filters.isActive) {
+        return false;
+      }
+      if (search && !league.name.toLowerCase().includes(search)) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  /**
+   * Active member and active contest counts for a set of leagues.
+   *
+   * Public because the single-league reads need it too: they used to send
+   * `activeContestCount: 0` unconditionally, which is a value invented by the mapper's
+   * default rather than read from the data.
+   *
+   * Two reads, not one per league. The membership side goes through its port; the contest
+   * side is the one raw Prisma query left in this service, because `ContestRepository` has
+   * no count — that is slice 3, and it is marked so the sweep finds it.
+   */
+  async countLeagueActivity(leagueIds: string[]): Promise<{
+    memberCounts: Map<string, number>;
+    activeContestCounts: Map<string, number>;
+  }> {
+    if (!leagueIds.length) {
+      return { memberCounts: new Map(), activeContestCounts: new Map() };
+    }
+
+    const [memberCounts, contestRows] = await Promise.all([
+      this.membershipRepo.countActiveByLeagues(leagueIds),
+      // SLICE 3 — replace with a ContestRepository count once that cluster has ports.
+      this.prisma
+        ? this.prisma.contest.groupBy({
+          by: ['leagueId'],
+          where: {
+            leagueId: { in: leagueIds },
+            status: { in: [...ACTIVE_LEAGUE_CONTEST_STATUSES] },
+          },
+          _count: { _all: true },
+        })
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      memberCounts,
+      activeContestCounts: new Map(
+        contestRows.map((row) => [row.leagueId, row._count._all]),
+      ),
+    };
+  }
+
+  async inactivateLeague(leagueId: string, actor?: LeagueWriteActor): Promise<League> {
     this.logger?.debug({
       action: 'league.inactivate.enter',
-      data: { leagueId },
+      data: { leagueId, actorIsRootAdmin: actor?.isRootAdmin ?? null },
     }, 'Inactivating league');
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
@@ -187,6 +304,13 @@ export class LeagueService {
     }
 
     const updatedLeague = await this.leagueRepo.update(leagueId, { isActive: false });
+    await this.auditRootAdminAction(actor, {
+      action: 'league.inactivate',
+      resourceId: leagueId,
+      description: `Root-admin inactivated league ${league.leagueCode} (${league.name})`,
+      beforeState: { isActive: league.isActive },
+      afterState: { isActive: updatedLeague.isActive },
+    });
     this.logger?.info({
       action: 'league.inactivate.success',
       data: { leagueId },
@@ -307,10 +431,14 @@ export class LeagueService {
     return updatedLeague;
   }
 
-  async deleteInactiveLeague(leagueId: string, confirmationLeagueCode: string): Promise<void> {
+  async deleteInactiveLeague(
+    leagueId: string,
+    confirmationLeagueCode: string,
+    actor?: LeagueWriteActor,
+  ): Promise<void> {
     this.logger?.debug({
       action: 'league.delete.enter',
-      data: { leagueId, confirmationLeagueCode },
+      data: { leagueId, confirmationLeagueCode, actorIsRootAdmin: actor?.isRootAdmin ?? null },
     }, 'Deleting inactive league');
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
@@ -354,6 +482,12 @@ export class LeagueService {
         500,
       );
     }
+
+    // Read for the audit entry BEFORE the delete, because after it there is nothing to count.
+    // Only a root admin's delete is audited, so only then is the read worth making.
+    const auditCounts = actor?.isRootAdmin
+      ? await this.countLeagueActivity([leagueId])
+      : null;
 
     this.logger?.info({
       action: 'league.delete.transaction.start',
@@ -409,10 +543,63 @@ export class LeagueService {
         where: { id: leagueId },
       });
     });
+    // AFTER the transaction: `logAdminAction` writes through its own Prisma singleton and
+    // takes no transaction client, so an entry written inside the callback would commit
+    // immediately and survive a rollback (#205 carries the defect).
+    await this.auditRootAdminAction(actor, {
+      action: 'league.delete',
+      resourceId: leagueId,
+      description: `Root-admin deleted league ${league.leagueCode} (${league.name})`,
+      beforeState: {
+        leagueCode: league.leagueCode,
+        name: league.name,
+        isActive: league.isActive,
+        memberCount: auditCounts?.memberCounts.get(leagueId) ?? 0,
+        activeContestCount: auditCounts?.activeContestCounts.get(leagueId) ?? 0,
+      },
+      reason: `Confirmed with league code ${confirmationLeagueCode}`,
+    });
     this.logger?.info({
       action: 'league.delete.success',
       data: { leagueId },
     }, 'Deleted inactive league');
+  }
+
+  /**
+   * Writes the platform audit entry when — and only when — a root admin exercised their
+   * authority over a league they do not run.
+   *
+   * The same rule as `UserService.auditRootAdminAction`, and stated rather than merged for the
+   * same reason: the two halves of each league lifecycle operation disagreed about auditing,
+   * and the honest resolution is that the entry records an exercise of root-admin authority. A
+   * commissioner inactivating or deleting their own league is doing ordinary league
+   * administration, not that.
+   */
+  private async auditRootAdminAction(
+    actor: LeagueWriteActor | undefined,
+    entry: {
+      action: string;
+      resourceId: string;
+      description: string;
+      beforeState?: Record<string, unknown>;
+      afterState?: Record<string, unknown>;
+      reason?: string;
+    },
+  ): Promise<void> {
+    if (!actor?.isRootAdmin) {
+      return;
+    }
+    await logAdminAction({
+      actorUserId: actor.userId,
+      actorEmail: actor.email,
+      action: entry.action,
+      resourceType: 'LEAGUE',
+      resourceId: entry.resourceId,
+      description: entry.description,
+      ...(entry.beforeState ? { beforeState: entry.beforeState } : {}),
+      ...(entry.afterState ? { afterState: entry.afterState } : {}),
+      ...(entry.reason ? { reason: entry.reason } : {}),
+    });
   }
 
   /** Returns the league together with its member list. */

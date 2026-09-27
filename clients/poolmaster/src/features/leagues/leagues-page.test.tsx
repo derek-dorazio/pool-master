@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockApi } from '@/test/msw-api';
 import { WelcomePage } from './leagues-page';
-import { apiSuccess, buildLeagueSummary, listLeaguesData } from './test/fixtures';
+import { apiSuccess, buildLeague, listLeaguesData } from './test/fixtures';
 
 const {
   authState,
@@ -154,14 +154,12 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
 
   it('pool-master-rop.63: preserves redirect into the resolved league context', async () => {
     mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([
-      buildLeagueSummary({
+      buildLeague({
         id: 'league-1',
         leagueCode: 'LEAGUE1',
         name: 'League One',
         memberCount: 10,
         activeContestCount: 2,
-        memberType: 'MEMBER',
-        leagueRelationship: { leagueMember: true, commissioner: false },
         createdAt: '2026-04-20T12:00:00.000Z',
       }),
     ])));

@@ -2,18 +2,17 @@ import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { getLeagueByCode, listContestEntries, listContests, listLeagueSquads, type SquadDto, type LeagueDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { listContestEntries, listContests, listLeagueSquads, type SquadDto, type ContestEntryDetailDto, type ContestEntryListResponse, type ContestSummaryDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestEntryPath,
   buildLeagueContestPath,
   buildLeagueTeamPath,
-  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
   EmptyState,
   ErrorState,
@@ -25,31 +24,13 @@ import {
 
 export function MyTeamHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const auth = useAuth();
   const logger = getLogger().child({
     feature: 'my-team-history-page',
   });
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -68,7 +49,7 @@ export function MyTeamHistoryPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
 
   const teamsQuery = useQuery({
     queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
@@ -100,17 +81,17 @@ export function MyTeamHistoryPage() {
     retry: false,
   });
 
+  // #202 (A8) — the viewer's own squad is named by their squad membership, which the league
+  // context delivers once. This used to scan every squad in the league and every squad's member
+  // list for the signed-in user, which is the same read A8 replaced — just written by hand
+  // rather than as a per-row flag, which is why the type change did not catch it.
   const myTeam = useMemo(() => {
-    if (!auth.user?.id) {
+    if (!viewer.mySquadId) {
       return null;
     }
 
-    return teamsQuery.data?.find((team) =>
-      team.members?.some(
-        (member) => member.userId === auth.user?.id && member.status === 'ACTIVE',
-      ),
-    ) ?? null;
-  }, [auth.user?.id, teamsQuery.data]);
+    return teamsQuery.data?.find((team) => team.id === viewer.mySquadId) ?? null;
+  }, [teamsQuery.data, viewer.mySquadId]);
 
   const contestEntriesByContestQuery = useQuery({
     queryKey: QueryKeys.myTeamHistory.byTeamAndContests(
@@ -168,7 +149,7 @@ export function MyTeamHistoryPage() {
     );
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
+  if (leagueQuery.isError || !league) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (

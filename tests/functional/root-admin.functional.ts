@@ -1,13 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import {
   deleteUser,
-  adminDeleteLeague,
   disableUser,
   enableUser,
   adminGetIngestionSchedule,
   adminGetPollIntervals,
-  adminInactivateLeague,
-  adminListLeagues,
   adminPrepareSportSync,
   setUserRootAdmin,
   adminListContestConfigTemplates,
@@ -21,6 +18,9 @@ import {
   adminUpdateContestConfigTemplate,
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
+  deleteLeague,
+  inactivateLeague,
+  listLeagues,
   loginUser,
   registerUser,
 } from '@poolmaster/shared/generated/hey-api';
@@ -97,13 +97,17 @@ describe('SDK Functional: Root Admin', () => {
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
 
-    const leagueResponse = await adminListLeagues({
+    // #202 — the unscoped league list is a SCOPE on `listLeagues`, not a separate admin
+    // route, so the refusal comes from the scope rather than from the route's existence. Same
+    // access rule (A1), same 403, different code.
+    const leagueResponse = await listLeagues({
       client: user.client,
+      query: { scope: 'all' },
     });
 
     expectFunctionalError(leagueResponse, {
       status: 403,
-      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
+      code: 'LEAGUE_SCOPE_FORBIDDEN',
     });
 
     const prepareSyncResponse = await adminPrepareSportSync({
@@ -496,29 +500,36 @@ describe('SDK Functional: Root Admin', () => {
       leagueName: 'Root Admin Search League',
     });
 
-    const listResponse = await adminListLeagues({
+    // #202 — one league list, one inactivate, one delete. These were `adminListLeagues`,
+    // `adminInactivateLeague` and `adminDeleteLeague`; the league routes always served root
+    // admins, so the duplicates added only the audit entry, which moved into the service.
+    const listResponse = await listLeagues({
       client: rootAdmin.client,
       query: {
+        scope: 'all',
         search: 'Search League',
       },
     });
 
     expect(listResponse.data?.leagues.some((item) => item.id === league.id)).toBe(true);
+    // A root admin listing leagues they do not belong to has no memberships among them, and
+    // the response says so rather than inventing a relationship (A8).
+    expect(listResponse.data?.memberships).toEqual([]);
 
-    const inactivateResponse = await adminInactivateLeague({
+    const inactivateResponse = await inactivateLeague({
       client: rootAdmin.client,
       path: {
-        leagueId: league.id,
+        id: league.id,
       },
     });
 
     expect(inactivateResponse.data?.league.id).toBe(league.id);
     expect(inactivateResponse.data?.league.isActive).toBe(false);
 
-    const deleteResponse = await adminDeleteLeague({
+    const deleteResponse = await deleteLeague({
       client: rootAdmin.client,
       path: {
-        leagueId: league.id,
+        id: league.id,
       },
       body: {
         leagueCode: league.leagueCode,

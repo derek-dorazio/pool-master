@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { getLeagueByCode, listContests, type LeagueDetailDto, type ContestSummaryDto } from '@/lib/api';
+import { listContests, type ContestSummaryDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeagueContestsPath, buildLeaguePath, rememberRecentLeagueCode } from '@/features/leagues/league-routing';
+import { buildLeagueContestsPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import {
   Chip,
   EmptyState,
@@ -18,6 +18,7 @@ import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
 import { QueryKeys } from '@/lib/query-keys';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { throwApiError } from '@/lib/errors';
 
 
@@ -27,26 +28,9 @@ export function LeagueContestHistoryPage() {
     feature: 'league-contest-history-page',
   });
 
-  const leagueQuery = useQuery({
-    queryKey: QueryKeys.leagues.detail(leagueCode),
-    queryFn: async (): Promise<LeagueDetailDto> => {
-      const response = await getLeagueByCode({ path: { leagueCode } });
+  // #202 — one league-context call, shared. Carries the viewer's own edges (A8).
+  const { query: leagueQuery, league } = useLeagueContext(leagueCode);
 
-      if (!response.data?.league) {
-        throwApiError(response.error, 'League detail response is missing data.');
-      }
-
-      return response.data.league;
-    },
-    enabled: Boolean(leagueCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (leagueQuery.data?.leagueCode) {
-      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
-    }
-  }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -65,7 +49,7 @@ export function LeagueContestHistoryPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueId = leagueQuery.data?.id ?? '';
+  const leagueId = league?.id ?? '';
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
     queryFn: async (): Promise<ContestSummaryDto[]> => {
@@ -90,7 +74,7 @@ export function LeagueContestHistoryPage() {
     return <LoadingState body="Loading contest history..." />;
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
+  if (leagueQuery.isError || !league) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (
@@ -106,7 +90,6 @@ export function LeagueContestHistoryPage() {
     );
   }
 
-  const league = leagueQuery.data;
 
   return (
     <section className="space-y-6" data-testid="league-contest-history-page">

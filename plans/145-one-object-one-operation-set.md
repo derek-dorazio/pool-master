@@ -883,6 +883,189 @@ the webapp; and `clients/poolmaster/src/test/msw-api.ts` plus `packages/shared/a
 are two hand-maintained mirrors of a generated artifact — the shadow pattern of this whole
 refactor, one level up.
 
+### Slice 1 frontend reconnection — outcome, 2026-09-27
+
+Not a numbered step. Phase 2 was planned as one pass after all four slices, on the reasoning
+that the webapp should move once, onto a settled SDK. The repo owner reduced that to its actual
+requirement — *"I just wanted to get the backend refactored and then re-export out the SDK
+before beginning the front-end so the front-end wouldn't be using old exports"* — which slice 1
+had already satisfied: the DTOs are registered as named components and the SDK is regenerated.
+So the webapp was reconnected to slice 1's contract now, with slices 2–4 still to come.
+
+**83 type errors across 37 files, all of them the same four changes.** `LeagueDetailDto` and
+`LeagueSummaryDto` becoming one `LeagueDto`; `getCurrentUser` becoming `getUser({ userId: 'me' })`;
+viewer context coming off the entities (A8); and a squad or league member's flattened
+`firstName`/`lastName` becoming the embedded `UserDto`. Nothing needed a design decision that
+slice 1 had not already made — which is the evidence that deferring the frontend bought nothing.
+
+**`useLeagueContext` is A8 realised on the client.** Eight pages each had a byte-identical
+`useQuery` for the league, four of them with their own copy of the `rememberRecentLeagueCode`
+effect. They now share one hook returning `{ query, league, viewer }`, where `LeagueViewer` is
+`{ isRootAdmin, isMember, isCommissioner, membership, squadMembership, mySquadId }`. It reads
+`isRootAdmin` from the cached session user and everything else from the league-context response.
+The line A8 cited as proof the per-row flag was residue —
+`teams.find(t => t.teamRelationship.owner)`, which fetched every squad in a league to scan a
+per-row viewer flag — became `teams.find(t => t.id === viewer.mySquadId)`.
+
+**The leagues list is the one place viewer context is a set, and it needed its own shape.**
+`LeagueListResponse` carries `{ leagues, memberships }`. `getCommissionerLeagueIds(memberships)`
+reduces that to the only question callers asked of the old `leagueRelationship` block, and
+`getLeagueSelectorOptions` takes the set. `sortLeaguesForOverview` had no caller outside its own
+test and was deleted with it (§1D).
+
+**Two query caches changed shape, and one of them changed behaviour.** `QueryKeys.leagues.list`
+now holds `{ leagues, memberships }` and `QueryKeys.leagues.detail(leagueCode)` holds the
+league-context response, so `syncLeagueCaches` replaces only the league part of each rather than
+overwriting the entry. The behavioural consequence is that **creating a league no longer seeds
+its context cache**: `createLeague` returns `LeagueResponse`, and the client cannot invent the
+membership that belongs beside it. The new league's page reads its own context on arrival — one
+extra request. `LeagueService.createLeague` already returns `{ league, membership }` and the
+handler discards the membership, so having create return `LeagueContextResponse` would remove
+that request and is the A8-consistent shape; left as a follow-up rather than reopening the
+merged backend.
+
+**What the collapse exposed in the tests.** `user-page.test.tsx` bound two mocks to each of
+`getUser`, `disableUser`, `enableUser` and `deleteUser` — an `admin*` one and an `*Account` one —
+so whichever was registered second silently won for both callers. With one operation there is one
+mock, and the root-admin tests had to dispatch on the path (`me` versus a user id) because the
+signed-in user and the viewed user are now the same read. That is not test mechanics: it is the
+same "two halves of one operation" shape the service collapse removed, sitting in the test
+harness.
+
+**Residue swept along the way.** `ManageSectionKey` still listed `'teams'` after step 3.4 deleted
+the cross-league team console, and a scaffold test still asserted that section was live — both
+gone. `teams-page.tsx` had a local `getOwnerLabel` with an "Unknown owner" fallback that existed
+only because the flattened name fields were optional; it now uses the shared `formatUserName`.
+`ManageLeagueModal` has no caller outside its own test — flagged, not deleted, since deleting a
+whole surface is the repo owner's call.
+
+**Counts.** Webapp 119 suites / 495 tests (was 120/499 — one suite and one test removed as the
+code they covered went, the rest net-neutral). Backend unchanged and green: unit 88/1046,
+integration 18/82, FAPI 10/58. `npm run api:refresh` produced no diff, confirming the contract
+was already current.
+
+### Slice 1 completion sweep — outcome, 2026-09-27
+
+Two things the frontend reconnection surfaced, found by auditing what was left rather than by a
+type error. Both were done on the same branch.
+
+**The League half of the operation collapse had never run.** `docs/DOMAIN-OPERATIONS.md` lists
+`listLeagues` + `adminListLeagues` and `inactivateLeague` + `adminInactivateLeague` as one
+operation split in two, alongside the five User pairs. The User pairs all landed in step 3.3;
+the League pairs did not, and `deleteLeague` + `adminDeleteLeague` was the same shape without
+being in the table. Two of the three admin routes had **zero** frontend callers.
+
+The collapse found the same class of silent disagreement as the User one, which is the argument
+for doing it rather than deleting the unused routes:
+
+- **Counts.** The member-scoped list called `toLeagueDto(league)` with no counts, so every
+  league it returned reported `memberCount: 0` and `activeContestCount: 0` while the root-admin
+  list computed them. Latent — no surface displayed the member list's counts — but two answers
+  to one question.
+- **Filters.** `search` and `isActive` existed only on the root-admin half, though they describe
+  the query rather than the caller. They narrow either scope now.
+- **Audit.** Only the root-admin half wrote an `AdminAuditEntry`. Settled the way `UserService`
+  settles it — keyed on the actor, so a commissioner administering their own league writes none
+  — rather than merged. The delete's entry reads the league's counts *before* the transaction,
+  because afterwards there is nothing to count, and is written *after* it commits, because
+  `logAdminAction` holds its own Prisma singleton (#205).
+- **Nothing else.** `requireCommissioner` already granted root admins, so the `/admin/leagues/*`
+  routes were never the only path — they added the audit entry and otherwise duplicated.
+
+**Scope had to become explicit, and that corrects the epic's own wording.**
+`docs/DOMAIN-OPERATIONS.md` said scope is "resolved from the caller's role". That works for the
+User operations, where the path names the subject and the role only decides whether you may. It
+cannot work for a list: a root admin legitimately needs **both** scopes — their own leagues for
+the selector, every league for the management page — and one request cannot mean both. So
+`GET /leagues?scope=mine|all`, with `all` returning 403 `LEAGUE_SCOPE_FORBIDDEN` to anyone who
+is not a root admin (A1). The doc is corrected rather than quietly contradicted.
+
+Gone with the routes: `AdminLeagueService` (257 lines), `admin/league-handler.ts` (112),
+`AdminListLeaguesQuerySchema`, and every league repository, service and user repository the
+admin module wired up only to serve them. `LeagueService.findByUser` and `UserLeagueView` went
+too — the collapse made them residue in the same commit that created it, since
+`listLeagues({ scope: 'mine' })` is that read with the counts it omitted. Its N+1 guard migrated
+rather than being deleted: the property it protects is still true of the replacement. `admin-league-service.test.ts` migrated into
+`league-service.test.ts` under §1D — the composition it asserted did not change, only its home
+— with new cases for scope, for filters on the member-scoped read, for the counts defect, and
+for the four audit behaviours.
+
+**Two league reads, one response shape.** `getLeague` (by id) returned a bare `LeagueResponse`
+while `getLeagueByCode` returned `LeagueContextResponse`: two reads of one object with two
+shapes, the shadow projection of this whole refactor one level up. They share one handler now,
+which also removes the duplicated membership authorization each had a copy of.
+
+That fixed the last instance of the pattern A8 was written to remove. `contest-detail-page.tsx`
+and `my-team-history-page.tsx` were still finding the viewer's own squad by fetching every squad
+in the league and scanning each one's member list for the signed-in user — the same read as
+`teams.find(t => t.teamRelationship.owner)`, written by hand rather than as a per-row flag,
+which is exactly why removing the flags from the DTOs did not flush them out. Contest-rooted
+routes hold a `leagueId` and never a `leagueCode`, so they could not use `useLeagueContext` until
+the by-id read carried the context. `useLeagueContextById` serves them, and seeds whichever of
+the two cache addresses it did not fetch so one league never sits in two entries with different
+content. The contest board's squad-list query is deleted outright: it existed only to answer
+that question.
+
+**Residue swept with it.** `sortLeaguesForOverview` and the `'teams'` manage-section key went in
+the reconnection; this pass added: the duplicated `listLeagueMembers` query and its identical
+`Map` index in both team surfaces, now `useLeagueMembersQuery`; the `contestLeagueCodes` query
+key, a contest-shaped address for a league that nothing else could reuse; and four
+`Account*FormValues` type aliases still named for the module that no longer exists.
+
+**Stale fixtures that typecheck could not see.** Three test files still built
+`memberType`, `leagueRelationship` and `teamRelationship` into their mocks — `vi.fn()` is
+untyped, so nothing failed, and the tests passed because they never read those fields. One of
+them, `my-team-history-page.test.tsx`, was missing `squadMembership` entirely, which is the field
+the page reads now. This is the cost of untyped mocks stated concretely: the contract was
+enforced only at runtime, in tests whose whole job is to check the contract.
+
+**The zero-caller operations, resolved with the repo owner — and a claim of mine that was wrong.**
+
+I reported that "there is no league-members surface in the webapp at all." That was wrong, and the
+correction matters because it changes what the remaining work is. **The squad list *is* the member
+roster.** `ensureDefaultSquadForLeagueMember` runs on both paths that create a `LeagueMembership`
+(league creation, invitation acceptance), and accepting a *squad-owner* invitation creates a
+`LeagueMembership` with role `MEMBER` plus a `SquadMembership` on that squad. So every league
+member has exactly one active squad, and `teams-page.tsx` already renders every squad with its
+active owners, each owner's league-role chip, and pending owner invitations. It also already
+carries remove-owner and promote/demote through `TeamOwnerActionMenu`. What is missing is the
+invite/create/inactivate group, which lives on Team Home behind a `?teamId=` hop — a surfacing
+job, not a missing screen. I had also said `changeMemberRole` had no league-level frontend; it has
+one, in that shared row menu, reachable from both surfaces.
+
+**Auditing the rest found that most of them were read/write APIs in front of features never
+built**, which is a different finding from "no frontend yet":
+
+- Nothing in the codebase ever created a `CommissionerActionItem`. `createActionItem` had one
+  caller — a unit test — and `resolveActionItem` had none, so the resolve route could never have
+  had anything to resolve.
+- Nothing ever wrote to `CommissionerAuditLog`. `AuditService.logAction` had **zero callers**, so
+  `getLeagueAuditLog` and `getMemberAuditLog` both always returned `[]`. `getLeagueAuditLog` also
+  took `limit`/`offset`, which §16 forbids.
+
+Deleted on the repo owner's decision: `resolveActionItem`, `getLeagueAuditLog`,
+`getMemberAuditLog`, `createActionItem`, and `copySeason` (contest copy-forward, no caller,
+removed from scope). `AuditService.logAction` and `getContestAuditLog` stay because the contest
+audit route is live — it has the same empty-read problem, but contests are slice 3 and #205 has to
+settle how many audit tables there should be first.
+
+Kept and ticketed: **#221** the commissioner dashboard, which is the one of the four that returns
+real data — every field except `actionItems`, which is now unpopulatable and is that ticket's
+first question. **#220** CSV/spreadsheet bulk import, deferred; note the repo owner's framing is
+"teams and owners", which the current row shape cannot express. **#219** surfacing the squad
+lifecycle actions on the squad list. **#217** inviting a co-owner who has no account yet —
+register, join league, join squad in one flow, the one item with real design in it. **#218**
+removing a co-owner must also end their league membership, decided here:
+
+> "This should also remove the league membership as well. If the desire is to have a new team,
+> they can be re-invited by the commissioner to create a new team."
+
+That last one closes the model into a checkable invariant, which is why it is worth stating:
+**every ACTIVE `LeagueMembership` has exactly one ACTIVE `SquadMembership` in that league.** Today
+`removeOwner` breaks it — it ends the squad membership and leaves the league membership, so a
+removed co-owner keeps league access while disappearing from every surface that lists people.
+#218 fixes it and gives `removeMember` its first frontend caller.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
@@ -941,14 +1124,21 @@ real argument that a record of a failed attempt is worth keeping.
 The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
 (stop calling it "admin") and bringing services onto ports for consistency.
 
-### Phase 2 — the frontend, once
-Not a fifth slice. Runs after all four slices' backends are green and step 3.8 has exported
-the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
-in slices 1–4 moves onto the generated type, using the full object (rule 3).
+### Phase 2 — the frontend, per slice
 
-Its gates are the ones phase 1 deliberately skips: `npm run lint:webapp`,
-`npm run typecheck:webapp`, `npm run test:poolmaster:unit`, and green `poolmaster-build` /
-`poolmaster-unit-tests` in CI.
+**Revised 2026-09-27.** This was "the frontend, once": one pass after all four slices' backends
+were green. The repo owner's actual requirement was narrower — the frontend must not be written
+against stale exports, so a slice's backend and its SDK re-export must land first. That is
+satisfied per slice, not per epic. So the webapp is reconnected **after each slice's boundary
+export**, starting with slice 1 (see its outcome above). Reconnecting slice 1 found 83 errors and
+not one design decision the slice had not already made, which is the evidence for the change.
+
+Every webapp surface touching the slice's objects moves onto the generated type, using the full
+object (rule 3).
+
+Its gates are the ones a slice's phase 1 deliberately skips: `npm run lint` (whole repo,
+including the webapp), `npx turbo typecheck --force`, `npm run test:poolmaster:unit`, and green
+`poolmaster-build` / `poolmaster-unit-tests` in CI.
 
 ## Open Questions — found so far
 

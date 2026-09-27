@@ -60,19 +60,10 @@ export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSche
 // `AdminResetUserPassword` and `AdminDeleteUser` were the admin halves of operations the
 // account module also implemented; there is one of each, and one route for each.
 
-export const AdminListLeaguesQuerySchema = z.object({
-  search: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe('Optional case-insensitive league-name search for root-admin management surfaces.'),
-  isActive: z
-    .boolean()
-    .optional()
-    .describe('Optional active/inactive filter for root-admin league management surfaces.'),
-}).describe('Root-admin league search query.');
-export type AdminListLeaguesQuery = z.infer<typeof AdminListLeaguesQuerySchema>;
+// #202 — `AdminListLeaguesQuerySchema` is gone with its route. `GET /api/v1/admin/leagues` was
+// the admin half of `listLeagues`; there is one league list now, and `LeagueListQuerySchema` in
+// `leagues.dto.ts` carries its `scope`, `search` and `isActive` — the filters were properties of
+// the query, not of the caller.
 
 // #202 step 3.4 — `adminListTeams` and its four schemas are deleted, not unified.
 //

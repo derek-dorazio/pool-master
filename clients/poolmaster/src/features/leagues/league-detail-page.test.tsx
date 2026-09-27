@@ -9,8 +9,9 @@ import {
   activateLeagueData,
   apiSuccess,
   buildCurrentUser,
+  buildLeagueMembership,
   buildGeneratedInviteLink,
-  buildLeagueDetail,
+  buildLeague,
   buildLeagueSquad,
   buildLeagueSquadMember,
   deleteLeagueData,
@@ -47,7 +48,7 @@ bindApiMocks({
   enterContest: enterContestMock,
   generateInviteLink: generateInviteLinkMock,
   getContest: getContestMock,
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   inactivateLeague: inactivateLeagueMock,
   leaveLeague: leaveLeagueMock,
@@ -126,15 +127,12 @@ function primeCommonMocks({
     user: buildCurrentUser({ isRootAdmin }),
   }));
   refreshTokenMock.mockResolvedValue({ data: null });
-  getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
-    isActive,
-    memberType: leagueRole,
-    leagueRelationship: {
-      leagueMember: true,
-      commissioner: leagueRole === 'COMMISSIONER',
-    },
-    isRootAdmin,
-  }))));
+  // #202 (A8) — the viewer's role now rides on their membership in the league context, and
+  // root admin on the cached session user, not on the league.
+  getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
+    buildLeague({ isActive }),
+    { membership: buildLeagueMembership({ role: leagueRole }) },
+  )));
   listContestsMock.mockResolvedValue({
     data: {
       contests: [],
@@ -171,7 +169,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
   it('pool-master-rop.23: updates league details by syncing the cached league detail instead of refetching it', async () => {
     primeCommonMocks();
     const { queryClient } = renderLeagueDetailPage();
-    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
       name: 'Bigger Dawgs',
       description: 'Updated description',
     }))));
@@ -198,16 +196,22 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     );
     expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('league-home')).toBeVisible();
+    // #202 — the league-context cache holds the league WITH the viewer's edges, and the list
+    // cache holds `{ leagues, memberships }`. A rename replaces only the league part of each.
     expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
-      name: 'Bigger Dawgs',
-      description: 'Updated description',
-    });
-    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
-      expect.objectContaining({
-        id: 'league-1',
+      league: {
         name: 'Bigger Dawgs',
-      }),
-    ]);
+        description: 'Updated description',
+      },
+    });
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({
+      leagues: [
+        expect.objectContaining({
+          id: 'league-1',
+          name: 'Bigger Dawgs',
+        }),
+      ],
+    });
   });
 
   it('pool-master-rop.20 preserves unsaved league detail drafts across query refetches', async () => {
@@ -224,7 +228,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
       target: { value: 'Unsaved description' },
     });
 
-    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
+    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeague({
       name: 'Server Snapshot League',
       description: 'Server snapshot description',
     }))));
@@ -235,8 +239,10 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
 
     await waitFor(() =>
       expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
-        name: 'Server Snapshot League',
-        description: 'Server snapshot description',
+        league: {
+          name: 'Server Snapshot League',
+          description: 'Server snapshot description',
+        },
       }),
     );
 
@@ -246,7 +252,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
 
   it('pool-master-rop.20 reseeds league detail drafts when the league identity changes', async () => {
     primeCommonMocks();
-    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
       id: 'league-2',
       leagueCode: 'NEWDOGS',
       name: 'Renamed New Dawgs',
@@ -264,7 +270,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
       target: { value: 'Unsaved description' },
     });
 
-    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
+    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeague({
       id: 'league-2',
       leagueCode: 'NEWDOGS',
       name: 'New Dawgs',
@@ -337,7 +343,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
 
   it('pool-master-dxd.37 opens active league inactivation in a confirmation modal', async () => {
     primeCommonMocks();
-    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeagueDetail({
+    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeague({
       isActive: false,
     }))));
 
@@ -372,7 +378,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
   // pool-master-4uq — inactive leagues expose activate/delete in the compact lifecycle row.
   it('shows inactive lifecycle actions and activates immediately', async () => {
     primeCommonMocks({ isActive: false });
-    activateLeagueMock.mockResolvedValue(apiSuccess(activateLeagueData(buildLeagueDetail({
+    activateLeagueMock.mockResolvedValue(apiSuccess(activateLeagueData(buildLeague({
       isActive: true,
     }))));
 
@@ -440,7 +446,7 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
   // with only the modal draft held locally while editing.
   it('updates the league icon from a modal and returns to League Home with the new icon', async () => {
     primeCommonMocks();
-    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeague({
       iconKey: 'GOLF_BALL',
     }))));
 

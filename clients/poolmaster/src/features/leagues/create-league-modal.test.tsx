@@ -2,12 +2,11 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import type { LeagueSummaryDto } from '@/lib/api';
+import type { LeagueListCache } from './league-cache';
 import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
 import {
   apiSuccess,
-  buildLeagueDetail,
-  buildLeagueSummary,
+  buildLeague,
   createLeagueData,
 } from './test/fixtures';
 import { QueryKeys } from '@/lib/query-keys';
@@ -40,7 +39,9 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDto[]> }) {
+// #202 — the league-list cache holds `{ leagues, memberships }` (access rule A8's one
+// set-shaped exception), so this stand-in for the app shell's list query holds that shape.
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueListCache> }) {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.leagues.list,
     queryFn,
@@ -55,7 +56,7 @@ function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummaryDt
     return <div data-testid="league-list-state">error</div>;
   }
 
-  const leagues = leaguesQuery.data ?? [];
+  const leagues = leaguesQuery.data?.leagues ?? [];
 
   return (
     <div data-testid="league-list-state">
@@ -80,7 +81,7 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.23: creates a league by syncing the shell league list without refetching it', async () => {
-    const createdLeague = buildLeagueDetail({
+    const createdLeague = buildLeague({
       id: 'league-1',
       leagueCode: 'BIGDAWGS',
       name: 'Big Dawgs',
@@ -89,19 +90,15 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
       iconKey: 'TROPHY',
       memberCount: 1,
       activeContestCount: 0,
-      memberType: 'COMMISSIONER',
-      leagueRelationship: {
-        leagueMember: true,
-        commissioner: true,
-      },
-      isRootAdmin: false,
       createdAt: '2026-04-15T00:00:00.000Z',
       joinPolicy: 'COMMISSIONER_ONLY',
     });
     createLeagueMock.mockResolvedValue(apiSuccess(createLeagueData(createdLeague)));
 
     const onCreated = vi.fn();
-    const leaguesQueryFn = vi.fn<() => Promise<LeagueSummaryDto[]>>().mockResolvedValue([]);
+    const leaguesQueryFn = vi
+      .fn<() => Promise<LeagueListCache>>()
+      .mockResolvedValue({ leagues: [], memberships: [] });
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -144,8 +141,8 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('BIGDAWGS'));
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData<LeagueSummaryDto[]>(QueryKeys.leagues.list)).toEqual([
-      buildLeagueSummary({
+    expect(queryClient.getQueryData<LeagueListCache>(QueryKeys.leagues.list)?.leagues).toEqual([
+      buildLeague({
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
@@ -154,16 +151,14 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
         iconKey: 'TROPHY',
         memberCount: 1,
         activeContestCount: 0,
-        memberType: 'COMMISSIONER',
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: true,
-        },
-        isRootAdmin: false,
         createdAt: '2026-04-15T00:00:00.000Z',
       }),
     ]);
-    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toEqual(createdLeague);
+    // #202 (A8) — creating a league does NOT seed its league-context cache. That cache holds the
+    // league together with the viewer's edges in it, and `createLeague` returns only the league;
+    // inventing the membership here is the mistake this pass removes. The league page reads its
+    // own context on arrival.
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toBeUndefined();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.succeeded',

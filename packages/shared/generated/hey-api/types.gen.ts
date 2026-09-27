@@ -3804,16 +3804,6 @@ export type AcceptInvitationRequest = {
 };
 
 /**
- * Commissioner request payload for copying a prior season into a new one.
- */
-export type CopySeasonRequest = {
-    /**
-     * Contests from the source season that should be copied forward.
-     */
-    sourceContestIds: Array<string>;
-};
-
-/**
  * Single CSV-style member import row.
  */
 export type CsvImportRow = {
@@ -3860,6 +3850,24 @@ export type ImportLeagueMembersRequest = {
          */
         role?: 'COMMISSIONER' | 'MEMBER';
     }>;
+};
+
+/**
+ * League-list query. Narrows the result; it never pages it.
+ */
+export type LeagueListQuery = {
+    /**
+     * Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+     */
+    scope?: 'mine' | 'all';
+    /**
+     * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+     */
+    search?: string;
+    /**
+     * Optional active/inactive filter. Omitted returns both.
+     */
+    isActive?: boolean;
 };
 
 /**
@@ -4924,66 +4932,6 @@ export type GenerateInviteLinkResponse = {
 };
 
 /**
- * League audit-log response.
- */
-export type LeagueAuditEntriesResponse = {
-    entries: Array<{
-        /**
-         * Audit-log entry id.
-         */
-        id: string;
-        /**
-         * League this entry belongs to.
-         */
-        leagueId: string;
-        /**
-         * Contest this entry references when the action is contest-scoped.
-         */
-        contestId?: string;
-        /**
-         * User id of the commissioner / actor that performed the action.
-         */
-        actorId: string;
-        /**
-         * Action verb in dotted form (e.g., "league.member.role.changed").
-         */
-        action: string;
-        /**
-         * Audit-log entry category — broad classification of the action that produced this entry.
-         */
-        category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-        /**
-         * Human-readable description of what happened.
-         */
-        description: string;
-        /**
-         * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-         */
-        beforeState?: {
-            [key: string]: unknown;
-        };
-        /**
-         * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-         */
-        afterState?: {
-            [key: string]: unknown;
-        };
-        /**
-         * Optional human-supplied reason / justification for the action.
-         */
-        reason?: string;
-        /**
-         * IP address from which the action originated, when available.
-         */
-        ipAddress?: string;
-        /**
-         * When the audit entry was recorded.
-         */
-        createdAt: string;
-    }>;
-};
-
-/**
  * Commissioner dashboard response.
  */
 export type LeagueDashboardResponse = {
@@ -5122,32 +5070,6 @@ export type LeagueDashboardResponse = {
          */
         eventType: 'DRAFT_START' | 'CONTEST_START' | 'CONTEST_END' | 'LOCK_TIME';
     }>;
-};
-
-/**
- * Action-item resolution response.
- */
-export type ResolveActionItemResponse = {
-    /**
-     * Commissioner dashboard action item.
-     */
-    actionItem: {
-        id: string;
-        leagueId: string;
-        contestId?: string | null;
-        title: string;
-        description: string;
-        actionUrl?: string | null;
-        resolved: boolean;
-        /**
-         * When the action item was created.
-         */
-        createdAt: string;
-        /**
-         * When the action item was last updated.
-         */
-        updatedAt: string;
-    };
 };
 
 /**
@@ -8068,7 +7990,20 @@ export type GetVersionResponse = GetVersionResponses[keyof GetVersionResponses];
 export type ListLeaguesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+         */
+        scope?: 'mine' | 'all';
+        /**
+         * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+         */
+        search?: string;
+        /**
+         * Optional active/inactive filter. Omitted returns both.
+         */
+        isActive?: boolean;
+    };
     url: '/api/v1/leagues/';
 };
 
@@ -8077,6 +8012,28 @@ export type ListLeaguesErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -8258,6 +8215,50 @@ export type GetLeagueErrors = {
     /**
      * Standard API error envelope.
      */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -8283,9 +8284,9 @@ export type GetLeagueError = GetLeagueErrors[keyof GetLeagueErrors];
 
 export type GetLeagueResponses = {
     /**
-     * Single-league response.
+     * A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context.
      */
-    200: LeagueResponse;
+    200: LeagueContextResponse;
 };
 
 export type GetLeagueResponse = GetLeagueResponses[keyof GetLeagueResponses];
@@ -8300,6 +8301,50 @@ export type GetLeagueByCodeData = {
 };
 
 export type GetLeagueByCodeErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -9200,209 +9245,6 @@ export type GetLeagueDashboardResponses = {
 };
 
 export type GetLeagueDashboardResponse = GetLeagueDashboardResponses[keyof GetLeagueDashboardResponses];
-
-export type ResolveActionItemData = {
-    body?: never;
-    path: {
-        id: string;
-        itemId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/action-items/{itemId}/resolve';
-};
-
-export type ResolveActionItemErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type ResolveActionItemError = ResolveActionItemErrors[keyof ResolveActionItemErrors];
-
-export type ResolveActionItemResponses = {
-    /**
-     * Action-item resolution response.
-     */
-    200: ResolveActionItemResponse;
-};
-
-export type ResolveActionItemResponse2 = ResolveActionItemResponses[keyof ResolveActionItemResponses];
-
-export type GetLeagueAuditLogData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/audit-log';
-};
-
-export type GetLeagueAuditLogErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type GetLeagueAuditLogError = GetLeagueAuditLogErrors[keyof GetLeagueAuditLogErrors];
-
-export type GetLeagueAuditLogResponses = {
-    /**
-     * League audit-log response.
-     */
-    200: LeagueAuditEntriesResponse;
-};
-
-export type GetLeagueAuditLogResponse = GetLeagueAuditLogResponses[keyof GetLeagueAuditLogResponses];
-
-export type GetMemberAuditLogData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/audit-log/member';
-};
-
-export type GetMemberAuditLogErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type GetMemberAuditLogError = GetMemberAuditLogErrors[keyof GetMemberAuditLogErrors];
-
-export type GetMemberAuditLogResponses = {
-    /**
-     * League audit-log response.
-     */
-    200: LeagueAuditEntriesResponse;
-};
-
-export type GetMemberAuditLogResponse = GetMemberAuditLogResponses[keyof GetMemberAuditLogResponses];
-
-export type CopySeasonData = {
-    body: CopySeasonRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/contests/copy-season';
-};
-
-export type CopySeasonErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type CopySeasonError = CopySeasonErrors[keyof CopySeasonErrors];
-
-export type CopySeasonResponses = {
-    /**
-     * Arbitrary JSON object payload.
-     */
-    201: LeagueBulkOperationResponse;
-};
-
-export type CopySeasonResponse = CopySeasonResponses[keyof CopySeasonResponses];
 
 export type ImportMembersData = {
     body: ImportLeagueMembersRequest;
@@ -13418,241 +13260,6 @@ export type AdminListEventParticipantsResponses = {
 };
 
 export type AdminListEventParticipantsResponse = AdminListEventParticipantsResponses[keyof AdminListEventParticipantsResponses];
-
-export type AdminListLeaguesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Optional case-insensitive league-name search for root-admin management surfaces.
-         */
-        search?: string;
-        /**
-         * Optional active/inactive filter for root-admin league management surfaces.
-         */
-        isActive?: boolean;
-    };
-    url: '/api/v1/admin/leagues';
-};
-
-export type AdminListLeaguesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminListLeaguesError = AdminListLeaguesErrors[keyof AdminListLeaguesErrors];
-
-export type AdminListLeaguesResponses = {
-    /**
-     * League-list response, with the viewer's memberships once as an array.
-     */
-    200: LeagueListResponse;
-};
-
-export type AdminListLeaguesResponse = AdminListLeaguesResponses[keyof AdminListLeaguesResponses];
-
-export type AdminInactivateLeagueData = {
-    body?: never;
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/leagues/{leagueId}/inactivate';
-};
-
-export type AdminInactivateLeagueErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminInactivateLeagueError = AdminInactivateLeagueErrors[keyof AdminInactivateLeagueErrors];
-
-export type AdminInactivateLeagueResponses = {
-    /**
-     * Single-league response.
-     */
-    200: LeagueResponse;
-};
-
-export type AdminInactivateLeagueResponse = AdminInactivateLeagueResponses[keyof AdminInactivateLeagueResponses];
-
-export type AdminDeleteLeagueData = {
-    body: DeleteLeagueRequest;
-    path: {
-        leagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/leagues/{leagueId}';
-};
-
-export type AdminDeleteLeagueErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminDeleteLeagueError = AdminDeleteLeagueErrors[keyof AdminDeleteLeagueErrors];
-
-export type AdminDeleteLeagueResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminDeleteLeagueResponse = AdminDeleteLeagueResponses[keyof AdminDeleteLeagueResponses];
 
 export type AdminListProvidersData = {
     body?: never;

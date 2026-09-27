@@ -389,8 +389,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List leagues for the current user
-         * @description Returns the leagues visible to the authenticated user, together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.
+         * List leagues
+         * @description Returns leagues together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8).
+         *
+         *     `scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.
+         *
+         *     This replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.
          */
         get: operations["listLeagues"];
         put?: never;
@@ -413,15 +417,19 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get league details by ID
-         * @description Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.
+         * Get a league and the viewer's context in it, by ID
+         * @description Returns a league by internal league ID together with the viewer's own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.
+         *
+         *     The same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).
          */
         get: operations["getLeague"];
         put?: never;
         post?: never;
         /**
          * Delete an inactive league permanently
-         * @description Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.
+         * @description Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.
+         *
+         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin's use is recorded in the platform audit log, with the league's member and active-contest counts captured before the delete; a commissioner administering their own league writes no entry. This replaced `deleteLeague` + `adminDeleteLeague`.
          */
         delete: operations["deleteLeague"];
         options?: never;
@@ -500,7 +508,9 @@ export interface paths {
         put?: never;
         /**
          * Inactivate a league
-         * @description Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.
+         * @description Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.
+         *
+         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin's use is recorded in the platform audit log; a commissioner administering their own league is not an exercise of root-admin authority and writes no entry. This replaced `inactivateLeague` + `adminInactivateLeague`.
          */
         post: operations["inactivateLeague"];
         delete?: never;
@@ -683,86 +693,6 @@ export interface paths {
         get: operations["getLeagueDashboard"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/action-items/{itemId}/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Resolve a commissioner action item
-         * @description Marks a commissioner action item as resolved and returns the updated action-item record for the league dashboard.
-         */
-        post: operations["resolveActionItem"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/audit-log": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get audit log for a league
-         * @description Returns the commissioner-visible audit log for league-level actions.
-         */
-        get: operations["getLeagueAuditLog"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/audit-log/member": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get audit log for a specific member
-         * @description Returns member-scoped audit information inside the league for commissioner or permitted member review surfaces.
-         */
-        get: operations["getMemberAuditLog"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/contests/copy-season": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Copy contests from a previous season
-         * @description Copies prior contest definitions into the current league so commissioners can bootstrap a new season from historical contests.
-         */
-        post: operations["copySeason"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1569,66 +1499,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/leagues": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List leagues for root-admin management
-         * @description Returns root-admin league search results by league name for manage-page lifecycle actions.
-         */
-        get: operations["adminListLeagues"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/leagues/{leagueId}/inactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Inactivate a league as root admin
-         * @description Allows root-admins to inactivate a league before permanent deletion. This reuses the truthful league lifecycle behavior.
-         */
-        post: operations["adminInactivateLeague"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/leagues/{leagueId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete an inactive league as root admin
-         * @description Allows root-admins to permanently delete an inactive league after confirming the exact league code. This reuses the truthful cascade-delete lifecycle behavior.
-         */
-        delete: operations["adminDeleteLeague"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5849,11 +5719,6 @@ export interface components {
             /** @description Invite code from the invite URL or invitation email. */
             inviteCode: string;
         };
-        /** @description Commissioner request payload for copying a prior season into a new one. */
-        CopySeasonRequest: {
-            /** @description Contests from the source season that should be copied forward. */
-            sourceContestIds: string[];
-        };
         /** @description Single CSV-style member import row. */
         CsvImportRow: {
             /** @description Email address for the imported member row. */
@@ -5884,6 +5749,18 @@ export interface components {
                  */
                 role?: "COMMISSIONER" | "MEMBER";
             }[];
+        };
+        /** @description League-list query. Narrows the result; it never pages it. */
+        LeagueListQuery: {
+            /**
+             * @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+             * @enum {string}
+             */
+            scope?: "mine" | "all";
+            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            search?: string;
+            /** @description Optional active/inactive filter. Omitted returns both. */
+            isActive?: boolean;
         };
         /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
         LeagueDto: {
@@ -6703,45 +6580,6 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description League audit-log response. */
-        LeagueAuditEntriesResponse: {
-            entries: {
-                /** @description Audit-log entry id. */
-                id: string;
-                /** @description League this entry belongs to. */
-                leagueId: string;
-                /** @description Contest this entry references when the action is contest-scoped. */
-                contestId?: string;
-                /** @description User id of the commissioner / actor that performed the action. */
-                actorId: string;
-                /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                action: string;
-                /**
-                 * @description Audit-log entry category — broad classification of the action that produced this entry.
-                 * @enum {string}
-                 */
-                category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                /** @description Human-readable description of what happened. */
-                description: string;
-                /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                beforeState?: {
-                    [key: string]: unknown;
-                };
-                /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                afterState?: {
-                    [key: string]: unknown;
-                };
-                /** @description Optional human-supplied reason / justification for the action. */
-                reason?: string;
-                /** @description IP address from which the action originated, when available. */
-                ipAddress?: string;
-                /**
-                 * Format: date-time
-                 * @description When the audit entry was recorded.
-                 */
-                createdAt: string;
-            }[];
-        };
         /** @description Commissioner dashboard response. */
         LeagueDashboardResponse: {
             /** @description League payload driving the dashboard header. */
@@ -6857,29 +6695,6 @@ export interface components {
                  */
                 eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
             }[];
-        };
-        /** @description Action-item resolution response. */
-        ResolveActionItemResponse: {
-            /** @description Commissioner dashboard action item. */
-            actionItem: {
-                id: string;
-                leagueId: string;
-                contestId?: string | null;
-                title: string;
-                description: string;
-                actionUrl?: string | null;
-                resolved: boolean;
-                /**
-                 * Format: date-time
-                 * @description When the action item was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the action item was last updated.
-                 */
-                updatedAt: string;
-            };
         };
         /** @description Arbitrary JSON object payload. */
         LeagueBulkOperationResponse: {
@@ -9326,7 +9141,14 @@ export interface operations {
     };
     listLeagues: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access. */
+                scope?: "mine" | "all";
+                /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+                search?: string;
+                /** @description Optional active/inactive filter. Omitted returns both. */
+                isActive?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -9344,6 +9166,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9436,13 +9277,51 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league response. */
+            /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueResponse"];
+                    "application/json": components["schemas"]["LeagueContextResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -9554,6 +9433,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeagueContextResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -10357,194 +10274,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    resolveActionItem: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                itemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Action-item resolution response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResolveActionItemResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getLeagueAuditLog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description League audit-log response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueAuditEntriesResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getMemberAuditLog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description League audit-log response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueAuditEntriesResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    copySeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CopySeasonRequest"];
-            };
-        };
-        responses: {
-            /** @description Arbitrary JSON object payload. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueBulkOperationResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14124,218 +13853,6 @@ export interface operations {
                              */
                             updatedAt: string;
                         }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListLeagues: {
-        parameters: {
-            query?: {
-                /** @description Optional case-insensitive league-name search for root-admin management surfaces. */
-                search?: string;
-                /** @description Optional active/inactive filter for root-admin league management surfaces. */
-                isActive?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description League-list response, with the viewer's memberships once as an array. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminInactivateLeague: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single-league response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LeagueResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteLeague: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                leagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeleteLeagueRequest"];
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
                     };
                 };
             };

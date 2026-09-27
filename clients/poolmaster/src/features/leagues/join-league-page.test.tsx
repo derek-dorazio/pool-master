@@ -60,7 +60,7 @@ vi.mock('@/lib/logger', () => ({
 
 bindApiMocks({
   acceptInvitation: acceptInvitationMock,
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getInvitationPreview: getInvitationPreviewMock,
   listLeagueSquads: listLeagueSquadsMock,
   logoutUser: logoutUserMock,
@@ -130,8 +130,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
         updatedAt: '2026-04-16T00:00:00.000Z',
         members: [
           buildLeagueSquadMember({
-            firstName: 'Derek',
-            lastName: 'Dorazio',
+            user: buildCurrentUser({ firstName: 'Derek', lastName: 'Dorazio' }),
             joinedAt: '2026-04-16T00:00:00.000Z',
             createdAt: '2026-04-16T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',

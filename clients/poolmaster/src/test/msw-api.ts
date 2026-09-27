@@ -72,7 +72,6 @@ const operationDefinitions = {
   adminUpdateGolfLeagueRoster: { method: 'patch', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster' },
   adminUpdateGolfRoundScore: { method: 'patch', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/{sportEventParticipantId}' },
   adminUpdateGolfSeason: { method: 'patch', path: '/api/v1/admin/sports/golf/seasons/{seasonId}' },
-  adminListLeagues: { method: 'get', path: '/api/v1/admin/leagues' },
   adminListProviderCatalogEvents: { method: 'get', path: '/api/v1/admin/providers/{providerId}/catalog-events' },
   adminListProviderSyncRuns: { method: 'get', path: '/api/v1/admin/providers/sync-runs' },
   adminListProviders: { method: 'get', path: '/api/v1/admin/providers/health' },

@@ -27,14 +27,12 @@ import { InvitationService } from './invitation-service';
 import { MemberService } from './member-service';
 import { MemberDirectoryService } from './member-directory-service';
 import { DashboardService } from './dashboard-service';
-import { AuditService } from './audit-service';
 import { BulkService } from './bulk-service';
 import { requireCommissioner, requireLeagueMembership } from './permissions';
 import { createLeagueHandlers } from './handler';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createDashboardHandlers } from './dashboard-handler';
-import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import {
@@ -96,9 +94,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
     invitationRepo,
     actionItemRepo,
   );
-  const auditService = new AuditService(prisma);
   const bulkService = new BulkService(
-    contestRepo,
     leagueRepo,
     membershipRepo,
     invitationRepo,
@@ -108,7 +104,6 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const dashboard = createDashboardHandlers(dashboardService);
-  const audit = createAuditHandlers(auditService);
   const bulk = createBulkHandlers(bulkService);
 
   // --- League CRUD ---
@@ -116,13 +111,15 @@ export function leaguesModule(fastify: FastifyInstance): void {
   fastify.get('/', {
     schema: {
       tags: ['Leagues'],
-      summary: 'List leagues for the current user',
+      summary: 'List leagues',
       description:
-        'Returns the leagues visible to the authenticated user, together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.',
+        'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
       operationId: 'listLeagues',
+      querystring: schemaRef('LeagueListQuery'),
       response: {
         200: schemaRef('LeagueListResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: league.listLeagues,
@@ -148,12 +145,14 @@ export function leaguesModule(fastify: FastifyInstance): void {
   fastify.get('/:id', {
     schema: {
       tags: ['Leagues'],
-      summary: 'Get league details by ID',
+      summary: 'Get a league and the viewer\'s context in it, by ID',
       description:
-        'Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.',
+        'Returns a league by internal league ID together with the viewer\'s own membership edges in it — their LeagueMembership and their SquadMembership — for authenticated league members, league commissioners, or root admins using platform-level override access.\n\nThe same `LeagueContextResponse` as `getLeagueByCode`: two ways to find one league, one response shape. Use this route when you hold a league ID rather than a league code, as contest-rooted surfaces do (access rule A8).',
       operationId: 'getLeague',
       response: {
-        200: schemaRef('LeagueResponse'),
+        200: schemaRef('LeagueContextResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -169,6 +168,8 @@ export function leaguesModule(fastify: FastifyInstance): void {
       operationId: 'getLeagueByCode',
       response: {
         200: schemaRef('LeagueContextResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -216,7 +217,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Inactivate a league',
       description:
-        'Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.',
+        'Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log; a commissioner administering their own league is not an exercise of root-admin authority and writes no entry. This replaced `inactivateLeague` + `adminInactivateLeague`.',
       operationId: 'inactivateLeague',
       response: {
         200: schemaRef('LeagueResponse'),
@@ -250,7 +251,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Delete an inactive league permanently',
       description:
-        'Allows a commissioner to permanently delete an inactive league after typing the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.',
+        'Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log, with the league\'s member and active-contest counts captured before the delete; a commissioner administering their own league writes no entry. This replaced `deleteLeague` + `adminDeleteLeague`.',
       operationId: 'deleteLeague',
       body: schemaRef('DeleteLeagueRequest'),
       response: {
@@ -409,75 +410,25 @@ export function leaguesModule(fastify: FastifyInstance): void {
     handler: dashboard.getDashboard,
   });
 
-  fastify.post('/:id/action-items/:itemId/resolve', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Resolve a commissioner action item',
-      description:
-        'Marks a commissioner action item as resolved and returns the updated action-item record for the league dashboard.',
-      operationId: 'resolveActionItem',
-      response: {
-        200: schemaRef('ResolveActionItemResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: dashboard.resolveActionItem,
-  });
+  /*
+   * #202 — `resolveActionItem`, `getLeagueAuditLog` and `getMemberAuditLog` are GONE.
+   *
+   * All three were read/write APIs in front of features that were never built:
+   *
+   * - Nothing in the codebase ever created a `CommissionerActionItem`, so the resolve route
+   *   could never have anything to resolve.
+   * - Nothing ever wrote to `CommissionerAuditLog` — `AuditService.logAction` had zero callers
+   *   — so both audit reads always returned an empty array. `getLeagueAuditLog` also took
+   *   `limit`/`offset`, which §16 forbids.
+   *
+   * The audit tables are slice 4's to design (#205 merges the two of them), so deleting the
+   * reads now leaves that decision open rather than pre-empting it with an unwritten shape.
+   */
 
-  // --- Audit Log ---
-
-  fastify.get('/:id/audit-log', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Get audit log for a league',
-      description:
-        'Returns the commissioner-visible audit log for league-level actions.',
-      operationId: 'getLeagueAuditLog',
-      response: {
-        200: schemaRef('LeagueAuditEntriesResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: audit.getLeagueAuditLog,
-  });
-
-  fastify.get('/:id/audit-log/member', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Get audit log for a specific member',
-      description:
-        'Returns member-scoped audit information inside the league for commissioner or permitted member review surfaces.',
-      operationId: 'getMemberAuditLog',
-      response: {
-        200: schemaRef('LeagueAuditEntriesResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireLeagueMembership(membershipRepo),
-    handler: audit.getMemberAuditLog,
-  });
-
-  // --- Bulk Operations ---
-
-  fastify.post('/:id/contests/copy-season', {
-    schema: {
-      tags: ['Leagues'],
-      summary: 'Copy contests from a previous season',
-      description:
-        'Copies prior contest definitions into the current league so commissioners can bootstrap a new season from historical contests.',
-      operationId: 'copySeason',
-      body: schemaRef('CopySeasonRequest'),
-      response: {
-        201: schemaRef('LeagueBulkOperationResponse'),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: bulk.copySeason,
-  });
+  /*
+   * #202 — `copySeason` is gone. It copied prior contest definitions into a league to bootstrap
+   * a new season, had no frontend caller, and the repo owner removed it from scope.
+   */
 
   fastify.post('/:id/members/import', {
     schema: {

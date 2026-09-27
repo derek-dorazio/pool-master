@@ -68,40 +68,18 @@ export class AuditService {
   }
 
   /** Returns audit log entries for a league, with optional filters. */
-  async getLeagueAuditLog(
-    leagueId: string,
-    filters?: AuditLogFilters,
-    limit = 50,
-    offset = 0,
-  ): Promise<AuditLogEntry[]> {
-    const rows = await this.prisma.commissionerAuditLog.findMany({
-      where: {
-        leagueId,
-        ...(filters?.category && { category: filters.category }),
-        ...(filters?.actorId && { actorId: filters.actorId }),
-        ...(filters?.contestId && { contestId: filters.contestId }),
-        ...(filters?.fromDate && { createdAt: { gte: filters.fromDate } }),
-        ...(filters?.toDate && { createdAt: { lte: filters.toDate } }),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-    });
-    return rows.map(mapToEntry);
-  }
-
-  /** Returns a simplified audit log for regular members (scoring, payout, role changes only). */
-  async getMemberAuditLog(leagueId: string, limit = 50): Promise<AuditLogEntry[]> {
-    const rows = await this.prisma.commissionerAuditLog.findMany({
-      where: {
-        leagueId,
-        category: { in: ['SCORING', 'PAYOUT', 'MEMBER'] },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-    return rows.map(mapToEntry);
-  }
+  /*
+   * #202 — `getLeagueAuditLog` and `getMemberAuditLog` are gone.
+   *
+   * Both read `CommissionerAuditLog`, and `logAction` below is its only writer and has zero
+   * callers — so both always returned an empty array. `getLeagueAuditLog` also took
+   * `limit`/`offset`, which §16 forbids.
+   *
+   * `logAction` and `getContestAuditLog` stay because the contest audit route
+   * (`GET /contests/:contestId/audit-log`) is live. It has the same problem — nothing writes,
+   * so it also always reads empty — but contests are slice 3's cluster, and #205 has to decide
+   * how many audit tables there should be before either of these gets a real writer.
+   */
 
   /** Returns audit log entries for a specific contest. */
   async getContestAuditLog(contestId: string, limit = 50): Promise<AuditLogEntry[]> {

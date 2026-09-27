@@ -126,10 +126,22 @@ duplication, not delivery.**
 
 | Surface | Viewer context it carries |
 |---|---|
-| League-scoped responses — league detail, squads, members, contests, entries | **none.** The client has it from the league-context call |
-| The league-context call (`getLeagueByCode`) | the viewer's `LeagueMembership` for that league **and** their `SquadMembership` in it |
+| League-scoped responses — squads, members, contests, entries | **none.** The client has it from the league-context call |
+| The league-context call — `getLeagueByCode` **and** `getLeague` | the viewer's `LeagueMembership` for that league **and** their `SquadMembership` in it |
 | The leagues list — the one inherently multi-league surface | the viewer's `LeagueMembership[]`, once, as an array beside the leagues |
 | `isRootAdmin` | **neither.** It is a property of the `User`, read from the cached `UserDto` |
+
+**Both league reads return the context (added 2026-09-27).** `getLeague` (by id) originally
+returned a bare `LeagueResponse` while `getLeagueByCode` returned `LeagueContextResponse` —
+two reads of one object with two shapes, which is the shadow projection this pass removes, one
+level up from the DTOs. They share one handler now and one response.
+
+It matters beyond tidiness. A contest-rooted surface resolves a contest first and learns a
+`leagueId`, never a `leagueCode`, so before the by-id read carried context those pages
+answered "which squad is mine?" by fetching every squad in the league and scanning each one's
+member list for the signed-in user. That is the read A8 exists to replace, written by hand
+instead of as a per-row flag — which is why removing the flags from the DTOs did not flush it
+out and a later sweep had to.
 
 `LeagueDto` and `SquadDto` become pure entity values. No new DTO is invented: the viewer's
 context *is* `UserDto` + `LeagueMembership[]` + `SquadMembership[]`, all of which already
@@ -322,24 +334,49 @@ link with `maxUses` / `currentUses`.
 
 ## What this document settles
 
-Several pairs currently modelled as separate admin and member operations are **one
-operation with two callers**. Recorded explicitly because they are the audit's main
-targets:
+Several pairs modelled as separate admin and member operations were **one operation with
+two callers**. All of them are now collapsed; the table is kept as the record of what was
+split and what it became.
 
-| One operation | Currently split as |
-|---|---|
-| Disable a user | `inactivateAccount` + `adminDisableUser` |
-| Enable a user | `reactivateAccount` + `adminEnableUser` |
-| Delete a user | `deleteAccount` + `adminDeleteUser` |
-| Revoke a user's sessions | logout + `adminForceLogout` |
-| List leagues | `listLeagues` + `adminListLeagues` |
-| Inactivate a league | `inactivateLeague` + `adminInactivateLeague` |
-| List squads | `listLeagueSquads` + `adminListTeams` |
-| Read a user | `getCurrentUser` + `adminGetUserDetail` |
+| One operation | Was split as | Now |
+|---|---|---|
+| Disable a user | `inactivateAccount` + `adminDisableUser` | `POST /users/:userId/disable` |
+| Enable a user | `reactivateAccount` + `adminEnableUser` | `POST /users/:userId/enable` |
+| Delete a user | `deleteAccount` + `adminDeleteUser` | `DELETE /users/:userId` |
+| Revoke a user's sessions | logout + `adminForceLogout` | `POST /users/:userId/revoke-sessions` |
+| Read a user | `getCurrentUser` + `adminGetUserDetail` | `GET /users/:userId` (`me` resolves to the caller) |
+| List leagues | `listLeagues` + `adminListLeagues` | `GET /leagues?scope=mine\|all` |
+| Inactivate a league | `inactivateLeague` + `adminInactivateLeague` | `POST /leagues/:id/inactivate` |
+| Delete a league | `deleteLeague` + `adminDeleteLeague` | `DELETE /leagues/:id` |
+| List squads | `listLeagueSquads` + `adminListTeams` | `GET /leagues/:id/squads` (the admin half deleted, no caller) |
 
-Scope is a **parameter of the operation**, resolved from the caller's role — exactly as
-the DAO already expresses it, where `LeagueRepository.findAll()` is the unscoped read and
-`findByUser` the scoped one.
+Scope is a **parameter of the operation** — exactly as the DAO already expresses it, where
+`LeagueRepository.findAll()` is the unscoped read and `findByUser` the scoped one.
+
+**Correction (2026-09-27, while implementing the league collapse).** This previously said
+scope is "resolved from the caller's role". That is right for the User operations, where the
+subject is named in the path and the role only decides whether you may. It is wrong for a
+list: a root admin legitimately needs **both** scopes — their own leagues for the league
+selector, every league for the management surface — and one request cannot mean both. So
+`GET /leagues` takes an explicit `scope`, and the caller's role decides whether the requested
+scope is permitted rather than which scope they get. Role-implicit scope is not a general
+rule; it is what a path-addressed operation happens to allow.
+
+**What the league collapse found, recorded because it is the pattern.** As with the User
+pairs, the two halves disagreed about more than scope:
+
+- **Counts.** The member-scoped list called the mapper with no counts, so every league it
+  returned reported `memberCount: 0` and `activeContestCount: 0`; only the root-admin list
+  computed them. Latent — no surface displayed the member list's counts — but it is two
+  answers to one question.
+- **Filters.** `search` and `isActive` existed only on the root-admin half, though they
+  describe the query rather than the caller.
+- **Audit.** Only the root-admin half wrote an `AdminAuditEntry`. Settled the same way
+  `UserService` settles it: the entry records an exercise of root-admin authority, so it is
+  keyed on the actor and a commissioner administering their own league writes none.
+- **Nothing else.** `requireCommissioner` already granted root admins, so the `/admin/leagues/*`
+  routes were never the only way a root admin could act — they added the audit entry and
+  otherwise duplicated behaviour.
 
 ## Settled during review
 

@@ -14,7 +14,6 @@ import { toContestSummaryDto } from '../../mappers/contests.mapper';
 export function createDashboardHandlers(dashboardService: DashboardService) {
   return {
     getDashboard,
-    resolveActionItem,
   };
 
   async function getDashboard(
@@ -53,13 +52,5 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
       recentMemberActivity: dashboard.recentMemberActivity,
       upcomingEvents: dashboard.upcomingEvents,
     });
-  }
-
-  async function resolveActionItem(
-    request: FastifyRequest<{ Params: { id: string; itemId: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const item = await dashboardService.resolveActionItem(request.params.itemId);
-    return reply.send({ actionItem: item });
   }
 }

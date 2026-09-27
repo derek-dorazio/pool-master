@@ -365,7 +365,7 @@ describe('identity cluster repositories (#202)', () => {
   });
 
   // #202 — new in step 3.3, backing the admin league list. Asserted against a real
-  // database because it is a grouped query: the FAPI suite proves adminListLeagues still
+  // database because it is a grouped query: the FAPI suite proves the league list still
   // responds, but asserts nothing about the counts themselves.
   describe('LeagueMembershipRepository.countActiveByLeagues', () => {
     it('counts active members per league and omits leagues with none', async () => {

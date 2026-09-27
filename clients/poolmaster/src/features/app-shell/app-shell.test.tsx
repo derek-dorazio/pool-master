@@ -172,9 +172,20 @@ describe('AppShell', () => {
             name: 'League One',
             isActive: true,
             iconKey: 'clubhouse',
-            memberType: 'COMMISSIONER',
-            leagueRelationship: { leagueMember: true, commissioner: true },
-            isRootAdmin: false,
+          },
+        ],
+        // #202 (A8) — the viewer's memberships travel beside the list, once, instead of a
+        // `leagueRelationship` block repeated on every league.
+        memberships: [
+          {
+            id: 'league-membership-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            role: 'COMMISSIONER',
+            status: 'ACTIVE',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
       },
@@ -254,7 +265,7 @@ describe('AppShell', () => {
 
   it('forwards isRootAdmin from auth into the account menu', async () => {
     clearSessionMock.mockResolvedValue(undefined);
-    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
     authState.isRootAdmin = true;
 
     renderAppShell();
@@ -274,11 +285,11 @@ describe('AppShell', () => {
             name: 'League One',
             isActive: true,
             iconKey: 'clubhouse',
-            memberType: 'MEMBER',
-            leagueRelationship: { leagueMember: true, commissioner: false },
-            isRootAdmin: false,
           },
         ],
+        // #202 (A8) — no membership: this viewer belongs to the league but does not
+        // commission it, which is what the absent commissioner edge says.
+        memberships: [],
       },
     });
     authState.isRootAdmin = false;
@@ -293,7 +304,7 @@ describe('AppShell', () => {
 
   it('disables header menus when no active league is selected', async () => {
     clearSessionMock.mockResolvedValue(undefined);
-    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
     renderAppShell(['/welcome']);
 
@@ -344,6 +355,7 @@ describe('AppShell', () => {
     listLeaguesMock.mockResolvedValue({
       data: {
         leagues: [],
+        memberships: [],
       },
     });
 

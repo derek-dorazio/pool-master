@@ -9,7 +9,7 @@ const {
   enterContestMock,
   getContestMock,
   listContestEntriesMock,
-  listLeagueSquadsMock,
+  getLeagueMock,
   mockLogger,
   updateContestEntryMock,
 } = vi.hoisted(() => {
@@ -27,8 +27,8 @@ const {
   return {
     enterContestMock: vi.fn(),
     getContestMock: vi.fn(),
+    getLeagueMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
-    listLeagueSquadsMock: vi.fn(),
     mockLogger: logger,
     updateContestEntryMock: vi.fn(),
   };
@@ -37,10 +37,23 @@ const {
 bindApiMocks({
   enterContest: enterContestMock,
   getContest: getContestMock,
+  // #202 — the contest board reads the league BY ID for the viewer's own squad membership. It
+  // used to list every squad in the league and scan each one's members for the signed-in user.
+  getLeague: getLeagueMock,
   listContestEntries: listContestEntriesMock,
-  listLeagueSquads: listLeagueSquadsMock,
   updateContestEntry: updateContestEntryMock,
 });
+
+const VIEWER_USER = {
+  id: 'user-1',
+  email: 'member@example.com',
+  username: 'member@example.com',
+  firstName: 'Morgan',
+  lastName: 'Member',
+  isActive: true,
+  isRootAdmin: false,
+  createdAt: '2026-04-15T00:00:00.000Z',
+} as const;
 
 vi.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({
@@ -170,22 +183,43 @@ function primeMocks(opts?: {
     },
   });
 
-  listLeagueSquadsMock.mockResolvedValue({
+  // #202 (A8) — the league context: the league plus the viewer's own edges in it, once. Which
+  // squad is the viewer's is their `squadMembership`, not a flag on a squad row.
+  getLeagueMock.mockResolvedValue({
     data: {
-      squads: [
-        {
-          id: myTeamId,
-          name: 'Birdie Hunters',
-          leagueId: 'league-1',
-          isActive: true,
-          iconKey: 'CAPTAIN_SMILE_FIELD',
-          isRootAdmin: false,
-          teamRelationship: { owner: true, commissioner: false },
-          members: [
-            { userId: 'user-1', status: 'ACTIVE', firstName: 'Morgan', lastName: 'Member' },
-          ],
-        },
-      ],
+      league: {
+        id: 'league-1',
+        leagueCode: 'BIGDAWGS',
+        name: 'Big Dawgs',
+        isActive: true,
+        iconKey: 'TROPHY',
+        memberCount: 3,
+        activeContestCount: 1,
+        joinPolicy: 'COMMISSIONER_ONLY',
+        createdAt: '2026-04-15T00:00:00.000Z',
+      },
+      membership: {
+        id: 'league-membership-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        user: VIEWER_USER,
+        role: 'MEMBER',
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
+      squadMembership: {
+        id: 'squad-membership-1',
+        squadId: myTeamId,
+        leagueId: 'league-1',
+        userId: 'user-1',
+        user: VIEWER_USER,
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
     },
   });
 }
@@ -195,7 +229,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     enterContestMock.mockReset();
     getContestMock.mockReset();
     listContestEntriesMock.mockReset();
-    listLeagueSquadsMock.mockReset();
+    getLeagueMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
@@ -217,7 +251,7 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     renderContestBoard();
 
-    // myTeamId derives from listLeagueSquads which resolves after the initial
+    // The viewer's squad comes from the league-context read, which resolves after the initial
     // render. Wait for the count to update from the initial 0 to 2.
     await waitFor(() => {
       expect(screen.getByTestId('contest-board-my-count')).toHaveTextContent('My Entries: 2');

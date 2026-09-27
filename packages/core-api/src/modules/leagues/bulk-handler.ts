@@ -1,5 +1,8 @@
 /**
- * Bulk operations route handlers — season bulk setup, copy season, CSV import.
+ * Bulk operations route handlers — CSV member import.
+ *
+ * #202 — `copySeason` is gone with its route; it had no frontend caller and the repo owner
+ * removed it from scope.
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -9,25 +12,8 @@ import { sendError } from '../../core/error-handler';
 
 export function createBulkHandlers(bulkService: BulkService) {
   return {
-    copySeason,
     importMembers,
   };
-
-  async function copySeason(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: { sourceContestIds: string[] };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const userId = request.authUser?.userId as string;
-    const result = await bulkService.copyLastSeason({
-      leagueId: request.params.id,
-      createdBy: userId,
-      sourceContestIds: request.body.sourceContestIds,
-    });
-    return reply.status(201).send(result);
-  }
 
   async function importMembers(
     request: FastifyRequest<{

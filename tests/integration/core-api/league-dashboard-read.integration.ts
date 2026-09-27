@@ -119,6 +119,10 @@ describe('League Dashboard Read Integration', () => {
     expect(contestRes.statusCode).toBe(201);
     contestId = contestRes.json().contest.id;
 
+    // #202 — note what this insert proves: there is no product path that creates a
+    // `CommissionerActionItem`. `createActionItem` and `resolveActionItem` are deleted, so the
+    // dashboard's `actionItems` field can only ever be populated the way it is here — by writing
+    // the table directly. Whether action items live or die is on the dashboard follow-up.
     const prisma = getPrisma();
     await prisma.commissionerActionItem.create({
       data: {

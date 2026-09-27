@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListLeagues, type LeagueSummaryDto } from "@/lib/api";
+import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import {
   ManagementListPage,
@@ -10,14 +10,17 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
-const columnHelper = createColumnHelper<LeagueSummaryDto>();
+const columnHelper = createColumnHelper<LeagueDto>();
 
 export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageLeagues,
-    queryFn: async (): Promise<LeagueSummaryDto[]> => {
-      const response = await adminListLeagues({
-        query: {},
+    queryFn: async (): Promise<LeagueDto[]> => {
+      // #202 — one league list, scope as a parameter. `scope: 'all'` is access rule A1's
+      // unscoped read, which the route permits to root admins only; this page was the sole
+      // caller of the `adminListLeagues` half.
+      const response = await listLeagues({
+        query: { scope: "all" },
       });
 
       if (!response.data?.leagues) {

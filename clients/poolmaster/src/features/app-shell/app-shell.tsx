@@ -47,21 +47,19 @@ export function AppShell() {
     location.pathname === "/manage" || location.pathname.startsWith("/manage/");
   const shouldLoadLeagueShell =
     auth.isAuthenticated && !auth.isRootAdmin && !isManageRoute;
-  const leaguesQuery = useLeaguesQuery({
+  const { query: leaguesQuery, leagues, commissionerLeagueIds } = useLeaguesQuery({
     enabled: shouldLoadLeagueShell,
   });
   const activeLeagueCode = leagueCode ?? null;
   const activeLeague = useMemo(
     () =>
-      leaguesQuery.data?.find(
-        (league) => league.leagueCode === activeLeagueCode,
-      ) ?? null,
-    [activeLeagueCode, leaguesQuery.data],
+      leagues?.find((league) => league.leagueCode === activeLeagueCode) ?? null,
+    [activeLeagueCode, leagues],
   );
+  // #202 (A8) — commissioner comes from the viewer's own memberships beside the league list,
+  // and root admin from the cached session user. Neither is a field on a league.
   const canManageActiveLeague = Boolean(
-    activeLeagueCode &&
-    (activeLeague?.leagueRelationship.commissioner ||
-      activeLeague?.isRootAdmin),
+    activeLeague && (commissionerLeagueIds.has(activeLeague.id) || auth.isRootAdmin),
   );
   const canCreateActiveLeagueContest =
     canManageActiveLeague && activeLeague?.isActive !== false;
@@ -206,7 +204,7 @@ export function AppShell() {
   ]);
 
   useEffect(() => {
-    if (!shouldLoadLeagueShell || !leaguesQuery.data) {
+    if (!shouldLoadLeagueShell || !leagues) {
       return;
     }
 
@@ -216,14 +214,14 @@ export function AppShell() {
         data: {
           path: location.pathname,
           activeLeagueCode,
-          leagueCount: leaguesQuery.data.length,
+          leagueCount: leagues.length,
         },
       },
       "Loaded authenticated app shell state",
     );
   }, [
     activeLeagueCode,
-    leaguesQuery.data,
+    leagues,
     location.pathname,
     logger,
     shouldLoadLeagueShell,
@@ -247,7 +245,8 @@ export function AppShell() {
               <>
                 <LeagueSelector
                   activeLeagueCode={activeLeagueCode}
-                  leagues={leaguesQuery.data ?? []}
+                  commissionerLeagueIds={commissionerLeagueIds}
+                  leagues={leagues ?? []}
                   onCreateLeague={openCreateLeague}
                   onNavigate={(path) => {
                     logger.info(

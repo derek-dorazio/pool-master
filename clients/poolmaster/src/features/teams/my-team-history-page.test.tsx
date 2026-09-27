@@ -16,7 +16,7 @@ const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
@@ -73,28 +73,65 @@ function primeCurrentUser() {
   refreshTokenMock.mockResolvedValue({ data: null });
 }
 
-function primeLeague() {
-  getLeagueByCodeMock.mockResolvedValue({
-    data: {
-      league: {
-        id: 'league-1',
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        isActive: true,
-        iconKey: 'TROPHY',
-        memberCount: 2,
-        activeContestCount: 2,
-        memberType: 'MEMBER',
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: false,
-        },
-        isRootAdmin: false,
-        joinPolicy: 'COMMISSIONER_ONLY',
-        createdAt: '2026-04-15T00:00:00.000Z',
-      },
+const VIEWER_USER = {
+  id: 'user-1',
+  email: 'derek@example.com',
+  username: 'derek@example.com',
+  firstName: 'Derek',
+  lastName: 'Dorazio',
+  isActive: true,
+  isRootAdmin: false,
+  createdAt: '2026-04-15T00:00:00.000Z',
+} as const;
+
+/**
+ * #202 (A8) — the league context: the league plus the viewer's own edges in it, once.
+ *
+ * These fixtures carried `memberType`, `leagueRelationship` and a per-squad
+ * `teamRelationship`/`isRootAdmin` long after the server stopped sending them. The mocks are
+ * untyped, so typecheck could not say so, and the tests passed because nothing read those
+ * fields — but the page's `squadMembership` was missing entirely, which is what it reads now.
+ */
+function leagueContext() {
+  return {
+    league: {
+      id: 'league-1',
+      leagueCode: 'BIGDAWGS',
+      name: 'Big Dawgs',
+      isActive: true,
+      iconKey: 'TROPHY',
+      memberCount: 2,
+      activeContestCount: 2,
+      joinPolicy: 'COMMISSIONER_ONLY',
+      createdAt: '2026-04-15T00:00:00.000Z',
     },
-  });
+    membership: {
+      id: 'league-membership-1',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      user: VIEWER_USER,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      joinedAt: '2026-04-15T00:00:00.000Z',
+      createdAt: '2026-04-15T00:00:00.000Z',
+      updatedAt: '2026-04-15T00:00:00.000Z',
+    },
+    squadMembership: {
+      id: 'membership-1',
+      squadId: 'team-1',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      user: VIEWER_USER,
+      status: 'ACTIVE',
+      joinedAt: '2026-04-15T00:00:00.000Z',
+      createdAt: '2026-04-15T00:00:00.000Z',
+      updatedAt: '2026-04-15T00:00:00.000Z',
+    },
+  };
+}
+
+function primeLeague() {
+  getLeagueByCodeMock.mockResolvedValue({ data: leagueContext() });
 }
 
 function buildMyTeam() {
@@ -108,20 +145,13 @@ function buildMyTeam() {
     memberCount: 1,
     createdAt: '2026-04-15T00:00:00.000Z',
     updatedAt: '2026-04-15T00:00:00.000Z',
-    teamRelationship: {
-      leagueMember: true,
-      owner: true,
-      commissioner: false,
-    },
-    isRootAdmin: false,
     members: [
       {
         id: 'membership-1',
         squadId: 'team-1',
         leagueId: 'league-1',
         userId: 'user-1',
-        firstName: 'Derek',
-        lastName: 'Dorazio',
+        user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
         status: 'ACTIVE',
         joinedAt: '2026-04-15T00:00:00.000Z',
         createdAt: '2026-04-15T00:00:00.000Z',
@@ -255,27 +285,7 @@ describe('MyTeamHistoryPage', () => {
       },
     });
     refreshTokenMock.mockResolvedValue({ data: null });
-    getLeagueByCodeMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 2,
-          memberType: 'MEMBER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: false,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    getLeagueByCodeMock.mockResolvedValue({ data: leagueContext() });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
@@ -289,20 +299,13 @@ describe('MyTeamHistoryPage', () => {
             memberCount: 1,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-15T00:00:00.000Z',
-            teamRelationship: {
-              leagueMember: true,
-              owner: true,
-              commissioner: false,
-            },
-            isRootAdmin: false,
             members: [
               {
                 id: 'membership-1',
                 squadId: 'team-1',
                 leagueId: 'league-1',
                 userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
+                user: { ...VIEWER_USER, id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' },
                 status: 'ACTIVE',
                 joinedAt: '2026-04-15T00:00:00.000Z',
                 createdAt: '2026-04-15T00:00:00.000Z',

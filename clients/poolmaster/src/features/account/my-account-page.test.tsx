@@ -17,7 +17,7 @@ const {
 }));
 
 bindApiMocks({
-  getCurrentUser: getCurrentUserMock,
+  getUser: getCurrentUserMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
 });

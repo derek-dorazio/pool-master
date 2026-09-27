@@ -1,6 +1,6 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
+import { getUser, logoutUser, refreshToken } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   AUTH_ME_QUERY_KEY,
@@ -42,7 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'Loading current auth user',
       );
 
-      const response = await getCurrentUser();
+      // #202 — `GET /users/me`. Reading a user is one operation whose subject is a
+      // parameter; `me` resolves to the authenticated caller. There is no `/auth/me`.
+      const response = await getUser({ path: { userId: 'me' } });
       if (!response.data?.user) {
         throw new Error('Current user profile is missing from the auth response.');
       }

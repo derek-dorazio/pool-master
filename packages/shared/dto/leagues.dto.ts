@@ -13,7 +13,6 @@ import {
 } from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { ContestSummaryDtoSchema } from './contests.dto';
-import { LeagueAuditEntryDtoSchema } from './audit.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -114,10 +113,7 @@ export const AcceptInvitationRequestSchema = z.object({
 }).describe('Authenticated invitation-acceptance payload.');
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationRequestSchema>;
 
-export const CopySeasonRequestSchema = z.object({
-  sourceContestIds: z.array(z.string()).min(1).describe('Contests from the source season that should be copied forward.'),
-}).describe('Commissioner request payload for copying a prior season into a new one.');
-export type CopySeasonRequest = z.infer<typeof CopySeasonRequestSchema>;
+// #202 — `CopySeasonRequestSchema` is gone with the `copy-season` route.
 
 export const CsvImportRowSchema = z.object({
   email: z.string().describe('Email address for the imported member row.'),
@@ -331,6 +327,38 @@ export const LeagueContextResponseSchema = z.object({
 export type LeagueContextResponse = z.infer<typeof LeagueContextResponseSchema>;
 
 /**
+ * The league-list query (#202).
+ *
+ * `scope` is the operation's scope parameter, and it is **explicit rather than inferred from
+ * the caller's role**. `docs/DOMAIN-OPERATIONS.md` said scope would be "resolved from the
+ * caller's role", and implementing the collapse showed that cannot work for a root admin:
+ * they legitimately need both scopes. The league selector wants the leagues they personally
+ * belong to; the management surface wants every league. One request cannot mean both, so the
+ * caller says which it wants and authorization decides whether it may.
+ *
+ * `all` is the unscoped read access rule A1 permits to a root admin only; anything else gets
+ * 403. `mine` is the scoped read A2 gives everyone, including a root admin asking about their
+ * own memberships.
+ */
+export const LeagueListQuerySchema = z.object({
+  scope: z
+    .enum(['mine', 'all'])
+    .optional()
+    .describe("Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access."),
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.'),
+  isActive: z
+    .boolean()
+    .optional()
+    .describe('Optional active/inactive filter. Omitted returns both.'),
+}).describe('League-list query. Narrows the result; it never pages it.');
+export type LeagueListQuery = z.infer<typeof LeagueListQuerySchema>;
+
+/**
  * The leagues list — the one inherently multi-league surface, and so the one exception A8
  * allows. The viewer's relationship differs per league, and the selector must show which of
  * your leagues you run, so the relationship travels as a SET: one `LeagueMembership[]`
@@ -364,9 +392,9 @@ export const GenerateInviteLinkResponseSchema = z.object({
 }).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
 
-export const LeagueAuditEntriesResponseSchema = z.object({
-  entries: z.array(LeagueAuditEntryDtoSchema),
-}).describe('League audit-log response.');
+// #202 — `LeagueAuditEntriesResponseSchema` is gone with the two league audit-log reads. The
+// contest audit route keeps its own response schema in `contests.dto.ts`, and both still share
+// `LeagueAuditEntryDtoSchema`.
 
 /**
  * Commissioner dashboard response. The `league` and `contests` fields are typed against the
@@ -384,10 +412,9 @@ export const LeagueDashboardResponseSchema = z.object({
 }).describe('Commissioner dashboard response.');
 export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
 
-export const ResolveActionItemResponseSchema = z.object({
-  actionItem: LeagueActionItemDtoSchema,
-}).describe('Action-item resolution response.');
-export type ResolveActionItemResponse = z.infer<typeof ResolveActionItemResponseSchema>;
+// #202 — `ResolveActionItemResponseSchema` is gone with the resolve route. `LeagueActionItemDto`
+// stays because `LeagueDashboardResponse` still declares an `actionItems` array — which is
+// permanently empty until action items are designed, and is recorded on the dashboard follow-up.
 
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
 
@@ -403,9 +430,9 @@ registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchem
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);
 registerSchema('AcceptInvitationRequest', AcceptInvitationRequestSchema);
-registerSchema('CopySeasonRequest', CopySeasonRequestSchema);
 registerSchema('CsvImportRow', CsvImportRowSchema);
 registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
+registerSchema('LeagueListQuery', LeagueListQuerySchema);
 registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
@@ -420,7 +447,5 @@ registerSchema('LeagueMembersResponse', LeagueMembersResponseSchema);
 registerSchema('LeagueMembershipResponse', LeagueMembershipResponseSchema);
 registerSchema('SendLeagueInvitationsResponse', SendLeagueInvitationsResponseSchema);
 registerSchema('GenerateInviteLinkResponse', GenerateInviteLinkResponseSchema);
-registerSchema('LeagueAuditEntriesResponse', LeagueAuditEntriesResponseSchema);
 registerSchema('LeagueDashboardResponse', LeagueDashboardResponseSchema);
-registerSchema('ResolveActionItemResponse', ResolveActionItemResponseSchema);
 registerSchema('LeagueBulkOperationResponse', LeagueBulkOperationResponseSchema);
