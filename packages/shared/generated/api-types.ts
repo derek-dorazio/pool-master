@@ -5750,6 +5750,18 @@ export interface components {
                 role?: "COMMISSIONER" | "MEMBER";
             }[];
         };
+        /** @description League-list query. Narrows the result; it never pages it. */
+        LeagueListQuery: {
+            /**
+             * @description Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+             * @enum {string}
+             */
+            scope?: "mine" | "all";
+            /** @description Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16. */
+            search?: string;
+            /** @description Optional active/inactive filter. Omitted returns both. */
+            isActive?: boolean;
+        };
         /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
         LeagueDto: {
             /** @description Internal league identifier used for authenticated management APIs. */

@@ -3853,6 +3853,24 @@ export type ImportLeagueMembersRequest = {
 };
 
 /**
+ * League-list query. Narrows the result; it never pages it.
+ */
+export type LeagueListQuery = {
+    /**
+     * Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access.
+     */
+    scope?: 'mine' | 'all';
+    /**
+     * Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16.
+     */
+    search?: string;
+    /**
+     * Optional active/inactive filter. Omitted returns both.
+     */
+    isActive?: boolean;
+};
+
+/**
  * A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.
  */
 export type LeagueDto = {

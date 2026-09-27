@@ -8267,6 +8267,30 @@
         "additionalProperties": false,
         "description": "Commissioner request payload for importing league members."
       },
+      "LeagueListQuery": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "mine",
+              "all"
+            ],
+            "description": "Which leagues to return: 'mine' (default) for the leagues the caller belongs to, 'all' for every league on the platform. 'all' requires root-admin access."
+          },
+          "search": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional case-insensitive substring matched against the league name. A filter, never a slice — see §16."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Optional active/inactive filter. Omitted returns both."
+          }
+        },
+        "additionalProperties": false,
+        "description": "League-list query. Narrows the result; it never pages it."
+      },
       "LeagueDto": {
         "type": "object",
         "properties": {

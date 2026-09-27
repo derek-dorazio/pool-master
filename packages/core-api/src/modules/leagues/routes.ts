@@ -9,7 +9,6 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/leagues.dto';
 import {
   zodToJsonSchema,
-  LeagueListQuerySchema,
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -116,7 +115,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       description:
         'Returns leagues together with the viewer\'s own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer\'s relationship travels as a set rather than per row (access rule A8).\n\n`scope` selects which leagues: `mine` (the default) returns the leagues the caller belongs to and powers the welcome page, header selector and My Leagues overview; `all` returns every league on the platform and powers root-admin league management. `all` is the unscoped read access rule A1 permits to root admins only, and returns 403 otherwise. `search` and `isActive` narrow either scope.\n\nThis replaced `listLeagues` + `adminListLeagues`, which were one operation split by caller role.',
       operationId: 'listLeagues',
-      querystring: zodToJsonSchema(LeagueListQuerySchema),
+      querystring: schemaRef('LeagueListQuery'),
       response: {
         200: schemaRef('LeagueListResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),

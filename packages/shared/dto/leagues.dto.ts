@@ -432,6 +432,7 @@ registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSch
 registerSchema('AcceptInvitationRequest', AcceptInvitationRequestSchema);
 registerSchema('CsvImportRow', CsvImportRowSchema);
 registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
+registerSchema('LeagueListQuery', LeagueListQuerySchema);
 registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
