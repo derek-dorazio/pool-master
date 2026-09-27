@@ -1,15 +1,15 @@
 import {
-  changeAccountPassword,
+  changeUserPassword,
   createLeague,
-  deleteAccount,
-  getCurrentUser,
-  inactivateAccount,
+  deleteUser,
+  getUser,
+  disableUser,
   loginUser,
-  reactivateAccount,
+  enableUser,
   refreshToken,
-  updateAccountPreferences,
-  updateAccountProfile,
-  updateAccountUsername,
+  updateUserPreferences,
+  updateUserProfile,
+  updateUserUsername,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
 import {
@@ -38,8 +38,9 @@ describe('SDK Functional: Account Lifecycle', () => {
     const updatedEmail = createFunctionalEmail('updated-account-profile');
     const updatedUsername = `updated-account-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const profileResponse = await updateAccountProfile({
+    const profileResponse = await updateUserProfile({
       client: cookieClient,
+      path: { userId: 'me' },
       body: {
         email: updatedEmail,
         firstName: 'Updated',
@@ -51,8 +52,9 @@ describe('SDK Functional: Account Lifecycle', () => {
     expect(profileResponse.data?.user.firstName).toBe('Updated');
     expect(profileResponse.data?.user.lastName).toBe('Person');
 
-    const usernameResponse = await updateAccountUsername({
+    const usernameResponse = await updateUserUsername({
       client: cookieClient,
+      path: { userId: 'me' },
       body: {
         username: updatedUsername,
       },
@@ -60,8 +62,9 @@ describe('SDK Functional: Account Lifecycle', () => {
 
     expect(usernameResponse.data?.user.username).toBe(updatedUsername);
 
-    const preferencesResponse = await updateAccountPreferences({
+    const preferencesResponse = await updateUserPreferences({
       client: cookieClient,
+      path: { userId: 'me' },
       body: {
         timezone: 'America/New_York',
         locale: 'en-US',
@@ -75,8 +78,9 @@ describe('SDK Functional: Account Lifecycle', () => {
     expect(preferencesResponse.data?.user.timeFormat).toBe('12H');
     expect(preferencesResponse.data?.user.dateFormat).toBe('MDY');
 
-    const passwordResponse = await changeAccountPassword({
+    const passwordResponse = await changeUserPassword({
       client: cookieClient,
+      path: { userId: 'me' },
       body: {
         currentPassword: user.password,
         newPassword: 'UpdatedPassword123!',
@@ -117,15 +121,18 @@ describe('SDK Functional: Account Lifecycle', () => {
     });
     const cookieClient = createCookieSessionClient(user.login.tokens);
 
-    const inactivateResponse = await inactivateAccount({
+    const inactivateResponse = await disableUser({
       client: cookieClient,
+      path: { userId: 'me' },
+      body: {},
     });
 
     expect(inactivateResponse.data?.user.id).toBe(user.userId);
     expect(inactivateResponse.data?.user.isActive).toBe(false);
 
-    const currentUserResponse = await getCurrentUser({
+    const currentUserResponse = await getUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
     expect(currentUserResponse.data?.user.isActive).toBe(false);
@@ -152,8 +159,9 @@ describe('SDK Functional: Account Lifecycle', () => {
       code: 'INVALID_REFRESH_TOKEN',
     });
 
-    const wrongDeleteResponse = await deleteAccount({
+    const wrongDeleteResponse = await deleteUser({
       client: user.client,
+      path: { userId: 'me' },
       body: {
         email: 'wrong@example.com',
       },
@@ -164,8 +172,9 @@ describe('SDK Functional: Account Lifecycle', () => {
       code: 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
     });
 
-    const deleteResponse = await deleteAccount({
+    const deleteResponse = await deleteUser({
       client: user.client,
+      path: { userId: 'me' },
       body: {
         email: user.email,
       },
@@ -173,8 +182,9 @@ describe('SDK Functional: Account Lifecycle', () => {
 
     expect(deleteResponse.data?.success).toBe(true);
 
-    const meAfterDelete = await getCurrentUser({
+    const meAfterDelete = await getUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
   expectFunctionalError(meAfterDelete, {
@@ -212,14 +222,17 @@ describe('SDK Functional: Account Lifecycle', () => {
 
     expect(createLeagueResponse.data?.league.id).toBeTruthy();
 
-    const inactivateResponse = await inactivateAccount({
+    const inactivateResponse = await disableUser({
       client: cookieClient,
+      path: { userId: 'me' },
+      body: {},
     });
 
     expect(inactivateResponse.data?.user.isActive).toBe(false);
 
-    const blockedDeleteResponse = await deleteAccount({
+    const blockedDeleteResponse = await deleteUser({
       client: user.client,
+      path: { userId: 'me' },
       body: {
         email: user.email,
       },
@@ -230,14 +243,16 @@ describe('SDK Functional: Account Lifecycle', () => {
       code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
     });
 
-    const reactivateResponse = await reactivateAccount({
+    const reactivateResponse = await enableUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
     expect(reactivateResponse.data?.user.isActive).toBe(true);
 
-    const refreshedProfile = await getCurrentUser({
+    const refreshedProfile = await getUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
     expect(refreshedProfile.data?.user.isActive).toBe(true);

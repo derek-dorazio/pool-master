@@ -68,7 +68,8 @@
     "lint:service": "eslint 'packages/**/*.ts' --max-warnings 0",
     "lint:webapp": "eslint 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
     "typecheck:service": "turbo typecheck --filter=!@poolmaster/poolmaster",
-    "typecheck:webapp": "turbo typecheck --filter=@poolmaster/poolmaster"
+    "typecheck:webapp": "turbo typecheck --filter=@poolmaster/poolmaster",
+    "typecheck:tests": "tsc --noEmit --project tests/tsconfig.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

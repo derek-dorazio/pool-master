@@ -54,7 +54,6 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     id,
     leagueCode: `LEAGUE${id.slice(-4)}`,
     name: `League ${id}`,
-    createdBy: 'owner-1',
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
     joinPolicy: JoinPolicy.COMMISSIONER_ONLY,

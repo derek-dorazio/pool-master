@@ -62,6 +62,11 @@ jobs:
         run: npm run lint:service
       - name: service - typecheck
         run: npm run typecheck:service
+      # turbo typecheck compiles packages/ only (#181), so tests/ was never
+      # type-checked anywhere. Both CI fallouts on #197 were tests importing
+      # modules the change had deleted.
+      - name: service - typecheck tests
+        run: npm run typecheck:tests
 
   # =========================================================================
   # Backend Unit Tests + Coverage

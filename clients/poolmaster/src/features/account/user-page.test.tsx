@@ -129,7 +129,6 @@ function buildCurrentUser({
     timeFormat: '12H',
     dateFormat: 'MDY',
     createdAt: '2026-04-13T00:00:00.000Z',
-    sessionId: 'session-1',
     ...overrides,
   };
 }
@@ -304,7 +303,6 @@ describe('UserPage', () => {
         email: 'updated@example.com',
         firstName: 'Updated',
         lastName: 'Person',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -365,7 +363,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         username: 'derekd',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -427,7 +424,6 @@ describe('UserPage', () => {
         timezone: 'America/Chicago',
         timeFormat: '24H',
         dateFormat: 'YMD',
-        sessionId: 'session-1',
       }),
     );
   });
@@ -496,7 +492,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: false,
-        sessionId: 'session-1',
       }),
     );
   });
@@ -540,7 +535,6 @@ describe('UserPage', () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         isActive: true,
-        sessionId: 'session-1',
       }),
     );
   });
@@ -620,56 +614,6 @@ describe('UserPage', () => {
 
     expect(await screen.findByTestId('root-admin-user-temp-password')).toHaveTextContent(
       'Pm-temp-password!9a',
-    );
-  });
-
-  it('pool-master-6nl shows linked team and league names when root-admin account delete is blocked by ownership', async () => {
-    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
-    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: false });
-    adminDeleteUserMock.mockResolvedValue({
-      data: null,
-      error: {
-        error: {
-          code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
-          message: 'Account still owns or belongs to league-scoped data: user-2',
-          details: {
-            dependencyType: 'TEAM_OWNER',
-            team: {
-              id: 'team-1',
-              name: 'Birdie Hunters',
-            },
-            league: {
-              id: 'league-1',
-              name: 'Masters League',
-              leagueCode: 'MASTERS',
-            },
-          },
-        },
-      },
-    });
-
-    renderUserPage('/users/user-2');
-
-    await screen.findByTestId('root-admin-user-page');
-    fireEvent.click(screen.getByTestId('root-admin-user-open-delete'));
-    fireEvent.change(screen.getByTestId('root-admin-user-delete-confirmation'), {
-      target: { value: 'target@example.com' },
-    });
-    fireEvent.click(screen.getByTestId('root-admin-user-submit-delete'));
-
-    expect(
-      await screen.findByText(
-        "Account cannot be deleted because it's still an owner of team",
-        { exact: false },
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Birdie Hunters' })).toHaveAttribute(
-      'href',
-      '/league/MASTERS/teams/team-1',
-    );
-    expect(screen.getByRole('link', { name: 'Masters League-MASTERS' })).toHaveAttribute(
-      'href',
-      '/league/MASTERS',
     );
   });
 });

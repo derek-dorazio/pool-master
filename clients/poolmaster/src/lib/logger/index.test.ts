@@ -28,7 +28,6 @@ describe('pool-master-dxd.24: logger accessor naming', () => {
       isActive: true,
       isRootAdmin: false,
       createdAt: '2026-04-22T00:00:00.000Z',
-      sessionId: 'session-1',
     });
 
     logger.warn({ action: 'test.authContext' }, 'with cached auth context');
@@ -36,7 +35,6 @@ describe('pool-master-dxd.24: logger accessor naming', () => {
     expect(warnSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'test.authContext',
-        sessionId: 'session-1',
         userId: 'user-1',
       }),
     );
@@ -47,7 +45,6 @@ describe('pool-master-dxd.24: logger accessor naming', () => {
     expect(warnSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({
         action: 'test.authContextCleared',
-        sessionId: null,
         userId: null,
       }),
     );

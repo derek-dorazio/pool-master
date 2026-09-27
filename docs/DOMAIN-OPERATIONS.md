@@ -27,7 +27,9 @@ everything, and repeating it on every row adds noise.
 
 ## Access rules
 
-**These six rules decide every row in the tables below.** Where a table and a rule
+**These rules decide every row in the tables below.** A1–A7 decide *who may call* an
+operation; A8 decides *what viewer context the response carries*; A9 decides what
+`isActive` does and does not constrain. Where a table and a rule
 disagree, the rule wins and the table is a bug. New operations are assigned a role by
 applying these rules, not by precedent from a similar-looking route.
 
@@ -80,6 +82,128 @@ the client must resolve with a second call it is not permitted to make unscoped.
 Secrets are not a redaction concern here — `passwordHash` and `authId` are not on the
 canonical `UserDto` at all, for any caller.
 
+## A8. Viewer context is delivered once per league, never per row
+
+**Settled 2026-09-26 with the repo owner.** This is the answer to "where does viewer
+context live", and it is load-bearing for every DTO below.
+
+### The problem it solves
+
+`LeagueDto` and `SquadDto` carried the requester's relationship to the object *as fields on
+the object*, in five different encodings:
+
+| Field | On | Shape |
+|---|---|---|
+| `leagueRelationship` | `LeagueSummaryDto` | `{ leagueMember, commissioner }` |
+| `memberType` | `LeagueSummaryDto` | nullable `LeagueRole` |
+| `isRootAdmin` | `LeagueSummaryDto`, `SquadDto` | `boolean`, repeated on every row |
+| `teamRelationship` | `SquadDto` | `{ leagueMember, owner, commissioner }` |
+| `viewerAuthority` | `UserDetailResponse` | `{ self, rootAdmin, viewer }` |
+
+Two requesters therefore got **different `LeagueDto` values for the same league**, which
+makes the DTO not a value of the entity, breaks caching, and was the seed of the
+admin/member DTO split this whole pass exists to undo.
+
+### Why "one round trip per league" is the answer
+
+The webapp is a single-page app whose league context is already URL-scoped and already
+cached client-side. This is not a new mechanism to build — it exists:
+
+- every league route is `/league/:leagueCode/…`
+- `resolveDefaultLeagueCode()` (`league-routing.ts`) picks the landing league — the
+  `poolmaster_recent_league` cookie if it still matches a membership, else newest
+- `LeagueSelector` navigates to a new league and `rememberRecentLeagueCode()` persists it
+- selecting a league fetches `getLeagueByCode` once, cached at
+  `QueryKeys.leagues.detail(leagueCode)`
+- TanStack Query is the state store, deliberately, with no Zustand mirror
+  (`auth-state-ownership.test.ts` enforces this)
+
+So the client already receives the viewer's league context in one round trip on league
+selection and holds it for the session. **Every other response repeating it is
+duplication, not delivery.**
+
+### The rule
+
+| Surface | Viewer context it carries |
+|---|---|
+| League-scoped responses — league detail, squads, members, contests, entries | **none.** The client has it from the league-context call |
+| The league-context call (`getLeagueByCode`) | the viewer's `LeagueMembership` for that league **and** their `SquadMembership` in it |
+| The leagues list — the one inherently multi-league surface | the viewer's `LeagueMembership[]`, once, as an array beside the leagues |
+| `isRootAdmin` | **neither.** It is a property of the `User`, read from the cached `UserDto` |
+
+`LeagueDto` and `SquadDto` become pure entity values. No new DTO is invented: the viewer's
+context *is* `UserDto` + `LeagueMembership[]` + `SquadMembership[]`, all of which already
+exist as canonical shapes. This satisfies working rule 5 — the apparent gap turned out to
+already exist under another name.
+
+### Why the leagues list is the one exception
+
+It is inherently N leagues and the viewer's relationship differs per league:
+`getLeagueSelectorOptions()` filters on `leagueRelationship.commissioner` and
+`sortLeaguesForOverview()` sorts by it, because the selector must show which of your
+leagues you run. That needs the relationship **as a set** — which is
+`LeagueMembership[]`, one array, not a field repeated on every row.
+
+### Evidence that these were already residue, not design
+
+- `app-shell.tsx` reads **both sources in one file** — line 49 uses `auth.isRootAdmin`
+  from the cached user, line 64 uses `activeLeague?.isRootAdmin`. Around twelve call sites
+  read that global boolean off a league or squad while `auth-provider.tsx:175` has exposed
+  it all along.
+- `my-team-page.tsx:149` identifies the viewer's own squad with
+  `teamsQuery.data?.find(team => team.teamRelationship.owner)` — it fetches every squad in
+  the league and scans a per-row viewer flag. With the viewer's `SquadMembership` in the
+  league context this is `find(t => t.id === viewer.squadId)`, and `teamRelationship` comes
+  off `SquadDto` entirely.
+- `league-cache.ts:6` has a `toLeagueSummary()` that hand-projects `LeagueDetailDto` down
+  to `LeagueSummaryDto` field by field — the shadow-projection problem replicated in the
+  **client**. Collapsing the two into one `LeagueDto` deletes the function.
+
+### What this does not change
+
+Working rule 4 still holds: admin-only *fields* are noted, not enforced. A8 is about
+**whose relationship to the object** travels in the payload, not about trimming fields per
+caller. Nothing here authorises a redacted variant.
+
+---
+
+## A9. `isActive` is a read filter, not a write lock
+
+**Settled 2026-09-26 with the repo owner**, after this was got wrong while planning slice 1's
+service migration.
+
+Inactivating anything — a `User`, `Squad`, `League`, `SportEvent` — means it is **excluded
+from views and from use**. That is the whole of what it means, and it is enforced where
+reads happen:
+
+- `SquadRepository.findByLeague(leagueId, includeInactive = false)`
+- `SquadMembershipRepository.findBySquad(squadId, includeInactive = false)`
+- `LeagueMembershipRepository.findByLeague` / `findByUser` / `countActiveByLeagues`, all
+  filtering `status = ACTIVE`
+
+**It does not freeze the row against writes.** An inactive object can still be edited; the
+edit simply is not visible anywhere, because the reads exclude it. So a guard that refuses a
+*write* because the target is inactive is not protecting anything — it is a second,
+weaker version of a rule the read layer already enforces completely.
+
+### The one exception, and why it is not the same thing
+
+**Permanent delete requires the row to be inactive already.** That is a genuine write
+precondition, and the rules that state it (`deleteInactiveSquad`, `deleteInactiveLeague`,
+admin and self user delete) stay exactly as they are.
+
+The difference: that gate exists so a destructive, irreversible operation cannot be reached
+in one step from the normal state. It is sequencing, not freezing. Blocking a *profile edit*
+on an inactive account protects nothing by comparison — nothing renders it either way.
+
+### What this ruled out in slice 1
+
+`account/service`'s `requireUserForMutableAccountAction` refused profile, username and
+preference updates whenever the account was inactive. It reads as a generalisation of the
+delete gate, applied to all writes. It was dropped: nothing in the operation set makes an
+inactive account read-only, and a user must be able to sign in while inactive in order to
+reactivate, so the account was never actually frozen.
+
 ---
 
 ## Slice 1 — Identity and membership
@@ -101,7 +225,7 @@ are wider — see the league-scoped row.
 | Read one | `self`, `rootAdmin` | A6 · `me` resolves to the caller |
 | **Read league peers** | `member` | **A4 + A6** · scoped through the `LeagueMembership` join; returns users sharing a league with the caller, as the canonical `UserDto` |
 | List / search *(unscoped)* | `rootAdmin` | **A1** |
-| Update profile, username, preferences | `self`, `rootAdmin` | A6 |
+| Update profile, username, preferences | `self`, `rootAdmin` | A6 · **one operation, either caller** — `modules/users/user-profile-service.ts`; the authority rule is `requireWritableUser`, and a caller who is neither gets 403 `USER_WRITE_FORBIDDEN` |
 | Change own password | `self` | A6 · requires the current password |
 | Reset another's password | `rootAdmin` | A6 · no current password; the subject differs, not just the precondition |
 | Disable *(set `isActive = false`)* | `self`, `rootAdmin` | A6 · self-inactivate and admin-disable are **one operation** |
@@ -109,6 +233,12 @@ are wider — see the league-scoped row.
 | Delete | `self`, `rootAdmin` | A6 |
 | Revoke sessions | `self`, `rootAdmin` | A6 · self-logout and admin force-logout are **one operation** |
 | Grant / revoke root admin | `rootAdmin` | A6 |
+
+**The scope is a parameter, not a second operation.** The account routes pass the
+authenticated caller as both actor and subject; an admin route passes a `userId`. That is the
+only difference between the two callers, and it is an argument — which is why there is one
+implementation. Before #202 the `self` half lived in `account/service.ts` with the authority
+rule implicit in the route prefix, and the `rootAdmin` half did not exist.
 
 **A member reads peers' `User` data — name and email — through the league join, never
 unscoped.** The canonical `UserDto` travels on the `LeagueMembership` / `SquadMembership`
@@ -213,9 +343,31 @@ the DAO already expresses it, where `LeagueRepository.findAll()` is the unscoped
 
 ## Settled during review
 
+**Viewer context moves out of the domain DTOs — see A8 above.** `leagueRelationship`,
+`memberType`, `teamRelationship`, `viewerAuthority` and the per-row `isRootAdmin` all come
+off `LeagueDto` and `SquadDto`. Settled 2026-09-26; A8 carries the reasoning and the
+evidence.
+
 **`League.createdBy` is dropped.** It was a bare `String @db.Uuid` with no relation — no
-referential integrity, no traversal — and nothing read it for a decision. Its only two
-readers passed it through: the repository row→domain mapper, and an admin DTO field.
+referential integrity, no traversal.
+
+**Correction (2026-09-26, while implementing).** This section previously said "nothing read
+it for a decision. Its only two readers passed it through." That was wrong. Four call sites
+*queried* it, and two of them gated a destructive operation: the user hard-delete dependency
+guards in `admin/user-service.ts` and `account/service.ts` both counted
+`league.createdBy = userId`, and the admin guard reported a `LEAGUE_CREATOR` dependency type
+from it.
+
+Dropping it is still correct, for a better reason than "nothing reads it": **those counts are
+redundant.** Both guards already count the user's `LeagueMembership` rows, and `createLeague`
+writes the creator's `COMMISSIONER` membership in the same operation, so every creator is
+already caught by that count. The only case `createdBy` added was a user who created a league
+and was later removed from it — who under §12 has no remaining relationship to it. The
+`LEAGUE_CREATOR` dependency type is removed with the column.
+
+`Squad.createdBy` is unaffected. It is a real relation (`@relation("SquadCreatedBy")`) and
+stays, along with the `createdSquadCount` guard. The `TEAM_OWNER` dependency *type* is gone
+with the rest of the dependency-detail payload — see below.
 
 Creator provenance is not a concept this product needs. Who runs a league is the
 `LeagueMembership` with `role = COMMISSIONER`, which league creation already writes.
@@ -224,6 +376,34 @@ Dropping it: remove the column (migration), the field from `League` in
 `packages/shared/domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the
 DTO field emitted by `admin/league-service.ts`. `input.createdBy` **stays** as a parameter
 of the create operation — it is the userId that becomes the first commissioner.
+
+### Three guards dropped while implementing slice 1 (2026-09-26)
+
+Each existed in exactly one of the two User write paths, which is what made them worth
+looking at: a rule that only half the callers enforce is not a rule.
+
+**1. The self-demotion block on `setRootAdmin` is gone.** `admin/user-service.ts` rejected
+`isRootAdmin = false` when the subject was the caller, with a 400
+`SELF_ROOT_ADMIN_CHANGE`, *before* the last-root-admin count ran. The rule it was reaching
+for is "the platform must keep at least one root admin", and that is what the
+last-root-admin guard already enforces — for every caller, not just for the self case. With
+two root admins, one stepping down is a legitimate operation and the count permits it; with
+one, the count rejects it whoever asks. The self check added no protection, only a second
+error code the UI had to handle and a rule the account path did not have.
+
+**2. The dependency-detail payload on a blocked hard delete is gone.** `deleteUser` resolved
+the first blocking row into `{ dependencyType, team, league }` and shipped it in the error
+envelope, so the UI could render "still an owner of team X in league Y" with links. Three
+extra queries, a payload shape, a client-side parser and a discriminated type, to name one
+of possibly many blockers — and only on the admin path; self-delete returned the typed 409
+alone and always had. A typed 409 `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract; the
+blockers themselves are visible in the league and squad views that A9 already governs.
+
+**3. The read-only lock on inactive accounts is gone.** See A9: `isActive` is a read filter,
+not a write lock. `account/service.ts` rejected profile, username, preference and password
+writes to an inactive account with a 409 `ACCOUNT_INACTIVE_READ_ONLY`; the admin path
+imposed no such thing, and the lock blocked the obvious recovery — correct your details,
+then reactivate.
 
 ## Open items
 

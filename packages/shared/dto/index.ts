@@ -1,4 +1,5 @@
 export * from './common.dto';
+export * from './users.dto';
 export * from './auth.dto';
 export * from './leagues.dto';
 export * from './squads.dto';
@@ -10,7 +11,6 @@ export * from './participants.dto';
 export * from './admin.dto';
 export * from './admin-golf.dto';
 export * from './config.dto';
-export * from './account.dto';
 export * from './events.dto';
 export * from './ingestion.dto';
 export * from './live-score.dto';

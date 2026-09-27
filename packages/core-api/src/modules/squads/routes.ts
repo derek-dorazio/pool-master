@@ -11,6 +11,7 @@ import {
   PrismaSquadMembershipRepository,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { createSquadHandlers } from './handler';
 import { createSquadOwnerInvitationHandlers } from './owner-invitation-handler';
@@ -27,10 +28,12 @@ export function squadsModule(fastify: FastifyInstance): void {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const squadOwnerInvitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const userRepo = new PrismaUserRepository(prisma);
   const service = new SquadService(
     squadRepo,
     squadMembershipRepo,
     leagueMembershipRepo,
+    userRepo,
     prisma,
     fastify.log,
   );
@@ -40,6 +43,7 @@ export function squadsModule(fastify: FastifyInstance): void {
     leagueMembershipRepo,
     squadRepo,
     squadMembershipRepo,
+    userRepo,
     prisma,
   );
   const ownerInvitationHandler = createSquadOwnerInvitationHandlers(ownerInvitationService);

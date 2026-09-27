@@ -137,7 +137,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/me": {
+    "/api/v1/users/": {
         parameters: {
             query?: never;
             header?: never;
@@ -145,12 +145,216 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get current user profile from JWT
-         * @description Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.
+         * List users
+         * @description Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
          */
-        get: operations["getCurrentUser"];
+        get: operations["listUsers"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read one user
+         * @description Returns one user as the canonical UserDto. `me` resolves to the authenticated caller. Access rule A6: the subject themselves, or a root admin. Carries no viewer context (A8).
+         */
+        get: operations["getUser"];
+        put?: never;
+        post?: never;
+        /**
+         * Permanently delete an inactive user
+         * @description Removes the user row and the user-owned data that references it, in one transaction. Self-delete and admin-delete are ONE operation (A6). Gated: the account must already be inactive — the one place isActive is a write precondition rather than a read filter (A9) — the exact email must be confirmed, no league-scoped data may remain, and the last root admin cannot be removed.
+         */
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a user profile
+         * @description Updates email, first name and last name. One operation for either caller — the subject themselves or a root admin (A6). The email must be unique across account emails and usernames.
+         */
+        put: operations["updateUserProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a user login username
+         * @description Updates the login username after confirming it is unique across usernames AND emails, because login accepts either.
+         */
+        put: operations["updateUserUsername"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update user preferences
+         * @description Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.
+         */
+        put: operations["updateUserPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change your own password
+         * @description Changes the password after validating the current one. Self only (A6): a root admin resetting somebody else uses the reset operation, which has a different subject rather than merely a different precondition. Other sessions are revoked while the caller stays signed in.
+         */
+        post: operations["changeUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset another user's password
+         * @description Generates a temporary password for the target user, revokes their live sessions, and returns the credential for the root admin to relay. Root admin only (A6).
+         */
+        post: operations["resetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disable a user
+         * @description Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+         */
+        post: operations["disableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable a user
+         * @description Sets isActive = true. Self-reactivation and admin-enable are ONE operation (A6). Idempotent. Re-enabling yourself rotates a fresh session so the account is immediately usable.
+         */
+        post: operations["enableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/revoke-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke every live session for a user
+         * @description Revokes all refresh tokens, forcing re-authentication. Self sign-out-everywhere and admin force-logout are ONE operation (A6).
+         */
+        post: operations["revokeUserSessions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/root-admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant or revoke the root-admin role
+         * @description Root admin only (A6). Self-demotion is permitted: the only rule is that the platform keeps an administrator, which the last-root-admin guard enforces for every caller. A demotion also revokes the subject's sessions so the removed authority cannot be used until re-login.
+         */
+        post: operations["setUserRootAdmin"];
         delete?: never;
         options?: never;
         head?: never;
@@ -186,7 +390,7 @@ export interface paths {
         };
         /**
          * List leagues for the current user
-         * @description Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.
+         * @description Returns the leagues visible to the authenticated user, together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.
          */
         get: operations["listLeagues"];
         put?: never;
@@ -234,7 +438,7 @@ export interface paths {
         };
         /**
          * Get league details by league code
-         * @description Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.
+         * @description The league-context call. Returns a league by its stable league code together with the viewer's own membership edges in it — their LeagueMembership and their SquadMembership. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation, it allows root-admin override access without faking league membership, and it is the one response that carries viewer context: every other league-scoped response omits it because the client already holds this one (access rule A8).
          */
         get: operations["getLeagueByCode"];
         put?: never;
@@ -1330,290 +1534,6 @@ export interface paths {
         patch: operations["updateParticipant"];
         trace?: never;
     };
-    "/api/v1/account/reactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reactivate the authenticated account
-         * @description Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.
-         */
-        post: operations["reactivateAccount"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update the authenticated account profile
-         * @description Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.
-         */
-        put: operations["updateAccountProfile"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/username": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update the authenticated account username
-         * @description Updates the authenticated account login username after confirming it is unique across account usernames and emails.
-         */
-        put: operations["updateAccountUsername"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/preferences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update authenticated account preferences
-         * @description Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.
-         */
-        put: operations["updateAccountPreferences"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change the authenticated account password
-         * @description Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.
-         */
-        post: operations["changeAccountPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/inactivate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Inactivate the authenticated account
-         * @description Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.
-         */
-        post: operations["inactivateAccount"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/account/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete the authenticated inactive account permanently
-         * @description Permanently deletes the authenticated account after the user has already inactivated it and provides exact email confirmation. This removes the user row and user-owned account data.
-         */
-        delete: operations["deleteAccount"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List users with filters
-         * @description Returns the administrative user list with filter support for platform operations and support workflows.
-         */
-        get: operations["adminListUsers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user detail
-         * @description Returns the administrative detail view for a specific user account.
-         */
-        get: operations["adminGetUserDetail"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete an inactive user account as root admin
-         * @description Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.
-         */
-        delete: operations["adminDeleteUser"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/force-logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Force logout a user from all sessions
-         * @description Revokes every active session for the target user so they are forced to authenticate again.
-         */
-        post: operations["adminForceLogout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/disable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Disable a user account
-         * @description Disables the target user account at the platform level.
-         */
-        post: operations["adminDisableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/enable": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-enable a disabled user account
-         * @description Re-enables a previously disabled user account.
-         */
-        post: operations["adminEnableUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset a user password as root admin
-         * @description Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.
-         */
-        post: operations["adminResetUserPassword"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/users/{userId}/root-admin": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Grant or revoke the root-admin role for a user
-         * @description Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.
-         */
-        post: operations["adminSetUserRootAdmin"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/events": {
         parameters: {
             query?: never;
@@ -1666,26 +1586,6 @@ export interface paths {
          * @description Returns root-admin league search results by league name for manage-page lifecycle actions.
          */
         get: operations["adminListLeagues"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/teams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List teams for root-admin management
-         * @description Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.
-         */
-        get: operations["adminListTeams"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3243,6 +3143,214 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
+        UserDto: {
+            /** @description Stable user identifier. */
+            id: string;
+            /** @description Primary email address for the user account. */
+            email: string;
+            /** @description Unique login identifier for the account. */
+            username: string;
+            /** @description First name shown in account and member-management surfaces. */
+            firstName: string;
+            /** @description Last name shown in account and member-management surfaces. */
+            lastName: string;
+            /** @description Whether the account is currently active for normal sign-in and product usage. */
+            isActive: boolean;
+            /** @description Whether the user has platform-level root-admin access. */
+            isRootAdmin: boolean;
+            /**
+             * @description Authentication provider used for the account when known.
+             * @enum {string}
+             */
+            authProvider?: "email" | "google" | "apple";
+            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+            timezone?: string;
+            /** @description Preferred locale for formatting and localized copy. */
+            locale?: string;
+            /**
+             * @description Preferred clock display used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            timeFormat?: "12H" | "24H";
+            /**
+             * @description Preferred date display format used in account and scheduling surfaces.
+             * @enum {string}
+             */
+            dateFormat?: "MDY" | "DMY" | "YMD";
+            /**
+             * Format: date-time
+             * @description Account creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        };
+        /** @description Single-user response. */
+        UserResponse: {
+            /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+        };
+        /** @description User-list response. */
+        UserListResponse: {
+            users: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            }[];
+        };
+        /** @description Profile update payload. Sent by the user themselves or by a root admin (access rule A6). */
+        UserProfileUpdateRequest: {
+            /**
+             * Format: email
+             * @description Updated primary contact email address.
+             */
+            email: string;
+            /** @description Updated first name. */
+            firstName: string;
+            /** @description Updated last name. */
+            lastName: string;
+        };
+        /** @description Username update payload. */
+        UserUsernameUpdateRequest: {
+            /** @description Updated unique login username. */
+            username: string;
+        };
+        /** @description Preferences update payload. Omitted fields are untouched; null clears a field. */
+        UserPreferencesUpdateRequest: {
+            /** @description Preferred IANA timezone. Omit to leave unchanged; null to clear it. */
+            timezone?: string | null;
+            /** @description Preferred locale. Omit to leave unchanged; null to clear it. */
+            locale?: string | null;
+            /**
+             * @description Preferred clock display format. Omit to leave unchanged; null to clear it.
+             * @enum {string|null}
+             */
+            timeFormat?: "12H" | "24H" | null;
+            /**
+             * @description Preferred date display format. Omit to leave unchanged; null to clear it.
+             * @enum {string|null}
+             */
+            dateFormat?: "MDY" | "DMY" | "YMD" | null;
+        };
+        /** @description Password-change payload. Self only, because it requires the current password (A6). */
+        UserPasswordChangeRequest: {
+            /** @description Existing password, which must match before the password can be changed. */
+            currentPassword: string;
+            /** @description New password to persist for future sign-in attempts. */
+            newPassword: string;
+            /** @description Repeat of the new password to guard against confirmation mistakes. */
+            confirmNewPassword: string;
+        };
+        /** @description Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition. */
+        UserResetPasswordRequest: {
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Password-reset response. */
+        UserResetPasswordResponse: {
+            /** @description Temporary password to relay to the user. Existing sessions are revoked and the user should change this after signing in. */
+            temporaryPassword: string;
+        };
+        /** @description Disable payload. The reason is optional because self-inactivation has nobody to explain itself to. */
+        UserDisableRequest: {
+            /** @description Optional human reason captured in the root-admin audit log when an admin disables somebody else. */
+            reason?: string;
+        };
+        /** @description Permanent-delete confirmation payload. */
+        UserDeleteRequest: {
+            /**
+             * Format: email
+             * @description Exact email confirmation required before permanently deleting the inactive account.
+             */
+            email: string;
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Root-admin role-change payload. */
+        SetUserRootAdminRequest: {
+            /** @description Whether the target user should hold the platform-level root-admin role after the change. */
+            isRootAdmin: boolean;
+            /** @description Optional human reason captured in the root-admin audit log. */
+            reason?: string;
+        };
+        /** @description Session-revocation response. */
+        RevokeUserSessionsResponse: {
+            /** @description How many live sessions were revoked. */
+            revokedCount: number;
+        };
         /** @description Authentication token bundle returned after login or registration. */
         AuthTokensDto: {
             /** @description Short-lived bearer token used for authenticated API requests. */
@@ -3253,93 +3361,6 @@ export interface components {
             csrfToken: string;
             /** @description Access-token lifetime in seconds from the time it was issued. */
             expiresIn: number;
-        };
-        /** @description Frontend-facing user profile summary derived from the authenticated account. */
-        UserProfileDto: {
-            /** @description Stable user identifier. */
-            id: string;
-            /** @description Primary email address for the user account. */
-            email: string;
-            /** @description Unique login identifier for the account. */
-            username: string;
-            /** @description First name shown in account and member-management surfaces. */
-            firstName: string;
-            /** @description Last name shown in account and member-management surfaces. */
-            lastName: string;
-            /** @description Whether the account is currently active for normal sign-in and product usage. */
-            isActive: boolean;
-            /** @description Whether the user has platform-level root-admin access. */
-            isRootAdmin: boolean;
-            /**
-             * @description Authentication provider used for the account when known.
-             * @enum {string}
-             */
-            authProvider?: "email" | "google" | "apple";
-            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-            timezone?: string;
-            /** @description Preferred locale for formatting and localized copy. */
-            locale?: string;
-            /**
-             * @description Preferred clock display used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            timeFormat?: "12H" | "24H";
-            /**
-             * @description Preferred date display format used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            dateFormat?: "MDY" | "DMY" | "YMD";
-            /**
-             * Format: date-time
-             * @description Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-        AuthenticatedSessionUserDto: {
-            /** @description Stable user identifier. */
-            id: string;
-            /** @description Primary email address for the user account. */
-            email: string;
-            /** @description Unique login identifier for the account. */
-            username: string;
-            /** @description First name shown in account and member-management surfaces. */
-            firstName: string;
-            /** @description Last name shown in account and member-management surfaces. */
-            lastName: string;
-            /** @description Whether the account is currently active for normal sign-in and product usage. */
-            isActive: boolean;
-            /** @description Whether the user has platform-level root-admin access. */
-            isRootAdmin: boolean;
-            /**
-             * @description Authentication provider used for the account when known.
-             * @enum {string}
-             */
-            authProvider?: "email" | "google" | "apple";
-            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-            timezone?: string;
-            /** @description Preferred locale for formatting and localized copy. */
-            locale?: string;
-            /**
-             * @description Preferred clock display used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            timeFormat?: "12H" | "24H";
-            /**
-             * @description Preferred date display format used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            dateFormat?: "MDY" | "DMY" | "YMD";
-            /**
-             * Format: date-time
-             * @description Account creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-            /**
-             * Format: uuid
-             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-             */
-            sessionId: string | null;
         };
         /** @description Create-account payload for a new username/email/password user. */
         RegisterRequest: {
@@ -3366,7 +3387,7 @@ export interface components {
         };
         /** @description Successful authentication response returned after registration or login. */
         AuthResponse: {
-            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+            /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
             user: {
                 /** @description Stable user identifier. */
                 id: string;
@@ -3406,11 +3427,6 @@ export interface components {
                  * @description Account creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
-                /**
-                 * Format: uuid
-                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                 */
-                sessionId: string | null;
             };
             /** @description Authentication token bundle returned after login or registration. */
             tokens: {
@@ -3424,56 +3440,7 @@ export interface components {
                 expiresIn: number;
             };
         };
-        /** @description Authenticated current-user profile response. */
-        MeResponse: {
-            /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-            user: {
-                /** @description Stable user identifier. */
-                id: string;
-                /** @description Primary email address for the user account. */
-                email: string;
-                /** @description Unique login identifier for the account. */
-                username: string;
-                /** @description First name shown in account and member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in account and member-management surfaces. */
-                lastName: string;
-                /** @description Whether the account is currently active for normal sign-in and product usage. */
-                isActive: boolean;
-                /** @description Whether the user has platform-level root-admin access. */
-                isRootAdmin: boolean;
-                /**
-                 * @description Authentication provider used for the account when known.
-                 * @enum {string}
-                 */
-                authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
-                locale?: string;
-                /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
-                /**
-                 * Format: date-time
-                 * @description Account creation timestamp in ISO 8601 format.
-                 */
-                createdAt?: string;
-                /**
-                 * Format: uuid
-                 * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                 */
-                sessionId: string | null;
-            };
-        };
-        /** @description Token refresh response including the stable session correlation identifier. */
+        /** @description Token refresh response carrying the rotated access, refresh and CSRF tokens. */
         TokenRefreshResponse: {
             /** @description Short-lived bearer token used for authenticated API requests. */
             accessToken: string;
@@ -3483,11 +3450,6 @@ export interface components {
             csrfToken: string;
             /** @description Access-token lifetime in seconds from the time it was issued. */
             expiresIn: number;
-            /**
-             * Format: uuid
-             * @description Safe non-secret session correlation identifier that remains stable across refresh rotation.
-             */
-            sessionId: string;
         };
         /** @description Tier definition used in contest create and update flows. */
         TierDefinitionRequest: {
@@ -5345,6 +5307,492 @@ export interface components {
                 createdAt: string;
             }[];
         };
+        /** @description Squad membership summary. */
+        SquadMembershipDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            squadId: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
+            /**
+             * @description Squad membership status.
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE";
+            /**
+             * Format: date-time
+             * @description When the user joined the squad.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad membership record was last updated.
+             */
+            updatedAt: string;
+        };
+        /** @description A squad within a league. Returned wherever a squad is read. */
+        SquadDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            leagueId: string;
+            /** Format: uuid */
+            createdBy: string;
+            /** @description Squad display name. */
+            name: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+            isActive: boolean;
+            /** @description Number of memberships attached to the squad. */
+            memberCount: number;
+            /**
+             * Format: date-time
+             * @description When the squad was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the squad was last updated.
+             */
+            updatedAt: string;
+            /** @description Optional expanded squad membership list. */
+            members?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            }[];
+        };
+        /** @description Single-squad response. */
+        SquadResponse: {
+            /** @description A squad within a league. Returned wherever a squad is read. */
+            squad: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description The member, as the canonical UserDto. */
+                    user: {
+                        /** @description Stable user identifier. */
+                        id: string;
+                        /** @description Primary email address for the user account. */
+                        email: string;
+                        /** @description Unique login identifier for the account. */
+                        username: string;
+                        /** @description First name shown in account and member-management surfaces. */
+                        firstName: string;
+                        /** @description Last name shown in account and member-management surfaces. */
+                        lastName: string;
+                        /** @description Whether the account is currently active for normal sign-in and product usage. */
+                        isActive: boolean;
+                        /** @description Whether the user has platform-level root-admin access. */
+                        isRootAdmin: boolean;
+                        /**
+                         * @description Authentication provider used for the account when known.
+                         * @enum {string}
+                         */
+                        authProvider?: "email" | "google" | "apple";
+                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        timezone?: string;
+                        /** @description Preferred locale for formatting and localized copy. */
+                        locale?: string;
+                        /**
+                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        timeFormat?: "12H" | "24H";
+                        /**
+                         * @description Preferred date display format used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        dateFormat?: "MDY" | "DMY" | "YMD";
+                        /**
+                         * Format: date-time
+                         * @description Account creation timestamp in ISO 8601 format.
+                         */
+                        createdAt?: string;
+                    };
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            };
+        };
+        /** @description Squad-list response. */
+        SquadListResponse: {
+            squads: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                createdBy: string;
+                /** @description Squad display name. */
+                name: string;
+                /**
+                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                isActive: boolean;
+                /** @description Number of memberships attached to the squad. */
+                memberCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the squad was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad was last updated.
+                 */
+                updatedAt: string;
+                /** @description Optional expanded squad membership list. */
+                members?: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    squadId: string;
+                    /** Format: uuid */
+                    leagueId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    /** @description The member, as the canonical UserDto. */
+                    user: {
+                        /** @description Stable user identifier. */
+                        id: string;
+                        /** @description Primary email address for the user account. */
+                        email: string;
+                        /** @description Unique login identifier for the account. */
+                        username: string;
+                        /** @description First name shown in account and member-management surfaces. */
+                        firstName: string;
+                        /** @description Last name shown in account and member-management surfaces. */
+                        lastName: string;
+                        /** @description Whether the account is currently active for normal sign-in and product usage. */
+                        isActive: boolean;
+                        /** @description Whether the user has platform-level root-admin access. */
+                        isRootAdmin: boolean;
+                        /**
+                         * @description Authentication provider used for the account when known.
+                         * @enum {string}
+                         */
+                        authProvider?: "email" | "google" | "apple";
+                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        timezone?: string;
+                        /** @description Preferred locale for formatting and localized copy. */
+                        locale?: string;
+                        /**
+                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        timeFormat?: "12H" | "24H";
+                        /**
+                         * @description Preferred date display format used in account and scheduling surfaces.
+                         * @enum {string}
+                         */
+                        dateFormat?: "MDY" | "DMY" | "YMD";
+                        /**
+                         * Format: date-time
+                         * @description Account creation timestamp in ISO 8601 format.
+                         */
+                        createdAt?: string;
+                    };
+                    /**
+                     * @description Squad membership status.
+                     * @enum {string}
+                     */
+                    status: "ACTIVE" | "INACTIVE";
+                    /**
+                     * Format: date-time
+                     * @description When the user joined the squad.
+                     */
+                    joinedAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was created.
+                     */
+                    createdAt: string;
+                    /**
+                     * Format: date-time
+                     * @description When the squad membership record was last updated.
+                     */
+                    updatedAt: string;
+                }[];
+            }[];
+        };
+        /** @description Single squad-membership response. */
+        SquadMembershipResponse: {
+            /** @description Squad membership summary. */
+            membership: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            };
+        };
+        /** @description Request payload for creating a squad within a league. */
+        CreateSquadRequest: {
+            /** @description Squad display name. */
+            name?: string;
+            /**
+             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Patch payload for updating a squad. */
+        UpdateSquadRequest: {
+            /** @description Updated squad display name. */
+            name?: string;
+            /**
+             * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
+             * @enum {string}
+             */
+            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+        };
+        /** @description Request payload for adding a user to a squad. */
+        AddSquadMemberRequest: {
+            /**
+             * Format: uuid
+             * @description User to add as an owner of the team.
+             */
+            userId: string;
+        };
         /** @description Commissioner request payload for creating a new private league. */
         CreateLeagueRequest: {
             /** @description Primary league name shown in selectors, invites, and league home. */
@@ -5437,15 +5885,8 @@ export interface components {
                 role?: "COMMISSIONER" | "MEMBER";
             }[];
         };
-        /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-        LeagueRelationshipDto: {
-            /** @description Whether the current requester is an active member of this league. */
-            leagueMember: boolean;
-            /** @description Whether the current requester is an active commissioner of this league. */
-            commissioner: boolean;
-        };
-        /** @description League list item used for selectors, welcome screens, and league overviews. */
-        LeagueSummaryDto: {
+        /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
+        LeagueDto: {
             /** @description Internal league identifier used for authenticated management APIs. */
             id: string;
             /** @description Stable short code used in bookmarkable league-home routes and invite context. */
@@ -5465,99 +5906,18 @@ export interface components {
             memberCount: number;
             /** @description Number of currently active contests associated with the league. */
             activeContestCount: number;
-            /**
-             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             * @enum {string|null}
-             */
-            memberType: "COMMISSIONER" | "MEMBER" | null;
-            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-            leagueRelationship: {
-                /** @description Whether the current requester is an active member of this league. */
-                leagueMember: boolean;
-                /** @description Whether the current requester is an active commissioner of this league. */
-                commissioner: boolean;
-            };
-            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-            isRootAdmin: boolean;
-            /**
-             * Format: date-time
-             * @description League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
-        };
-        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
-        LeagueDetailDto: {
-            /** @description Internal league identifier used for authenticated management APIs. */
-            id: string;
-            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
-            leagueCode: string;
-            /** @description Primary display name for the league. */
-            name: string;
-            /** @description Optional short league description. */
-            description?: string | null;
-            /** @description Whether the league is currently active for normal write interactions. */
-            isActive: boolean;
-            /**
-             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
-             * @enum {string}
-             */
-            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
-            /** @description Current number of memberships in the league. */
-            memberCount: number;
-            /** @description Number of currently active contests associated with the league. */
-            activeContestCount: number;
-            /**
-             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-             * @enum {string|null}
-             */
-            memberType: "COMMISSIONER" | "MEMBER" | null;
-            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-            leagueRelationship: {
-                /** @description Whether the current requester is an active member of this league. */
-                leagueMember: boolean;
-                /** @description Whether the current requester is an active commissioner of this league. */
-                commissioner: boolean;
-            };
-            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-            isRootAdmin: boolean;
-            /**
-             * Format: date-time
-             * @description League creation timestamp in ISO 8601 format.
-             */
-            createdAt?: string;
             /**
              * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
              * @enum {string}
              */
             joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
-        };
-        /** @description League membership summary shown in member-management views. */
-        LeagueMemberDto: {
-            /** @description Membership record identifier. */
-            id: string;
-            /** @description User account identifier for the member. */
-            userId: string;
-            /**
-             * Format: email
-             * @description Email address for the member account.
-             */
-            email: string;
-            /** @description First name shown in member-management surfaces. */
-            firstName: string;
-            /** @description Last name shown in member-management surfaces. */
-            lastName: string;
-            /**
-             * @description League role for the member, such as COMMISSIONER or MEMBER.
-             * @enum {string}
-             */
-            role: "COMMISSIONER" | "MEMBER";
             /**
              * Format: date-time
-             * @description When the user joined or was activated in the league.
+             * @description League creation timestamp in ISO 8601 format.
              */
-            joinedAt?: string;
+            createdAt?: string;
         };
-        /** @description Detailed league membership record. */
+        /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
             /** @description Membership record identifier. */
             id: string;
@@ -5590,6 +5950,47 @@ export interface components {
              * @description When the membership record was last updated.
              */
             updatedAt: string;
+            /** @description The member, as the canonical UserDto. */
+            user: {
+                /** @description Stable user identifier. */
+                id: string;
+                /** @description Primary email address for the user account. */
+                email: string;
+                /** @description Unique login identifier for the account. */
+                username: string;
+                /** @description First name shown in account and member-management surfaces. */
+                firstName: string;
+                /** @description Last name shown in account and member-management surfaces. */
+                lastName: string;
+                /** @description Whether the account is currently active for normal sign-in and product usage. */
+                isActive: boolean;
+                /** @description Whether the user has platform-level root-admin access. */
+                isRootAdmin: boolean;
+                /**
+                 * @description Authentication provider used for the account when known.
+                 * @enum {string}
+                 */
+                authProvider?: "email" | "google" | "apple";
+                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                timezone?: string;
+                /** @description Preferred locale for formatting and localized copy. */
+                locale?: string;
+                /**
+                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                timeFormat?: "12H" | "24H";
+                /**
+                 * @description Preferred date display format used in account and scheduling surfaces.
+                 * @enum {string}
+                 */
+                dateFormat?: "MDY" | "DMY" | "YMD";
+                /**
+                 * Format: date-time
+                 * @description Account creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            };
         };
         /** @description Invitation record returned from commissioner invite-management APIs. */
         LeagueInvitationDto: {
@@ -5713,9 +6114,9 @@ export interface components {
              */
             eventType: "DRAFT_START" | "CONTEST_START" | "CONTEST_END" | "LOCK_TIME";
         };
-        /** @description Single-league detail response. */
+        /** @description Single-league response. */
         LeagueResponse: {
-            /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
             league: {
                 /** @description Internal league identifier used for authenticated management APIs. */
                 id: string;
@@ -5737,34 +6138,21 @@ export interface components {
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
                 /**
-                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                 * @enum {string|null}
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
                  */
-                memberType: "COMMISSIONER" | "MEMBER" | null;
-                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                leagueRelationship: {
-                    /** @description Whether the current requester is an active member of this league. */
-                    leagueMember: boolean;
-                    /** @description Whether the current requester is an active commissioner of this league. */
-                    commissioner: boolean;
-                };
-                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                isRootAdmin: boolean;
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                 /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
-                /**
-                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
-                 * @enum {string}
-                 */
-                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
             };
         };
-        /** @description League-list response. */
-        LeagueListResponse: {
-            leagues: {
+        /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
+        LeagueContextResponse: {
+            /** @description A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object. */
+            league: {
                 /** @description Internal league identifier used for authenticated management APIs. */
                 id: string;
                 /** @description Stable short code used in bookmarkable league-home routes and invite context. */
@@ -5785,57 +6173,17 @@ export interface components {
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
                 /**
-                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                 * @enum {string|null}
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
                  */
-                memberType: "COMMISSIONER" | "MEMBER" | null;
-                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                leagueRelationship: {
-                    /** @description Whether the current requester is an active member of this league. */
-                    leagueMember: boolean;
-                    /** @description Whether the current requester is an active commissioner of this league. */
-                    commissioner: boolean;
-                };
-                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                isRootAdmin: boolean;
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                 /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
-            }[];
-        };
-        /** @description League-members response. */
-        LeagueMembersResponse: {
-            members: {
-                /** @description Membership record identifier. */
-                id: string;
-                /** @description User account identifier for the member. */
-                userId: string;
-                /**
-                 * Format: email
-                 * @description Email address for the member account.
-                 */
-                email: string;
-                /** @description First name shown in member-management surfaces. */
-                firstName: string;
-                /** @description Last name shown in member-management surfaces. */
-                lastName: string;
-                /**
-                 * @description League role for the member, such as COMMISSIONER or MEMBER.
-                 * @enum {string}
-                 */
-                role: "COMMISSIONER" | "MEMBER";
-                /**
-                 * Format: date-time
-                 * @description When the user joined or was activated in the league.
-                 */
-                joinedAt?: string;
-            }[];
-        };
-        /** @description Single league-membership response. */
-        LeagueMembershipResponse: {
-            /** @description Detailed league membership record. */
+            };
+            /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
                 /** @description Membership record identifier. */
                 id: string;
@@ -5868,6 +6216,383 @@ export interface components {
                  * @description When the membership record was last updated.
                  */
                 updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            } | null;
+            /** @description The viewer's squad membership within this league, or null when they hold none. */
+            squadMembership: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                squadId: string;
+                /** Format: uuid */
+                leagueId: string;
+                /** Format: uuid */
+                userId: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+                /**
+                 * @description Squad membership status.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the squad.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the squad membership record was last updated.
+                 */
+                updatedAt: string;
+            } | null;
+        };
+        /** @description League-list response, with the viewer's memberships once as an array. */
+        LeagueListResponse: {
+            leagues: {
+                /** @description Internal league identifier used for authenticated management APIs. */
+                id: string;
+                /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                leagueCode: string;
+                /** @description Primary display name for the league. */
+                name: string;
+                /** @description Optional short league description. */
+                description?: string | null;
+                /** @description Whether the league is currently active for normal write interactions. */
+                isActive: boolean;
+                /**
+                 * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                 * @enum {string}
+                 */
+                iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                /** @description Current number of memberships in the league. */
+                memberCount: number;
+                /** @description Number of currently active contests associated with the league. */
+                activeContestCount: number;
+                /**
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
+                 */
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                /**
+                 * Format: date-time
+                 * @description League creation timestamp in ISO 8601 format.
+                 */
+                createdAt?: string;
+            }[];
+            /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
+            memberships: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            }[];
+        };
+        /** @description League-members response. Each member is the membership edge with the user embedded. */
+        LeagueMembersResponse: {
+            members: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
+            }[];
+        };
+        /** @description Single league-membership response. */
+        LeagueMembershipResponse: {
+            /** @description A membership of a user in a league, with the member embedded. */
+            membership: {
+                /** @description Membership record identifier. */
+                id: string;
+                /** @description League that owns the membership. */
+                leagueId: string;
+                /** @description User account attached to the membership. */
+                userId: string;
+                /**
+                 * @description Current league role for the user.
+                 * @enum {string}
+                 */
+                role: "COMMISSIONER" | "MEMBER";
+                /**
+                 * @description Membership lifecycle state.
+                 * @enum {string}
+                 */
+                status: "ACTIVE" | "INACTIVE";
+                /**
+                 * Format: date-time
+                 * @description When the user joined the league.
+                 */
+                joinedAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the membership record was last updated.
+                 */
+                updatedAt: string;
+                /** @description The member, as the canonical UserDto. */
+                user: {
+                    /** @description Stable user identifier. */
+                    id: string;
+                    /** @description Primary email address for the user account. */
+                    email: string;
+                    /** @description Unique login identifier for the account. */
+                    username: string;
+                    /** @description First name shown in account and member-management surfaces. */
+                    firstName: string;
+                    /** @description Last name shown in account and member-management surfaces. */
+                    lastName: string;
+                    /** @description Whether the account is currently active for normal sign-in and product usage. */
+                    isActive: boolean;
+                    /** @description Whether the user has platform-level root-admin access. */
+                    isRootAdmin: boolean;
+                    /**
+                     * @description Authentication provider used for the account when known.
+                     * @enum {string}
+                     */
+                    authProvider?: "email" | "google" | "apple";
+                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    timezone?: string;
+                    /** @description Preferred locale for formatting and localized copy. */
+                    locale?: string;
+                    /**
+                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    timeFormat?: "12H" | "24H";
+                    /**
+                     * @description Preferred date display format used in account and scheduling surfaces.
+                     * @enum {string}
+                     */
+                    dateFormat?: "MDY" | "DMY" | "YMD";
+                    /**
+                     * Format: date-time
+                     * @description Account creation timestamp in ISO 8601 format.
+                     */
+                    createdAt?: string;
+                };
             };
         };
         /** @description League invitation-send response. */
@@ -6019,7 +6744,7 @@ export interface components {
         };
         /** @description Commissioner dashboard response. */
         LeagueDashboardResponse: {
-            /** @description League summary payload driving the dashboard header. */
+            /** @description League payload driving the dashboard header. */
             league: {
                 /** @description Internal league identifier used for authenticated management APIs. */
                 id: string;
@@ -6041,19 +6766,10 @@ export interface components {
                 /** @description Number of currently active contests associated with the league. */
                 activeContestCount: number;
                 /**
-                 * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
-                 * @enum {string|null}
+                 * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                 * @enum {string}
                  */
-                memberType: "COMMISSIONER" | "MEMBER" | null;
-                /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
-                leagueRelationship: {
-                    /** @description Whether the current requester is an active member of this league. */
-                    leagueMember: boolean;
-                    /** @description Whether the current requester is an active commissioner of this league. */
-                    commissioner: boolean;
-                };
-                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
-                isRootAdmin: boolean;
+                joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
                 /**
                  * Format: date-time
                  * @description League creation timestamp in ISO 8601 format.
@@ -6168,349 +6884,6 @@ export interface components {
         /** @description Arbitrary JSON object payload. */
         LeagueBulkOperationResponse: {
             [key: string]: unknown;
-        };
-        /** @description Squad membership summary. */
-        SquadMembershipDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            squadId: string;
-            /** Format: uuid */
-            leagueId: string;
-            /** Format: uuid */
-            userId: string;
-            /** @description First name for the squad member. */
-            firstName?: string;
-            /** @description Last name for the squad member. */
-            lastName?: string;
-            /**
-             * @description Squad membership status.
-             * @enum {string}
-             */
-            status: "ACTIVE" | "INACTIVE";
-            /**
-             * Format: date-time
-             * @description When the user joined the squad.
-             */
-            joinedAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad membership record was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad membership record was last updated.
-             */
-            updatedAt: string;
-        };
-        /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-        TeamRelationshipDto: {
-            /** @description Whether the current requester is an active member of the team’s parent league. */
-            leagueMember: boolean;
-            /** @description Whether the current requester is an active owner of this team. */
-            owner: boolean;
-            /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-            commissioner: boolean;
-        };
-        /** @description Squad detail returned from squad-management APIs. */
-        SquadDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            leagueId: string;
-            /** Format: uuid */
-            createdBy: string;
-            /** @description Squad display name. */
-            name: string;
-            /**
-             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-            isActive: boolean;
-            /** @description Number of memberships attached to the squad. */
-            memberCount: number;
-            /**
-             * Format: date-time
-             * @description When the squad was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the squad was last updated.
-             */
-            updatedAt: string;
-            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-            teamRelationship: {
-                /** @description Whether the current requester is an active member of the team’s parent league. */
-                leagueMember: boolean;
-                /** @description Whether the current requester is an active owner of this team. */
-                owner: boolean;
-                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                commissioner: boolean;
-            };
-            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-            isRootAdmin: boolean;
-            /** @description Optional expanded squad membership list. */
-            members?: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                userId: string;
-                /** @description First name for the squad member. */
-                firstName?: string;
-                /** @description Last name for the squad member. */
-                lastName?: string;
-                /**
-                 * @description Squad membership status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description Single-squad response. */
-        SquadResponse: {
-            /** @description Squad detail returned from squad-management APIs. */
-            squad: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                createdBy: string;
-                /** @description Squad display name. */
-                name: string;
-                /**
-                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
-                memberCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the squad was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad was last updated.
-                 */
-                updatedAt: string;
-                /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                teamRelationship: {
-                    /** @description Whether the current requester is an active member of the team’s parent league. */
-                    leagueMember: boolean;
-                    /** @description Whether the current requester is an active owner of this team. */
-                    owner: boolean;
-                    /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                    commissioner: boolean;
-                };
-                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                isRootAdmin: boolean;
-                /** @description Optional expanded squad membership list. */
-                members?: {
-                    /** Format: uuid */
-                    id: string;
-                    /** Format: uuid */
-                    squadId: string;
-                    /** Format: uuid */
-                    leagueId: string;
-                    /** Format: uuid */
-                    userId: string;
-                    /** @description First name for the squad member. */
-                    firstName?: string;
-                    /** @description Last name for the squad member. */
-                    lastName?: string;
-                    /**
-                     * @description Squad membership status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE";
-                    /**
-                     * Format: date-time
-                     * @description When the user joined the squad.
-                     */
-                    joinedAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was last updated.
-                     */
-                    updatedAt: string;
-                }[];
-            };
-        };
-        /** @description Squad-list response. */
-        SquadListResponse: {
-            squads: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                createdBy: string;
-                /** @description Squad display name. */
-                name: string;
-                /**
-                 * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                 * @enum {string}
-                 */
-                iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
-                isActive: boolean;
-                /** @description Number of memberships attached to the squad. */
-                memberCount: number;
-                /**
-                 * Format: date-time
-                 * @description When the squad was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad was last updated.
-                 */
-                updatedAt: string;
-                /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
-                teamRelationship: {
-                    /** @description Whether the current requester is an active member of the team’s parent league. */
-                    leagueMember: boolean;
-                    /** @description Whether the current requester is an active owner of this team. */
-                    owner: boolean;
-                    /** @description Whether the current requester has commissioner authority in the team’s parent league. */
-                    commissioner: boolean;
-                };
-                /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
-                isRootAdmin: boolean;
-                /** @description Optional expanded squad membership list. */
-                members?: {
-                    /** Format: uuid */
-                    id: string;
-                    /** Format: uuid */
-                    squadId: string;
-                    /** Format: uuid */
-                    leagueId: string;
-                    /** Format: uuid */
-                    userId: string;
-                    /** @description First name for the squad member. */
-                    firstName?: string;
-                    /** @description Last name for the squad member. */
-                    lastName?: string;
-                    /**
-                     * @description Squad membership status.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "INACTIVE";
-                    /**
-                     * Format: date-time
-                     * @description When the user joined the squad.
-                     */
-                    joinedAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was created.
-                     */
-                    createdAt: string;
-                    /**
-                     * Format: date-time
-                     * @description When the squad membership record was last updated.
-                     */
-                    updatedAt: string;
-                }[];
-            }[];
-        };
-        /** @description Single squad-membership response. */
-        SquadMembershipResponse: {
-            /** @description Squad membership summary. */
-            membership: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                squadId: string;
-                /** Format: uuid */
-                leagueId: string;
-                /** Format: uuid */
-                userId: string;
-                /** @description First name for the squad member. */
-                firstName?: string;
-                /** @description Last name for the squad member. */
-                lastName?: string;
-                /**
-                 * @description Squad membership status.
-                 * @enum {string}
-                 */
-                status: "ACTIVE" | "INACTIVE";
-                /**
-                 * Format: date-time
-                 * @description When the user joined the squad.
-                 */
-                joinedAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the squad membership record was last updated.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description Request payload for creating a squad within a league. */
-        CreateSquadRequest: {
-            /** @description Squad display name. */
-            name?: string;
-            /**
-             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-        };
-        /** @description Patch payload for updating a squad. */
-        UpdateSquadRequest: {
-            /** @description Updated squad display name. */
-            name?: string;
-            /**
-             * @description Updated built-in team icon key from the curated PoolMaster team icon catalog.
-             * @enum {string}
-             */
-            iconKey?: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-        };
-        /** @description Request payload for adding a user to a squad. */
-        AddSquadMemberRequest: {
-            /**
-             * Format: uuid
-             * @description User to add as an owner of the team.
-             */
-            userId: string;
         };
         /** @description Request payload for inviting an additional co-owner to a team. */
         CreateSquadOwnerInvitationRequest: {
@@ -7377,10 +7750,6 @@ export interface components {
             ts: string;
             route?: string;
             /** Format: uuid */
-            sessionId?: string | null;
-            /** Format: uuid */
-            userId?: string | null;
-            /** Format: uuid */
             clientRequestId?: string | null;
             data?: {
                 [key: string]: unknown;
@@ -7401,10 +7770,6 @@ export interface components {
                 /** Format: date-time */
                 ts: string;
                 route?: string;
-                /** Format: uuid */
-                sessionId?: string | null;
-                /** Format: uuid */
-                userId?: string | null;
                 /** Format: uuid */
                 clientRequestId?: string | null;
                 data?: {
@@ -7606,7 +7971,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Token refresh response including the stable session correlation identifier. */
+            /** @description Token refresh response carrying the rotated access, refresh and CSRF tokens. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7681,26 +8046,1214 @@ export interface operations {
             };
         };
     };
-    getCurrentUser: {
+    listUsers: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string;
+                isActive?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Authenticated current-user profile response. */
+            /** @description User-list response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MeResponse"];
+                    "application/json": components["schemas"]["UserListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserUsername: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUsernameUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPreferencesUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    changeUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resetUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Password-reset response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResetPasswordResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    disableUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserDisableRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    enableUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-user response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    revokeUserSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session-revocation response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokeUserSessionsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    setUserRootAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserRootAdminRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7780,7 +9333,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description League-list response. */
+            /** @description League-list response, with the viewer's memberships once as an array. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7823,7 +9376,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -7883,7 +9436,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7994,13 +9547,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league detail response. */
+            /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueResponse"];
+                    "application/json": components["schemas"]["LeagueContextResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -8039,7 +9592,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8103,7 +9656,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8163,7 +9716,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8223,7 +9776,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8459,7 +10012,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description League-members response. */
+            /** @description League-members response. Each member is the membership edge with the user embedded. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12267,1642 +13820,6 @@ export interface operations {
             };
         };
     };
-    reactivateAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service profile update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Updated primary contact email address for the account profile.
-                     */
-                    email: string;
-                    /** @description Updated first name for the account profile. */
-                    firstName: string;
-                    /** @description Updated last name for the account profile. */
-                    lastName: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountUsername: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service username update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Updated unique login username for the authenticated account. */
-                    username: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateAccountPreferences: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service preferences update payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Preferred IANA timezone, or null to clear it. */
-                    timezone?: string | null;
-                    /** @description Preferred locale, or null to clear it. */
-                    locale?: string | null;
-                    /**
-                     * @description Preferred clock display format, or null to clear it.
-                     * @enum {string|null}
-                     */
-                    timeFormat?: "12H" | "24H" | null;
-                    /**
-                     * @description Preferred date display format, or null to clear it.
-                     * @enum {string|null}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD" | null;
-                };
-            };
-        };
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    changeAccountPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service password-change payload for the authenticated account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Existing password that must match before the password can be changed. */
-                    currentPassword: string;
-                    /** @description New password to persist for future sign-in attempts. */
-                    newPassword: string;
-                    /** @description Repeat of the new password to guard against confirmation mistakes. */
-                    confirmNewPassword: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response returned after changing the authenticated account password. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    inactivateAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
-                        user: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                            /**
-                             * Format: uuid
-                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
-                             */
-                            sessionId: string | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    deleteAccount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Self-service confirmation payload for permanently deleting an inactive account. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Exact email confirmation required before permanently deleting the inactive account.
-                     */
-                    email: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response returned after permanently deleting an inactive account. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListUsers: {
-        parameters: {
-            query?: {
-                search?: string;
-                isActive?: boolean;
-                page?: number;
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Generic paginated response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Current result page items. */
-                        items: {
-                            /** @description Stable user identifier. */
-                            id: string;
-                            /** @description Primary email address for the user account. */
-                            email: string;
-                            /** @description Unique login identifier for the account. */
-                            username: string;
-                            /** @description First name shown in account and member-management surfaces. */
-                            firstName: string;
-                            /** @description Last name shown in account and member-management surfaces. */
-                            lastName: string;
-                            /** @description Whether the account is currently active for normal sign-in and product usage. */
-                            isActive: boolean;
-                            /** @description Whether the user has platform-level root-admin access. */
-                            isRootAdmin: boolean;
-                            /**
-                             * @description Authentication provider used for the account when known.
-                             * @enum {string}
-                             */
-                            authProvider?: "email" | "google" | "apple";
-                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                            timezone?: string;
-                            /** @description Preferred locale for formatting and localized copy. */
-                            locale?: string;
-                            /**
-                             * @description Preferred clock display used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            timeFormat?: "12H" | "24H";
-                            /**
-                             * @description Preferred date display format used in account and scheduling surfaces.
-                             * @enum {string}
-                             */
-                            dateFormat?: "MDY" | "DMY" | "YMD";
-                            /**
-                             * Format: date-time
-                             * @description Account creation timestamp in ISO 8601 format.
-                             */
-                            createdAt?: string;
-                        }[];
-                        /** @description Total number of matching records. */
-                        total: number;
-                        /** @description Current page number. */
-                        page: number;
-                        /** @description Number of items requested per page. */
-                        pageSize: number;
-                        /** @description Total page count for the current query. */
-                        totalPages: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetUserDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Root-admin user-detail response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Stable user identifier. */
-                        id: string;
-                        /** @description Primary email address for the user account. */
-                        email: string;
-                        /** @description Unique login identifier for the account. */
-                        username: string;
-                        /** @description First name shown in account and member-management surfaces. */
-                        firstName: string;
-                        /** @description Last name shown in account and member-management surfaces. */
-                        lastName: string;
-                        /** @description Whether the account is currently active for normal sign-in and product usage. */
-                        isActive: boolean;
-                        /** @description Whether the user has platform-level root-admin access. */
-                        isRootAdmin: boolean;
-                        /**
-                         * @description Authentication provider used for the account when known.
-                         * @enum {string}
-                         */
-                        authProvider?: "email" | "google" | "apple";
-                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
-                        timezone?: string;
-                        /** @description Preferred locale for formatting and localized copy. */
-                        locale?: string;
-                        /**
-                         * @description Preferred clock display used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        timeFormat?: "12H" | "24H";
-                        /**
-                         * @description Preferred date display format used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        dateFormat?: "MDY" | "DMY" | "YMD";
-                        /**
-                         * Format: date-time
-                         * @description Account creation timestamp in ISO 8601 format.
-                         */
-                        createdAt?: string;
-                        /** @description Account-page authority flags emitted for the viewed user. */
-                        viewerAuthority: {
-                            /** @description Whether the current requester is viewing their own user account. */
-                            self: boolean;
-                            /** @description Whether the current requester has root-admin authority on this account page. */
-                            rootAdmin: boolean;
-                            /** @description Fallback viewer state when the requester is neither self nor root admin on this account page. */
-                            viewer: boolean;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDeleteUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin delete-account confirmation payload. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Format: email
-                     * @description Exact target email confirmation required before permanently deleting the account.
-                     */
-                    email: string;
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminForceLogout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminDisableUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminEnableUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminResetUserPassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin initiated password-reset request. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Root-admin password-reset response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in. */
-                        temporaryPassword: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminSetUserRootAdmin: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Root-admin role-change request payload. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Whether the target user should hold the platform-level root-admin role after the change. */
-                    isRootAdmin: boolean;
-                    /** @description Optional human reason captured in the root-admin audit log. */
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
     adminListEvents: {
         parameters: {
             query?: {
@@ -14264,100 +14181,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description League-list response. */
+            /** @description League-list response, with the viewer's memberships once as an array. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["LeagueListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListTeams: {
-        parameters: {
-            query?: {
-                /** @description Optional case-insensitive team-name search for root-admin management surfaces. */
-                search?: string;
-                /** @description Optional canonical league-code filter for cross-league team management. */
-                leagueCode?: string;
-                /** @description Optional active/inactive filter for root-admin team management surfaces. */
-                isActive?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Cross-league team list response for root-admin management surfaces. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        teams: {
-                            /** Format: uuid */
-                            id: string;
-                            /** Format: uuid */
-                            leagueId: string;
-                            /** @description Canonical league code for routing and filtering. */
-                            leagueCode: string;
-                            /** @description Display name for the team’s parent league. */
-                            leagueName: string;
-                            /** @description Team display name. */
-                            name: string;
-                            /**
-                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
-                             * @enum {string}
-                             */
-                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /** @description Whether the team is currently active. This is the lifecycle source of truth for root-admin team management surfaces. */
-                            isActive: boolean;
-                            /** @description Count of active owners attached to the team. */
-                            ownerCount: number;
-                            /** @description Active owners attached to the team. */
-                            owners: {
-                                /** Format: uuid */
-                                userId: string;
-                                /** @description First name for the active team owner. */
-                                firstName?: string;
-                                /** @description Last name for the active team owner. */
-                                lastName?: string;
-                            }[];
-                            /**
-                             * Format: date-time
-                             * @description When the team was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the team was last updated.
-                             */
-                            updatedAt: string;
-                        }[];
-                    };
                 };
             };
             /** @description Standard API error envelope. */
@@ -14392,7 +14222,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Single-league detail response. */
+            /** @description Single-league response. */
             200: {
                 headers: {
                     [name: string]: unknown;

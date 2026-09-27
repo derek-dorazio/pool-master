@@ -37,14 +37,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     to: '/manage/leagues',
   },
   {
-    key: 'teams',
-    group: 'platform',
-    title: 'Teams',
-    description:
-      'Search teams across leagues, then open Team Home for owner and lifecycle actions.',
-    to: '/manage/teams',
-  },
-  {
     key: 'users',
     group: 'platform',
     title: 'Users',

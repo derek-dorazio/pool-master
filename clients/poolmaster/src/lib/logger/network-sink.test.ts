@@ -9,7 +9,6 @@ function buildMeta(overrides: Partial<LogMeta> = {}): LogMeta {
     webappVersion: '1.2.3',
     userAgent: 'vitest',
     route: '/my-leagues',
-    sessionId: null,
     userId: null,
     ...overrides,
   };

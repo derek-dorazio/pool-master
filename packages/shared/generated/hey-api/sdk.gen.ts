@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminAddGolfLeagueRosterEntryData, AdminAddGolfLeagueRosterEntryErrors, AdminAddGolfLeagueRosterEntryResponses, AdminApplyGolfLeagueRosterUploadData, AdminApplyGolfLeagueRosterUploadErrors, AdminApplyGolfLeagueRosterUploadResponses, AdminApplyGolfRoundScoresData, AdminApplyGolfRoundScoresErrors, AdminApplyGolfRoundScoresResponses, AdminAutoAssignGolfPricesData, AdminAutoAssignGolfPricesErrors, AdminAutoAssignGolfPricesResponses, AdminAutoAssignGolfTiersData, AdminAutoAssignGolfTiersErrors, AdminAutoAssignGolfTiersResponses, AdminBulkAddGolfFieldEntriesData, AdminBulkAddGolfFieldEntriesErrors, AdminBulkAddGolfFieldEntriesResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminCloneGolfSeasonData, AdminCloneGolfSeasonErrors, AdminCloneGolfSeasonResponses, AdminCreateGolfLeagueData, AdminCreateGolfLeagueErrors, AdminCreateGolfLeagueResponses, AdminCreateGolfPlayerData, AdminCreateGolfPlayerErrors, AdminCreateGolfPlayerResponses, AdminCreateGolfSeasonData, AdminCreateGolfSeasonErrors, AdminCreateGolfSeasonResponses, AdminCreateGolfTournamentData, AdminCreateGolfTournamentErrors, AdminCreateGolfTournamentFromProviderEventData, AdminCreateGolfTournamentFromProviderEventErrors, AdminCreateGolfTournamentFromProviderEventResponses, AdminCreateGolfTournamentResponses, AdminDeleteGolfTournamentData, AdminDeleteGolfTournamentErrors, AdminDeleteGolfTournamentResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminDeleteUserData, AdminDeleteUserErrors, AdminDeleteUserResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetGolfLeagueRosterData, AdminGetGolfLeagueRosterErrors, AdminGetGolfLeagueRosterResponses, AdminGetGolfPlayerData, AdminGetGolfPlayerErrors, AdminGetGolfPlayerResponses, AdminGetGolfRoundScoresData, AdminGetGolfRoundScoresErrors, AdminGetGolfRoundScoresResponses, AdminGetGolfSeasonData, AdminGetGolfSeasonErrors, AdminGetGolfSeasonResponses, AdminGetGolfTournamentData, AdminGetGolfTournamentErrors, AdminGetGolfTournamentFieldData, AdminGetGolfTournamentFieldErrors, AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentResponses, AdminGetGolfTournamentRoundsData, AdminGetGolfTournamentRoundsErrors, AdminGetGolfTournamentRoundsResponses, AdminGetGolfTournamentTiersData, AdminGetGolfTournamentTiersErrors, AdminGetGolfTournamentTiersResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminLinkGolfTournamentScoreSourceData, AdminLinkGolfTournamentScoreSourceErrors, AdminLinkGolfTournamentScoreSourceResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListGolfLeaguesData, AdminListGolfLeaguesErrors, AdminListGolfLeaguesResponses, AdminListGolfPlayersData, AdminListGolfPlayersErrors, AdminListGolfPlayersResponses, AdminListGolfSeasonsData, AdminListGolfSeasonsErrors, AdminListGolfSeasonsResponses, AdminListGolfTournamentsData, AdminListGolfTournamentsErrors, AdminListGolfTournamentsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProviderCatalogEventsData, AdminListProviderCatalogEventsErrors, AdminListProviderCatalogEventsResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminListTeamsData, AdminListTeamsErrors, AdminListTeamsResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminPreviewGolfLeagueRosterUploadData, AdminPreviewGolfLeagueRosterUploadErrors, AdminPreviewGolfLeagueRosterUploadResponses, AdminPreviewGolfRoundScoresData, AdminPreviewGolfRoundScoresErrors, AdminPreviewGolfRoundScoresResponses, AdminRefreshGolfTournamentFieldData, AdminRefreshGolfTournamentFieldErrors, AdminRefreshGolfTournamentFieldResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminRemoveGolfFieldEntryData, AdminRemoveGolfFieldEntryErrors, AdminRemoveGolfFieldEntryResponses, AdminRemoveGolfLeagueRosterEntryData, AdminRemoveGolfLeagueRosterEntryErrors, AdminRemoveGolfLeagueRosterEntryResponses, AdminReplaceGolfTierAssignmentsData, AdminReplaceGolfTierAssignmentsErrors, AdminReplaceGolfTierAssignmentsResponses, AdminReplaceGolfTournamentTiersData, AdminReplaceGolfTournamentTiersErrors, AdminReplaceGolfTournamentTiersResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminResetUserPasswordData, AdminResetUserPasswordErrors, AdminResetUserPasswordResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSeedGolfTournamentFieldData, AdminSeedGolfTournamentFieldErrors, AdminSeedGolfTournamentFieldResponses, AdminSetCurrentGolfSeasonData, AdminSetCurrentGolfSeasonErrors, AdminSetCurrentGolfSeasonResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSetUserRootAdminData, AdminSetUserRootAdminErrors, AdminSetUserRootAdminResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTransitionGolfTournamentData, AdminTransitionGolfTournamentErrors, AdminTransitionGolfTournamentResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnlinkGolfTournamentScoreSourceData, AdminUnlinkGolfTournamentScoreSourceErrors, AdminUnlinkGolfTournamentScoreSourceResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateGolfFieldEntriesData, AdminUpdateGolfFieldEntriesErrors, AdminUpdateGolfFieldEntriesResponses, AdminUpdateGolfLeagueData, AdminUpdateGolfLeagueErrors, AdminUpdateGolfLeagueResponses, AdminUpdateGolfLeagueRosterData, AdminUpdateGolfLeagueRosterErrors, AdminUpdateGolfLeagueRosterResponses, AdminUpdateGolfPlayerData, AdminUpdateGolfPlayerErrors, AdminUpdateGolfPlayerResponses, AdminUpdateGolfRoundScoreData, AdminUpdateGolfRoundScoreErrors, AdminUpdateGolfRoundScoreResponses, AdminUpdateGolfSeasonData, AdminUpdateGolfSeasonErrors, AdminUpdateGolfSeasonResponses, AdminUpdateGolfTournamentData, AdminUpdateGolfTournamentErrors, AdminUpdateGolfTournamentResponses, AdminUpdateGolfTournamentRoundsData, AdminUpdateGolfTournamentRoundsErrors, AdminUpdateGolfTournamentRoundsResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeAccountPasswordData, ChangeAccountPasswordErrors, ChangeAccountPasswordResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetRootVersionData, GetRootVersionResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateAccountData, InactivateAccountErrors, InactivateAccountResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, ReactivateAccountData, ReactivateAccountErrors, ReactivateAccountResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateAccountPreferencesData, UpdateAccountPreferencesErrors, UpdateAccountPreferencesResponses, UpdateAccountProfileData, UpdateAccountProfileErrors, UpdateAccountProfileResponses, UpdateAccountUsernameData, UpdateAccountUsernameErrors, UpdateAccountUsernameResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminAddGolfLeagueRosterEntryData, AdminAddGolfLeagueRosterEntryErrors, AdminAddGolfLeagueRosterEntryResponses, AdminApplyGolfLeagueRosterUploadData, AdminApplyGolfLeagueRosterUploadErrors, AdminApplyGolfLeagueRosterUploadResponses, AdminApplyGolfRoundScoresData, AdminApplyGolfRoundScoresErrors, AdminApplyGolfRoundScoresResponses, AdminAutoAssignGolfPricesData, AdminAutoAssignGolfPricesErrors, AdminAutoAssignGolfPricesResponses, AdminAutoAssignGolfTiersData, AdminAutoAssignGolfTiersErrors, AdminAutoAssignGolfTiersResponses, AdminBulkAddGolfFieldEntriesData, AdminBulkAddGolfFieldEntriesErrors, AdminBulkAddGolfFieldEntriesResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminCloneGolfSeasonData, AdminCloneGolfSeasonErrors, AdminCloneGolfSeasonResponses, AdminCreateGolfLeagueData, AdminCreateGolfLeagueErrors, AdminCreateGolfLeagueResponses, AdminCreateGolfPlayerData, AdminCreateGolfPlayerErrors, AdminCreateGolfPlayerResponses, AdminCreateGolfSeasonData, AdminCreateGolfSeasonErrors, AdminCreateGolfSeasonResponses, AdminCreateGolfTournamentData, AdminCreateGolfTournamentErrors, AdminCreateGolfTournamentFromProviderEventData, AdminCreateGolfTournamentFromProviderEventErrors, AdminCreateGolfTournamentFromProviderEventResponses, AdminCreateGolfTournamentResponses, AdminDeleteGolfTournamentData, AdminDeleteGolfTournamentErrors, AdminDeleteGolfTournamentResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetGolfLeagueRosterData, AdminGetGolfLeagueRosterErrors, AdminGetGolfLeagueRosterResponses, AdminGetGolfPlayerData, AdminGetGolfPlayerErrors, AdminGetGolfPlayerResponses, AdminGetGolfRoundScoresData, AdminGetGolfRoundScoresErrors, AdminGetGolfRoundScoresResponses, AdminGetGolfSeasonData, AdminGetGolfSeasonErrors, AdminGetGolfSeasonResponses, AdminGetGolfTournamentData, AdminGetGolfTournamentErrors, AdminGetGolfTournamentFieldData, AdminGetGolfTournamentFieldErrors, AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentResponses, AdminGetGolfTournamentRoundsData, AdminGetGolfTournamentRoundsErrors, AdminGetGolfTournamentRoundsResponses, AdminGetGolfTournamentTiersData, AdminGetGolfTournamentTiersErrors, AdminGetGolfTournamentTiersResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminLinkGolfTournamentScoreSourceData, AdminLinkGolfTournamentScoreSourceErrors, AdminLinkGolfTournamentScoreSourceResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListGolfLeaguesData, AdminListGolfLeaguesErrors, AdminListGolfLeaguesResponses, AdminListGolfPlayersData, AdminListGolfPlayersErrors, AdminListGolfPlayersResponses, AdminListGolfSeasonsData, AdminListGolfSeasonsErrors, AdminListGolfSeasonsResponses, AdminListGolfTournamentsData, AdminListGolfTournamentsErrors, AdminListGolfTournamentsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProviderCatalogEventsData, AdminListProviderCatalogEventsErrors, AdminListProviderCatalogEventsResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminPreviewGolfLeagueRosterUploadData, AdminPreviewGolfLeagueRosterUploadErrors, AdminPreviewGolfLeagueRosterUploadResponses, AdminPreviewGolfRoundScoresData, AdminPreviewGolfRoundScoresErrors, AdminPreviewGolfRoundScoresResponses, AdminRefreshGolfTournamentFieldData, AdminRefreshGolfTournamentFieldErrors, AdminRefreshGolfTournamentFieldResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminRemoveGolfFieldEntryData, AdminRemoveGolfFieldEntryErrors, AdminRemoveGolfFieldEntryResponses, AdminRemoveGolfLeagueRosterEntryData, AdminRemoveGolfLeagueRosterEntryErrors, AdminRemoveGolfLeagueRosterEntryResponses, AdminReplaceGolfTierAssignmentsData, AdminReplaceGolfTierAssignmentsErrors, AdminReplaceGolfTierAssignmentsResponses, AdminReplaceGolfTournamentTiersData, AdminReplaceGolfTournamentTiersErrors, AdminReplaceGolfTournamentTiersResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSeedGolfTournamentFieldData, AdminSeedGolfTournamentFieldErrors, AdminSeedGolfTournamentFieldResponses, AdminSetCurrentGolfSeasonData, AdminSetCurrentGolfSeasonErrors, AdminSetCurrentGolfSeasonResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTransitionGolfTournamentData, AdminTransitionGolfTournamentErrors, AdminTransitionGolfTournamentResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnlinkGolfTournamentScoreSourceData, AdminUnlinkGolfTournamentScoreSourceErrors, AdminUnlinkGolfTournamentScoreSourceResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateGolfFieldEntriesData, AdminUpdateGolfFieldEntriesErrors, AdminUpdateGolfFieldEntriesResponses, AdminUpdateGolfLeagueData, AdminUpdateGolfLeagueErrors, AdminUpdateGolfLeagueResponses, AdminUpdateGolfLeagueRosterData, AdminUpdateGolfLeagueRosterErrors, AdminUpdateGolfLeagueRosterResponses, AdminUpdateGolfPlayerData, AdminUpdateGolfPlayerErrors, AdminUpdateGolfPlayerResponses, AdminUpdateGolfRoundScoreData, AdminUpdateGolfRoundScoreErrors, AdminUpdateGolfRoundScoreResponses, AdminUpdateGolfSeasonData, AdminUpdateGolfSeasonErrors, AdminUpdateGolfSeasonResponses, AdminUpdateGolfTournamentData, AdminUpdateGolfTournamentErrors, AdminUpdateGolfTournamentResponses, AdminUpdateGolfTournamentRoundsData, AdminUpdateGolfTournamentRoundsErrors, AdminUpdateGolfTournamentRoundsResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, ChangeUserPasswordData, ChangeUserPasswordErrors, ChangeUserPasswordResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DisableUserData, DisableUserErrors, DisableUserResponses, EnableUserData, EnableUserErrors, EnableUserResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetRootVersionData, GetRootVersionResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUserData, GetUserErrors, GetUserResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResetUserPasswordData, ResetUserPasswordErrors, ResetUserPasswordResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, RevokeUserSessionsData, RevokeUserSessionsErrors, RevokeUserSessionsResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SetUserRootAdminData, SetUserRootAdminErrors, SetUserRootAdminResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserProfileData, UpdateUserProfileErrors, UpdateUserProfileResponses, UpdateUserUsernameData, UpdateUserUsernameErrors, UpdateUserUsernameResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -88,14 +88,167 @@ export const logoutUser = <ThrowOnError extends boolean = false>(options?: Optio
 });
 
 /**
- * Get current user profile from JWT
+ * List users
  *
- * Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.
+ * Returns every user, optionally filtered. This is the unscoped read: access rule A1 permits it to root admins only. Not paged — filters narrow the result, nothing slices it.
  */
-export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({
+export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>) => (options?.client ?? client).get<ListUsersResponses, ListUsersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/auth/me',
+    url: '/api/v1/users/',
     ...options
+});
+
+/**
+ * Permanently delete an inactive user
+ *
+ * Removes the user row and the user-owned data that references it, in one transaction. Self-delete and admin-delete are ONE operation (A6). Gated: the account must already be inactive — the one place isActive is a write precondition rather than a read filter (A9) — the exact email must be confirmed, no league-scoped data may remain, and the last root admin cannot be removed.
+ */
+export const deleteUser = <ThrowOnError extends boolean = false>(options: Options<DeleteUserData, ThrowOnError>) => (options.client ?? client).delete<DeleteUserResponses, DeleteUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read one user
+ *
+ * Returns one user as the canonical UserDto. `me` resolves to the authenticated caller. Access rule A6: the subject themselves, or a root admin. Carries no viewer context (A8).
+ */
+export const getUser = <ThrowOnError extends boolean = false>(options: Options<GetUserData, ThrowOnError>) => (options.client ?? client).get<GetUserResponses, GetUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}',
+    ...options
+});
+
+/**
+ * Update a user profile
+ *
+ * Updates email, first name and last name. One operation for either caller — the subject themselves or a root admin (A6). The email must be unique across account emails and usernames.
+ */
+export const updateUserProfile = <ThrowOnError extends boolean = false>(options: Options<UpdateUserProfileData, ThrowOnError>) => (options.client ?? client).put<UpdateUserProfileResponses, UpdateUserProfileErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/profile',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update a user login username
+ *
+ * Updates the login username after confirming it is unique across usernames AND emails, because login accepts either.
+ */
+export const updateUserUsername = <ThrowOnError extends boolean = false>(options: Options<UpdateUserUsernameData, ThrowOnError>) => (options.client ?? client).put<UpdateUserUsernameResponses, UpdateUserUsernameErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/username',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update user preferences
+ *
+ * Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.
+ */
+export const updateUserPreferences = <ThrowOnError extends boolean = false>(options: Options<UpdateUserPreferencesData, ThrowOnError>) => (options.client ?? client).put<UpdateUserPreferencesResponses, UpdateUserPreferencesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/preferences',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Change your own password
+ *
+ * Changes the password after validating the current one. Self only (A6): a root admin resetting somebody else uses the reset operation, which has a different subject rather than merely a different precondition. Other sessions are revoked while the caller stays signed in.
+ */
+export const changeUserPassword = <ThrowOnError extends boolean = false>(options: Options<ChangeUserPasswordData, ThrowOnError>) => (options.client ?? client).post<ChangeUserPasswordResponses, ChangeUserPasswordErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset another user's password
+ *
+ * Generates a temporary password for the target user, revokes their live sessions, and returns the credential for the root admin to relay. Root admin only (A6).
+ */
+export const resetUserPassword = <ThrowOnError extends boolean = false>(options: Options<ResetUserPasswordData, ThrowOnError>) => (options.client ?? client).post<ResetUserPasswordResponses, ResetUserPasswordErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/reset-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Disable a user
+ *
+ * Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.
+ */
+export const disableUser = <ThrowOnError extends boolean = false>(options: Options<DisableUserData, ThrowOnError>) => (options.client ?? client).post<DisableUserResponses, DisableUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/disable',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Enable a user
+ *
+ * Sets isActive = true. Self-reactivation and admin-enable are ONE operation (A6). Idempotent. Re-enabling yourself rotates a fresh session so the account is immediately usable.
+ */
+export const enableUser = <ThrowOnError extends boolean = false>(options: Options<EnableUserData, ThrowOnError>) => (options.client ?? client).post<EnableUserResponses, EnableUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/enable',
+    ...options
+});
+
+/**
+ * Revoke every live session for a user
+ *
+ * Revokes all refresh tokens, forcing re-authentication. Self sign-out-everywhere and admin force-logout are ONE operation (A6).
+ */
+export const revokeUserSessions = <ThrowOnError extends boolean = false>(options: Options<RevokeUserSessionsData, ThrowOnError>) => (options.client ?? client).post<RevokeUserSessionsResponses, RevokeUserSessionsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/revoke-sessions',
+    ...options
+});
+
+/**
+ * Grant or revoke the root-admin role
+ *
+ * Root admin only (A6). Self-demotion is permitted: the only rule is that the platform keeps an administrator, which the last-root-admin guard enforces for every caller. A demotion also revokes the subject's sessions so the removed authority cannot be used until re-login.
+ */
+export const setUserRootAdmin = <ThrowOnError extends boolean = false>(options: Options<SetUserRootAdminData, ThrowOnError>) => (options.client ?? client).post<SetUserRootAdminResponses, SetUserRootAdminErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/{userId}/root-admin',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -112,7 +265,7 @@ export const getVersion = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * List leagues for the current user
  *
- * Returns the league summaries visible to the authenticated user. This list powers the welcome page, header selector, and richer My Leagues overview.
+ * Returns the leagues visible to the authenticated user, together with the viewer's own memberships once as an array. The leagues list is the one inherently multi-league surface, so it is the one place the viewer's relationship travels as a set rather than per row (access rule A8). Powers the welcome page, header selector, and My Leagues overview.
  */
 export const listLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguesResponses, ListLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -164,7 +317,7 @@ export const getLeague = <ThrowOnError extends boolean = false>(options: Options
 /**
  * Get league details by league code
  *
- * Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.
+ * The league-context call. Returns a league by its stable league code together with the viewer's own membership edges in it — their LeagueMembership and their SquadMembership. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation, it allows root-admin override access without faking league membership, and it is the one response that carries viewer context: every other league-scoped response omits it because the client already holds this one (access rule A8).
  */
 export const getLeagueByCode = <ThrowOnError extends boolean = false>(options: Options<GetLeagueByCodeData, ThrowOnError>) => (options.client ?? client).get<GetLeagueByCodeResponses, GetLeagueByCodeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -980,207 +1133,6 @@ export const updateParticipant = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Reactivate the authenticated account
- *
- * Reactivates an inactive account and rotates a fresh browser session so the user can resume normal product usage immediately.
- */
-export const reactivateAccount = <ThrowOnError extends boolean = false>(options?: Options<ReactivateAccountData, ThrowOnError>) => (options?.client ?? client).post<ReactivateAccountResponses, ReactivateAccountErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/reactivate',
-    ...options
-});
-
-/**
- * Update the authenticated account profile
- *
- * Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.
- */
-export const updateAccountProfile = <ThrowOnError extends boolean = false>(options: Options<UpdateAccountProfileData, ThrowOnError>) => (options.client ?? client).put<UpdateAccountProfileResponses, UpdateAccountProfileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/profile',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Update the authenticated account username
- *
- * Updates the authenticated account login username after confirming it is unique across account usernames and emails.
- */
-export const updateAccountUsername = <ThrowOnError extends boolean = false>(options: Options<UpdateAccountUsernameData, ThrowOnError>) => (options.client ?? client).put<UpdateAccountUsernameResponses, UpdateAccountUsernameErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/username',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Update authenticated account preferences
- *
- * Updates first-pass user preferences for locale, timezone, and date/time formatting without inventing a separate preferences-only account model.
- */
-export const updateAccountPreferences = <ThrowOnError extends boolean = false>(options: Options<UpdateAccountPreferencesData, ThrowOnError>) => (options.client ?? client).put<UpdateAccountPreferencesResponses, UpdateAccountPreferencesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/preferences',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Change the authenticated account password
- *
- * Changes the authenticated account password after validating the current password and matching new-password confirmation. Other refresh-token sessions are revoked while the current session stays usable.
- */
-export const changeAccountPassword = <ThrowOnError extends boolean = false>(options: Options<ChangeAccountPasswordData, ThrowOnError>) => (options.client ?? client).post<ChangeAccountPasswordResponses, ChangeAccountPasswordErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/password',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Inactivate the authenticated account
- *
- * Marks the authenticated account inactive for normal sign-in and product usage. This is the required first step before a permanent self-delete becomes available.
- */
-export const inactivateAccount = <ThrowOnError extends boolean = false>(options?: Options<InactivateAccountData, ThrowOnError>) => (options?.client ?? client).post<InactivateAccountResponses, InactivateAccountErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/inactivate',
-    ...options
-});
-
-/**
- * Delete the authenticated inactive account permanently
- *
- * Permanently deletes the authenticated account after the user has already inactivated it and provides exact email confirmation. This removes the user row and user-owned account data.
- */
-export const deleteAccount = <ThrowOnError extends boolean = false>(options: Options<DeleteAccountData, ThrowOnError>) => (options.client ?? client).delete<DeleteAccountResponses, DeleteAccountErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/account/',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List users with filters
- *
- * Returns the administrative user list with filter support for platform operations and support workflows.
- */
-export const adminListUsers = <ThrowOnError extends boolean = false>(options?: Options<AdminListUsersData, ThrowOnError>) => (options?.client ?? client).get<AdminListUsersResponses, AdminListUsersErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users',
-    ...options
-});
-
-/**
- * Delete an inactive user account as root admin
- *
- * Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.
- */
-export const adminDeleteUser = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteUserData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteUserResponses, AdminDeleteUserErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get user detail
- *
- * Returns the administrative detail view for a specific user account.
- */
-export const adminGetUserDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetUserDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetUserDetailResponses, AdminGetUserDetailErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}',
-    ...options
-});
-
-/**
- * Force logout a user from all sessions
- *
- * Revokes every active session for the target user so they are forced to authenticate again.
- */
-export const adminForceLogout = <ThrowOnError extends boolean = false>(options: Options<AdminForceLogoutData, ThrowOnError>) => (options.client ?? client).post<AdminForceLogoutResponses, AdminForceLogoutErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/force-logout',
-    ...options
-});
-
-/**
- * Disable a user account
- *
- * Disables the target user account at the platform level.
- */
-export const adminDisableUser = <ThrowOnError extends boolean = false>(options: Options<AdminDisableUserData, ThrowOnError>) => (options.client ?? client).post<AdminDisableUserResponses, AdminDisableUserErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/disable',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Re-enable a disabled user account
- *
- * Re-enables a previously disabled user account.
- */
-export const adminEnableUser = <ThrowOnError extends boolean = false>(options: Options<AdminEnableUserData, ThrowOnError>) => (options.client ?? client).post<AdminEnableUserResponses, AdminEnableUserErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/enable',
-    ...options
-});
-
-/**
- * Reset a user password as root admin
- *
- * Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.
- */
-export const adminResetUserPassword = <ThrowOnError extends boolean = false>(options: Options<AdminResetUserPasswordData, ThrowOnError>) => (options.client ?? client).post<AdminResetUserPasswordResponses, AdminResetUserPasswordErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/reset-password',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Grant or revoke the root-admin role for a user
- *
- * Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.
- */
-export const adminSetUserRootAdmin = <ThrowOnError extends boolean = false>(options: Options<AdminSetUserRootAdminData, ThrowOnError>) => (options.client ?? client).post<AdminSetUserRootAdminResponses, AdminSetUserRootAdminErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/users/{userId}/root-admin',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List current persisted events
  *
  * Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.
@@ -1210,17 +1162,6 @@ export const adminListEventParticipants = <ThrowOnError extends boolean = false>
 export const adminListLeagues = <ThrowOnError extends boolean = false>(options?: Options<AdminListLeaguesData, ThrowOnError>) => (options?.client ?? client).get<AdminListLeaguesResponses, AdminListLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/leagues',
-    ...options
-});
-
-/**
- * List teams for root-admin management
- *
- * Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.
- */
-export const adminListTeams = <ThrowOnError extends boolean = false>(options?: Options<AdminListTeamsData, ThrowOnError>) => (options?.client ?? client).get<AdminListTeamsResponses, AdminListTeamsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/teams',
     ...options
 });
 

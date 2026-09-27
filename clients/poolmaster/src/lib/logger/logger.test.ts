@@ -24,7 +24,6 @@ describe('logger', () => {
       getContext: () => ({
         webappVersion: '0.1.0',
         route: '/tests',
-        sessionId: null,
         userId: 'user-1',
       }),
     });

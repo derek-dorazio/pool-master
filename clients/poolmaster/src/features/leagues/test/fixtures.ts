@@ -1,7 +1,7 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
-import type { AuthenticatedSessionUserDto, DeleteLeagueResponses, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueDetailDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, LeagueSummaryDto, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
+import type { UserProfileDto, DeleteLeagueResponses, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueDetailDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, LeagueSummaryDto, SquadDto, SquadListResponse, SquadResponse } from '@/lib/api';
 
-export type CurrentUser = AuthenticatedSessionUserDto;
+export type CurrentUser = UserProfileDto;
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
 export type InvitationPreview = InvitationPreviewResponse['invitation'];
 export type AcceptedLeagueMembership = LeagueMembershipDto;
@@ -35,7 +35,6 @@ type CurrentUserFixture = Pick<
   | 'isActive'
   | 'isRootAdmin'
   | 'createdAt'
-  | 'sessionId'
 >;
 
 type LeagueSquadFixture = Pick<
@@ -131,7 +130,6 @@ const baseCurrentUser: CurrentUserFixture = {
   isActive: true,
   isRootAdmin: false,
   createdAt: '2026-04-15T00:00:00.000Z',
-  sessionId: 'session-1',
 };
 
 const baseSquadMember: LeagueSquadMemberFixture = {

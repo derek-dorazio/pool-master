@@ -760,6 +760,11 @@ export class ContestService {
 
     const [entry, user] = await Promise.all([
       this.loadContestEntryReceiptData(entryId),
+      // #202 step 3.6 — NOT on `UserRepository`, and recorded rather than converted. This
+      // service's constructor is a twelve-parameter positional list with three trailing
+      // optionals, so adding a port to it means counting arguments at thirty-two call sites;
+      // the fix is to replace the positional list with an options object, which is its own
+      // change. The read itself is a plain user-by-id.
       this.prisma.user.findUnique({
         where: { id: userId },
         select: {

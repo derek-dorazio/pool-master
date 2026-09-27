@@ -99,8 +99,8 @@ function toBufferedEntry(
     ...(msg ? { msg } : {}),
     ts: meta.ts,
     ...(meta.route ? { route: meta.route } : {}),
-    sessionId: meta.sessionId ?? null,
-    userId: meta.userId ?? null,
+    // #206 — session and user identity are not sent. The ingest route reads both from
+    // the verified JWT on the request that carries this batch.
     clientRequestId: null,
     ...(payload.data ? { data: payload.data } : {}),
     ...(payload.err !== undefined ? { err: payload.err } : {}),
@@ -170,8 +170,6 @@ export function createNetworkSink(options: NetworkSinkOptions = {}): LogSink {
         ...(entry.msg ? { msg: entry.msg } : {}),
         ts: entry.ts,
         ...(entry.route ? { route: entry.route } : {}),
-        sessionId: entry.sessionId ?? null,
-        userId: entry.userId ?? null,
         clientRequestId: entry.clientRequestId ?? null,
         ...(entry.data ? { data: entry.data } : {}),
         ...(entry.err !== undefined ? { err: entry.err } : {}),

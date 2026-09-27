@@ -1,20 +1,21 @@
 /**
- * League mappers — convert internal domain/Prisma objects to DTOs.
+ * League mappers — domain/Prisma row → DTO.
+ *
+ * #202 step 3.4: there is ONE league projection. There used to be two —
+ * `toLeagueSummaryDto` and `toLeagueDetailDto`, the second calling the first and adding
+ * `joinPolicy` — and both took an options bag of viewer fields (`memberType`,
+ * `leagueRelationship`, `isRootAdmin`) that access rule A8 has since removed from the DTO.
+ * With the viewer context gone, the only remaining inputs are the league row and its two
+ * counts, so the options bag went with them.
  */
-import type {
-  LeagueSummaryDto,
-  LeagueDetailDto,
-  LeagueListResponse,
-  LeagueRelationshipDto,
-} from '@poolmaster/shared/dto';
-import type { JoinPolicy, LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
+import type { LeagueDto } from '@poolmaster/shared/dto';
+import type { JoinPolicy, LeagueIconKey } from '@poolmaster/shared/domain';
 
 interface LeagueRow {
   id: string;
   leagueCode: string;
   name: string;
   description?: string | null;
-  createdBy: string;
   isActive: boolean;
   iconKey: LeagueIconKey;
   joinPolicy: JoinPolicy;
@@ -22,22 +23,13 @@ interface LeagueRow {
   updatedAt: Date;
 }
 
-export function toLeagueSummaryDto(
+export function toLeagueDto(
   league: LeagueRow,
-  opts?: {
+  counts?: {
     memberCount?: number;
     activeContestCount?: number;
-    memberType?: LeagueRole | null;
-    leagueRelationship?: LeagueRelationshipDto;
-    isRootAdmin?: boolean;
   },
-): LeagueSummaryDto {
-  const memberType = opts?.memberType ?? null;
-  const leagueRelationship = opts?.leagueRelationship ?? {
-    leagueMember: memberType !== null,
-    commissioner: memberType === 'COMMISSIONER',
-  };
-
+): LeagueDto {
   return {
     id: league.id,
     leagueCode: league.leagueCode,
@@ -45,35 +37,9 @@ export function toLeagueSummaryDto(
     description: league.description ?? null,
     isActive: league.isActive,
     iconKey: league.iconKey,
-    memberCount: opts?.memberCount ?? 0,
-    activeContestCount: opts?.activeContestCount ?? 0,
-    memberType,
-    leagueRelationship,
-    isRootAdmin: opts?.isRootAdmin ?? false,
-    createdAt: league.createdAt.toISOString(),
-  };
-}
-
-export function toLeagueDetailDto(
-  league: LeagueRow,
-  opts?: {
-    memberCount?: number;
-    activeContestCount?: number;
-    memberType?: LeagueRole | null;
-    leagueRelationship?: LeagueRelationshipDto;
-    isRootAdmin?: boolean;
-  },
-): LeagueDetailDto {
-  return {
-    ...toLeagueSummaryDto(league, opts),
     joinPolicy: league.joinPolicy,
-  };
-}
-
-export function toLeagueListResponse(
-  leagues: LeagueRow[],
-): LeagueListResponse {
-  return {
-    leagues: leagues.map((league) => toLeagueSummaryDto(league)),
+    memberCount: counts?.memberCount ?? 0,
+    activeContestCount: counts?.activeContestCount ?? 0,
+    createdAt: league.createdAt.toISOString(),
   };
 }

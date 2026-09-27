@@ -487,10 +487,14 @@ load-bearing; do not "clean it up".**
 ### League creation establishes the first commissioner
 
 Creating a league must also create a `LeagueMembership` for the creator with
-`role = COMMISSIONER`. That membership — not `League.createdBy` — is the authoritative
-statement of who runs a league.
+`role = COMMISSIONER`. That membership is the authoritative statement of who runs a league,
+and it is the **only** record of it: `League` has no `createdBy` column.
 
-`League.createdBy` is provenance only. No functionality depends on it.
+It had one until #202. It was a bare uuid with no relation, and because the membership is
+written in the same operation as the league, any query over it was answerable from
+`LeagueMembership` instead — including the two user-hard-delete guards that counted it.
+Do not reintroduce a creator column on an entity whose creator already holds a membership
+or ownership row; that row is the fact, and a parallel column is a second source for it.
 
 ---
 
@@ -563,3 +567,112 @@ per-page DTO variants since the repository's first commit, naming
 `LeagueSummaryDto` / `LeagueDetailDto` as the explicit counter-example — and both exist
 in the published contract today. Treat this section as a hard stop, not guidance, and
 prefer a mechanical guard over a restated rule.
+
+---
+
+## 15. Residue — The Right Mechanism, Built Then Bypassed
+
+§14 covers the shadow object someone *created*. This section covers its twin, which has
+been the more common finding by far: the correct mechanism **already existed and was not
+used**, so a second path grew beside it and both now ship.
+
+This is not a milder version of §14. It is worse in one specific way: the codebase
+contains proof that someone already understood the problem, so the next reader finds two
+plausible paths with no signal that one is abandoned. "Does it exist?" is the wrong
+question — the answer is usually yes.
+
+### Measured instances
+
+All found in one pass over the identity cluster (#201, #202, #206):
+
+| The mechanism that existed | What bypassed it |
+|---|---|
+| `auth.mapper.ts` — all four exports | The auth handler shaped all five responses inline. **The entire mapper was dead code.** Response DTOs were enforced only by Fastify's serializer dropping undeclared fields, which is how `sessionId` reached three response bodies with no compile error |
+| `tryAttachOptionalAuthUser` populating `request.authUser` on the client-logs route | The handler read session and user identity from the request **body** instead, making both forgeable (#206) |
+| `auth.isRootAdmin`, exposed at `auth-provider.tsx:175` | ~12 sites read the same global boolean off a league or squad. `app-shell.tsx` uses both sources in one file — `auth.isRootAdmin` at line 49, `activeLeague?.isRootAdmin` at line 64 |
+| `UserRepository` | `admin/user-service.ts` (36 raw Prisma calls) and `account/service.ts` (26) bypass it entirely |
+| `SquadRepository.findByLeague` | `admin/team-service.ts` hand-rolls `prisma.squad.findMany` with an inline `select`, then maps to a shape it invented |
+| `UserProfileDto` — the canonical user shape | `AdminTeamOwnerSummaryDto` was invented as a 3-field projection of it |
+| The URL-scoped, client-cached league context | Viewer relationship fields duplicated onto every league and squad row (A8 in `docs/DOMAIN-OPERATIONS.md`) |
+
+Seven instances, one cluster. Assume more.
+
+### The rule
+
+**Finding that the correct mechanism exists does not close the finding. Removing the
+bypass does.** A slice is not done while both paths ship. Specifically:
+
+1. **Check for an existing mechanism before adding one** — a repository port, a mapper, a
+   provider, a cached query, a request decorator. Search for the capability, not the name
+   you would have given it.
+2. **When you find one unused, the unused-ness is the defect.** Wire the callers to it and
+   delete the bypass in the same change. Leaving a correct-but-dead mechanism in place is
+   how it stays dead.
+3. **Dead code that encodes a convention is worse than absent code.** `auth.mapper.ts`
+   looked like the convention was being followed. Delete it or use it; never leave it.
+4. **Prefer the compiler over the serializer.** A contract enforced only by a runtime
+   stripping unknown fields is not enforced. That single gap produced three of the rows
+   above.
+
+### Every slice ends with a residue sweep
+
+Set by the repo owner, 2026-09-26: *"So many times your answer is yes that already exists,
+but it wasn't used. I want all of the residue removed."*
+
+The last phase-1 step of every slice is a deliberate sweep of the cluster for residue and
+derivations that the slice's forward work did not happen to touch — not a review of the
+diff, a search of the cluster. It is a numbered step in the workflow precisely because
+it will not happen if it is left to judgement at the end of a long slice.
+
+---
+
+## 16. No Paging In The API
+
+Set by the repo owner, 2026-09-26: **no API operation takes `page`, `pageSize`, `limit`,
+`offset` or a cursor, and no response carries a paging envelope.**
+
+A list operation returns its whole result. Narrowing is the job of a **filter** — a league,
+a status, a search term — which answers "which rows do I want", a question the caller can
+actually answer. Paging answers "how many at a time", which is a transport concern that
+leaks into the contract, forces a second parallel count query, and makes every consumer
+reassemble a result the server already had.
+
+This repo's scale makes it unnecessary: leagues have tens of members, not thousands, and
+the product shows one league at a time (A8). Where a set could genuinely grow without
+bound, the answer is a tighter filter or a retention policy, not a page parameter.
+
+### What this rules out
+
+- Query parameters `page`, `pageSize`, `limit`, `offset`, `perPage`, `cursor`.
+- Response envelopes carrying `total`, `page`, `pageSize` or `totalPages` beside `items`.
+  Use an entity-named array — `{ users: [...] }`, `{ leagues: [...] }`, `{ squads: [...] }`
+  — matching `LeagueListResponse` and `SquadListResponse`.
+- Repository ports that take paging arguments or return `{ items, total }`. A port is not
+  a place to hide a page either: `UserRepository.findAll` takes filters and returns
+  `User[]`.
+
+### Still to be removed
+
+`adminListUsers` was converted with this rule (#202). Seven operations still page, each
+belonging to a later slice, and each slice removes its own:
+
+| Operation | Paging | Slice |
+|---|---|---|
+| `listEvents` | `limit` | 2 |
+| `listParticipants` | `limit`, `offset` | 2 |
+| `adminListEvents` | `limit` | 2 |
+| `adminListProviderSyncRuns` | `limit` | 4 |
+| `adminSearchErrors` | `page`, `pageSize` | 4 |
+| `adminListAuditLog` | `page`, `pageSize` | 4 |
+| `adminExportAuditLog` | `page`, `pageSize` | 4 |
+
+`PaginatedSchema` in `dto/common.dto.ts` and `AuditListResponse` survive only because the
+slice-4 surfaces above still reference them. Both go with the last of those; do not add a
+new caller.
+
+`ParticipantRepository.search` still takes `limit`/`offset` and returns
+`{ participants, total }` — slice 2 removes it.
+
+**Audit and error logs are the one place to think before deleting the parameter.** They are
+append-only and unbounded by nature, so slice 4's answer may be a retention window or a
+date-range filter rather than simply returning everything. That is a filter, not a page.

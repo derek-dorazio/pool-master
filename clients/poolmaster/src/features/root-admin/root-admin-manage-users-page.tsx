@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
+import { adminListUsers, type UserDto } from "@/lib/api";
 import { throwApiError } from "@/lib/errors";
 import {
   DataGridPage,
@@ -9,7 +9,8 @@ import {
 } from "@/features/shared/ui";
 import { QueryKeys } from '@/lib/query-keys';
 
-type RootAdminUser = AdminListUsersResponses[200]["items"][number];
+// #202 step 3.4 — the canonical named component, not an index into the response map.
+type RootAdminUser = UserDto;
 const columnHelper = createColumnHelper<RootAdminUser>();
 
 function buildUserDisplayName(user: RootAdminUser) {
@@ -21,12 +22,8 @@ export function RootAdminManageUsersPage() {
   const usersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageUsers,
     queryFn: async () => {
-      const response = await adminListUsers({
-        query: {
-          page: 1,
-          pageSize: 100,
-        },
-      });
+      // No paging (§16) — the API returns every user, narrowed by filters if needed.
+      const response = await adminListUsers();
 
       if (!response.data) {
         throwApiError(response.error, "User list response is missing data.");
@@ -94,7 +91,7 @@ export function RootAdminManageUsersPage() {
   return (
     <DataGridPage
       columns={columns}
-      data={usersQuery.data?.items ?? []}
+      data={usersQuery.data?.users ?? []}
       emptyMessage="No users matched the current filters."
       error={usersQuery.error}
       errorBody="We could not load users right now."

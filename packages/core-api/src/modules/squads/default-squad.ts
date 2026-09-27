@@ -3,7 +3,7 @@ import type { SquadMembershipRepository, SquadRepository } from '@poolmaster/sha
 import type { Squad } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
-import { buildDefaultSquadName } from '../../core/user-name';
+import { resolveAvailableDefaultSquadName } from './squad-name';
 
 interface EnsureDefaultSquadForLeagueMemberInput {
   leagueId: string;
@@ -98,7 +98,14 @@ export async function ensureDefaultSquadForLeagueMember(
   const createdSquad = await input.squadRepo.create({
     leagueId: input.leagueId,
     createdBy: input.userId,
-    name: buildDefaultSquadName(user.firstName, user.lastName),
+    // #202 — disambiguated against the league. This runs on league creation and on
+    // member join, so a collision here would block joining outright.
+    name: await resolveAvailableDefaultSquadName(
+      input.squadRepo,
+      input.leagueId,
+      user.firstName,
+      user.lastName,
+    ),
     iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
     isActive: true,
   });

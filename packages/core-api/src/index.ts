@@ -23,7 +23,7 @@ import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
-import { accountModule } from './modules/account/routes';
+import { usersModule } from './modules/users/routes';
 import { adminModule } from './modules/admin/routes';
 import { IngestionConfigService } from './modules/admin/ingestion-config-service';
 import { PollConfigService } from './modules/admin/poll-config-service';
@@ -107,6 +107,7 @@ export function buildApp() {
   // Auth (public routes — no JWT required)
   // =========================================================================
   app.register(authModule, { prefix: '/api/v1/auth' });
+  app.register(usersModule, { prefix: '/api/v1/users' });
   app.register(versionModule, { prefix: '/api/v1/version', operationId: 'getVersion' });
 
   const ingestionCallbacks: IngestionCallbacks = {
@@ -217,7 +218,6 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(accountModule, { prefix: '/api/v1/account' });
   app.register(adminModule, {
     prefix: '/api/v1/admin',
     providerRegistry: registry,

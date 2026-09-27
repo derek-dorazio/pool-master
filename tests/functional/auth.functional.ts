@@ -1,6 +1,6 @@
 import {
   createLeague,
-  getCurrentUser,
+  getUser,
   logoutUser,
   refreshToken,
 } from '@poolmaster/shared/generated/hey-api';
@@ -35,8 +35,9 @@ describe('SDK Functional: Auth', () => {
     expect(user.registration.tokens.accessToken).toBeTruthy();
     expect(user.login.tokens.refreshToken).toBeTruthy();
 
-    const { data: currentUser } = await getCurrentUser({
+    const { data: currentUser } = await getUser({
       client: user.client,
+      path: { userId: 'me' },
     });
 
     expect(currentUser).toBeDefined();
@@ -45,7 +46,6 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser?.user.username).toBe(user.username);
     expect(currentUser?.user.firstName).toBe(user.firstName);
     expect(currentUser?.user.lastName).toBe(user.lastName);
-    expect(currentUser?.user.sessionId).toBeTruthy();
   });
 
   it('supports cookie-session auth for reads and refresh rotation through the SDK', async () => {
@@ -63,14 +63,14 @@ describe('SDK Functional: Auth', () => {
       },
     });
 
-    const currentUser = await getCurrentUser({
+    const currentUser = await getUser({
       client: cookieClient,
+      path: { userId: 'me' },
     });
 
     expect(currentUser.data?.user.id).toBe(user.userId);
     expect(currentUser.data?.user.email).toBe(user.email);
     expect(currentUser.data?.user.username).toBe(user.username);
-    expect(currentUser.data?.user.sessionId).toBe(originalRefreshToken.sessionId);
 
     const refreshResponse = await refreshToken({
       client: cookieClient,
@@ -80,7 +80,8 @@ describe('SDK Functional: Auth', () => {
     expect(refreshResponse.data?.accessToken).toBeTruthy();
     expect(refreshResponse.data?.refreshToken).toBeTruthy();
     expect(refreshResponse.data?.csrfToken).toBeTruthy();
-    expect(refreshResponse.data?.sessionId).toBe(originalRefreshToken.sessionId);
+    // #206 — no session id in the response body. Continuity across rotation is asserted
+    // below against refresh_tokens.session_id, which is the authoritative record.
     expect(refreshResponse.data?.refreshToken).not.toBe(user.login.tokens.refreshToken);
 
     const rotatedOriginalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
@@ -137,12 +138,6 @@ describe('SDK Functional: Auth', () => {
     });
 
     expect(successfulCreate.data?.league.id).toBeTruthy();
-    expect(successfulCreate.data?.league.memberType).toBe('COMMISSIONER');
-    expect(successfulCreate.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: true,
-    });
-    expect(successfulCreate.data?.league.isRootAdmin).toBe(false);
   });
 
   it('revokes the refresh token on logout and rejects subsequent refresh attempts', async () => {

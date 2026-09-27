@@ -21,6 +21,15 @@ export class PrismaSquadRepository implements SquadRepository {
     return rows.map(mapToSquad);
   }
 
+  async findByLeagueAndName(leagueId: string, name: string): Promise<Squad | null> {
+    // Resolves against the @@unique([leagueId, name]) index, so at most one row, and
+    // deliberately unfiltered by isActive — the constraint covers inactive squads too.
+    const row = await this.prisma.squad.findUnique({
+      where: { leagueId_name: { leagueId, name } },
+    });
+    return row ? mapToSquad(row) : null;
+  }
+
   async create(squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>): Promise<Squad> {
     const row = await this.prisma.squad.create({
       data: {

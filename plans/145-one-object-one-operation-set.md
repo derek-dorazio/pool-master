@@ -51,7 +51,20 @@ Set by the repo owner. They bound what this work may and may not do.
    duplicate documented in this plan came to exist.
 
    This rule outlives the pass. It is a candidate for `rules/*.md` codification before this
-   plan is deleted (ADR-0002).
+   plan is deleted (ADR-0002). **Codified** as §14 of
+   `rules/domain-model-conventions-rules.md`.
+
+6. **Residue must be removed, not just identified.** Repeatedly the finding has been *"the
+   correct mechanism already exists — it just wasn't used."* That does not close the
+   finding; removing the bypass does. A slice is not done while both paths ship.
+
+   > "So many times your answer is yes that already exists, but it wasn't used. I want all
+   > of the residue removed." — repo owner, 2026-09-26
+
+   Seven measured instances in the identity cluster alone, from a dead mapper to a
+   forgeable identity read. **Codified** as §15 of
+   `rules/domain-model-conventions-rules.md`, which carries the table; the last phase-1
+   step of every slice is a residue sweep (step 3.6 below).
 
 The goal of this pass is a single end-to-end flow — UI → route → DTO → service → DAO →
 schema — over one set of objects and one set of operations. Everything else waits.
@@ -330,8 +343,41 @@ it.
 Note the separate concern: `TeamRelationshipDto { leagueMember, owner, commissioner }` and
 `LeagueRelationshipDto { leagueMember, commissioner }` are **viewer-scoped** descriptors —
 what the *caller's* relationship is — not edges between arbitrary users and objects. They
-belong to the viewer-scope question in §4, and they overlap each other
-(`LeagueRelationshipDto` is a strict subset of `TeamRelationshipDto`).
+overlap each other (`LeagueRelationshipDto` is a strict subset of `TeamRelationshipDto`),
+and both are resolved by §2b.
+
+### 2b. Viewer context is delivered once per league — SETTLED, and it is A8
+
+Settled with the repo owner 2026-09-26. **The full reasoning, the evidence and the rule live
+in `docs/DOMAIN-OPERATIONS.md` under A8**, which survives this plan's deletion (ADR-0002).
+Recorded here because it is the largest model decision in slice 1 and half the shadow
+inventory depends on it.
+
+The short version. Five encodings of one idea — `leagueRelationship`, `memberType`,
+`isRootAdmin`, `teamRelationship`, `viewerAuthority` — sat as fields *on the domain object*,
+so two requesters got different `LeagueDto` values for the same league. That makes the DTO
+not a value of the entity, and it is the same mistake as the admin/member DTO split, one
+layer down.
+
+What resolved it was the repo owner's observation that the webapp is a single-page app
+holding league context in client state, and that **the mechanism already exists**: every
+route is `/league/:leagueCode/…`, `resolveDefaultLeagueCode()` picks the landing league from
+a cookie, `LeagueSelector` switches it, and selecting a league already fetches
+`getLeagueByCode` once into `QueryKeys.leagues.detail(leagueCode)`. TanStack Query is the
+store, deliberately, with no Zustand mirror.
+
+So the viewer's league context is **already delivered in one round trip and cached**. Every
+other response carrying it is duplication. A8's table says which surface carries what; the
+only genuine exception is the leagues *list*, which is inherently N leagues and takes the
+viewer's `LeagueMembership[]` as one array rather than a field per row.
+
+No new DTO is invented — the viewer's context is `UserDto` + `LeagueMembership[]` +
+`SquadMembership[]`, all canonical already. That is working rule 5 landing the way it is
+supposed to: the apparent gap already existed under another name.
+
+`isRootAdmin` needs no new mechanism at all. `auth-provider.tsx:175` has exposed
+`auth.isRootAdmin` from the cached user the whole time, and `app-shell.tsx` reads it at line
+49 while reading `activeLeague?.isRootAdmin` at line 64. It is pure residue (rule 6, §15).
 
 ### 3. The four kinds of difference — none of which is "a different object"
 
@@ -350,8 +396,10 @@ belong to the viewer-scope question in §4, and they overlap each other
 - One operation set per object. `DELETE /users/{id}` is the delete; root-admin-only is a
   permission on it. `me` resolves to the caller.
 - Projections deleted.
-- Viewer-scoped fields consolidated into one consistently named sub-object, so scope is
-  explicit in the model rather than implied by which URL was called.
+- Viewer-scoped fields **off the domain DTOs entirely**, delivered once per league context
+  as the viewer's own `UserDto` + memberships (§2b, A8). Superseded the earlier target of
+  "consolidated into one consistently named sub-object" — that would still have left
+  `LeagueDto` varying by requester.
 - Field visibility resolved by one stated rule.
 - Row scoping stays in the query and authorization layer.
 
@@ -429,21 +477,190 @@ Output: answered questions, and a model the owner has agreed to.
 
 Only once stages 1 and 2 are settled, and strictly in this order:
 
-| Step | Layer |
-|---|---|
-| 3.1 | **Schema** — migrations, if stage 1 said the schema is wrong |
-| 3.2 | **DAO** — repository ports covering the cluster's entities and its full operation set, including the unscoped reads admin needs |
-| 3.3 | **Services** — moved onto those ports; no service returns a shape it invented |
-| 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) |
-| 3.5 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) |
-| 3.6 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) |
+| Step | Layer | Phase |
+|---|---|---|
+| 3.1 | **Schema** — migrations, if stage 1 said the schema is wrong | 1 |
+| 3.2 | **DAO** — repository ports covering the cluster's entities and its full operation set, including the unscoped reads admin needs | 1 |
+| 3.3 | **Services** — moved onto those ports; no service returns a shape it invented | 1 |
+| 3.4 | **DTOs and routes** — one DTO per entity and edge, one operation set per object, permissioned; admin-only fields annotated, not enforced (rule 4) | 1 |
+| 3.5 | **Tests** — the slice's unit, integration and functional-api tests moved onto the canonical shapes | 1 |
+| 3.6 | **Residue sweep** — search the cluster for shadows and bypasses the forward work did not happen to touch (working rule 6, §15) | 1 |
+| 3.7 | **Architecture write-up** — one new document: the service layers and the webapp layers, what goes in each and why, the dependencies between them (exported SDK, generated TS types), and the tests that apply to each layer, with fresh diagrams and flows | 1 |
+| 3.8 | **Export** — register the canonical DTOs as named components, regenerate the client SDK (this is #192, resumed for the cluster) | boundary |
+| 3.9 | **Frontend** — every surface touching the object or one of its shadows moves onto the generated type, using the full object (rule 3) | 2 |
 
-A slice is done when that flow is unbroken for its cluster and nothing in the codebase names
-those entities any other way.
+**A slice's stage 3 stops at 3.7.** Steps 3.8 and 3.9 do not run per slice — see the phase
+split below.
+
+### Step 3.7 — the architecture write-up
+
+Set by the repo owner 2026-09-26, after slice 1's step 3.4: *"a separate, new architecture doc
+& diagram for the layers and rules for where each piece of service code goes, and why. Along
+with all the layers of the webapp and what goes where and why. With dependencies such as
+exported SDK and TS types... And do the same for the test organization. What type of tests go
+into which folders of which test suites, and why."*
+
+Constraints, as set:
+
+- **One new document.** Not an edit to an existing one.
+- **Written fresh.** Do not consult or mirror the existing rules and docs while writing it —
+  the point is to describe the structure this refactor actually produced, so that the owner
+  can review it against what they expected. A description that inherits the old documents'
+  framing cannot serve that purpose.
+- **Tests sit beside the layer they test.** Not a separate testing section: each layer is
+  described together with the tests that apply to it, which folder and suite they live in,
+  and why there rather than elsewhere.
+- **Fresh diagrams and flows**, not prose alone.
+
+It runs once, after slice 1, and is for review and discussion rather than as an input to
+slices 2–4. A slice is done, for phase-1 purposes, when its schema, DAO, services, routes
+and tests name the cluster's entities one way, the sweep is clean, and the phase-1 gates
+are green.
+
+### Tests follow the code they test
+
+Codified as §1D of `rules/testing-rules.md`, set by the repo owner 2026-09-26. It changes how
+the remaining steps handle tests, and it is the reason #209 shrinks rather than grows:
+
+- **Removing code removes its tests.** Not repaired, not ported. A test against code being
+  deleted is testing the wrong thing, whether or not it passes.
+- **Migrating code replaces its tests.** The new implementation's test *is* the replacement.
+  Its cases come from the shadow comparison already done in stage 1 — and must cover the
+  **union** of the shadows' cases, not just the surviving implementation's.
+- **Tests must earn their place.** Delete is the default. A test survives by being a case
+  worth asserting, not by having existed — and a test that exists only to enforce the shape
+  of code being deleted has no replacement owed. A case that still holds gets re-expressed at
+  the layer where it is observable.
+- **Defect ids are not carried forward, and are no longer required at all.** §1A's reference
+  requirement is struck: the product is pre-launch, so an id on a test records the history of
+  code still being written. The ~739 existing ids stay where they are rather than being
+  mass-renamed, but a deleted or rewritten test's id goes with it.
+- **The count is an outcome.** N implementations collapsing to one should leave about one
+  implementation's worth of tests covering N implementations' worth of cases. A count that
+  does not fall means tests are propagating independently of the code.
+
+The practical effect on the remaining work: for every DTO and operation collapse in steps 3.3
+and 3.4, the deleted implementation's tests go with it in the same commit, and the new test
+is written from the stage-1 case comparison rather than from the old assertions.
+
+### Test layering — what each layer may assert
+
+Set with the repo owner 2026-09-26, after four commits in this slice repaired
+implementation mirrors instead of deleting them. The goal is a correctly-factored service
+with correct coverage, not a suite that pins the shape of code being replaced.
+
+| Layer | Asserts | Against |
+|---|---|---|
+| **DAO** | the query returns the right rows; scoping actually scopes | real Postgres, no mocks |
+| **Service** | returned value, thrown typed error, resulting persisted state | behavioural unit tests for pure logic; integration where state matters |
+| **Route** | the published contract — status, shape, permission | FAPI through the generated SDK |
+
+**No layer asserts which method was called with what.** Where an effect has no observable,
+the test moves *down* a layer until it does — not sideways into a mock assertion. A test
+that can only be written as `expect(dep.method).toHaveBeenCalledWith(...)` is a signal the
+assertion belongs at a lower layer, or that the effect is not worth asserting.
+
+Deleting such a test is the default. Repairing one during a refactor is the thing to avoid:
+it converts a mirror of the old code into a mirror of the new code and produces no safety.
+
+### Step 3.6 — the residue sweep, in detail
+
+Not a review of the diff. A **search of the cluster**, because the residue is by definition
+what the forward work did not touch. It is a numbered step rather than a judgement call at
+the end of a long slice precisely because it will not otherwise happen.
+
+For every entity and edge in the cluster, and every layer from schema to frontend:
+
+- **Derived and projected shapes.** Any type that is a subset, rename or reshape of a
+  canonical DTO. Compare semantics, not field names (§5). Include **client-side**
+  projections — `league-cache.ts`'s `toLeagueSummary()` hand-projects one DTO down to
+  another, field by field, in the webapp.
+- **Bypassed mechanisms.** For each repository port, mapper, provider, cached query and
+  request decorator touching the cluster: is anything reaching past it? Raw Prisma beside a
+  port, inline response shaping beside a mapper, a value re-fetched beside a cached one.
+- **Duplicated facts.** The same value delivered by two paths, especially viewer identity:
+  a global flag repeated per row, a relationship derivable from a membership the client
+  already holds, an id echoed back that the server can read from the token.
+- **Dead code that encodes a convention.** An unused mapper or unused DTO is worse than an
+  absent one — it looks like the convention is being followed. Delete or wire it.
+- **Contracts enforced only at runtime.** A response shape held together by the serializer
+  dropping unknown fields is not type-checked. Route it through a mapper so the compiler
+  owns it.
+
+Output: every instance either removed in this slice, or recorded with the reason it is not.
+"Already exists" is not a closure. Finish by re-reading §15's table and asking which of
+those seven patterns this cluster also has.
+
+## Two phases — backend first, then the frontend in one pass
+
+Set by the repo owner. All of it lands on **one branch**; the phases are a sequencing rule
+within that branch, not separate branches or separate PRs.
+
+> "Instead of trying to fix everything in a single pass, first adjust all of the backend and
+> tests. Make sure the service build is clean. Then begin on the front-end once all of the
+> types and client SDK's are exported."
+
+**Phase 1 — every slice, backend only.** Slices 1 through 4 each run stages 1, 2 and steps
+3.1–3.6; step 3.7 runs once, after slice 1. The webapp is not touched and is *expected to be broken* for the duration: routes
+and DTOs are changing underneath it and the generated client has not been regenerated yet.
+
+**The boundary — export once.** After the last slice's backend is green, run 3.8 for
+everything at once: register the canonical DTOs as named OpenAPI components, `npm run
+api:refresh`, and regenerate the client SDK. One regeneration over a settled model, not four
+over a moving one.
+
+**Phase 2 — the frontend, one pass.** Every webapp surface moves onto the regenerated types.
+Doing this once means each surface is rewritten against the final shape rather than against
+an intermediate one that a later slice would change again.
+
+### Why the phases, concretely
+
+Slices 2 and 3 change objects slice 1's frontend would already be rendering — a league page
+shows squads, events and contest entries. Converting that page after slice 1 means
+converting it again after slices 2 and 3. Deferring the whole frontend to one pass over a
+settled model is strictly less work and produces one shape per surface instead of three.
+
+### Phase-1 gates — what "the service build is clean" means
+
+These four commands are the phase-1 definition of done. **Do not run the whole-repo `npm run
+lint` or `npm run typecheck` during phase 1** — they include the webapp, which is expected
+to be red, and a red webapp says nothing about whether the backend is clean.
+
+| Command | Covers |
+|---|---|
+| `npm run lint:service` | `packages/**/*.ts` |
+| `npm run typecheck:service` | every package except the webapp |
+| `npm run typecheck:tests` | `tests/**` — the only gate that compiles the test tree (see below) |
+| `npm run test:unit` | backend unit suite |
+
+`npm run rules:check`, `npm run api:check` and `npm run api:validate` also apply and are not
+phase-scoped.
+
+**`typecheck:tests` exists because nothing used to compile `tests/`.** `turbo typecheck`
+covers `packages/` only (#181) and jest transpiles per file without a program-wide check, so
+a test importing a module the change deleted compiled locally and failed in CI. That is
+exactly the failure mode this pass will generate repeatedly — every slice deletes shadow
+DTOs and the services behind them. Both CI fallouts on #197 were this. Run it before every
+push.
+
+The integration and functional-api suites need Postgres, which is not available in every
+working environment. Where it is missing, push the branch and let CI run them:
+`service-coverage-report` is the job that does.
+
+### CI during phase 1
+
+The CI jobs were split so a broken webapp does not block the backend suites
+(`b20c653`, `a2830d9`). The backend chain is `all-contract-gates` →
+`service-lint-typecheck` → `service-coverage-report` / `service-build`, and none of it
+depends on `poolmaster-build`. Expect `poolmaster-build` and `poolmaster-unit-tests` to be
+red for all of phase 1; that is the plan working, not a regression. They must be green
+before phase 2 is done.
 
 ## Slices — grouped by related objects
 
-Ordered by dependency: later clusters reference earlier ones.
+Ordered by dependency: later clusters reference earlier ones. **Slices 1–4 are phase-1
+(backend) units** — each runs stages 1 and 2 and steps 3.1–3.6, and none of them touches the
+webapp. The frontend is a single pass after all four, listed last.
 
 ### Slice 1 — Identity and membership
 `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, `LeagueInvitation`,
@@ -457,6 +674,214 @@ vs `/admin/users/*`, `adminInactivateLeague` vs `inactivateLeague`, `adminListTe
 `SquadDto`.
 
 First because it is the smallest real test of the whole workflow.
+
+**Stages 1 and 2 are done for this slice.** The ER diagram is in #202, the stage-1 shadow
+inventory is in #202 (2026-09-25), and every model question is answered in
+`docs/DOMAIN-OPERATIONS.md` — access rules A1–A7 (who may call) and **A8 (viewer context
+is delivered once per league, never per row)**.
+
+Two schema changes, step 3.1:
+
+- Add `@@unique([leagueId, name])` to `Squad` — squad names are unique within a league.
+  `SquadMembership` already carries `@@unique([leagueId, userId])`, so one squad per user
+  per league is already enforced in the database.
+- Drop `League.createdBy` — not a concept the model needs. Removes the column, the field in
+  `domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the DTO field in
+  `admin/league-service.ts`.
+
+Four DAO gaps, step 3.2 — each one a requirement from an access rule (working rule 2, §14):
+
+| Gap | Required by |
+|---|---|
+| `UserRepository` has no `findAll`/search | A1 — only rootAdmin reads across all users |
+| `UserRepository` has no `findByLeague` | A4 + A6 — members read peer users through the league join |
+| `LeagueRepository` has no `findByUser` | A2 — a member sees only their own leagues |
+| `SquadRepository` needs no cross-league search | **Retired.** A8's "one league at a time" means there is no unscoped squad list; `adminListTeams` is deleted, not unified |
+
+DTO collapses, step 3.4:
+
+| Shadow | Becomes |
+|---|---|
+| `UserProfileDto` | renamed `UserDto`, moved from `auth.dto.ts` to a new `users.dto.ts` |
+| `AdminTeamSummaryDto` | `SquadDto` |
+| `AdminTeamOwnerSummaryDto` | `UserDto` |
+| `LeagueMemberDto` | `LeagueMembershipDto` with an embedded `UserDto` |
+| `LeagueDetailDto` | merged into `LeagueDto` — it is `LeagueSummaryDto` + `joinPolicy`, a pure view variant |
+| `LeagueRelationshipDto`, `TeamRelationshipDto`, `UserViewerAuthorityDto` | deleted — A8 |
+| `SquadMembershipDto.firstName`/`lastName` | embedded `UserDto` |
+
+Eight duplicate operation pairs collapse to eight operations; the list is in
+`docs/DOMAIN-OPERATIONS.md` under *What this document settles*.
+
+**Known step 3.6 sweep targets**, recorded now so they are not lost:
+
+- `account/service.ts` — 26 raw Prisma calls, **zero repository ports**. Not in the
+  original §2y diagnosis, which implicated only `admin/*` and `golf/*`. It is half of the
+  `/account/*` vs `/admin/users/*` split, and the reason the two drifted: neither side goes
+  through `UserRepository`, so nothing constrained them to agree.
+- `admin/user-service.ts` (36 raw calls), `admin/league-service.ts` (2),
+  `admin/team-service.ts` (1) — all zero ports.
+- `league-cache.ts`'s `toLeagueSummary()` — a client-side hand projection of one DTO down
+  to another, field by field. Deleted by the `LeagueDto` collapse.
+- `my-team-page.tsx:149` — finds the viewer's own squad by scanning
+  `team.teamRelationship.owner` across every squad in the league. Becomes a lookup against
+  the viewer's `SquadMembership` from the league context.
+- ~12 sites reading `isRootAdmin` off a league or squad while `auth-provider.tsx:175`
+  exposes `auth.isRootAdmin`. `app-shell.tsx` uses both, at lines 49 and 64.
+- `account.dto.ts` registers **no** named components at all, so `AccountResponse` is
+  published as an inline anonymous schema. Pre-existing on main, a #192 gap.
+- `admin/routes.ts` carries the `#192-mixed:` opt-out from
+  `check-dto-conversion-complete.mjs` check 5. Re-examine whether it still needs it once
+  the admin DTOs above are gone.
+- **Repository test fakes: 50 factories across 13 files — #208.** Pulled out of the sweep
+  into its own epic because it is not residue to find at the end, it is a tax being paid
+  *now*: three consecutive commits in this slice edited 7, 5 and 10 fakes respectively to
+  add one port method each. Sequenced **before** the `UserRepository` service injection,
+  since that step needs 17 fakes built from scratch and would otherwise write them twice.
+- **210 assertions on mock call shape, 105 of them on raw Prisma — #209.** The fakes are a
+  shadow; these are worse, because they mirror the implementation rather than specifying
+  behaviour. They break on every refactor that changes nothing, and one of them was found
+  passing *vacuously* in this slice. Unlike #208 the test counts are expected to move:
+  fewer unit tests, more integration tests.
+
+  **#209 runs BEFORE the rest of step 3.3 and all of step 3.4.** Set by the repo owner
+  2026-09-26: *"All of these tests enforcing poorly implemented code is just tax and in the
+  way of the refactor."* The original order put it last, which guaranteed every remaining
+  migration step would repair mirrors instead of deleting them — and the biggest chunk
+  left, the 17 `UserService`/`AccountService` tests that mock `PrismaClient` directly, is
+  the most mirror-heavy of all.
+
+  Four commits on this branch added or repaired mirrors rather than deleting them
+  (`c4a1dab`, `b1d7c9d`, `384128d`, `183bed8`); those are in #209's scope too. "Verified
+  against the mutation" only established that the mirror matched the new code, which is
+  not coverage.
+
+**Step 3.3 outcome, recorded 2026-09-26.** Both zero-port services are on
+`UserRepository`. What the migration actually changed, beyond the injection:
+
+- **Three one-sided guards dropped**, each present in exactly one of the two write paths:
+  the self-demotion block on `setRootAdmin`, the dependency-detail payload on a blocked hard
+  delete, and the read-only lock on inactive accounts (A9). Reasoning and evidence are in
+  `docs/DOMAIN-OPERATIONS.md`, "Three guards dropped while implementing slice 1".
+- **The profile/username/preferences write became one operation for both callers**, in
+  `modules/users/user-profile-service.ts`. The document had always defined it for `self` OR
+  `rootAdmin`; only the `self` half existed, with the authority rule implicit in the route
+  prefix, so the rule had never been tested. It is now `requireWritableUser`, and the two
+  identity-availability checks that differed only in the order of their `OR` arms are one
+  check over `findByIdentifier`.
+- **`isLastRootAdmin` takes the port and the already-loaded user.** It was written inline
+  three times in `admin/user-service.ts` plus once here, and re-read the user only to learn
+  `isRootAdmin` — which every caller already had.
+- **`UserUpdate` replaced `Partial<User>` on the port.** `Partial<User>` could not express
+  "clear my timezone", because the optional preferences are `string | undefined` on the
+  domain type; worse, a `null` mapped through the enum `Record` returns `undefined`, which
+  Prisma reads as "no change", so a clear would have silently done nothing.
+- **Three hand-rolled shapes deleted**: `UserListItem`, `UserDetailView` and
+  `AccountUserRow`, along with the three copies of the row→domain enum mapping they needed.
+  `viewerAuthority` is assembled in the handler that knows the viewer (A8), and
+  `account.mapper.ts` is now a projection with no mapping in it.
+- **The client-side mirror of the inactive lock went too.** `user-page.tsx` disabled its four
+  edit forms on `isInactive`; that is gone, and the two strings telling the user their
+  account is read-only now describe what inactive actually means.
+
+Test counts across the step: unit 90 suites/1045 tests → 91/1052, integration 18/76 → 18/83,
+webapp 120/499 → 120/498. The unit count did not fall, and that is the honest outcome rather
+than the predicted one: 7 tests were deleted with the guards and 3 duplicate `UserService`
+tests were removed from `admin-support-services.test.ts`, but the operation that previously
+had NO tests for its `rootAdmin` half — and no test of its authority rule at all — needed 16. FAPI 10/60 → 10/59.
+The integration rise is `findByIdentifier`, `countRootAdmins` and `update`, none of which had
+a DAO test before.
+
+**One tension worth recording.** "Test layering" above says no layer asserts which method was
+called with what. `user-profile-service.test.ts` does, for the normalization cases, and the
+file says why: that service holds no state and issues no query, so the `UserUpdate` it hands
+the port is its entire output — there is no lower layer to move to. The rule held everywhere
+else: the `searchUsers` filter pass-through test was deleted rather than re-pointed, and what
+survives at the service layer is returned values, typed errors, the *absence* of a write, and
+transaction atomicity.
+
+**Step 3.4 and 3.6 outcome, recorded 2026-09-27.**
+
+Step 3.4 ran in three parts. **A8** took the viewer context off the entities: `memberType`,
+`leagueRelationship`, `isRootAdmin`, `teamRelationship` and `viewerAuthority` are gone, along
+with the three DTOs that existed only to name those blocks. It now travels once, on
+`getLeagueByCode` as `LeagueContextResponse` (the league plus the viewer's own
+`LeagueMembership` and `SquadMembership`), and once per leagues list as a `LeagueMembership[]`
+beside the leagues. **The DTO collapse** merged `LeagueSummaryDto` + `LeagueDetailDto` into
+`LeagueDto`, renamed `UserProfileDto` to `UserDto` in its own `users.dto.ts`, replaced
+`LeagueMemberDto` with `LeagueMembershipDto` embedding the canonical `UserDto`, did the same
+for `SquadMembershipDto`'s loose name columns, and deleted `adminListTeams` with its four
+schemas rather than re-pointing them. **The operation collapse** replaced `/api/v1/account/*`
+(7 routes), `/api/v1/admin/users/*` (8) and `/api/v1/auth/me` with `/api/v1/users` (11),
+where `:userId` accepts `me`: sixteen routes over two DTO families became eleven over one.
+
+The thing that made the collapse worth doing is what it forced into the open. Each of the
+eight "pairs" disagreed about its guards, and nobody could see it because the two halves lived
+in different files:
+
+- only the admin half had the last-root-admin guard on disable;
+- only the account half had a read-only lock on inactive accounts (dropped under A9);
+- only the admin half wrote an audit entry — now the rule is stated: the entry records an
+  exercise of root-admin authority, so it is keyed on the ACTOR, not on the route prefix;
+- only the admin half blocked self-demotion, which the last-root-admin count already covered.
+
+Moving the user list out from under `/api/v1/admin` also separated two failures that the admin
+prefix had answered identically: an anonymous caller is not authenticated (401), and an
+authenticated caller who is not a root admin is not authorized (403).
+
+### Step 3.6 — the sweep, and what it did NOT convert
+
+Converted: `AuthService`, `SquadService`, `MemberDirectoryService` and
+`SquadOwnerInvitationService` onto `UserRepository`; four `User → UserDto` projections and four
+copies of the row→domain enum mapping collapsed into one `users.mapper.ts`; two contracts that
+were enforced only at runtime (`mapLeagueMembershipToDto` had no declared return type, and
+accepting an invitation sent the raw domain object) now compile.
+
+**Five user reads were NOT converted, and the reason is one finding, not five.** They are in
+`leagues/invitation-service.ts` (×2), `leagues/member-lifecycle.ts`,
+`squads/default-squad.ts` and `contests/service.ts`. Each is a plain user-by-id read that
+`UserRepository.findById` covers exactly. What blocks them is the shape of the constructors
+they hang off: `ContestService` takes twelve positional parameters with three trailing
+optionals, `InvitationService` nine, `LeagueService` seven. Adding a parameter mid-list
+silently shifts every existing argument; appending it means every call that stops early has to
+pad with `undefined`.
+
+That is not a hypothesis. Converting them and threading the port through produced exactly that
+breakage — a test passing a Prisma mock into the logger slot, another passing a repository into
+`appBaseUrl`, and a league-creation test that silently skipped default-squad provisioning
+because the port arrived as `undefined` — and the failures were type errors and wrong-call
+assertions rather than anything about users. The conversion was reverted.
+
+**The fix is to replace those three positional lists with an options object**, and that is its
+own change with its own risk, not a step inside a DTO refactor. Recorded here rather than left
+in the diff. Two other user reads stay on Prisma by design: `admin/health-service.ts` counts
+users for a platform metric, which is not an aggregate read, and `plugins/admin-auth.ts`
+re-reads the user per request — which is #195, and now inconsistent with the user routes, since
+those take `isRootAdmin` from the token claim.
+
+**Three route maps exist for the same routes.** The Fastify registrations are the truth; the
+OpenAPI document is generated from them; and then `packages/shared/api-routes.ts` and
+`clients/poolmaster/src/test/msw-api.ts` are hand-maintained copies. Both were stale in this
+slice's favour — they still listed `/api/v1/account/*` and `/api/v1/auth/me` after the routes
+were gone. Updated here, but two hand-maintained mirrors of a generated artifact is the §15
+pattern and should be a follow-up.
+
+**Step 3.7 outcome, 2026-09-27.** `docs/LAYERS.md`. Written from the code rather than from the
+existing rules and docs, as set: the point is to describe the structure this refactor produced
+so it can be reviewed against what was intended, and a description that inherits the old
+framing cannot do that. It covers the service layers (domain → ports → adapters → services →
+mappers → DTOs → routes, plus plugins and core), the webapp layers (`lib/` as the boundary,
+`features/<area>/` as the unit, the generated SDK and types as the dependency between them),
+the tests that apply to each layer with the reason they sit where they do, two end-to-end flows,
+and a closing section on the boundaries that are still soft — including the five unconverted
+user reads and the three route maps.
+
+Two structural facts it records that were not obvious before writing it down: the webapp's tests
+are colocated and vitest-run while every backend test is central and jest-run, which follows
+from the runner rather than from a testing policy and means `npm run test:unit` does not include
+the webapp; and `clients/poolmaster/src/test/msw-api.ts` plus `packages/shared/api-routes.ts`
+are two hand-maintained mirrors of a generated artifact — the shadow pattern of this whole
+refactor, one level up.
 
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
@@ -488,8 +913,42 @@ one.
 ### Slice 4 — Platform and operations
 Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
 
+**Carried in from slice 1, 2026-09-26: there are two audit tables for one concept.**
+`AdminAuditEntry` and `CommissionerAuditLog` share nine columns — `id`, `actorId`,
+`action`, `description`, `beforeState`, `afterState`, `reason`, `ipAddress`, `createdAt`.
+They differ only in that the admin one adds `actorEmail`, `resourceType`, `resourceId` and
+`userAgent`, and the commissioner one adds a required `leagueId` FK, an optional
+`contestId`, and `category`.
+
+They are split **by actor role** — the same mistake this whole pass exists to undo, one
+layer down, in the schema. `AdminAuditEntry`'s relation is literally named
+`RootAdminAuditActor`.
+
+Slice 1 asked whether self-service user actions should be audited and the repo owner
+deferred it here, which is right: the answer depends on how many audit tables there should
+be. Writing self actions into `AdminAuditEntry` would give that table a third meaning, and
+a new `UserAuditLog` would be a third table for one concept, which working rule 5 forbids.
+So **self-service user lifecycle actions are currently not audited**, deliberately, pending
+this slice.
+
+One related defect found while looking: `logAdminAction` writes through a module-level
+Prisma singleton and takes no transaction client, so calls placed inside a
+`$transaction` callback were never enrolled in it — the entry committed immediately and
+would have survived a rollback. Slice 1 moved those calls after their transactions
+(#202); whether the audit write *should* be atomic is this slice's call, and there is a
+real argument that a record of a failed attempt is worth keeping.
+
 The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
 (stop calling it "admin") and bringing services onto ports for consistency.
+
+### Phase 2 — the frontend, once
+Not a fifth slice. Runs after all four slices' backends are green and step 3.8 has exported
+the canonical DTOs and regenerated the client SDK. Every webapp surface touching any object
+in slices 1–4 moves onto the generated type, using the full object (rule 3).
+
+Its gates are the ones phase 1 deliberately skips: `npm run lint:webapp`,
+`npm run typecheck:webapp`, `npm run test:poolmaster:unit`, and green `poolmaster-build` /
+`poolmaster-unit-tests` in CI.
 
 ## Open Questions — found so far
 

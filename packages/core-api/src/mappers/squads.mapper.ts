@@ -1,18 +1,22 @@
-import type { Squad, SquadMembership } from '@poolmaster/shared/domain';
-import type { SquadDto, SquadMembershipDto, TeamRelationshipDto } from '@poolmaster/shared/dto';
+import type { Squad, SquadMembership, User } from '@poolmaster/shared/domain';
+import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
+import { toUserDto } from './users.mapper';
 
+/**
+ * #202 step 3.4 — takes the member rather than two loose name strings. The edge embeds the
+ * canonical `UserDto`; `firstName`/`lastName` were optional on the DTO, so every consumer had
+ * to handle a member whose name was simply absent.
+ */
 export function toSquadMembershipDto(
   membership: SquadMembership,
-  firstName?: string,
-  lastName?: string,
+  user: User,
 ): SquadMembershipDto {
   return {
     id: membership.id,
     squadId: membership.squadId,
     leagueId: membership.leagueId,
     userId: membership.userId,
-    firstName,
-    lastName,
+    user: toUserDto(user),
     status: membership.status,
     joinedAt: membership.joinedAt.toISOString(),
     createdAt: membership.createdAt.toISOString(),
@@ -20,14 +24,14 @@ export function toSquadMembershipDto(
   };
 }
 
+/**
+ * #202 step 3.4 — no viewer options bag. `teamRelationship` and `isRootAdmin` came off
+ * `SquadDto` under access rule A8, and they were the only reason this took one.
+ */
 export function toSquadDto(
   squad: Squad,
   memberCount: number,
   members?: SquadMembershipDto[],
-  opts?: {
-    teamRelationship?: TeamRelationshipDto;
-    isRootAdmin?: boolean;
-  },
 ): SquadDto {
   return {
     id: squad.id,
@@ -39,12 +43,6 @@ export function toSquadDto(
     memberCount,
     createdAt: squad.createdAt.toISOString(),
     updatedAt: squad.updatedAt.toISOString(),
-    teamRelationship: opts?.teamRelationship ?? {
-      leagueMember: false,
-      owner: false,
-      commissioner: false,
-    },
-    isRootAdmin: opts?.isRootAdmin ?? false,
     ...(members ? { members } : {}),
   };
 }

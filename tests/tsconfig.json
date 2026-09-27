@@ -7,6 +7,9 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "baseUrl": "..",
+    // The generated hey-api fetch client is DOM-typed (BodyInit, RequestInit).
+    // Tests import through it, so the tests program needs the DOM lib.
+    "lib": ["ES2022", "DOM"],
     "paths": {
       "@poolmaster/shared/*": ["packages/shared/*"],
       "@poolmaster/mock-contest-feed-provider/generated/hey-api/types": [
@@ -18,5 +21,10 @@
     "./**/*.ts",
     "../packages/*/src/**/*.ts",
     "../packages/shared/**/*.ts"
+  ],
+  "exclude": [
+    // Build tooling config, not test or product code. It is typed against the
+    // generator's own CLI types and does not belong in the tests program.
+    "../packages/shared/openapi-ts.config.ts"
   ]
 }

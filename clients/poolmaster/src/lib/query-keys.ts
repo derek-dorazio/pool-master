@@ -181,7 +181,6 @@ export const QueryKeys = {
       ] as const,
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
-    manageTeams: ['poolmaster', 'root-admin', 'manage-teams'] as const,
     manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
     pollConfig: ['poolmaster', 'root-admin', 'poll-config'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,

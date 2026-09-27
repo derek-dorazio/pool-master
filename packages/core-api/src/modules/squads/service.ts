@@ -4,6 +4,7 @@ import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import {
   LeagueMembershipStatus,
@@ -13,17 +14,16 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
-import { buildDefaultSquadName } from '../../core/user-name';
+import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
 import { inactivateLeagueMemberUnit } from '../leagues/member-lifecycle';
 
-interface SquadViewerContext {
-  userId: string;
-  isRootAdmin: boolean;
-  teamRelationship: {
-    leagueMember: boolean;
-    commissioner: boolean;
-  };
-}
+/**
+ * #202 step 3.4 — `SquadViewerContext` is gone. It threaded
+ * `{ userId, isRootAdmin, teamRelationship }` through every read and write in this file so
+ * that `toSquadDto` could stamp the viewer's relationship onto each squad. Access rule A8
+ * removed those fields from `SquadDto`, so what the two guards below return is nothing: they
+ * are authorization checks, and they now say so by name.
+ */
 
 interface CreateSquadInput {
   name?: string;
@@ -40,6 +40,7 @@ export class SquadService {
     private readonly squadRepo: SquadRepository,
     private readonly squadMembershipRepo: SquadMembershipRepository,
     private readonly leagueMembershipRepo: LeagueMembershipRepository,
+    private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
   ) {}
@@ -49,12 +50,10 @@ export class SquadService {
       action: 'squad.list.enter',
       data: { leagueId, userId },
     }, 'Listing squads');
-    const viewerContext = await this.requireSquadViewerContext(leagueId, userId, isRootAdmin);
+    await this.requireLeagueAccess(leagueId, userId, isRootAdmin);
 
     const squads = await this.squadRepo.findByLeague(leagueId, true);
-    const result = await Promise.all(
-      squads.map(async (squad) => this.loadSquadDto(squad.id, viewerContext)),
-    );
+    const result = await Promise.all(squads.map(async (squad) => this.loadSquadDto(squad.id)));
     this.logger?.info({
       action: 'squad.list.success',
       data: { leagueId, userId, squadCount: result.length },
@@ -67,9 +66,9 @@ export class SquadService {
       action: 'squad.get.enter',
       data: { leagueId, squadId, userId },
     }, 'Loading squad');
-    const viewerContext = await this.requireSquadViewerContext(leagueId, userId, isRootAdmin);
+    await this.requireLeagueAccess(leagueId, userId, isRootAdmin);
     await this.requireLeagueScopedSquad(leagueId, squadId);
-    const squad = await this.loadSquadDto(squadId, viewerContext);
+    const squad = await this.loadSquadDto(squadId);
     this.logger?.info({
       action: 'squad.get.success',
       data: { leagueId, squadId, userId },
@@ -82,14 +81,29 @@ export class SquadService {
       action: 'squad.create.enter',
       data: { leagueId, userId, hasName: Boolean(input.name?.trim()), iconKey: input.iconKey ?? null },
     }, 'Creating squad');
-    const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
+    await this.requireActiveLeagueMembership(leagueId, userId);
     await this.ensureUserCanJoinLeagueSquad(leagueId, userId);
 
     const user = await this.requireUser(userId);
+    // #202 — squad names are unique per league. A name the user typed must be rejected on
+    // collision; the default name must not be able to block them, so it disambiguates.
+    const requestedName = input.name?.trim();
+    let name: string;
+    if (requestedName) {
+      await assertSquadNameAvailable(this.squadRepo, leagueId, requestedName);
+      name = requestedName;
+    } else {
+      name = await resolveAvailableDefaultSquadName(
+        this.squadRepo,
+        leagueId,
+        user.firstName,
+        user.lastName,
+      );
+    }
     const squad = await this.squadRepo.create({
       leagueId,
       createdBy: userId,
-      name: input.name?.trim() || buildDefaultSquadName(user.firstName, user.lastName),
+      name,
       iconKey: input.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
       isActive: true,
     });
@@ -102,14 +116,7 @@ export class SquadService {
       joinedAt: new Date(),
     });
 
-    const squadDto = await this.loadSquadDto(squad.id, {
-      userId,
-      isRootAdmin: false,
-      teamRelationship: {
-        leagueMember: true,
-        commissioner: leagueMembership.role === LeagueRole.COMMISSIONER,
-      },
-    });
+    const squadDto = await this.loadSquadDto(squad.id);
     this.logger?.info({
       action: 'squad.create.success',
       data: { leagueId, squadId: squad.id, userId },
@@ -136,12 +143,19 @@ export class SquadService {
         },
       },
     }, 'Updating squad');
-    const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
+    await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
+    const nextName = input.name?.trim();
+    if (nextName !== undefined) {
+      // excludeSquadId so a no-op rename does not collide with itself (#202).
+      await assertSquadNameAvailable(this.squadRepo, leagueId, nextName, {
+        excludeSquadId: squadId,
+      });
+    }
     await this.squadRepo.update(squadId, {
-      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+      ...(nextName !== undefined ? { name: nextName } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
-    const squad = await this.loadSquadDto(squadId, viewerContext);
+    const squad = await this.loadSquadDto(squadId);
     this.logger?.info({
       action: 'squad.update.success',
       data: { leagueId, squadId, userId },
@@ -159,14 +173,14 @@ export class SquadService {
       action: 'squad.inactivate.enter',
       data: { leagueId, squadId, userId },
     }, 'Inactivating squad');
-    const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
+    await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
     if (!squad.isActive) {
       this.logger?.warn({
         action: 'squad.inactivate.alreadyInactive',
         data: { leagueId, squadId, userId },
       }, 'Squad already inactive');
-      return this.loadSquadDto(squadId, viewerContext);
+      return this.loadSquadDto(squadId);
     }
 
     const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
@@ -189,7 +203,7 @@ export class SquadService {
       await this.squadRepo.update(squadId, { isActive: false });
     }
 
-    const squadDto = await this.loadSquadDto(squadId, viewerContext);
+    const squadDto = await this.loadSquadDto(squadId);
     this.logger?.info({
       action: 'squad.inactivate.success',
       data: { leagueId, squadId, userId },
@@ -378,44 +392,26 @@ export class SquadService {
     }, 'Deleted inactive squad');
   }
 
-  private async loadSquadDto(
-    squadId: Promise<string> | string,
-    viewerContext: SquadViewerContext,
-  ): Promise<SquadDto> {
+  private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {
     const resolvedSquadId = await squadId;
     const squad = await this.squadRepo.findById(resolvedSquadId);
     if (!squad) {
       throw new SquadNotFoundError(`Squad not found: ${resolvedSquadId}`);
     }
     const memberships = await this.squadMembershipRepo.findBySquad(resolvedSquadId, true);
-    const users = memberships.length === 0
-      ? []
-      : await this.prisma.user.findMany({
-        where: { id: { in: memberships.map((membership) => membership.userId) } },
-        select: { id: true, firstName: true, lastName: true },
-      });
-    const userByUserId = new Map(users.map((user) => [user.id, user]));
-    const memberDtos = memberships.map((membership) =>
-      toSquadMembershipDto(
-        membership,
-        userByUserId.get(membership.userId)?.firstName,
-        userByUserId.get(membership.userId)?.lastName,
-      ),
-    );
+    // #202 step 3.4 — the squad's members come off `UserRepository.findByLeague`, the scoped
+    // peer read A4 and A6 require, rather than a raw `findMany` selecting three columns. The
+    // edge embeds the whole `UserDto`, so three columns are no longer enough.
+    const leagueUsers = memberships.length === 0 ? [] : await this.users.findByLeague(squad.leagueId);
+    const userByUserId = new Map(leagueUsers.map((user) => [user.id, user]));
+    const memberDtos = memberships.flatMap((membership) => {
+      const user = userByUserId.get(membership.userId);
+      return user ? [toSquadMembershipDto(membership, user)] : [];
+    });
     const memberCount = memberships.filter(
       (membership) => membership.status === SquadMembershipStatus.ACTIVE,
     ).length;
-    const teamRelationship = {
-      ...viewerContext.teamRelationship,
-      owner: memberships.some(
-        (membership) =>
-          membership.userId === viewerContext.userId && membership.status === SquadMembershipStatus.ACTIVE,
-      ),
-    };
-    return toSquadDto(squad, memberCount, memberDtos, {
-      teamRelationship,
-      isRootAdmin: viewerContext.isRootAdmin,
-    });
+    return toSquadDto(squad, memberCount, memberDtos);
   }
 
   private async loadSquadMembershipDto(membership: {
@@ -429,7 +425,7 @@ export class SquadService {
     updatedAt: Date;
   }): Promise<SquadMembershipDto> {
     const user = await this.requireUser(membership.userId);
-    return toSquadMembershipDto(membership, user.firstName, user.lastName);
+    return toSquadMembershipDto(membership, user);
   }
 
   private async requireLeagueScopedSquad(leagueId: string, squadId: string) {
@@ -463,42 +459,19 @@ export class SquadService {
     return membership;
   }
 
-  private async requireSquadViewerContext(
+  /**
+   * Access rule A4 — reading a league's squads requires an active membership in it, which a
+   * root admin bypasses (A1). Returns nothing: the answer is "you may proceed or you may not".
+   */
+  private async requireLeagueAccess(
     leagueId: string,
     userId: string,
     isRootAdmin: boolean,
-  ): Promise<SquadViewerContext> {
+  ): Promise<void> {
     if (isRootAdmin) {
-      const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
-      if (membership?.status === LeagueMembershipStatus.ACTIVE) {
-        return {
-          userId,
-          isRootAdmin: true,
-          teamRelationship: {
-            leagueMember: true,
-            commissioner: membership.role === LeagueRole.COMMISSIONER,
-          },
-        };
-      }
-      return {
-        userId,
-        isRootAdmin: true,
-        teamRelationship: {
-          leagueMember: false,
-          commissioner: false,
-        },
-      };
+      return;
     }
-
-    const membership = await this.requireActiveLeagueMembership(leagueId, userId);
-    return {
-      userId,
-      isRootAdmin: false,
-      teamRelationship: {
-        leagueMember: true,
-        commissioner: membership.role === LeagueRole.COMMISSIONER,
-      },
-    };
+    await this.requireActiveLeagueMembership(leagueId, userId);
   }
 
   private async requireActiveSquadOwner(leagueId: string, squadId: string, userId: string) {
@@ -532,29 +505,23 @@ export class SquadService {
     return membership;
   }
 
+  /**
+   * Access rule A7 — a squad is managed by one of its owners, by a commissioner of its
+   * league acting on a member's behalf, or by a root admin. Returns nothing.
+   */
   private async requireSquadManager(
     leagueId: string,
     squadId: string,
     userId: string,
     isRootAdmin: boolean,
-  ): Promise<SquadViewerContext> {
+  ): Promise<void> {
     if (isRootAdmin) {
       await this.requireLeagueScopedSquad(leagueId, squadId);
       this.logger?.debug({
         action: 'squad.requireManager.rootAdminBypass',
         data: { leagueId, squadId, userId },
       }, 'Root admin managing squad');
-      const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
-      return {
-        userId,
-        isRootAdmin: true,
-        teamRelationship: {
-          leagueMember: membership?.status === LeagueMembershipStatus.ACTIVE,
-          commissioner:
-            membership?.status === LeagueMembershipStatus.ACTIVE
-            && membership.role === LeagueRole.COMMISSIONER,
-        },
-      };
+      return;
     }
 
     const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
@@ -564,25 +531,10 @@ export class SquadService {
         action: 'squad.requireManager.commissionerBypass',
         data: { leagueId, squadId, userId },
       }, 'Commissioner managing squad');
-      return {
-        userId,
-        isRootAdmin: false,
-        teamRelationship: {
-          leagueMember: true,
-          commissioner: true,
-        },
-      };
+      return;
     }
 
     await this.requireActiveSquadOwner(leagueId, squadId, userId);
-    return {
-      userId,
-      isRootAdmin: false,
-      teamRelationship: {
-        leagueMember: true,
-        commissioner: false,
-      },
-    };
   }
 
   private async ensureUserCanJoinLeagueSquad(leagueId: string, userId: string): Promise<void> {
@@ -610,10 +562,7 @@ export class SquadService {
   }
 
   private async requireUser(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, firstName: true, lastName: true },
-    });
+    const user = await this.users.findById(userId);
     if (!user) {
       this.logger?.warn({
         action: 'squad.requireUser.notFound',

@@ -3,20 +3,26 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import {
-  toLeagueDetailDto,
-  toLeagueSummaryDto,
-} from '../../mappers/leagues.mapper';
+import type { LeagueListResponse } from '@poolmaster/shared/dto';
+import { toLeagueDto } from '../../mappers/leagues.mapper';
+import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
+import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { LeagueMembership } from '@poolmaster/shared/domain';
-import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
+import type {
+  LeagueMembershipRepository,
+  SquadMembershipRepository,
+  UserRepository,
+} from '@poolmaster/shared/db';
 
 export function createLeagueHandlers(
   leagueService: LeagueService,
   membershipRepo: LeagueMembershipRepository,
+  squadMembershipRepo: SquadMembershipRepository,
+  userRepo: UserRepository,
 ) {
   return {
     listLeagues,
@@ -30,27 +36,17 @@ export function createLeagueHandlers(
     deleteLeague,
   };
 
-  function getLeagueViewerShape(
-    membership: LeagueMembership | null | undefined,
-    isRootAdmin: boolean,
-  ) {
-    const isActiveMembership = membership?.status === LeagueMembershipStatus.ACTIVE;
-    const memberType = isActiveMembership ? membership.role : null;
-
-    return {
-      memberType,
-      leagueRelationship: {
-        leagueMember: isActiveMembership,
-        commissioner: isActiveMembership && membership?.role === LeagueRole.COMMISSIONER,
-      },
-      isRootAdmin,
-    };
-  }
-
+  /**
+   * #202 step 3.4 — `getLeagueViewerShape()` is gone. It built
+   * `{ memberType, leagueRelationship, isRootAdmin }` and spread it onto every league
+   * payload this file produced, eight call sites' worth. Access rule A8: the viewer's
+   * relationship travels once per league, on `getLeagueByCode`, as the membership edges
+   * themselves — see `mapLeagueMembershipToDto` below and `LeagueContextResponse`.
+   */
   async function listLeagues(
     request: FastifyRequest,
     reply: FastifyReply,
-  ): Promise<{ leagues: unknown[] }> {
+  ): Promise<LeagueListResponse | void> {
     const logger = request.contextLogger ?? request.log;
     logger.debug({
       action: 'leagueRoute.list.enter',
@@ -67,14 +63,24 @@ export function createLeagueHandlers(
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const leagues = await leagueService.findByUser(userId);
+    // The memberships below are all the VIEWER's, so the member embedded in each is the
+    // viewer — one read, not one per league.
+    const viewer = await userRepo.findById(userId);
     logger.info({
       action: 'leagueRoute.list.success',
       data: { userId, isRootAdmin: request.authUser?.isRootAdmin === true, leagueCount: leagues.length },
     }, 'Listed leagues');
+    // A8's one exception: the leagues list is inherently multi-league and the viewer's
+    // relationship differs per league, so it travels as a SET beside the leagues rather than
+    // as fields repeated on every row.
     return {
-      leagues: leagues.map((item) => toLeagueSummaryDto(item.league, {
-        ...getLeagueViewerShape(item.membership, request.authUser?.isRootAdmin === true),
-      })),
+      leagues: leagues.map((item) => toLeagueDto(item.league)),
+      memberships: viewer
+        ? leagues
+          .map((item) => item.membership)
+          .filter((membership): membership is LeagueMembership => Boolean(membership))
+          .map((membership) => mapLeagueMembershipToDto(membership, viewer))
+        : [],
     };
   }
 
@@ -117,11 +123,7 @@ export function createLeagueHandlers(
       data: { leagueId: result.league.id, userId },
     }, 'Created league');
     return reply.status(201).send({
-      league: toLeagueDetailDto(result.league, {
-        memberCount: 1,
-        activeContestCount: 0,
-        ...getLeagueViewerShape(result.membership, request.authUser?.isRootAdmin === true),
-      }),
+      league: toLeagueDto(result.league, { memberCount: 1, activeContestCount: 0 }),
     });
   }
 
@@ -181,10 +183,9 @@ export function createLeagueHandlers(
       data: { leagueId: request.params.id, memberCount: result.members.length },
     }, 'Loaded league');
     return reply.send({
-      league: toLeagueDetailDto(result.league, {
+      league: toLeagueDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        ...getLeagueViewerShape(membership, rootAdminViewer),
       }),
     });
   }
@@ -249,12 +250,24 @@ export function createLeagueHandlers(
       action: 'leagueRoute.getByCode.success',
       data: { leagueId: result.league.id, leagueCode: result.league.leagueCode, memberCount: result.members.length },
     }, 'Loaded league by code');
+    // A8 — this is the ONE response carrying the viewer's relationship to a league, and it
+    // carries it as the canonical edges rather than as flags. The client fetches this once on
+    // league selection and holds it for the session, so every league-scoped response after it
+    // carries none.
+    const [squadMembership, viewer] = await Promise.all([
+      squadMembershipRepo.findByLeagueAndUser(result.league.id, userId),
+      userRepo.findById(userId),
+    ]);
     return reply.send({
-      league: toLeagueDetailDto(result.league, {
+      league: toLeagueDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        ...getLeagueViewerShape(membership, rootAdminViewer),
       }),
+      // Both edges are the viewer's own, so the embedded member is the viewer.
+      membership: membership && viewer ? mapLeagueMembershipToDto(membership, viewer) : null,
+      squadMembership: squadMembership && viewer
+        ? toSquadMembershipDto(squadMembership, viewer)
+        : null,
     });
   }
 
@@ -269,18 +282,12 @@ export function createLeagueHandlers(
     }, 'Handling inactivate league request');
     try {
       const league = await leagueService.inactivateLeague(request.params.id);
-      const membership = request.authUser?.userId
-        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
-        : null;
       logger.info({
         action: 'leagueRoute.inactivate.success',
         data: { leagueId: request.params.id },
       }, 'Inactivated league');
       return reply.send({
-        league: toLeagueDetailDto(
-          league,
-          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
-        ),
+        league: toLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -312,18 +319,12 @@ export function createLeagueHandlers(
     }, 'Handling activate league request');
     try {
       const league = await leagueService.activateLeague(request.params.id);
-      const membership = request.authUser?.userId
-        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
-        : null;
       logger.info({
         action: 'leagueRoute.activate.success',
         data: { leagueId: request.params.id },
       }, 'Activated league');
       return reply.send({
-        league: toLeagueDetailDto(
-          league,
-          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
-        ),
+        league: toLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -358,18 +359,12 @@ export function createLeagueHandlers(
     }, 'Handling update league details request');
     try {
       const league = await leagueService.updateLeagueDetails(request.params.id, request.body);
-      const membership = request.authUser?.userId
-        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
-        : null;
       logger.info({
         action: 'leagueRoute.updateDetails.success',
         data: { leagueId: request.params.id },
       }, 'Updated league details');
       return reply.send({
-        league: toLeagueDetailDto(
-          league,
-          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
-        ),
+        league: toLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -406,18 +401,12 @@ export function createLeagueHandlers(
       const league = await leagueService.updateLeagueIcon(request.params.id, {
         iconKey: request.body.iconKey as never,
       });
-      const membership = request.authUser?.userId
-        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
-        : null;
       logger.info({
         action: 'leagueRoute.updateIcon.success',
         data: { leagueId: request.params.id, iconKey: request.body.iconKey },
       }, 'Updated league icon');
       return reply.send({
-        league: toLeagueDetailDto(
-          league,
-          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
-        ),
+        league: toLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {

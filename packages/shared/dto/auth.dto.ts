@@ -3,8 +3,8 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { SuccessSchema } from './common.dto';
+import { UserDtoSchema } from './users.dto';
 
 // --- Requests ---
 
@@ -72,62 +72,23 @@ export const AuthTokensDtoSchema = z.object({
 }).describe('Authentication token bundle returned after login or registration.');
 export type AuthTokensDto = z.infer<typeof AuthTokensDtoSchema>;
 
-export const UserProfileDtoSchema = z.object({
-  id: z.string().describe('Stable user identifier.'),
-  email: z.string().describe('Primary email address for the user account.'),
-  username: z.string().describe('Unique login identifier for the account.'),
-  firstName: z.string().describe('First name shown in account and member-management surfaces.'),
-  lastName: z.string().describe('Last name shown in account and member-management surfaces.'),
-  isActive: z
-    .boolean()
-    .describe('Whether the account is currently active for normal sign-in and product usage.'),
-  isRootAdmin: z.boolean().describe('Whether the user has platform-level root-admin access.'),
-  authProvider: z
-    .enum([AuthProvider.EMAIL, AuthProvider.GOOGLE, AuthProvider.APPLE])
-    .optional()
-    .describe('Authentication provider used for the account when known.'),
-  timezone: z.string().optional().describe('Preferred IANA timezone for user-facing scheduling and reminders.'),
-  locale: z.string().optional().describe('Preferred locale for formatting and localized copy.'),
-  timeFormat: z
-    .enum([TimeFormat.TWELVE_HOUR, TimeFormat.TWENTY_FOUR_HOUR])
-    .optional()
-    .describe('Preferred clock display used in account and scheduling surfaces.'),
-  dateFormat: z
-    .enum([DateFormat.MDY, DateFormat.DMY, DateFormat.YMD])
-    .optional()
-    .describe('Preferred date display format used in account and scheduling surfaces.'),
-  createdAt: z.string().datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
-}).describe('Frontend-facing user profile summary derived from the authenticated account.');
-export type UserProfileDto = z.infer<typeof UserProfileDtoSchema>;
-
-export const AuthenticatedSessionUserDtoSchema = UserProfileDtoSchema.extend({
-  sessionId: z
-    .string()
-    .uuid()
-    .nullable()
-    .describe('Safe non-secret session correlation identifier for the authenticated browser session.'),
-}).describe('Authenticated user profile summary enriched with the safe session correlation identifier.');
-export type AuthenticatedSessionUserDto = z.infer<typeof AuthenticatedSessionUserDtoSchema>;
-
 // --- Responses ---
 
 export const AuthResponseSchema = z.object({
-  user: AuthenticatedSessionUserDtoSchema,
+  user: UserDtoSchema,
   tokens: AuthTokensDtoSchema,
 }).describe('Successful authentication response returned after registration or login.');
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
-export const MeResponseSchema = z.object({
-  user: AuthenticatedSessionUserDtoSchema,
-}).describe('Authenticated current-user profile response.');
-export type MeResponse = z.infer<typeof MeResponseSchema>;
+// #202 step 3.4 — `MeResponse` is gone with `GET /auth/me`. Reading a user is one operation,
+// `GET /users/:userId`, whose `me` resolves to the caller; it returns `UserResponse`.
 
-export const TokenRefreshResponseSchema = AuthTokensDtoSchema.extend({
-  sessionId: z
-    .string()
-    .uuid()
-    .describe('Safe non-secret session correlation identifier that remains stable across refresh rotation.'),
-}).describe('Token refresh response including the stable session correlation identifier.');
+// #206 — no `sessionId`. The session correlation id stays server-side in the JWT's
+// `sid` claim; the browser never receives it and never needs to, because the only
+// consumer was the client logger and the ingest route now reads it from the token.
+export const TokenRefreshResponseSchema = AuthTokensDtoSchema.describe(
+  'Token refresh response carrying the rotated access, refresh and CSRF tokens.',
+);
 export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 
 export const LogoutResponseSchema = SuccessSchema;
@@ -138,14 +99,11 @@ export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;
 // LogoutResponseSchema are not referenced by any route, so registering them would
 // publish components nothing serves (check 2).
 //
-// AuthenticatedSessionUserDto is the payoff here: getCurrentUser's `user` was derived in
-// three frontend files under three different names (AuthSessionUser, PostAuthUser,
-// CurrentUser).
+// `UserDto` itself is registered by users.dto.ts, which owns it as of #202 step 3.4 — it
+// was declared here as `UserProfileDto`, under a name that read as a view of a user rather
+// than the user, in a module that is only one of its callers.
 registerSchema('AuthTokensDto', AuthTokensDtoSchema);
-registerSchema('UserProfileDto', UserProfileDtoSchema);
-registerSchema('AuthenticatedSessionUserDto', AuthenticatedSessionUserDtoSchema);
 registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);
-registerSchema('MeResponse', MeResponseSchema);
 registerSchema('TokenRefreshResponse', TokenRefreshResponseSchema);

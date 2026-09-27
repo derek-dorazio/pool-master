@@ -141,7 +141,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       data: {
         leagueCode: 'CLN68A',
         name: 'Cleanup League',
-        createdBy: rootAdmin.user.id,
       },
     });
     const directContest = await prisma.contest.create({

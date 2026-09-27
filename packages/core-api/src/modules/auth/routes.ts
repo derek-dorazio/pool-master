@@ -13,6 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth-service';
 import { createAuthHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import { PrismaUserRepository } from '../../adapters';
 import { ErrorEnvelopeSchema, SuccessSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
@@ -23,7 +24,8 @@ export function authModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const authService = new AuthService(prisma, fastify.log);
+  const users = new PrismaUserRepository(prisma);
+  const authService = new AuthService(users, prisma, fastify.log);
   const handlers = createAuthHandlers(authService);
 
   // --- Registration ---
@@ -94,19 +96,8 @@ export function authModule(fastify: FastifyInstance): void {
     handler: handlers.logout,
   });
 
-  // --- Current User Profile ---
-  fastify.get('/me', {
-    schema: {
-      tags: ['Auth'],
-      summary: 'Get current user profile from JWT',
-      description:
-        'Returns the authenticated user profile that drives role-aware app-shell behavior after the browser already has a valid access token.',
-      operationId: 'getCurrentUser',
-      response: {
-        200: schemaRef('MeResponse'),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    handler: handlers.me,
-  });
+  // #202 step 3.4 — `GET /auth/me` is gone. "Read a user" was one operation split two ways:
+  // `getCurrentUser` here and `adminGetUserDetail` under `/admin/users/:userId`. Both are now
+  // `GET /api/v1/users/:userId`, where `me` resolves to the caller — the subject is a
+  // parameter, and access rule A6 decides who may ask.
 }

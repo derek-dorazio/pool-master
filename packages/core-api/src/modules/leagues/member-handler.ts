@@ -9,10 +9,12 @@ import type { MemberDirectoryService } from './member-directory-service';
 import { MemberNotFoundError, MemberOperationError } from './member-service';
 import { mapLeagueMembershipToDto } from '../../mappers';
 import { sendError } from '../../core/error-handler';
+import type { UserRepository } from '@poolmaster/shared/db';
 
 export function createMemberHandlers(
   memberService: MemberService,
   memberDirectoryService: MemberDirectoryService,
+  userRepo: UserRepository,
 ) {
   return {
     listMembers,
@@ -60,7 +62,13 @@ export function createMemberHandlers(
         action: 'leagueMemberRoute.changeRole.success',
         data: { leagueId: request.params.id, targetUserId: request.params.uid, newRole: request.body.role },
       }, 'Changed league member role');
-      return reply.send({ membership: mapLeagueMembershipToDto(membership) });
+      // The edge embeds the member (#202 step 3.4), so the changed membership is returned
+      // with the user it belongs to rather than with three of their columns flattened on.
+      const member = await userRepo.findById(membership.userId);
+      if (!member) {
+        return sendError(reply, 404, 'USER_NOT_FOUND', `User not found: ${membership.userId}`);
+      }
+      return reply.send({ membership: mapLeagueMembershipToDto(membership, member) });
     } catch (err) {
       if (err instanceof MemberNotFoundError) {
         logger.warn({

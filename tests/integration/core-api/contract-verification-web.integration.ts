@@ -11,9 +11,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  AccountPasswordChangeResponseSchema,
-  AccountDeleteResponseSchema,
-  AccountResponseSchema,
+  UserResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
   ContestManagementResponseSchema,
@@ -23,7 +21,6 @@ import {
   GenerateInviteLinkResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
-  MeResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
   SquadResponseSchema,
@@ -73,14 +70,14 @@ describe('Contract verification (web)', () => {
 
     const meRes = await getApp().inject({
       method: 'GET',
-      url: API_ROUTES.auth.me,
+      url: API_ROUTES.users.detail('me'),
       headers: {
         cookie: cookieHeader,
       },
     });
 
     expect(meRes.statusCode).toBe(200);
-    expect(MeResponseSchema.safeParse(meRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(meRes.json()).success).toBe(true);
 
     const refreshRes = await getApp().inject({
       method: 'POST',
@@ -109,7 +106,7 @@ describe('Contract verification (web)', () => {
 
     const meRes = await getApp().inject({
       method: 'GET',
-      url: API_ROUTES.auth.me,
+      url: API_ROUTES.users.detail('me'),
     });
 
     expect(meRes.statusCode).toBe(401);
@@ -557,7 +554,7 @@ describe('Contract verification (web)', () => {
 
     const profileRes = await getApp().inject({
       method: 'PUT',
-      url: API_ROUTES.account.profile,
+      url: API_ROUTES.users.profile('me'),
       headers: user.headers,
       payload: {
         email: user.user.email,
@@ -567,11 +564,11 @@ describe('Contract verification (web)', () => {
     });
 
     expect(profileRes.statusCode).toBe(200);
-    expect(AccountResponseSchema.safeParse(profileRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(profileRes.json()).success).toBe(true);
 
     const preferencesRes = await getApp().inject({
       method: 'PUT',
-      url: API_ROUTES.account.preferences,
+      url: API_ROUTES.users.preferences('me'),
       headers: user.headers,
       payload: {
         timezone: 'America/New_York',
@@ -582,11 +579,11 @@ describe('Contract verification (web)', () => {
     });
 
     expect(preferencesRes.statusCode).toBe(200);
-    expect(AccountResponseSchema.safeParse(preferencesRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(preferencesRes.json()).success).toBe(true);
 
     const passwordRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.account.password,
+      url: API_ROUTES.users.password('me'),
       headers: user.headers,
       payload: {
         currentPassword: 'TestPass123',
@@ -596,38 +593,44 @@ describe('Contract verification (web)', () => {
     });
 
     expect(passwordRes.statusCode).toBe(200);
-    expect(AccountPasswordChangeResponseSchema.safeParse(passwordRes.json()).success).toBe(true);
+    expect(SuccessSchema.safeParse(passwordRes.json()).success).toBe(true);
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.account.inactivate,
-      headers: withoutJsonBodyHeaders(user.headers),
+      url: API_ROUTES.users.disable('me'),
+      headers: user.headers,
+      // The disable operation takes an optional `reason`, which a root admin supplies and
+      // self-inactivation does not. `{}` is the no-reason case.
+      payload: {},
     });
 
     expect(inactivateRes.statusCode).toBe(200);
-    expect(AccountResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
 
     const reactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.account.reactivate,
+      url: API_ROUTES.users.enable('me'),
       headers: withoutJsonBodyHeaders(user.headers),
     });
 
     expect(reactivateRes.statusCode).toBe(200);
-    expect(AccountResponseSchema.safeParse(reactivateRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(reactivateRes.json()).success).toBe(true);
 
     const secondInactivateRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.account.inactivate,
-      headers: withoutJsonBodyHeaders(user.headers),
+      url: API_ROUTES.users.disable('me'),
+      headers: user.headers,
+      // The disable operation takes an optional `reason`, which a root admin supplies and
+      // self-inactivation does not. `{}` is the no-reason case.
+      payload: {},
     });
 
     expect(secondInactivateRes.statusCode).toBe(200);
-    expect(AccountResponseSchema.safeParse(secondInactivateRes.json()).success).toBe(true);
+    expect(UserResponseSchema.safeParse(secondInactivateRes.json()).success).toBe(true);
 
     const deleteRes = await getApp().inject({
       method: 'DELETE',
-      url: API_ROUTES.account.detail,
+      url: API_ROUTES.users.detail('me'),
       headers: user.headers,
       payload: {
         email: user.user.email,
@@ -635,7 +638,7 @@ describe('Contract verification (web)', () => {
     });
 
     expect(deleteRes.statusCode).toBe(200);
-    expect(AccountDeleteResponseSchema.safeParse(deleteRes.json()).success).toBe(true);
+    expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
   it('draft room routes match DraftStateResponseSchema', async () => {

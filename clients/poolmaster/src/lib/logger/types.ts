@@ -14,7 +14,10 @@ export type LogMeta = {
   webappVersion: string;
   userAgent: string;
   route?: string;
-  sessionId?: string | null;
+  // #206 — no sessionId. The server keeps it in the JWT's `sid` claim and stamps it on
+  // ingest; the browser never receives it. `userId` stays because the client does know
+  // its own user, but it is only shown by the console sink and is never transmitted:
+  // the ingest route reads user identity from the token too.
   userId?: string | null;
 };
 
@@ -24,7 +27,6 @@ export type LogSink = {
 
 export type LoggerContext = {
   route?: string;
-  sessionId?: string | null;
   userId?: string | null;
   webappVersion: string;
 };

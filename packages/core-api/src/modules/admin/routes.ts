@@ -11,14 +11,12 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192). The DTOs live in
 // leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
 import '@poolmaster/shared/dto/leagues.dto';
+// Registers the canonical UserDto and its response envelopes (#202 step 3.4).
+import '@poolmaster/shared/dto/users.dto';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
-import { UserService } from './user-service';
-import { createUserHandlers } from './user-handler';
 import { AdminLeagueService } from './league-service';
 import { createLeagueAdminHandlers } from './league-handler';
-import { AdminTeamService } from './team-service';
-import { createTeamAdminHandlers } from './team-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -51,11 +49,6 @@ import {
   AdminEventParticipantsParamsSchema,
   AdminEventParticipantListResponseSchema,
   AdminListLeaguesQuerySchema,
-  AdminListTeamsQuerySchema,
-  AdminTeamListResponseSchema,
-  AdminDeleteUserRequestSchema,
-  AdminResetUserPasswordRequestSchema,
-  AdminResetUserPasswordResponseSchema,
   AdminProviderEventCleanupRequestSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
@@ -63,9 +56,6 @@ import {
   AdminUpdateContestConfigTemplateRequestSchema,
   ContestConfigTemplateListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
-  SetUserRootAdminRequestSchema,
-  UserListResponseSchema,
-  UserDetailResponseSchema,
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
@@ -99,6 +89,7 @@ import {
   PrismaLeagueRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { LeagueService } from '../leagues/service';
 
@@ -149,17 +140,24 @@ export async function adminModule(
   setAuditQueryLogger(fastify.log);
 
   // --- Services ---
-  const userService = new UserService(prisma, fastify.log);
+  const adminUserRepository = new PrismaUserRepository(prisma);
+  const leagueRepository = new PrismaLeagueRepository(prisma);
+  const leagueMembershipRepository = new PrismaLeagueMembershipRepository(prisma);
   const leagueService = new LeagueService(
-    new PrismaLeagueRepository(prisma),
-    new PrismaLeagueMembershipRepository(prisma),
+    leagueRepository,
+    leagueMembershipRepository,
     new PrismaSquadRepository(prisma),
     new PrismaSquadMembershipRepository(prisma),
     prisma,
     fastify.log,
   );
-  const adminLeagueService = new AdminLeagueService(prisma, leagueService, fastify.log);
-  const adminTeamService = new AdminTeamService(prisma, fastify.log);
+  const adminLeagueService = new AdminLeagueService(
+    prisma,
+    leagueService,
+    leagueRepository,
+    leagueMembershipRepository,
+    fastify.log,
+  );
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
@@ -193,110 +191,13 @@ export async function adminModule(
   const golfScoreService = new GolfScoreService(prisma, fastify.log);
 
   // --- Handlers ---
-  const user = createUserHandlers(userService);
-  const leagues = createLeagueAdminHandlers(adminLeagueService);
-  const teams = createTeamAdminHandlers(adminTeamService);
+  const leagues = createLeagueAdminHandlers(adminLeagueService, leagueMembershipRepository, adminUserRepository);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
   const eventBrowser = createEventBrowserAdminHandlers(adminEventBrowserService);
 
   // --- User Management Routes ---
-
-  fastify.get('/users', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List users with filters',
-      description: 'Returns the administrative user list with filter support for platform operations and support workflows.',
-      operationId: 'adminListUsers',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserListResponseSchema) }),
-      querystring: {
-        type: 'object',
-        properties: {
-          search: { type: 'string' },
-          isActive: { type: 'boolean' },
-          page: { type: 'integer', minimum: 1 },
-          pageSize: { type: 'integer', minimum: 1, maximum: 100 },
-        },
-      },
-    },
-    handler: user.listUsers,
-  });
-
-  fastify.get('/users/:userId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Get user detail',
-      description: 'Returns the administrative detail view for a specific user account.',
-      operationId: 'adminGetUserDetail',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(UserDetailResponseSchema) }, [404]),
-    },
-    handler: user.getUserDetail,
-  });
-
-  fastify.post('/users/:userId/force-logout', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Force logout a user from all sessions',
-      description: 'Revokes every active session for the target user so they are forced to authenticate again.',
-      operationId: 'adminForceLogout',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-    },
-    handler: user.forceLogout,
-  });
-
-  fastify.post('/users/:userId/disable', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Disable a user account',
-      description: 'Disables the target user account at the platform level.',
-      operationId: 'adminDisableUser',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-      body: {
-        type: 'object',
-        required: ['reason'],
-        properties: {
-          reason: { type: 'string', minLength: 1, maxLength: 1000 },
-        },
-      },
-    },
-    handler: user.disableUser,
-  });
-
-  fastify.post('/users/:userId/enable', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Re-enable a disabled user account',
-      description: 'Re-enables a previously disabled user account.',
-      operationId: 'adminEnableUser',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
-    },
-    handler: user.enableUser,
-  });
-
-  fastify.post('/users/:userId/reset-password', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Reset a user password as root admin',
-      description: 'Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.',
-      operationId: 'adminResetUserPassword',
-      body: zodToJsonSchema(AdminResetUserPasswordRequestSchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminResetUserPasswordResponseSchema) }, [404]),
-    },
-    handler: user.resetPassword,
-  });
-
-  fastify.post('/users/:userId/root-admin', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Grant or revoke the root-admin role for a user',
-      description: 'Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.',
-      operationId: 'adminSetUserRootAdmin',
-      body: zodToJsonSchema(SetUserRootAdminRequestSchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
-    },
-    handler: user.setRootAdmin,
-  });
 
   fastify.get('/events', {
     schema: {
@@ -328,18 +229,6 @@ export async function adminModule(
     handler: eventBrowser.listEventParticipants,
   });
 
-  fastify.delete('/users/:userId', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Delete an inactive user account as root admin',
-      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.',
-      operationId: 'adminDeleteUser',
-      body: zodToJsonSchema(AdminDeleteUserRequestSchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
-    },
-    handler: user.deleteUser,
-  });
-
   fastify.get('/leagues', {
     schema: {
       tags: ['Admin'],
@@ -352,17 +241,6 @@ export async function adminModule(
     handler: leagues.listLeagues,
   });
 
-  fastify.get('/teams', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List teams for root-admin management',
-      description: 'Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.',
-      operationId: 'adminListTeams',
-      querystring: zodToJsonSchema(AdminListTeamsQuerySchema),
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminTeamListResponseSchema) }),
-    },
-    handler: teams.listTeams,
-  });
 
   fastify.post('/leagues/:leagueId/inactivate', {
     schema: {

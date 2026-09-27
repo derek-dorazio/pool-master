@@ -3,15 +3,24 @@
  *
  * Handles user registration, login, JWT issuance/refresh, and logout.
  * Passwords are hashed with bcrypt. Refresh tokens are persisted in Postgres.
+ *
+ * #202 step 3.4 — user reads and the registration write go through `UserRepository`. This
+ * file previously held the FOURTH hand-rolled User shape (`UserProfile`), the fourth copy of
+ * the row→domain enum mapping, and two more hand-written email-or-username lookups. The port
+ * method those two asked for, `findByIdentifier`, was added in step 3.2 for exactly this and
+ * is now wired here.
+ *
+ * `prisma` stays for refresh tokens, which are this module's own aggregate, and for the one
+ * `passwordHash` read the port deliberately never serves.
  */
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { UserAuthProvider as PrismaUserAuthProvider, UserDateFormat as PrismaUserDateFormat, UserTimeFormat as PrismaUserTimeFormat } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import type { UserRepository } from '@poolmaster/shared/db';
+import { AuthProvider, type User } from '@poolmaster/shared/domain';
 import { readJwtSecret } from '../../core/config';
 
 // ---------------------------------------------------------------------------
@@ -33,23 +42,6 @@ export interface JwtPayload {
   sid?: string;
   iat: number;
   exp: number;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isRootAdmin: boolean;
-  authProvider?: AuthProvider;
-  timezone?: string | null;
-  locale?: string | null;
-  timeFormat?: TimeFormat | null;
-  dateFormat?: DateFormat | null;
-  createdAt: Date;
-  sessionId?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +75,7 @@ export class AuthService {
   private readonly jwtSecret: string;
 
   constructor(
+    private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
   ) {
@@ -99,7 +92,7 @@ export class AuthService {
     password: string,
     firstName: string,
     lastName: string,
-  ): Promise<{ user: UserProfile; tokens: TokenPair }> {
+  ): Promise<{ user: User; tokens: TokenPair }> {
     const normalizedUsername = normalizeUsername(username);
     const normalizedEmail = normalizeEmail(email);
     this.logger?.debug({
@@ -114,39 +107,32 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        username: normalizedUsername,
-        passwordHash,
-        firstName,
-        lastName,
-        authProvider: PrismaUserAuthProvider.EMAIL,
-      },
-    });
+    const user = await this.users.create({
+      email: normalizedEmail,
+      username: normalizedUsername,
+      firstName,
+      lastName,
+      isActive: true,
+      isRootAdmin: false,
+      authProvider: AuthProvider.EMAIL,
+    }, { passwordHash });
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
     this.logger?.info({
       action: 'authService.register.success',
       data: {
         userId: user.id,
-        isRootAdmin: user.isRootAdmin,
+        isRootAdmin: user.isRootAdmin === true,
       },
     }, 'Registered user account');
 
-    return {
-      user: {
-        ...mapUserProfile(user),
-        sessionId: tokens.sessionId,
-      },
-      tokens,
-    };
+    return { user, tokens };
   }
 
   /**
    * Authenticates a user with username-or-email/password and returns a token pair.
    */
-  async login(identifier: string, password: string): Promise<{ user: UserProfile; tokens: TokenPair }> {
+  async login(identifier: string, password: string): Promise<{ user: User; tokens: TokenPair }> {
     const normalizedIdentifier = normalizeIdentifier(identifier);
     const identifierType = normalizedIdentifier.includes('@') ? 'email' : 'username';
     this.logger?.debug({
@@ -155,15 +141,12 @@ export class AuthService {
         identifierType,
       },
     }, 'Authenticating user');
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedIdentifier },
-          { username: normalizedIdentifier },
-        ],
-      },
-    });
-    if (!user || !user.passwordHash) {
+    // One question, not two: email and username are both @unique and login accepts either.
+    const user = await this.users.findByIdentifier(normalizedIdentifier);
+    // The hash is read separately and by id, because `UserRepository` deliberately never
+    // returns it — nothing that reads a user should be handed a secret.
+    const credentials = user ? await this.readCredentials(user.id) : null;
+    if (!user || !credentials?.passwordHash) {
       this.logger?.warn({
         action: 'authService.login.invalidCredentials',
         data: {
@@ -187,7 +170,7 @@ export class AuthService {
       );
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(password, credentials.passwordHash);
     if (!valid) {
       this.logger?.warn({
         action: 'authService.login.invalidCredentials',
@@ -199,22 +182,16 @@ export class AuthService {
       throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
     this.logger?.info({
       action: 'authService.login.success',
       data: {
         userId: user.id,
-        isRootAdmin: user.isRootAdmin,
+        isRootAdmin: user.isRootAdmin === true,
       },
     }, 'Authenticated user');
 
-    return {
-      user: {
-        ...mapUserProfile(user),
-        sessionId: tokens.sessionId,
-      },
-      tokens,
-    };
+    return { user, tokens };
   }
 
   /**
@@ -317,12 +294,12 @@ export class AuthService {
   /**
    * Returns the user profile for a given user ID.
    */
-  async getProfile(userId: string, sessionId?: string | null): Promise<UserProfile> {
+  async getProfile(userId: string): Promise<User> {
     this.logger?.debug({
       action: 'authService.getProfile.start',
       data: { userId },
     }, 'Loading authenticated user profile');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.users.findById(userId);
     if (!user) {
       this.logger?.warn({
         action: 'authService.getProfile.notFound',
@@ -334,10 +311,7 @@ export class AuthService {
       action: 'authService.getProfile.success',
       data: { userId },
     }, 'Loaded authenticated user profile');
-    return {
-      ...mapUserProfile(user),
-      sessionId: sessionId ?? null,
-    };
+    return user;
   }
 
   async issueSessionForUser(userId: string): Promise<TokenPair> {
@@ -345,7 +319,7 @@ export class AuthService {
       action: 'authService.issueSession.start',
       data: { userId },
     }, 'Issuing session for existing user');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.users.findById(userId);
     if (!user) {
       this.logger?.warn({
         action: 'authService.issueSession.notFound',
@@ -365,7 +339,7 @@ export class AuthService {
       );
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);
     this.logger?.info({
       action: 'authService.issueSession.success',
       data: { userId: user.id },
@@ -426,18 +400,22 @@ export class AuthService {
     };
   }
 
+  /**
+   * The one user column `UserRepository` never returns. Read by id, after the port has
+   * resolved the identifier, so the lookup and the secret stay separate concerns.
+   */
+  private async readCredentials(userId: string): Promise<{ passwordHash: string | null } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+  }
+
   private async assertIdentifierAvailability(
     normalizedUsername: string,
     normalizedEmail: string,
   ): Promise<void> {
-    const emailCollision = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedEmail },
-          { username: normalizedEmail },
-        ],
-      },
-    });
+    const emailCollision = await this.users.findByIdentifier(normalizedEmail);
 
     if (emailCollision) {
       this.logger?.warn({
@@ -454,14 +432,7 @@ export class AuthService {
       return;
     }
 
-    const usernameCollision = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: normalizedUsername },
-          { email: normalizedUsername },
-        ],
-      },
-    });
+    const usernameCollision = await this.users.findByIdentifier(normalizedUsername);
 
     if (usernameCollision) {
       this.logger?.warn({
@@ -480,38 +451,6 @@ export class AuthService {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mapUserProfile(user: {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isRootAdmin: boolean;
-  authProvider: PrismaUserAuthProvider | null;
-  timezone: string | null;
-  locale: string | null;
-  timeFormat: PrismaUserTimeFormat | null;
-  dateFormat: PrismaUserDateFormat | null;
-  createdAt: Date;
-}): UserProfile {
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    isActive: user.isActive,
-    isRootAdmin: user.isRootAdmin,
-    authProvider: mapAuthProvider(user.authProvider),
-    timezone: user.timezone ?? undefined,
-    locale: user.locale ?? undefined,
-    timeFormat: mapTimeFormat(user.timeFormat),
-    dateFormat: mapDateFormat(user.dateFormat),
-    createdAt: user.createdAt,
-  };
-}
-
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -524,22 +463,4 @@ function normalizeIdentifier(identifier: string): string {
   return identifier.trim().toLowerCase();
 }
 
-function mapAuthProvider(provider: PrismaUserAuthProvider | null): UserProfile['authProvider'] {
-  if (provider === PrismaUserAuthProvider.EMAIL) return AuthProvider.EMAIL;
-  if (provider === PrismaUserAuthProvider.GOOGLE) return AuthProvider.GOOGLE;
-  if (provider === PrismaUserAuthProvider.APPLE) return AuthProvider.APPLE;
-  return undefined;
-}
 
-function mapTimeFormat(format: PrismaUserTimeFormat | null): UserProfile['timeFormat'] {
-  if (format === PrismaUserTimeFormat.TWELVE_HOUR) return TimeFormat.TWELVE_HOUR;
-  if (format === PrismaUserTimeFormat.TWENTY_FOUR_HOUR) return TimeFormat.TWENTY_FOUR_HOUR;
-  return undefined;
-}
-
-function mapDateFormat(format: PrismaUserDateFormat | null): UserProfile['dateFormat'] {
-  if (format === PrismaUserDateFormat.MDY) return DateFormat.MDY;
-  if (format === PrismaUserDateFormat.DMY) return DateFormat.DMY;
-  if (format === PrismaUserDateFormat.YMD) return DateFormat.YMD;
-  return undefined;
-}

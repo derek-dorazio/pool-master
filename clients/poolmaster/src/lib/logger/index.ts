@@ -22,7 +22,6 @@ function getLoggerContext() {
 
   return {
     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    sessionId: user?.sessionId ?? null,
     userId: user?.id ?? null,
     webappVersion: getEmbeddedWebappVersion(),
   };

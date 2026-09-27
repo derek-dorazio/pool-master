@@ -15,8 +15,11 @@ export const ClientLogEntrySchema = z.object({
   msg: z.string().min(1).optional(),
   ts: z.string().datetime(),
   route: z.string().min(1).optional(),
-  sessionId: z.string().uuid().nullable().optional(),
-  userId: z.string().uuid().nullable().optional(),
+  // #206 — session and user identity are NOT accepted from the client. The
+  // ingest route runs with optional auth, so the server reads them from the
+  // verified JWT (`request.authUser`) on the request that carries the batch.
+  // A client-supplied identity would let any caller attribute log lines to
+  // any session or user.
   clientRequestId: z.string().uuid().nullable().optional(),
   data: z.record(z.string(), z.unknown()).optional(),
   err: z.unknown().optional(),

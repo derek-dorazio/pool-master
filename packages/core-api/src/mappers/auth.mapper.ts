@@ -1,29 +1,13 @@
 /**
- * Auth mappers — convert internal domain/Prisma objects to DTOs.
+ * Auth response envelopes.
+ *
+ * #202 step 3.4 — the `User` projection is no longer here. It lived here over a local
+ * `UserRow` interface, one of four copies; `users.mapper.ts` owns the only one now, over the
+ * canonical domain `User`.
  */
-import type {
-  AuthResponse,
-  AuthenticatedSessionUserDto,
-  MeResponse,
-  TokenRefreshResponse,
-  UserProfileDto,
-} from '@poolmaster/shared/dto';
-import type { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
-
-interface UserRow {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  isRootAdmin: boolean;
-  timezone?: string | null;
-  locale?: string | null;
-  timeFormat?: TimeFormat | null;
-  dateFormat?: DateFormat | null;
-  createdAt: Date;
-}
+import type { AuthResponse, TokenRefreshResponse } from '@poolmaster/shared/dto';
+import type { User } from '@poolmaster/shared/domain';
+import { toUserDto } from './users.mapper';
 
 interface TokenPair {
   accessToken: string;
@@ -33,36 +17,9 @@ interface TokenPair {
   sessionId: string;
 }
 
-export function toUserProfileDto(user: UserRow): UserProfileDto {
+export function toAuthResponse(user: User, tokens: TokenPair): AuthResponse {
   return {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    isActive: user.isActive,
-    isRootAdmin: user.isRootAdmin,
-    timezone: user.timezone ?? undefined,
-    locale: user.locale ?? undefined,
-    timeFormat: user.timeFormat ?? undefined,
-    dateFormat: user.dateFormat ?? undefined,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
-
-export function toAuthenticatedSessionUserDto(
-  user: UserRow,
-  sessionId: string,
-): AuthenticatedSessionUserDto {
-  return {
-    ...toUserProfileDto(user),
-    sessionId,
-  };
-}
-
-export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
-  return {
-    user: toAuthenticatedSessionUserDto(user, tokens.sessionId),
+    user: toUserDto(user),
     tokens: {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -72,18 +29,14 @@ export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
   };
 }
 
-export function toMeResponse(user: UserRow, sessionId: string): MeResponse {
-  return {
-    user: toAuthenticatedSessionUserDto(user, sessionId),
-  };
-}
-
+// #206 — `tokens.sessionId` is deliberately not mapped out. It lives in the access token's
+// `sid` claim, which the browser cannot read (httpOnly) and does not need: the client-log
+// ingest route reads it from the token server-side.
 export function toTokenRefreshResponse(tokens: TokenPair): TokenRefreshResponse {
   return {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     csrfToken: tokens.csrfToken,
     expiresIn: tokens.expiresIn,
-    sessionId: tokens.sessionId,
   };
 }

@@ -376,7 +376,6 @@ model League {
   leagueCode  String                 @unique @map("league_code") @db.VarChar(16)
   name        String
   description String?
-  createdBy   String                 @map("created_by") @db.Uuid
   isActive    Boolean                @default(true) @map("is_active")
   iconKey     PrismaLeagueIconKey    @default(TROPHY) @map("icon_key")
   joinPolicy  PrismaLeagueJoinPolicy @default(COMMISSIONER_ONLY) @map("join_policy")
@@ -429,6 +428,7 @@ model Squad {
   entries          ContestEntry[]
   ownerInvitations SquadOwnerInvitation[]
 
+  @@unique([leagueId, name])
   @@index([leagueId, isActive])
   @@map("squads")
 }

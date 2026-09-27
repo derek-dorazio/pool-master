@@ -9,6 +9,7 @@ import {
   PrismaSquadMembershipRepository,
   PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { getAppPrisma } from '../../core/prisma-context';
 import { createSquadOwnerInvitationHandlers } from '../squads/owner-invitation-handler';
@@ -27,6 +28,7 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
     membershipRepo,
     squadRepo,
     squadMembershipRepo,
+    new PrismaUserRepository(prisma),
     prisma,
   );
   const handlers = createSquadOwnerInvitationHandlers(service);

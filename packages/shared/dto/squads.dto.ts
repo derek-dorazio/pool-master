@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
+import { UserDtoSchema } from './users.dto';
 
 const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 
@@ -22,13 +23,19 @@ export const AddSquadMemberRequestSchema = z.object({
 }).describe('Request payload for adding a user to a squad.');
 export type AddSquadMemberRequest = z.infer<typeof AddSquadMemberRequestSchema>;
 
+/**
+ * The User↔Squad edge (#202 step 3.4).
+ *
+ * It embeds the canonical `UserDto`, replacing the two loose `firstName`/`lastName` columns
+ * flattened onto it — which were optional, so every consumer had to handle a member whose
+ * name was missing, and which could not answer anything else about the member.
+ */
 export const SquadMembershipDtoSchema = z.object({
   id: z.string().uuid(),
   squadId: z.string().uuid(),
   leagueId: z.string().uuid(),
   userId: z.string().uuid(),
-  firstName: z.string().optional().describe('First name for the squad member.'),
-  lastName: z.string().optional().describe('Last name for the squad member.'),
+  user: UserDtoSchema.describe('The member, as the canonical UserDto.'),
   status: z.enum(['ACTIVE', 'INACTIVE']).describe('Squad membership status.'),
   joinedAt: DateTimeSchema.describe('When the user joined the squad.'),
   createdAt: DateTimeSchema.describe('When the squad membership record was created.'),
@@ -36,21 +43,18 @@ export const SquadMembershipDtoSchema = z.object({
 }).describe('Squad membership summary.');
 export type SquadMembershipDto = z.infer<typeof SquadMembershipDtoSchema>;
 
-export const TeamRelationshipDtoSchema = z.object({
-  leagueMember: z
-    .boolean()
-    .describe('Whether the current requester is an active member of the team’s parent league.'),
-  owner: z
-    .boolean()
-    .describe('Whether the current requester is an active owner of this team.'),
-  commissioner: z
-    .boolean()
-    .describe('Whether the current requester has commissioner authority in the team’s parent league.'),
-}).describe(
-  'Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.',
-);
-export type TeamRelationshipDto = z.infer<typeof TeamRelationshipDtoSchema>;
-
+/**
+ * A squad. The canonical Squad shape.
+ *
+ * **It carries no viewer context** (#202 step 3.4, access rule A8). Gone: `teamRelationship`
+ * — `{ leagueMember, owner, commissioner }` — and `isRootAdmin`. The viewer's relationship to
+ * a squad is their `SquadMembership` in it, which the league-context call already delivers
+ * once, and `isRootAdmin` is a property of the cached `UserDto`.
+ *
+ * `my-team-page.tsx` is the evidence these were residue: it found the viewer's own squad with
+ * `teams.find(t => t.teamRelationship.owner)` — fetching every squad in the league to scan a
+ * per-row viewer flag, where the viewer's own `SquadMembership` answers it directly.
+ */
 export const SquadDtoSchema = z.object({
   id: z.string().uuid(),
   leagueId: z.string().uuid(),
@@ -63,12 +67,8 @@ export const SquadDtoSchema = z.object({
   memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),
   updatedAt: DateTimeSchema.describe('When the squad was last updated.'),
-  teamRelationship: TeamRelationshipDtoSchema,
-  isRootAdmin: z
-    .boolean()
-    .describe('Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.'),
   members: z.array(SquadMembershipDtoSchema).optional().describe('Optional expanded squad membership list.'),
-}).describe('Squad detail returned from squad-management APIs.');
+}).describe('A squad within a league. Returned wherever a squad is read.');
 export type SquadDto = z.infer<typeof SquadDtoSchema>;
 
 export const SquadResponseSchema = z.object({
@@ -88,9 +88,9 @@ export type SquadMembershipResponse = z.infer<typeof SquadMembershipResponseSche
 
 // --- Published contract (#192) -------------------------------------------------
 // See version.dto.ts for the convention. SquadDto is the canonical squad shape; the
-// frontend imports it rather than deriving from ListLeagueSquadsResponses.
+// frontend imports it rather than deriving from ListLeagueSquadsResponses. There is no
+// relationship component any more — A8 took the viewer context off the entity.
 registerSchema('SquadMembershipDto', SquadMembershipDtoSchema);
-registerSchema('TeamRelationshipDto', TeamRelationshipDtoSchema);
 registerSchema('SquadDto', SquadDtoSchema);
 registerSchema('SquadResponse', SquadResponseSchema);
 registerSchema('SquadListResponse', SquadListResponseSchema);

@@ -30,7 +30,7 @@ import { invitationsModule } from '../../packages/core-api/src/modules/invitatio
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
-import { accountModule } from '../../packages/core-api/src/modules/account/routes';
+import { usersModule } from '../../packages/core-api/src/modules/users/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
@@ -43,6 +43,29 @@ const INTEGRATION_TEST_PROVIDER_IDS = [
   'contract-provider',
   'contract-events-provider',
   'PGA',
+] as const;
+
+/**
+ * League codes that integration tests insert DIRECTLY with `prisma.league.create`, giving
+ * them no membership and therefore no link to a test user.
+ *
+ * Needed since #202 dropped `League.createdBy`. The league sweep below used to find these
+ * through `createdBy: { in: userIds }`; the membership arm that remains cannot, because
+ * these leagues have no members. Left uncleaned they leak between runs and the next run
+ * fails on the unique `league_code` — which only reproduces on a second run against a
+ * database that was not reset, so it is easy to miss.
+ *
+ * Prefer cleaning up in the suite that creates the league (see
+ * identity-repositories.integration.ts, which deletes by code prefix in `afterAll`). This
+ * list is the safety net for the suites that do not.
+ */
+const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
+  'ADMINLIFE',
+  'ADMINTEAM',
+  'CLN68',
+  'MISSING',
+  'IDREPO',
+  'ULIFE',
 ] as const;
 
 let app: FastifyInstance;
@@ -93,7 +116,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
-  testApp.register(accountModule, { prefix: '/api/v1/account' });
+  testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
@@ -221,8 +244,13 @@ export async function createTestUser(overrides: {
     },
   });
 
+  // #202 step 3.4 — `isRootAdmin` is signed into the token, as `AuthService.issueTokens`
+  // does. It was omitted here because every root-admin route sat behind `adminAuth`, which
+  // re-read the user from the database on every request (#195). The user operations take the
+  // actor from the authenticated request instead, so the claim has to be present for a test
+  // fixture to be a root admin at all.
   const accessToken = jwt.sign(
-    { sub: user.id, email: user.email },
+    { sub: user.id, email: user.email, isRootAdmin: user.isRootAdmin },
     JWT_SECRET,
     { expiresIn: '15m' },
   );
@@ -497,17 +525,20 @@ export async function cleanupTestData(): Promise<void> {
     : [];
   const providerSportEventParticipantIds = providerSportEventParticipants.map((participant) => participant.id);
 
-  const leagues = userIds.length
-    ? await prisma.league.findMany({
-        where: {
-          OR: [
-            { createdBy: { in: userIds } },
-            { memberships: { some: { userId: { in: userIds } } } },
-          ],
-        },
-        select: { id: true },
-      })
-    : [];
+  // #202 — no `createdBy` arm. Leagues created through the service always carry the
+  // creator's COMMISSIONER membership, so the membership filter covers those. Leagues a
+  // test inserts directly have no membership at all, so they are matched by code prefix.
+  const leagues = await prisma.league.findMany({
+    where: {
+      OR: [
+        ...(userIds.length ? [{ memberships: { some: { userId: { in: userIds } } } }] : []),
+        ...INTEGRATION_TEST_LEAGUE_CODE_PREFIXES.map((prefix) => ({
+          leagueCode: { startsWith: prefix },
+        })),
+      ],
+    },
+    select: { id: true },
+  });
   const leagueIds = leagues.map((league) => league.id);
   const contests = (leagueIds.length || providerSportEventIds.length)
     ? await prisma.contest.findMany({

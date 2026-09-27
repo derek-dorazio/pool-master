@@ -5,6 +5,7 @@ import type {
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import type {
   SquadOwnerInvitation,
@@ -41,6 +42,7 @@ export class SquadOwnerInvitationService {
     private readonly membershipRepo: LeagueMembershipRepository,
     private readonly squadRepo: SquadRepository,
     private readonly squadMembershipRepo: SquadMembershipRepository,
+    private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
   ) {}
 
@@ -365,10 +367,8 @@ export class SquadOwnerInvitationService {
   }
 
   private async findUserByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true },
-    });
+    // #202 step 3.6 — through the port. `findByEmail` existed for exactly this.
+    return this.users.findByEmail(email);
   }
 
   private async rejectIfCurrentLeagueMember(leagueId: string, userId?: string) {

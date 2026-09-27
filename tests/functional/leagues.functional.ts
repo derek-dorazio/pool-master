@@ -59,12 +59,6 @@ describe('SDK Functional: Leagues', () => {
     expect(createResponse.data).toBeDefined();
     expect(createResponse.data?.league.id).toBeTruthy();
     expect(createResponse.data?.league.name).toBe('Functional League');
-    expect(createResponse.data?.league.memberType).toBe('COMMISSIONER');
-    expect(createResponse.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: true,
-    });
-    expect(createResponse.data?.league.isRootAdmin).toBe(false);
     expect(createResponse.data?.league.memberCount).toBe(1);
 
     const leagueId = createResponse.data?.league.id;
@@ -78,12 +72,19 @@ describe('SDK Functional: Leagues', () => {
     const listedLeague = listResponse.data?.leagues.find((league) => league.id === leagueId);
     expect(listedLeague).toBeDefined();
     expect(listedLeague?.name).toBe('Functional League');
-    expect(listedLeague?.memberType).toBe('COMMISSIONER');
-    expect(listedLeague?.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: true,
-    });
-    expect(listedLeague?.isRootAdmin).toBe(false);
+    // #202 step 3.4 — the league carries no viewer fields (A8). "Am I the commissioner of
+    // this league" is answered by the viewer's memberships, delivered once beside the
+    // leagues rather than as `memberType`/`leagueRelationship` repeated on every row.
+    expect(listedLeague).not.toHaveProperty('memberType');
+    expect(listedLeague).not.toHaveProperty('leagueRelationship');
+    expect(listedLeague).not.toHaveProperty('isRootAdmin');
+    const ownMembership = listResponse.data?.memberships.find(
+      (membership) => membership.leagueId === leagueId,
+    );
+    expect(ownMembership?.role).toBe('COMMISSIONER');
+    expect(ownMembership?.status).toBe('ACTIVE');
+    // The edge embeds the canonical UserDto rather than flattening a few of its columns.
+    expect(ownMembership?.user.email).toBe(commissioner.email);
 
     const detailResponse = await getLeague({
       client: commissioner.client,
@@ -95,12 +96,6 @@ describe('SDK Functional: Leagues', () => {
     expect(detailResponse.data).toBeDefined();
     expect(detailResponse.data?.league.id).toBe(leagueId);
     expect(detailResponse.data?.league.name).toBe('Functional League');
-    expect(detailResponse.data?.league.memberType).toBe('COMMISSIONER');
-    expect(detailResponse.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: true,
-    });
-    expect(detailResponse.data?.league.isRootAdmin).toBe(false);
     expect(detailResponse.data?.league.memberCount).toBe(1);
 
     const commissionerSquads = await listLeagueSquads({
@@ -261,12 +256,6 @@ describe('SDK Functional: Leagues', () => {
     expect(inviteeLeagues.data).toBeDefined();
     const joinedLeague = inviteeLeagues.data?.leagues.find((league) => league.id === leagueId);
     expect(joinedLeague).toBeDefined();
-    expect(joinedLeague?.memberType).toBe('MEMBER');
-    expect(joinedLeague?.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: false,
-    });
-    expect(joinedLeague?.isRootAdmin).toBe(false);
 
     const inviteeDetail = await getLeague({
       client: invitee.client,
@@ -277,12 +266,6 @@ describe('SDK Functional: Leagues', () => {
 
     expect(inviteeDetail.data).toBeDefined();
     expect(inviteeDetail.data?.league.id).toBe(leagueId);
-    expect(inviteeDetail.data?.league.memberType).toBe('MEMBER');
-    expect(inviteeDetail.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: false,
-    });
-    expect(inviteeDetail.data?.league.isRootAdmin).toBe(false);
 
     const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
       where: {
@@ -989,12 +972,16 @@ describe('SDK Functional: Leagues', () => {
 
     expect(memberLeagueResponse.data?.league.id).toBe(leagueId);
     expect(memberLeagueResponse.data?.league.leagueCode).toBe(leagueCode);
-    expect(memberLeagueResponse.data?.league.memberType).toBe('MEMBER');
-    expect(memberLeagueResponse.data?.league.leagueRelationship).toEqual({
-      leagueMember: true,
-      commissioner: false,
-    });
-    expect(memberLeagueResponse.data?.league.isRootAdmin).toBe(false);
+    // #202 step 3.4 — this is THE league-context call (A8). It carries the viewer's own
+    // membership edges, and it is the only response that carries any viewer context: the
+    // client fetches it once on league selection and holds it for the session.
+    expect(memberLeagueResponse.data?.membership?.userId).toBe(member.userId);
+    expect(memberLeagueResponse.data?.membership?.role).toBe('MEMBER');
+    expect(memberLeagueResponse.data?.membership?.user.email).toBe(member.email);
+    // Accepting an invitation puts the member in a squad, so their squad edge is here too —
+    // which is what replaced scanning every squad in the league for a per-row `owner` flag.
+    expect(memberLeagueResponse.data?.squadMembership?.userId).toBe(member.userId);
+    expect(memberLeagueResponse.data?.league).not.toHaveProperty('leagueRelationship');
 
     const outsiderLeagueResponse = await getLeagueByCode({
       client: outsider.client,

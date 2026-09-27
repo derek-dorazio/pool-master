@@ -1,12 +1,11 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
-  AdminResetUserPasswordResponseSchema,
+  UserResetPasswordResponseSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
-  AdminTeamListResponseSchema,
   AdminCloneGolfSeasonResponseSchema,
   AdminGolfLeagueDtoSchema,
   AdminGolfLeagueListResponseSchema,
@@ -30,7 +29,7 @@ import {
   ProviderManualSyncSubmissionResponseSchema,
   ProviderSyncRunListResponseSchema,
   SuccessSchema,
-  UserDetailResponseSchema,
+  UserResponseSchema,
   UserListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -349,15 +348,28 @@ describe('Contract verification (root admin)', () => {
     await teardownIntegrationTests();
   });
 
-  it('admin routes reject missing root-admin identity with ErrorEnvelopeSchema', async () => {
-    const res = await getApp().inject({
+  // #202 step 3.4 — the user list moved out from under `/api/v1/admin`, so the two failures
+  // are now distinguishable, which they were not before: an anonymous caller is not
+  // authenticated, and an authenticated caller who is not a root admin is not authorized. The
+  // old admin prefix answered ROOT_ADMIN_SESSION_REQUIRED to both.
+  it('separates "not signed in" from "not a root admin" on the unscoped user list (A1)', async () => {
+    const anonymous = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users',
+      url: '/api/v1/users',
     });
+    expect(anonymous.statusCode).toBe(401);
+    expect(ErrorEnvelopeSchema.safeParse(anonymous.json()).success).toBe(true);
+    expect(anonymous.json().error.code).toBe('AUTH_SESSION_REQUIRED');
 
-    expect(res.statusCode).toBe(401);
-    expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-    expect(res.json().error.code).toBe('ROOT_ADMIN_SESSION_REQUIRED');
+    const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin User' });
+    const forbidden = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/users',
+      headers: ordinaryUser.headers,
+    });
+    expect(forbidden.statusCode).toBe(403);
+    expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
+    expect(forbidden.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
   it('root-admin user reads match their DTOs on happy paths', async () => {
@@ -404,7 +416,7 @@ describe('Contract verification (root admin)', () => {
 
     const listRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users',
+      url: '/api/v1/users',
       headers: rootAdmin.headers,
     });
     expect(listRes.statusCode).toBe(200);
@@ -412,20 +424,19 @@ describe('Contract verification (root admin)', () => {
 
     const detailRes = await getApp().inject({
       method: 'GET',
-      url: `/api/v1/admin/users/${rootAdmin.user.id}`,
+      url: `/api/v1/users/${rootAdmin.user.id}`,
       headers: rootAdmin.headers,
     });
     expect(detailRes.statusCode).toBe(200);
-    expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
-    expect(detailRes.json().viewerAuthority).toEqual({
-      self: true,
-      rootAdmin: true,
-      viewer: false,
-    });
+    expect(UserResponseSchema.safeParse(detailRes.json()).success).toBe(true);
+    // #202 step 3.4 — `{ user }`, and no `viewerAuthority` block (A8). Of its three flags two
+    // were constants on a root-admin-only route, and `self` is `user.id === me.id`.
+    expect(detailRes.json().user.id).toBe(rootAdmin.user.id);
+    expect(detailRes.json()).not.toHaveProperty('viewerAuthority');
 
     const setRootAdminRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/admin/users/${targetUser.user.id}/root-admin`,
+      url: `/api/v1/users/${targetUser.user.id}/root-admin`,
       headers: rootAdmin.headers,
       payload: {
         isRootAdmin: true,
@@ -437,14 +448,14 @@ describe('Contract verification (root admin)', () => {
 
     const resetPasswordRes = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/admin/users/${targetUser.user.id}/reset-password`,
+      url: `/api/v1/users/${targetUser.user.id}/reset-password`,
       headers: rootAdmin.headers,
       payload: {
         reason: 'Contract verification',
       },
     });
     expect(resetPasswordRes.statusCode).toBe(200);
-    expect(AdminResetUserPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
+    expect(UserResetPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
     expect(typeof resetPasswordRes.json().temporaryPassword).toBe('string');
 
     await getPrisma().user.update({
@@ -454,7 +465,7 @@ describe('Contract verification (root admin)', () => {
 
     const deleteUserRes = await getApp().inject({
       method: 'DELETE',
-      url: `/api/v1/admin/users/${targetUser.user.id}`,
+      url: `/api/v1/users/${targetUser.user.id}`,
       headers: rootAdmin.headers,
       payload: {
         email: targetUser.user.email,
@@ -579,7 +590,6 @@ describe('Contract verification (root admin)', () => {
         leagueCode: 'ADMINLIFE1',
         name: 'Root Admin Lifecycle League',
         description: 'Managed through contract verification.',
-        createdBy: rootAdmin.user.id,
         isActive: true,
         iconKey: 'TROPHY',
         joinPolicy: 'COMMISSIONER_ONLY',
@@ -626,61 +636,6 @@ describe('Contract verification (root admin)', () => {
     expect(await getPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
   });
 
-  it('root-admin team search routes match their DTOs on happy paths', async () => {
-    const rootAdmin = await createTestUser({
-      displayName: 'Root Admin Team Contract User',
-      isRootAdmin: true,
-    });
-    const commissioner = await createTestUser({
-      displayName: 'Root Admin Team Commissioner',
-    });
-
-    const league = await getPrisma().league.create({
-      data: {
-        leagueCode: 'ADMINTEAM1',
-        name: 'Root Admin Team Contract League',
-        description: 'Managed through contract verification.',
-        createdBy: commissioner.user.id,
-        isActive: true,
-        iconKey: 'TROPHY',
-        joinPolicy: 'COMMISSIONER_ONLY',
-      },
-    });
-    await getPrisma().leagueMembership.create({
-      data: {
-        leagueId: league.id,
-        userId: commissioner.user.id,
-        role: 'COMMISSIONER',
-        status: 'ACTIVE',
-      },
-    });
-    const squad = await getPrisma().squad.create({
-      data: {
-        leagueId: league.id,
-        createdBy: commissioner.user.id,
-        name: 'Contract Tigers',
-        iconKey: 'CAPTAIN_SMILE_FIELD',
-        isActive: true,
-      },
-    });
-    await getPrisma().squadMembership.create({
-      data: {
-        squadId: squad.id,
-        leagueId: league.id,
-        userId: commissioner.user.id,
-        status: 'ACTIVE',
-      },
-    });
-
-    const listRes = await getApp().inject({
-      method: 'GET',
-      url: `/api/v1/admin/teams?search=Contract&leagueCode=${league.leagueCode}&isActive=true`,
-      headers: rootAdmin.headers,
-    });
-    expect(listRes.statusCode).toBe(200);
-    expect(AdminTeamListResponseSchema.safeParse(listRes.json()).success).toBe(true);
-    expect(listRes.json().teams.some((item: { id: string }) => item.id === squad.id)).toBe(true);
-  });
 
   it('pool-master-rop.68.1.2 root-admin provider operational routes match their DTOs on happy paths', async () => {
     const rootAdmin = await createTestUser({
@@ -915,7 +870,7 @@ describe('Contract verification (root admin)', () => {
 
     const userRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000',
       headers: rootAdmin.headers,
     });
     expect(userRes.statusCode).toBe(404);
@@ -924,7 +879,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingRoleChangeRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/root-admin',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000/root-admin',
       headers: rootAdmin.headers,
       payload: {
         isRootAdmin: true,
@@ -936,7 +891,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingResetPasswordRes = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/reset-password',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000/reset-password',
       headers: rootAdmin.headers,
       payload: {},
     });
@@ -946,7 +901,7 @@ describe('Contract verification (root admin)', () => {
 
     const missingDeleteUserRes = await getApp().inject({
       method: 'DELETE',
-      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      url: '/api/v1/users/00000000-0000-0000-0000-000000000000',
       headers: rootAdmin.headers,
       payload: {
         email: 'missing@example.com',
@@ -955,18 +910,6 @@ describe('Contract verification (root admin)', () => {
     expect(missingDeleteUserRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingDeleteUserRes.json()).success).toBe(true);
     expect(missingDeleteUserRes.json().error.code).toBe('USER_NOT_FOUND');
-
-    const selfRoleChangeRes = await getApp().inject({
-      method: 'POST',
-      url: `/api/v1/admin/users/${rootAdmin.user.id}/root-admin`,
-      headers: rootAdmin.headers,
-      payload: {
-        isRootAdmin: false,
-      },
-    });
-    expect(selfRoleChangeRes.statusCode).toBe(400);
-    expect(ErrorEnvelopeSchema.safeParse(selfRoleChangeRes.json()).success).toBe(true);
-    expect(selfRoleChangeRes.json().error.code).toBe('SELF_ROOT_ADMIN_CHANGE');
 
     const providerRes = await getApp().inject({
       method: 'GET',

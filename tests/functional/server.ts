@@ -6,12 +6,16 @@ import { buildApp } from '../../packages/core-api/src/index';
 import { buildApp as buildMockContestFeedProvider } from '../../packages/mock-contest-feed-provider/src/app';
 import { startSmtpSinkServer, type SmtpSinkServer } from '../support/smtp-sink';
 
-const stateFilePath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
+const stateFilePathEnv = process.env.FUNCTIONAL_SERVER_STATE_FILE;
 const runId = process.env.FUNCTIONAL_RUN_ID ?? 'functional-run';
 
-if (!stateFilePath) {
+if (!stateFilePathEnv) {
   throw new Error('FUNCTIONAL_SERVER_STATE_FILE is required');
 }
+
+// Re-bound so the narrowing survives into the closures below; a module-level
+// `const` guard does not narrow inside function bodies.
+const stateFilePath: string = stateFilePathEnv;
 
 let smtpSink: SmtpSinkServer | undefined;
 // pool-master-cs8 — the FAPI daemon runs a real mock-contest-feed provider so

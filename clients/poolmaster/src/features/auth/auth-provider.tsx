@@ -129,29 +129,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!meResult.data) {
           logger.warn(
-            {
-              action: 'auth.refresh.refetchMissingUser',
-              data: {
-                sessionId: result.data.sessionId,
-              },
-            },
+            { action: 'auth.refresh.refetchMissingUser' },
             'Refresh succeeded but current user reload returned no user',
           );
           clearAuthSession(queryClient);
           return;
         }
 
-        const refreshedUser = setAuthSessionUser(queryClient, {
-          ...meResult.data,
-          sessionId: result.data.sessionId,
-        });
+        const refreshedUser = setAuthSessionUser(queryClient, meResult.data);
 
         attemptedRefreshRef.current = false;
         logger.info(
           {
             action: 'auth.refresh.succeeded',
             data: {
-              sessionId: result.data.sessionId,
               userId: refreshedUser.id,
             },
           },

@@ -20,6 +20,7 @@ import {
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
+  PrismaUserRepository,
 } from '../../adapters';
 import { InvitationService } from '../leagues/invitation-service';
 import { createInvitationHandlers } from '../leagues/invitation-handler';
@@ -34,6 +35,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
+  const userRepo = new PrismaUserRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
@@ -56,7 +58,7 @@ export function invitationsModule(fastify: FastifyInstance): void {
     mailDelivery,
     appBaseUrl,
   );
-  const handlers = createInvitationHandlers(invitationService);
+  const handlers = createInvitationHandlers(invitationService, userRepo);
 
   fastify.get('/:inviteCode', {
     schema: {

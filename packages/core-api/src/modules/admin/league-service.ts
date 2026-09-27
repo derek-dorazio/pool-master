@@ -1,16 +1,14 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import type { LeagueMembershipRepository, LeagueRepository } from '@poolmaster/shared/db';
 import {
   ContestStatus,
   JoinPolicy,
   LeagueIconKey,
   LeagueMembershipStatus,
 } from '@poolmaster/shared/domain';
-import type {
-  LeagueDetailDto,
-  LeagueSummaryDto,
-} from '@poolmaster/shared/dto';
-import { toLeagueDetailDto, toLeagueSummaryDto } from '../../mappers/leagues.mapper';
+import type { LeagueDto } from '@poolmaster/shared/dto';
+import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { logAdminAction } from './admin-audit-service';
 import { LeagueNotFoundError, LeagueOperationError, LeagueService } from '../leagues/service';
 
@@ -45,10 +43,12 @@ export class AdminLeagueService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly leagueService: LeagueService,
+    private readonly leagueRepo: LeagueRepository,
+    private readonly membershipRepo: LeagueMembershipRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async searchLeagues(query: AdminLeagueSearchQuery): Promise<LeagueSummaryDto[]> {
+  async searchLeagues(query: AdminLeagueSearchQuery): Promise<LeagueDto[]> {
     const trimmedSearch = query.search?.trim();
 
     this.logger?.debug({
@@ -59,95 +59,60 @@ export class AdminLeagueService {
       },
     }, 'Searching leagues for root-admin management');
 
-    const rows = await this.prisma.league.findMany({
-      where: {
-        ...(trimmedSearch
-          ? {
-            name: {
-              contains: trimmedSearch,
-              mode: 'insensitive',
-            },
-          }
-          : {}),
-        ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
-      },
-      orderBy: [
-        { updatedAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
-      select: {
-        id: true,
-        leagueCode: true,
-        name: true,
-        description: true,
-        isActive: true,
-        iconKey: true,
-        joinPolicy: true,
-        createdAt: true,
-        updatedAt: true,
-        memberships: {
-          where: {
-            status: LeagueMembershipStatus.ACTIVE,
-          },
-          select: {
-            id: true,
-          },
-        },
-        contests: {
-          where: {
-            status: {
-              in: [...ACTIVE_LEAGUE_CONTEST_STATUSES],
-            },
-          },
-          select: {
-            id: true,
-          },
-        },
-      },
+    // #202 — composed from ports instead of one hand-written findMany with nested
+    // selects. That query is what let this service invent its own row shape (§2y).
+    // Three reads rather than one: the leagues, their active-member counts, and the
+    // active-contest counts. Contest has no port for this yet — that is slice 3 — so it
+    // is the one raw query left here, and it is marked.
+    const leagues = await this.leagueRepo.findAll({
+      search: trimmedSearch,
+      isActive: query.isActive,
     });
+    const leagueIds = leagues.map((league) => league.id);
 
-    const leagues = rows.map((row) => toLeagueSummaryDto(
-      {
-        id: row.id,
-        leagueCode: row.leagueCode,
-        name: row.name,
-        description: row.description,
-        createdBy: '',
-        isActive: row.isActive,
-        iconKey: row.iconKey as LeagueIconKey,
-        joinPolicy: row.joinPolicy as JoinPolicy,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      },
-      {
-        memberCount: row.memberships.length,
-        activeContestCount: row.contests.length,
-        memberType: null,
-        leagueRelationship: {
-          leagueMember: false,
-          commissioner: false,
-        },
-        isRootAdmin: true,
-      },
-    ));
+    const [memberCounts, contestRows] = await Promise.all([
+      this.membershipRepo.countActiveByLeagues(leagueIds),
+      // SLICE 3 — replace with a ContestRepository count once that cluster has ports.
+      leagueIds.length
+        ? this.prisma.contest.groupBy({
+          by: ['leagueId'],
+          where: {
+            leagueId: { in: leagueIds },
+            status: { in: [...ACTIVE_LEAGUE_CONTEST_STATUSES] },
+          },
+          _count: { _all: true },
+        })
+        : Promise.resolve([]),
+    ]);
+    const contestCountByLeagueId = new Map(
+      contestRows.map((row) => [row.leagueId, row._count._all]),
+    );
+
+    // #202 step 3.4 — no viewer fields. This used to hard-code `isRootAdmin: true` and an
+    // all-false `leagueRelationship` on every row, which is the clearest evidence they were
+    // never properties of the league: the admin caller had to invent values for them.
+    const summaries = leagues.map((league) => toLeagueDto(league, {
+      memberCount: memberCounts.get(league.id) ?? 0,
+      activeContestCount: contestCountByLeagueId.get(league.id) ?? 0,
+    }));
 
     this.logger?.info({
       action: 'adminLeagueService.search.success',
       data: {
         hasSearch: Boolean(trimmedSearch),
-        returnedCount: leagues.length,
+        returnedCount: summaries.length,
         isActive: query.isActive ?? null,
       },
     }, 'Loaded leagues for root-admin management');
 
-    return leagues;
+    return summaries;
   }
 
   async inactivateLeague(
     leagueId: string,
     rootAdminUserId: string,
     rootAdminEmail: string,
-  ): Promise<LeagueDetailDto> {
+  ): Promise<LeagueDto> {
     const before = await this.loadLeagueSummaryRow(leagueId);
     const league = await this.leagueService.inactivateLeague(leagueId);
     const updated = await this.loadLeagueSummaryRow(leagueId);
@@ -176,13 +141,12 @@ export class AdminLeagueService {
       },
     }, 'Root-admin inactivated league');
 
-    return toLeagueDetailDto(
+    return toLeagueDto(
       {
         id: league.id,
         leagueCode: league.leagueCode,
         name: league.name,
         description: league.description ?? null,
-        createdBy: league.createdBy,
         isActive: league.isActive,
         iconKey: league.iconKey,
         joinPolicy: league.joinPolicy,
@@ -192,12 +156,6 @@ export class AdminLeagueService {
       {
         memberCount: updated.memberCount,
         activeContestCount: updated.activeContestCount,
-        memberType: null,
-        leagueRelationship: {
-          leagueMember: false,
-          commissioner: false,
-        },
-        isRootAdmin: true,
       },
     );
   }
