@@ -1,12 +1,19 @@
 import { useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { acceptTeamOwnerInvitation } from '@/lib/api';
+import { RegisterWithTeamOwnerInvitationRequestSchema } from '@poolmaster/shared/dto';
+import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { setAuthSessionUser } from '@/features/auth/auth-session-cache';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import {
   Button,
   Chip,
+  FormField,
+  Input,
   LinkButton,
   PublicInviteJoinPage,
 } from '@/features/shared/ui';
@@ -25,7 +32,18 @@ import {
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { ApiError, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
+
+/*
+ * #217 — the invited stranger registers here rather than being sent away.
+ *
+ * `inviteCode` is supplied by the route, and there is deliberately no email field: the account is
+ * created with the address the commissioner invited, which the server reads off the invitation. A
+ * squad-owner invitation grants league membership, so honouring an address typed in here would let
+ * a forwarded invite link admit an unintended person.
+ */
+const RegisterFormSchema = RegisterWithTeamOwnerInvitationRequestSchema.omit({ inviteCode: true });
+type RegisterFormValues = z.infer<typeof RegisterFormSchema>;
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -54,6 +72,7 @@ export function JoinTeamOwnerPage() {
   });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const invitationQuery = useQuery({
     queryKey: getTeamOwnerInvitationPreviewQueryKey(inviteCode),
@@ -97,6 +116,74 @@ export function JoinTeamOwnerPage() {
       'Team-owner invitation preview loaded',
     );
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
+
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(RegisterFormSchema),
+    mode: 'onSubmit',
+    defaultValues: { username: '', password: '', firstName: '', lastName: '' },
+  });
+
+  /**
+   * #217 — register and join in one request.
+   *
+   * This replaced a dead end: the page told an invited stranger to "sign in or create an account
+   * first, then come back", but `acceptTeamOwnerInvitation` needs a session, so there was no way
+   * through for somebody without an account. One request now registers them with the invited
+   * email, joins them to the league and the squad, and returns a session.
+   */
+  const registerMutation = useInvalidatingMutation({
+    mutationFn: async (values: RegisterFormValues) => {
+      const response = await registerWithTeamOwnerInvitation({
+        body: {
+          inviteCode,
+          username: values.username.trim().toLowerCase(),
+          password: values.password,
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+        },
+      });
+      if (!response.data?.user) {
+        throwApiError(response.error, 'Team-owner registration response is missing data.');
+      }
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // The session arrives with the response, so seed the cache rather than making the new
+      // member's first action a round trip to discover who they are.
+      setAuthSessionUser(queryClient, data.user);
+      logger.info(
+        {
+          action: 'teamInvite.register.succeeded',
+          data: {
+            inviteCode,
+            userId: data.user.id,
+            leagueCode: invitationQuery.data?.league.leagueCode ?? null,
+          },
+        },
+        'Registered an invited co-owner and joined their team',
+      );
+      const leagueCode = invitationQuery.data?.league.leagueCode;
+      if (leagueCode) {
+        rememberRecentLeagueCode(leagueCode);
+        navigate(buildLeagueTeamPath(leagueCode), { replace: true });
+      }
+    },
+    invalidates: [
+      QueryKeys.leagues.list,
+      QueryKeys.leagueTeams.all,
+    ],
+    onError: (error) => {
+      logger.warn(
+        {
+          action: 'teamInvite.register.failed',
+          data: { inviteCode },
+          err: error,
+        },
+        'Failed to register an invited co-owner',
+      );
+    },
+  });
 
   const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -167,7 +254,9 @@ export function JoinTeamOwnerPage() {
     }
 
     if (!isAuthenticated) {
-      return 'Sign in or create an account first, then come back to accept this team invitation.';
+      // #217 — no longer a dead end. The registration form below completes the join in one step;
+      // this line only sets the heading's tone.
+      return 'Create your account to join this team, or sign in if you already have one.';
     }
 
     return null;
@@ -188,7 +277,7 @@ export function JoinTeamOwnerPage() {
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
               leagueName={invitationQuery.data.league.name}
-              message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Sign in with your existing account, or create a new account and then come back here to accept the invite.`}
+              message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
               title="Team co-owner invite"
             />
             <div className="rounded-[1.5rem] border border-border bg-background p-5">
@@ -209,21 +298,83 @@ export function JoinTeamOwnerPage() {
             </div>
           </div>
         ) : null}
+        {inviteCode && invitationQuery.data ? (
+          <form
+            className="mt-5 space-y-4 rounded-[1.5rem] border border-border bg-background p-5"
+            data-testid="team-invite-register-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void registerForm.handleSubmit((values) =>
+                registerMutation.mutateAsync(values).catch(() => undefined),
+              )();
+            }}
+          >
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Create your account</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your account uses the email this invitation was sent to, so there is nothing to
+                confirm — you&apos;ll land on your team.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField error={registerForm.formState.errors.firstName?.message} label="First name">
+                <Input
+                  data-testid="team-invite-register-first-name"
+                  {...registerForm.register('firstName')}
+                />
+              </FormField>
+              <FormField error={registerForm.formState.errors.lastName?.message} label="Last name">
+                <Input
+                  data-testid="team-invite-register-last-name"
+                  {...registerForm.register('lastName')}
+                />
+              </FormField>
+            </div>
+            <FormField error={registerForm.formState.errors.username?.message} label="Username">
+              <Input
+                data-testid="team-invite-register-username"
+                {...registerForm.register('username')}
+              />
+            </FormField>
+            <FormField error={registerForm.formState.errors.password?.message} label="Password">
+              <Input
+                data-testid="team-invite-register-password"
+                type="password"
+                {...registerForm.register('password')}
+              />
+            </FormField>
+            {registerMutation.isError ? (
+              <p className="text-sm text-destructive" data-testid="team-invite-register-error">
+                {extractErrorMessage(registerMutation.error, {
+                  fallback: 'We could not create your account. Please try again.',
+                  codeMessages: {
+                    // The one case worth its own words: the invited address already has an
+                    // account, so the answer is to sign in rather than register again.
+                    SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
+                      'An account already exists for the email this invitation was sent to. Sign in to accept it.',
+                    SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
+                      'This invitation has already been accepted. Sign in to reach your team.',
+                  },
+                })}
+              </p>
+            ) : null}
+            <Button
+              data-testid="team-invite-register-submit"
+              disabled={registerMutation.isPending}
+              type="submit"
+            >
+              {registerMutation.isPending ? 'Creating your account...' : 'Create account and join team'}
+            </Button>
+          </form>
+        ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
           <LinkButton
             data-testid="team-invite-sign-in"
             state={{ from: buildTeamInvitePath(inviteCode) }}
             to="/"
-          >
-            Sign in to continue
-          </LinkButton>
-          <LinkButton
-            data-testid="team-invite-create-account"
-            state={{ authMode: 'register', from: buildTeamInvitePath(inviteCode) }}
-            to="/"
             variant="secondary"
           >
-            Create account
+            I already have an account
           </LinkButton>
           <LinkButton to="/" variant="secondary">
             Back to home

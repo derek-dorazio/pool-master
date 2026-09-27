@@ -991,6 +991,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/team-invitations/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register a new account against a team-owner invitation and accept it
+         * @description Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.
+         *
+         *     Unauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.
+         *
+         *     The account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.
+         */
+        post: operations["registerWithTeamOwnerInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contests/": {
         parameters: {
             query?: never;
@@ -6721,6 +6745,19 @@ export interface components {
             /** @description Team-owner invitation code from the invite URL or email. */
             inviteCode: string;
         };
+        /** @description Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request. */
+        RegisterWithTeamOwnerInvitationRequest: {
+            /** @description Invite code from the team-owner invitation URL. */
+            inviteCode: string;
+            /** @description Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to. */
+            username: string;
+            /** @description Plaintext password chosen during registration. */
+            password: string;
+            /** @description First name captured for the account profile. Also names the invitee on the squad roster. */
+            firstName: string;
+            /** @description Last name captured for the account profile. */
+            lastName: string;
+        };
         /** @description Pending or historical team-owner invitation record. */
         TeamOwnerInvitationDto: {
             /** Format: uuid */
@@ -11624,6 +11661,87 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    registerWithTeamOwnerInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterWithTeamOwnerInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful authentication response returned after registration or login. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -255,6 +255,121 @@ describe('SquadOwnerInvitationService', () => {
     expect(result.status).toBe(SquadOwnerInvitationStatus.ACCEPTED);
   });
 
+  /**
+   * #217 — `requireInvitationForRegistration`, the validator for the register-and-accept flow.
+   *
+   * It exists because the caller has no account yet, so there is no `userId` to key acceptance on.
+   * Its job is to prove the invitation is usable AND to hand back the email the new account must
+   * use — which is the whole security property of the flow.
+   */
+  describe('requireInvitationForRegistration (#217)', () => {
+    function pendingInvitation(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'invite-1',
+        leagueId: 'league-1',
+        squadId: 'squad-1',
+        email: 'stranger@example.com',
+        inviteCode: 'invite-code',
+        status: SquadOwnerInvitationStatus.PENDING,
+        invitedBy: 'user-1',
+        expiresAt: new Date(Date.now() + 86_400_000),
+        acceptedAt: null,
+        acceptedBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+      };
+    }
+
+    function createService(options: {
+      invitation?: unknown;
+      existingUser?: unknown;
+      invitationRepo?: SquadOwnerInvitationRepository;
+    } = {}) {
+      const invitationRepo = options.invitationRepo ?? createInvitationRepo({
+        findByCode: jest.fn().mockResolvedValue(
+          options.invitation === undefined ? pendingInvitation() : options.invitation,
+        ),
+      });
+      return {
+        invitationRepo,
+        service: new SquadOwnerInvitationService(
+          invitationRepo,
+          createMembershipRepo(),
+          createSquadRepo(),
+          createSquadMembershipRepo(),
+          fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
+          createPrisma(),
+        ),
+      };
+    }
+
+    it('returns the INVITED email, not one the caller could supply', async () => {
+      const { service } = createService();
+
+      const result = await service.requireInvitationForRegistration('invite-code');
+
+      // The security property, settled with the repo owner: bind to the invited email. A
+      // squad-owner invitation grants league membership, so honouring an address from the request
+      // would let a forwarded invite link admit an unintended person.
+      expect(result.email).toBe('stranger@example.com');
+      expect(result.invitation.leagueId).toBe('league-1');
+      expect(result.invitation.squadId).toBe('squad-1');
+    });
+
+    it('refuses when the invited email already has an account', async () => {
+      const { service } = createService({
+        existingUser: { id: 'user-9', email: 'stranger@example.com' },
+      });
+
+      // This case never produces a pending invitation — `inviteOwner` provisions an existing user
+      // straight away and marks it ACCEPTED. Reaching here means an account appeared between the
+      // invite and the acceptance, and the answer is "sign in and accept", not "register again".
+      await expect(service.requireInvitationForRegistration('invite-code')).rejects.toMatchObject({
+        code: 'SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS',
+      });
+    });
+
+    it('refuses an invitation that is not pending', async () => {
+      const { service } = createService({
+        invitation: pendingInvitation({ status: SquadOwnerInvitationStatus.ACCEPTED }),
+      });
+
+      await expect(service.requireInvitationForRegistration('invite-code')).rejects.toMatchObject({
+        code: 'SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED',
+      });
+    });
+
+    it('expires an invitation past its expiry rather than honouring it', async () => {
+      const invitationRepo = createInvitationRepo({
+        findByCode: jest.fn().mockResolvedValue(
+          pendingInvitation({ expiresAt: new Date(Date.now() - 1_000) }),
+        ),
+        update: jest.fn().mockResolvedValue(
+          pendingInvitation({ status: SquadOwnerInvitationStatus.EXPIRED }),
+        ),
+      });
+      const { service } = createService({ invitationRepo });
+
+      await expect(service.requireInvitationForRegistration('invite-code')).rejects.toMatchObject({
+        code: 'SQUAD_OWNER_INVITATION_EXPIRED',
+      });
+      // Recorded, not just refused: the row is moved to EXPIRED so a later attempt reads the same.
+      expect(invitationRepo.update).toHaveBeenCalledWith(
+        'invite-1',
+        expect.objectContaining({ status: SquadOwnerInvitationStatus.EXPIRED }),
+      );
+    });
+
+    it('refuses an unknown invite code', async () => {
+      const { service } = createService({ invitation: null });
+
+      await expect(service.requireInvitationForRegistration('nope')).rejects.toThrow(
+        /not found/i,
+      );
+    });
+  });
+
   it('allows a root admin outsider to list invitations for any team in the league', async () => {
     const invitationRepo = createInvitationRepo({
       findByLeague: jest.fn().mockResolvedValue([

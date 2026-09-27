@@ -96,6 +96,49 @@ export type TeamOwnerInvitationPreviewResponse = z.infer<
   typeof TeamOwnerInvitationPreviewResponseSchema
 >;
 
+/**
+ * Register and accept a team-owner invitation in one request (#217).
+ *
+ * The flow for an invited email that has **no PoolMaster account**. `inviteOwner` already handles
+ * the other case: when the email belongs to an existing user it provisions them onto the squad
+ * immediately and returns the invitation `ACCEPTED`, so there is nothing to accept. The
+ * pending-then-accept path exists only for a stranger, and `acceptTeamOwnerInvitation` cannot
+ * serve them because it requires an authenticated caller.
+ *
+ * **There is no `email` field, and that is the design.** The account is created with the address
+ * the commissioner invited, taken from the invitation. A squad-owner invitation grants league
+ * membership, so honouring whoever completes the flow would let a forwarded link admit an
+ * unintended person. Settled with the repo owner: bind to the invited email.
+ */
+export const RegisterWithTeamOwnerInvitationRequestSchema = z.object({
+  inviteCode: z.string().min(1).describe('Invite code from the team-owner invitation URL.'),
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(100)
+    .regex(/^\S+$/, 'Username cannot contain spaces')
+    .describe('Unique login identifier chosen by the invitee. The account email is not chosen here — it is the address the invitation was sent to.'),
+  password: z
+    .string()
+    .min(8)
+    .max(128)
+    .describe('Plaintext password chosen during registration.'),
+  firstName: z
+    .string()
+    .min(1)
+    .max(100)
+    .describe('First name captured for the account profile. Also names the invitee on the squad roster.'),
+  lastName: z
+    .string()
+    .min(1)
+    .max(100)
+    .describe('Last name captured for the account profile.'),
+}).describe('Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request.');
+export type RegisterWithTeamOwnerInvitationRequest = z.infer<
+  typeof RegisterWithTeamOwnerInvitationRequestSchema
+>;
+
 // --- Published contract (#192) -------------------------------------------------
 // These shapes are served by BOTH squads/routes.ts and team-invitations/routes.ts, so
 // both modules convert together. TeamOwnerInvitationDto is the canonical invitation
@@ -103,6 +146,10 @@ export type TeamOwnerInvitationPreviewResponse = z.infer<
 registerSchema('CreateSquadOwnerInvitationRequest', CreateSquadOwnerInvitationRequestSchema);
 registerSchema('ReplaceSquadOwnerRequest', ReplaceSquadOwnerRequestSchema);
 registerSchema('AcceptTeamOwnerInvitationRequest', AcceptTeamOwnerInvitationRequestSchema);
+registerSchema(
+  'RegisterWithTeamOwnerInvitationRequest',
+  RegisterWithTeamOwnerInvitationRequestSchema,
+);
 registerSchema('TeamOwnerInvitationDto', TeamOwnerInvitationDtoSchema);
 registerSchema('TeamOwnerInvitationResponse', TeamOwnerInvitationResponseSchema);
 registerSchema('TeamOwnerInvitationListResponse', TeamOwnerInvitationListResponseSchema);

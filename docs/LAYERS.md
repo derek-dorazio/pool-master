@@ -568,8 +568,11 @@ to a root admin.
 `(leagueId, userId)`, so one member holds at most one squad per league and an existing member cannot
 join a second squad (`SQUAD_MEMBERSHIP_CONFLICT`). Co-ownership therefore only arises for somebody
 who joins the league *through* a squad-owner invitation. And `inviteOwner` auto-accepts when the
-invited email already belongs to a PoolMaster user — the pending-then-accept path is only for an
-email with no account (#217).
+invited email already belongs to a PoolMaster user, provisioning them on the spot and returning the
+invitation `ACCEPTED`. The pending-then-accept path is only for an email with no account, which
+`POST /api/v1/team-invitations/register` serves (#217): it registers, joins the league and joins the
+squad in one request, and creates the account with the **invited** email rather than one the caller
+supplies, because a squad-owner invitation grants league membership.
 
 **Operations with no frontend caller, as of this pass.** `removeMember` (gets one in #218),
 `revokeInviteLink` (the league invite *link*, distinct from the squad-owner invitation revoke that

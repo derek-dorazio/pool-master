@@ -4,6 +4,8 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto/team-owner-invitations.dto';
+// #217 — the register-and-accept route returns AuthResponse, so its module registers here too.
+import '@poolmaster/shared/dto/auth.dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
@@ -14,6 +16,7 @@ import {
 import { getAppPrisma } from '../../core/prisma-context';
 import { createSquadOwnerInvitationHandlers } from '../squads/owner-invitation-handler';
 import { SquadOwnerInvitationService } from '../squads/owner-invitation-service';
+import { AuthService } from '../auth/auth-service';
 
 export function teamInvitationsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
@@ -23,15 +26,21 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
+  const userRepo = new PrismaUserRepository(prisma);
   const service = new SquadOwnerInvitationService(
     invitationRepo,
     membershipRepo,
     squadRepo,
     squadMembershipRepo,
-    new PrismaUserRepository(prisma),
+    userRepo,
     prisma,
   );
-  const handlers = createSquadOwnerInvitationHandlers(service);
+  // #217 — this module is the only one that exposes register-and-accept, so it is the only one
+  // that hands the handlers an AuthService.
+  const handlers = createSquadOwnerInvitationHandlers(
+    service,
+    new AuthService(userRepo, prisma, fastify.log),
+  );
 
   fastify.get('/:inviteCode', {
     schema: {
@@ -65,5 +74,23 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
       },
     },
     handler: handlers.acceptInvitation,
+  });
+
+  fastify.post('/register', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Register a new account against a team-owner invitation and accept it',
+      description:
+        'Creates a PoolMaster account for an invited co-owner who does not have one yet, then joins them to the league and the invited team — registration, league membership and team ownership in a single request. Returns the new account with a session, so the invitee is signed in and lands on their team.\n\nUnauthenticated by design: the caller has no account yet, which is why `acceptTeamOwnerInvitation` cannot serve them. When the invited email already belongs to a user, `createSquadOwnerInvitation` provisions them immediately and the invitation comes back ACCEPTED, so there is nothing to accept and this route returns 400 `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS`.\n\nThe account is created with the address the invitation was sent to; the request carries no email. A team-owner invitation grants league membership, so honouring an address supplied by the caller would let a forwarded invite link admit an unintended person.',
+      operationId: 'registerWithTeamOwnerInvitation',
+      body: schemaRef('RegisterWithTeamOwnerInvitationRequest'),
+      response: {
+        201: schemaRef('AuthResponse'),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.registerAndAcceptInvitation,
   });
 }

@@ -1136,6 +1136,55 @@ reason rather than passing vacuously.
 co-owner; and `cleanupTestData` deleted squads without first deleting `squadOwnerInvitation` rows,
 which holds an FK to them. Both were invisible until a test created a squad-owner invitation.
 
+### #217 — register against a squad-owner invitation, 2026-09-27
+
+The second follow-up, and #218's work had already narrowed it to one case.
+
+**What the ticket originally claimed, and what is actually true.** I wrote that inviting an
+existing user "works" and only the no-account case was missing. `inviteOwner` is sharper than that:
+it looks the email up, and on a hit it provisions the user onto the squad immediately and returns
+the invitation already `ACCEPTED`. So for an existing user there is **no pending state and no
+acceptance step** — they are simply added. The `PENDING` → accept path exists *only* for an email
+with no account, and it dead-ended: acceptance needs an authenticated `userId`, which somebody
+without an account cannot supply. The webapp said as much out loud — *"Sign in or create an account
+first, then come back to accept this team invitation"* — which was not a workaround, it was a wall.
+
+**The security decision, settled with the repo owner: bind to the invited email.** The request
+carries no `email` field at all; the account is created with the address the commissioner invited,
+read off the invitation server-side. A squad-owner invitation grants league membership, so
+honouring an address supplied by the caller would let a forwarded invite link admit an unintended
+person. The DTO says this in its description, and the webapp test asserts the absence of an email
+input, because the absence *is* the property.
+
+`POST /api/v1/team-invitations/register` → `AuthResponse`. Public by necessity, and not an open
+registration hole: it needs a valid PENDING invite code, and it refuses an email that already has
+an account with `SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS` — the answer there is "sign in and accept",
+not "register again".
+
+**Where the orchestration lives, and why.** In the handler, because it spans two services: the
+invitation rules belong to `SquadOwnerInvitationService` and creating an account belongs to
+`AuthService`, and neither should know about the other. The invitation is validated **first**, so a
+bad or expired code cannot strand an account. `requireInvitationForRegistration` is the new
+validator, and `acceptInvitation`'s own PENDING/expiry checks were extracted into a shared
+`requirePendingInvitation` rather than duplicated.
+
+**The atomicity limit, stated rather than hidden.** Account creation and the membership writes are
+not one transaction, because the repositories hold their own Prisma client and take no transaction
+client — the same constraint that keeps `logAdminAction` outside its callers' transactions. If
+provisioning failed after registration the invitee would hold an account with no league: a
+legitimate state that logs in fine and can be re-invited, not a corrupt one, and *not* a breach of
+the league/squad membership invariant (which only constrains active memberships). Making it atomic
+needs the repository refactor in #211. The handler logs loudly if it happens.
+
+**A latent bug found on the way.** `GET /api/v1/team-invitations/:inviteCode` described itself as
+"the public team-owner invitation flow before or after authentication" but was never added to the
+auth guard's public patterns — only the *league* invitation preview one line above was. So an
+invited stranger could not read the preview at all. Fixed with the register route's exemption.
+
+**Two hand-maintained mirrors needed updating again**, which is the §15 pattern this epic keeps
+running into: `clients/poolmaster/src/test/msw-api.ts` had no entry for the new operation, so the
+webapp test failed inside `bindApiMocks` rather than in the code under test.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
