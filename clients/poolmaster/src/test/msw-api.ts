@@ -1,6 +1,10 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { setupServer } from 'msw/node';
 import { beforeEach, vi, type Mock } from 'vitest';
+import type { operations } from '@poolmaster/shared/generated';
+// A relative path, not the `@poolmaster/shared/generated` alias: that alias resolves to
+// api-types.ts itself and so cannot serve a sibling file.
+import openapiSpecJson from '../../../../packages/shared/generated/openapi.json?raw';
 
 type HttpMethod = 'delete' | 'get' | 'patch' | 'post' | 'put';
 
@@ -20,130 +24,60 @@ interface ApiMockResult {
 
 type ApiMock = Mock<(options: Record<string, unknown>) => Promise<ApiMockResult> | ApiMockResult>;
 
-const operationDefinitions = {
-  acceptInvitation: { method: 'post', path: '/api/v1/invitations/accept' },
-  acceptTeamOwnerInvitation: { method: 'post', path: '/api/v1/team-invitations/accept' },
-  registerWithTeamOwnerInvitation: { method: 'post', path: '/api/v1/team-invitations/register' },
-  activateLeague: { method: 'post', path: '/api/v1/leagues/{id}/activate' },
-  deleteUser: { method: 'delete', path: '/api/v1/users/{userId}' },
-  disableUser: { method: 'post', path: '/api/v1/users/{userId}/disable' },
-  enableUser: { method: 'post', path: '/api/v1/users/{userId}/enable' },
-  adminAddGolfLeagueRosterEntry: { method: 'post', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster' },
-  adminApplyGolfLeagueRosterUpload: { method: 'post', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/apply' },
-  adminApplyGolfRoundScores: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores' },
-  adminAutoAssignGolfPrices: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/prices/auto-assign' },
-  adminAutoAssignGolfTiers: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/auto-assign' },
-  adminBulkAddGolfFieldEntries: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/bulk-add' },
-  adminCloneGolfSeason: { method: 'post', path: '/api/v1/admin/sports/golf/seasons/{seasonId}/clone' },
-  adminCreateGolfLeague: { method: 'post', path: '/api/v1/admin/sports/golf/leagues' },
-  adminCreateGolfSeason: { method: 'post', path: '/api/v1/admin/sports/golf/seasons' },
-  adminCreateGolfTournament: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments' },
-  adminCreateGolfTournamentFromProviderEvent: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/from-provider-event' },
-  adminCreateGolfPlayer: { method: 'post', path: '/api/v1/admin/sports/golf/players' },
-  adminGetGolfLeagueRoster: { method: 'get', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster' },
-  adminGetGolfSeason: { method: 'get', path: '/api/v1/admin/sports/golf/seasons/{seasonId}' },
-  adminGetGolfPlayer: { method: 'get', path: '/api/v1/admin/sports/golf/players/{participantId}' },
-  adminGetGolfRoundScores: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores' },
-  adminGetGolfTournamentField: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field' },
-  adminGetGolfTournamentTiers: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers' },
-  adminGetGolfTournament: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments/{eventId}' },
-  adminGetGolfTournamentRounds: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds' },
-  adminGetIngestionDashboard: { method: 'get', path: '/api/v1/admin/providers/ingestion' },
-  adminGetIngestionSchedule: { method: 'get', path: '/api/v1/admin/config/ingestion-schedule' },
-  adminGetPollIntervals: { method: 'get', path: '/api/v1/admin/config/poll-intervals' },
-  getUser: { method: 'get', path: '/api/v1/users/{userId}' },
-  adminListContestConfigTemplates: { method: 'get', path: '/api/v1/admin/contest-config-templates' },
-  adminListEventParticipants: { method: 'get', path: '/api/v1/admin/events/{eventId}/participants' },
-  adminListEvents: { method: 'get', path: '/api/v1/admin/events' },
-  adminListGolfLeagues: { method: 'get', path: '/api/v1/admin/sports/golf/leagues' },
-  adminListGolfPlayers: { method: 'get', path: '/api/v1/admin/sports/golf/players' },
-  adminListGolfSeasons: { method: 'get', path: '/api/v1/admin/sports/golf/seasons' },
-  adminListGolfTournaments: { method: 'get', path: '/api/v1/admin/sports/golf/tournaments' },
-  adminPreviewGolfLeagueRosterUpload: { method: 'post', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/preview' },
-  adminPreviewGolfRoundScores: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/preview' },
-  adminRefreshGolfTournamentField: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/refresh' },
-  adminRemoveGolfLeagueRosterEntry: { method: 'delete', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/{participantId}' },
-  adminReplaceGolfTierAssignments: { method: 'put', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/assignments' },
-  adminReplaceGolfTournamentTiers: { method: 'put', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers' },
-  adminSeedGolfTournamentField: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/seed' },
-  adminSetCurrentGolfSeason: { method: 'post', path: '/api/v1/admin/sports/golf/seasons/{seasonId}/set-current' },
-  adminUpdateGolfFieldEntries: { method: 'patch', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field' },
-  adminUpdateGolfLeague: { method: 'patch', path: '/api/v1/admin/sports/golf/leagues/{leagueId}' },
-  adminUpdateGolfPlayer: { method: 'patch', path: '/api/v1/admin/sports/golf/players/{participantId}' },
-  adminUpdateGolfLeagueRoster: { method: 'patch', path: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster' },
-  adminUpdateGolfRoundScore: { method: 'patch', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/{sportEventParticipantId}' },
-  adminUpdateGolfSeason: { method: 'patch', path: '/api/v1/admin/sports/golf/seasons/{seasonId}' },
-  adminListProviderCatalogEvents: { method: 'get', path: '/api/v1/admin/providers/{providerId}/catalog-events' },
-  adminListProviderSyncRuns: { method: 'get', path: '/api/v1/admin/providers/sync-runs' },
-  adminListProviders: { method: 'get', path: '/api/v1/admin/providers/health' },
-  listUsers: { method: 'get', path: '/api/v1/users' },
-  adminPrepareSportSync: { method: 'post', path: '/api/v1/admin/providers/sync/{sport}' },
-  adminResetIngestionSchedule: { method: 'post', path: '/api/v1/admin/config/ingestion-schedule/reset' },
-  adminResetPollIntervals: { method: 'post', path: '/api/v1/admin/config/poll-intervals/reset' },
-  adminResetSportIngestionOverride: { method: 'post', path: '/api/v1/admin/config/ingestion-schedule/{sport}/reset' },
-  resetUserPassword: { method: 'post', path: '/api/v1/users/{userId}/reset-password' },
-  adminSetSportIngestionOverride: { method: 'put', path: '/api/v1/admin/config/ingestion-schedule/{sport}' },
-  setUserRootAdmin: { method: 'post', path: '/api/v1/users/{userId}/root-admin' },
-  adminSyncProviderEventData: { method: 'post', path: '/api/v1/admin/providers/events/{sport}/{eventId}/sync' },
-  adminLinkGolfTournamentScoreSource: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/score-source' },
-  adminTransitionGolfTournament: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/transitions' },
-  adminUnlinkGolfTournamentScoreSource: { method: 'delete', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/score-source' },
-  adminUpdateContestConfigTemplate: { method: 'put', path: '/api/v1/admin/contest-config-templates/{templateId}' },
-  adminUpdateGolfTournament: { method: 'patch', path: '/api/v1/admin/sports/golf/tournaments/{eventId}' },
-  adminUpdateGolfTournamentRounds: { method: 'patch', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds' },
-  adminUpdateIngestionSchedule: { method: 'put', path: '/api/v1/admin/config/ingestion-schedule' },
-  adminUpdatePollIntervals: { method: 'put', path: '/api/v1/admin/config/poll-intervals' },
-  changeUserPassword: { method: 'post', path: '/api/v1/users/{userId}/password' },
-  changeMemberRole: { method: 'put', path: '/api/v1/leagues/{id}/members/{uid}/role' },
-  createLeague: { method: 'post', path: '/api/v1/leagues/' },
-  createLeagueSquad: { method: 'post', path: '/api/v1/leagues/{id}/squads/' },
-  createManagedContest: { method: 'post', path: '/api/v1/leagues/{id}/contest-management/contests' },
-  createSquadOwnerInvitation: { method: 'post', path: '/api/v1/leagues/{id}/squads/{squadId}/owner-invitations' },
-  deleteContest: { method: 'delete', path: '/api/v1/contests/{contestId}' },
-  deleteLeague: { method: 'delete', path: '/api/v1/leagues/{id}' },
-  deleteLeagueSquad: { method: 'delete', path: '/api/v1/leagues/{id}/squads/{squadId}' },
-  enterContest: { method: 'post', path: '/api/v1/contests/{contestId}/entries/me' },
-  generateInviteLink: { method: 'post', path: '/api/v1/leagues/{id}/invite-link' },
-  getContest: { method: 'get', path: '/api/v1/contests/{contestId}' },
-  getDraftState: { method: 'get', path: '/api/v1/drafts/{contestId}' },
-  getInvitationPreview: { method: 'get', path: '/api/v1/invitations/{inviteCode}' },
-  getLeague: { method: 'get', path: '/api/v1/leagues/{id}' },
-  getLeagueByCode: { method: 'get', path: '/api/v1/leagues/code/{leagueCode}' },
-  getManagedContest: { method: 'get', path: '/api/v1/leagues/{id}/contest-management/contests/{contestId}' },
-  getMyContestEntry: { method: 'get', path: '/api/v1/contests/{contestId}/entries/me' },
-  getTeamOwnerInvitationPreview: { method: 'get', path: '/api/v1/team-invitations/{inviteCode}' },
-  inactivateLeague: { method: 'post', path: '/api/v1/leagues/{id}/inactivate' },
-  inactivateLeagueSquad: { method: 'post', path: '/api/v1/leagues/{id}/squads/{squadId}/inactivate' },
-  leaveLeague: { method: 'delete', path: '/api/v1/leagues/{id}/members/me' },
-  listContestEntries: { method: 'get', path: '/api/v1/contests/{contestId}/entries' },
-  listContests: { method: 'get', path: '/api/v1/leagues/{id}/contests/' },
-  listEvents: { method: 'get', path: '/api/v1/events/' },
-  listLeagueMembers: { method: 'get', path: '/api/v1/leagues/{id}/members' },
-  listLeagueSquads: { method: 'get', path: '/api/v1/leagues/{id}/squads/' },
-  listLeagues: { method: 'get', path: '/api/v1/leagues/' },
-  listManagedContestTemplates: { method: 'get', path: '/api/v1/leagues/{id}/contest-management/templates' },
-  listSquadOwnerInvitations: { method: 'get', path: '/api/v1/leagues/{id}/squads/owner-invitations' },
-  loginUser: { method: 'post', path: '/api/v1/auth/login' },
-  logoutUser: { method: 'post', path: '/api/v1/auth/logout' },
-  refreshToken: { method: 'post', path: '/api/v1/auth/refresh' },
-  registerUser: { method: 'post', path: '/api/v1/auth/register' },
-  removeSquadOwner: { method: 'delete', path: '/api/v1/leagues/{id}/squads/{squadId}/members/{userId}' },
-  replaceSquadOwner: { method: 'post', path: '/api/v1/leagues/{id}/squads/{squadId}/owners/{userId}/replace' },
-  revokeSquadOwnerInvitation: { method: 'delete', path: '/api/v1/leagues/{id}/squads/owner-invitations/{invitationId}' },
-  sendLeagueInvitations: { method: 'post', path: '/api/v1/leagues/{id}/invitations' },
-  submitContestSelection: { method: 'post', path: '/api/v1/drafts/{contestId}/pick' },
-  updateUserPreferences: { method: 'put', path: '/api/v1/users/{userId}/preferences' },
-  updateUserProfile: { method: 'put', path: '/api/v1/users/{userId}/profile' },
-  updateUserUsername: { method: 'put', path: '/api/v1/users/{userId}/username' },
-  updateContest: { method: 'put', path: '/api/v1/contests/{contestId}' },
-  updateContestEntry: { method: 'patch', path: '/api/v1/contests/{contestId}/entries/{entryId}' },
-  updateLeagueDetails: { method: 'put', path: '/api/v1/leagues/{id}/details' },
-  updateLeagueIcon: { method: 'put', path: '/api/v1/leagues/{id}/icon' },
-  updateLeagueSquad: { method: 'patch', path: '/api/v1/leagues/{id}/squads/{squadId}' },
-  updateManagedContestConfiguration: { method: 'put', path: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/configuration' },
-} as const satisfies Record<string, OperationDefinition>;
+/**
+ * The operation map, derived from the committed OpenAPI spec (#212).
+ *
+ * This used to be a hand-written `operationId -> { method, path }` table, and it was a shadow of
+ * the spec in the §15 sense: the Fastify registrations are the truth, `openapi.json` is generated
+ * from them, and this copy was maintained by eye. It went stale twice — once when `/api/v1/account/*`
+ * and `/api/v1/auth/me` were deleted and fifteen entries kept pointing at routes that no longer
+ * existed, and again whenever a new route needed an entry that nothing required anyone to add.
+ * Nothing failed either time, because a stale entry just mocks a URL no code calls.
+ *
+ * Now the paths come from the spec and the *names* come from the generated `operations` type, so
+ * drift is impossible in both directions: a renamed route moves its path here on the next
+ * `npm run api:refresh`, and a mis-typed operation name in `bindApiMocks` is a compile error.
+ */
+type ApiOperationName = keyof operations;
 
-type ApiOperationName = keyof typeof operationDefinitions;
+const HTTP_METHODS = new Set<string>(['delete', 'get', 'patch', 'post', 'put']);
+
+interface SpecOperation {
+  operationId?: string;
+}
+
+interface OpenApiSpec {
+  // A path item also carries non-operation keys such as `parameters`, so the values are
+  // `unknown` and the HTTP-method filter below is what narrows them to operations.
+  paths?: Record<string, Record<string, unknown>>;
+}
+
+function buildOperationDefinitions(): Record<ApiOperationName, OperationDefinition> {
+  // `?raw` keeps this a string: importing the 1.8 MB JSON as a module would have TypeScript infer
+  // a literal type for the whole spec on every typecheck.
+  const spec = JSON.parse(openapiSpecJson) as OpenApiSpec;
+  const definitions: Partial<Record<ApiOperationName, OperationDefinition>> = {};
+
+  for (const [path, pathItem] of Object.entries(spec.paths ?? {})) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!HTTP_METHODS.has(method)) {
+        continue;
+      }
+      const operationId = (operation as SpecOperation | null)?.operationId;
+      if (!operationId) {
+        continue;
+      }
+      definitions[operationId as ApiOperationName] = {
+        method: method as HttpMethod,
+        path,
+      };
+    }
+  }
+
+  return definitions as Record<ApiOperationName, OperationDefinition>;
+}
+
+const operationDefinitions = buildOperationDefinitions();
 
 function createApiMocks() {
   return Object.fromEntries(
@@ -264,10 +198,36 @@ function createHandler(operationName: ApiOperationName, definition: OperationDef
   });
 }
 
-export const poolmasterApiHandlers = Object.entries(operationDefinitions).map(
-  ([operationName, definition]) =>
+/**
+ * Register the most specific path first, because MSW matches handlers in order (#212).
+ *
+ * `/leagues/{id}/squads/owner-invitations` and `/leagues/{id}/squads/{squadId}` are both real
+ * routes, and whichever is registered first wins: with the wrong order, a request for the
+ * invitation list is answered by the get-a-squad mock with `owner-invitations` bound as the squad
+ * id. The hand-written map avoided this by accident — it simply had no entry for the route that
+ * shadows — which is not a property worth relying on now that every operation in the spec gets a
+ * handler. A literal segment beats a parameter at the first position they differ.
+ */
+function byPathSpecificity(a: OperationDefinition, b: OperationDefinition): number {
+  const left = a.path.split('/');
+  const right = b.path.split('/');
+
+  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
+    const leftIsParam = left[index]?.startsWith('{') ?? false;
+    const rightIsParam = right[index]?.startsWith('{') ?? false;
+    if (leftIsParam !== rightIsParam) {
+      return leftIsParam ? 1 : -1;
+    }
+  }
+
+  return a.path.localeCompare(b.path);
+}
+
+export const poolmasterApiHandlers = Object.entries(operationDefinitions)
+  .sort(([, a], [, b]) => byPathSpecificity(a, b))
+  .map(([operationName, definition]) =>
     createHandler(operationName as ApiOperationName, definition),
-);
+  );
 
 export const server = setupServer(...poolmasterApiHandlers);
 
