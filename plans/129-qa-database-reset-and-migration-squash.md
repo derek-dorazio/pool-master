@@ -110,41 +110,52 @@ verification too.
    real diff means the squash dropped or changed something and needs
    investigation before proceeding.
 7. **Re-append required definitional data — `prisma migrate dev --name init`
-   does not carry this forward on its own.** Audited 2026-09-19: of ~65
-   migrations, exactly two contain hand-written `INSERT` data that the app
-   actually needs at runtime (confirmed clean of any test/fixture data
-   otherwise — no fake events/participants/contests/leagues anywhere in
-   migration history):
-   - `20260419213000_add_contest_config_templates` — 3 rows in
-     `contest_config_templates` (the golf contest-creation template picker:
-     `golf-tiered-pick-6`, `golf-tiered-pick-12`, `golf-category-picks`).
-   - `20260902150000_add_sport_event_round_schedule` — 1 row: the
-     `system@poolmaster.internal` user that `AdminAuditEntry.actorId`
-     (a required FK) attributes scheduler-driven audit writes to.
-   (A third migration, `20260408113000_expand_contest_configuration_from_selection_config`,
-   has an `INSERT ... SELECT` but it backfills from `selection_configs`, a
-   table a later migration already dropped — moot on a fresh DB, nothing to
-   preserve.)
+   does not carry this forward on its own.** Squashing regenerates the
+   migration purely from `schema.prisma`'s structure, so any data rows the
+   migration history put in place are silently lost unless something
+   re-appends them to the freshly generated `migration.sql`.
 
-   Since squashing regenerates the migration purely from `schema.prisma`'s
-   structure, these two `INSERT` blocks are silently lost unless something
-   re-appends them to the freshly generated `migration.sql` every time —
-   this squash is now repeatable, so a one-time manual copy-paste would only
-   survive the first run; the second squash's `rm -rf migrations/*` would
-   delete last time's re-appended `INSERT`s right along with everything else,
-   with nothing left to re-derive them from.
+   **Seed from the current data, never from the original `INSERT`s.** Later
+   migrations can `UPDATE` or `DELETE` rows an earlier migration inserted, so
+   copying an old migration's `INSERT` text brings back stale or deleted
+   data. The seed is the rows as they exist *after the full pre-squash
+   history has been applied* — i.e. read out of the step 3 scratch database,
+   not out of the migration files. Which rows count:
+   - **Included:** rows that migration history itself creates (and later
+     migrations may have modified) and that the app needs at runtime to
+     function on an otherwise empty database — reference/definitional data
+     and system-owned records that code or required FKs depend on.
+   - **Excluded:** anything that is test, fixture, or demo data (users,
+     leagues, contests, events created for testing belong to
+     `bootstrap-users.mjs` and the test suites, not the baseline), and
+     one-time backfills that copy existing rows from one table into another
+     (they have nothing to copy on a fresh database).
+   - **Identifying them:** audit the pre-squash migration history for
+     data-writing statements (`INSERT`, `UPDATE`, `DELETE`) at squash time,
+     determine the tables and rows whose net effect survives on a freshly
+     migrated database, and take their current values from the scratch
+     database. Re-run this audit on every squash — don't rely on a list
+     recorded in this plan, which goes stale as soon as a new migration
+     touches that data.
 
-   Concretely: `packages/core-api/prisma/required-seed-data.sql` — a small,
-   permanent, checked-in file living *outside* `prisma/migrations/` (so
-   `rm -rf migrations/*` never touches it) — holds exactly these two blocks'
-   literal SQL. After step 5 generates the new `migration.sql`,
+   Because the squash is repeatable, a one-time manual copy-paste only
+   survives the first run: the next squash's `rm -rf migrations/*` deletes
+   it along with everything else. So the seed lives in
+   `packages/core-api/prisma/required-seed-data.sql` — a small, permanent,
+   checked-in file *outside* `prisma/migrations/` (so `rm -rf migrations/*`
+   never touches it). After step 5 generates the new `migration.sql`,
    `squash-migrations.mjs` appends `required-seed-data.sql`'s contents onto
-   it. The result is one ordinary migration file — DDL followed by these two
-   `INSERT`s — applied together by `prisma migrate deploy` like any other
-   migration, exactly matching how this repo already did it three times in
-   history (no new runtime seed mechanism, nothing to run separately after
-   migrate deploy). Any future required-data need gets added to that one
-   `.sql` fragment file, not hand-typed into the script.
+   it. The result is one ordinary migration file — DDL followed by the seed
+   rows — applied together by `prisma migrate deploy` like any other
+   migration (no new runtime seed mechanism, nothing to run separately after
+   migrate deploy).
+
+   On each squash, `squash-migrations.mjs` must also prove the seed file is
+   current: compare the seeded tables' rows in the step 3 (pre-squash) scratch
+   database against the same tables after applying the new single migration,
+   and fail on any difference. This catches both a stale
+   `required-seed-data.sql` and a data-writing migration added since the last
+   squash whose effect hasn't been folded into it.
 8. Run the full gate suite (`npx jest --config tests/jest.config.js`,
    `npm run test:service:integration:fresh`, `npm run test:service:functional-api:fresh`)
    against the new single-migration path to confirm nothing behavioral moved.
@@ -205,9 +216,10 @@ Single job, run start to finish on every dispatch:
    against a disposable Postgres service container in the runner (not QA, not
    local dev). Includes the before/after schema-equivalence diff from slice 1
    step 6 (fail the run on any real diff) and appending
-   `required-seed-data.sql` from slice 1 step 7 (contest config templates,
-   the system audit-actor user) onto the freshly generated migration, since
-   `prisma migrate dev` doesn't carry hand-written `INSERT`s forward on its
+   `required-seed-data.sql` from slice 1 step 7 onto the freshly generated
+   migration, plus step 7's seed-currency check (fail the run if the seeded
+   rows differ from the pre-squash database's current rows), since
+   `prisma migrate dev` doesn't carry migration-written data forward on its
    own.
 3. **Verify** — run the full gate suite (`jest`, `test:service:integration:fresh`,
    `test:service:functional-api:fresh`) against the freshly-squashed baseline.
