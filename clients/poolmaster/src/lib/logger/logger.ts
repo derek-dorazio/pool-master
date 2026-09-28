@@ -135,7 +135,6 @@ export function createLogger(options: CreateLoggerOptions): PoolmasterLogger {
         clientTraceId: getOrCreateClientTraceId(),
         userAgent: resolveUserAgent(),
         route: context.route,
-        userId: context.userId ?? null,
         webappVersion: context.webappVersion,
       };
 
