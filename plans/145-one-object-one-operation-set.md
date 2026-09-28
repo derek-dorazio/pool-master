@@ -1185,6 +1185,57 @@ invited stranger could not read the preview at all. Fixed with the register rout
 running into: `clients/poolmaster/src/test/msw-api.ts` had no entry for the new operation, so the
 webapp test failed inside `bindApiMocks` rather than in the code under test.
 
+### #219 — the squad lifecycle actions move onto the roster, 2026-09-28
+
+The third follow-up off slice 1's audit. The squad list **is** the league's member roster — every
+`LeagueMembership` gets a `SquadMembership`, so every member appears as an owner of some squad — and
+it already carried the per-owner actions (`removeSquadOwner`, `changeMemberRole`) through
+`TeamOwnerActionMenu`. What it lacked were the *squad-level* actions, which existed only on Team
+Home and were reachable for somebody else's team by appending `?teamId=`. That hop is gone:
+`SquadActions` sits under each roster row and carries invite co-owner, revoke a pending invite, and
+inactivate the team.
+
+**The permission split, decided with the repo owner.** He asked whether these should be
+commissioner-only, since an owner can already do them from their own team page. Two shapes were put
+to him; he chose the second:
+
+> "I'd pick B as well. Agreed."
+
+So **invite and revoke stay owner-accessible** — plainly the owner's business, and the backend
+already says so via `requireSquadManager` — while **inactivating a squad became commissioner or
+root admin only**, a deliberate narrowing from `requireSquadManager`. #218 is what made that
+consequential rather than merely generous: inactivating a squad now ends its owners' league
+memberships, so under the old guard a sole owner could remove themselves from the league by
+pressing a button on their own team page. Ending a team, and with it somebody's league membership,
+is league administration.
+
+The narrowing is enforced in `SquadService.inactivateSquad` by a new private `requireCommissioner`,
+and Team Home's inactivate action is gated to match rather than offering a button that can only
+403.
+
+**Two stale pieces of copy this exposed, both promising the cascade #218 deleted.** Team Home's
+success notice said "any user with no other active leagues was also inactivated" and its confirm
+dialog hedged the league removal with "if they do not have another active team" — a condition that
+never held, since a member has exactly one squad per league. Both now describe what actually
+happens: the owners leave the league, their accounts are untouched, and inviting them back restores
+the team.
+
+**`createLeagueSquad` is not an action for this screen, and the ticket was wrong to list it.**
+#219's table put "create a squad — commissioner" alongside the others. Read against the service,
+the operation creates *the caller's own* squad: it requires an active league membership for the
+caller, adds the caller as its member, and refuses with `SQUAD_MEMBERSHIP_CONFLICT` if they already
+have one. Since `ensureDefaultSquadForLeagueMember` gives every member a squad on join, an active
+member — commissioner included — can only ever get a 409 from it. A commissioner does not create a
+team for somebody else here; the league invite flow creates it as the invitee joins, which is the
+repo owner's own framing (*"Invites just go to users. The invite flow creates the squads as they
+register or join."*). Its one live caller stays: Team Home's create-your-team panel, the
+self-service path for a member who has no squad. So nothing was built for it.
+
+**Team Home keeps its copies of invite and revoke.** The ticket asks whether it should defer to the
+roster instead. It should not, yet: Team Home is where an owner manages their own team's name, icon
+and history, and the owner actions belong next to that. The duplication worth removing is the
+`?teamId=` hop, and that is what went.
+
 ### Slice 2 — Events and participants (the cross-sport core)
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,

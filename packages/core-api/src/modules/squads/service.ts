@@ -167,6 +167,17 @@ export class SquadService {
     return squad;
   }
 
+  /**
+   * Inactivate a squad. **Commissioner or root admin only (#219).**
+   *
+   * It used to be `requireSquadManager`, which also admits an owner of the squad. #218 made that
+   * consequential rather than merely generous: inactivating a squad ends its owners' league
+   * memberships, so a sole owner could remove themselves from the league by inactivating their own
+   * team — a destructive, non-obvious side effect of a button on their own team page.
+   *
+   * Inviting or removing a co-owner stays owner-accessible, because that is plainly the owner's
+   * business. Ending a team, and with it somebody's league membership, is league administration.
+   */
   async inactivateSquad(
     leagueId: string,
     squadId: string,
@@ -177,7 +188,7 @@ export class SquadService {
       action: 'squad.inactivate.enter',
       data: { leagueId, squadId, userId },
     }, 'Inactivating squad');
-    await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
+    await this.requireCommissioner(leagueId, squadId, userId, isRootAdmin);
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
     if (!squad.isActive) {
       this.logger?.warn({
@@ -195,7 +206,7 @@ export class SquadService {
           leagueId,
           userId: membership.userId,
           membershipRepo: this.leagueMembershipRepo,
-              squadRepo: this.squadRepo,
+          squadRepo: this.squadRepo,
           squadMembershipRepo: this.squadMembershipRepo,
           logger: this.logger,
         })),
@@ -560,6 +571,36 @@ export class SquadService {
    * Access rule A7 — a squad is managed by one of its owners, by a commissioner of its
    * league acting on a member's behalf, or by a root admin. Returns nothing.
    */
+  /**
+   * Commissioner or root admin, for squad operations that are league administration rather than
+   * team management (#219). Narrower than `requireSquadManager`, which also admits the squad's own
+   * owners.
+   */
+  private async requireCommissioner(
+    leagueId: string,
+    squadId: string,
+    userId: string,
+    isRootAdmin: boolean,
+  ): Promise<void> {
+    if (isRootAdmin) {
+      await this.requireLeagueScopedSquad(leagueId, squadId);
+      return;
+    }
+
+    const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
+    if (leagueMembership.role !== LeagueRole.COMMISSIONER) {
+      this.logger?.warn({
+        action: 'squad.requireCommissioner.denied',
+        data: { leagueId, squadId, userId, role: leagueMembership.role },
+      }, 'Rejected commissioner-only squad action');
+      throw new SquadOperationError(
+        'Only a league commissioner can inactivate a team',
+        'LEAGUE_PERMISSION_DENIED',
+      );
+    }
+    await this.requireLeagueScopedSquad(leagueId, squadId);
+  }
+
   private async requireSquadManager(
     leagueId: string,
     squadId: string,

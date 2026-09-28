@@ -1109,7 +1109,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     );
   });
 
-  it('pool-master-rop.22: inactivates the current team', async () => {
+  it('pool-master-rop.22: inactivates the current team as a commissioner', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -1125,7 +1125,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
-      data: leagueContext({ role: 'MEMBER' }),
+      data: leagueContext({ role: 'COMMISSIONER' }),
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
@@ -1144,7 +1144,7 @@ describe('pool-master-rop.22: MyTeamPage', () => {
             leagueId: 'league-1',
             userId: 'user-1',
             user: { ...VIEWER_USER, id: 'user-1', email: 'derek@example.com', username: 'derek@example.com', firstName: 'Derek', lastName: 'Dorazio' },
-            role: 'MEMBER',
+            role: 'COMMISSIONER',
             status: 'ACTIVE',
             joinedAt: '2026-04-15T00:00:00.000Z',
             createdAt: '2026-04-15T00:00:00.000Z',
@@ -1189,6 +1189,39 @@ describe('pool-master-rop.22: MyTeamPage', () => {
 
   // pool-master-dxd.32 — inactive teams should show their lifecycle and advance
   // to the delete workflow instead of offering another inactivation.
+  // #219 — inactivating a team ends its owners' league memberships (#218), so it is commissioner
+  // work. The backend enforces it; Team Home must not offer a button that can only 403.
+  it('does not let a plain owner inactivate their own team from Team Home', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: leagueContext({ role: 'MEMBER' }),
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: { squads: [buildTeamSummary({ name: 'Original Team' })] },
+    });
+    listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
+    listContestsMock.mockResolvedValue({ data: { contests: [] } });
+    listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByTestId('my-team-inactivate')).toBeDisabled();
+    expect(inactivateLeagueSquadMock).not.toHaveBeenCalled();
+  });
+
   it('shows inactive lifecycle and deletes an inactive team from Team Home', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {

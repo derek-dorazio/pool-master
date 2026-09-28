@@ -20,6 +20,7 @@ import {
   PageHeader,
   Tile,
 } from '@/features/shared/ui';
+import { SquadActions } from './squad-actions';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -28,10 +29,6 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { throwApiError } from '@/lib/errors';
 
-
-function formatInvitationStatus(status: string) {
-  return status.charAt(0) + status.slice(1).toLowerCase();
-}
 
 export function TeamsPage() {
   const logger = getLogger().child({
@@ -157,6 +154,13 @@ export function TeamsPage() {
     return leagueContext.element;
   }
 
+  // #202 (A8) — the viewer's authority arrives once, with the league, not as a flag repeated on
+  // every squad row. Everything below reads it from here.
+  const canManageLeague = viewer.isCommissioner || viewer.isRootAdmin;
+  // An inactive league is read-only on Team Home; the roster follows suit rather than offering
+  // buttons that surface on one screen and not the other.
+  const leagueIsActive = league.isActive !== false;
+
 
 
   return (
@@ -168,9 +172,9 @@ export function TeamsPage() {
         ]}
         description={(
           <>
-            Browse every team in {league.name}. Members use this as a directory, while
-            commissioners, root admins, and team co-owners can use the inline owner actions here and
-            move to Team Home for deeper lifecycle work.
+            Every member of {league.name} owns a team, so this is the league roster. Owners manage
+            their own team&apos;s co-owners here; commissioners and root admins manage every team
+            and can inactivate one.
           </>
         )}
         eyebrow="League Directory"
@@ -217,10 +221,11 @@ export function TeamsPage() {
 
               return (
                 <div
-                  className="rounded-2xl border border-border bg-background p-5 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6"
+                  className="rounded-2xl border border-border bg-background p-5"
                   data-testid={`league-team-${team.id}`}
                   key={team.id}
                 >
+                  <div className="md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6">
                   <div className="flex min-w-0 items-start gap-4">
                     <div
                       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${icon.themeClass}`}
@@ -243,7 +248,7 @@ export function TeamsPage() {
                         ) : null}
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Open Team Home for owner and lifecycle actions.
+                        Open Team Home for this team&apos;s name, icon, and contest history.
                       </p>
                     </div>
                   </div>
@@ -251,10 +256,7 @@ export function TeamsPage() {
                   <div className="mt-5 space-y-3 md:mt-0">
                     {activeOwners.map((owner) => {
                       const leagueMember = leagueMembersByUserId.get(owner.userId);
-                      // #202 (A8) — the viewer's authority comes from the league context, once,
-                      // not from a `teamRelationship` flag repeated on every squad row.
-                      const canManageLeagueRole = viewer.isCommissioner || viewer.isRootAdmin;
-                      const canRemoveOwner = canManageLeagueRole || team.id === viewer.mySquadId;
+                      const canRemoveOwner = canManageLeague || team.id === viewer.mySquadId;
 
                       return (
                         <div
@@ -281,7 +283,7 @@ export function TeamsPage() {
                           </div>
                           <TeamOwnerActionMenu
                             activeOwnerCount={activeOwners.length}
-                            canManageLeagueRole={canManageLeagueRole}
+                            canManageLeagueRole={canManageLeague}
                             canRemoveOwner={canRemoveOwner}
                             leagueCode={league.leagueCode}
                             leagueId={leagueId}
@@ -295,23 +297,23 @@ export function TeamsPage() {
                       );
                     })}
 
-                    {pendingInvitations.map((invitation) => (
-                      <div
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-border px-4 py-3"
-                        data-testid={`league-team-owner-invitation-${team.id}-${invitation.id}`}
-                        key={invitation.id}
-                      >
-                        <span className="text-sm text-foreground">{invitation.email}</span>
-                        <Chip>
-                          {formatInvitationStatus(invitation.status)} invite
-                        </Chip>
-                      </div>
-                    ))}
-
-                    {!activeOwners.length && !pendingInvitations.length ? (
+                    {!activeOwners.length ? (
                       <p className="text-sm text-muted-foreground">No owners are listed for this team yet.</p>
                     ) : null}
                   </div>
+                  </div>
+
+                  <SquadActions
+                    canInactivate={canManageLeague && leagueIsActive}
+                    canManageOwners={
+                      (canManageLeague || team.id === viewer.mySquadId) && leagueIsActive
+                    }
+                    leagueId={leagueId}
+                    pendingInvitations={pendingInvitations}
+                    squadId={team.id}
+                    squadIsActive={team.isActive !== false}
+                    squadName={team.name}
+                  />
                 </div>
               );
             })

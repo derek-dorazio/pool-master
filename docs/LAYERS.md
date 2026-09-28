@@ -547,6 +547,14 @@ a `LeagueMembership` plus a `SquadMembership`, so every active member has exactl
 and appears on `teams-page.tsx`. Reading the member layer, expect the squad list — not a separate
 roster screen — to be its UI.
 
+**And it carries the roster's write operations (#219).** Not just the per-owner ones it already
+had (`removeSquadOwner`, `changeMemberRole`) but the squad-level ones too — invite a co-owner,
+revoke a pending invite, inactivate the team — through `SquadActions`. They used to live only on
+Team Home, reachable for another team by appending `?teamId=`. Two different permissions apply, and
+they mirror the backend rather than restating it: invite and revoke need `requireSquadManager` (an
+owner of *that* squad, or a commissioner for any), while **inactivating a squad is commissioner or
+root admin only**, because inactivating a squad ends its owners' league memberships.
+
 **The invariant that makes it true, now asserted (#218).** Every ACTIVE `LeagueMembership` has
 exactly one ACTIVE `SquadMembership` in that league, and no ACTIVE squad membership belongs to a
 non-member. `SquadService.removeOwner` used to break it — it ended the squad membership and left the

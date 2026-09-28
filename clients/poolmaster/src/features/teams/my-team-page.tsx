@@ -359,7 +359,7 @@ export function MyTeamPage() {
     onSuccess: (team) => {
       setActiveDialog(null);
       setTeamInactivationNotice(
-        `${team.name} is now inactive. Its active owners were removed from the league, and any user with no other active leagues was also inactivated.`,
+        `${team.name} is now inactive. Its owners were removed from this league. Their accounts and their other leagues are untouched, and inviting them back restores this team.`,
       );
       setReplaceTargetUserId(null);
       setReplaceEmail('');
@@ -515,6 +515,9 @@ export function MyTeamPage() {
     selectedTeam && (selectedTeam.id === viewer.mySquadId || canManageAnyTeam),
   );
   const canDeleteSelectedTeam = Boolean(selectedTeam && isInactiveTeam && viewer.isRootAdmin);
+  // #219 — inactivating a team ends its owners' league memberships (#218), so it is league
+  // administration, not team management. An owner manages their own team; they do not end it.
+  const canInactivateSelectedTeam = Boolean(selectedTeam && canManageAnyTeam);
   const isManagingAnotherTeam = Boolean(
     selectedTeam && myTeam && selectedTeam.id !== myTeam.id && canManageAnyTeam,
   );
@@ -814,7 +817,7 @@ export function MyTeamPage() {
                       label: 'Inactivate team',
                       pending: inactivateTeamMutation.isPending,
                       pendingLabel: 'Inactivating...',
-                      disabled: isInactiveLeague || isBusy || !canManageSelectedTeam,
+                      disabled: isInactiveLeague || isBusy || !canInactivateSelectedTeam,
                       onSelect: () => setActiveDialog('inactivate'),
                       testId: 'my-team-inactivate',
                       tone: 'danger',
@@ -1044,7 +1047,7 @@ export function MyTeamPage() {
         confirmTestId="my-team-confirm-inactivate"
         description={
           selectedTeam
-            ? `${selectedTeam.name} will become inactive. Active owners are removed from the league if they do not have another active team.`
+            ? `${selectedTeam.name} will become inactive and its active owners will be removed from this league. Their accounts stay active, and inviting them back restores this team.`
             : 'This team will become inactive.'
         }
         isPending={inactivateTeamMutation.isPending}
