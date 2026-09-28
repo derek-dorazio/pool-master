@@ -6,7 +6,7 @@
  * mappings. It no longer synthesizes provider state from static mock data.
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { type PrismaClient, Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { Sport , SportEventSyncScope} from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';

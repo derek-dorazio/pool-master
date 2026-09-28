@@ -7,7 +7,7 @@
  */
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import {
   deriveLegacyParticipantStatus,
   DraftStatus,

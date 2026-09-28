@@ -96,6 +96,20 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
 
+      // #162 — a type-only import that is not marked `import type` is emitted as a real
+      // import by the transpiler. Under `isolatedModules` that is how a build ends up with a
+      // runtime dependency on a module it only needed types from, and how a circular import
+      // appears between two modules that only reference each other's types.
+      //
+      // `fixStyle: 'inline-type-imports'` keeps a mixed import in one statement
+      // (`import { a, type B }`) rather than splitting it into two, which is the style already
+      // used across the codebase. `import()` type annotations are forbidden by default and stay
+      // so: there are two, both in files that can say it as a normal import.
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+      ],
+
       // Was 'warn'. Baseline is 0, so promoting it costs nothing and stops an
       // unused symbol from riding in behind --max-warnings 0 being relaxed later.
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
+import { type ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser, logoutUser, refreshToken } from '@/lib/api';
 import { getLogger } from '@/lib/logger';

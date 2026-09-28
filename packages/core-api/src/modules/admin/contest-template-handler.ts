@@ -8,7 +8,7 @@ import { extractRootAdminContext } from './request-admin-context';
 import {
   ContestConfigTemplateNotFoundError,
   ContestConfigTemplateUpdateError,
-  ContestTemplateAdminService,
+  type ContestTemplateAdminService,
 } from './contest-template-service';
 
 export function createContestTemplateAdminHandlers(
