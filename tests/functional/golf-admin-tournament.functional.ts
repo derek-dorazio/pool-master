@@ -25,7 +25,7 @@ import {
   adminUpdateGolfFieldEntries,
   adminUpdateGolfRoundScore,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   createFunctionalEmail,
   disconnectFunctionalPrisma,
@@ -43,13 +43,6 @@ import {
 // calendar), BR-GOLF-ADMIN-AUTHZ (every admin-golf op requires root admin).
 
 const RUN = `z3l-${Date.now()}`;
-
-async function promoteToRootAdmin(userId: string): Promise<void> {
-  await getFunctionalPrisma().user.update({
-    where: { id: userId },
-    data: { isRootAdmin: true },
-  });
-}
 
 async function ensureGolfSportRow(): Promise<void> {
   await getFunctionalPrisma().sport.upsert({
@@ -161,7 +154,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8)
 
     const admin = await buildRegisteredUser({ displayName: 'Golf Admin Pilot' });
     created.userIds.add(admin.userId);
-    await promoteToRootAdmin(admin.userId);
+    await promoteToRootAdmin(admin);
     const c = admin.client;
 
     // --- Tour + season -------------------------------------------------------

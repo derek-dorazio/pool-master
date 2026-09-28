@@ -218,6 +218,51 @@ reactivate, so the account was never actually frozen.
 
 ---
 
+## A10. Root-admin authority is read from the access-token claim
+
+**Settled 2026-09-28 with the repo owner (#213, #195).** Every surface answers "is this caller a
+root admin" the same way: from the `isRootAdmin` claim on the access token, set when the token was
+issued. No route re-reads the `User` row to decide it.
+
+### The inconsistency this replaced
+
+`/api/v1/users/*` (11 routes) already trusted the claim, because #202 built them that way.
+`/api/v1/admin/*` — leagues, providers, golf, config, audit — ran `prisma.user.findUnique` on every
+request inside `plugins/admin-auth.ts`. So a role change took effect immediately on one surface and
+on the next token for the other, and nobody had decided that; it arrived by attrition.
+
+It surfaced as a test failure rather than a review finding. `root-admin.functional.ts` promoted a
+user by writing `isRootAdmin: true` straight to the database and then called a route with the
+client it already held. Against `/admin/*` that worked, because the row was re-read. Against the
+user routes it got a 403, because the token in hand still said `isRootAdmin: false`.
+
+### Why the claim is the safe side of the trade
+
+The obvious objection to a claim is that a demotion does not take effect until the token expires.
+That objection does not apply here, because **`setUserRootAdmin` already revokes the subject's
+sessions on demotion**, deliberately. Removed authority cannot be used until they log in again,
+and the next login mints a token without the claim. The window is closed for the case that
+matters.
+
+What genuinely does get slower is **promotion**: a newly promoted root admin waits for their next
+token, at most the access token's lifetime. Nobody is harmed by gaining authority a few minutes
+late.
+
+### What follows from it
+
+- A test that promotes a user in the database **must re-issue their session** before calling any
+  route as a root admin. `promoteToRootAdmin` in `tests/functional/builders.ts` does both; three
+  suites previously promoted without the re-login and passed only because `/admin/*` re-read the
+  row.
+- `RootAdminContext` carries `id` and `email`, both signed claims. It used to carry a `name` built
+  from the row, which had no consumers.
+- `ROOT_ADMIN_USER_NOT_FOUND` is gone with the lookup. A signed token for a deleted user now reads
+  as a plain 403, the same answer for the caller with one fewer code to distinguish.
+  `ROOT_ADMIN_SESSION_REQUIRED` and `ROOT_ADMIN_SESSION_INVALID` are unchanged, which matters
+  because `clients/poolmaster/src/lib/api.ts` treats both as refresh-triggering.
+
+---
+
 ## Slice 1 — Identity and membership
 
 Cluster: `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`,

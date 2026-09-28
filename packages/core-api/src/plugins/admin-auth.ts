@@ -6,6 +6,15 @@
  * attaching root-admin context to the request.
  *
  * This is registered as a Fastify plugin so it can be scoped to admin routes.
+ *
+ * **Root-admin authority is read from the access-token claim (#213/#195, access rule A10).**
+ * This used to re-read the `User` row on every admin request, while `/api/v1/users/*` trusted
+ * the claim — two answers to one question, which surfaced as a functional test that promoted a
+ * user in the database and then got a 403 from one surface and a 200 from the other. The claim
+ * wins, and the reason it is safe is that `setUserRootAdmin` already revokes the subject's
+ * sessions on demotion: removed authority cannot be used until they log in again, whichever
+ * surface they call. Only promotion is slower, by at most the access token's lifetime, and
+ * nobody is harmed by gaining authority a few minutes late.
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
@@ -14,7 +23,6 @@ import jwt from 'jsonwebtoken';
 import { sendError } from '../core/error-handler';
 import { readJwtSecret } from '../core/config';
 import { readAccessCookie } from '../core/session-cookies';
-import { formatUserFullName } from '../core/user-name';
 
 // ---------------------------------------------------------------------------
 // Admin context interface
@@ -24,7 +32,6 @@ export interface RootAdminContext {
   rootAdminUser: {
     id: string;
     email: string;
-    name: string;
     isRootAdmin: true;
   };
 }
@@ -66,13 +73,21 @@ function adminAuthPlugin(fastify: FastifyInstance): void {
       );
     }
 
-    let userId: string;
+    let claims: { sub: string; email: string; isRootAdmin: boolean };
     try {
-      const decoded = jwt.verify(token, jwtSecret) as { sub?: string };
-      userId = decoded.sub ?? '';
-      if (!userId) {
+      const decoded = jwt.verify(token, jwtSecret) as {
+        sub?: string;
+        email?: string;
+        isRootAdmin?: boolean;
+      };
+      if (!decoded.sub) {
         throw new Error('Missing user ID in token payload');
       }
+      claims = {
+        sub: decoded.sub,
+        email: decoded.email ?? '',
+        isRootAdmin: decoded.isRootAdmin === true,
+      };
     } catch {
       return sendError(
         reply,
@@ -82,34 +97,18 @@ function adminAuthPlugin(fastify: FastifyInstance): void {
       );
     }
 
-    // `prisma` is declared on FastifyInstance by core/prisma-context.ts's module
-    // augmentation, so this needs no assertion. It previously went through a double
-    // assertion via `unknown`, which predated that augmentation existing.
-    const prisma = fastify.prisma;
-    const rootAdminUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isRootAdmin: true,
-      },
-    });
-
-    if (!rootAdminUser) {
-      return sendError(reply, 401, 'ROOT_ADMIN_USER_NOT_FOUND', 'Root-admin user not found');
-    }
-
-    if (!rootAdminUser.isRootAdmin) {
+    // No user row is read. `auth-service` mints `{ sub, email, isRootAdmin, sid }`, so both
+    // fields the context carries are signed claims. The `ROOT_ADMIN_USER_NOT_FOUND` 401 went
+    // with the lookup: a signed token for a deleted user now reads as a plain 403, which is
+    // the same answer for the caller and one fewer code to distinguish.
+    if (!claims.isRootAdmin) {
       return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access required');
     }
 
     request.rootAdminContext = {
       rootAdminUser: {
-        id: rootAdminUser.id,
-        email: rootAdminUser.email,
-        name: formatUserFullName(rootAdminUser.firstName, rootAdminUser.lastName),
+        id: claims.sub,
+        email: claims.email,
         isRootAdmin: true,
       },
     };
