@@ -154,11 +154,15 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
         createdAt: '2026-04-15T00:00:00.000Z',
       }),
     ]);
-    // #202 (A8) — creating a league does NOT seed its league-context cache. That cache holds the
-    // league together with the viewer's edges in it, and `createLeague` returns only the league;
-    // inventing the membership here is the mistake this pass removes. The league page reads its
-    // own context on arrival.
-    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toBeUndefined();
+    // #215 — creating a league now seeds its league-context cache, at both of the cache's
+    // addresses. The 201 carries the viewer's membership because creating a league creates it,
+    // so the context is read off the response rather than invented here, and the new league's
+    // page no longer issues its own `getLeagueByCode` on arrival.
+    const expectedContext = createLeagueData(createdLeague);
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toEqual(expectedContext);
+    expect(queryClient.getQueryData(QueryKeys.leagues.contextById('league-1'))).toEqual(
+      expectedContext,
+    );
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.succeeded',

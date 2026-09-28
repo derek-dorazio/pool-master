@@ -400,7 +400,9 @@ export interface paths {
         put?: never;
         /**
          * Create a new league
-         * @description Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.
+         * @description Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.
+         *
+         *     The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.
          */
         post: operations["createLeague"];
         delete?: never;
@@ -9256,13 +9258,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Single-league response. */
+            /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LeagueResponse"];
+                    "application/json": components["schemas"]["LeagueContextResponse"];
                 };
             };
             /** @description Standard API error envelope. */

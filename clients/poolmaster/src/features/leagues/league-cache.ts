@@ -60,6 +60,22 @@ export function removeLeague(
   };
 }
 
+/**
+ * Write a league context to BOTH of its addresses (#215).
+ *
+ * `QueryKeys.leagues.detail(leagueCode)` and `QueryKeys.leagues.contextById(leagueId)` hold the
+ * same `LeagueContextResponse`, so anything that obtains one writes both or they drift. Two
+ * callers now: the context read itself, and league creation, whose 201 carries the context
+ * because creating a league also creates the creator's membership in it.
+ */
+export function seedLeagueContext(
+  queryClient: QueryClient,
+  context: LeagueContextResponse,
+) {
+  queryClient.setQueryData(QueryKeys.leagues.detail(context.league.leagueCode), context);
+  queryClient.setQueryData(QueryKeys.leagues.contextById(context.league.id), context);
+}
+
 export function syncLeagueCaches(
   queryClient: QueryClient,
   league: LeagueDto,

@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 import { rememberRecentLeagueCode } from './league-routing';
+import { seedLeagueContext } from './league-cache';
 
 /**
  * The viewer's relationship to one league (#202, access rule A8).
@@ -133,8 +134,7 @@ function useLeagueContextQuery(options: {
     if (!context) {
       return;
     }
-    queryClient.setQueryData(QueryKeys.leagues.detail(context.league.leagueCode), context);
-    queryClient.setQueryData(QueryKeys.leagues.contextById(context.league.id), context);
+    seedLeagueContext(queryClient, context);
   }, [context, queryClient]);
 
   // Looking at a league IS selecting it, so this is where the recent-league cookie is

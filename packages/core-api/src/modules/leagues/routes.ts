@@ -130,11 +130,11 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Create a new league',
       description:
-        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the initial league detail payload.',
+        'Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator\'s own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator\'s COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.',
       operationId: 'createLeague',
       body: schemaRef('CreateLeagueRequest'),
       response: {
-        201: schemaRef('LeagueResponse'),
+        201: schemaRef('LeagueContextResponse'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
