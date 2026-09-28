@@ -15,8 +15,9 @@ The workflow runs on:
 - `pull_request` targeting `main`
 
 A concurrency group cancels superseded runs on the same ref. The deploy
-stages (`publish-images`, `migrate-qa`, `poolmaster-browser-e2e`) are gated to
-push events on `main` only — they do not run for pull requests.
+stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
+`poolmaster-browser-e2e`, `deploy-health-issue`) are gated to push events on
+`main` only — they do not run for pull requests.
 
 ## Repository setup — branch protection
 
@@ -138,14 +139,18 @@ flowchart TD
   SC --> CS[coverage-summary]
   PU --> CS
 
-  SC --> PI[publish-images]
+  SC --> PI[deploy-publish-images]
   PU --> PI
   SB --> PI
   MB --> PI
   PB --> PI
 
-  PI --> MQ[migrate-qa]
-  MQ --> E2E[poolmaster-browser-e2e]
+  PI --> MQ[deploy-migrate-qa]
+  MQ --> DQ[deploy-qa]
+  DQ --> E2E[poolmaster-browser-e2e]
+  PI --> DH[deploy-health-issue]
+  MQ --> DH
+  DQ --> DH
 
   classDef gate fill:#fff4e6,stroke:#d97706,stroke-width:2px
   classDef test fill:#e6f7ff,stroke:#0369a1
@@ -154,16 +159,20 @@ flowchart TD
 
   class LT gate
   class SC,PU,SB,MB,PB test
-  class PI,MQ,E2E deploy
-  class CS report
+  class PI,MQ,DQ,E2E deploy
+  class CS,DH report
 ```
 
 The `lint-typecheck` job is the gate. Every downstream job depends on it
 (`needs: lint-typecheck`). If lint-typecheck fails, nothing else runs.
 
-The deploy track (`publish-images` → `migrate-qa` → `poolmaster-browser-e2e`)
-is push-to-main-only and additionally requires all the test and build jobs to
-pass.
+The deploy track (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`
+→ `poolmaster-browser-e2e`) is push-to-main-only and additionally requires all
+the test and build jobs to pass. Migrations gate the rollout: nothing reaches
+QA until `deploy-migrate-qa` succeeds, so a failed migration leaves the
+previous release running rather than new code on an old schema.
+`deploy-health-issue` keeps one open GitHub issue ("QA deploy is failing on
+main") while any deploy job fails, and closes it on the next green deploy.
 
 ## The lint-typecheck job
 
@@ -388,11 +397,19 @@ hardening epic.
 - **`mock-contest-feed-provider-build`** — mock provider Docker build
   verification.
 - **`poolmaster-build`** — webapp build verification.
-- **`publish-images`** (push to `main` only) — builds and pushes Docker
-  images to ECR, registers ECS task definitions, syncs the webapp to S3 and
-  invalidates CloudFront.
-- **`migrate-qa`** (push to `main` only) — runs the migration ECS task,
-  waits for ECS service stabilization, and dumps diagnostics on failure.
+- **`deploy-publish-images`** (push to `main` only) — builds and pushes
+  Docker images to ECR and registers ECS task definitions. Deploys nothing.
+- **`deploy-migrate-qa`** (push to `main` only) — runs the migration ECS task
+  and prints its CloudWatch logs, pass or fail, via
+  `scripts/ecs-task-wait-and-print-logs.mjs`.
+- **`deploy-qa`** (push to `main` only) — rolls the new task definitions out
+  to the QA services, waits for stabilization (dumping diagnostics on
+  failure), then syncs the webapp to S3 and invalidates CloudFront.
+- **`deploy-health-issue`** (push to `main` only) — opens, comments on, or
+  closes the "QA deploy is failing on main" issue from the deploy jobs'
+  results.
+- The `all-contract-gates` job also runs `npm run test:scripts`: the
+  `node --test` suites for the deploy and migration scripts.
 
 ## Test suites
 
@@ -480,7 +497,7 @@ release.
 - **Local commands:**
   - `npm run test:poolmaster:browser-e2e` — run the suite
   - `npm run test:poolmaster:browser-e2e:list` — list tests without running
-- **CI job:** `poolmaster-browser-e2e` (push-to-main only; not run on PR builds). Triggered after `migrate-qa` deploy succeeds.
+- **CI job:** `poolmaster-browser-e2e` (push-to-main only; not run on PR builds). Triggered after `deploy-qa` succeeds.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 

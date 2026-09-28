@@ -107,11 +107,12 @@ One job:
 1. Run the existing `poolmaster-qa-migrate` task definition (latest revision,
    so it carries the image with the squashed migrations) with a command
    override running `node scripts/reset-qa-database.mjs --apply`.
-2. Wait for the task and print its CloudWatch logs on failure, using a shared,
-   tested helper (e.g. `scripts/ecs-task-wait-and-print-logs.mjs`) that the
-   existing `deploy-migrate-qa` job also uses — resolving the log group and
-   stream prefix from the task definition, retrying the stream lookup with
-   backoff, with `node --test` unit tests for its pure helpers.
+2. Wait for the task and print its CloudWatch logs with
+   `scripts/ecs-task-wait-and-print-logs.mjs`, the same helper
+   `deploy-migrate-qa` uses (added for #191).
+3. Roll the new release out: because migrations gate the rollout, the squash
+   push's `deploy-qa` job was skipped when its migration failed. Re-run that
+   CI run's failed jobs (or push again) once the reset succeeds.
 
 `packages/core-api/scripts/reset-qa-database.mjs` is a thin wrapper so the
 override is one command and the destructive step is guarded:
@@ -129,15 +130,17 @@ the repo owner as required reviewer.
 
 ### Normal QA migrations — `packages/core-api/scripts/run-migrations.mjs`
 
-After a squash merges and deploys, the automatic `deploy-migrate-qa` step
-will fail until the reset runs, because QA still records the old migration
+After a squash merges, the automatic `deploy-migrate-qa` step will fail —
+and, since migrations gate the rollout, `deploy-qa` will not deploy — until
+the reset runs, because QA still records the old migration
 names. Make that failure self-explanatory: when `_prisma_migrations` lists
 migrations that don't exist in the image, fail with "QA's migration history
 doesn't match this build — run the Reset QA database workflow" rather than
 Prisma's raw error.
 
-Also remove the one-off repair logic for `20260411173000_add_league_code` and
-`20260506211309_substrate_redesign_phase4_foundation`, which references
+Also remove the one-off repair logic for `20260411173000_add_league_code`
+and the `SCRIPTED_REPAIRS` entries (substrate foundation, sport-league
+season), which reference
 migrations that no longer exist after the first squash — leaving a plain
 `prisma migrate deploy` plus the check above.
 
@@ -152,20 +155,22 @@ After the first QA reset succeeds, delete
 
 1. On a branch: `npm run db:squash`, run the gate suite, open a PR, merge.
 2. The normal `main` pipeline publishes the new image; `deploy-migrate-qa`
-   fails with the "needs reset" message (expected).
+   fails with the "needs reset" message (expected), so `deploy-qa` does not
+   roll out and QA keeps running the previous release.
 3. Dispatch **Reset QA database**, approve it; QA is wiped, migrated, and has
    its fixture users back.
+4. Re-run the squash push's failed CI jobs so `deploy-qa` rolls the new
+   release out.
 
 ## Dependency: #191
 
-`deploy-migrate-qa` currently fails on every `main` push and CI can't retrieve
-the task's logs (#191). The reset runs through the same task definition, so
-a reset failure would be just as blind. At minimum, the log retrieval part of
-#191 (the shared wait-and-print-logs helper above) must land before the first
-reset. Note `ci.yml`'s `deploy-migrate-qa` reads
-`needs.publish-images.outputs...`, but the job is named
-`deploy-publish-images`, so that value is always empty and the step falls
-back to the latest task definition.
+#191 made `deploy-migrate-qa` fail on every `main` push since 2026-09-02 with
+no retrievable logs. Its fix supplies what this plan builds on:
+`scripts/ecs-task-wait-and-print-logs.mjs` (the shared wait-and-print-logs
+helper the reset workflow reuses), a pipeline where migrations gate the
+rollout (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`), and
+`run-migrations.mjs` picking scripted repairs through `selectScriptedRepair`.
+Confirm #191 is closed before the first reset.
 
 ## When this stops being free
 

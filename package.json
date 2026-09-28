@@ -37,6 +37,7 @@
     "typecheck": "turbo run typecheck --filter=@poolmaster/shared --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster --force",
     "test": "jest --config tests/jest.config.js",
     "test:unit": "jest --config tests/jest.config.js tests/unit",
+    "test:scripts": "node --test scripts/*.test.mjs packages/core-api/scripts/*.test.mjs",
     "test:integration": "jest --config tests/integration/jest.config.js --forceExit",
     "test:service:unit": "npm run test:unit",
     "test:service:integration": "npm run test:integration",
