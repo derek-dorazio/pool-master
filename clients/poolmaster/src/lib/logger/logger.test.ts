@@ -24,7 +24,6 @@ describe('logger', () => {
       getContext: () => ({
         webappVersion: '0.1.0',
         route: '/tests',
-        userId: 'user-1',
       }),
     });
 
@@ -40,7 +39,6 @@ describe('logger', () => {
       'should write',
       expect.objectContaining({
         route: '/tests',
-        userId: 'user-1',
       }),
     );
   });

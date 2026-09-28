@@ -1,9 +1,4 @@
-import {
-  AUTH_ME_QUERY_KEY,
-  type AuthSessionData,
-} from '@/features/auth/auth-session-cache';
 import { isLocalRuntimeMode, poolMasterConfig } from '@/lib/config';
-import { queryClient } from '@/lib/query-client';
 import { getEmbeddedVersionInfo } from '@/lib/version-info';
 import { consoleSink } from './console-sink';
 import { createNetworkSink } from './network-sink';
@@ -17,12 +12,17 @@ function getEmbeddedWebappVersion() {
   }
 }
 
+/**
+ * Resolved on every log call, so it holds only what is cheap and always true.
+ *
+ * It used to read the authenticated user out of the React Query cache to stamp `userId`. That
+ * field was never transmitted — #206 moved user identity to the JWT the ingest route reads — so
+ * the read existed to populate something only the console sink displayed, and it coupled the
+ * logger to the auth feature and the query client.
+ */
 function getLoggerContext() {
-  const user = queryClient.getQueryData<AuthSessionData>(AUTH_ME_QUERY_KEY);
-
   return {
     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    userId: user?.id ?? null,
     webappVersion: getEmbeddedWebappVersion(),
   };
 }
