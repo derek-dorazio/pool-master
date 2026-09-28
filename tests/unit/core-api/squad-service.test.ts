@@ -630,6 +630,63 @@ describe('SquadService', () => {
     });
   });
 
+  /**
+   * #219 — inactivating a team is commissioner-only.
+   *
+   * It used to be `requireSquadManager`, which admits the squad's own owners. #218 made that
+   * consequential: inactivating a squad ends its owners' league memberships, so a sole owner could
+   * remove themselves from the league via a button on their own team page.
+   */
+  it('refuses to let a plain team owner inactivate their own team', async () => {
+    const squadRepo = createSquadRepo({
+      findById: jest.fn().mockResolvedValue({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: 'Owner Team',
+        iconKey: 'CAPTAIN_SMILE_FIELD',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      update: jest.fn(),
+    });
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findBySquadAndUser: jest.fn().mockResolvedValue({
+        id: 'squad-membership-1',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      update: jest.fn(),
+    });
+    // An active owner of this squad, and an ordinary MEMBER of the league.
+    const leagueMembershipRepo = createLeagueMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue({ ...baseMembership, role: 'MEMBER' }),
+      update: jest.fn(),
+    });
+    const service = new SquadService(
+      squadRepo,
+      squadMembershipRepo,
+      leagueMembershipRepo,
+      userRepo,
+      prisma,
+    );
+
+    await expect(service.inactivateSquad('league-1', 'squad-1', 'user-1')).rejects.toMatchObject({
+      code: 'LEAGUE_PERMISSION_DENIED',
+    });
+
+    // Nothing written: not the squad, not the squad membership, and not the league membership.
+    expect(squadRepo.update).not.toHaveBeenCalled();
+    expect(squadMembershipRepo.update).not.toHaveBeenCalled();
+    expect(leagueMembershipRepo.update).not.toHaveBeenCalled();
+  });
+
   // #218 — was "…and inactivates users with no other leagues". Inactivating a squad ends its
   // owners' league memberships, but no longer their accounts.
   it('inactivates a team and removes its active owners from the league, leaving their accounts active', async () => {

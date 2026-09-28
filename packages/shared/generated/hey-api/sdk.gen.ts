@@ -568,7 +568,9 @@ export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Inactivate a team
  *
- * Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.
+ * Inactivates the target team, preserves its history, and removes its active owners from the league. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).
+ *
+ * **League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners' league memberships, so it is league administration rather than team management.
  */
 export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<InactivateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<InactivateLeagueSquadResponses, InactivateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

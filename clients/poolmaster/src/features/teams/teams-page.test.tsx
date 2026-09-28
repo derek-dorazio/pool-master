@@ -8,14 +8,17 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { TeamsPage } from './teams-page';
 
 const {
+  createSquadOwnerInvitationMock,
   getCurrentUserMock,
   getLeagueByCodeMock,
+  inactivateLeagueSquadMock,
   listLeagueMembersMock,
   listLeagueSquadsMock,
   listSquadOwnerInvitationsMock,
   logoutUserMock,
   mockLogger,
   removeSquadOwnerMock,
+  revokeSquadOwnerInvitationMock,
   changeMemberRoleMock,
   refreshTokenMock,
 } = vi.hoisted(() => {
@@ -31,14 +34,17 @@ const {
   logger.child.mockImplementation(() => logger);
 
   return {
+    createSquadOwnerInvitationMock: vi.fn(),
     getCurrentUserMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
+    inactivateLeagueSquadMock: vi.fn(),
     listLeagueMembersMock: vi.fn(),
     listLeagueSquadsMock: vi.fn(),
     listSquadOwnerInvitationsMock: vi.fn(),
     logoutUserMock: vi.fn(),
     mockLogger: logger,
     removeSquadOwnerMock: vi.fn(),
+    revokeSquadOwnerInvitationMock: vi.fn(),
     changeMemberRoleMock: vi.fn(),
     refreshTokenMock: vi.fn(),
   };
@@ -51,13 +57,16 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 bindApiMocks({
+  createSquadOwnerInvitation: createSquadOwnerInvitationMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  inactivateLeagueSquad: inactivateLeagueSquadMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
   listSquadOwnerInvitations: listSquadOwnerInvitationsMock,
   logoutUser: logoutUserMock,
   removeSquadOwner: removeSquadOwnerMock,
+  revokeSquadOwnerInvitation: revokeSquadOwnerInvitationMock,
   changeMemberRole: changeMemberRoleMock,
   refreshToken: refreshTokenMock,
 });
@@ -171,6 +180,26 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function buildPendingInvitation(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'invite-1',
+    leagueId: 'league-1',
+    squadId: 'team-1',
+    email: 'friend@example.com',
+    inviteCode: 'TEAM123',
+    status: 'PENDING',
+    invitedBy: 'user-1',
+    createdAt: '2026-04-16T00:00:00.000Z',
+    updatedAt: '2026-04-16T00:00:00.000Z',
+    team: {
+      id: 'team-1',
+      name: 'Beer Bellies',
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+    },
+    ...overrides,
+  };
+}
+
 function primeAuthenticatedLeague(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER') {
   getCurrentUserMock.mockResolvedValue({
     data: {
@@ -211,6 +240,9 @@ function primeAuthenticatedLeague(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONE
 
 describe('TeamsPage', () => {
   afterEach(() => {
+    createSquadOwnerInvitationMock.mockReset();
+    inactivateLeagueSquadMock.mockReset();
+    revokeSquadOwnerInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
     listLeagueMembersMock.mockReset();
@@ -256,7 +288,7 @@ describe('TeamsPage', () => {
     expect(await screen.findByTestId('teams-page-teams-empty')).toHaveTextContent('No teams yet');
   });
 
-  it('renders the read-only teams and owners directory with team-home and owner links', async () => {
+  it('renders the roster with team-home links, owner links, and the squad actions', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -333,9 +365,14 @@ describe('TeamsPage', () => {
       '/users/user-1',
     );
     expect(screen.getByTestId('teams-owner-actions-trigger-team-1-user-1')).toBeInTheDocument();
-    expect(screen.getByTestId('league-team-owner-invitation-team-1-invite-1')).toBeInTheDocument();
+    expect(screen.getByTestId('squad-actions-pending-team-1-invite-1')).toHaveTextContent(
+      'friend@example.com',
+    );
     expect(screen.queryByRole('link', { name: /manage team/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+    // #219 — the actions that used to need a hop to Team Home are here now.
+    expect(screen.getByTestId('squad-actions-revoke-team-1-invite-1')).toBeInTheDocument();
+    expect(screen.getByTestId('squad-actions-open-invite-team-1')).toBeInTheDocument();
+    expect(screen.getByTestId('squad-actions-open-inactivate-team-1')).toBeInTheDocument();
   });
 
   it('lets a commissioner promote an owner to commissioner from the teams directory', async () => {
@@ -447,6 +484,125 @@ describe('TeamsPage', () => {
         body: { role: 'COMMISSIONER' },
       }),
     );
+  });
+
+  // #219 — the three squad-level actions that used to require opening Team Home, with the
+  // `?teamId=` hop for anybody else's team. Permissions come from the league context, once (A8).
+  it('lets a commissioner invite a co-owner from the roster', async () => {
+    primeAuthenticatedLeague('COMMISSIONER');
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [buildTeamSummary()] } });
+    createSquadOwnerInvitationMock.mockResolvedValue({
+      data: { invitation: { ...buildPendingInvitation({ id: 'invite-9' }) } },
+    });
+
+    renderTeamsPage();
+
+    fireEvent.click(await screen.findByTestId('squad-actions-open-invite-team-1'));
+    fireEvent.change(screen.getByTestId('squad-actions-invite-email-team-1'), {
+      target: { value: 'friend@example.com' },
+    });
+    fireEvent.click(screen.getByTestId('squad-actions-send-invite-team-1'));
+
+    await waitFor(() =>
+      expect(createSquadOwnerInvitationMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
+        body: { email: 'friend@example.com' },
+      }),
+    );
+  });
+
+  it('lets a commissioner revoke a pending owner invitation from the roster', async () => {
+    primeAuthenticatedLeague('COMMISSIONER');
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [buildTeamSummary()] } });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: { invitations: [buildPendingInvitation()] },
+    });
+    revokeSquadOwnerInvitationMock.mockResolvedValue({
+      data: { invitation: buildPendingInvitation({ status: 'REVOKED' }) },
+    });
+
+    renderTeamsPage();
+
+    fireEvent.click(await screen.findByTestId('squad-actions-revoke-team-1-invite-1'));
+
+    await waitFor(() =>
+      expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', invitationId: 'invite-1' },
+      }),
+    );
+  });
+
+  it('lets a commissioner inactivate a team from the roster', async () => {
+    primeAuthenticatedLeague('COMMISSIONER');
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [buildTeamSummary()] } });
+    inactivateLeagueSquadMock.mockResolvedValue({
+      data: { squad: buildTeamSummary({ isActive: false }) },
+    });
+
+    renderTeamsPage();
+
+    fireEvent.click(await screen.findByTestId('squad-actions-open-inactivate-team-1'));
+    fireEvent.click(screen.getByTestId('squad-actions-confirm-inactivate-team-1'));
+
+    await waitFor(() =>
+      expect(inactivateLeagueSquadMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
+      }),
+    );
+  });
+
+  // #219 option B — co-owner management is the owner's business; ending a team removes its owners
+  // from the league (#218), so it is the commissioner's. And an owner gets neither on a team that
+  // is not theirs.
+  it('gives a plain owner the invite action on their own team and nothing on anybody else', async () => {
+    primeAuthenticatedLeague('MEMBER');
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          buildTeamSummary(),
+          buildTeamSummary({
+            id: 'team-2',
+            name: 'Other Team',
+            createdBy: 'user-2',
+            members: [
+              {
+                id: 'membership-2',
+                squadId: 'team-2',
+                leagueId: 'league-1',
+                userId: 'user-2',
+                user: { ...VIEWER_USER, id: 'user-2', firstName: 'Fran', lastName: 'Lane' },
+                status: 'ACTIVE',
+                joinedAt: '2026-04-16T00:00:00.000Z',
+                createdAt: '2026-04-16T00:00:00.000Z',
+                updatedAt: '2026-04-16T00:00:00.000Z',
+              },
+            ],
+          }),
+        ],
+      },
+    });
+
+    renderTeamsPage();
+
+    expect(await screen.findByTestId('squad-actions-open-invite-team-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('squad-actions-open-inactivate-team-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('squad-actions-team-2')).not.toBeInTheDocument();
+  });
+
+  it('hides the squad actions while the league is inactive', async () => {
+    primeAuthenticatedLeague('COMMISSIONER');
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        ...leagueContext('COMMISSIONER'),
+        league: { ...buildLeague(), isActive: false },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [buildTeamSummary()] } });
+
+    renderTeamsPage();
+
+    await screen.findByTestId('league-team-team-1');
+    expect(screen.queryByTestId('squad-actions-team-1')).not.toBeInTheDocument();
   });
 
   it('shows the load failure state when the league detail cannot be loaded', async () => {

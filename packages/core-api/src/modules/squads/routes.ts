@@ -123,12 +123,13 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Inactivate a team',
       description:
-        'Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.',
+        'Inactivates the target team, preserves its history, and removes its active owners from the league. It does NOT touch their user accounts — they can still sign in, and a commissioner can invite them back, which restores their original team (#218).\n\n**League commissioners and root admins only (#219).** Team owners may invite and remove co-owners on their own team, but ending a team also ends its owners\' league memberships, so it is league administration rather than team management.',
       operationId: 'inactivateLeagueSquad',
       response: {
         200: schemaRef('SquadResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
