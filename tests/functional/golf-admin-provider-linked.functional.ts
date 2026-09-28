@@ -17,7 +17,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { buildRegisteredUser } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -79,13 +79,6 @@ const created = {
   contestIds: new Set<string>(),
   userIds: new Set<string>(),
 };
-
-async function promoteToRootAdmin(userId: string): Promise<void> {
-  await getFunctionalPrisma().user.update({
-    where: { id: userId },
-    data: { isRootAdmin: true },
-  });
-}
 
 async function ensureGolfSportRow(): Promise<string> {
   const sport = await getFunctionalPrisma().sport.upsert({
@@ -247,7 +240,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     const adminCtx = await buildRegisteredUser({ displayName: 'Golf Provider Admin' });
     created.userIds.add(adminCtx.userId);
-    await promoteToRootAdmin(adminCtx.userId);
+    await promoteToRootAdmin(adminCtx);
     const admin: Client = adminCtx.client;
 
     // --- Tour + season -------------------------------------------------------

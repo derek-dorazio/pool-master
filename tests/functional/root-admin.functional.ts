@@ -24,14 +24,13 @@ import {
   loginUser,
   registerUser,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import {
   cleanupFunctionalData,
   createFunctionalEmail,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
-  createAuthenticatedClient,
   getSdkClient,
 } from './setup';
 
@@ -55,24 +54,6 @@ afterAll(async () => {
  *
  * The context is mutated in place so the existing call sites keep using `user.client`.
  */
-async function promoteToRootAdmin(user: { userId: string; username: string; password: string; client: unknown; token: string }): Promise<void> {
-  await getFunctionalPrisma().user.update({
-    where: { id: user.userId },
-    data: { isRootAdmin: true },
-  });
-
-  const login = await loginUser({
-    client: getSdkClient(),
-    body: { identifier: user.username, password: user.password },
-  });
-  const token = login.data?.tokens.accessToken;
-  if (!token) {
-    throw new Error(`Could not re-issue a session after promoting ${user.userId}`);
-  }
-  user.token = token;
-  user.client = createAuthenticatedClient(token);
-}
-
 describe('SDK Functional: Root Admin', () => {
   it('rejects non-root-admin users from root-admin SDK flows', async () => {
     const user = await buildRegisteredUser({

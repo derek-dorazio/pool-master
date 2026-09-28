@@ -7,7 +7,7 @@
  * Persisted via Prisma to the admin_audit_log table.
  */
 
-import { Prisma, type PrismaClient } from '@prisma/client';
+import { type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 
 /**

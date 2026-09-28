@@ -1,7 +1,12 @@
 import { createLeague, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { createAuthenticatedClient, createFunctionalEmail, getSdkClient } from './setup';
+import {
+  createAuthenticatedClient,
+  createFunctionalEmail,
+  getFunctionalPrisma,
+  getSdkClient,
+} from './setup';
 
 function describeSdkFailure(result: {
   response?: Response | undefined;
@@ -115,6 +120,38 @@ export async function buildRegisteredUser(overrides?: {
     token,
     userId: registration.data.user.id,
   };
+}
+
+/**
+ * Promotes a user to root admin **and re-issues their session** (#213).
+ *
+ * Root-admin authority is read from the access-token claim on every surface now (access rule
+ * A10), so writing `isRootAdmin: true` straight to the database does not affect a token already
+ * in hand. Four suites had their own version of this; three of them promoted without the
+ * re-login and only passed because `/admin/*` still re-read the user row. One rule, one place.
+ *
+ * Mutates the context in place, so callers keep using the same object.
+ */
+export async function promoteToRootAdmin(user: RegisteredUserContext): Promise<void> {
+  await getFunctionalPrisma().user.update({
+    where: { id: user.userId },
+    data: { isRootAdmin: true },
+  });
+
+  const login = await loginUser({
+    client: getSdkClient(),
+    body: { identifier: user.username, password: user.password },
+  });
+
+  const token = login.data?.tokens.accessToken;
+  if (!token) {
+    throw new Error(
+      `Builder: could not re-issue a session after promoting ${user.userId} (${describeSdkFailure(login)})`,
+    );
+  }
+
+  user.token = token;
+  user.client = createAuthenticatedClient(token);
 }
 
 export async function buildLeagueWithCommissioner(overrides?: {

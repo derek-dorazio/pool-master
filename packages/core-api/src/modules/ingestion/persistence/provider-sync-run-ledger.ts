@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionFeedType, SportSyncRequest, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';

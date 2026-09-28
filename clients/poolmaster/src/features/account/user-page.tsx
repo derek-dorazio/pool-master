@@ -5,7 +5,7 @@ import {
   useForm,
   useWatch,
 } from 'react-hook-form';
-import { z } from 'zod';
+import { type z } from 'zod';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {

@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ClientLogBatch } from '@poolmaster/shared/dto';
-import { ClientLogService } from './service';
+import { type ClientLogService } from './service';
 
 export function createClientLogHandlers(service: ClientLogService) {
   return {

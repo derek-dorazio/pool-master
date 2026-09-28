@@ -66,14 +66,30 @@ const PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS = [
   /^POST \/api\/v1\/client-logs\/?$/,
 ];
 
-function isPublicRoute(method: string, url: string): boolean {
+/**
+ * `METHOD /path`, with a trailing slash normalised away (#212).
+ *
+ * Fastify's `prefixTrailingSlash: 'both'` default serves a route registered at a prefix root
+ * under two spellings — `/api/v1/client-logs` and `/api/v1/client-logs/` — and the generated
+ * OpenAPI spec documents the second, so the SDK calls it. Matching the literal spelling exempted
+ * only one of them, which meant the **documented** path of a deliberately public route answered
+ * 401 to the unauthenticated callers it exists for.
+ *
+ * Normalising here fixes the class rather than the instance. The `/version` checks below used to
+ * spell both forms out by hand, which is the same bug caught once and patched narrowly.
+ */
+function routeSignature(method: string, url: string): string {
   const path = url.split('?')[0] ?? url;
-  const signature = `${method.toUpperCase()} ${path}`;
+  const normalized = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+  return `${method.toUpperCase()} ${normalized}`;
+}
+
+function isPublicRoute(method: string, url: string): boolean {
+  const signature = routeSignature(method, url);
+  const path = signature.slice(signature.indexOf(' ') + 1);
   return path.startsWith('/health')
     || path === '/version'
-    || path === '/version/'
     || path === '/api/v1/version'
-    || path === '/api/v1/version/'
     || PUBLIC_ROUTES.has(signature)
     || PUBLIC_ROUTE_PATTERNS.some((pattern) => pattern.test(signature));
 }
@@ -118,7 +134,7 @@ function authGuardPlugin(fastify: FastifyInstance): void {
   }
 
   fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
-    const signature = `${request.method.toUpperCase()} ${request.url.split('?')[0] ?? request.url}`;
+    const signature = routeSignature(request.method, request.url);
 
     if (isPublicRoute(request.method, request.url)) {
       if (PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS.some((pattern) => pattern.test(signature))) {

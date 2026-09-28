@@ -1,7 +1,26 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { ClientLogBatch, ClientLogLevel } from '@poolmaster/shared/dto';
 
-const DEFAULT_RATE_LIMIT_PER_MINUTE = 120;
+/**
+ * Per-process, per-IP, per-minute. **Not a fleet-wide ceiling** — the window below lives in an
+ * in-memory `Map` in each Fastify process, so the real limit an IP sees is this number times the
+ * number of running tasks, and every deploy resets all windows to empty. Prod runs
+ * `desired_count = 2` (`infrastructure/terraform/main.tf`), so 60 here is 120/min in front of one
+ * IP; non-prod runs one task and gets 60.
+ *
+ * It was 120, which made the prod ceiling 240 — twice what the number appeared to say. Halved so
+ * the fleet-wide figure is the one the code always intended, on the repo owner's call to keep
+ * this weak implementation but configure it to the lowest workable value.
+ *
+ * Headroom check, because "lowest" has to stay above legitimate traffic: a tab flushes on a 10s
+ * timer (6/min), plus immediately on an error, a fatal, or a full 20-entry batch. 120/min in
+ * front of an IP covers roughly twenty concurrent tabs behind one NAT at steady state. Over that,
+ * a batch is rejected with 429 and dropped — the sink only retries 5xx — which is the intended
+ * failure mode: shed client logs rather than let a public route be a free amplifier.
+ *
+ * Override with `CLIENT_LOGS_RATE_LIMIT_PER_MIN`, remembering it is per process.
+ */
+const DEFAULT_RATE_LIMIT_PER_MINUTE = 60;
 const DEFAULT_MAX_BATCH_BYTES = 64 * 1024;
 
 export class ClientLogBatchTooLargeError extends Error {
