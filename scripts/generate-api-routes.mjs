@@ -26,6 +26,13 @@ const SPEC_PATH = resolve('packages/shared/generated/openapi.json');
 const OUTPUT_PATH = resolve('packages/shared/api-routes.ts');
 
 /**
+ * **Adding an entry needs the repo owner's explicit approval.** The default answer is the
+ * generated SDK (`@poolmaster/shared/generated/hey-api`), which has a typed function per
+ * operation; a literal path is for callers that genuinely cannot use it — today the log
+ * transport, which needs `keepalive`/`sendBeacon`, and integration suites building `inject()`
+ * URLs. "It was easier to reference" is not a reason: every entry here is a path string that can
+ * be wrong, which is exactly what the hand-written version of this table became.
+ *
  * name -> operationId, or `{ literal }` for a path the spec does not describe.
  *
  * Several names share a path deliberately: `leagues.list` and `leagues.create` are the same URL
@@ -194,13 +201,24 @@ function generate() {
  * the spec disagree. The mapping from each name to its operation lives in
  * \`scripts/generate-api-routes.mjs\`.
  *
- * Used by:
- *   - Integration and contract-focused test suites, which build \`inject()\` URLs
- *   - \`clients/poolmaster/src/lib/logger/network-sink.ts\`, the one production consumer: the log
- *     transport cannot go through the generated SDK, because it is what reports the failures the
- *     SDK would be producing
+ * **Do not add routes here.** Use the generated SDK — \`@poolmaster/shared/generated/hey-api\` —
+ * which has a typed function for every operation in the spec. A literal path is the exception,
+ * and it needs the repo owner's explicit approval before it is added. Adding one costs the thing
+ * this file was regenerated to buy: the SDK cannot be called with a URL that does not exist,
+ * while a path string can be, and this table's previous hand-written version drifted into ten
+ * wrong paths and four routes that no longer existed.
  *
- * Everything else should use the generated SDK rather than a literal path (#212).
+ * There are exactly two reasons an entry belongs here, and both are about not being able to use
+ * the SDK rather than not wanting to:
+ *
+ *   1. \`clients/poolmaster/src/lib/logger/network-sink.ts\` — the log transport needs \`fetch\` with
+ *      \`keepalive\` and a \`sendBeacon\` fallback on tab-hide, which the SDK client does not do.
+ *   2. Integration suites building \`inject()\` URLs, which do not go over HTTP at all. These are
+ *      migrating to the SDK as the functional suites already have; new suites should start there.
+ *
+ * A route that is merely convenient to reference is not a third reason. Entries are added to the
+ * manifest in \`scripts/generate-api-routes.mjs\`, not to this file — a hand edit here is reverted
+ * by the next \`npm run api:refresh\` and fails \`npm run api:check\` in CI before that.
  */
 `);
 
