@@ -10,8 +10,17 @@ import { SyncRequestValidationError } from '../../../packages/core-api/src/modul
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 process.env.JWT_SECRET = JWT_SECRET;
 
-function authHeaders(userId: string): Record<string, string> {
-  const token = jwt.sign({ sub: userId, email: `${userId}@example.test` }, JWT_SECRET, { expiresIn: '15m' });
+/**
+ * #213 (access rule A10) — root-admin authority is a signed claim, so the token carries it. It
+ * used to come from a mocked `user.findUnique` row while the token said nothing, which is the
+ * arrangement the rule replaced.
+ */
+function authHeaders(userId: string, isRootAdmin: boolean): Record<string, string> {
+  const token = jwt.sign(
+    { sub: userId, email: `${userId}@example.test`, isRootAdmin },
+    JWT_SECRET,
+    { expiresIn: '15m' },
+  );
 
   return {
     authorization: `Bearer ${token}`,
@@ -38,20 +47,12 @@ function createProviderServiceMock() {
   };
 }
 
-async function buildAdminSyncApp(isRootAdmin: boolean) {
+async function buildAdminSyncApp() {
   const app = Fastify({ logger: false });
   const providerService = createProviderServiceMock();
-  const prisma = {
-    user: {
-      findUnique: jest.fn().mockResolvedValue({
-        id: isRootAdmin ? 'root-admin-user' : 'member-user',
-        email: isRootAdmin ? 'root@example.test' : 'member@example.test',
-        firstName: isRootAdmin ? 'Root' : 'Member',
-        lastName: 'User',
-        isRootAdmin,
-      }),
-    },
-  } as unknown as PrismaClient;
+  // No `user.findUnique` stub: authorization reads the token claim and never the row (A10).
+  // The decoration stays because the module expects the instance to carry a Prisma client.
+  const prisma = {} as unknown as PrismaClient;
 
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);
@@ -66,12 +67,12 @@ async function buildAdminSyncApp(isRootAdmin: boolean) {
 
 describe('pool-master-rop.68.4.1 retained admin provider sync route authorization', () => {
   it('pool-master-rop.68.4.1 rejects non-root users before sport sync submission', async () => {
-    const { app, providerService } = await buildAdminSyncApp(false);
+    const { app, providerService } = await buildAdminSyncApp();
 
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/sync/GOLF',
-      headers: authHeaders('member-user'),
+      headers: authHeaders('member-user', false),
       payload: {
         feeds: ['EVENTSCHEDULE'],
       },
@@ -86,12 +87,12 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
   });
 
   it('pool-master-rop.68.4.1 rejects non-root users before event sync submission', async () => {
-    const { app, providerService } = await buildAdminSyncApp(false);
+    const { app, providerService } = await buildAdminSyncApp();
 
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
-      headers: authHeaders('member-user'),
+      headers: authHeaders('member-user', false),
       payload: {
         feeds: ['EVENTLIVESCORES'],
       },
@@ -106,12 +107,12 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
   });
 
   it('pool-master-rop.68.4.1 allows root admins to submit the retained sync endpoints', async () => {
-    const { app, providerService } = await buildAdminSyncApp(true);
+    const { app, providerService } = await buildAdminSyncApp();
 
     const sportRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/sync/GOLF',
-      headers: authHeaders('root-admin-user'),
+      headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTSCHEDULE'],
       },
@@ -121,12 +122,12 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
     expect(providerService.prepareSportSync).toHaveBeenCalledWith({
       sport: 'GOLF',
       feeds: ['EVENTSCHEDULE'],
-    }, 'root-admin-user', 'root@example.test');
+    }, 'root-admin-user', 'root-admin-user@example.test');
 
     const eventRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
-      headers: authHeaders('root-admin-user'),
+      headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTLIVESCORES'],
       },
@@ -137,13 +138,13 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
       sport: 'GOLF',
       eventId: 'event-1',
       feeds: ['EVENTLIVESCORES'],
-    }, 'root-admin-user', 'root@example.test');
+    }, 'root-admin-user', 'root-admin-user@example.test');
 
     await app.close();
   });
 
   it('pool-master-rop.68.2.3 maps sync request validation errors to 422 responses', async () => {
-    const { app, providerService } = await buildAdminSyncApp(true);
+    const { app, providerService } = await buildAdminSyncApp();
     providerService.prepareSportSync.mockRejectedValueOnce(
       new SyncRequestValidationError('INVALID_SYNC_WINDOW', 'Sync request window end must be greater than or equal to its start.'),
     );
@@ -154,7 +155,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
     const sportRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/sync/GOLF',
-      headers: authHeaders('root-admin-user'),
+      headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTSCHEDULE'],
         from: '2026-06-15T00:00:00.000Z',
@@ -171,7 +172,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
     const eventRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
-      headers: authHeaders('root-admin-user'),
+      headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTLIVESCORES'],
       },
