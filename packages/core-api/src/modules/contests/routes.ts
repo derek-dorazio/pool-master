@@ -18,7 +18,6 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaContestEntryRepository,
-  PrismaDraftSessionRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
 } from '../../adapters';
@@ -117,7 +116,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
-  const draftSessionRepo = new PrismaDraftSessionRepository(prisma);
   const mailDelivery = createMailDeliveryProvider(
     readMailDeliveryConfig(process.env),
     fastify.log,
@@ -137,16 +135,13 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     mailDelivery,
     appBaseUrl,
   );
-  const overrideService = new OverrideService(
-    contestRepo,
-    draftSessionRepo,
-  );
+  const overrideService = new OverrideService(contestRepo);
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
   // Sage Pass 3 — every override route below mutates contest state on
   // behalf of a commissioner. The fastify-level auth guard only proves a
   // valid session, not league commissioner role; without this gate any
-  // authenticated user could call recalculate / adjust / undo-pick / etc.
+  // authenticated user could call reopen / close / extend-deadline / etc.
   // The contest-scoped helper resolves leagueId from the contest's row.
   const requireContestCommissioner = requireCommissionerForContest(
     contestRepo,
@@ -315,59 +310,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       },
     },
     handler: handlers.deleteContest,
-  });
-
-  // --- Draft Overrides ---
-  fastify.post('/:contestId/draft/undo-pick', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Undo a draft pick',
-      description:
-        'Undoes the most recent draft selection through the contest-level override surface used by commissioners and administrators.',
-      operationId: 'undoContestDraftSelection',
-      body: schemaRef('UndoContestDraftSelectionRequest'),
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.undoPick,
-  });
-  fastify.post('/:contestId/draft/pause', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Pause an active draft (contest override)',
-      description:
-        'Pauses an active draft through the contest override surface without requiring the dedicated draft-room route family.',
-      operationId: 'pauseContestDraft',
-      body: schemaRef('PauseContestDraftRequest'),
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.pauseDraft,
-  });
-  fastify.post('/:contestId/draft/resume', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Resume a paused draft (contest override)',
-      description:
-        'Resumes a paused draft through the contest override surface for commissioner or admin intervention.',
-      operationId: 'resumeContestDraft',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.resumeDraft,
-  });
-  fastify.post('/:contestId/draft/extend-clock', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Extend the pick clock for the current drafter',
-      description:
-        'Adds extra time to the current drafter turn through the contest override surface.',
-      operationId: 'extendPickClock',
-      body: schemaRef('ExtendPickClockRequest'),
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.extendPickClock,
   });
 
   // --- Contest Lifecycle Overrides ---

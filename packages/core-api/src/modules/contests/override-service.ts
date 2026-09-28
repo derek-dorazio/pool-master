@@ -1,88 +1,15 @@
 /**
  * OverrideService — commissioner safety-valve tools for in-season contest management.
  *
- * Covers draft overrides, scoring overrides, and contest lifecycle overrides.
+ * Covers contest lifecycle overrides.
  */
 
-import type {
-  ContestRepository,
-  DraftSessionRepository,
-} from '@poolmaster/shared/db';
-import type { Contest, DraftSession } from '@poolmaster/shared/domain';
-import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
-
-const UNDO_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+import type { ContestRepository } from '@poolmaster/shared/db';
+import type { Contest } from '@poolmaster/shared/domain';
+import { ContestStatus } from '@poolmaster/shared/domain';
 
 export class OverrideService {
-  constructor(
-    private readonly contestRepo: ContestRepository,
-    private readonly draftSessionRepo: DraftSessionRepository,
-  ) {}
-
-  // --- Draft Overrides (08-018, 08-019, 08-020) ---
-
-  /** Undoes a draft pick within the configurable window (default 5 min). */
-  async undoPick(contestId: string, pickId: string, _reason: string): Promise<void> {
-    const session = await this.requireDraftSession(contestId);
-    const pickHistories = await this.draftSessionRepo.getPickHistories(session.id);
-    const pickHistory = pickHistories.find((history) => history.id === pickId);
-    if (!pickHistory) {
-      throw new OverrideError('Pick not found in this draft session', 'DRAFT_PICK_NOT_FOUND');
-    }
-    const elapsed = Date.now() - pickHistory.createdAt.getTime();
-    if (elapsed > UNDO_WINDOW_MS) {
-      throw new OverrideError(
-        'Undo window has expired (5 minutes)',
-        'DRAFT_PICK_UNDO_WINDOW_EXPIRED',
-      );
-    }
-    // Reset current pick to the undone pick's position
-    await this.draftSessionRepo.update(session.id, {
-      currentPickNumber: pickHistory.pickNumber,
-    });
-  }
-
-  /** Pauses a live draft. */
-  async pauseDraft(contestId: string, _reason: string): Promise<void> {
-    const session = await this.requireDraftSession(contestId);
-    if (session.status !== DraftStatus.LIVE) {
-      throw new OverrideError('Draft can only be paused when live', 'DRAFT_PAUSE_STATUS_INVALID');
-    }
-    await this.draftSessionRepo.update(session.id, {
-      status: DraftStatus.PAUSED,
-    } as Partial<DraftSession>);
-  }
-
-  /** Resumes a paused draft. */
-  async resumeDraft(contestId: string): Promise<void> {
-    const session = await this.requireDraftSession(contestId);
-    if (session.status !== DraftStatus.PAUSED) {
-      throw new OverrideError(
-        'Draft can only be resumed when paused',
-        'DRAFT_RESUME_STATUS_INVALID',
-      );
-    }
-    await this.draftSessionRepo.update(session.id, {
-      status: DraftStatus.LIVE,
-    } as Partial<DraftSession>);
-  }
-
-  /** Extends the pick clock by additional seconds. */
-  async extendPickClock(
-    contestId: string,
-    additionalSeconds: number,
-  ): Promise<void> {
-    const session = await this.requireDraftSession(contestId);
-    if (!session.currentTurnStartedAt) {
-      throw new OverrideError('No active current turn to extend', 'DRAFT_TURN_NOT_ACTIVE');
-    }
-    const shiftedTurnStart = new Date(
-      session.currentTurnStartedAt.getTime() + additionalSeconds * 1000,
-    );
-    await this.draftSessionRepo.update(session.id, {
-      currentTurnStartedAt: shiftedTurnStart,
-    } as Partial<DraftSession>);
-  }
+  constructor(private readonly contestRepo: ContestRepository) {}
 
   // --- Contest Lifecycle Overrides (08-023) ---
 
@@ -139,16 +66,6 @@ export class OverrideService {
       throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
     }
     return this.contestRepo.update(contestId, { lockAt: newLock } as Partial<Contest>);
-  }
-
-  // --- Helpers ---
-
-  private async requireDraftSession(contestId: string): Promise<DraftSession> {
-    const session = await this.draftSessionRepo.findByContest(contestId);
-    if (!session) {
-      throw new OverrideError('No draft session found for this contest', 'DRAFT_SESSION_NOT_FOUND');
-    }
-    return session;
   }
 }
 

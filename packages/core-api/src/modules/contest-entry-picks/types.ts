@@ -18,11 +18,11 @@ export interface ContestEntryPickInsertInput {
   tier?: string | null;
   /** Budget cost (budget ROSTER). */
   cost?: number | null;
-  /** Snake-draft round number (existing draft mechanism). */
+  /** Selection round (tiered: position across tier quotas; budget: pick ordinal). */
   draftRound?: number | null;
-  /** Snake-draft pick order (existing draft mechanism). */
+  /** Contest-wide pick order at insert time. */
   draftPickNumber?: number | null;
-  /** Whether the pick was auto-assigned (snake-draft auto-pick, missed-week loss). */
+  /** Whether the pick was auto-assigned (e.g. a missed-week loss). */
   isAutoPicked?: boolean;
   /** Override the default `pickedAt` (now). Used by integration fixtures. */
   pickedAt?: Date;
