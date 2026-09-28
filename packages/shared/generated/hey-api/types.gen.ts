@@ -8149,9 +8149,9 @@ export type CreateLeagueError = CreateLeagueErrors[keyof CreateLeagueErrors];
 
 export type CreateLeagueResponses = {
     /**
-     * Single-league response.
+     * A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context.
      */
-    201: LeagueResponse;
+    201: LeagueContextResponse;
 };
 
 export type CreateLeagueResponse = CreateLeagueResponses[keyof CreateLeagueResponses];

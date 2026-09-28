@@ -284,10 +284,20 @@ export function getLeagueByCodeData(
   };
 }
 
+/**
+ * #215 — creating a league returns the league context, not a bare league. Creating a league
+ * also creates the creator's COMMISSIONER membership, so the 201 carries the same shape the
+ * two league reads carry. `squadMembership` is null by construction.
+ */
 export function createLeagueData(
   league: LeagueDto,
-): LeagueResponse {
-  return { league };
+  context: { membership?: LeagueMembershipDto | null } = {},
+): LeagueContextResponse {
+  return {
+    league,
+    membership: context.membership ?? buildLeagueMembership({ leagueId: league.id }),
+    squadMembership: null,
+  };
 }
 
 export function updateLeagueDetailsData(

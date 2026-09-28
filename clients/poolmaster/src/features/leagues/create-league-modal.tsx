@@ -15,7 +15,7 @@ import {
   Tile,
 } from "@/features/shared/ui";
 import { buildLeaguePath, rememberRecentLeagueCode } from "./league-routing";
-import { syncLeagueCaches } from "./league-cache";
+import { seedLeagueContext, syncLeagueCaches } from "./league-cache";
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -122,7 +122,10 @@ export function CreateLeagueModal({
         throwApiError(response.error, "League creation response is missing data.");
       }
 
-      return response.data.league;
+      // #215 — the whole league context, not just the league. Creating a league also creates
+      // the creator's COMMISSIONER membership, so the 201 carries the same shape the two
+      // league reads carry and the page we are about to navigate to needs no second fetch.
+      return response.data;
     },
     onMutate: (values) => {
       logger.debug(
@@ -136,7 +139,8 @@ export function CreateLeagueModal({
         "Starting league creation flow",
       );
     },
-    onSuccess: (league) => {
+    onSuccess: (context) => {
+      const league = context.league;
       logger.info(
         {
           action: "league.create.succeeded",
@@ -147,6 +151,8 @@ export function CreateLeagueModal({
         "Created league successfully",
       );
       syncLeagueCaches(queryClient, league);
+      // The new league's page reads this cache on arrival and now finds it populated.
+      seedLeagueContext(queryClient, context);
       rememberRecentLeagueCode(league.leagueCode);
       hasEditedLeagueCodeRef.current = false;
       setStep(WIZARD_STEP_DETAILS);

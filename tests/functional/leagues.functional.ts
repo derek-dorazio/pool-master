@@ -63,6 +63,19 @@ describe('SDK Functional: Leagues', () => {
     const leagueId = createResponse.data?.league.id;
     expect(leagueId).toBeTruthy();
 
+    // #215 — the 201 is a LeagueContextResponse, the same shape the two league reads return.
+    // Creating a league also creates the creator's COMMISSIONER membership, so the client can
+    // seed the new league's context cache from this response instead of reading it back. The
+    // membership embeds the creator, because it is the viewer's own edge (A8).
+    expect(createResponse.data?.membership).toBeDefined();
+    expect(createResponse.data?.membership?.leagueId).toBe(leagueId);
+    expect(createResponse.data?.membership?.userId).toBe(commissioner.userId);
+    expect(createResponse.data?.membership?.role).toBe('COMMISSIONER');
+    expect(createResponse.data?.membership?.status).toBe('ACTIVE');
+    expect(createResponse.data?.membership?.user.id).toBe(commissioner.userId);
+    // Null by construction: a league has no squads the instant it is created.
+    expect(createResponse.data?.squadMembership).toBeNull();
+
     const listResponse = await listLeagues({
       client: commissioner.client,
     });

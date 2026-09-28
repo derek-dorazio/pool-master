@@ -174,12 +174,22 @@ export function createLeagueHandlers(
       description: body.description,
     };
     const result = await leagueService.createLeague(input);
+    // #215 — the creator's COMMISSIONER membership is created with the league and the service
+    // already returns it, so send the same `LeagueContextResponse` the two league reads send.
+    // The client navigates straight into the new league and can now seed
+    // `QueryKeys.leagues.detail(leagueCode)` from this response instead of fetching it again.
+    // The alternative — the client assembling the membership itself — is the shadow projection
+    // this epic exists to remove.
+    const viewer = await userRepo.findById(userId);
     logger.info({
       action: 'leagueRoute.create.success',
       data: { leagueId: result.league.id, userId },
     }, 'Created league');
     return reply.status(201).send({
       league: toLeagueDto(result.league, { memberCount: 1, activeContestCount: 0 }),
+      membership: viewer ? mapLeagueMembershipToDto(result.membership, viewer) : null,
+      // Null by construction: a league has no squads the instant it is created.
+      squadMembership: null,
     });
   }
 
