@@ -47,7 +47,7 @@ export const swaggerPlugin = fp(async (fastify) => {
         { name: 'Auth', description: 'Authentication, registration, and user profile' },
         { name: 'Leagues', description: 'League CRUD, membership, and lifecycle management' },
         { name: 'Contests', description: 'Contest creation, lifecycle, and scoring' },
-        { name: 'Drafts', description: 'Draft sessions — snake, auction, tiered' },
+        { name: 'Drafts', description: 'Roster selection — tiered and budget pick' },
         { name: 'Standings', description: 'Contest standings and leaderboards' },
         { name: 'Participants', description: 'Participant profiles and contest pools' },
         { name: 'Invitations', description: 'League invitations and invite links' },

@@ -119,7 +119,6 @@ const MANIFEST = {
   },
   drafts: {
     $comment: 'Drafts',
-    start: 'startDraft',
     state: 'getDraftState',
     pick: 'submitContestSelection',
   },

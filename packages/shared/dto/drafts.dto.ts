@@ -6,15 +6,6 @@ import { DraftStatus, SelectionType } from '../domain/enums';
 
 // --- Requests ---
 
-export const StartDraftRequestSchema = z.object({
-  entryIds: z.array(z.string()).min(2).describe('Entries that should participate in the draft.'),
-  rounds: z.number().int().min(1).max(30).optional().describe('Optional total number of draft rounds.'),
-  timePerPickSeconds: z.number().int().min(10).max(86400).optional().describe('Seconds allowed per turn in a turn-based draft.'),
-  availableParticipantIds: z.array(z.string()).min(1).optional().describe('Optional participant pool restriction for the draft.'),
-  autoPickPolicy: z.enum(['QUEUE_THEN_BEST', 'BEST_AVAILABLE', 'RANDOM']).optional().describe('Fallback policy used when the clock expires.'),
-}).describe('Request payload for starting a draft.');
-export type StartDraftRequest = z.infer<typeof StartDraftRequestSchema>;
-
 export const DraftStateQuerySchema = z.object({
   entryId: z.string().optional().describe('Specific contest entry to view within roster-based selection flows.'),
 }).describe('Optional query parameters for loading draft or selection state.');
@@ -25,11 +16,6 @@ export const SubmitPickRequestSchema = z.object({
   participantId: z.string().describe('Participant being selected.'),
 }).describe('Request payload for submitting a draft pick.');
 export type SubmitPickRequest = z.infer<typeof SubmitPickRequestSchema>;
-
-export const ExtendCurrentTurnRequestSchema = z.object({
-  additionalSeconds: z.number().int().min(1).max(3600).describe('How many seconds to add to the current draft turn.'),
-}).describe('Commissioner request payload for extending the active draft turn.');
-export type ExtendCurrentTurnRequest = z.infer<typeof ExtendCurrentTurnRequestSchema>;
 
 // --- Response Sub-schemas ---
 
