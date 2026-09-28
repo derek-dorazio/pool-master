@@ -1,17 +1,30 @@
 /**
- * Canonical API route paths — single source of truth.
+ * Canonical API route paths.
  *
- * Used by:
- *   - Active backend route registration reference
- *   - Integration and contract-focused test suites
- *   - Any remaining app code that still needs a stable manual route constant
+ * **Generated from `packages/shared/generated/openapi.json` — do not edit by hand.**
+ * Run `npm run api:refresh` to regenerate; `npm run api:check` fails in CI when this file and
+ * the spec disagree. The mapping from each name to its operation lives in
+ * `scripts/generate-api-routes.mjs`.
  *
- * If you add or change a route, update it HERE. Everything else imports from this file.
+ * **Do not add routes here.** Use the generated SDK — `@poolmaster/shared/generated/hey-api` —
+ * which has a typed function for every operation in the spec. A literal path is the exception,
+ * and it needs the repo owner's explicit approval before it is added. Adding one costs the thing
+ * this file was regenerated to buy: the SDK cannot be called with a URL that does not exist,
+ * while a path string can be, and this table's previous hand-written version drifted into ten
+ * wrong paths and four routes that no longer existed.
+ *
+ * There are exactly two reasons an entry belongs here, and both are about not being able to use
+ * the SDK rather than not wanting to:
+ *
+ *   1. `clients/poolmaster/src/lib/logger/network-sink.ts` — the log transport needs `fetch` with
+ *      `keepalive` and a `sendBeacon` fallback on tab-hide, which the SDK client does not do.
+ *   2. Integration suites building `inject()` URLs, which do not go over HTTP at all. These are
+ *      migrating to the SDK as the functional suites already have; new suites should start there.
+ *
+ * A route that is merely convenient to reference is not a third reason. Entries are added to the
+ * manifest in `scripts/generate-api-routes.mjs`, not to this file — a hand edit here is reverted
+ * by the next `npm run api:refresh` and fails `npm run api:check` in CI before that.
  */
-
-// ---------------------------------------------------------------------------
-// Full endpoint paths (used by frontend + tests)
-// ---------------------------------------------------------------------------
 
 export const API_ROUTES = {
   // Auth
@@ -27,7 +40,7 @@ export const API_ROUTES = {
   // access rule A6 decides which is allowed. They replaced `/api/v1/auth/me`,
   // `/api/v1/account/*` and `/api/v1/admin/users/*`.
   users: {
-    list: '/api/v1/users',
+    list: '/api/v1/users/',
     detail: (userId: string) => `/api/v1/users/${userId}`,
     profile: (userId: string) => `/api/v1/users/${userId}/profile`,
     username: (userId: string) => `/api/v1/users/${userId}/username`,
@@ -42,8 +55,8 @@ export const API_ROUTES = {
 
   // Leagues
   leagues: {
-    list: '/api/v1/leagues',
-    create: '/api/v1/leagues',
+    list: '/api/v1/leagues/',
+    create: '/api/v1/leagues/',
     detail: (id: string) => `/api/v1/leagues/${id}`,
     details: (id: string) => `/api/v1/leagues/${id}/details`,
     icon: (id: string) => `/api/v1/leagues/${id}/icon`,
@@ -52,36 +65,30 @@ export const API_ROUTES = {
     byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,
     leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
-    memberRole: (leagueId: string, memberId: string) =>
-      `/api/v1/leagues/${leagueId}/members/${memberId}/role`,
-    removeMember: (leagueId: string, memberId: string) =>
-      `/api/v1/leagues/${leagueId}/members/${memberId}`,
+    memberRole: (id: string, uid: string) => `/api/v1/leagues/${id}/members/${uid}/role`,
+    removeMember: (id: string, uid: string) => `/api/v1/leagues/${id}/members/${uid}`,
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
-    contests: (id: string) => `/api/v1/leagues/${id}/contests`,
-    squads: (id: string) => `/api/v1/leagues/${id}/squads`,
-    contestManagement: (id: string) =>
-      `/api/v1/leagues/${id}/contest-management/contests`,
+    contests: (id: string) => `/api/v1/leagues/${id}/contests/`,
+    squads: (id: string) => `/api/v1/leagues/${id}/squads/`,
+    contestManagement: (id: string) => `/api/v1/leagues/${id}/contest-management/contests`,
   },
 
   squads: {
-    list: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
-    create: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
-    detail: (leagueId: string, squadId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}`,
-    inactivate: (leagueId: string, squadId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}/inactivate`,
-    ownerInvitations: (leagueId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/owner-invitations`,
-    createOwnerInvitation: (leagueId: string, squadId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}/owner-invitations`,
-    replaceOwner: (leagueId: string, squadId: string, userId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}/owners/${userId}/replace`,
-    revokeOwnerInvitation: (leagueId: string, invitationId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/owner-invitations/${invitationId}`,
-    addMember: (leagueId: string, squadId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}/members`,
-    removeMember: (leagueId: string, squadId: string, userId: string) =>
-      `/api/v1/leagues/${leagueId}/squads/${squadId}/members/${userId}`,
+    list: (id: string) => `/api/v1/leagues/${id}/squads/`,
+    create: (id: string) => `/api/v1/leagues/${id}/squads/`,
+    detail: (id: string, squadId: string) => `/api/v1/leagues/${id}/squads/${squadId}`,
+    inactivate: (id: string, squadId: string) =>
+      `/api/v1/leagues/${id}/squads/${squadId}/inactivate`,
+    ownerInvitations: (id: string) => `/api/v1/leagues/${id}/squads/owner-invitations`,
+    createOwnerInvitation: (id: string, squadId: string) =>
+      `/api/v1/leagues/${id}/squads/${squadId}/owner-invitations`,
+    replaceOwner: (id: string, squadId: string, userId: string) =>
+      `/api/v1/leagues/${id}/squads/${squadId}/owners/${userId}/replace`,
+    revokeOwnerInvitation: (id: string, invitationId: string) =>
+      `/api/v1/leagues/${id}/squads/owner-invitations/${invitationId}`,
+    addMember: (id: string, squadId: string) => `/api/v1/leagues/${id}/squads/${squadId}/members`,
+    removeMember: (id: string, squadId: string, userId: string) =>
+      `/api/v1/leagues/${id}/squads/${squadId}/members/${userId}`,
   },
 
   // Invitations
@@ -97,41 +104,31 @@ export const API_ROUTES = {
 
   // Contests
   contests: {
-    list: '/api/v1/contests',
-    detail: (id: string) => `/api/v1/contests/${id}`,
-    entries: (id: string) => `/api/v1/contests/${id}/entries`,
-    myEntry: (id: string) => `/api/v1/contests/${id}/entries/me`,
-    pool: (id: string) => `/api/v1/contests/${id}/pool`,
+    detail: (contestId: string) => `/api/v1/contests/${contestId}`,
+    entries: (contestId: string) => `/api/v1/contests/${contestId}/entries`,
+    myEntry: (contestId: string) => `/api/v1/contests/${contestId}/entries/me`,
   },
 
   contestManagement: {
-    templates: (leagueId: string) =>
-      `/api/v1/leagues/${leagueId}/contest-management/templates`,
-    detail: (leagueId: string, contestId: string) =>
-      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
-    configuration: (leagueId: string, contestId: string) =>
-      `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
+    templates: (id: string) => `/api/v1/leagues/${id}/contest-management/templates`,
+    detail: (id: string, contestId: string) =>
+      `/api/v1/leagues/${id}/contest-management/contests/${contestId}`,
+    configuration: (id: string, contestId: string) =>
+      `/api/v1/leagues/${id}/contest-management/contests/${contestId}/configuration`,
   },
 
   // Drafts
   drafts: {
     start: (contestId: string) => `/api/v1/drafts/${contestId}/start`,
-    state: (draftId: string) => `/api/v1/drafts/${draftId}`,
-    pick: (draftId: string) => `/api/v1/drafts/${draftId}/pick`,
-  },
-
-  // Admin
-  admin: {
-    health: '/api/v1/admin/health',
-    audit: '/api/v1/admin/audit',
+    state: (contestId: string) => `/api/v1/drafts/${contestId}`,
+    pick: (contestId: string) => `/api/v1/drafts/${contestId}/pick`,
   },
 
   observability: {
-    clientLogs: '/api/v1/client-logs',
+    clientLogs: '/api/v1/client-logs/',
   },
 
-  // Health
   health: '/health',
-  version: '/api/v1/version',
-  rootVersion: '/version',
+  version: '/api/v1/version/',
+  rootVersion: '/version/',
 } as const;
