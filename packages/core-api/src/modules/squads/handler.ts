@@ -3,7 +3,7 @@ import type { TeamIconKey } from '@poolmaster/shared/domain';
 import {
   SquadNotFoundError,
   SquadOperationError,
-  SquadService,
+  type SquadService,
 } from './service';
 import { sendError } from '../../core/error-handler';
 

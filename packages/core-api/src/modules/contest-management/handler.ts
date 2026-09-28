@@ -8,7 +8,7 @@ import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
   ContestManagementError,
-  ContestManagementService,
+  type ContestManagementService,
 } from './service';
 
 export function createContestManagementHandlers(

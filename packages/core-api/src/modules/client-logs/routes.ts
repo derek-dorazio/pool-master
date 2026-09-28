@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { zodToJsonSchema } from '@poolmaster/shared/dto';
+import { zodToJsonSchema, type ClientLogBatch } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
@@ -16,7 +16,7 @@ export function clientLogsModule(fastify: FastifyInstance): void {
   });
   const handler = createClientLogHandlers(service);
 
-  fastify.post<{ Body: import('@poolmaster/shared/dto').ClientLogBatch }>(
+  fastify.post<{ Body: ClientLogBatch }>(
     '/',
     {
       schema: {
