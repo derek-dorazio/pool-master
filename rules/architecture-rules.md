@@ -79,12 +79,10 @@ Required implications:
 
 ### Route Source of Truth
 
-- `packages/shared/api-routes.ts` is the shared source of truth for canonical route constants used by:
-  - backend route prefixes
-  - integration tests
-  - smoke tests
-  - MSW handlers
-- For **frontend runtime application code**, the generated SDK is the primary path source of truth. Do not add new manual path-building code when a generated operation exists.
+- **The generated SDK is the route source of truth**, for frontend runtime code and for tests alike. Do not add manual path-building code when a generated operation exists.
+- `packages/shared/api-routes.ts` is **generated** from `packages/shared/generated/openapi.json` by `scripts/generate-api-routes.mjs` (#212). It is not hand-edited, and it is not "the source of truth" — it was described that way while it was hand-written, and it drifted into ten wrong paths and four dead routes. `npm run api:refresh` regenerates it; `npm run api:check` fails CI when it and the spec disagree.
+- **Do not add entries to it without the repo owner's explicit approval.** An entry is for a caller that genuinely cannot use the SDK — today the client-log transport, which needs `fetch` with `keepalive` and a `sendBeacon` fallback, and integration suites building `inject()` URLs. Entries are added to the manifest in the generator, never to the generated file.
+- `clients/poolmaster/src/test/msw-api.ts` likewise derives its map from the committed spec; it is not a hand-maintained table either.
 
 ### Validity / Compatibility Matrices Source of Truth
 
