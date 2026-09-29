@@ -751,7 +751,7 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 **Assertion rules:**
 - Assertions must be strong and intentional. Do not accept broad fallback status ranges like `200 | 400 | 500`.
 - Assert on response body shape using DTO schemas where practical (`schema.safeParse(body)`).
-- Use shared route constants from `@poolmaster/shared/api-routes`.
+- Call the generated SDK rather than building a URL. Where a literal path is unavoidable — a route with no SDK operation, or a request the SDK cannot construct — use the generated constants from `@poolmaster/shared/api-routes` and never a string literal.
 - Use shared domain enums from `@poolmaster/shared/domain` for status values, sport types, etc.
 - When endpoint contracts change, functional tests must change with them.
 - Do not weaken a test to match known-wrong production behavior when the contract or domain rule says the implementation is wrong. Fix the service behavior first, then update the test to assert the corrected behavior.

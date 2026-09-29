@@ -268,12 +268,9 @@ Rules:
 
 ### Route Constants
 
-- `packages/shared/api-routes.ts` is the canonical route constant registry.
-- Use it for:
-  - backend registration prefixes
-  - integration tests
-  - smoke tests
-  - MSW handlers
+- `packages/shared/api-routes.ts` is **generated** from the OpenAPI spec (#212) — see `rules/architecture-rules.md`, "Route Source of Truth". Do not hand-edit it; a hand edit is reverted by the next `npm run api:refresh` and fails `npm run api:check` before that.
+- Prefer the generated SDK to a literal path. `api-routes.ts` exists for callers that cannot use it: backend registration prefixes, and integration suites building `inject()` URLs.
+- **Adding an entry needs the repo owner's explicit approval**, and it goes in the manifest in `scripts/generate-api-routes.mjs`, not in the generated file.
 - Do not create new duplicate route-constant registries.
 
 ### Time and Timezone Discipline
