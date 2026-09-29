@@ -2,12 +2,8 @@ import {
   acceptInvitation,
   createContest,
   enterContest,
-  extendCurrentTurn,
   generateInviteLink,
   getDraftState,
-  pauseDraft,
-  resumeDraft,
-  startDraft,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
@@ -123,7 +119,12 @@ async function cleanupDraftArtifacts(): Promise<void> {
   }
 }
 
-async function seedSnakeDraftFixture() {
+/**
+ * A contest configured with the retained SelectionType.SNAKE_DRAFT value (#200). No
+ * turn-based implementation exists behind it, so no sport event is linked: the
+ * draft-room endpoints must answer 501 before they would ever read participants.
+ */
+async function seedUnsupportedSelectionTypeFixture() {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Draft Commissioner',
     leagueName: 'Draft Functional League',
@@ -200,74 +201,12 @@ async function seedSnakeDraftFixture() {
     throw new Error('Builder: enterContest failed for challenger draft fixture');
   }
 
-  const prisma = getFunctionalPrisma();
-  const sport = await prisma.sport.create({
-    data: {
-      name: `DraftSnakeSport-${randomUUID().slice(0, 8)}`,
-      participantType: 'INDIVIDUAL',
-    },
-  });
-  createdSportIds.push(sport.id);
-
-  const event = await prisma.sportEvent.create({
-    data: {
-      externalId: `snake-functional-event-${randomUUID().slice(0, 8)}`,
-      providerId: 'integration-test',
-      sport: 'GOLF',
-      name: 'Snake Functional Event',
-      startDate: new Date('2026-04-20T12:00:00.000Z'),
-      releaseAt: new Date('2026-04-20T12:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-20T12:00:00.000Z'),
-      status: 'SCHEDULED',
-    },
-  });
-  createdSportEventIds.push(event.id);
-
-  const participants = await Promise.all(
-    [1, 2, 3, 4].map((index) =>
-      prisma.participant.create({
-        data: {
-          sportId: sport.id,
-          name: `Draft Snake Player ${index}-${randomUUID().slice(0, 8)}`,
-          participantType: 'INDIVIDUAL',
-          externalIds: {},
-          position: 'GOLFER',
-          teamAffiliation: null,
-        },
-      }),
-    ),
-  );
-  createdParticipantIds.push(...participants.map((participant) => participant.id));
-
-  const eventParticipants = await Promise.all(
-    participants.map((participant) =>
-      prisma.sportEventParticipant.create({
-        data: {
-          sportEventId: event.id,
-          participantId: participant.id,
-          isActive: true,
-        },
-      }),
-    ),
-  );
-  createdSportEventParticipantIds.push(...eventParticipants.map((row) => row.id));
-
-  await prisma.contest.update({
-    where: {
-      id: contestId,
-    },
-    data: {
-      sportEventId: event.id,
-    },
-  });
-
   return {
     contestId,
     commissioner,
     challenger,
     commissionerEntryId: commissionerEntry.data.entry.id,
     challengerEntryId: challengerEntry.data.entry.id,
-    availableParticipantIds: eventParticipants.map((row) => row.id),
   };
 }
 
@@ -622,28 +561,8 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Drafts and Roster Selection', () => {
-  it('drives the snake draft lifecycle and rejects duplicate picks', async () => {
-    const fixture = await seedSnakeDraftFixture();
-
-    const startResponse = await startDraft({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
-        rounds: 2,
-        timePerPickSeconds: 60,
-        availableParticipantIds: fixture.availableParticipantIds,
-        autoPickPolicy: 'BEST_AVAILABLE',
-      },
-    });
-
-    expect(startResponse.data).toBeDefined();
-    expect(startResponse.data?.contestId).toBe(fixture.contestId);
-    expect(startResponse.data?.status).toBe('LIVE');
-    expect(startResponse.data?.entries).toHaveLength(2);
-    expect(startResponse.data?.draftPickHistories).toHaveLength(0);
+  it('#200 answers 501 DRAFT_MODE_UNSUPPORTED for a contest configured with the retained SNAKE_DRAFT type', async () => {
+    const fixture = await seedUnsupportedSelectionTypeFixture();
 
     const stateResponse = await getDraftState({
       client: fixture.commissioner.client,
@@ -652,104 +571,30 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       },
     });
 
-    expect(stateResponse.data).toBeDefined();
-    expect(stateResponse.data?.contestId).toBe(fixture.contestId);
-    expect(stateResponse.data?.currentPickNumber).toBe(1);
-    expect(stateResponse.data?.isTurnBased).toBe(true);
-    expect(stateResponse.data?.entries).toHaveLength(2);
-    expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
-
-    const pauseResponse = await pauseDraft({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
+    expectFunctionalError(stateResponse, {
+      status: 501,
+      code: 'DRAFT_MODE_UNSUPPORTED',
     });
 
-    expect(pauseResponse.data?.status).toBe('PAUSED');
-
-    const resumeResponse = await resumeDraft({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-    });
-
-    expect(resumeResponse.data?.status).toBe('LIVE');
-
-    const extendResponse = await extendCurrentTurn({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        additionalSeconds: 30,
-      },
-    });
-
-    expect(extendResponse.data?.currentTurnStartedAt).toBeTruthy();
-
-    const duplicateStartResponse = await startDraft({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
-        rounds: 2,
-        timePerPickSeconds: 60,
-        availableParticipantIds: fixture.availableParticipantIds,
-        autoPickPolicy: 'BEST_AVAILABLE',
-      },
-    });
-
-    expectFunctionalError(duplicateStartResponse, {
-      status: 409,
-      code: 'DRAFT_EXISTS',
-    });
-
-    const firstPickResponse = await submitContestSelection({
+    const pickResponse = await submitContestSelection({
       client: fixture.commissioner.client,
       path: {
         contestId: fixture.contestId,
       },
       body: {
         entryId: fixture.commissionerEntryId,
-        participantId: fixture.availableParticipantIds[0],
+        participantId: randomUUID(),
       },
     });
 
-    expect(firstPickResponse.data).toBeDefined();
-    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(firstPickResponse.data?.draftPickHistories[0].participantId).toBe(fixture.availableParticipantIds[0]);
-    expect(firstPickResponse.data?.isComplete).toBe(false);
-    expect(firstPickResponse.data?.status).toBe('LIVE');
-
-    const afterPickStateResponse = await getDraftState({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
+    expectFunctionalError(pickResponse, {
+      status: 501,
+      code: 'DRAFT_MODE_UNSUPPORTED',
     });
+  });
 
-    expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
-    expect(afterPickStateResponse.data?.status).toBe('LIVE');
-
-    const duplicatePickResponse = await submitContestSelection({
-      client: fixture.challenger.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        entryId: fixture.challengerEntryId,
-        participantId: fixture.availableParticipantIds[0],
-      },
-    });
-
-    expectFunctionalError(duplicatePickResponse, {
-      status: 400,
-      code: 'INVALID_PICK',
-    });
+  it('#200 rejects a selection for another squad\'s entry and a draft-state read for an unknown contest', async () => {
+    const fixture = await seedUnsupportedSelectionTypeFixture();
 
     const wrongEntryResponse = await submitContestSelection({
       client: fixture.challenger.client,
@@ -758,7 +603,7 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       },
       body: {
         entryId: fixture.commissionerEntryId,
-        participantId: fixture.availableParticipantIds[1],
+        participantId: randomUUID(),
       },
     });
 
@@ -777,53 +622,6 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expectFunctionalError(missingStateResponse, {
       status: 404,
       code: 'CONTEST_NOT_FOUND',
-    });
-  });
-
-  it('rejects non-commissioners from snake draft control endpoints with stable draft permission codes', async () => {
-    const fixture = await seedSnakeDraftFixture();
-
-    const startResponse = await startDraft({
-      client: fixture.commissioner.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        entryIds: [fixture.commissionerEntryId, fixture.challengerEntryId],
-        rounds: 2,
-        timePerPickSeconds: 60,
-        availableParticipantIds: fixture.availableParticipantIds,
-        autoPickPolicy: 'BEST_AVAILABLE',
-      },
-    });
-
-    expect(startResponse.data?.status).toBe('LIVE');
-
-    const pauseDenied = await pauseDraft({
-      client: fixture.challenger.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-    });
-
-    expectFunctionalError(pauseDenied, {
-      status: 403,
-      code: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-    });
-
-    const extendDenied = await extendCurrentTurn({
-      client: fixture.challenger.client,
-      path: {
-        contestId: fixture.contestId,
-      },
-      body: {
-        additionalSeconds: 15,
-      },
-    });
-
-    expectFunctionalError(extendDenied, {
-      status: 403,
-      code: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
     });
   });
 
