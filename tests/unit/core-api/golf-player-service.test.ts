@@ -47,7 +47,7 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       },
     },
     participantService: {
-      search: jest.fn().mockResolvedValue({ participants: [buildParticipant()], total: 1 }),
+      search: jest.fn().mockResolvedValue([buildParticipant()]),
       create: jest.fn().mockResolvedValue(buildParticipant()),
       findById: jest.fn().mockResolvedValue(buildParticipant()),
       update: jest.fn().mockResolvedValue(buildParticipant({ status: 'INACTIVE' })),
@@ -70,7 +70,6 @@ describe('GolfPlayerService.listPlayers', () => {
     expect(deps.participantService.search).toHaveBeenCalledWith({
       query: 'rory',
       filters: { sportId: 'sport-golf', status: ['ACTIVE'] },
-      limit: 200,
     });
     expect(result).toEqual([expect.objectContaining({ id: 'p-1', providerMappingCount: 2 })]);
   });

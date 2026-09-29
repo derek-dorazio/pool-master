@@ -149,14 +149,6 @@ export interface SportConfig extends DomainEntity {
   tournamentFormat: TournamentFormat;
 }
 
-/** Season metadata for a given sport. */
-export interface Season extends DomainEntity {
-  sportId: string;
-  name: string;
-  year: number;
-  startDate: string;
-  endDate: string;
-}
 
 /** Normalized participant record imported from one or more data providers. */
 export interface Participant extends DomainEntity {

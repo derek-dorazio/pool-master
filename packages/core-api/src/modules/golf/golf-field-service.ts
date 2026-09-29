@@ -104,7 +104,7 @@ export class GolfFieldService {
     });
     const sportLeagueId = await this.resolveSportLeagueId(sportEvent.seasonId);
     const rosterParticipantIds = sportLeagueId
-      ? new Set((await this.sportLeagueService.getRoster(sportLeagueId)).map((entry) => entry.participantId))
+      ? new Set((await this.sportLeagueService.listAffiliations(sportLeagueId)).map((entry) => entry.participantId))
       : new Set<string>();
 
     const rows = (await this.prisma.sportEventParticipant.findMany({
@@ -145,8 +145,8 @@ export class GolfFieldService {
       );
     }
 
-    const roster = await this.sportLeagueService.getRoster(sportLeagueId);
-    const activeRoster = roster.filter((entry) => entry.status === 'ACTIVE');
+    const roster = await this.sportLeagueService.listAffiliations(sportLeagueId);
+    const activeRoster = roster.filter((entry) => entry.participant.status === 'ACTIVE');
 
     const existing = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
@@ -230,7 +230,7 @@ export class GolfFieldService {
 
     const sportLeagueId = await this.resolveSportLeagueId(sportEvent.seasonId);
     const affiliationRankings = sportLeagueId
-      ? new Map((await this.sportLeagueService.getRoster(sportLeagueId)).map((entry) => [entry.participantId, entry.ranking]))
+      ? new Map((await this.sportLeagueService.listAffiliations(sportLeagueId)).map((entry) => [entry.participantId, entry.ranking]))
       : new Map<string, number | null>();
 
     const resolved = await Promise.all(

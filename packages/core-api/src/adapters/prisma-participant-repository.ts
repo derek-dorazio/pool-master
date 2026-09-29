@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
+import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { Participant, InjuryStatus, ParticipantType } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 
@@ -31,12 +31,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return mapping ? mapToParticipant(mapping.participant) : null;
   }
 
-  async search(
-    query: string,
-    filters: ParticipantSearchFilters,
-    limit = 50,
-    offset = 0,
-  ): Promise<{ participants: Participant[]; total: number }> {
+  async search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]> {
     const where: Record<string, unknown> = {};
 
     if (filters.sportId) {
@@ -66,17 +61,21 @@ export class PrismaParticipantRepository implements ParticipantRepository {
       ];
     }
 
-    const [rows, total] = await Promise.all([
-      this.prisma.participant.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        take: limit,
-        skip: offset,
-      }),
-      this.prisma.participant.count({ where }),
-    ]);
+    const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
+    return rows.map(mapToParticipant);
+  }
 
-    return { participants: rows.map(mapToParticipant), total };
+  async findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]> {
+    const rows = await this.prisma.participant.findMany({
+      where: {
+        sportId,
+        ...(query.id !== undefined && { id: query.id }),
+        ...(query.externalId !== undefined && { externalId: query.externalId }),
+        ...(query.name !== undefined && { name: { equals: query.name, mode: 'insensitive' } }),
+      },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map(mapToParticipant);
   }
 
   async create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant> {
@@ -149,7 +148,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
   }
 }
 
-function mapToParticipant(row: {
+export function mapToParticipant(row: {
   id: string;
   sportId: string;
   name: string;

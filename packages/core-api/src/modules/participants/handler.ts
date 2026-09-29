@@ -7,6 +7,7 @@ import type { ParticipantService } from './service';
 import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
+import type { ParticipantListQuery, ParticipantListResponse } from '@poolmaster/shared/dto/participants.dto';
 import { mapParticipantToDto } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 
@@ -19,22 +20,10 @@ export function createParticipantHandlers(participantService: ParticipantService
   };
 
   async function searchParticipants(
-    request: FastifyRequest<{
-      Querystring: {
-        q?: string;
-        sportId?: string;
-        status?: string;
-        position?: string;
-        team?: string;
-        nationality?: string;
-        limit?: string;
-        offset?: string;
-      };
-    }>,
+    request: FastifyRequest<{ Querystring: ParticipantListQuery }>,
     _reply: FastifyReply,
-  ): Promise<{ participants: ReturnType<typeof mapParticipantToDto>[]; total: number }> {
+  ): Promise<ParticipantListResponse> {
     const qs = request.query;
-    const logger = request.contextLogger ?? request.log;
     const filters: ParticipantSearchFilters = {};
     if (qs.sportId) filters.sportId = qs.sportId;
     if (qs.status) filters.status = qs.status.split(',') as ParticipantStatus[];
@@ -42,58 +31,20 @@ export function createParticipantHandlers(participantService: ParticipantService
     if (qs.team) filters.teamAffiliation = qs.team.split(',');
     if (qs.nationality) filters.nationality = qs.nationality.split(',');
 
-    logger.debug(
-      {
-        action: 'participants.route.search.start',
-        data: {
-          query: qs.q ?? null,
-          sportId: qs.sportId ?? null,
-          status: qs.status ?? null,
-          limit: qs.limit ?? null,
-          offset: qs.offset ?? null,
-        },
-      },
-      'Handling participant search request',
-    );
+    const participants = await participantService.search({ query: qs.q, filters });
+    return { participants: participants.map(mapParticipantToDto) };
+  }
 
-    try {
-      const result = await participantService.search({
-        query: qs.q,
-        filters,
-        limit: qs.limit ? parseInt(qs.limit, 10) : undefined,
-        offset: qs.offset ? parseInt(qs.offset, 10) : undefined,
-      });
-      const response = {
-        participants: result.participants.map(mapParticipantToDto),
-        total: result.total,
-      };
-
-      logger.info(
-        {
-          action: 'participants.route.search.success',
-          data: {
-            returnedCount: response.participants.length,
-            total: response.total,
-          },
-        },
-        'Participant search succeeded',
-      );
-
-      return response;
-    } catch (error) {
-      logger.error(
-        {
-          action: 'participants.route.search.failed',
-          err: error,
-          data: {
-            query: qs.q ?? null,
-            sportId: qs.sportId ?? null,
-          },
-        },
-        'Participant search request failed',
-      );
-      throw error;
+  /**
+   * The participant catalog is shared reference data: any signed-in user reads it, only a
+   * root admin writes it (access rule A1). Authority is the token claim (A10).
+   */
+  function rejectUnlessRootAdmin(request: FastifyRequest, reply: FastifyReply, action: string) {
+    if (request.authUser?.isRootAdmin === true) {
+      return null;
     }
+    (request.contextLogger ?? request.log).warn({ action: `${action}.forbidden` }, 'Rejected participant write from a non-root-admin');
+    return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required to change the participant catalog');
   }
 
   async function getParticipant(
@@ -170,7 +121,9 @@ export function createParticipantHandlers(participantService: ParticipantService
       };
     }>,
     reply: FastifyReply,
-  ): Promise<void> {
+  ) {
+    const forbidden = rejectUnlessRootAdmin(request, reply, 'participants.route.create');
+    if (forbidden) return forbidden;
     const body = request.body;
     const logger = request.contextLogger ?? request.log;
 
@@ -234,7 +187,9 @@ export function createParticipantHandlers(participantService: ParticipantService
       Body: Record<string, unknown>;
     }>,
     reply: FastifyReply,
-  ): Promise<void> {
+  ) {
+    const forbidden = rejectUnlessRootAdmin(request, reply, 'participants.route.update');
+    if (forbidden) return forbidden;
     const logger = request.contextLogger ?? request.log;
 
     logger.debug(

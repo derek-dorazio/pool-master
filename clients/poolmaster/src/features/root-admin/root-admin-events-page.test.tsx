@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminEventsPage } from './root-admin-events-page';
 
-const { adminListEventParticipantsMock, adminListEventsMock, mockLogger } = vi.hoisted(() => {
+const { adminListEventParticipantsMock, listEventsMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -17,14 +17,14 @@ const { adminListEventParticipantsMock, adminListEventsMock, mockLogger } = vi.h
 
   return {
     adminListEventParticipantsMock: vi.fn(),
-    adminListEventsMock: vi.fn(),
+    listEventsMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
   adminListEventParticipants: adminListEventParticipantsMock,
-  adminListEvents: adminListEventsMock,
+  listEvents: listEventsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -50,12 +50,12 @@ function renderPage() {
 describe('pool-master-33l.12: RootAdminEventsPage', () => {
   afterEach(() => {
     adminListEventParticipantsMock.mockReset();
-    adminListEventsMock.mockReset();
+    listEventsMock.mockReset();
     mockLogger.info.mockReset();
   });
 
   it('pool-master-33l.12 renders current persisted event state separately from sync-run history', async () => {
-    adminListEventsMock.mockResolvedValue({
+    listEventsMock.mockResolvedValue({
       data: {
         events: [
           {
@@ -93,16 +93,15 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     expect(screen.getByText('Provider count 144')).toBeInTheDocument();
     expect(screen.getByText('Pending Field')).toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(adminListEventsMock).toHaveBeenLastCalledWith({
-        query: { limit: 250 },
-      }),
-    );
+    // #235 — the canonical list, unpaged: no limit is sent (§16).
+    await waitFor(() => expect(listEventsMock).toHaveBeenCalled());
+    const [options] = listEventsMock.mock.calls.at(-1) as [{ query?: unknown } | undefined];
+    expect(options?.query).toBeUndefined();
   });
 
   it('pool-master-33l.12 opens a participant grid modal for the selected current-state event', async () => {
     const eventId = '11111111-1111-4111-8111-111111111111';
-    adminListEventsMock.mockResolvedValue({
+    listEventsMock.mockResolvedValue({
       data: {
         events: [
           {

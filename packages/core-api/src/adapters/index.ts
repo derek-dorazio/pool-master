@@ -20,3 +20,13 @@ export {
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventParticipantRepository,
 } from './prisma-contest-management-repositories';
+export {
+  PrismaParticipantLeagueAffiliationRepository,
+  PrismaSeasonRepository,
+  PrismaSportEventParticipantRoundRepository,
+  PrismaSportEventParticipantStandingRepository,
+  PrismaSportEventRepository,
+  PrismaSportEventRoundRepository,
+  PrismaSportLeagueRepository,
+  PrismaSportRepository,
+} from './prisma-sport-catalog-repositories';

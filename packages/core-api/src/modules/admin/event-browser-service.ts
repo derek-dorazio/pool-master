@@ -1,14 +1,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import type { SportEventStatus } from '@poolmaster/shared/domain';
-import type {
-  AdminEventListQuery,
-  AdminEventParticipantListResponse,
-  AdminEventSummaryDto,
-} from '@poolmaster/shared/dto';
+import type { SportEventRepository } from '@poolmaster/shared/db';
+import type { AdminEventParticipantListResponse } from '@poolmaster/shared/dto';
 import {
   mapAdminEventParticipantToDto,
-  mapAdminEventSummaryToDto,
+  mapSportEventToDto,
 } from '../../mappers';
 import { GolfTierService } from '../golf/golf-tier-service';
 
@@ -17,54 +13,10 @@ export class AdminEventBrowserService {
 
   constructor(
     private readonly prisma: PrismaClient,
+    private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {
     this.golfTierService = new GolfTierService(prisma, logger);
-  }
-
-  async listEvents(query: AdminEventListQuery): Promise<AdminEventSummaryDto[]> {
-    const limit = query.limit ?? 100;
-
-    this.logger?.debug({
-      action: 'adminEventBrowser.listEvents.start',
-      data: {
-        sport: query.sport ?? null,
-        status: query.status ?? null,
-        limit,
-      },
-    }, 'Listing current-state events for root-admin browser');
-
-    const rows = await this.prisma.sportEvent.findMany({
-      where: {
-        ...(query.sport ? { sport: query.sport } : {}),
-        ...(query.status ? { status: query.status as SportEventStatus } : {}),
-      },
-      orderBy: [
-        { startDate: 'asc' },
-        { name: 'asc' },
-      ],
-      take: limit,
-      include: {
-        _count: {
-          select: {
-            sportEventParticipants: true,
-          },
-        },
-      },
-    });
-
-    const events = rows.map(mapAdminEventSummaryToDto);
-
-    this.logger?.info({
-      action: 'adminEventBrowser.listEvents.success',
-      data: {
-        returnedCount: events.length,
-        sport: query.sport ?? null,
-        status: query.status ?? null,
-      },
-    }, 'Listed current-state events for root-admin browser');
-
-    return events;
   }
 
   async listEventParticipants(
@@ -75,17 +27,7 @@ export class AdminEventBrowserService {
       data: { eventId },
     }, 'Listing current-state event participants for root-admin browser');
 
-    const event = await this.prisma.sportEvent.findUnique({
-      where: { id: eventId },
-      include: {
-        _count: {
-          select: {
-            sportEventParticipants: true,
-          },
-        },
-      },
-    });
-
+    const event = await this.sportEvents.findById(eventId);
     if (!event) {
       this.logger?.warn({
         action: 'adminEventBrowser.listEventParticipants.notFound',
@@ -139,7 +81,7 @@ export class AdminEventBrowserService {
     );
 
     const response = {
-      event: mapAdminEventSummaryToDto(event),
+      event: mapSportEventToDto(event, (await this.sportEvents.countParticipants([event.id])).get(event.id) ?? 0),
       participants: rows.map((row) => {
         const valuation = valuationBySportEventParticipantId.get(row.id);
         const { rounds, standing, ...participant } = row;

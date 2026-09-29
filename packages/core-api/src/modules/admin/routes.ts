@@ -38,11 +38,17 @@ import { GolfPlayerService } from '../golf/golf-player-service';
 import { GolfScoreService } from '../golf/golf-score-service';
 import { EventLifecycleService } from '../events/event-lifecycle-service';
 import { EventScoreSourceService } from '../events/event-score-source-service';
-import { PrismaParticipantRepository, PrismaParticipantProviderMappingRepository } from '../../adapters';
+import {
+  PrismaParticipantLeagueAffiliationRepository,
+  PrismaParticipantProviderMappingRepository,
+  PrismaParticipantRepository,
+  PrismaSeasonRepository,
+  PrismaSportEventRepository,
+  PrismaSportLeagueRepository,
+  PrismaSportRepository,
+} from '../../adapters';
 import { ParticipantService } from '../participants/service';
 import {
-  AdminEventListQuerySchema,
-  AdminEventListResponseSchema,
   AdminEventParticipantsParamsSchema,
   AdminEventParticipantListResponseSchema,
   AdminProviderEventCleanupRequestSchema,
@@ -142,9 +148,21 @@ export async function adminModule(
     new PrismaContestConfigTemplateRepository(prisma),
     fastify.log,
   );
-  const adminEventBrowserService = new AdminEventBrowserService(prisma, fastify.log);
-  const sportLeagueService = new SportLeagueService(prisma, fastify.log);
-  const seasonService = new SeasonService(prisma, fastify.log);
+  const sports = new PrismaSportRepository(prisma);
+  const sportLeagues = new PrismaSportLeagueRepository(prisma);
+  const seasons = new PrismaSeasonRepository(prisma);
+  const sportEvents = new PrismaSportEventRepository(prisma);
+  const participantRepo = new PrismaParticipantRepository(prisma);
+  const adminEventBrowserService = new AdminEventBrowserService(prisma, sportEvents, fastify.log);
+  const sportLeagueService = new SportLeagueService({
+    sports,
+    sportLeagues,
+    seasons,
+    affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
+    participants: participantRepo,
+    logger: fastify.log,
+  });
+  const seasonService = new SeasonService({ sports, sportLeagues, seasons, sportEvents, logger: fastify.log });
   const golfRoundScheduleService = new GolfRoundScheduleService(prisma, fastify.log);
   const golfTierService = new GolfTierService(prisma, fastify.log);
   const golfTournamentService = new GolfTournamentService(
@@ -158,7 +176,7 @@ export async function adminModule(
   const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, opts.providerRegistry, fastify.log);
   const eventScoreSourceService = new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log);
   const participantService = new ParticipantService(
-    new PrismaParticipantRepository(prisma),
+    participantRepo,
     new PrismaParticipantProviderMappingRepository(prisma),
     fastify.log,
   );
@@ -173,20 +191,9 @@ export async function adminModule(
 
   // --- User Management Routes ---
 
-  fastify.get('/events', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List current persisted events',
-      description:
-        'Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.',
-      operationId: 'adminListEvents',
-      querystring: zodToJsonSchema(AdminEventListQuerySchema),
-      response: withAdminErrorResponses({
-        200: zodToJsonSchema(AdminEventListResponseSchema),
-      }),
-    },
-    handler: eventBrowser.listEvents,
-  });
+  // #235 — `adminListEvents` is gone, not re-pointed. It was `listEvents` plus four fields
+  // under an admin prefix, each with its own mapper deriving the same readiness. The one
+  // operation is GET /api/v1/events, returning the canonical SportEventDto.
 
   fastify.get('/events/:eventId/participants', {
     schema: {

@@ -1,60 +1,51 @@
 /**
- * SportEvent mapper — Prisma row → canonical SportEventDto per plans/117
- * §4.1 / §12.1.
- *
- * Pure projection: no operational-state derivation, no business logic.
- * The legacy `events.mapper.ts:toEventSummaryDto` still computes derived
- * fields (`readinessStatus`, `readinessReasons`, `contestEligible`) for
- * the legacy `/events` list response — that path is kept separate so the
- * persistence-aware DTO stays uncontaminated by API-shape concerns.
+ * SportEvent mapper — the domain SportEvent and its loaded-participant count →
+ * the canonical SportEventDto. The one place contest-setup readiness is derived
+ * for the wire.
  */
 
-import type { Sport } from '@poolmaster/shared/domain';
+import type { SportEvent } from '@poolmaster/shared/domain';
 import type {
-  EventStatusDto,
+  EventReadinessReasonDto,
+  EventReadinessStatusDto,
   SportEventDto,
 } from '@poolmaster/shared/dto/events.dto';
+import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
-export interface SportEventRow {
-  id: string;
-  externalId: string;
-  providerId: string;
-  sport: Sport;
-  name: string;
-  venue: string | null;
-  location: string | null;
-  startDate: Date;
-  endDate: Date | null;
-  status: EventStatusDto;
-  rounds: number | null;
-  participantCount: number | null;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
-  metadata: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export function mapSportEventToDto(event: SportEvent, loadedParticipantCount: number): SportEventDto {
+  const operationalState = evaluateEventOperationalState({
+    participantCount: loadedParticipantCount,
+    releaseAt: event.releaseAt,
+    fieldLocksAt: event.fieldLocksAt,
+    providerFieldLocked: event.fieldLocked,
+  });
 
-export function mapSportEventToDto(row: SportEventRow): SportEventDto {
   return {
-    id: row.id,
-    externalId: row.externalId,
-    providerId: row.providerId,
-    sport: row.sport,
-    name: row.name,
-    venue: row.venue,
-    location: row.location,
-    startDate: row.startDate.toISOString(),
-    endDate: row.endDate?.toISOString() ?? null,
-    status: row.status,
-    rounds: row.rounds,
-    participantCount: row.participantCount,
-    releaseAt: row.releaseAt.toISOString(),
-    fieldLocksAt: row.fieldLocksAt.toISOString(),
-    fieldLocked: row.fieldLocked,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    id: event.id,
+    externalId: event.externalId,
+    providerId: event.providerId,
+    sport: event.sport,
+    name: event.name,
+    venue: event.venue ?? null,
+    location: event.location ?? null,
+    status: event.status,
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate?.toISOString() ?? null,
+    rounds: event.rounds ?? null,
+    participantCount: event.participantCount ?? null,
+    loadedParticipantCount,
+    releaseAt: event.releaseAt.toISOString(),
+    fieldLocksAt: event.fieldLocksAt.toISOString(),
+    fieldLocked: operationalState.fieldLocked,
+    readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
+    readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
+    contestEligible: operationalState.contestEligible,
+    seasonId: event.seasonId ?? null,
+    leagueEventId: event.leagueEventId ?? null,
+    syncScope: event.syncScope,
+    autoLifecycleEnabled: event.autoLifecycleEnabled,
+    metadata: event.metadata,
+    createdAt: event.createdAt.toISOString(),
+    updatedAt: event.updatedAt.toISOString(),
   };
 }

@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { EventSummaryDto, GetManagedContestResponses, ListManagedContestTemplatesResponses } from '@/lib/api';
+import type { SportEventDto, GetManagedContestResponses, ListManagedContestTemplatesResponses } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -104,7 +104,7 @@ function formatDateTimeDisplay(isoString: string | null) {
   return date.toLocaleString();
 }
 
-function formatReadinessLabel(event: EventSummaryDto) {
+function formatReadinessLabel(event: SportEventDto) {
   switch (event.readinessStatus) {
     case 'CONTEST_ELIGIBLE':
       return 'Contest ready';
@@ -118,7 +118,7 @@ function formatReadinessLabel(event: EventSummaryDto) {
   }
 }
 
-function formatReadinessReasons(event: EventSummaryDto) {
+function formatReadinessReasons(event: SportEventDto) {
   if (!event.readinessReasons.length) {
     return 'This event is ready for contest setup.';
   }
@@ -201,7 +201,7 @@ function deriveLockAtFromEvent(
   );
 }
 
-function sortEventsForPicker(events: EventSummaryDto[]) {
+function sortEventsForPicker(events: SportEventDto[]) {
   return [...events].sort((left, right) => {
     const leftTime = Date.parse(left.startDate);
     const rightTime = Date.parse(right.startDate);
@@ -263,11 +263,10 @@ export function CreateContestPage() {
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
-    queryFn: async (): Promise<EventSummaryDto[]> => {
+    queryFn: async (): Promise<SportEventDto[]> => {
       const response = await listEvents({
         query: {
           sport: Sport.GOLF,
-          limit: 100,
         },
       });
 

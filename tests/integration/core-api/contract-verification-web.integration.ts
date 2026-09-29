@@ -17,7 +17,7 @@ import {
   ContestManagementResponseSchema,
   DraftStateResponseSchema,
   ErrorEnvelopeSchema,
-  EventListResponseSchema,
+  SportEventListResponseSchema,
   GenerateInviteLinkResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
@@ -229,7 +229,7 @@ describe('Contract verification (web)', () => {
     expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
-  it('event list route matches EventListResponseSchema on the happy path', async () => {
+  it('event list route matches SportEventListResponseSchema, with the loaded field and readiness, on the happy path', async () => {
     const prisma = getPrisma();
     const eventId = randomUUID();
     const participantId = randomUUID();
@@ -286,18 +286,19 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&limit=100',
+        url: '/api/v1/events/?sport=UFC',
         headers: viewer.headers,
       });
 
       expect(res.statusCode).toBe(200);
-      const parsed = EventListResponseSchema.safeParse(res.json());
+      const parsed = SportEventListResponseSchema.safeParse(res.json());
       expect(parsed.success).toBe(true);
       const event = parsed.data?.events.find((item) => item.id === eventId);
       expect(event).toMatchObject({
         id: eventId,
         contestEligible: true,
         readinessStatus: 'CONTEST_ELIGIBLE',
+        loadedParticipantCount: 1,
       });
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
@@ -346,12 +347,12 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&limit=100',
+        url: '/api/v1/events/?sport=UFC',
         headers: viewer.headers,
       });
 
       expect(res.statusCode).toBe(200);
-      const parsed = EventListResponseSchema.safeParse(res.json());
+      const parsed = SportEventListResponseSchema.safeParse(res.json());
       expect(parsed.success).toBe(true);
       const event = parsed.data?.events.find((item) => item.id === eventId);
       expect(event).toMatchObject({

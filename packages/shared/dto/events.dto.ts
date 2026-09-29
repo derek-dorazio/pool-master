@@ -1,12 +1,9 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
-  ParticipantInactiveReason,
-  ParticipantType,
   Sport,
-  SportCategory,
   SportEventStatus,
-  TournamentFormat,
+  SportEventSyncScope,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
@@ -29,147 +26,67 @@ export const EventReadinessReasonDtoSchema = z.enum([
 ]);
 export type EventReadinessReasonDto = z.infer<typeof EventReadinessReasonDtoSchema>;
 
-export const EventListQuerySchema = z.object({
-  sport: z.string().optional().describe('Optional sport filter.'),
-  status: z.string().optional().describe('Optional provider-normalized event status filter.'),
-  limit: z.number().int().min(1).max(100).optional().describe('Optional page-size style limit.'),
-});
-export type EventListQuery = z.infer<typeof EventListQuerySchema>;
-
-export const EventSummaryDtoSchema = z.object({
-  id: z.string().describe('Sport-event identifier.'),
-  externalId: z.string().describe('Provider event identifier used by event-level sync operations.'),
-  sport: z.enum([
-    Sport.GOLF,
-    Sport.NFL,
-    Sport.NBA,
-    Sport.F1,
-    Sport.NASCAR,
-    Sport.NCAA_BASKETBALL,
-    Sport.NCAA_HOCKEY,
-    Sport.NCAA_FOOTBALL,
-    Sport.TENNIS,
-    Sport.HORSE_RACING,
-    Sport.SOCCER,
-    Sport.NHL,
-    Sport.MLB,
-    Sport.UFC,
-  ]).describe('Sport associated with the event.'),
-  name: z.string().describe('Primary event name shown in contest and event selectors.'),
-  venue: z.string().nullable().optional().describe('Venue name for the event, when known.'),
-  location: z.string().nullable().optional().describe('Human-readable event location, when known.'),
-  status: EventStatusDtoSchema.describe('Provider-normalized event status.'),
-  startDate: DateTimeSchema.describe('Scheduled or actual event start time.'),
-  endDate: DateTimeSchema.nullable().optional().describe('Scheduled or actual event end time, when known.'),
-  releaseAt: DateTimeSchema.describe('PoolMaster operational datetime when the event becomes available for contest setup.'),
-  fieldLocksAt: DateTimeSchema.describe('PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.'),
-  participantCount: z.number().int().nullable().optional().describe('Participant count when the provider exposes field size.'),
-  fieldLocked: z.boolean().describe('Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.'),
-  readinessStatus: EventReadinessStatusDtoSchema.describe('Current readiness state for contest setup and event-driven contest operations.'),
-  readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Structured reasons explaining why the event is or is not contest-eligible right now.'),
-  contestEligible: z.boolean().describe('Whether the event is currently eligible for contest creation/configuration flows.'),
-}).describe('Event list item returned from event-discovery endpoints.');
-export type EventSummaryDto = z.infer<typeof EventSummaryDtoSchema>;
-
-export const EventListResponseSchema = z.object({
-  events: z.array(EventSummaryDtoSchema),
-}).describe('Event list response for the requested sport or filter set.');
-export type EventListResponse = z.infer<typeof EventListResponseSchema>;
-
-// ============================================================================
-// pool-master-rop.78.5 — canonical entity DTOs per plans/117 §12.1
-// ============================================================================
-
 /**
- * Canonical Sport DTO — pure projection of the `sports` row per plans/117
- * §4.1 / §12.1. Drives per-category scoring dispatch and the validity
- * matrix in plans/117 §9.
- *
- * `category` / `tournamentFormat` use `z.nativeEnum(...)` instead of
- * `z.enum(Object.values(...))` so the union stays compile-time exhaustive:
- * adding a new SportCategory or TournamentFormat value forces every
- * consumer that switches on the enum to be updated rather than silently
- * accepting the new variant.
+ * Admin-only fields are annotated, not enforced (plans/145 rule 4, DOMAIN-OPERATIONS §13):
+ * every caller gets the full object.
  */
-export const SportDtoSchema = z.object({
-  id: z.string().describe('Sport identifier.'),
-  name: z.string().describe('Sport name. Currently legacy enum-style (Sport.GOLF, Sport.NFL); granular tournament names land in a later slice.'),
-  participantType: z.nativeEnum(ParticipantType).describe('Whether the sport is individual- or team-based.'),
-  category: z.nativeEnum(SportCategory).describe('Sport category, drives per-category scoring detail-table dispatch (plans/117 §6).'),
-  tournamentFormat: z.nativeEnum(TournamentFormat).describe('Tournament format, drives the validity matrix in plans/117 §9.'),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('Canonical Sport DTO per plans/117 §4.1 / §12.1 — pure row projection.');
-export type SportDto = z.infer<typeof SportDtoSchema>;
+const ADMIN_ONLY = '(Admin-only: operational detail no member surface reads.)';
 
 /**
- * Canonical SportEvent DTO — pure row projection per plans/117 §4.1 / §12.1.
- *
- * Distinct from the legacy `EventSummaryDto`, which adds derived
- * operational fields (`readinessStatus`, `readinessReasons`,
- * `contestEligible`) computed at the route boundary. SportEventDto is the
- * persistence-aware shape; routes that need operational derivations
- * compose them on top.
+ * The canonical SportEvent — the row plus the three things every reader of an event
+ * needs and the row does not store: how many participants are loaded, and whether the
+ * event is ready for contest setup (derived from release/field-lock timing and the
+ * loaded field). One shape for every caller; it replaced EventSummaryDto and
+ * AdminEventSummaryDto, which each derived the same readiness in their own mapper.
  */
 export const SportEventDtoSchema = z.object({
-  id: z.string().describe('Sport-event identifier.'),
-  externalId: z.string().describe('Provider-side event identifier.'),
-  providerId: z.string().describe('Provider that emitted this event.'),
-  sport: z.nativeEnum(Sport).describe('Sport associated with the event.'),
-  name: z.string().describe('Primary event name.'),
+  id: z.string().uuid().describe('Sport-event identifier.'),
+  externalId: z.string().describe(`Provider-side event identifier used by sync operations. ${ADMIN_ONLY}`),
+  providerId: z.string().describe(`Provider that emitted the event, or manual-admin for an admin-authored one. ${ADMIN_ONLY}`),
+  sport: z.nativeEnum(Sport).describe('Sport the event belongs to.'),
+  name: z.string().describe('Event name shown in contest and event selectors.'),
   venue: z.string().nullable().describe('Venue name when known; null otherwise.'),
-  location: z.string().nullable().describe('Human-readable event location when known; null otherwise.'),
-  startDate: DateTimeSchema.describe('Scheduled or actual event start time.'),
-  endDate: DateTimeSchema.nullable().describe('Scheduled or actual event end time when known; null otherwise.'),
-  status: EventStatusDtoSchema.describe('Provider-normalized event status.'),
-  rounds: z.number().int().nullable().describe('Tournament round count when applicable; null otherwise.'),
-  participantCount: z.number().int().nullable().describe('Provider-reported field size when known; null otherwise.'),
-  releaseAt: DateTimeSchema.describe('PoolMaster operational datetime when the event becomes available for contest setup.'),
-  fieldLocksAt: DateTimeSchema.describe('PoolMaster operational datetime after which event-field changes are no longer honored.'),
-  fieldLocked: z.boolean().describe('Whether the event field is currently locked for contest setup (raw column).'),
-  metadata: JsonObjectSchema.describe('Provider-emitted event metadata captured at field-load time.'),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('Canonical SportEvent DTO per plans/117 §4.1 / §12.1 — pure row projection.');
+  location: z.string().nullable().describe('Human-readable location when known; null otherwise.'),
+  status: EventStatusDtoSchema.describe('Event lifecycle status.'),
+  startDate: DateTimeSchema.describe('Scheduled or actual start time.'),
+  endDate: DateTimeSchema.nullable().describe('Scheduled or actual end time when known; null otherwise.'),
+  rounds: z.number().int().nullable().describe('Number of rounds when the format has them; null otherwise.'),
+  participantCount: z.number().int().nullable().describe('Field size the provider reports, when it reports one; null otherwise.'),
+  loadedParticipantCount: z.number().int().describe('Number of event participants currently persisted for the event.'),
+  releaseAt: DateTimeSchema.describe('When the event becomes available for contest setup.'),
+  fieldLocksAt: DateTimeSchema.describe('After this time, field changes are no longer honored for new contest setup.'),
+  fieldLocked: z.boolean().describe('Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.'),
+  readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
+  readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now.'),
+  contestEligible: z.boolean().describe('Whether a contest can be created or configured for the event right now.'),
+  seasonId: z.string().uuid().nullable().describe('Season the event belongs to; null for a provider-synced event with no season.'),
+  leagueEventId: z.string().uuid().nullable().describe('Recurring tournament this is one year\'s instance of; null for a one-off event.'),
+  syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
+  autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
+  metadata: JsonObjectSchema.describe(`Provider-emitted event metadata captured at field-load time. ${ADMIN_ONLY}`),
+  createdAt: DateTimeSchema.describe('When the event row was created.'),
+  updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
+}).describe('A real-world event a contest can be run on — a golf tournament, a race, a match.');
 export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 
-/**
- * Canonical SportEventParticipant DTO — pure row projection per
- * plans/117 §4.1 / §12.1. `ranking` is copied from the latest
- * provider-scoped global ranking snapshot; `oddsToWin` and `seedNumber`
- * are event-scoped values.
- *
- * All optional row columns are `.nullable()` (not `.optional()`) so the
- * DTO mirrors the row shape exactly: every key is present, with null when
- * the column has no value. This eliminates the `T | null | undefined`
- * trichotomy at consumers.
- */
-export const SportEventParticipantDtoSchema = z.object({
-  id: z.string().describe('Sport-event-participant identifier.'),
-  sportEventId: z.string().describe('Owning sport-event identifier.'),
-  participantId: z.string().describe('Canonical participant identifier (the across-events Participant row).'),
-  isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
-  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  ranking: z.number().int().nullable().describe('Latest provider-scoped global world-ranking snapshot copied onto this event participant; null when not available.'),
-  oddsToWin: z.number().nullable().describe('Event-scoped implied odds-to-win snapshot (decimal); null when not provided.'),
-  seedNumber: z.number().int().nullable().describe('Event-relative seed number (e.g., NCAA tournament seed); null when not provided.'),
-  metadata: JsonObjectSchema.describe('Provider-emitted per-participant metadata.'),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('Canonical SportEventParticipant DTO per plans/117 §4.1 / §12.1 — pure row projection.');
-export type SportEventParticipantDto = z.infer<typeof SportEventParticipantDtoSchema>;
+/** Filters narrow the list; nothing pages it (§16). */
+export const SportEventListQuerySchema = z.object({
+  sport: z.nativeEnum(Sport).optional().describe('Only events of this sport.'),
+  status: EventStatusDtoSchema.optional().describe('Only events in this lifecycle status.'),
+}).describe('Filters for the sport-event list.');
+export type SportEventListQuery = z.infer<typeof SportEventListQuerySchema>;
+
+export const SportEventListResponseSchema = z.object({
+  events: z.array(SportEventDtoSchema).describe('Matching events, earliest start first.'),
+}).describe('Sport events matching the filters.');
+export type SportEventListResponse = z.infer<typeof SportEventListResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
-// Only what events/routes.ts actually serves. SportDtoSchema, SportEventDtoSchema and
-// SportEventParticipantDtoSchema are referenced nowhere, so registering them would
-// publish components no route serves.
-//
-// The three enums are also consumed by admin.dto.ts. Naming them here gives the frontend
-// importable unions instead of re-spelled literals; the nested occurrences inside admin's
-// still-inline schemas are unaffected (see plans/143 §1a).
+// The three enums are also consumed by admin.dto.ts; naming them gives the frontend
+// importable unions instead of re-spelled literals.
 registerSchema('EventStatusDto', EventStatusDtoSchema);
 registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
 registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
-registerSchema('EventSummaryDto', EventSummaryDtoSchema);
-registerSchema('EventListQuery', EventListQuerySchema);
-registerSchema('EventListResponse', EventListResponseSchema);
+registerSchema('SportEventDto', SportEventDtoSchema);
+registerSchema('SportEventListQuery', SportEventListQuerySchema);
+registerSchema('SportEventListResponse', SportEventListResponseSchema);

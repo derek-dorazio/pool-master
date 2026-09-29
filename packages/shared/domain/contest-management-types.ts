@@ -7,6 +7,7 @@ import type {
   SelectionType,
   Sport,
   SportEventStatus,
+  SportEventSyncScope,
 } from './enums';
 import type {
   AggregationDefinitionId,
@@ -83,6 +84,12 @@ export interface SportEvent extends DomainEntity {
   releaseAt: Date;
   fieldLocksAt: Date;
   metadata: Record<string, unknown>;
+  seasonId?: string;
+  /** The recurring tournament this is one year's instance of. */
+  leagueEventId?: string;
+  syncScope: SportEventSyncScope;
+  /** False stops the lifecycle scheduler moving this event's status. */
+  autoLifecycleEnabled: boolean;
 }
 
 /** Seeded timing policy used to resolve event release/field-lock datetimes. */

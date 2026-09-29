@@ -16,8 +16,6 @@ import type {
   LeagueMembership,
   Participant,
   ParticipantProviderMapping,
-  Season,
-  SportConfig,
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
@@ -25,6 +23,7 @@ import type {
 } from '../domain';
 
 import type { DateFormat, ParticipantStatus, Sport, TimeFormat } from '../domain';
+import type { ParticipantMatchQuery } from './sport-catalog-ports';
 
 // --- Identity ---
 
@@ -251,18 +250,6 @@ export interface LeagueInvitationRepository {
 
 // --- Sport & Participant ---
 
-export interface SportRepository {
-  findById(id: string): Promise<SportConfig | null>;
-  findAll(): Promise<SportConfig[]>;
-  create(sport: Omit<SportConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<SportConfig>;
-}
-
-export interface SeasonRepository {
-  findById(id: string): Promise<Season | null>;
-  findBySport(sportId: string): Promise<Season[]>;
-  create(season: Omit<Season, 'id' | 'createdAt' | 'updatedAt'>): Promise<Season>;
-}
-
 export interface ParticipantSearchFilters {
   sport?: Sport;
   sportId?: string;
@@ -276,7 +263,10 @@ export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
   findBySport(sportId: string): Promise<Participant[]>;
   findByExternalId(providerId: string, externalId: string): Promise<Participant | null>;
-  search(query: string, filters: ParticipantSearchFilters, limit?: number, offset?: number): Promise<{ participants: Participant[]; total: number }>;
+  /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
+  search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
+  /** Candidates for an upload row within one sport; exact match on each identifier given. */
+  findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;

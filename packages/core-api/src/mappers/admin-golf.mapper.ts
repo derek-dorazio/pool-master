@@ -23,8 +23,9 @@ import type {
   AdminUpdateGolfTournamentRoundsRequest,
 } from '@poolmaster/shared/dto';
 import { MANUAL_ADMIN_PROVIDER_ID } from '@poolmaster/shared/domain';
-import type { LeagueRosterEntry, LeagueRosterUploadPreviewRow, SportLeagueRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
-import type { SeasonDetail, SeasonRow, SeasonSummary } from '../modules/sport-catalog/season-service';
+import type { ParticipantLeagueAffiliation, Season, SportLeague } from '@poolmaster/shared/domain';
+import type { AffiliationUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
+import type { SeasonDetail, SeasonSummary } from '../modules/sport-catalog/season-service';
 import type { SportEventRoundRow } from '../modules/golf/golf-round-schedule-service';
 import type { GolfTournamentRow } from '../modules/golf/golf-tournament-service';
 import type { GolfFieldRow } from '../modules/golf/golf-field-service';
@@ -32,7 +33,7 @@ import type { GolfTierGroup } from '../modules/golf/golf-tier-service';
 import type { GolfPlayerDetail, GolfPlayerRow } from '../modules/golf/golf-player-service';
 import type { GolfRoundScoreRow, GolfScorePreviewRow } from '../modules/golf/golf-score-service';
 
-export function toAdminGolfLeagueDto(league: SportLeagueRow): AdminGolfLeagueDto {
+export function toAdminGolfLeagueDto(league: SportLeague): AdminGolfLeagueDto {
   return {
     id: league.id,
     sportId: league.sportId,
@@ -48,7 +49,7 @@ export function toAdminGolfLeagueDto(league: SportLeagueRow): AdminGolfLeagueDto
 export function toAdminGolfLeagueSummaryDto(league: SportLeagueSummary): AdminGolfLeagueSummaryDto {
   return {
     ...toAdminGolfLeagueDto(league),
-    rosterSize: league.rosterSize,
+    rosterSize: league.affiliationCount,
     seasonCount: league.seasonCount,
   };
 }
@@ -57,27 +58,34 @@ export function toAdminGolfLeagueSummaryDtoList(leagues: SportLeagueSummary[]): 
   return leagues.map(toAdminGolfLeagueSummaryDto);
 }
 
-export function toAdminGolfLeagueRosterEntryDto(entry: LeagueRosterEntry): AdminGolfLeagueRosterEntryDto {
-  return { ...entry };
+export function toAdminGolfLeagueRosterEntryDto(entry: ParticipantLeagueAffiliation): AdminGolfLeagueRosterEntryDto {
+  return {
+    participantId: entry.participantId,
+    name: entry.participant.name,
+    shortName: entry.participant.shortName ?? null,
+    nationality: entry.participant.nationality ?? null,
+    status: entry.participant.status,
+    ranking: entry.ranking,
+  };
 }
 
-export function toAdminGolfLeagueRosterEntryDtoList(entries: LeagueRosterEntry[]): AdminGolfLeagueRosterEntryDto[] {
+export function toAdminGolfLeagueRosterEntryDtoList(entries: ParticipantLeagueAffiliation[]): AdminGolfLeagueRosterEntryDto[] {
   return entries.map(toAdminGolfLeagueRosterEntryDto);
 }
 
 export function toAdminGolfLeagueRosterUploadPreviewRowDto(
-  row: LeagueRosterUploadPreviewRow,
+  row: AffiliationUploadPreviewRow,
 ): AdminGolfLeagueRosterUploadPreviewRowDto {
   return { ...row };
 }
 
 export function toAdminGolfLeagueRosterUploadPreviewRowDtoList(
-  rows: LeagueRosterUploadPreviewRow[],
+  rows: AffiliationUploadPreviewRow[],
 ): AdminGolfLeagueRosterUploadPreviewRowDto[] {
   return rows.map(toAdminGolfLeagueRosterUploadPreviewRowDto);
 }
 
-export function toAdminGolfSeasonDto(season: SeasonRow): AdminGolfSeasonDto {
+export function toAdminGolfSeasonDto(season: Season): AdminGolfSeasonDto {
   return {
     id: season.id,
     sportLeagueId: season.sportLeagueId,

@@ -1,12 +1,24 @@
 import { Sport } from '@poolmaster/shared/domain';
+import type { Participant, SportLeague } from '@poolmaster/shared/domain';
+import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
-  SportLeagueService,
-} from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+  fakeParticipantLeagueAffiliationRepo,
+  fakeParticipantRepo,
+  fakeSeasonRepo,
+  fakeSportLeagueRepo,
+  fakeSportRepo,
+} from '../../support/repo-fakes';
 
-function buildLeagueRow(overrides: Record<string, unknown> = {}) {
+// SportLeagueService's own logic: resolving the sport, merging counts, the duplicate
+// guards, and resolving upload rows. What the repositories do with a write (atomicity,
+// ordering, scoping) is asserted against Postgres in sport-catalog-repositories.integration.
+
+const GOLF = { id: 'sport-golf', name: Sport.GOLF } as never;
+
+function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return {
-    id: 'league-1',
-    sportId: 'sport-1',
+    id: 'sl-pga',
+    sportId: 'sport-golf',
     name: 'PGA Tour',
     matchKeyword: 'PGA',
     currentSeasonId: null,
@@ -17,241 +29,145 @@ function buildLeagueRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('SportLeagueService.listLeagues / createLeague / updateLeague', () => {
-  it('pool-master-2re lists leagues scoped to the resolved Sport row with roster/season counts', async () => {
-    const prisma = {
-      sport: { findUnique: jest.fn().mockResolvedValue({ id: 'sport-1' }) },
-      sportLeague: {
-        findMany: jest.fn().mockResolvedValue([
-          { ...buildLeagueRow(), _count: { affiliations: 144, seasons: 3 } },
-        ]),
-      },
-    };
-    const service = new SportLeagueService(prisma as any);
+function participant(id: string, name: string): Participant {
+  return { id, name } as Participant;
+}
 
-    const result = await service.listLeagues(Sport.GOLF, { isActive: true });
+function buildService(overrides: {
+  sports?: Parameters<typeof fakeSportRepo>[0];
+  sportLeagues?: Parameters<typeof fakeSportLeagueRepo>[0];
+  seasons?: Parameters<typeof fakeSeasonRepo>[0];
+  affiliations?: Parameters<typeof fakeParticipantLeagueAffiliationRepo>[0];
+  participants?: Parameters<typeof fakeParticipantRepo>[0];
+} = {}) {
+  const deps = {
+    sports: fakeSportRepo({ findByName: jest.fn().mockResolvedValue(GOLF), ...overrides.sports }),
+    sportLeagues: fakeSportLeagueRepo({ findById: jest.fn().mockResolvedValue(sportLeague()), ...overrides.sportLeagues }),
+    seasons: fakeSeasonRepo(overrides.seasons),
+    affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
+    participants: fakeParticipantRepo(overrides.participants),
+  };
+  return { service: new SportLeagueService(deps), deps };
+}
 
-    expect(prisma.sport.findUnique).toHaveBeenCalledWith({ where: { name: Sport.GOLF } });
-    expect(prisma.sportLeague.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { sportId: 'sport-1', isActive: true } }),
-    );
-    expect(result).toEqual([expect.objectContaining({ name: 'PGA Tour', rosterSize: 144, seasonCount: 3 })]);
-  });
-
-  it('pool-master-2re throws SPORT_NOT_FOUND when no Sport row exists yet', async () => {
-    const prisma = { sport: { findUnique: jest.fn().mockResolvedValue(null) } };
-    const service = new SportLeagueService(prisma as any);
-
-    await expect(service.listLeagues(Sport.GOLF)).rejects.toMatchObject({
-      code: 'SPORT_NOT_FOUND',
-      statusCode: 404,
+describe('SportLeagueService — sport leagues', () => {
+  it('lists the sport\'s sport leagues with their affiliation and season counts, zero where there are none', async () => {
+    const { service } = buildService({
+      sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
+      affiliations: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
+      seasons: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
+
+    const result = await service.listSportLeagues(Sport.GOLF, { isActive: true });
+
+    expect(result.map((row) => [row.name, row.affiliationCount, row.seasonCount])).toEqual([
+      ['PGA Tour', 144, 3],
+      ['Champions Tour', 0, 0],
+    ]);
   });
 
-  it('pool-master-2re creates a league, e.g. adding Champions Tour is one call, not a migration', async () => {
-    const prisma = {
-      sport: { findUnique: jest.fn().mockResolvedValue({ id: 'sport-1' }) },
-      sportLeague: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(buildLeagueRow({ name: 'Champions Tour', matchKeyword: undefined })),
-      },
-    };
-    const service = new SportLeagueService(prisma as any);
+  it('fails with 404 SPORT_NOT_FOUND when the sport has no Sport row yet', async () => {
+    const { service } = buildService({ sports: { findByName: jest.fn().mockResolvedValue(null) } });
 
-    await service.createLeague(Sport.GOLF, { name: 'Champions Tour' });
-
-    expect(prisma.sportLeague.create).toHaveBeenCalledWith({
-      data: { sportId: 'sport-1', name: 'Champions Tour', matchKeyword: null },
-    });
+    await expect(service.listSportLeagues(Sport.GOLF)).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });
   });
 
-  it('pool-master-2re rejects creating a league with a name already used for the sport', async () => {
-    const prisma = {
-      sport: { findUnique: jest.fn().mockResolvedValue({ id: 'sport-1' }) },
-      sportLeague: { findUnique: jest.fn().mockResolvedValue(buildLeagueRow()) },
-    };
-    const service = new SportLeagueService(prisma as any);
+  it('creates a sport league — adding the Champions Tour is one call, not a migration', async () => {
+    const { service } = buildService();
 
-    await expect(service.createLeague(Sport.GOLF, { name: 'PGA Tour' })).rejects.toMatchObject({
-      code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS',
-      statusCode: 409,
-    });
+    const created = await service.createSportLeague(Sport.GOLF, { name: 'Champions Tour' });
+
+    expect(created).toMatchObject({ sportId: 'sport-golf', name: 'Champions Tour', matchKeyword: null });
   });
 
-  it('pool-master-2re updates only the provided fields (rename/matchKeyword/deactivate)', async () => {
-    const update = jest.fn().mockResolvedValue(buildLeagueRow({ isActive: false }));
-    const prisma = { sportLeague: { update } };
-    const service = new SportLeagueService(prisma as any);
+  it('rejects a sport league name already used for the sport with 409', async () => {
+    const { service } = buildService({ sportLeagues: { findBySportAndName: jest.fn().mockResolvedValue(sportLeague()) } });
 
-    await service.updateLeague('league-1', { isActive: false });
-
-    expect(update).toHaveBeenCalledWith({ where: { id: 'league-1' }, data: { isActive: false } });
+    await expect(service.createSportLeague(Sport.GOLF, { name: 'PGA Tour' }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
   });
 });
 
-describe('SportLeagueService roster CRUD', () => {
-  it('pool-master-2re adds a roster entry, rejecting a duplicate affiliation', async () => {
-    const prisma = {
-      participantLeagueAffiliation: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue({
-          participantId: 'p-1',
-          ranking: null,
-          participant: { name: 'Scottie Scheffler', shortName: null, nationality: 'US', status: 'ACTIVE' },
-        }),
-      },
-    };
-    const service = new SportLeagueService(prisma as any);
+describe('SportLeagueService — affiliations', () => {
+  it('affiliates a participant, and rejects affiliating them twice with 409', async () => {
+    const { service } = buildService();
+    await expect(service.addAffiliation('sl-pga', 'p-rory')).resolves.toMatchObject({ participantId: 'p-rory' });
 
-    const entry = await service.addRosterEntry('league-1', 'p-1');
-
-    expect(entry).toEqual(expect.objectContaining({ participantId: 'p-1', name: 'Scottie Scheffler' }));
-
-    prisma.participantLeagueAffiliation.findUnique.mockResolvedValue({ participantId: 'p-1' });
-    await expect(service.addRosterEntry('league-1', 'p-1')).rejects.toMatchObject({
-      code: 'LEAGUE_ROSTER_ENTRY_ALREADY_EXISTS',
-      statusCode: 409,
+    const { service: again } = buildService({
+      affiliations: { find: jest.fn().mockResolvedValue({ participantId: 'p-rory' }) },
     });
-  });
-
-  it('pool-master-2re removes a roster entry (leaving the tour) distinct from retiring', async () => {
-    const del = jest.fn().mockResolvedValue(undefined);
-    const prisma = { participantLeagueAffiliation: { delete: del } };
-    const service = new SportLeagueService(prisma as any);
-
-    await service.removeRosterEntry('league-1', 'p-1');
-
-    expect(del).toHaveBeenCalledWith({
-      where: { participantId_sportLeagueId: { participantId: 'p-1', sportLeagueId: 'league-1' } },
-    });
-  });
-
-  it('pool-master-2re bulk-patches ranking for multiple roster entries in one transaction', async () => {
-    const update = jest.fn().mockResolvedValue(undefined);
-    const findMany = jest.fn().mockResolvedValue([]);
-    const prisma = {
-      participantLeagueAffiliation: { update, findMany },
-      $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
-    };
-    const service = new SportLeagueService(prisma as any);
-
-    await service.bulkUpdateRoster('league-1', [
-      { participantId: 'p-1', ranking: 3 },
-      { participantId: 'p-2', ranking: 7 },
-    ]);
-
-    expect(update).toHaveBeenCalledTimes(2);
-    expect(update).toHaveBeenCalledWith({
-      where: { participantId_sportLeagueId: { participantId: 'p-1', sportLeagueId: 'league-1' } },
-      data: { ranking: 3 },
-    });
+    await expect(again.addAffiliation('sl-pga', 'p-rory'))
+      .rejects.toMatchObject({ code: 'LEAGUE_ROSTER_ENTRY_ALREADY_EXISTS', statusCode: 409 });
   });
 });
 
-describe('SportLeagueService roster upload preview/apply', () => {
-  it('pool-master-2re resolves by participantId first, without a DB name/externalId lookup', async () => {
-    const prisma = {
-      sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) },
-      participant: { findFirst: jest.fn().mockResolvedValue({ id: 'p-1', name: 'Scottie Scheffler' }) },
-    };
-    const service = new SportLeagueService(prisma as any);
+describe('SportLeagueService — affiliation upload', () => {
+  it('resolves by participantId, then externalId, then exact case-insensitive name, within the sport league\'s sport', async () => {
+    const findMatching = jest.fn().mockImplementation(async (sportId: string, query: { id?: string; externalId?: string; name?: string }) => {
+      if (sportId !== 'sport-golf') return [];
+      if (query.id === 'p-1') return [participant('p-1', 'Scottie Scheffler')];
+      if (query.externalId === 'owgr-2') return [participant('p-2', 'Rory McIlroy')];
+      if (query.name === 'jon rahm') return [participant('p-3', 'Jon Rahm')];
+      return [];
+    });
+    const { service } = buildService({ participants: { findMatching } });
 
-    const preview = await service.previewRosterUpload('league-1', [{ participantId: 'p-1' }]);
-
-    expect(preview).toEqual([
-      { row: { participantId: 'p-1' }, resolution: 'MATCHED', participantId: 'p-1', participantName: 'Scottie Scheffler' },
-    ]);
-    expect(prisma.participant.findFirst).toHaveBeenCalledWith({ where: { id: 'p-1', sportId: 'sport-1' } });
-  });
-
-  it('pool-master-2re falls back to externalId, then to an exact case-insensitive playerName match', async () => {
-    const prisma = {
-      sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) },
-      participant: {
-        findMany: jest.fn()
-          .mockResolvedValueOnce([{ id: 'p-2', name: 'Rory McIlroy' }]) // externalId lookup
-          .mockResolvedValueOnce([{ id: 'p-3', name: 'Jon Rahm' }]), // playerName lookup
-      },
-    };
-    const service = new SportLeagueService(prisma as any);
-
-    const preview = await service.previewRosterUpload('league-1', [
-      { externalId: 'ext-2' },
-      { playerName: 'jon rahm' },
+    const preview = await service.previewAffiliationUpload('sl-pga', [
+      { participantId: 'p-1', externalId: 'ignored', ranking: 1 },
+      { externalId: 'owgr-2', ranking: 2 },
+      { playerName: 'jon rahm', ranking: 3 },
     ]);
 
-    expect(preview[0]).toMatchObject({ resolution: 'MATCHED', participantId: 'p-2' });
-    expect(preview[1]).toMatchObject({ resolution: 'MATCHED', participantId: 'p-3' });
-    expect(prisma.participant.findMany).toHaveBeenNthCalledWith(2, {
-      where: { sportId: 'sport-1', name: { equals: 'jon rahm', mode: 'insensitive' } },
-    });
+    expect(preview.map((row) => [row.resolution, row.participantId, row.participantName])).toEqual([
+      ['MATCHED', 'p-1', 'Scottie Scheffler'],
+      ['MATCHED', 'p-2', 'Rory McIlroy'],
+      ['MATCHED', 'p-3', 'Jon Rahm'],
+    ]);
   });
 
-  it('pool-master-2re marks a row AMBIGUOUS when more than one Participant matches, UNRESOLVED when none do', async () => {
-    const prisma = {
-      sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) },
-      participant: {
-        findMany: jest.fn()
-          .mockResolvedValueOnce([{ id: 'p-4' }, { id: 'p-5' }]) // ambiguous
-          .mockResolvedValueOnce([]), // unresolved
-      },
-    };
-    const service = new SportLeagueService(prisma as any);
+  it('marks a row AMBIGUOUS when several participants match, and UNRESOLVED when none do or no identifier is given', async () => {
+    const findMatching = jest.fn().mockImplementation(async (_sportId: string, query: { name?: string }) => (
+      query.name === 'Smith' ? [participant('p-a', 'Smith'), participant('p-b', 'Smith')] : []
+    ));
+    const { service } = buildService({ participants: { findMatching } });
 
-    const preview = await service.previewRosterUpload('league-1', [
-      { playerName: 'John Smith' },
-      { playerName: 'Nobody Real' },
+    const preview = await service.previewAffiliationUpload('sl-pga', [
+      { playerName: 'Smith' },
+      { playerName: 'Nobody' },
+      { ranking: 5 },
     ]);
 
-    expect(preview[0].resolution).toBe('AMBIGUOUS');
-    expect(preview[1].resolution).toBe('UNRESOLVED');
+    expect(preview.map((row) => row.resolution)).toEqual(['AMBIGUOUS', 'UNRESOLVED', 'UNRESOLVED']);
+    expect(preview.every((row) => row.participantId === null)).toBe(true);
   });
 
-  it('pool-master-2re never creates a Participant from an upload row — a row with no identifier is UNRESOLVED', async () => {
-    const prisma = { sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) } };
-    const service = new SportLeagueService(prisma as any);
+  it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
+    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
 
-    const preview = await service.previewRosterUpload('league-1', [{ ranking: 5 }]);
-
-    expect(preview).toEqual([{ row: { ranking: 5 }, resolution: 'UNRESOLVED', participantId: null, participantName: null }]);
+    await expect(service.previewAffiliationUpload('missing', [{ participantId: 'p-1' }]))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
   });
 
-  it('pool-master-2re rejects apply with 422 when any row is unresolved, writing nothing', async () => {
-    const upsert = jest.fn();
-    const prisma = {
-      sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) },
-      participant: { findFirst: jest.fn().mockResolvedValue(null) },
-      participantLeagueAffiliation: { upsert },
-      $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
-    };
-    const service = new SportLeagueService(prisma as any);
+  it('refuses to apply an upload with any unresolved row with 422, handing nothing to the repository', async () => {
+    const { service, deps } = buildService();
 
-    await expect(service.applyRosterUpload('league-1', [{ participantId: 'missing' }])).rejects.toMatchObject({
-      code: 'LEAGUE_ROSTER_UPLOAD_UNRESOLVED_ROWS',
-      statusCode: 422,
-    });
-    expect(upsert).not.toHaveBeenCalled();
+    await expect(service.applyAffiliationUpload('sl-pga', [{ participantId: 'missing' }]))
+      .rejects.toMatchObject({ code: 'LEAGUE_ROSTER_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
+    expect(deps.affiliations.upsertRankings).not.toHaveBeenCalled();
   });
 
-  it('pool-master-2re applies a fully-resolved upload, upserting each affiliation', async () => {
-    const upsert = jest.fn().mockResolvedValue(undefined);
-    const prisma = {
-      sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) },
-      participant: { findFirst: jest.fn().mockResolvedValue({ id: 'p-1', name: 'Scottie Scheffler' }) },
-      participantLeagueAffiliation: {
-        upsert,
-        findMany: jest.fn().mockResolvedValue([]),
+  it('applies a fully resolved upload as one set of rankings, unranked rows as null', async () => {
+    const { service, deps } = buildService({
+      participants: {
+        findMatching: jest.fn().mockImplementation(async (_sportId: string, query: { id?: string }) => [participant(query.id as string, 'x')]),
       },
-      $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
-    };
-    const service = new SportLeagueService(prisma as any);
-
-    await service.applyRosterUpload('league-1', [{ participantId: 'p-1', ranking: 3 }]);
-
-    expect(upsert).toHaveBeenCalledWith({
-      where: { participantId_sportLeagueId: { participantId: 'p-1', sportLeagueId: 'league-1' } },
-      create: { participantId: 'p-1', sportLeagueId: 'league-1', ranking: 3 },
-      update: { ranking: 3 },
     });
+
+    await service.applyAffiliationUpload('sl-pga', [{ participantId: 'p-1', ranking: 4 }, { participantId: 'p-2' }]);
+
+    expect(deps.affiliations.upsertRankings).toHaveBeenCalledWith('sl-pga', [
+      { participantId: 'p-1', ranking: 4 },
+      { participantId: 'p-2', ranking: null },
+    ]);
   });
 });

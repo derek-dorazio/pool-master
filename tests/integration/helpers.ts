@@ -620,12 +620,18 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantRankingSnapshot.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
+  await prisma.participantLeagueAffiliation.deleteMany();
   await prisma.participant.deleteMany();
   // SportEventTier and SportEventRound both have RESTRICT FKs to
   // SportEvent, so they must clear before the SportEvent delete below.
   await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
+  // A sport league points at its current season and every season at its sport league, so
+  // the pointer clears before the seasons, and the seasons before the sport leagues.
+  await prisma.sportLeague.updateMany({ data: { currentSeasonId: null } });
+  await prisma.season.deleteMany();
+  await prisma.sportLeague.deleteMany();
   await prisma.sport.deleteMany();
 
   await prisma.platformRuntimeConfig.deleteMany();

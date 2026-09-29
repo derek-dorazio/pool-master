@@ -212,7 +212,7 @@ export function deriveGolfAutoTransition(input: {
 // --- Readiness (plans/124 §6.3 tournament list) ---
 //
 // The shipped AdminGolfTournamentDto carries no server `readinessStatus`
-// (unlike AdminEventSummaryDto), so readiness is derived here from the counts
+// (unlike SportEventDto), so readiness is derived here from the counts
 // the DTO does carry. Kept deliberately small and branch-tested.
 
 export type GolfTournamentReadiness = {

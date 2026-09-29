@@ -37,23 +37,12 @@ export function participantsModule(fastify: FastifyInstance): void {
   fastify.get('/', {
     schema: {
       tags: ['Participants'],
-      summary: 'Search and list participants',
+      summary: 'List participants',
       description:
-        'Searches and lists participants so contest configuration, scoring, and ingestion-mapping flows can browse the participant catalog.',
+        'The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: '
+        + 'contest setup and ingestion mapping browse it, and a root admin maintains it.',
       operationId: 'listParticipants',
-      querystring: {
-        type: 'object',
-        properties: {
-          q: { type: 'string' },
-          sportId: { type: 'string' },
-          status: { type: 'string' },
-          position: { type: 'string' },
-          team: { type: 'string' },
-          nationality: { type: 'string' },
-          limit: { type: 'string' },
-          offset: { type: 'string' },
-        },
-      },
+      querystring: schemaRef('ParticipantListQuery'),
       response: {
         200: schemaRef('ParticipantListResponse'),
       },
@@ -81,9 +70,9 @@ export function participantsModule(fastify: FastifyInstance): void {
   fastify.post('/', {
     schema: {
       tags: ['Participants'],
-      summary: 'Create a new participant',
+      summary: 'Create a participant',
       description:
-        'Creates a participant record in the shared participant catalog.',
+        'Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'createParticipant',
       body: {
         type: 'object',
@@ -104,6 +93,7 @@ export function participantsModule(fastify: FastifyInstance): void {
       },
       response: {
         201: schemaRef('ParticipantResponse'),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handler.createParticipant,
@@ -114,10 +104,11 @@ export function participantsModule(fastify: FastifyInstance): void {
       tags: ['Participants'],
       summary: 'Update a participant',
       description:
-        'Updates mutable participant fields such as display metadata and identifiers.',
+        'Updates mutable participant fields such as display metadata and identifiers. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'updateParticipant',
       response: {
         200: schemaRef('ParticipantResponse'),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: {

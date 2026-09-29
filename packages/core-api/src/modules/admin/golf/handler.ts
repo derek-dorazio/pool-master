@@ -146,7 +146,7 @@ export function createGolfAdminHandlers(
     request: FastifyRequest<{ Querystring: AdminGolfLeagueListQuery }>,
     reply: FastifyReply,
   ) {
-    const leagues = await sportLeagueService.listLeagues(Sport.GOLF, { isActive: request.query.isActive });
+    const leagues = await sportLeagueService.listSportLeagues(Sport.GOLF, { isActive: request.query.isActive });
     return reply.send({ leagues: toAdminGolfLeagueSummaryDtoList(leagues) });
   }
 
@@ -155,7 +155,7 @@ export function createGolfAdminHandlers(
     reply: FastifyReply,
   ) {
     try {
-      const league = await sportLeagueService.createLeague(Sport.GOLF, request.body);
+      const league = await sportLeagueService.createSportLeague(Sport.GOLF, request.body);
       return reply.status(201).send({ league: toAdminGolfLeagueDto(league) });
     } catch (err) {
       return handleSportCatalogError(err, reply);
@@ -167,7 +167,7 @@ export function createGolfAdminHandlers(
     reply: FastifyReply,
   ) {
     try {
-      const league = await sportLeagueService.updateLeague(request.params.leagueId, request.body);
+      const league = await sportLeagueService.updateSportLeague(request.params.leagueId, request.body);
       return reply.send({ league: toAdminGolfLeagueDto(league) });
     } catch (err) {
       return handleSportCatalogError(err, reply);
@@ -178,7 +178,7 @@ export function createGolfAdminHandlers(
     request: FastifyRequest<{ Params: { leagueId: string } }>,
     reply: FastifyReply,
   ) {
-    const entries = await sportLeagueService.getRoster(request.params.leagueId);
+    const entries = await sportLeagueService.listAffiliations(request.params.leagueId);
     return reply.send({ entries: toAdminGolfLeagueRosterEntryDtoList(entries) });
   }
 
@@ -187,7 +187,7 @@ export function createGolfAdminHandlers(
     reply: FastifyReply,
   ) {
     try {
-      const entry = await sportLeagueService.addRosterEntry(request.params.leagueId, request.body.participantId);
+      const entry = await sportLeagueService.addAffiliation(request.params.leagueId, request.body.participantId);
       return reply.status(201).send({ entry: toAdminGolfLeagueRosterEntryDto(entry) });
     } catch (err) {
       return handleSportCatalogError(err, reply);
@@ -198,7 +198,7 @@ export function createGolfAdminHandlers(
     request: FastifyRequest<{ Params: { leagueId: string; participantId: string } }>,
     reply: FastifyReply,
   ) {
-    await sportLeagueService.removeRosterEntry(request.params.leagueId, request.params.participantId);
+    await sportLeagueService.removeAffiliation(request.params.leagueId, request.params.participantId);
     return reply.status(204).send();
   }
 
@@ -206,7 +206,7 @@ export function createGolfAdminHandlers(
     request: FastifyRequest<{ Params: { leagueId: string }; Body: AdminUpdateGolfLeagueRosterRequest }>,
     reply: FastifyReply,
   ) {
-    const entries = await sportLeagueService.bulkUpdateRoster(request.params.leagueId, request.body.entries);
+    const entries = await sportLeagueService.updateRankings(request.params.leagueId, request.body.entries);
     return reply.send({ entries: toAdminGolfLeagueRosterEntryDtoList(entries) });
   }
 
@@ -214,7 +214,7 @@ export function createGolfAdminHandlers(
     request: FastifyRequest<{ Params: { leagueId: string }; Body: AdminGolfLeagueRosterUploadRequest }>,
     reply: FastifyReply,
   ) {
-    const rows = await sportLeagueService.previewRosterUpload(request.params.leagueId, request.body.rows);
+    const rows = await sportLeagueService.previewAffiliationUpload(request.params.leagueId, request.body.rows);
     return reply.send({ rows: toAdminGolfLeagueRosterUploadPreviewRowDtoList(rows) });
   }
 
@@ -223,7 +223,7 @@ export function createGolfAdminHandlers(
     reply: FastifyReply,
   ) {
     try {
-      const entries = await sportLeagueService.applyRosterUpload(request.params.leagueId, request.body.rows);
+      const entries = await sportLeagueService.applyAffiliationUpload(request.params.leagueId, request.body.rows);
       return reply.send({ entries: toAdminGolfLeagueRosterEntryDtoList(entries) });
     } catch (err) {
       return handleSportCatalogError(err, reply);

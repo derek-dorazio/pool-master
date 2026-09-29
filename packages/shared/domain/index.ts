@@ -3,6 +3,7 @@ export * from './contest-validity';
 export * from './sport-event-lifecycle';
 export * from './providers';
 export * from './system';
+export * from './sport-catalog-types';
 export {
   AggregationDefinitionIdSchema,
   ParticipantScoringDefinitionIdSchema,
@@ -84,7 +85,6 @@ export type {
   PayoutSlot,
   PriceOverride,
   PricingConfig,
-  Season,
   SportConfig,
   Squad,
   SquadMembership,

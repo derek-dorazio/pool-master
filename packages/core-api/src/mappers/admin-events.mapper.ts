@@ -1,19 +1,9 @@
-import type {
-  AdminEventParticipantDto,
-  AdminEventSummaryDto,
-} from '@poolmaster/shared/dto';
+import type { AdminEventParticipantDto } from '@poolmaster/shared/dto';
 import type { ParticipantStandingStatus } from '@prisma/client';
-import type {
-  EventReadinessReasonDto,
-  EventReadinessStatusDto,
-  EventStatusDto,
-} from '@poolmaster/shared/dto/events.dto';
 import {
   deriveLegacyParticipantStatus,
   type ParticipantInactiveReason,
-  type Sport,
 } from '@poolmaster/shared/domain';
-import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
 interface DecimalLike {
   toNumber(): number;
@@ -52,28 +42,6 @@ function mapGolfStandingStatusToDto(
     case 'ACTIVE':
       return 'active';
   }
-}
-
-export interface AdminEventSummaryRow {
-  id: string;
-  externalId: string;
-  providerId: string;
-  sport: string;
-  name: string;
-  venue: string | null;
-  location: string | null;
-  status: string;
-  startDate: Date;
-  endDate: Date | null;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
-  participantCount: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-  _count: {
-    sportEventParticipants: number;
-  };
 }
 
 export interface AdminEventParticipantRow {
@@ -115,41 +83,6 @@ export interface AdminEventParticipantRow {
     displayPosition: string | null;
     asOf: Date | null;
   } | null;
-}
-
-export function mapAdminEventSummaryToDto(
-  row: AdminEventSummaryRow,
-): AdminEventSummaryDto {
-  const loadedParticipantCount = row._count.sportEventParticipants;
-  const operationalState = evaluateEventOperationalState({
-    participantCount: loadedParticipantCount,
-    releaseAt: row.releaseAt,
-    fieldLocksAt: row.fieldLocksAt,
-    providerFieldLocked: row.fieldLocked,
-  });
-
-  return {
-    id: row.id,
-    externalId: row.externalId,
-    providerId: row.providerId,
-    sport: row.sport as Sport,
-    name: row.name,
-    ...(row.venue !== null ? { venue: row.venue } : {}),
-    ...(row.location !== null ? { location: row.location } : {}),
-    status: row.status as EventStatusDto,
-    startDate: row.startDate.toISOString(),
-    ...(row.endDate ? { endDate: row.endDate.toISOString() } : {}),
-    releaseAt: row.releaseAt.toISOString(),
-    fieldLocksAt: row.fieldLocksAt.toISOString(),
-    fieldLocked: operationalState.fieldLocked,
-    ...(row.participantCount !== null ? { participantCount: row.participantCount } : {}),
-    loadedParticipantCount,
-    readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
-    readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
-    contestEligible: operationalState.contestEligible,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  };
 }
 
 export function mapAdminEventParticipantToDto(

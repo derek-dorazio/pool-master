@@ -1,5 +1,5 @@
 import type {
-  EventSummaryDto,
+  SportEventDto,
   GetManagedContestResponses,
   ListManagedContestTemplatesResponses,
 } from "@/lib/api";
@@ -69,10 +69,10 @@ export function ContestTemplatePicker({
 }
 
 type EventReadinessPanelProps = {
-  event: EventSummaryDto;
+  event: SportEventDto;
   formatDateTimeDisplay: (value: string | null) => string;
-  formatReadinessLabel: (event: EventSummaryDto) => string;
-  formatReadinessReasons: (event: EventSummaryDto) => string;
+  formatReadinessLabel: (event: SportEventDto) => string;
+  formatReadinessReasons: (event: SportEventDto) => string;
 };
 
 export function EventReadinessPanel({
@@ -177,9 +177,9 @@ export function InheritedTiersPanel({ tiers }: InheritedTiersPanelProps) {
 }
 
 type NoEligibleEventsAlertProps = {
-  events: EventSummaryDto[];
-  formatReadinessLabel: (event: EventSummaryDto) => string;
-  formatReadinessReasons: (event: EventSummaryDto) => string;
+  events: SportEventDto[];
+  formatReadinessLabel: (event: SportEventDto) => string;
+  formatReadinessReasons: (event: SportEventDto) => string;
 };
 
 export function NoEligibleEventsAlert({

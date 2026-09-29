@@ -91,7 +91,7 @@ describe('events routes', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&status=SCHEDULED&limit=10',
+        url: '/api/v1/events/?sport=UFC&status=SCHEDULED',
         headers: viewer.headers,
       });
 
@@ -206,7 +206,7 @@ describe('events routes', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&limit=100',
+        url: '/api/v1/events/?sport=UFC',
         headers: viewer.headers,
       });
 

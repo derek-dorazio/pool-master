@@ -62,8 +62,8 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     },
     sportLeagueService: {
-      getRoster: jest.fn().mockResolvedValue([
-        { participantId: 'p-1', name: 'Rory McIlroy', shortName: 'R. McIlroy', nationality: 'NIR', status: 'ACTIVE', ranking: 5 },
+      listAffiliations: jest.fn().mockResolvedValue([
+        { participantId: 'p-1', ranking: 5, participant: { name: 'Rory McIlroy', shortName: 'R. McIlroy', nationality: 'NIR', status: 'ACTIVE' } },
       ]),
     },
     random: () => 0.5,
@@ -90,7 +90,7 @@ describe('GolfFieldService.listField', () => {
 
   it('pool-master-6jk sets isLeagueRosterMember false for a golfer not on the league roster', async () => {
     const deps = buildDeps({
-      sportLeagueService: { getRoster: jest.fn().mockResolvedValue([]) },
+      sportLeagueService: { listAffiliations: jest.fn().mockResolvedValue([]) },
     });
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random);
 
@@ -133,10 +133,10 @@ describe('GolfFieldService.seedFieldFromLeagueRoster', () => {
   it('pool-master-6jk filters the roster to ACTIVE participants, skips existing field members, and derives seed/odds only for the added ones', async () => {
     const deps = buildDeps({
       sportLeagueService: {
-        getRoster: jest.fn().mockResolvedValue([
-          { participantId: 'p-existing', name: 'Existing Golfer', shortName: null, nationality: null, status: 'ACTIVE', ranking: 1 },
-          { participantId: 'p-new', name: 'New Golfer', shortName: null, nationality: null, status: 'ACTIVE', ranking: 2 },
-          { participantId: 'p-inactive', name: 'Inactive Golfer', shortName: null, nationality: null, status: 'INACTIVE', ranking: 3 },
+        listAffiliations: jest.fn().mockResolvedValue([
+          { participantId: 'p-existing', ranking: 1, participant: { name: 'Existing Golfer', shortName: null, nationality: null, status: 'ACTIVE' } },
+          { participantId: 'p-new', ranking: 2, participant: { name: 'New Golfer', shortName: null, nationality: null, status: 'ACTIVE' } },
+          { participantId: 'p-inactive', ranking: 3, participant: { name: 'Inactive Golfer', shortName: null, nationality: null, status: 'INACTIVE' } },
         ]),
       },
       prisma: {
@@ -366,7 +366,7 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       ...(overrides.providerRegistry as object ?? {}),
     };
     const sportLeagueService = {
-      getRoster: jest.fn().mockResolvedValue([]),
+      listAffiliations: jest.fn().mockResolvedValue([]),
       ...(overrides.sportLeagueService as object ?? {}),
     };
     return { prisma, provider, providerRegistry, sportLeagueService, random: () => 0.5 };
@@ -514,7 +514,7 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
         }),
       },
       sportLeagueService: {
-        getRoster: jest.fn().mockResolvedValue([
+        listAffiliations: jest.fn().mockResolvedValue([
           { participantId: 'participant-ext-1', ranking: 42 },
         ]),
       },
