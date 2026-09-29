@@ -105,9 +105,10 @@ export interface ContestTimingPolicy extends DomainEntity {
 
 /**
  * Join record linking a provider event to a normalized participant. The
- * Per-event participant state for a normalized event field. World ranking is
- * copied from the latest provider-scoped global ranking snapshot during event
- * hydration; odds and seed are event-scoped values from the event detail feed.
+ * Per-event participant state for a normalized event field. `ranking` is the
+ * rank that applied at this event — copied from the latest provider ranking
+ * snapshot during event hydration, then editable; odds and seed are
+ * event-scoped values from the event detail feed.
  */
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;

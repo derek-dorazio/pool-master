@@ -653,14 +653,12 @@ bound, the answer is a tighter filter or a retention policy, not a page paramete
 
 ### Still to be removed
 
-`adminListUsers` was converted with this rule (#202). Seven operations still page, each
-belonging to a later slice, and each slice removes its own:
+`adminListUsers` was converted with this rule (#202). Four operations still page, all
+belonging to slice 4, which removes them. Slice 2's three went in #235 — `listEvents` and
+`listParticipants` lost their paging, and `adminListEvents` was removed:
 
 | Operation | Paging | Slice |
 |---|---|---|
-| `listEvents` | `limit` | 2 |
-| `listParticipants` | `limit`, `offset` | 2 |
-| `adminListEvents` | `limit` | 2 |
 | `adminListProviderSyncRuns` | `limit` | 4 |
 | `adminSearchErrors` | `page`, `pageSize` | 4 |
 | `adminListAuditLog` | `page`, `pageSize` | 4 |

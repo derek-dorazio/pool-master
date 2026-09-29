@@ -287,7 +287,7 @@ export const GolfLeaderboardParticipantDtoSchema = z.object({
   shortName: z.string().nullable().describe('Optional shorter golfer display name.'),
   isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
   inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  ranking: z.number().int().nullable().describe('Latest copied global world ranking on this event participant.'),
+  ranking: z.number().int().nullable().describe('Rank that applied at this event: seeded from the provider\'s ranking, then editable by an admin. Null when unranked.'),
   oddsToWin: z.number().nullable().describe('Event-scoped odds-to-win for this golfer.'),
   seedNumber: z.number().int().nullable().describe('Event seed/order when supplied by the provider.'),
   totalScoreToPar: z.number().int().nullable().describe('TOT column value: current event total relative to par. Lower is better.'),
