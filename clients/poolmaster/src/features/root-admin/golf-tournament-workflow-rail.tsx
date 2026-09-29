@@ -8,9 +8,8 @@ import {
   deriveGolfAutoTransition,
   formatSportEventStatus,
   resolveGolfLifecycleStage,
-  type AdminGolfTournamentDetail,
-  type AdminGolfTournamentRound,
 } from './golf-admin-utils';
+import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
  * plans/124 §6.3 block 2 — the horizontal lifecycle rail
@@ -21,8 +20,8 @@ export function GolfTournamentWorkflowRail({
   rounds,
   tournament,
 }: {
-  rounds: readonly AdminGolfTournamentRound[];
-  tournament: AdminGolfTournamentDetail;
+  rounds: readonly SportEventRoundDto[];
+  tournament: SportEventDto;
 }) {
   const stage = resolveGolfLifecycleStage({
     status: tournament.status,

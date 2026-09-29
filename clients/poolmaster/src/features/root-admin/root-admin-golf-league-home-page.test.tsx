@@ -5,21 +5,28 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfLeagueHomePage } from './root-admin-golf-league-home-page';
+import {
+  GOLF_SPORT_FIXTURE,
+  affiliationFixture,
+  participantFixture,
+  sportLeagueFixture,
+} from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/leagues/:leagueId Tour Home (pool-master-qqs):
 // details edit + active toggle + roster grid (inline rank edit, add, remove) +
 // bulk-upload flow.
 
 const {
-  adminListGolfLeaguesMock,
-  adminGetGolfLeagueRosterMock,
-  adminUpdateGolfLeagueMock,
-  adminUpdateGolfLeagueRosterMock,
-  adminListGolfPlayersMock,
-  adminAddGolfLeagueRosterEntryMock,
-  adminRemoveGolfLeagueRosterEntryMock,
-  adminPreviewGolfLeagueRosterUploadMock,
-  adminApplyGolfLeagueRosterUploadMock,
+  listSportLeaguesMock,
+  listParticipantLeagueAffiliationsMock,
+  updateSportLeagueMock,
+  updateParticipantLeagueAffiliationRankingsMock,
+  listParticipantsMock,
+  listSportsMock,
+  createParticipantLeagueAffiliationMock,
+  deleteParticipantLeagueAffiliationMock,
+  previewParticipantLeagueAffiliationUploadMock,
+  applyParticipantLeagueAffiliationUploadMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -32,29 +39,31 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminListGolfLeaguesMock: vi.fn(),
-    adminGetGolfLeagueRosterMock: vi.fn(),
-    adminUpdateGolfLeagueMock: vi.fn(),
-    adminUpdateGolfLeagueRosterMock: vi.fn(),
-    adminListGolfPlayersMock: vi.fn(),
-    adminAddGolfLeagueRosterEntryMock: vi.fn(),
-    adminRemoveGolfLeagueRosterEntryMock: vi.fn(),
-    adminPreviewGolfLeagueRosterUploadMock: vi.fn(),
-    adminApplyGolfLeagueRosterUploadMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
+    listParticipantLeagueAffiliationsMock: vi.fn(),
+    updateSportLeagueMock: vi.fn(),
+    updateParticipantLeagueAffiliationRankingsMock: vi.fn(),
+    listParticipantsMock: vi.fn(),
+    listSportsMock: vi.fn(),
+    createParticipantLeagueAffiliationMock: vi.fn(),
+    deleteParticipantLeagueAffiliationMock: vi.fn(),
+    previewParticipantLeagueAffiliationUploadMock: vi.fn(),
+    applyParticipantLeagueAffiliationUploadMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminListGolfLeagues: adminListGolfLeaguesMock,
-  adminGetGolfLeagueRoster: adminGetGolfLeagueRosterMock,
-  adminUpdateGolfLeague: adminUpdateGolfLeagueMock,
-  adminUpdateGolfLeagueRoster: adminUpdateGolfLeagueRosterMock,
-  adminListGolfPlayers: adminListGolfPlayersMock,
-  adminAddGolfLeagueRosterEntry: adminAddGolfLeagueRosterEntryMock,
-  adminRemoveGolfLeagueRosterEntry: adminRemoveGolfLeagueRosterEntryMock,
-  adminPreviewGolfLeagueRosterUpload: adminPreviewGolfLeagueRosterUploadMock,
-  adminApplyGolfLeagueRosterUpload: adminApplyGolfLeagueRosterUploadMock,
+  listSportLeagues: listSportLeaguesMock,
+  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
+  updateSportLeague: updateSportLeagueMock,
+  updateParticipantLeagueAffiliationRankings: updateParticipantLeagueAffiliationRankingsMock,
+  listParticipants: listParticipantsMock,
+  listSports: listSportsMock,
+  createParticipantLeagueAffiliation: createParticipantLeagueAffiliationMock,
+  deleteParticipantLeagueAffiliation: deleteParticipantLeagueAffiliationMock,
+  previewParticipantLeagueAffiliationUpload: previewParticipantLeagueAffiliationUploadMock,
+  applyParticipantLeagueAffiliationUpload: applyParticipantLeagueAffiliationUploadMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -63,39 +72,36 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function league(overrides: Record<string, unknown> = {}) {
-  return {
+function league(overrides: Parameters<typeof sportLeagueFixture>[0] = {}) {
+  return sportLeagueFixture({
     id: 'pga',
-    sportId: 'sport-golf',
-    name: 'PGA Tour',
-    matchKeyword: 'PGA',
     currentSeasonId: 'season-2026',
-    isActive: true,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    rosterSize: 2,
+    affiliationCount: 2,
     seasonCount: 3,
     ...overrides,
-  };
+  });
 }
 
-function rosterEntry(overrides: Record<string, unknown> = {}) {
-  return {
-    participantId: 'p-rory',
-    name: 'Rory McIlroy',
-    shortName: 'R. McIlroy',
-    nationality: 'NIR',
-    status: 'ACTIVE',
-    ranking: 2,
-    ...overrides,
-  };
+// #236: a roster entry is a ParticipantLeagueAffiliation embedding its participant.
+function rosterEntry({
+  participantId = 'p-rory',
+  name = 'Rory McIlroy',
+  ranking = 2,
+}: { participantId?: string; name?: string; ranking?: number | null } = {}) {
+  return affiliationFixture({
+    sportLeagueId: 'pga',
+    participantId,
+    ranking,
+    participant: participantFixture({ id: participantId, name, shortName: 'R. McIlroy', nationality: 'NIR' }),
+  });
 }
 
 function seed() {
-  adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [league()] } });
-  adminGetGolfLeagueRosterMock.mockResolvedValue({
+  listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league()] } });
+  listParticipantLeagueAffiliationsMock.mockResolvedValue({
     data: {
-      entries: [
+      affiliations: [
         rosterEntry(),
         rosterEntry({ participantId: 'p-scottie', name: 'Scottie Scheffler', ranking: 1 }),
       ],
@@ -141,8 +147,9 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
   });
 
   it('pool-master-qqs shows a not-found state when the tour id is unknown', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [league()] } });
-    adminGetGolfLeagueRosterMock.mockResolvedValue({ data: { entries: [] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league()] } });
+    listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: {
+      affiliations: [] } });
 
     renderPage('missing');
 
@@ -150,21 +157,23 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
   });
 
   it('pool-master-qqs surfaces the tour load error', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({
+    listSportLeaguesMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Tour index offline' },
       response: { status: 500 },
     });
-    adminGetGolfLeagueRosterMock.mockResolvedValue({ data: { entries: [] } });
+    listParticipantLeagueAffiliationsMock.mockResolvedValue({ data: {
+      affiliations: [] } });
 
     renderPage();
 
     expect(await screen.findByText('Tour index offline')).toBeInTheDocument();
   });
 
-  it('pool-master-qqs collects an inline world-ranking edit into a dirty bar and saves the changed row only', async () => {
+  it('pool-master-qqs collects an inline ranking edit into a dirty bar and saves the changed row only', async () => {
     seed();
-    adminUpdateGolfLeagueRosterMock.mockResolvedValue({
-      data: { entries: [rosterEntry({ ranking: 5 })] },
+    updateParticipantLeagueAffiliationRankingsMock.mockResolvedValue({
+      data: {
+      affiliations: [rosterEntry({ ranking: 5 })] },
     });
     renderPage();
 
@@ -179,10 +188,10 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-league-roster-save'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfLeagueRosterMock).toHaveBeenCalledWith(
+      expect(updateParticipantLeagueAffiliationRankingsMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { leagueId: 'pga' },
-          body: { entries: [{ participantId: 'p-rory', ranking: 5 }] },
+          path: { sportLeagueId: 'pga' },
+          body: { rankings: [{ participantId: 'p-rory', ranking: 5 }] },
         }),
       ),
     );
@@ -204,44 +213,16 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
 
   it('pool-master-qqs adds a golfer via the picker, excluding roster members', async () => {
     seed();
-    adminListGolfPlayersMock.mockResolvedValue({
+    listParticipantsMock.mockResolvedValue({
       data: {
-        players: [
-          {
-            id: 'p-rory',
-            name: 'Rory McIlroy',
-            firstName: 'Rory',
-            lastName: 'McIlroy',
-            shortName: 'R. McIlroy',
-            nationality: 'NIR',
-            position: '',
-            teamAffiliation: '',
-            externalId: 'rory-1',
-            status: 'ACTIVE',
-            providerMappingCount: 1,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
-          {
-            id: 'p-jon',
-            name: 'Jon Rahm',
-            firstName: 'Jon',
-            lastName: 'Rahm',
-            shortName: 'J. Rahm',
-            nationality: 'ESP',
-            position: '',
-            teamAffiliation: '',
-            externalId: 'jon-1',
-            status: 'ACTIVE',
-            providerMappingCount: 1,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-          },
+        participants: [
+          participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
+          participantFixture({ id: 'p-jon', name: 'Jon Rahm' }),
         ],
       },
     });
-    adminAddGolfLeagueRosterEntryMock.mockResolvedValue({
-      data: { entry: rosterEntry({ participantId: 'p-jon', name: 'Jon Rahm' }) },
+    createParticipantLeagueAffiliationMock.mockResolvedValue({
+      data: { affiliation: rosterEntry({ participantId: 'p-jon', name: 'Jon Rahm' }) },
     });
     renderPage();
 
@@ -256,16 +237,20 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     await userEvent.click(within(modal).getByText('Jon Rahm'));
     await userEvent.click(screen.getByTestId('root-admin-golf-league-roster-add-modal-apply'));
 
+    // The picker lists the golf sport's active participants.
+    expect(listParticipantsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
+    );
     await waitFor(() =>
-      expect(adminAddGolfLeagueRosterEntryMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { leagueId: 'pga' }, body: { participantId: 'p-jon' } }),
+      expect(createParticipantLeagueAffiliationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { participantId: 'p-jon' } }),
       ),
     );
   });
 
   it('pool-master-qqs removes a golfer behind a confirmation', async () => {
     seed();
-    adminRemoveGolfLeagueRosterEntryMock.mockResolvedValue({ data: null, response: { status: 204 } });
+    deleteParticipantLeagueAffiliationMock.mockResolvedValue({ data: null, response: { status: 204 } });
     renderPage();
 
     await userEvent.click(
@@ -276,15 +261,15 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminRemoveGolfLeagueRosterEntryMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { leagueId: 'pga', participantId: 'p-rory' } }),
+      expect(deleteParticipantLeagueAffiliationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ path: { sportLeagueId: 'pga', participantId: 'p-rory' } }),
       ),
     );
   });
 
   it('pool-master-qqs previews then applies a roster bulk upload', async () => {
     seed();
-    adminPreviewGolfLeagueRosterUploadMock.mockResolvedValue({
+    previewParticipantLeagueAffiliationUploadMock.mockResolvedValue({
       data: {
         rows: [
           {
@@ -296,8 +281,9 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
         ],
       },
     });
-    adminApplyGolfLeagueRosterUploadMock.mockResolvedValue({
-      data: { entries: [rosterEntry()] },
+    applyParticipantLeagueAffiliationUploadMock.mockResolvedValue({
+      data: {
+      affiliations: [rosterEntry()] },
     });
     renderPage();
 
@@ -317,9 +303,9 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-league-roster-upload-apply'));
 
     await waitFor(() =>
-      expect(adminApplyGolfLeagueRosterUploadMock).toHaveBeenCalledWith(
+      expect(applyParticipantLeagueAffiliationUploadMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { leagueId: 'pga' },
+          path: { sportLeagueId: 'pga' },
           body: { rows: [{ playerName: 'Rory McIlroy', ranking: 2 }] },
         }),
       ),

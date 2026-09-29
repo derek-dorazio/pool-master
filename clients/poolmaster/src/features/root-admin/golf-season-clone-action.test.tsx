@@ -9,7 +9,7 @@ import { GolfSeasonCloneAction } from './golf-season-clone-action';
 
 // plans/124 §6.3 / §4.2a — "Clone to next year" (pool-master-pcd).
 
-const { adminCloneGolfSeasonMock, navigateMock, mockLogger } = vi.hoisted(() => {
+const { cloneSeasonMock, navigateMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -19,10 +19,10 @@ const { adminCloneGolfSeasonMock, navigateMock, mockLogger } = vi.hoisted(() => 
     child: vi.fn(),
   };
   logger.child.mockReturnValue(logger);
-  return { adminCloneGolfSeasonMock: vi.fn(), navigateMock: vi.fn(), mockLogger: logger };
+  return { cloneSeasonMock: vi.fn(), navigateMock: vi.fn(), mockLogger: logger };
 });
 
-bindApiMocks({ adminCloneGolfSeason: adminCloneGolfSeasonMock });
+bindApiMocks({ cloneSeason: cloneSeasonMock });
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -46,7 +46,7 @@ function season(overrides: Record<string, unknown> = {}) {
     isActive: true,
     createdAt: '2025-06-01T00:00:00.000Z',
     updatedAt: '2025-06-01T00:00:00.000Z',
-    tournamentCount: 6,
+    sportEventCount: 6,
     isCurrent: false,
     ...overrides,
   };
@@ -71,8 +71,8 @@ describe('pool-master-pcd GolfSeasonCloneAction', () => {
   });
 
   it('pool-master-pcd previews the count + target year, then clones and navigates to the new season Home', async () => {
-    adminCloneGolfSeasonMock.mockResolvedValue({
-      data: { season: { ...season({ id: 'season-2027', name: 'PGA Tour 2027', year: 2027 }) }, tournamentsCloned: 6 },
+    cloneSeasonMock.mockResolvedValue({
+      data: { season: { ...season({ id: 'season-2027', name: 'PGA Tour 2027', year: 2027 }) }, clonedEventCount: 6 },
     });
     renderAction();
 
@@ -84,7 +84,7 @@ describe('pool-master-pcd GolfSeasonCloneAction', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-season-home-clone-confirm'));
 
     await waitFor(() =>
-      expect(adminCloneGolfSeasonMock).toHaveBeenCalledWith(
+      expect(cloneSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({ path: { seasonId: 'season-2026' }, body: {} }),
       ),
     );
@@ -94,7 +94,7 @@ describe('pool-master-pcd GolfSeasonCloneAction', () => {
   });
 
   it('pool-master-pcd surfaces a SEASON_YEAR_ALREADY_EXISTS conflict with specific copy', async () => {
-    adminCloneGolfSeasonMock.mockResolvedValue({
+    cloneSeasonMock.mockResolvedValue({
       error: { code: 'SEASON_YEAR_ALREADY_EXISTS', message: 'exists' },
       response: { status: 409 },
     });
@@ -110,7 +110,7 @@ describe('pool-master-pcd GolfSeasonCloneAction', () => {
   });
 
   it('pool-master-pcd shows the generic fallback and does not navigate on an unmapped error', async () => {
-    adminCloneGolfSeasonMock.mockResolvedValue({
+    cloneSeasonMock.mockResolvedValue({
       error: { code: 'INTERNAL' },
       response: { status: 500 },
     });
@@ -126,7 +126,7 @@ describe('pool-master-pcd GolfSeasonCloneAction', () => {
   });
 
   it('pool-master-pcd singularises the count copy for a one-tournament season', async () => {
-    renderAction({ tournamentCount: 1 });
+    renderAction({ sportEventCount: 1 });
     await userEvent.click(screen.getByTestId('root-admin-golf-season-home-clone'));
     expect(
       screen.getByText(/1 tournament will be copied to a new 2027 season/i),

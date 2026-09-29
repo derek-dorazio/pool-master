@@ -4,21 +4,22 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-home-page';
+import { sportEventFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — Tournament Home: summary + workflow rail + score source + sections
 // (pool-master-3dg).
 
 const {
-  adminGetGolfSeasonMock,
-  adminGetGolfTournamentMock,
-  adminGetGolfTournamentRoundsMock,
-  adminLinkGolfTournamentScoreSourceMock,
+  getSeasonMock,
+  getEventMock,
+  listEventRoundsMock,
+  linkEventScoreSourceMock,
   adminListProviderCatalogEventsMock,
   adminListProvidersMock,
-  adminTransitionGolfTournamentMock,
-  adminUnlinkGolfTournamentScoreSourceMock,
-  adminUpdateGolfTournamentMock,
-  adminUpdateGolfTournamentRoundsMock,
+  transitionEventMock,
+  unlinkEventScoreSourceMock,
+  updateEventMock,
+  updateEventRoundsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -31,31 +32,31 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminGetGolfSeasonMock: vi.fn(),
-    adminGetGolfTournamentMock: vi.fn(),
-    adminGetGolfTournamentRoundsMock: vi.fn(),
-    adminLinkGolfTournamentScoreSourceMock: vi.fn(),
+    getSeasonMock: vi.fn(),
+    getEventMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
+    linkEventScoreSourceMock: vi.fn(),
     adminListProviderCatalogEventsMock: vi.fn(),
     adminListProvidersMock: vi.fn(),
-    adminTransitionGolfTournamentMock: vi.fn(),
-    adminUnlinkGolfTournamentScoreSourceMock: vi.fn(),
-    adminUpdateGolfTournamentMock: vi.fn(),
-    adminUpdateGolfTournamentRoundsMock: vi.fn(),
+    transitionEventMock: vi.fn(),
+    unlinkEventScoreSourceMock: vi.fn(),
+    updateEventMock: vi.fn(),
+    updateEventRoundsMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminGetGolfSeason: adminGetGolfSeasonMock,
-  adminGetGolfTournament: adminGetGolfTournamentMock,
-  adminGetGolfTournamentRounds: adminGetGolfTournamentRoundsMock,
-  adminLinkGolfTournamentScoreSource: adminLinkGolfTournamentScoreSourceMock,
+  getSeason: getSeasonMock,
+  getEvent: getEventMock,
+  listEventRounds: listEventRoundsMock,
+  linkEventScoreSource: linkEventScoreSourceMock,
   adminListProviderCatalogEvents: adminListProviderCatalogEventsMock,
   adminListProviders: adminListProvidersMock,
-  adminTransitionGolfTournament: adminTransitionGolfTournamentMock,
-  adminUnlinkGolfTournamentScoreSource: adminUnlinkGolfTournamentScoreSourceMock,
-  adminUpdateGolfTournament: adminUpdateGolfTournamentMock,
-  adminUpdateGolfTournamentRounds: adminUpdateGolfTournamentRoundsMock,
+  transitionEvent: transitionEventMock,
+  unlinkEventScoreSource: unlinkEventScoreSourceMock,
+  updateEvent: updateEventMock,
+  updateEventRounds: updateEventRoundsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -64,8 +65,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({
     id: 'tour-1',
     name: 'Rolling Weekend Invitational',
     venue: 'Mock Golf Club',
@@ -79,26 +80,21 @@ function tournament(overrides: Record<string, unknown> = {}) {
     fieldLocked: false,
     seasonId: 'season-1',
     leagueEventId: '',
-    source: 'MANUAL',
     syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
     autoLifecycleEnabled: true,
-    fieldCount: 120,
+    loadedParticipantCount: 120,
     tierCount: 6,
     contestCount: 0,
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
-    workflow: {
-      currentStatus: 'SCHEDULED',
-      allowedTransitions: ['IN_PROGRESS', 'CANCELLED'],
-    },
+    allowedTransitions: ['IN_PROGRESS', 'CANCELLED'],
     ...overrides,
-  };
+  });
 }
 
 function seedDefaults() {
-  adminGetGolfTournamentMock.mockResolvedValue({ data: { tournament: tournament() } });
-  adminGetGolfTournamentRoundsMock.mockResolvedValue({
+  getEventMock.mockResolvedValue({ data: { event: tournament() } });
+  listEventRoundsMock.mockResolvedValue({
     data: {
       rounds: [
         { roundNumber: 1, scheduledDate: '2026-05-07T12:00:00.000Z', scheduledEndAt: '2026-05-07T22:00:00.000Z' },
@@ -106,7 +102,7 @@ function seedDefaults() {
       ],
     },
   });
-  adminGetGolfSeasonMock.mockResolvedValue({
+  getSeasonMock.mockResolvedValue({
     data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
   });
 }
@@ -167,8 +163,8 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
 
   it('pool-master-3dg confirms and applies an allowed lifecycle transition', async () => {
     seedDefaults();
-    adminTransitionGolfTournamentMock.mockResolvedValue({
-      data: { tournament: tournament({ status: 'IN_PROGRESS' }) },
+    transitionEventMock.mockResolvedValue({
+      data: { event: tournament({ status: 'IN_PROGRESS' }) },
     });
     renderPage();
 
@@ -182,7 +178,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminTransitionGolfTournamentMock).toHaveBeenCalledWith({
+      expect(transitionEventMock).toHaveBeenCalledWith({
         path: { eventId: 'tour-1' },
         body: { toStatus: 'IN_PROGRESS' },
       }),
@@ -207,8 +203,8 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
         ],
       },
     });
-    adminLinkGolfTournamentScoreSourceMock.mockResolvedValue({
-      data: { tournament: tournament({ syncScope: 'SCORES_ONLY' }) },
+    linkEventScoreSourceMock.mockResolvedValue({
+      data: { event: tournament({ syncScope: 'SCORES_ONLY' }) },
     });
     renderPage();
 
@@ -227,7 +223,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-link-modal-apply'));
 
     await waitFor(() =>
-      expect(adminLinkGolfTournamentScoreSourceMock).toHaveBeenCalledWith({
+      expect(linkEventScoreSourceMock).toHaveBeenCalledWith({
         path: { eventId: 'tour-1' },
         body: { providerId: 'mock-contest-feed', externalId: 'mock-weekend' },
       }),
@@ -235,11 +231,11 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
   });
 
   it('pool-master-3dg renders a read-only notice and hides editing for a fully provider-owned tournament', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({
-      data: { tournament: tournament({ syncScope: 'FULL' }) },
+    getEventMock.mockResolvedValue({
+      data: { event: tournament({ syncScope: 'FULL' }) },
     });
-    adminGetGolfTournamentRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    adminGetGolfSeasonMock.mockResolvedValue({
+    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    getSeasonMock.mockResolvedValue({
       data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
     });
     renderPage();
@@ -257,10 +253,10 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('pool-master-3dg saves edited summary details through RHF + adminUpdateGolfTournament', async () => {
+  it('pool-master-3dg saves edited summary details through RHF + updateEvent', async () => {
     seedDefaults();
-    adminUpdateGolfTournamentMock.mockResolvedValue({
-      data: { tournament: tournament({ name: 'Renamed Invitational' }) },
+    updateEventMock.mockResolvedValue({
+      data: { event: tournament({ name: 'Renamed Invitational' }) },
     });
     renderPage();
 
@@ -274,9 +270,9 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminUpdateGolfTournamentMock).toHaveBeenCalledTimes(1),
+      expect(updateEventMock).toHaveBeenCalledTimes(1),
     );
-    expect(adminUpdateGolfTournamentMock.mock.calls[0][0]).toMatchObject({
+    expect(updateEventMock.mock.calls[0][0]).toMatchObject({
       path: { eventId: 'tour-1' },
       body: { name: 'Renamed Invitational', rounds: 4 },
     });
@@ -296,13 +292,13 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
 
     await screen.findByText('Name is required');
-    expect(adminUpdateGolfTournamentMock).not.toHaveBeenCalled();
+    expect(updateEventMock).not.toHaveBeenCalled();
   });
 
   it('pool-master-3dg confirms the manage-lifecycle-manually toggle', async () => {
     seedDefaults();
-    adminUpdateGolfTournamentMock.mockResolvedValue({
-      data: { tournament: tournament({ autoLifecycleEnabled: false }) },
+    updateEventMock.mockResolvedValue({
+      data: { event: tournament({ autoLifecycleEnabled: false }) },
     });
     renderPage();
 
@@ -312,7 +308,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminUpdateGolfTournamentMock).toHaveBeenCalledWith({
+      expect(updateEventMock).toHaveBeenCalledWith({
         path: { eventId: 'tour-1' },
         body: { autoLifecycleEnabled: false },
       }),
@@ -321,7 +317,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
 
   it('pool-master-3dg saves an edited round schedule', async () => {
     seedDefaults();
-    adminUpdateGolfTournamentRoundsMock.mockResolvedValue({
+    updateEventRoundsMock.mockResolvedValue({
       data: { rounds: [] },
     });
     renderPage();
@@ -335,9 +331,9 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     fireEvent.click(within(modal).getByTestId('root-admin-golf-tournament-rounds-save'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfTournamentRoundsMock).toHaveBeenCalledTimes(1),
+      expect(updateEventRoundsMock).toHaveBeenCalledTimes(1),
     );
-    const body = (adminUpdateGolfTournamentRoundsMock.mock.calls[0][0] as {
+    const body = (updateEventRoundsMock.mock.calls[0][0] as {
       body: { rounds: Array<Record<string, unknown>> };
     }).body;
     expect(body.rounds[0]).toMatchObject({ roundNumber: 1 });
@@ -345,20 +341,20 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
   });
 
   it('pool-master-3dg unlinks a linked score source after confirmation', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({
+    getEventMock.mockResolvedValue({
       data: {
-        tournament: tournament({
+        event: tournament({
           syncScope: 'SCORES_ONLY',
-          scoreSource: { providerId: 'mock-contest-feed', externalId: 'mock-weekend' },
+          providerId: 'mock-contest-feed', externalId: 'mock-weekend',
         }),
       },
     });
-    adminGetGolfTournamentRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    adminGetGolfSeasonMock.mockResolvedValue({
+    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    getSeasonMock.mockResolvedValue({
       data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
     });
-    adminUnlinkGolfTournamentScoreSourceMock.mockResolvedValue({
-      data: { tournament: tournament({ syncScope: 'NONE' }) },
+    unlinkEventScoreSourceMock.mockResolvedValue({
+      data: { event: tournament({ syncScope: 'NONE' }) },
     });
     renderPage();
 
@@ -370,7 +366,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminUnlinkGolfTournamentScoreSourceMock).toHaveBeenCalledWith({
+      expect(unlinkEventScoreSourceMock).toHaveBeenCalledWith({
         path: { eventId: 'tour-1' },
       }),
     );

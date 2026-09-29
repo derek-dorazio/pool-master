@@ -1,10 +1,10 @@
-import { adminApplyGolfRoundScores, adminPreviewGolfRoundScores } from '@/lib/api';
+import { applyEventGolfRoundScores, previewEventGolfRoundScores } from '@/lib/api';
 import { BulkUploadPanel, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminPreviewGolfRoundScoresResponses } from '@/lib/api';
+import type { GolfRoundScorePreviewResponse } from '@/lib/api';
 import {
   GOLF_ROUND_SCORE_UPLOAD_HEADERS,
   formatGolfRoundStatus,
@@ -12,7 +12,7 @@ import {
   type GolfRoundScoreUploadRow,
 } from './golf-admin-utils';
 
-type PreviewRow = AdminPreviewGolfRoundScoresResponses[200]['rows'][number];
+type PreviewRow = GolfRoundScorePreviewResponse['rows'][number];
 
 const RESOLUTION_TONE: Record<PreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -41,7 +41,7 @@ export function GolfRoundScoreUploadCard({
 }: {
   eventId: string;
   round: number;
-  fieldPlayers: Array<{ playerName: string }>;
+  fieldPlayers: Array<{ externalId?: string; playerName: string }>;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-scores-page',
@@ -49,8 +49,8 @@ export function GolfRoundScoreUploadCard({
 
   const previewMutation = useInvalidatingMutation({
     mutationFn: async (rows: GolfRoundScoreUploadRow[]) => {
-      const response = await adminPreviewGolfRoundScores({
-        path: { eventId, round },
+      const response = await previewEventGolfRoundScores({
+        path: { eventId, roundNumber: round },
         body: { rows },
       });
       if (!response.data?.rows) {
@@ -69,8 +69,8 @@ export function GolfRoundScoreUploadCard({
 
   const applyMutation = useInvalidatingMutation({
     mutationFn: async (rows: GolfRoundScoreUploadRow[]) => {
-      const response = await adminApplyGolfRoundScores({
-        path: { eventId, round },
+      const response = await applyEventGolfRoundScores({
+        path: { eventId, roundNumber: round },
         body: { rows },
       });
       if (response.error) {
@@ -78,7 +78,8 @@ export function GolfRoundScoreUploadCard({
       }
       return response.data;
     },
-    invalidates: [QueryKeys.rootAdmin.golf.roundScores(eventId, round)],
+    // Round scores are read from the field (#236).
+    invalidates: [QueryKeys.rootAdmin.golf.field(eventId)],
     onError: (error) => {
       logger.warn(
         { action: 'golf.roundScore.apply.failed', err: error },
@@ -87,12 +88,12 @@ export function GolfRoundScoreUploadCard({
     },
   });
 
-  // Prefill the template with one row per field golfer (playerName populated,
-  // score cells blank) so the admin only fills in numbers (plans/124 §6.3). The
-  // field DTO carries no externalId, so playerName is the identifier used here.
+  // Prefill the template with one row per field golfer (externalId and playerName
+  // populated, score cells blank) so the admin only fills in numbers (plans/124
+  // §6.3). #236: the field row embeds the participant, so its externalId is known.
   const templateRows =
     fieldPlayers.length > 0
-      ? fieldPlayers.map((golfer) => ['', golfer.playerName, '', '', '', ''])
+      ? fieldPlayers.map((golfer) => [golfer.externalId ?? '', golfer.playerName, '', '', '', ''])
       : undefined;
   const templateSampleRow = ['ext-123', 'Rory McIlroy', 70, -2, 18, 'COMPLETED'];
 

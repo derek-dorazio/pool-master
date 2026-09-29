@@ -4,7 +4,14 @@ import {
   parseDelimitedRecords,
   type BulkUploadFormat,
 } from '@/features/shared/ui/bulk-upload-parse';
-import type { AdminApplyGolfRoundScoresData, AdminGetGolfTournamentResponses, AdminGetGolfTournamentRoundsResponses, AdminListGolfPlayersResponses, AdminListGolfTournamentsResponses, AdminPreviewGolfLeagueRosterUploadData } from '@/lib/api';
+import type {
+  GolfRoundScoreUploadRequest,
+  ParticipantDto,
+  ParticipantLeagueAffiliationUploadRequest,
+  SportEventDto,
+  SportEventParticipantDto,
+  SportEventRoundDto,
+} from '@/lib/api';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -26,15 +33,9 @@ type BadgeTone =
   | 'success'
   | 'warning';
 
-export type AdminGolfTournamentSummary =
-  AdminListGolfTournamentsResponses[200]['tournaments'][number];
-export type AdminGolfTournamentDetail =
-  AdminGetGolfTournamentResponses[200]['tournament'];
-export type AdminGolfTournamentRound =
-  AdminGetGolfTournamentRoundsResponses[200]['rounds'][number];
-
-export type GolfSyncScope = AdminGolfTournamentSummary['syncScope'];
-export type GolfTournamentStatus = AdminGolfTournamentSummary['status'];
+// #236: the golf screens read the shared SportEvent and its rounds, not golf projections.
+export type GolfSyncScope = SportEventDto['syncScope'];
+export type GolfTournamentStatus = SportEventDto['status'];
 
 // --- Sync scope (plans/124 §4.4) ---
 
@@ -154,8 +155,8 @@ export type GolfAutoTransition = {
 };
 
 function sortRoundsAscending(
-  rounds: readonly AdminGolfTournamentRound[],
-): AdminGolfTournamentRound[] {
+  rounds: readonly SportEventRoundDto[],
+): SportEventRoundDto[] {
   return [...rounds].sort((left, right) => left.roundNumber - right.roundNumber);
 }
 
@@ -183,7 +184,7 @@ export function deriveGolfAutoTransition(input: {
   syncScope: GolfSyncScope;
   startDate: string;
   endDate: string | null;
-  rounds: readonly AdminGolfTournamentRound[];
+  rounds: readonly SportEventRoundDto[];
 }): GolfAutoTransition | null {
   if (!input.autoLifecycleEnabled || input.syncScope === SportEventSyncScope.FULL) {
     return null;
@@ -211,9 +212,9 @@ export function deriveGolfAutoTransition(input: {
 
 // --- Readiness (plans/124 §6.3 tournament list) ---
 //
-// The shipped AdminGolfTournamentDto carries no server `readinessStatus`
-// (unlike SportEventDto), so readiness is derived here from the counts
-// the DTO does carry. Kept deliberately small and branch-tested.
+// SportEventDto's own `readinessStatus` answers whether contests can be built on the event;
+// this answers where the admin's setup work stands (field, then tiers), from the counts the
+// DTO carries. Kept deliberately small and branch-tested.
 
 export type GolfTournamentReadiness = {
   label: string;
@@ -223,8 +224,8 @@ export type GolfTournamentReadiness = {
 
 export function deriveGolfTournamentReadiness(
   tournament: Pick<
-    AdminGolfTournamentSummary,
-    'status' | 'fieldLocked' | 'fieldCount' | 'tierCount'
+    SportEventDto,
+    'status' | 'fieldLocked' | 'loadedParticipantCount' | 'tierCount'
   >,
 ): GolfTournamentReadiness {
   if (tournament.status === 'COMPLETED') {
@@ -240,7 +241,7 @@ export function deriveGolfTournamentReadiness(
       reasons: [],
     };
   }
-  if (tournament.fieldCount === 0) {
+  if (tournament.loadedParticipantCount === 0) {
     return { label: 'Setup', tone: 'neutral', reasons: ['No field loaded'] };
   }
   if (tournament.tierCount === 0) {
@@ -293,8 +294,7 @@ export function resolveGolfProviderId(
 // --- Player status (Participant.status) ---
 
 type BadgeToneLite = 'active' | 'inactive' | 'warning';
-export type GolfPlayerStatus =
-  AdminListGolfPlayersResponses[200]['players'][number]['status'];
+export type GolfPlayerStatus = ParticipantDto['status'];
 
 export const GOLF_PLAYER_STATUSES = [
   'ACTIVE',
@@ -324,7 +324,7 @@ export function golfPlayerStatusTone(status: string): BadgeToneLite {
 
 /**
  * The "Load Participant Field" / "Refresh Participant Field" header action is one
- * endpoint (`adminRefreshGolfTournamentField`) with a client-computed label:
+ * endpoint (`refreshEventParticipants`) with a client-computed label:
  * "Load" while the field is still empty, "Refresh" once it has entries (§4.4a).
  */
 export function golfParticipantFieldActionLabel(
@@ -343,7 +343,7 @@ export function golfParticipantFieldActionLabel(
 // `playerName` (or an explicit `participantId`) plus `ranking`.
 
 export type GolfRosterUploadRow =
-  AdminPreviewGolfLeagueRosterUploadData['body']['rows'][number];
+  ParticipantLeagueAffiliationUploadRequest['rows'][number];
 
 export const GOLF_ROSTER_UPLOAD_HEADERS = [
   'externalId',
@@ -367,7 +367,7 @@ const golfRosterUploadRowSchema = z
   );
 
 /**
- * Parse pasted / uploaded league-roster text into `adminPreviewGolfLeagueRosterUpload`
+ * Parse pasted / uploaded league-roster text into `previewParticipantLeagueAffiliationUpload`
  * request rows. Throws an `Error` with a user-facing message on malformed input
  * or a row missing every identifier — the panel renders that inline.
  */
@@ -404,12 +404,11 @@ export function parseGolfRosterUpload(
 // --- Round-score bulk upload (plans/124 §6.3 Round scores / §6.4) ---
 //
 // plans/124 §6.3 documents the CSV header as `externalId,playerName,strokes,thru,status`,
-// but the generated `adminApplyGolfRoundScores` request row also requires `scoreToPar`
+// but the generated `applyEventGolfRoundScores` request row also requires `scoreToPar`
 // (not optional) and `status` is a fixed 5-value enum. The template + parser therefore
 // carry `scoreToPar` too; the discrepancy is flagged in the pool-master-r11 close note.
 
-export type GolfRoundScoreUploadRow =
-  AdminApplyGolfRoundScoresData['body']['rows'][number];
+export type GolfRoundScoreUploadRow = GolfRoundScoreUploadRequest['rows'][number];
 export type GolfRoundScoreStatus = GolfRoundScoreUploadRow['status'];
 
 export const GOLF_ROUND_SCORE_STATUSES = [
@@ -482,7 +481,7 @@ const golfRoundScoreUploadRowSchema = z
   );
 
 /**
- * Parse pasted / uploaded round-score text into `adminApplyGolfRoundScores`
+ * Parse pasted / uploaded round-score text into `applyEventGolfRoundScores`
  * request rows. Throws an `Error` with a user-facing message on malformed input.
  */
 function hasNoScoreData(record: Record<string, unknown>): boolean {
@@ -530,4 +529,40 @@ export function parseGolfRoundScoreUpload(
     if (thru !== undefined) row.thru = thru;
     return row;
   });
+}
+
+// --- One round's scores, read from the field (#236) ---
+//
+// The golf round-scores read is gone: each field row carries its per-round golf results,
+// so the corrections grid takes the golfers with a result in the chosen round.
+
+export type GolfRoundScoreRow = {
+  sportEventParticipantId: string;
+  participantName: string;
+  strokes: number;
+  scoreToPar: number;
+  thru: number | null;
+  status: string;
+};
+
+export function golfRoundScoreRows(
+  field: readonly SportEventParticipantDto[],
+  roundNumber: number,
+): GolfRoundScoreRow[] {
+  const rows: GolfRoundScoreRow[] = [];
+  for (const entry of field) {
+    const round = entry.rounds.find((candidate) => candidate.roundNumber === roundNumber);
+    if (!round?.golf) {
+      continue;
+    }
+    rows.push({
+      sportEventParticipantId: entry.id,
+      participantName: entry.participant.name,
+      strokes: round.golf.strokes,
+      scoreToPar: round.golf.scoreToPar,
+      thru: round.golf.thru,
+      status: round.status,
+    });
+  }
+  return rows.sort((left, right) => left.participantName.localeCompare(right.participantName));
 }

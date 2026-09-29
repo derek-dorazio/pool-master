@@ -272,6 +272,21 @@ export function deriveLegacyParticipantStatus(
   return inactiveReason ?? 'INACTIVE';
 }
 
+/**
+ * The label a participant status reads as on screen (#236). Cross-sport values render in
+ * title case, except that golf calls ELIMINATED "Cut" — the value stays sport-agnostic,
+ * the audience's word is applied here, once, for every surface that shows it.
+ */
+export function formatParticipantStatusLabel(status: string, sport?: string | null): string {
+  if (status === ParticipantInactiveReason.ELIMINATED && sport === 'GOLF') {
+    return 'Cut';
+  }
+  return status
+    .split('_')
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
 // --- Contest Lifecycle ---
 
 export const ContestStatus = {

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { adminCreateGolfTournament } from '@/lib/api';
+import { createEvent } from '@/lib/api';
 import {
   Button,
   Checkbox,
@@ -14,11 +14,10 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfSeasonsResponses } from '@/lib/api';
+import type { SeasonDto } from '@/lib/api';
 import { GolfTournamentSeasonSelect } from './golf-tournament-season-select';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 
-type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
 
 const manualFormSchema = z.object({
   name: z.string().trim().min(1, 'Tournament name is required'),
@@ -41,7 +40,7 @@ export function GolfTournamentManualCreateForm({
 }: {
   onSeasonChange: (seasonId: string) => void;
   seasonId: string;
-  seasons: readonly GolfSeason[];
+  seasons: readonly SeasonDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-create-page',
@@ -65,7 +64,7 @@ export function GolfTournamentManualCreateForm({
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: ManualFormValues) => {
-      const response = await adminCreateGolfTournament({
+      const response = await createEvent({
         body: {
           name: values.name,
           ...(values.venue?.trim() ? { venue: values.venue.trim() } : {}),
@@ -82,10 +81,10 @@ export function GolfTournamentManualCreateForm({
           autoLifecycleEnabled: values.autoLifecycleEnabled,
         },
       });
-      if (!response.data?.tournament?.id) {
+      if (!response.data?.event?.id) {
         throwApiError(response.error, 'Tournament creation response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [QueryKeys.rootAdmin.golf.tournaments],
     onSuccess: (tournament) => {

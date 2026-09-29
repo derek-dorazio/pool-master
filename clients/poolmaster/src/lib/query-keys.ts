@@ -136,6 +136,7 @@ export const QueryKeys = {
     events: ['poolmaster', 'root-admin', 'events'] as const,
     golf: {
       all: ['poolmaster', 'root-admin', 'golf'] as const,
+      sport: ['poolmaster', 'root-admin', 'golf', 'sport'] as const,
       tours: ['poolmaster', 'root-admin', 'golf', 'tours'] as const,
       // Deliberately NOT nested under the `tours` prefix: invalidating the
       // `tours` list (a tour rename / active toggle) must not also wipe every
@@ -149,6 +150,9 @@ export const QueryKeys = {
       season: (seasonId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'season', seasonId] as const,
       tournaments: ['poolmaster', 'root-admin', 'golf', 'tournaments'] as const,
+      // Under the `tournaments` prefix, so invalidating the list refreshes each season's too.
+      seasonTournaments: (seasonId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournaments', 'season', seasonId] as const,
       tournament: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId] as const,
       rounds: (eventId: QueryKeyId) =>
@@ -157,8 +161,6 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'tiers'] as const,
-      roundScores: (eventId: QueryKeyId, round: QueryKeyId | number) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'round-scores', round] as const,
       players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
       playerList: (status?: string) =>
         ['poolmaster', 'root-admin', 'golf', 'players', 'list', status ?? 'ACTIVE'] as const,
@@ -166,6 +168,8 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'golf', 'players', 'search', search] as const,
       player: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'player', participantId] as const,
+      playerMappings: (participantId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'player', participantId, 'provider-mappings'] as const,
     },
     // plans/124 §6.4. `dateWindow` extends the documented (providerId, sport,
     // search) signature: both callers (create browse, Home score-source picker)

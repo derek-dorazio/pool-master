@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { throwApiError } from '@/lib/errors';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminUpdateGolfTournamentRounds } from '@/lib/api';
+import { updateEventRounds } from '@/lib/api';
 import {
   FormField,
   FormModal,
@@ -14,8 +14,8 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import {
   localDateTimeInputToIso,
-  type AdminGolfTournamentRound,
 } from './golf-admin-utils';
+import type { SportEventRoundDto } from '@/lib/api';
 
 const roundsFormSchema = z.object({
   rounds: z
@@ -31,7 +31,7 @@ const roundsFormSchema = z.object({
 
 type RoundsFormValues = z.infer<typeof roundsFormSchema>;
 
-function toDefaults(rounds: readonly AdminGolfTournamentRound[]): RoundsFormValues {
+function toDefaults(rounds: readonly SportEventRoundDto[]): RoundsFormValues {
   return {
     rounds: rounds.map((round) => ({
       roundNumber: round.roundNumber,
@@ -58,7 +58,7 @@ export function GolfTournamentRoundsModal({
   eventId: string;
   onClose: () => void;
   open: boolean;
-  rounds: readonly AdminGolfTournamentRound[];
+  rounds: readonly SportEventRoundDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-home-page',
@@ -73,7 +73,7 @@ export function GolfTournamentRoundsModal({
 
   const roundsMutation = useInvalidatingMutation({
     mutationFn: async (values: RoundsFormValues) => {
-      const response = await adminUpdateGolfTournamentRounds({
+      const response = await updateEventRounds({
         path: { eventId },
         body: {
           rounds: values.rounds.map((row) => ({

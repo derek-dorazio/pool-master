@@ -12,9 +12,11 @@ import {
   parseGolfRosterUpload,
   parseGolfRoundScoreUpload,
   resolveGolfLifecycleStage,
+  golfRoundScoreRows,
   resolveGolfProviderId,
-  type AdminGolfTournamentRound,
 } from './golf-admin-utils';
+import { fieldEntryFixture, participantFixture } from './golf-test-fixtures';
+import type { SportEventRoundDto } from '@/lib/api';
 
 // plans/124 §6.3/§6.4 — pure helpers backing the golf admin keystone screens (pool-master-3dg).
 
@@ -22,8 +24,8 @@ function round(
   roundNumber: number,
   scheduledDate: string,
   scheduledEndAt = '',
-): AdminGolfTournamentRound {
-  return { roundNumber, scheduledDate, scheduledEndAt };
+): SportEventRoundDto {
+  return { id: `round-${roundNumber}`, sportEventId: 'event-1', roundNumber, scheduledDate, scheduledEndAt };
 }
 
 describe('pool-master-3dg golf-admin-utils: sync scope', () => {
@@ -170,10 +172,10 @@ describe('pool-master-3dg golf-admin-utils: deriveGolfAutoTransition', () => {
 });
 
 describe('pool-master-3dg golf-admin-utils: deriveGolfTournamentReadiness', () => {
-  const base = { status: 'SCHEDULED' as const, fieldLocked: false, fieldCount: 120, tierCount: 6 };
+  const base = { status: 'SCHEDULED' as const, fieldLocked: false, loadedParticipantCount: 120, tierCount: 6 };
 
   it('pool-master-3dg reports Setup with a reason when the field is empty', () => {
-    expect(deriveGolfTournamentReadiness({ ...base, fieldCount: 0 })).toEqual({
+    expect(deriveGolfTournamentReadiness({ ...base, loadedParticipantCount: 0 })).toEqual({
       label: 'Setup',
       tone: 'neutral',
       reasons: ['No field loaded'],
@@ -349,5 +351,43 @@ describe('pool-master-r11 golf-admin-utils: parseGolfRoundScoreUpload', () => {
         'CSV',
       ),
     ).toThrow('No scores were entered on any row.');
+  });
+});
+
+describe('#236 golf-admin-utils: golfRoundScoreRows', () => {
+  function result(roundNumber: number, strokes: number, status = 'COMPLETED') {
+    return {
+      id: `r-${roundNumber}`,
+      sportEventRoundId: `round-${roundNumber}`,
+      roundNumber,
+      status,
+      completedAt: null,
+      golf: { strokes, scoreToPar: strokes - 71, thru: 18 },
+    };
+  }
+
+  it('takes the golfers with a golf result in the chosen round, sorted by name', () => {
+    const field = [
+      fieldEntryFixture({
+        id: 'sep-z',
+        participant: participantFixture({ name: 'Zach' }),
+        rounds: [result(1, 70), result(2, 72, 'IN_PROGRESS')],
+      }),
+      fieldEntryFixture({ id: 'sep-a', participant: participantFixture({ name: 'Adam' }), rounds: [result(2, 69)] }),
+      fieldEntryFixture({ id: 'sep-none', participant: participantFixture({ name: 'Nobody' }), rounds: [] }),
+    ];
+
+    expect(golfRoundScoreRows(field, 2)).toEqual([
+      { sportEventParticipantId: 'sep-a', participantName: 'Adam', strokes: 69, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
+      { sportEventParticipantId: 'sep-z', participantName: 'Zach', strokes: 72, scoreToPar: 1, thru: 18, status: 'IN_PROGRESS' },
+    ]);
+    expect(golfRoundScoreRows(field, 4)).toEqual([]);
+  });
+
+  it('skips a round row that carries no golf result', () => {
+    const field = [
+      fieldEntryFixture({ rounds: [{ ...result(1, 70), golf: null }] }),
+    ];
+    expect(golfRoundScoreRows(field, 1)).toEqual([]);
   });
 });

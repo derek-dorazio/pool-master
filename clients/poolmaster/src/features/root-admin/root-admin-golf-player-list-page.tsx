@@ -1,10 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminCreateGolfPlayer, adminListGolfPlayers } from '@/lib/api';
+import { createParticipant } from '@/lib/api';
 import {
   Button,
   DataGridPage,
@@ -18,16 +17,15 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfPlayersResponses } from '@/lib/api';
+import type { ParticipantDto } from '@/lib/api';
 import {
   GOLF_PLAYER_STATUSES,
   golfPlayerStatusTone,
   type GolfPlayerStatus,
 } from './golf-admin-utils';
+import { useGolfPlayersQuery, useGolfSportQuery } from './use-golf-catalog';
 
-type GolfPlayer = AdminListGolfPlayersResponses[200]['players'][number];
-
-const columnHelper = createColumnHelper<GolfPlayer>();
+const columnHelper = createColumnHelper<ParticipantDto>();
 
 const newPlayerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -47,22 +45,16 @@ export function RootAdminGolfPlayerListPage() {
     feature: 'root-admin-golf-player-list-page',
   });
   const [createOpen, setCreateOpen] = useState(false);
-  // adminListGolfPlayers returns one status at a time (defaulting to ACTIVE), so
-  // the filter is a required single-select; there is no combined "all statuses"
-  // view without a backend change.
+  // One status at a time, ACTIVE first, as the golf player list this replaced did.
+  // listParticipants would list every status if asked without one; the single-select
+  // keeps the page's behaviour.
   const [status, setStatus] = useState<GolfPlayerStatus>('ACTIVE');
 
-  const playersQuery = useQuery({
+  const playersQuery = useGolfPlayersQuery({
     queryKey: QueryKeys.rootAdmin.golf.playerList(status),
-    queryFn: async (): Promise<GolfPlayer[]> => {
-      const response = await adminListGolfPlayers({ query: { status } });
-      if (!response.data?.players) {
-        throwApiError(response.error, 'Golf player list response is missing data.');
-      }
-      return response.data.players;
-    },
-    retry: false,
+    status,
   });
+  const sportQuery = useGolfSportQuery();
 
   const form = useForm<NewPlayerValues>({
     resolver: zodResolver(newPlayerSchema),
@@ -72,8 +64,13 @@ export function RootAdminGolfPlayerListPage() {
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: NewPlayerValues) => {
-      const response = await adminCreateGolfPlayer({
+      if (!sportQuery.data) {
+        throw new Error('The golf sport has not loaded yet.');
+      }
+      const response = await createParticipant({
         body: {
+          sportId: sportQuery.data.id,
+          participantType: 'INDIVIDUAL',
           name: values.name,
           ...(values.shortName?.trim() ? { shortName: values.shortName.trim() } : {}),
           ...(values.nationality?.trim()
@@ -82,10 +79,10 @@ export function RootAdminGolfPlayerListPage() {
           ...(values.externalId?.trim() ? { externalId: values.externalId.trim() } : {}),
         },
       });
-      if (!response.data?.player) {
+      if (!response.data?.participant) {
         throwApiError(response.error, 'Golf player creation response is missing data.');
       }
-      return response.data.player;
+      return response.data.participant;
     },
     invalidates: [QueryKeys.rootAdmin.golf.players],
     onSuccess: () => {
@@ -121,10 +118,6 @@ export function RootAdminGolfPlayerListPage() {
         cell: ({ getValue }) => (
           <StatusBadge tone={golfPlayerStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),
-      }),
-      columnHelper.accessor('providerMappingCount', {
-        header: 'Provider mappings',
-        cell: ({ getValue }) => getValue(),
       }),
     ],
     [],

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminCreateGolfTournamentFromProviderEvent } from '@/lib/api';
+import { createEventFromProviderEvent } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -16,7 +16,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfSeasonsResponses } from '@/lib/api';
+import type { SeasonDto } from '@/lib/api';
 import { GolfTournamentSeasonSelect } from './golf-tournament-season-select';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import {
@@ -24,7 +24,6 @@ import {
   type GolfProviderCatalogEvent,
 } from './use-golf-provider-catalog';
 
-type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
 
 function defaultWindowValue(offsetDays: number): string {
   const date = new Date();
@@ -39,9 +38,9 @@ export function GolfTournamentProviderBrowse({
   seasons,
 }: {
   onSeasonChange: (seasonId: string) => void;
-  scopedSeason: GolfSeason | undefined;
+  scopedSeason: SeasonDto | undefined;
   seasonId: string;
-  seasons: readonly GolfSeason[];
+  seasons: readonly SeasonDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-create-page',
@@ -70,7 +69,7 @@ export function GolfTournamentProviderBrowse({
         throw new Error('Select a provider event first.');
       }
       const roundsValue = Number.parseInt(providerRounds, 10);
-      const response = await adminCreateGolfTournamentFromProviderEvent({
+      const response = await createEventFromProviderEvent({
         body: {
           seasonId,
           providerId,
@@ -78,10 +77,10 @@ export function GolfTournamentProviderBrowse({
           ...(Number.isNaN(roundsValue) ? {} : { rounds: roundsValue }),
         },
       });
-      if (!response.data?.tournament?.id) {
+      if (!response.data?.event?.id) {
         throwApiError(response.error, 'Tournament creation response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [QueryKeys.rootAdmin.golf.tournaments],
     onSuccess: (tournament) => {

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
-import { adminReplaceGolfTierAssignments, adminUpdateGolfFieldEntries } from '@/lib/api';
+import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
 import { Alert, Button, Input, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -16,11 +16,7 @@ import {
   type TierCard,
   type TierColumn,
 } from './golf-tier-board-utils';
-import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses } from '@/lib/api';
-
-type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
-type FieldEntry =
-  AdminGetGolfTournamentFieldResponses[200]['entries'][number];
+import type { SportEventParticipantDto, SportEventTierDto } from '@/lib/api';
 
 const TIER_LOCKED_MESSAGE =
   'This tournament has contest entries. Tier and price changes are locked to keep existing picks consistent.';
@@ -69,9 +65,9 @@ export function GolfTierBoard({
   tiers,
 }: {
   eventId: string;
-  field: FieldEntry[];
+  field: SportEventParticipantDto[];
   readOnly: boolean;
-  tiers: TierDto[];
+  tiers: SportEventTierDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-tiers-page',
@@ -117,7 +113,7 @@ export function GolfTierBoard({
 
   const assignmentsMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminReplaceGolfTierAssignments({
+      const response = await replaceEventTierAssignments({
         path: { eventId },
         body: { assignments: toAssignmentsPayload(board) },
       });
@@ -126,7 +122,9 @@ export function GolfTierBoard({
       }
       return response.data;
     },
+    // The board reads each golfer's tier from the field's valuations (#236).
     invalidates: [
+      QueryKeys.rootAdmin.golf.field(eventId),
       QueryKeys.rootAdmin.golf.tiers(eventId),
       QueryKeys.rootAdmin.golf.tournament(eventId),
       QueryKeys.rootAdmin.golf.tournaments,
@@ -141,9 +139,9 @@ export function GolfTierBoard({
 
   const pricesMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminUpdateGolfFieldEntries({
+      const response = await updateEventParticipants({
         path: { eventId },
-        body: { entries: priceEdits },
+        body: { participants: priceEdits },
       });
       if (response.error) {
         throwApiError(response.error);

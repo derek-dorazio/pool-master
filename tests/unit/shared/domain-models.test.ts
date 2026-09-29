@@ -12,6 +12,7 @@ import {
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
   ParticipantInactiveReason,
   deriveLegacyParticipantStatus,
+  formatParticipantStatusLabel,
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
   isContestFormatValidForSport,
@@ -174,5 +175,15 @@ describe('deriveLegacyParticipantStatus', () => {
   it('pool-master-uvc: falls back to INACTIVE when isActive is false and no reason is recorded', () => {
     expect(deriveLegacyParticipantStatus(false, null)).toBe('INACTIVE');
     expect(deriveLegacyParticipantStatus(false, undefined)).toBe('INACTIVE');
+  });
+});
+
+describe('formatParticipantStatusLabel', () => {
+  it('#236: golf reads ELIMINATED as Cut; every other sport, and every other status, reads in title case', () => {
+    expect(formatParticipantStatusLabel('ELIMINATED', 'GOLF')).toBe('Cut');
+    expect(formatParticipantStatusLabel('ELIMINATED', 'NBA')).toBe('Eliminated');
+    expect(formatParticipantStatusLabel('ELIMINATED', null)).toBe('Eliminated');
+    expect(formatParticipantStatusLabel('WITHDRAWN', 'GOLF')).toBe('Withdrawn');
+    expect(formatParticipantStatusLabel('IN_PROGRESS', 'GOLF')).toBe('In Progress');
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { adminTransitionGolfTournament, adminUpdateGolfTournament } from '@/lib/api';
+import { transitionEvent, updateEvent } from '@/lib/api';
 import {
   Button,
   Callout,
@@ -16,13 +16,11 @@ import { QueryKeys } from '@/lib/query-keys';
 import {
   formatSportEventStatus,
   sportEventStatusTone,
-  type AdminGolfTournamentDetail,
-  type AdminGolfTournamentRound,
   type GolfTournamentStatus,
 } from './golf-admin-utils';
 import { GolfTournamentRoundsModal } from './golf-tournament-rounds-modal';
 import { GolfTournamentWorkflowRail } from './golf-tournament-workflow-rail';
-
+import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 
 /**
  * plans/124 §6.3 block 2 — the workflow rail, allowed transitions, the
@@ -36,9 +34,9 @@ export function GolfTournamentWorkflowCard({
   tournament,
 }: {
   eventId: string;
-  rounds: readonly AdminGolfTournamentRound[];
+  rounds: readonly SportEventRoundDto[];
   roundsError: unknown;
-  tournament: AdminGolfTournamentDetail;
+  tournament: SportEventDto;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-home-page',
@@ -50,14 +48,14 @@ export function GolfTournamentWorkflowCard({
 
   const transitionMutation = useInvalidatingMutation({
     mutationFn: async (toStatus: GolfTournamentStatus) => {
-      const response = await adminTransitionGolfTournament({
+      const response = await transitionEvent({
         path: { eventId },
         body: { toStatus },
       });
-      if (!response.data?.tournament) {
+      if (!response.data?.event) {
         throwApiError(response.error, 'Golf tournament transition response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.tournament(eventId),
@@ -74,14 +72,14 @@ export function GolfTournamentWorkflowCard({
 
   const autoMutation = useInvalidatingMutation({
     mutationFn: async (autoLifecycleEnabled: boolean) => {
-      const response = await adminUpdateGolfTournament({
+      const response = await updateEvent({
         path: { eventId },
         body: { autoLifecycleEnabled },
       });
-      if (!response.data?.tournament) {
+      if (!response.data?.event) {
         throwApiError(response.error, 'Golf tournament update response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [QueryKeys.rootAdmin.golf.tournament(eventId)],
     onSuccess: () => setAutoToggleOpen(false),
@@ -107,8 +105,8 @@ export function GolfTournamentWorkflowCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {tournament.workflow.allowedTransitions.length > 0 ? (
-          tournament.workflow.allowedTransitions.map((toStatus) => (
+        {tournament.allowedTransitions.length > 0 ? (
+          tournament.allowedTransitions.map((toStatus) => (
             <Button
               data-testid={`root-admin-golf-tournament-transition-${toStatus}`}
               key={toStatus}

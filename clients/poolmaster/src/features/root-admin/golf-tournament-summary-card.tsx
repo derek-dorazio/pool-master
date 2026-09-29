@@ -3,7 +3,7 @@ import { throwApiError } from '@/lib/errors';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminUpdateGolfTournament } from '@/lib/api';
+import { updateEvent } from '@/lib/api';
 import {
   Button,
   DefinitionList,
@@ -17,10 +17,9 @@ import {
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminUpdateGolfTournamentData } from '@/lib/api';
+import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 import {
   localDateTimeInputToIso,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
 
 const editFormSchema = z.object({
@@ -36,7 +35,7 @@ const editFormSchema = z.object({
 
 type EditFormValues = z.infer<typeof editFormSchema>;
 
-function toDefaults(tournament: AdminGolfTournamentDetail): EditFormValues {
+function toDefaults(tournament: SportEventDto): EditFormValues {
   return {
     name: tournament.name,
     venue: tournament.venue || '',
@@ -49,11 +48,12 @@ function toDefaults(tournament: AdminGolfTournamentDetail): EditFormValues {
   };
 }
 
-function toRequestBody(values: EditFormValues): AdminUpdateGolfTournamentData['body'] {
+function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
   return {
     name: values.name,
-    venue: values.venue?.trim() ?? '',
-    location: values.location?.trim() ?? '',
+    // A blank field clears the value (null), rather than storing an empty string.
+    venue: values.venue?.trim() || null,
+    location: values.location?.trim() || null,
     startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
     ...(localDateTimeInputToIso(values.endDate)
       ? { endDate: localDateTimeInputToIso(values.endDate) }
@@ -77,7 +77,7 @@ export function GolfTournamentSummaryCard({
   eventId: string;
   readOnly: boolean;
   seasonName: string | undefined;
-  tournament: AdminGolfTournamentDetail;
+  tournament: SportEventDto;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-home-page',
@@ -92,14 +92,14 @@ export function GolfTournamentSummaryCard({
 
   const updateMutation = useInvalidatingMutation({
     mutationFn: async (values: EditFormValues) => {
-      const response = await adminUpdateGolfTournament({
+      const response = await updateEvent({
         path: { eventId },
         body: toRequestBody(values),
       });
-      if (!response.data?.tournament) {
+      if (!response.data?.event) {
         throwApiError(response.error, 'Golf tournament update response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.tournament(eventId),

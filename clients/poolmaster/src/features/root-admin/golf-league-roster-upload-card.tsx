@@ -1,4 +1,7 @@
-import { adminApplyGolfLeagueRosterUpload, adminPreviewGolfLeagueRosterUpload } from '@/lib/api';
+import {
+  applyParticipantLeagueAffiliationUpload,
+  previewParticipantLeagueAffiliationUpload,
+} from '@/lib/api';
 import {
   BulkUploadPanel,
   StatusBadge,
@@ -8,15 +11,14 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminPreviewGolfLeagueRosterUploadResponses } from '@/lib/api';
+import type { ParticipantLeagueAffiliationUploadPreviewResponse } from '@/lib/api';
 import {
   GOLF_ROSTER_UPLOAD_HEADERS,
   parseGolfRosterUpload,
   type GolfRosterUploadRow,
 } from './golf-admin-utils';
 
-type RosterPreviewRow =
-  AdminPreviewGolfLeagueRosterUploadResponses[200]['rows'][number];
+type RosterPreviewRow = ParticipantLeagueAffiliationUploadPreviewResponse['rows'][number];
 
 const RESOLUTION_TONE: Record<RosterPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
   MATCHED: 'active',
@@ -35,7 +37,7 @@ function describeRow(row: RosterPreviewRow['row']): string {
 
 /**
  * plans/124 §6.3 Tour Home — bulk paste / upload / preview / apply for the tour
- * roster's world rankings, built on the shared {@link BulkUploadPanel}. The
+ * roster's rankings, built on the shared {@link BulkUploadPanel}. The
  * week-to-week ranking maintenance path; per-row edits live in the roster grid.
  */
 export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
@@ -45,8 +47,8 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
 
   const previewMutation = useInvalidatingMutation({
     mutationFn: async (rows: GolfRosterUploadRow[]) => {
-      const response = await adminPreviewGolfLeagueRosterUpload({
-        path: { leagueId },
+      const response = await previewParticipantLeagueAffiliationUpload({
+        path: { sportLeagueId: leagueId },
         body: { rows },
       });
       if (!response.data?.rows) {
@@ -65,14 +67,14 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
 
   const applyMutation = useInvalidatingMutation({
     mutationFn: async (rows: GolfRosterUploadRow[]) => {
-      const response = await adminApplyGolfLeagueRosterUpload({
-        path: { leagueId },
+      const response = await applyParticipantLeagueAffiliationUpload({
+        path: { sportLeagueId: leagueId },
         body: { rows },
       });
-      if (!response.data?.entries) {
+      if (!response.data?.affiliations) {
         throwApiError(response.error, 'Roster apply response is missing data.');
       }
-      return response.data.entries;
+      return response.data.affiliations;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
@@ -89,7 +91,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
   return (
     <Tile>
       <h3 className="text-base font-semibold text-foreground">
-        Bulk-update world rankings
+        Bulk-update rankings
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Paste or upload the current rankings, preview how each row resolves to a

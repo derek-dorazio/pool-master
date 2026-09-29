@@ -7,10 +7,11 @@ import {
   GolfRoundScoreCorrectionsCard,
   buildRoundScorePatch,
 } from './golf-round-score-corrections-card';
+import type { GolfRoundScoreRow } from './golf-admin-utils';
 
 // plans/124 §6.3 Round scores section 2 — inline corrections (pool-master-r11).
 
-const { adminUpdateGolfRoundScoreMock, mockLogger } = vi.hoisted(() => {
+const { updateEventParticipantGolfRoundScoreMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -20,10 +21,10 @@ const { adminUpdateGolfRoundScoreMock, mockLogger } = vi.hoisted(() => {
     child: vi.fn(),
   };
   logger.child.mockReturnValue(logger);
-  return { adminUpdateGolfRoundScoreMock: vi.fn(), mockLogger: logger };
+  return { updateEventParticipantGolfRoundScoreMock: vi.fn(), mockLogger: logger };
 });
 
-bindApiMocks({ adminUpdateGolfRoundScore: adminUpdateGolfRoundScoreMock });
+bindApiMocks({ updateEventParticipantGolfRoundScore: updateEventParticipantGolfRoundScoreMock });
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -31,23 +32,15 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function scoreRow(overrides: Record<string, unknown> = {}) {
+// #236: one round's score row, as golfRoundScoreRows reads it off the field.
+function scoreRow(overrides: Partial<GolfRoundScoreRow> = {}): GolfRoundScoreRow {
   return {
     sportEventParticipantId: 'sep-1',
-    participantId: 'p-1',
     participantName: 'Rory McIlroy',
     strokes: 70,
     scoreToPar: -2,
     thru: 18,
     status: 'IN_PROGRESS',
-    completedAt: '',
-    standing: {
-      eventScoreToPar: -2,
-      eventStrokes: 70,
-      currentRound: 1,
-      currentRoundThru: 18,
-      status: 'IN_PROGRESS',
-    },
     ...overrides,
   };
 }
@@ -99,7 +92,7 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
   });
 
   it('pool-master-r11 saves a single row correction with only the changed fields', async () => {
-    adminUpdateGolfRoundScoreMock.mockResolvedValue({ data: {} });
+    updateEventParticipantGolfRoundScoreMock.mockResolvedValue({ data: {} });
     renderCard();
 
     const strokes = screen.getByTestId('root-admin-golf-scores-strokes-sep-1');
@@ -112,9 +105,9 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-scores-save-sep-1'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfRoundScoreMock).toHaveBeenCalledWith(
+      expect(updateEventParticipantGolfRoundScoreMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { eventId: 'evt-1', round: '2', sportEventParticipantId: 'sep-1' },
+          path: { eventId: 'evt-1', roundNumber: '2', sportEventParticipantId: 'sep-1' },
           body: { strokes: 68, status: 'COMPLETED' },
         }),
       ),

@@ -1,10 +1,9 @@
-import type { AdminGetGolfTournamentFieldResponses, AdminUpdateGolfFieldEntriesData } from '@/lib/api';
+import type { SportEventParticipantDto, UpdateSportEventParticipantsRequest } from '@/lib/api';
 
-export type GolfFieldEntry =
-  AdminGetGolfTournamentFieldResponses[200]['entries'][number];
+// #236: a field row is the shared SportEventParticipant; its price sits on the valuation.
+export type GolfFieldEntry = SportEventParticipantDto;
 export type GolfFieldInactiveReason = NonNullable<GolfFieldEntry['inactiveReason']>;
-export type GolfFieldPatch =
-  AdminUpdateGolfFieldEntriesData['body']['entries'][number];
+export type GolfFieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
 
 export type GolfFieldNumericKey =
   | 'ranking'
@@ -60,10 +59,18 @@ export const GOLF_FIELD_NUMERIC_VALIDATORS: Record<
   oddsToWin: isPositiveNumber,
 };
 
+/** The server value of one editable numeric column; price is the valuation's. */
+export function golfFieldServerValue(
+  entry: GolfFieldEntry,
+  key: GolfFieldNumericKey,
+): number | null {
+  return key === 'price' ? entry.valuation?.price ?? null : entry[key];
+}
+
 /**
  * The string shown in a numeric cell: the user's draft edit if present, else the
  * server value coalesced to '' (a golfer just bulk-added has no derived
- * odds/seed/price yet, so `entry[key]` can be null despite the generated type).
+ * odds/seed/price yet).
  */
 export function golfFieldCellValue(
   entry: GolfFieldEntry,
@@ -74,10 +81,8 @@ export function golfFieldCellValue(
   if (drafted !== undefined) {
     return drafted;
   }
-  const serverValue = entry[key] as number | null | undefined;
-  return serverValue === null || serverValue === undefined
-    ? ''
-    : String(serverValue);
+  const serverValue = golfFieldServerValue(entry, key);
+  return serverValue === null ? '' : String(serverValue);
 }
 
 export function golfFieldCellInvalid(
@@ -104,7 +109,7 @@ export function golfFieldInvalidCount(
 }
 
 /**
- * Build the minimal `adminUpdateGolfFieldEntries` row for one golfer — only the
+ * Build the minimal `updateEventParticipants` row for one golfer — only the
  * fields whose draft value both parses and differs from the server value.
  * Returns null when nothing changed. An inactive golfer whose reason changed is
  * a change even when `isActive` itself did not.
@@ -114,7 +119,7 @@ export function buildGolfFieldPatch(
   rowDraft: GolfFieldRowDraft,
 ): GolfFieldPatch | null {
   const patch: GolfFieldPatch = {
-    sportEventParticipantId: entry.sportEventParticipantId,
+    sportEventParticipantId: entry.id,
   };
   let changed = false;
 
@@ -140,7 +145,7 @@ export function buildGolfFieldPatch(
       continue;
     }
     const value = Number(raw);
-    if (value !== entry[key]) {
+    if (value !== golfFieldServerValue(entry, key)) {
       patch[key] = value;
       changed = true;
     }
@@ -156,7 +161,7 @@ export function buildGolfFieldPatches(
 ): GolfFieldPatch[] {
   const patches: GolfFieldPatch[] = [];
   for (const entry of entries) {
-    const rowDraft = draft[entry.sportEventParticipantId];
+    const rowDraft = draft[entry.id];
     if (!rowDraft) {
       continue;
     }

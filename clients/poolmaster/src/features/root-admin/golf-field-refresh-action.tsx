@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { adminRefreshGolfTournamentField } from '@/lib/api';
+import { refreshEventParticipants } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -30,7 +30,7 @@ export function GolfFieldRefreshAction({
 
   const refreshMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminRefreshGolfTournamentField({ path: { eventId } });
+      const response = await refreshEventParticipants({ path: { eventId } });
       if (!response.data?.syncRuns) {
         throwApiError(response.error, 'Field refresh response is missing data.');
       }
@@ -99,7 +99,7 @@ export function GolfFieldRefreshAction({
       <ConfirmationModal
         confirmLabel={label}
         confirmTestId="root-admin-golf-field-refresh-confirm"
-        description="Pulls the field again from the linked provider event. This can overwrite manually-adjusted world rank and odds for any golfer the provider still reports."
+        description="Pulls the field again from the linked provider event. This can overwrite manually-adjusted ranking and odds for any golfer the provider still reports."
         errorMessage={
           refreshMutation.isError && confirmOpen
             ? extractErrorMessage(refreshMutation.error, {

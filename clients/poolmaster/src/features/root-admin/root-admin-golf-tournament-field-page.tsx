@@ -1,20 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfTournament, adminGetGolfTournamentField } from '@/lib/api';
 import { Alert, AsyncPage, Button, LinkButton } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
+import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
   golfTournamentHasScoreSync,
   isAdminManagedGolfTournament,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
-import { GolfFieldGridCard, type GolfFieldEntry } from './golf-field-grid-card';
+import { GolfFieldGridCard } from './golf-field-grid-card';
 import { GolfFieldSeedAction } from './golf-field-seed-action';
 import { GolfFieldRefreshAction } from './golf-field-refresh-action';
 import { GolfFieldAddParticipantsModal } from './golf-field-add-participants-modal';
+import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
  * plans/124 §6.3 — /manage/golf/tournaments/:eventId/field. Owns the tournament +
@@ -25,31 +22,8 @@ export function RootAdminGolfTournamentFieldPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [addOpen, setAddOpen] = useState(false);
 
-  const tournamentQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournament(eventId),
-    queryFn: async (): Promise<AdminGolfTournamentDetail> => {
-      const response = await adminGetGolfTournament({ path: { eventId } });
-      if (!response.data?.tournament) {
-        throwApiError(response.error, 'Golf tournament response is missing data.');
-      }
-      return response.data.tournament;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
-
-  const fieldQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.field(eventId),
-    queryFn: async (): Promise<GolfFieldEntry[]> => {
-      const response = await adminGetGolfTournamentField({ path: { eventId } });
-      if (!response.data?.entries) {
-        throwApiError(response.error, 'Golf tournament field response is missing data.');
-      }
-      return response.data.entries;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const tournamentQuery = useGolfTournamentQuery(eventId);
+  const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);

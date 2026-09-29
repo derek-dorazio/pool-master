@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
-import { adminLinkGolfTournamentScoreSource, adminUnlinkGolfTournamentScoreSource } from '@/lib/api';
+import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
@@ -16,12 +16,12 @@ import { QueryKeys } from '@/lib/query-keys';
 import {
   golfSyncScopeLabel,
   golfSyncScopeTone,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
 import {
   useGolfProviderCatalog,
   type GolfProviderCatalogEvent,
 } from './use-golf-provider-catalog';
+import type { SportEventDto } from '@/lib/api';
 
 type PickerCatalogEvent = GolfProviderCatalogEvent & { id: string };
 
@@ -34,7 +34,7 @@ export function GolfTournamentScoreSourceCard({
   tournament,
 }: {
   eventId: string;
-  tournament: AdminGolfTournamentDetail;
+  tournament: SportEventDto;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-home-page',
@@ -61,14 +61,14 @@ export function GolfTournamentScoreSourceCard({
       if (!providerId) {
         throw new Error('No golf provider is configured.');
       }
-      const response = await adminLinkGolfTournamentScoreSource({
+      const response = await linkEventScoreSource({
         path: { eventId },
         body: { providerId, externalId },
       });
-      if (!response.data?.tournament) {
+      if (!response.data?.event) {
         throwApiError(response.error, 'Score-source link response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.tournament(eventId),
@@ -88,11 +88,11 @@ export function GolfTournamentScoreSourceCard({
 
   const unlinkMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminUnlinkGolfTournamentScoreSource({ path: { eventId } });
-      if (!response.data?.tournament) {
+      const response = await unlinkEventScoreSource({ path: { eventId } });
+      if (!response.data?.event) {
         throwApiError(response.error, 'Score-source unlink response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.tournament(eventId),
@@ -115,9 +115,9 @@ export function GolfTournamentScoreSourceCard({
           {golfSyncScopeLabel(tournament.syncScope)}
         </StatusBadge>
         <p className="text-sm text-muted-foreground">
-          {tournament.syncScope === SportEventSyncScope.NONE || !tournament.scoreSource
+          {tournament.syncScope === SportEventSyncScope.NONE
             ? 'Not linked — scores must be entered manually.'
-            : `Linked to ${tournament.scoreSource.providerId} event ${tournament.scoreSource.externalId} — polled on the live-scores sync cadence.`}
+            : `Linked to ${tournament.providerId} event ${tournament.externalId} — polled on the live-scores sync cadence.`}
         </p>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

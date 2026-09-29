@@ -8,7 +8,7 @@ import { RootAdminGolfLeagueListPage } from './root-admin-golf-league-list-page'
 
 // plans/124 §6.3 — /manage/golf/leagues Tours list (pool-master-qqs).
 
-const { adminListGolfLeaguesMock, adminCreateGolfLeagueMock, mockLogger } = vi.hoisted(
+const { listSportLeaguesMock, createSportLeagueMock, mockLogger } = vi.hoisted(
   () => {
     const logger = {
       debug: vi.fn(),
@@ -20,16 +20,16 @@ const { adminListGolfLeaguesMock, adminCreateGolfLeagueMock, mockLogger } = vi.h
     };
     logger.child.mockReturnValue(logger);
     return {
-      adminListGolfLeaguesMock: vi.fn(),
-      adminCreateGolfLeagueMock: vi.fn(),
+      listSportLeaguesMock: vi.fn(),
+      createSportLeagueMock: vi.fn(),
       mockLogger: logger,
     };
   },
 );
 
 bindApiMocks({
-  adminListGolfLeagues: adminListGolfLeaguesMock,
-  adminCreateGolfLeague: adminCreateGolfLeagueMock,
+  listSportLeagues: listSportLeaguesMock,
+  createSportLeague: createSportLeagueMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -48,7 +48,7 @@ function league(overrides: Record<string, unknown> = {}) {
     isActive: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    rosterSize: 144,
+    affiliationCount: 144,
     seasonCount: 3,
     ...overrides,
   };
@@ -74,15 +74,15 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
   });
 
   it('pool-master-qqs renders tours with roster/season counts and a row link to Tour Home', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({
+    listSportLeaguesMock.mockResolvedValue({
       data: {
-        leagues: [
+        sportLeagues: [
           league(),
           league({
             id: 'liv',
             name: 'LIV Golf',
             isActive: false,
-            rosterSize: 54,
+            affiliationCount: 54,
             seasonCount: 1,
           }),
         ],
@@ -100,7 +100,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
   });
 
   it('pool-master-qqs shows the empty state', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
     renderPage();
     expect(
       await screen.findByText('No golf tours have been created yet.'),
@@ -108,7 +108,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
   });
 
   it('pool-master-qqs surfaces the load error state', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({
+    listSportLeaguesMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Tour index offline' },
       response: { status: 500 },
     });
@@ -117,9 +117,9 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
   });
 
   it('pool-master-qqs creates a tour through the New tour modal and refetches', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
-    adminCreateGolfLeagueMock.mockResolvedValue({
-      data: { league: league({ id: 'new', name: 'DP World Tour' }) },
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
+    createSportLeagueMock.mockResolvedValue({
+      data: { sportLeague: league({ id: 'new', name: 'DP World Tour' }) },
     });
 
     renderPage();
@@ -137,14 +137,14 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-league-list-new-save'));
 
     await waitFor(() =>
-      expect(adminCreateGolfLeagueMock).toHaveBeenCalledWith(
-        expect.objectContaining({ body: { name: 'DP World Tour', matchKeyword: 'DP World' } }),
+      expect(createSportLeagueMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { sport: 'GOLF', name: 'DP World Tour', matchKeyword: 'DP World' } }),
       ),
     );
   });
 
   it('pool-master-qqs blocks submit until the tour name is entered', async () => {
-    adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
     renderPage();
     await screen.findByText('No golf tours have been created yet.');
 

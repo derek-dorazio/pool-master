@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { adminAutoAssignGolfPrices, adminAutoAssignGolfTiers } from '@/lib/api';
+import { autoAssignEventPrices, autoAssignEventTiers } from '@/lib/api';
+import type { AutoAssignSportEventTiersRequest } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
@@ -11,11 +12,11 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 
-type TierSource = 'ODDS' | 'WORLD_RANK';
+type TierSource = AutoAssignSportEventTiersRequest['source'];
 
 /**
  * plans/124 §6.3 — Tier editor header actions: auto-assign tiers (from odds or
- * world rank) and auto-assign prices (min/max range). Independent — running one
+ * ranking) and auto-assign prices (min/max range). Independent — running one
  * never touches the other's `*AssignedSource` (§4.5). Both replace manual work,
  * so both confirm.
  */
@@ -36,7 +37,7 @@ export function GolfTierAutoAssignActions({
 
   const autoTiersMutation = useInvalidatingMutation({
     mutationFn: async (source: TierSource) => {
-      const response = await adminAutoAssignGolfTiers({
+      const response = await autoAssignEventTiers({
         path: { eventId },
         body: { source },
       });
@@ -45,8 +46,10 @@ export function GolfTierAutoAssignActions({
       }
       return response.data;
     },
+    // The assignments land on the field's valuations (#236).
     invalidates: [
       QueryKeys.rootAdmin.golf.tiers(eventId),
+      QueryKeys.rootAdmin.golf.field(eventId),
       QueryKeys.rootAdmin.golf.tournament(eventId),
     ],
     onSuccess: () => setTierSource(null),
@@ -60,7 +63,7 @@ export function GolfTierAutoAssignActions({
 
   const autoPricesMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminAutoAssignGolfPrices({
+      const response = await autoAssignEventPrices({
         path: { eventId },
         body: { minPrice: Number(minPrice), maxPrice: Number(maxPrice) },
       });
@@ -101,11 +104,11 @@ export function GolfTierAutoAssignActions({
       <Button
         data-testid="root-admin-golf-tier-auto-rank"
         disabled={disabled}
-        onClick={() => setTierSource('WORLD_RANK')}
+        onClick={() => setTierSource('RANKING')}
         size="sm"
         variant="secondary"
       >
-        Auto-assign tiers from world rank
+        Auto-assign tiers from ranking
       </Button>
       <Button
         data-testid="root-admin-golf-tier-auto-prices"
@@ -123,7 +126,7 @@ export function GolfTierAutoAssignActions({
         description={
           tierSource === 'ODDS'
             ? 'Every golfer is re-tiered by odds-to-win. Manual tier assignments will be replaced. Prices are untouched.'
-            : 'Every golfer is re-tiered by world ranking. Manual tier assignments will be replaced. Prices are untouched.'
+            : 'Every golfer is re-tiered by ranking. Manual tier assignments will be replaced. Prices are untouched.'
         }
         errorMessage={
           autoTiersMutation.isError

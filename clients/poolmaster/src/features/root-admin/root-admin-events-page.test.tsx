@@ -3,8 +3,14 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminEventsPage } from './root-admin-events-page';
+import {
+  fieldEntryFixture,
+  participantFixture,
+  tierFixture,
+  valuationFixture,
+} from './golf-test-fixtures';
 
-const { adminListEventParticipantsMock, listEventsMock, mockLogger } = vi.hoisted(() => {
+const { listEventParticipantsMock, listEventTiersMock, listEventsMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -16,14 +22,16 @@ const { adminListEventParticipantsMock, listEventsMock, mockLogger } = vi.hoiste
   logger.child.mockReturnValue(logger);
 
   return {
-    adminListEventParticipantsMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
+    listEventTiersMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminListEventParticipants: adminListEventParticipantsMock,
+  listEventParticipants: listEventParticipantsMock,
+  listEventTiers: listEventTiersMock,
   listEvents: listEventsMock,
 });
 
@@ -49,7 +57,8 @@ function renderPage() {
 
 describe('pool-master-33l.12: RootAdminEventsPage', () => {
   afterEach(() => {
-    adminListEventParticipantsMock.mockReset();
+    listEventParticipantsMock.mockReset();
+    listEventTiersMock.mockReset();
     listEventsMock.mockReset();
     mockLogger.info.mockReset();
   });
@@ -125,66 +134,60 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
         ],
       },
     });
-    adminListEventParticipantsMock.mockResolvedValue({
+    // #236: the field is the shared SportEventParticipant read; the tier label comes from
+    // the event's tiers, the score from the golf standing.
+    listEventTiersMock.mockResolvedValue({
+      data: { tiers: [tierFixture({ id: 'tier-a', sportEventId: eventId, tierKey: 'A', label: 'A' })] },
+    });
+    listEventParticipantsMock.mockResolvedValue({
       data: {
-        event: {
-          id: eventId,
-          externalId: 'golf-relative-weekend-20260507',
-          providerId: 'mock-contest-feed',
-          sport: 'GOLF',
-          name: 'Rolling Weekend Invitational',
-          status: 'IN_PROGRESS',
-          startDate: '2026-05-07T12:00:00.000Z',
-          releaseAt: '2026-04-23T12:00:00.000Z',
-          fieldLocksAt: '2026-05-06T16:00:00.000Z',
-          fieldLocked: true,
-          loadedParticipantCount: 1,
-          readinessStatus: 'FIELD_LOCKED',
-          readinessReasons: ['FIELD_LOCKED'],
-          contestEligible: false,
-          createdAt: '2026-05-01T10:00:00.000Z',
-          updatedAt: '2026-05-01T11:00:00.000Z',
-        },
         participants: [
-          {
+          fieldEntryFixture({
             id: '22222222-2222-4222-8222-222222222222',
             sportEventId: eventId,
             participantId: '33333333-3333-4333-8333-333333333333',
-            participantName: 'Avery Driver',
-            shortName: 'A. Driver',
-            nationality: 'US',
-            status: 'ACTIVE',
+            participant: participantFixture({
+              id: '33333333-3333-4333-8333-333333333333',
+              name: 'Avery Driver',
+              shortName: 'A. Driver',
+            }),
             ranking: 3,
             oddsToWin: 12.5,
-            valuationPrice: 19,
-            valuationTier: 'A',
-            valuationOrderIndex: 1,
-            roundCount: 2,
-            totalStrokes: 141,
-            scoreToPar: -3,
-            golfRounds: [
-              {
-                round: 1,
-                strokes: 70,
-                scoreToPar: -2,
-                status: 'COMPLETE',
-                completedAt: '2026-05-07T21:00:00.000Z',
-              },
+            valuation: valuationFixture({ sportEventTierId: 'tier-a', tierOrderIndex: 1, price: 19 }),
+            standing: {
+              id: 'standing-1',
+              position: 1,
+              displayPosition: '1',
+              status: 'ACTIVE',
+              asOf: null,
+              currentRound: 2,
+              golf: { eventScoreToPar: -3, eventStrokes: 141, currentRoundThru: 18 },
+            },
+            rounds: [
+              { id: 'r1', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETE', completedAt: null, golf: { strokes: 70, scoreToPar: -2, thru: 18 } },
+              { id: 'r2', sportEventRoundId: 'round-2', roundNumber: 2, status: 'COMPLETE', completedAt: null, golf: { strokes: 71, scoreToPar: -1, thru: 18 } },
             ],
-            updatedAt: '2026-05-08T22:00:00.000Z',
-          },
-          {
+          }),
+          fieldEntryFixture({
             id: '44444444-4444-4444-8444-444444444444',
             sportEventId: eventId,
             participantId: '55555555-5555-4555-8555-555555555555',
-            participantName: 'Level Par Player',
-            status: 'ACTIVE',
-            roundCount: 1,
-            totalStrokes: 72,
-            scoreToPar: 0,
-            golfRounds: [],
-            updatedAt: '2026-05-08T22:00:00.000Z',
-          },
+            participant: participantFixture({ id: '55555555-5555-4555-8555-555555555555', name: 'Level Par Player' }),
+            isActive: false,
+            inactiveReason: 'ELIMINATED',
+            standing: {
+              id: 'standing-2',
+              position: null,
+              displayPosition: null,
+              status: 'ELIMINATED',
+              asOf: null,
+              currentRound: 1,
+              golf: { eventScoreToPar: 0, eventStrokes: 72, currentRoundThru: 18 },
+            },
+            rounds: [
+              { id: 'r3', sportEventRoundId: 'round-1', roundNumber: 1, status: 'COMPLETE', completedAt: null, golf: { strokes: 72, scoreToPar: 0, thru: 18 } },
+            ],
+          }),
         ],
       },
     });
@@ -206,7 +209,10 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     // Level par renders "E", as on the contest entry page and the leaderboard.
     expect(within(modal).getByText('E')).toBeInTheDocument();
     expect(within(modal).queryByText('0')).not.toBeInTheDocument();
-    expect(adminListEventParticipantsMock).toHaveBeenLastCalledWith({
+    // The tier label comes from the event's tiers; a golfer who missed the cut reads "Cut".
+    expect(within(modal).getByText('A')).toBeInTheDocument();
+    expect(within(modal).getByText('Cut')).toBeInTheDocument();
+    expect(listEventParticipantsMock).toHaveBeenLastCalledWith({
       path: { eventId },
     });
   });

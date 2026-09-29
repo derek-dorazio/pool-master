@@ -1,16 +1,13 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataGrid, StatusBadge, Tile, formatDateTimeDisplay } from '@/features/shared/ui';
-import type { AdminListGolfTournamentsResponses } from '@/lib/api';
+import type { SportEventDto } from '@/lib/api';
 import {
   deriveGolfTournamentReadiness,
   formatSportEventStatus,
   sportEventStatusTone,
 } from './golf-admin-utils';
 
-type GolfTournament =
-  AdminListGolfTournamentsResponses[200]['tournaments'][number];
-
-const columnHelper = createColumnHelper<GolfTournament>();
+const columnHelper = createColumnHelper<SportEventDto>();
 
 const calendarColumns = [
   columnHelper.accessor('name', {
@@ -68,7 +65,7 @@ export function GolfSeasonTournamentCalendar({
 }: {
   isError: boolean;
   seasonName: string;
-  tournaments: GolfTournament[];
+  tournaments: SportEventDto[];
 }) {
   return (
     <Tile>

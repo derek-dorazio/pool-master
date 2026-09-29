@@ -1,19 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { adminListGolfSeasons } from '@/lib/api';
 import {
   Callout,
   LinkButton,
   SegmentedControl,
 } from '@/features/shared/ui';
-import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfSeasonsResponses } from '@/lib/api';
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
-import { throwApiError } from '@/lib/errors';
+import { useGolfSeasonsQuery } from './use-golf-catalog';
 
-type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
 type CreateMode = 'manual' | 'provider';
 
 /**
@@ -28,21 +23,12 @@ export function RootAdminGolfTournamentCreatePage() {
   const [mode, setMode] = useState<CreateMode>('manual');
   const [seasonSelection, setSeasonSelection] = useState(initialSeasonId);
 
-  const seasonsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.seasons(),
-    queryFn: async (): Promise<GolfSeason[]> => {
-      const response = await adminListGolfSeasons({ query: { isActive: true } });
-      if (!response.data?.seasons) {
-        throwApiError(response.error, 'Golf season list response is missing data.');
-      }
-      return response.data.seasons;
-    },
-    retry: false,
-  });
+  const seasonsQuery = useGolfSeasonsQuery();
 
+  // A tournament is created into an active season only.
   const seasons = useMemo(
     () =>
-      [...(seasonsQuery.data ?? [])].sort(
+      (seasonsQuery.data ?? []).filter((season) => season.isActive).sort(
         (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
       ),
     [seasonsQuery.data],

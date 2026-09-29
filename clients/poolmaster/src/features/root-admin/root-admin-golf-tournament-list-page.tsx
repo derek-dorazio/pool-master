@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { adminListGolfTournaments } from '@/lib/api';
+import { listEvents } from '@/lib/api';
 import {
   DataGridPage,
   LinkButton,
@@ -16,22 +16,22 @@ import {
   golfSyncScopeLabel,
   golfSyncScopeTone,
   sportEventStatusTone,
-  type AdminGolfTournamentSummary,
 } from './golf-admin-utils';
+import type { SportEventDto } from '@/lib/api';
 
-const columnHelper = createColumnHelper<AdminGolfTournamentSummary>();
+const columnHelper = createColumnHelper<SportEventDto>();
 
 export function RootAdminGolfTournamentListPage() {
   const tournamentsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.tournaments,
-    queryFn: async (): Promise<AdminGolfTournamentSummary[]> => {
-      const response = await adminListGolfTournaments();
+    queryFn: async (): Promise<SportEventDto[]> => {
+      const response = await listEvents({ query: { sport: 'GOLF' } });
 
-      if (!response.data?.tournaments) {
+      if (!response.data?.events) {
         throwApiError(response.error, 'Golf tournament list response is missing data.');
       }
 
-      return response.data.tournaments;
+      return response.data.events;
     },
     retry: false,
   });
@@ -89,7 +89,7 @@ export function RootAdminGolfTournamentListPage() {
         enableColumnFilter: false,
         enableSorting: false,
       }),
-      columnHelper.accessor('fieldCount', {
+      columnHelper.accessor('loadedParticipantCount', {
         header: 'Field',
         cell: ({ getValue }) => getValue(),
       }),

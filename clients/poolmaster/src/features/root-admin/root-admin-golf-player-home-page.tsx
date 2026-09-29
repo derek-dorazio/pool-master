@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
-import { adminGetGolfPlayer, adminUpdateGolfPlayer } from '@/lib/api';
+import { getParticipant, listParticipantProviderMappings, updateParticipant } from '@/lib/api';
 import {
   AsyncPage,
   Button,
@@ -20,11 +20,9 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfPlayerResponses, AdminUpdateGolfPlayerData } from '@/lib/api';
+import type { ParticipantDto, ParticipantProviderMappingDto, UpdateParticipantData } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GOLF_PLAYER_STATUSES, golfPlayerStatusTone } from './golf-admin-utils';
-
-type GolfPlayer = AdminGetGolfPlayerResponses[200]['player'];
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -40,7 +38,7 @@ const editSchema = z.object({
 
 type EditValues = z.infer<typeof editSchema>;
 
-function toDefaults(player: GolfPlayer): EditValues {
+function toDefaults(player: ParticipantDto): EditValues {
   return {
     name: player.name,
     firstName: player.firstName ?? '',
@@ -54,7 +52,7 @@ function toDefaults(player: GolfPlayer): EditValues {
   };
 }
 
-function toBody(values: EditValues): AdminUpdateGolfPlayerData['body'] {
+function toBody(values: EditValues): UpdateParticipantData['body'] {
   return {
     name: values.name,
     firstName: values.firstName?.trim() ?? '',
@@ -71,7 +69,8 @@ function toBody(values: EditValues): AdminUpdateGolfPlayerData['body'] {
 /**
  * plans/124 §6.3 — /manage/golf/players/:participantId. The canonical player
  * page: an editable detail form (status is a change, never a delete — §4.1) plus
- * a read-only provider-mapping list.
+ * a read-only provider-mapping list. #236: the golfer is the shared Participant,
+ * and its provider mappings are their own read.
  */
 export function RootAdminGolfPlayerHomePage() {
   const { participantId = '' } = useParams<{ participantId: string }>();
@@ -82,16 +81,30 @@ export function RootAdminGolfPlayerHomePage() {
 
   const playerQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.player(participantId),
-    queryFn: async (): Promise<GolfPlayer> => {
-      const response = await adminGetGolfPlayer({ path: { participantId } });
-      if (!response.data?.player) {
+    queryFn: async (): Promise<ParticipantDto> => {
+      const response = await getParticipant({ path: { id: participantId } });
+      if (!response.data?.participant) {
         throwApiError(response.error, 'Golf player response is missing data.');
       }
-      return response.data.player;
+      return response.data.participant;
     },
     enabled: participantId !== '',
     retry: false,
   });
+
+  const mappingsQuery = useQuery({
+    queryKey: QueryKeys.rootAdmin.golf.playerMappings(participantId),
+    queryFn: async (): Promise<ParticipantProviderMappingDto[]> => {
+      const response = await listParticipantProviderMappings({ path: { id: participantId } });
+      if (!response.data?.providerMappings) {
+        throwApiError(response.error, 'Provider mapping response is missing data.');
+      }
+      return response.data.providerMappings;
+    },
+    enabled: participantId !== '',
+    retry: false,
+  });
+  const providerMappings = mappingsQuery.data ?? [];
 
   const player = playerQuery.data;
   useManageBreadcrumbOverride(participantId || undefined, player?.name);
@@ -116,14 +129,14 @@ export function RootAdminGolfPlayerHomePage() {
 
   const updateMutation = useInvalidatingMutation({
     mutationFn: async (values: EditValues) => {
-      const response = await adminUpdateGolfPlayer({
-        path: { participantId },
+      const response = await updateParticipant({
+        path: { id: participantId },
         body: toBody(values),
       });
-      if (!response.data?.player) {
+      if (!response.data?.participant) {
         throwApiError(response.error, 'Golf player update response is missing data.');
       }
-      return response.data.player;
+      return response.data.participant;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.player(participantId),
@@ -212,12 +225,20 @@ export function RootAdminGolfPlayerHomePage() {
 
           <Tile>
             <h3 className="text-base font-semibold text-foreground">
-              Provider mappings ({player.providerMappings.length})
+              Provider mappings ({providerMappings.length})
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               How this golfer is matched in each provider&rsquo;s feed. Read-only.
             </p>
-            {player.providerMappings.length === 0 ? (
+            {mappingsQuery.isError ? (
+              <p className="mt-3 text-sm text-destructive" data-testid="root-admin-golf-player-home-mappings-error">
+                {extractErrorMessage(mappingsQuery.error, {
+                  fallback: 'We could not load this golfer’s provider mappings.',
+                })}
+              </p>
+            ) : mappingsQuery.isLoading ? (
+              <p className="mt-3 text-sm text-muted-foreground">Loading provider mappings…</p>
+            ) : providerMappings.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">
                 No provider mappings recorded.
               </p>
@@ -226,10 +247,10 @@ export function RootAdminGolfPlayerHomePage() {
                 className="mt-4 divide-y divide-border rounded-2xl border border-border"
                 data-testid="root-admin-golf-player-home-mappings"
               >
-                {player.providerMappings.map((mapping, index) => (
+                {providerMappings.map((mapping) => (
                   <li
                     className="flex flex-wrap items-center gap-3 px-4 py-2 text-sm"
-                    key={`${mapping.providerId}-${mapping.externalId}-${index}`}
+                    key={mapping.id}
                   >
                     <span className="font-medium text-foreground">
                       {mapping.providerId}
