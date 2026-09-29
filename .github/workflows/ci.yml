@@ -34,6 +34,8 @@ jobs:
         run: npm run api:check
       - name: all - generated API spec quality
         run: npm run api:validate
+      - name: all - deploy and migration script tests
+        run: npm run test:scripts
       - name: all - review triggers marker (PRs only)
         if: github.event_name == 'pull_request'
         env:
@@ -361,7 +363,10 @@ jobs:
       - run: npm run build:poolmaster
 
   # =========================================================================
-  # Publish Images + Deploy to QA
+  # QA deploy: publish images -> migrate -> roll out -> browser e2e.
+  # Migrations gate the rollout (#191): publish only builds images and
+  # registers task definitions; nothing reaches QA until deploy-migrate-qa
+  # has succeeded, so a failed migration leaves the previous release running.
   # =========================================================================
   deploy-publish-images:
     name: deploy-publish-images
@@ -667,74 +672,6 @@ jobs:
             echo "Registered QA mock provider task definition: ${QA_MOCK_PROVIDER_TASK_DEF}"
           fi
 
-      # --- Web Clients -> S3 + CloudFront ---
-
-      - name: Build PoolMaster webapp
-        run: |
-          npm ci
-          npx prisma generate --schema=packages/core-api/prisma/schema.prisma
-          WEB_RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          cd clients/poolmaster
-          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" \
-          POOLMASTER_ENVIRONMENT="qa" \
-          VITE_LOG_LEVEL="debug" \
-          POOLMASTER_RELEASE_PREFIX="${WEB_RELEASE_PREFIX}" \
-          POOLMASTER_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-          POOLMASTER_BUILD_NUMBER="${{ github.run_number }}" \
-          POOLMASTER_GIT_REF="${GITHUB_REF_NAME}" \
-          POOLMASTER_WEBAPP_GIT_SHA="${{ steps.tags.outputs.full_sha }}" \
-          POOLMASTER_SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}" \
-          POOLMASTER_SERVICE_GIT_SHA="${{ steps.tags.outputs.full_sha }}" \
-          npm run build
-          grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
-          test -f dist/version-info.json
-
-      - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
-        id: deploy-webapp
-        run: |
-          BUCKET="poolmaster-qa-webapp"
-          RELEASE_PREFIX="releases/${{ steps.tags.outputs.full_sha }}"
-          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa webapp'].Id" --output text 2>/dev/null)
-          if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-            aws s3 sync clients/poolmaster/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
-            aws s3 cp clients/poolmaster/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
-            aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
-            aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
-            if [ -n "$CF_ID" ]; then
-              aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
-            fi
-            echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
-            echo "PoolMaster webapp deployed to S3 release ${RELEASE_PREFIX} and root index updated"
-          else
-            echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
-            exit 1
-          fi
-
-      - name: Deploy QA services
-        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
-        run: |
-          if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            if [ -n "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" ]; then
-              echo "Deploying poolmaster-qa-core-api with task definition ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}..."
-              aws ecs update-service \
-                --cluster poolmaster-qa-cluster \
-                --service poolmaster-qa-core-api \
-                --task-definition "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" \
-                --no-cli-pager
-            fi
-
-            if [ -n "${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}" ]; then
-              echo "Deploying poolmaster-qa-mock-contest-feed-provider with task definition ${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}..."
-              aws ecs update-service \
-                --cluster poolmaster-qa-cluster \
-                --service poolmaster-qa-mock-contest-feed-provider \
-                --task-definition "${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}" \
-                --no-cli-pager
-            fi
-          else
-            echo "QA cluster not found — skipping deploy. Run terraform apply first."
-          fi
-
       - name: No ECR notice
         if: steps.ecr-check.outputs.core_api_exists != 'true' && steps.ecr-check.outputs.mock_provider_exists != 'true'
         run: |
@@ -744,7 +681,7 @@ jobs:
       - name: Summary
         if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
-          echo "### Docker Images Published to ECR + QA Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images Published to ECR + QA Task Definitions Registered" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
@@ -759,14 +696,13 @@ jobs:
             echo "| mock contest feed immutable image | \`${{ steps.image-ref.outputs.mock_provider_image }}\` |" >> $GITHUB_STEP_SUMMARY
             echo "| QA mock provider task definition | \`${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "| QA webapp release prefix | \`${{ steps.deploy-webapp.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**PoolMaster webapp** deployed to immutable S3 release prefixes with root index promotion" >> $GITHUB_STEP_SUMMARY
+          echo "Nothing is deployed yet: \`deploy-qa\` rolls these out only after \`deploy-migrate-qa\` succeeds." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The mock contest feed provider is deployed in QA only and is intentionally not promoted to staging or prod." >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
-  # QA Database Migrations — apply schema changes before smoke tests
+  # QA database migrations. Runs before anything is rolled out (see above).
   # =========================================================================
   deploy-migrate-qa:
     name: deploy-migrate-qa
@@ -774,6 +710,11 @@ jobs:
     needs: deploy-publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -786,7 +727,7 @@ jobs:
         run: |
           SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
           SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
-          MIGRATE_TASK_DEFINITION="${{ needs.publish-images.outputs.qa_migrate_task_definition }}"
+          MIGRATE_TASK_DEFINITION="${{ needs.deploy-publish-images.outputs.qa_migrate_task_definition }}"
 
           if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
             echo "⚠️ QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set — skipping migrations"
@@ -826,95 +767,62 @@ jobs:
           echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
           echo "Migration task started: ${TASK_ARN}"
 
+      # Prints the migrate container's CloudWatch logs whether it passed or
+      # failed, so what a migration or repair did is always in the job log.
       - name: Wait for migration to complete
         if: steps.run-migration.outputs.skipped != 'true'
         run: |
-          TASK_ARN="${{ steps.run-migration.outputs.task_arn }}"
-          CLUSTER="poolmaster-qa-cluster"
-          TASK_ID="${TASK_ARN##*/}"
-          TASK_DEFINITION_ARN=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-            --query 'tasks[0].taskDefinitionArn' --output text 2>/dev/null || echo "")
-          LOG_GROUP=""
-          LOG_PREFIX=""
-          CONTAINER_NAME="migrate"
+          node scripts/ecs-task-wait-and-print-logs.mjs \
+            --cluster poolmaster-qa-cluster \
+            --task-arn "${{ steps.run-migration.outputs.task_arn }}" \
+            --container migrate \
+            --timeout-seconds 600
 
-          if [ -n "$TASK_DEFINITION_ARN" ] && [ "$TASK_DEFINITION_ARN" != "None" ]; then
-            LOG_GROUP=$(aws ecs describe-task-definition \
-              --task-definition "$TASK_DEFINITION_ARN" \
-              --query 'taskDefinition.containerDefinitions[?name==`migrate`][0].logConfiguration.options."awslogs-group"' \
-              --output text 2>/dev/null || echo "")
-            LOG_PREFIX=$(aws ecs describe-task-definition \
-              --task-definition "$TASK_DEFINITION_ARN" \
-              --query 'taskDefinition.containerDefinitions[?name==`migrate`][0].logConfiguration.options."awslogs-stream-prefix"' \
-              --output text 2>/dev/null || echo "")
-          fi
+  # =========================================================================
+  # Roll the published release out to QA. Only reached once migrations pass.
+  # =========================================================================
+  deploy-qa:
+    name: deploy-qa
+    runs-on: ubuntu-latest
+    needs: [deploy-publish-images, deploy-migrate-qa]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-          echo "Waiting for migration task to complete..."
-          for i in $(seq 1 40); do
-            STATUS=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-              --query 'tasks[0].lastStatus' --output text)
-            echo "  Status: $STATUS (attempt $i/40)"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-            if [ "$STATUS" = "STOPPED" ]; then
-              EXIT_CODE=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-                --query 'tasks[0].containers[0].exitCode' --output text)
-              REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-                --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
-              STOP_REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
-                --query 'tasks[0].stoppedReason' --output text 2>/dev/null || echo "")
-              LOG_STREAM=""
-
-              if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
-                LOG_STREAM=$(aws logs describe-log-streams \
-                  --log-group-name "$LOG_GROUP" \
-                  --log-stream-name-prefix "${LOG_PREFIX}/${CONTAINER_NAME}/${TASK_ID}" \
-                  --order-by LastEventTime \
-                  --descending \
-                  --max-items 1 \
-                  --query 'logStreams[0].logStreamName' \
-                  --output text 2>/dev/null || echo "")
-              fi
-
-              if [ "$EXIT_CODE" = "0" ]; then
-                echo "✅ Migration completed successfully"
-                exit 0
-              else
-                echo "❌ Migration failed with exit code: $EXIT_CODE"
-                [ -n "$REASON" ] && [ "$REASON" != "None" ] && echo "  Reason: $REASON"
-                [ -n "$STOP_REASON" ] && [ "$STOP_REASON" != "None" ] && echo "  Stopped reason: $STOP_REASON"
-                echo "--- Migration Logs ---"
-                if [ -n "$LOG_STREAM" ] && [ "$LOG_STREAM" != "None" ]; then
-                  echo "  Log stream: $LOG_STREAM"
-                  aws logs get-log-events \
-                    --log-group-name "$LOG_GROUP" \
-                    --log-stream-name "$LOG_STREAM" \
-                    --query 'events[].message' --output text 2>/dev/null || echo "(log stream found, but events were not readable)"
-                else
-                  echo "  Task definition: ${TASK_DEFINITION_ARN:-unknown}"
-                  echo "  Log group: ${LOG_GROUP:-unknown}"
-                  echo "  Log prefix: ${LOG_PREFIX:-unknown}"
-                  if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ]; then
-                    echo "--- Recent CloudWatch Log Streams (${LOG_GROUP}) ---"
-                    aws logs describe-log-streams \
-                      --log-group-name "$LOG_GROUP" \
-                      --order-by LastEventTime \
-                      --descending \
-                      --max-items 10 \
-                      --query 'logStreams[*].{logStreamName:logStreamName,lastEventTimestamp:lastEventTimestamp,lastIngestionTime:lastIngestionTime}' \
-                      --output table 2>/dev/null || echo "(recent log streams unavailable)"
-                  else
-                    echo "(log configuration was unavailable for task $TASK_ID)"
-                  fi
-                fi
-                exit 1
-              fi
+      - name: Deploy QA services
+        run: |
+          if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            if [ -n "${{ needs.deploy-publish-images.outputs.qa_core_api_task_definition }}" ]; then
+              echo "Deploying poolmaster-qa-core-api with task definition ${{ needs.deploy-publish-images.outputs.qa_core_api_task_definition }}..."
+              aws ecs update-service \
+                --cluster poolmaster-qa-cluster \
+                --service poolmaster-qa-core-api \
+                --task-definition "${{ needs.deploy-publish-images.outputs.qa_core_api_task_definition }}" \
+                --no-cli-pager
             fi
 
-            sleep 15
-          done
-
-          echo "Migration task timed out after 10 minutes"
-          exit 1
+            if [ -n "${{ needs.deploy-publish-images.outputs.qa_mock_contest_feed_provider_task_definition }}" ]; then
+              echo "Deploying poolmaster-qa-mock-contest-feed-provider with task definition ${{ needs.deploy-publish-images.outputs.qa_mock_contest_feed_provider_task_definition }}..."
+              aws ecs update-service \
+                --cluster poolmaster-qa-cluster \
+                --service poolmaster-qa-mock-contest-feed-provider \
+                --task-definition "${{ needs.deploy-publish-images.outputs.qa_mock_contest_feed_provider_task_definition }}" \
+                --no-cli-pager
+            fi
+          else
+            echo "QA cluster not found — skipping deploy. Run terraform apply first."
+          fi
 
       - name: Capture QA service rollout target
         id: qa-service-target
@@ -942,7 +850,7 @@ jobs:
           PRIMARY_TASK_SET=$(aws ecs describe-services \
             --cluster "$CLUSTER" \
             --services "$SERVICE" \
-            --query 'services[0].deployments[?status==`PRIMARY`][0].taskDefinition' \
+            --query 'services[0].deployments[?status==`PRIMARY`] | [0].taskDefinition' \
             --output text 2>/dev/null || echo "")
 
           echo "task_definition=${TASK_DEFINITION}" >> $GITHUB_OUTPUT
@@ -1052,11 +960,11 @@ jobs:
             if [ -n "$TASK_ID" ] && [ "$TASK_ID" != "None" ] && [ -n "$TASK_DEFINITION" ] && [ "$TASK_DEFINITION" != "None" ]; then
               LOG_GROUP=$(aws ecs describe-task-definition \
                 --task-definition "$TASK_DEFINITION" \
-                --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].logConfiguration.options."awslogs-group"' \
+                --query 'taskDefinition.containerDefinitions[?name==`core-api`] | [0].logConfiguration.options."awslogs-group"' \
                 --output text 2>/dev/null || echo "")
               LOG_PREFIX=$(aws ecs describe-task-definition \
                 --task-definition "$TASK_DEFINITION" \
-                --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].logConfiguration.options."awslogs-stream-prefix"' \
+                --query 'taskDefinition.containerDefinitions[?name==`core-api`] | [0].logConfiguration.options."awslogs-stream-prefix"' \
                 --output text 2>/dev/null || echo "")
 
               if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
@@ -1120,6 +1028,48 @@ jobs:
           echo "QA ECS service failed to stabilize after deployment."
           exit 1
 
+      # The webapp goes out after the API it calls is stable.
+      - name: Build PoolMaster webapp
+        run: |
+          npm ci
+          npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+          WEB_RELEASE_PREFIX="releases/${{ github.sha }}"
+          cd clients/poolmaster
+          APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" \
+          POOLMASTER_ENVIRONMENT="qa" \
+          VITE_LOG_LEVEL="debug" \
+          POOLMASTER_RELEASE_PREFIX="${WEB_RELEASE_PREFIX}" \
+          POOLMASTER_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          POOLMASTER_BUILD_NUMBER="${{ github.run_number }}" \
+          POOLMASTER_GIT_REF="${GITHUB_REF_NAME}" \
+          POOLMASTER_WEBAPP_GIT_SHA="${{ github.sha }}" \
+          POOLMASTER_SERVICE_VERSION="${{ github.sha }}" \
+          POOLMASTER_SERVICE_GIT_SHA="${{ github.sha }}" \
+          npm run build
+          grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
+          test -f dist/version-info.json
+
+      - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
+        id: deploy-webapp
+        run: |
+          BUCKET="poolmaster-qa-webapp"
+          RELEASE_PREFIX="releases/${{ github.sha }}"
+          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='poolmaster-qa webapp'].Id" --output text 2>/dev/null)
+          if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
+            aws s3 sync clients/poolmaster/dist/ "s3://${BUCKET}/${RELEASE_PREFIX}/" --delete
+            aws s3 cp clients/poolmaster/dist/index.html "s3://${BUCKET}/index.html" --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
+            aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
+            aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
+            if [ -n "$CF_ID" ]; then
+              aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
+            fi
+            echo "release_prefix=${RELEASE_PREFIX}" >> $GITHUB_OUTPUT
+            echo "PoolMaster webapp deployed to S3 release ${RELEASE_PREFIX} and root index updated"
+          else
+            echo "::error::S3 bucket ${BUCKET} not found — run terraform apply first"
+            exit 1
+          fi
+
       - name: Warm-up delay after ECS stabilization
         if: steps.ecs-stabilize.outputs.stable == 'true'
         run: sleep 20
@@ -1127,11 +1077,10 @@ jobs:
   poolmaster-browser-e2e:
     name: poolmaster-browser-e2e
     runs-on: ubuntu-latest
-    # pool-master-303: the ping test never touches the database, so it
-    # shouldn't depend on migrate-qa succeeding — depend on the same thing
-    # migrate-qa itself depends on instead. An unrelated migration failure
-    # was silently skipping this job on every recent main run.
-    needs: deploy-publish-images
+    # Checks the release deploy-qa rolled out. Since #191 a failed migration
+    # stops the rollout, so there is nothing new to check and this is skipped;
+    # deploy-health-issue is what reports that failure.
+    needs: deploy-qa
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
@@ -1181,3 +1130,46 @@ jobs:
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
           echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Journeys: minimal deploy-reachability ping (pool-master-303 phase 1 — no data dependency; a real suite is phase 2, see plans/130)" >> $GITHUB_STEP_SUMMARY
+
+  # Ten failed QA deploys in a row went unnoticed (#191) because a red
+  # deploy job on main surfaces nowhere. Keep one open issue while the deploy
+  # is failing — opened on the first failure, commented on each repeat —
+  # and close it on the next fully green deploy.
+  deploy-health-issue:
+    name: deploy-health-issue
+    runs-on: ubuntu-latest
+    needs: [deploy-publish-images, deploy-migrate-qa, deploy-qa]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      issues: write
+    steps:
+      - name: Open, update, or close the QA deploy failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PUBLISH_RESULT: ${{ needs.deploy-publish-images.result }}
+          MIGRATE_RESULT: ${{ needs.deploy-migrate-qa.result }}
+          DEPLOY_RESULT: ${{ needs.deploy-qa.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          TITLE="QA deploy is failing on main"
+          ISSUE=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
+          RESULTS="publish-images: \`$PUBLISH_RESULT\`, migrate-qa: \`$MIGRATE_RESULT\`, deploy-qa: \`$DEPLOY_RESULT\`"
+
+          if [ "$PUBLISH_RESULT" = "failure" ] || [ "$MIGRATE_RESULT" = "failure" ] || [ "$DEPLOY_RESULT" = "failure" ]; then
+            BODY="The QA deploy failed for \`$SHA\` — $RESULTS. Run: $RUN_URL"
+            if [ -n "$ISSUE" ]; then
+              gh issue comment "$ISSUE" --body "$BODY"
+            else
+              gh issue create --title "$TITLE" --body "$BODY
+
+          This issue is managed by the \`deploy-health-issue\` CI job: it is commented on for every further failed deploy and closed automatically by the next successful one."
+            fi
+            echo "::error::QA deploy failed — $RESULTS"
+          elif [ "$PUBLISH_RESULT" = "success" ] && [ "$MIGRATE_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ] && [ -n "$ISSUE" ]; then
+            gh issue close "$ISSUE" --comment "QA deployed successfully at \`$SHA\`. Run: $RUN_URL"
+          else
+            echo "Nothing to report — $RESULTS"
+          fi

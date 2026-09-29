@@ -1,8 +1,36 @@
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
 
 const LEAGUE_CODE_MIGRATION = '20260411173000_add_league_code';
-const SUBSTRATE_FOUNDATION_MIGRATION = '20260506211309_substrate_redesign_phase4_foundation';
+
+// One-off QA repairs, each owned by a guarded script that verifies the exact
+// failed state before touching anything. Checked in order against the
+// unresolved failed migrations.
+const SCRIPTED_REPAIRS = [
+  {
+    migrationName: '20260506211309_substrate_redesign_phase4_foundation',
+    args: [
+      'scripts/repair-substrate-foundation-migration.mjs',
+      '--apply',
+      '--confirm-qa-substrate-repair',
+    ],
+  },
+  {
+    migrationName: '20260902110000_add_sport_league_season_roster',
+    args: [
+      'scripts/repair-sport-league-season-migration.mjs',
+      '--apply',
+      '--confirm-qa-season-repair',
+    ],
+  },
+];
+
+export function selectScriptedRepair(unresolvedMigrationNames) {
+  return SCRIPTED_REPAIRS.find(
+    (repair) => unresolvedMigrationNames.includes(repair.migrationName),
+  ) ?? null;
+}
 
 function runPrisma(args) {
   const result = spawnSync('npx', ['prisma', ...args], {
@@ -226,22 +254,19 @@ async function main() {
   const combinedOutput = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
 
   try {
-    if (await hasUnresolvedFailedMigration(prisma, SUBSTRATE_FOUNDATION_MIGRATION)) {
-      console.log(`Attempting one-time repair for migration ${SUBSTRATE_FOUNDATION_MIGRATION}...`);
-      result = runNodeScript([
-        'scripts/repair-substrate-foundation-migration.mjs',
-        '--apply',
-        '--confirm-qa-substrate-repair',
-      ]);
+    const scriptedRepair = selectScriptedRepair(await listUnresolvedFailedMigrations(prisma));
+    if (scriptedRepair) {
+      console.log(`Attempting one-time repair for migration ${scriptedRepair.migrationName}...`);
+      result = runNodeScript(scriptedRepair.args);
 
       if (result.status !== 0) {
         throw new Error(
-          `Failed to repair ${SUBSTRATE_FOUNDATION_MIGRATION}. The repair script refused or failed.`,
+          `Failed to repair ${scriptedRepair.migrationName}. The repair script refused or failed.`,
         );
       }
 
       await assertNoUnresolvedFailedMigrations(prisma);
-      console.log('Prisma migrations completed successfully after substrate repair.');
+      console.log(`Prisma migrations completed successfully after repairing ${scriptedRepair.migrationName}.`);
       return;
     }
 
@@ -287,7 +312,9 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
