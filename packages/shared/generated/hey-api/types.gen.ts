@@ -1146,11 +1146,11 @@ export type GolfLeaderboardParticipantDto = {
     /**
      * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
      */
-    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+    inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
     /**
      * Latest copied global world ranking on this event participant.
      */
-    worldRanking: number | null;
+    ranking: number | null;
     /**
      * Event-scoped odds-to-win for this golfer.
      */
@@ -1389,11 +1389,11 @@ export type GolfLeaderboardEntryPickDto = {
         /**
          * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
          */
-        inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
          * Latest copied global world ranking on this event participant.
          */
-        worldRanking: number | null;
+        ranking: number | null;
         /**
          * Event-scoped odds-to-win for this golfer.
          */
@@ -1681,11 +1681,11 @@ export type GolfLeaderboardEntryDto = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             /**
              * Latest copied global world ranking on this event participant.
              */
-            worldRanking: number | null;
+            ranking: number | null;
             /**
              * Event-scoped odds-to-win for this golfer.
              */
@@ -1937,11 +1937,11 @@ export type GolfLeaderboardResponse = {
         /**
          * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
          */
-        inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
          * Latest copied global world ranking on this event participant.
          */
-        worldRanking: number | null;
+        ranking: number | null;
         /**
          * Event-scoped odds-to-win for this golfer.
          */
@@ -2227,11 +2227,11 @@ export type GolfLeaderboardResponse = {
                 /**
                  * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                  */
-                inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+                inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
                 /**
                  * Latest copied global world ranking on this event participant.
                  */
-                worldRanking: number | null;
+                ranking: number | null;
                 /**
                  * Event-scoped odds-to-win for this golfer.
                  */
@@ -13161,7 +13161,7 @@ export type AdminListEventParticipantsResponses = {
             /**
              * Current per-event world-ranking snapshot when provided.
              */
-            worldRanking?: number;
+            ranking?: number;
             /**
              * Current per-event odds-to-win snapshot when provided.
              */
@@ -14966,7 +14966,7 @@ export type AdminCleanupStaleProviderEventsResponses = {
              */
             sportEventParticipantCount: number;
             /**
-             * Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event.
+             * Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.
              */
             valuationCount: number;
             /**
@@ -16699,7 +16699,7 @@ export type AdminGetGolfLeagueRosterResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -16710,7 +16710,7 @@ export type AdminUpdateGolfLeagueRosterData = {
     body: {
         entries: Array<{
             participantId: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
     path: {
@@ -16761,7 +16761,7 @@ export type AdminUpdateGolfLeagueRosterResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -16845,7 +16845,7 @@ export type AdminAddGolfLeagueRosterEntryResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         };
     };
 };
@@ -16904,7 +16904,7 @@ export type AdminPreviewGolfLeagueRosterUploadData = {
             participantId?: string;
             externalId?: string;
             playerName?: string;
-            worldRanking?: number;
+            ranking?: number;
         }>;
     };
     path: {
@@ -16954,7 +16954,7 @@ export type AdminPreviewGolfLeagueRosterUploadResponses = {
                 participantId?: string;
                 externalId?: string;
                 playerName?: string;
-                worldRanking?: number;
+                ranking?: number;
             };
             resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
             participantId: string | null;
@@ -16971,7 +16971,7 @@ export type AdminApplyGolfLeagueRosterUploadData = {
             participantId?: string;
             externalId?: string;
             playerName?: string;
-            worldRanking?: number;
+            ranking?: number;
         }>;
     };
     path: {
@@ -17044,7 +17044,7 @@ export type AdminApplyGolfLeagueRosterUploadResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -19285,12 +19285,12 @@ export type AdminGetGolfTournamentFieldResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking: number | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
             /**
-             * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
+             * SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
             price: number | null;
             /**
@@ -19308,8 +19308,8 @@ export type AdminUpdateGolfFieldEntriesData = {
         entries: Array<{
             sportEventParticipantId: string;
             isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking?: number | null;
+            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking?: number | null;
             oddsToWin?: number | null;
             seedNumber?: number | null;
             price?: number | null;
@@ -19386,12 +19386,12 @@ export type AdminUpdateGolfFieldEntriesResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking: number | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
             /**
-             * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
+             * SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
             price: number | null;
             /**

@@ -11,7 +11,7 @@
  * category typing isn't wired yet throw `LiveScoreUnsupportedError`.
  */
 
-import type { GolfParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import type { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 
 // --- Provider Interface ---
@@ -145,7 +145,7 @@ export interface ProviderParticipant {
   photoUrl?: string;
   active: boolean;
   /** Meaningful only when `active` is false; undefined covers "inactive, no more specific reason." */
-  inactiveReason?: GolfParticipantInactiveReason;
+  inactiveReason?: ParticipantInactiveReason;
   metadata: Record<string, unknown>;
 }
 

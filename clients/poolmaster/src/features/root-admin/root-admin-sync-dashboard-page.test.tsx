@@ -380,12 +380,12 @@ describe('RootAdminSyncDashboardPage', () => {
                     before: {
                       seedNumber: 9,
                       oddsToWin: 32,
-                      worldRanking: 9,
+                      ranking: 9,
                     },
                     after: {
                       seedNumber: 9,
                       oddsToWin: 32,
-                      worldRanking: 9,
+                      ranking: 9,
                     },
                   },
                   {
@@ -400,12 +400,12 @@ describe('RootAdminSyncDashboardPage', () => {
                     before: {
                       seedNumber: 4,
                       oddsToWin: 18,
-                      worldRanking: 6,
+                      ranking: 6,
                     },
                     after: {
                       seedNumber: 3,
                       oddsToWin: 12,
-                      worldRanking: 3,
+                      ranking: 3,
                     },
                   },
                   {
@@ -420,7 +420,7 @@ describe('RootAdminSyncDashboardPage', () => {
                     after: {
                       seedNumber: 18,
                       oddsToWin: 24,
-                      worldRanking: 18,
+                      ranking: 18,
                     },
                   },
                 ],

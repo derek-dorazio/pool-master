@@ -2,7 +2,7 @@
  * SportEventParticipant mapper — Prisma row → canonical
  * SportEventParticipantDto per plans/117 §4.1 / §12.1.
  *
- * Pure projection. `worldRanking` is copied from the latest provider-scoped
+ * Pure projection. `ranking` is copied from the latest provider-scoped
  * global ranking snapshot during event hydration; `oddsToWin` and
  * `seedNumber` are event-scoped values from the event detail feed.
  *
@@ -28,7 +28,7 @@ export interface SportEventParticipantRow {
   participantId: string;
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: DecimalLike | number | null;
   seedNumber: number | null;
   metadata: unknown;
@@ -56,7 +56,7 @@ export function mapSportEventParticipantToDto(
     participantId: row.participantId,
     isActive: row.isActive,
     inactiveReason: row.inactiveReason as SportEventParticipantDto['inactiveReason'],
-    worldRanking: row.worldRanking,
+    ranking: row.ranking,
     oddsToWin,
     seedNumber: row.seedNumber,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,

@@ -111,6 +111,13 @@ describe('events routes', () => {
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
+          standing: {
+            sportEventParticipant: { sportEventId: eligibleEventId },
+          },
+        },
+      });
+      await prisma.sportEventParticipantStanding.deleteMany({
+        where: {
           sportEventParticipant: { sportEventId: eligibleEventId },
         },
       });
@@ -218,6 +225,13 @@ describe('events routes', () => {
       });
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          standing: {
+            sportEventParticipant: { sportEventId: lockedEventId },
+          },
+        },
+      });
+      await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: lockedEventId },
         },

@@ -2059,7 +2059,7 @@ export interface paths {
         head?: never;
         /**
          * Bulk-patch a golf league roster
-         * @description Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.
+         * @description Bulk row patch (ranking) — same shape as the tournament field bulk-patch.
          */
         patch: operations["adminUpdateGolfLeagueRoster"];
         trace?: never;
@@ -2388,7 +2388,7 @@ export interface paths {
         head?: never;
         /**
          * Bulk-patch a golf tournament's field entries
-         * @description One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
+         * @description One request per Save on the field grid. price writes SportEventParticipantValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
          */
         patch: operations["adminUpdateGolfFieldEntries"];
         trace?: never;
@@ -2488,7 +2488,7 @@ export interface paths {
         put?: never;
         /**
          * Auto-assign a golf tournament's tiers
-         * @description Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.
+         * @description Partitions the active field across however many SportEventTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.
          */
         post: operations["adminAutoAssignGolfTiers"];
         delete?: never;
@@ -3640,9 +3640,9 @@ export interface components {
              * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              * @enum {string|null}
              */
-            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+            inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
             /** @description Latest copied global world ranking on this event participant. */
-            worldRanking: number | null;
+            ranking: number | null;
             /** @description Event-scoped odds-to-win for this golfer. */
             oddsToWin: number | null;
             /** @description Event seed/order when supplied by the provider. */
@@ -3800,9 +3800,9 @@ export interface components {
                  * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                  * @enum {string|null}
                  */
-                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                 /** @description Latest copied global world ranking on this event participant. */
-                worldRanking: number | null;
+                ranking: number | null;
                 /** @description Event-scoped odds-to-win for this golfer. */
                 oddsToWin: number | null;
                 /** @description Event seed/order when supplied by the provider. */
@@ -3988,9 +3988,9 @@ export interface components {
                      * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                      * @enum {string|null}
                      */
-                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                    inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                     /** @description Latest copied global world ranking on this event participant. */
-                    worldRanking: number | null;
+                    ranking: number | null;
                     /** @description Event-scoped odds-to-win for this golfer. */
                     oddsToWin: number | null;
                     /** @description Event seed/order when supplied by the provider. */
@@ -4162,9 +4162,9 @@ export interface components {
                  * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                  * @enum {string|null}
                  */
-                inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                 /** @description Latest copied global world ranking on this event participant. */
-                worldRanking: number | null;
+                ranking: number | null;
                 /** @description Event-scoped odds-to-win for this golfer. */
                 oddsToWin: number | null;
                 /** @description Event seed/order when supplied by the provider. */
@@ -4349,9 +4349,9 @@ export interface components {
                          * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                          * @enum {string|null}
                          */
-                        inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                        inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                         /** @description Latest copied global world ranking on this event participant. */
-                        worldRanking: number | null;
+                        ranking: number | null;
                         /** @description Event-scoped odds-to-win for this golfer. */
                         oddsToWin: number | null;
                         /** @description Event seed/order when supplied by the provider. */
@@ -13587,7 +13587,7 @@ export interface operations {
                             /** @description Provider-emitted per-event participant status. */
                             status?: string;
                             /** @description Current per-event world-ranking snapshot when provided. */
-                            worldRanking?: number;
+                            ranking?: number;
                             /** @description Current per-event odds-to-win snapshot when provided. */
                             oddsToWin?: number;
                             /** @description Event-relative seed number when provided. */
@@ -15046,7 +15046,7 @@ export interface operations {
                             directContestCount: number;
                             /** @description Number of SportEventParticipant rows attached to this event. */
                             sportEventParticipantCount: number;
-                            /** @description Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event. */
+                            /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
                             valuationCount: number;
                             /** @description Number of SportEventParticipantGolfRound rows attached through this event. */
                             golfRoundCount: number;
@@ -16679,7 +16679,7 @@ export interface operations {
                             nationality: string | null;
                             /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
                             status: string;
-                            worldRanking: number | null;
+                            ranking: number | null;
                         }[];
                     };
                 };
@@ -16737,7 +16737,7 @@ export interface operations {
                             nationality: string | null;
                             /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
                             status: string;
-                            worldRanking: number | null;
+                            ranking: number | null;
                         };
                     };
                 };
@@ -16796,7 +16796,7 @@ export interface operations {
                 "application/json": {
                     entries: {
                         participantId: string;
-                        worldRanking: number | null;
+                        ranking: number | null;
                     }[];
                 };
             };
@@ -16816,7 +16816,7 @@ export interface operations {
                             nationality: string | null;
                             /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
                             status: string;
-                            worldRanking: number | null;
+                            ranking: number | null;
                         }[];
                     };
                 };
@@ -16899,7 +16899,7 @@ export interface operations {
                         participantId?: string;
                         externalId?: string;
                         playerName?: string;
-                        worldRanking?: number;
+                        ranking?: number;
                     }[];
                 };
             };
@@ -16919,7 +16919,7 @@ export interface operations {
                                 participantId?: string;
                                 externalId?: string;
                                 playerName?: string;
-                                worldRanking?: number;
+                                ranking?: number;
                             };
                             /** @enum {string} */
                             resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
@@ -16967,7 +16967,7 @@ export interface operations {
                         participantId?: string;
                         externalId?: string;
                         playerName?: string;
-                        worldRanking?: number;
+                        ranking?: number;
                     }[];
                 };
             };
@@ -16987,7 +16987,7 @@ export interface operations {
                             nationality: string | null;
                             /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
                             status: string;
-                            worldRanking: number | null;
+                            ranking: number | null;
                         }[];
                     };
                 };
@@ -19151,11 +19151,11 @@ export interface operations {
                              * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                              * @enum {string|null}
                              */
-                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                            worldRanking: number | null;
+                            inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                            ranking: number | null;
                             oddsToWin: number | null;
                             seedNumber: number | null;
-                            /** @description SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
+                            /** @description SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
                             price: number | null;
                             /** @description Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite. */
                             isLeagueRosterMember: boolean;
@@ -19200,8 +19200,8 @@ export interface operations {
                         sportEventParticipantId: string;
                         isActive?: boolean;
                         /** @enum {string|null} */
-                        inactiveReason?: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                        worldRanking?: number | null;
+                        inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
+                        ranking?: number | null;
                         oddsToWin?: number | null;
                         seedNumber?: number | null;
                         price?: number | null;
@@ -19228,11 +19228,11 @@ export interface operations {
                              * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                              * @enum {string|null}
                              */
-                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
-                            worldRanking: number | null;
+                            inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
+                            ranking: number | null;
                             oddsToWin: number | null;
                             seedNumber: number | null;
-                            /** @description SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
+                            /** @description SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
                             price: number | null;
                             /** @description Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite. */
                             isLeagueRosterMember: boolean;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   ParticipantType,
   Sport,
   SportCategory,
@@ -135,7 +135,7 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 
 /**
  * Canonical SportEventParticipant DTO — pure row projection per
- * plans/117 §4.1 / §12.1. `worldRanking` is copied from the latest
+ * plans/117 §4.1 / §12.1. `ranking` is copied from the latest
  * provider-scoped global ranking snapshot; `oddsToWin` and `seedNumber`
  * are event-scoped values.
  *
@@ -149,8 +149,8 @@ export const SportEventParticipantDtoSchema = z.object({
   sportEventId: z.string().describe('Owning sport-event identifier.'),
   participantId: z.string().describe('Canonical participant identifier (the across-events Participant row).'),
   isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
-  inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  worldRanking: z.number().int().nullable().describe('Latest provider-scoped global world-ranking snapshot copied onto this event participant; null when not available.'),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
+  ranking: z.number().int().nullable().describe('Latest provider-scoped global world-ranking snapshot copied onto this event participant; null when not available.'),
   oddsToWin: z.number().nullable().describe('Event-scoped implied odds-to-win snapshot (decimal); null when not provided.'),
   seedNumber: z.number().int().nullable().describe('Event-relative seed number (e.g., NCAA tournament seed); null when not provided.'),
   metadata: JsonObjectSchema.describe('Provider-emitted per-participant metadata.'),

@@ -208,7 +208,7 @@ export function RootAdminEventsPage() {
           </StatusBadge>
         ),
       }),
-      participantColumnHelper.accessor('worldRanking', {
+      participantColumnHelper.accessor('ranking', {
         header: 'World rank',
         cell: ({ getValue }) => formatOptionalText(getValue()),
       }),

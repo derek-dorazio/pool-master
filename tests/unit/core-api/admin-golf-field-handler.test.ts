@@ -22,7 +22,7 @@ function buildFieldEntryDto(overrides: Record<string, unknown> = {}) {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null,
-    worldRanking: 5,
+    ranking: 5,
     oddsToWin: 12.5,
     seedNumber: 3,
     price: null,

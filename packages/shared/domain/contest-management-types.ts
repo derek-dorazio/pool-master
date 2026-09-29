@@ -2,7 +2,7 @@ import type {
   ContestStatus,
   ContestFormat,
   GolfContestConfigMode,
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -32,7 +32,7 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
 
 /**
  * Shrunk per plans/124 §4.6/§4.6a: tiers and price are event-owned data
- * (SportEventGolfTier/SportEventParticipantGolfValuation via
+ * (SportEventTier/SportEventParticipantValuation via
  * golf-tier-service.getEffectiveTiersForContest), never a per-contest
  * override, so tierSource/tierGeneration/tiers all drop. cutRule/
  * playoffHandling/displayScoring/tiebreaker each had exactly one possible
@@ -108,9 +108,9 @@ export interface SportEventParticipant extends DomainEntity {
   /** Whether this golfer is currently eligible/available for this tournament. */
   isActive: boolean;
   /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
-  inactiveReason?: GolfParticipantInactiveReason;
+  inactiveReason?: ParticipantInactiveReason;
   /** Latest global world-ranking snapshot copied onto this event participant. */
-  worldRanking?: number;
+  ranking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */
   oddsToWin?: number;
   /** Event-relative seed number (e.g., NCAA tournament seed). */

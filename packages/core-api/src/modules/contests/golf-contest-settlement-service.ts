@@ -7,11 +7,10 @@ import type { ContestCompletedEvent } from '@poolmaster/shared/events/contest';
 import type { GolfLeaderboardParticipantRow } from '../../mappers/contests.mapper';
 import {
   buildGolfLeaderboardEntry,
-  buildGolfRoundColumns,
-  mapGolfLeaderboardStatus,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
 } from './golf-leaderboard-calculator';
+import { loadGolfLeaderboardParticipants } from './golf-leaderboard-participants';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -65,7 +64,7 @@ export class GolfContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
-    const participants = await this.loadGolfLeaderboardParticipants(sportEventId);
+    const participants = await loadGolfLeaderboardParticipants(this.prisma, sportEventId);
     const participantById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
     );
@@ -194,51 +193,6 @@ export class GolfContestSettlementService {
     };
   }
 
-  private async loadGolfLeaderboardParticipants(
-    sportEventId: string,
-  ): Promise<GolfLeaderboardParticipantRow[]> {
-    const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId },
-      include: {
-        participant: true,
-        golfStanding: true,
-        golfRounds: {
-          orderBy: { sportEventRound: { roundNumber: 'asc' } },
-          include: {
-            sportEventRound: { select: { roundNumber: true } },
-          },
-        },
-      },
-      orderBy: [{ seedNumber: 'asc' }, { createdAt: 'asc' }],
-    });
-
-    return rows.map((row) => {
-      const standing = row.golfStanding;
-      return {
-        sportEventParticipantId: row.id,
-        participantId: row.participantId,
-        name: row.participant.name,
-        shortName: row.participant.shortName ?? null,
-        isActive: row.isActive,
-        inactiveReason: row.inactiveReason,
-        worldRanking: row.worldRanking ?? null,
-        oddsToWin: decimalToNumber(row.oddsToWin),
-        seedNumber: row.seedNumber ?? null,
-        totalScoreToPar: standing?.eventScoreToPar ?? null,
-        totalStrokes: standing?.eventStrokes ?? null,
-        thru: standing?.currentRoundThru ?? null,
-        currentRound: standing?.currentRound ?? null,
-        status: standing ? mapGolfLeaderboardStatus(String(standing.status)) : 'active',
-        position: standing?.position ?? null,
-        displayPosition: standing?.displayPosition ?? null,
-        asOf: standing?.asOf ?? null,
-        rounds: buildGolfRoundColumns(
-          row.golfRounds.map((round) => ({ ...round, round: round.sportEventRound.roundNumber })),
-        ),
-      };
-    });
-  }
-
   private async publishContestCompleted(
     contestId: string,
     rankedEntries: Array<{
@@ -271,8 +225,3 @@ function resolveContestStandingAsOf(
   return latest ?? fallback;
 }
 
-function decimalToNumber(value: { toNumber: () => number } | number | null): number | null {
-  if (value === null) return null;
-  if (typeof value === 'number') return value;
-  return value.toNumber();
-}

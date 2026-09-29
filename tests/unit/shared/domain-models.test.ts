@@ -10,7 +10,7 @@ import {
   PricingMethod,
   TierAssignmentMethod,
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   deriveLegacyParticipantStatus,
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
@@ -163,13 +163,12 @@ describe('deriveLegacyParticipantStatus', () => {
   it('pool-master-uvc: returns ACTIVE when isActive is true, regardless of inactiveReason', () => {
     expect(deriveLegacyParticipantStatus(true, null)).toBe('ACTIVE');
     expect(deriveLegacyParticipantStatus(true, undefined)).toBe('ACTIVE');
-    expect(deriveLegacyParticipantStatus(true, GolfParticipantInactiveReason.WITHDRAWN)).toBe('ACTIVE');
+    expect(deriveLegacyParticipantStatus(true, ParticipantInactiveReason.WITHDRAWN)).toBe('ACTIVE');
   });
 
   it('pool-master-uvc: returns the inactiveReason when isActive is false and a reason is recorded', () => {
-    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.WITHDRAWN)).toBe('WITHDRAWN');
-    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.CUT)).toBe('CUT');
-    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.ELIMINATED)).toBe('ELIMINATED');
+    expect(deriveLegacyParticipantStatus(false, ParticipantInactiveReason.WITHDRAWN)).toBe('WITHDRAWN');
+    expect(deriveLegacyParticipantStatus(false, ParticipantInactiveReason.ELIMINATED)).toBe('ELIMINATED');
   });
 
   it('pool-master-uvc: falls back to INACTIVE when isActive is false and no reason is recorded', () => {

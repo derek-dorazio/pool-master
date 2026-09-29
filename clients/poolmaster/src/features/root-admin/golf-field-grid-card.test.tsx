@@ -39,7 +39,7 @@ function entry(overrides: Partial<GolfFieldEntry> = {}): GolfFieldEntry {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null as unknown as GolfFieldEntry['inactiveReason'],
-    worldRanking: 2,
+    ranking: 2,
     oddsToWin: 8.5,
     seedNumber: 2,
     price: 9500,
@@ -83,8 +83,8 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
 
   it('pool-master-za4 preserves an in-progress draft when the same eventId refetches', async () => {
     const { rerender } = renderCard();
-    await userEvent.clear(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'));
-    await userEvent.type(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'), '1');
+    await userEvent.clear(screen.getByTestId('root-admin-golf-field-ranking-sep-1'));
+    await userEvent.type(screen.getByTestId('root-admin-golf-field-ranking-sep-1'), '1');
     expect(screen.getByTestId('root-admin-golf-field-dirty-bar')).toHaveTextContent('1 unsaved');
 
     // Same eventId, new entries array (a background refetch of the field query).
@@ -92,7 +92,7 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter>
           <GolfFieldGridCard
-            entries={[entry({ worldRanking: 3 })]}
+            entries={[entry({ ranking: 3 })]}
             eventId="evt-1"
             fieldError={null}
             fieldLoading={false}
@@ -102,14 +102,14 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1')).toHaveValue('1');
+    expect(screen.getByTestId('root-admin-golf-field-ranking-sep-1')).toHaveValue('1');
     expect(screen.getByTestId('root-admin-golf-field-dirty-bar')).toBeInTheDocument();
   });
 
   it('pool-master-za4 clears the draft when the eventId changes', async () => {
     const { rerender } = renderCard();
-    await userEvent.clear(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'));
-    await userEvent.type(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'), '1');
+    await userEvent.clear(screen.getByTestId('root-admin-golf-field-ranking-sep-1'));
+    await userEvent.type(screen.getByTestId('root-admin-golf-field-ranking-sep-1'), '1');
     expect(screen.getByTestId('root-admin-golf-field-dirty-bar')).toBeInTheDocument();
 
     rerender(
@@ -126,14 +126,14 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1')).toHaveValue('2');
+    expect(screen.getByTestId('root-admin-golf-field-ranking-sep-1')).toHaveValue('2');
     expect(screen.queryByTestId('root-admin-golf-field-dirty-bar')).not.toBeInTheDocument();
   });
 
   it('pool-master-za4 hides the save bar when readOnly', async () => {
     renderCard({ readOnly: true });
-    await userEvent.clear(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'));
-    await userEvent.type(screen.getByTestId('root-admin-golf-field-worldRanking-sep-1'), '1');
+    await userEvent.clear(screen.getByTestId('root-admin-golf-field-ranking-sep-1'));
+    await userEvent.type(screen.getByTestId('root-admin-golf-field-ranking-sep-1'), '1');
     expect(screen.queryByTestId('root-admin-golf-field-dirty-bar')).not.toBeInTheDocument();
   });
 });

@@ -454,6 +454,15 @@ async function cleanupSportEventParticipantArtifacts(
   });
   await database.sportEventParticipantGolfRound.deleteMany({
     where: {
+      participantRound: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.sportEventParticipantRound.deleteMany({
+    where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
       },
@@ -462,6 +471,15 @@ async function cleanupSportEventParticipantArtifacts(
   // SportEventParticipantGolfStanding has an explicit RESTRICT FK so tests
   // exercise the same child-before-parent cleanup order as production cleanup.
   await database.sportEventParticipantGolfStanding.deleteMany({
+    where: {
+      standing: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.sportEventParticipantStanding.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -475,7 +493,7 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantGolfValuation.deleteMany({
+  await database.sportEventParticipantValuation.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -593,17 +611,19 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.providerSyncRun.deleteMany();
   await prisma.contestEntryGolfStanding.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
+  await prisma.sportEventParticipantRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing
-  // table intentionally uses an explicit child row rather than FK cascade.
+  // tables intentionally use explicit child rows rather than FK cascade.
   await prisma.sportEventParticipantGolfStanding.deleteMany();
-  await prisma.sportEventParticipantGolfValuation.deleteMany();
+  await prisma.sportEventParticipantStanding.deleteMany();
+  await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantRankingSnapshot.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
-  // SportEventGolfTier and SportEventRound both have RESTRICT FKs to
+  // SportEventTier and SportEventRound both have RESTRICT FKs to
   // SportEvent, so they must clear before the SportEvent delete below.
-  await prisma.sportEventGolfTier.deleteMany();
+  await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
   await prisma.sport.deleteMany();

@@ -38,7 +38,7 @@ function buildSportEventRow(overrides: Record<string, unknown> = {}) {
     autoLifecycleEnabled: true,
     createdAt: new Date('2027-01-01T00:00:00.000Z'),
     updatedAt: new Date('2027-01-01T00:00:00.000Z'),
-    _count: { sportEventParticipants: 0, golfTiers: 0, contests: 0 },
+    _count: { sportEventParticipants: 0, tiers: 0, contests: 0 },
     ...overrides,
   };
 }
@@ -142,10 +142,10 @@ describe('GolfTournamentService.createTournament', () => {
     // exist, so its `_count` is all-zero; the re-read after
     // ensureDefaultGolfTiers/ensureSportEventRounds sees the 6 default tiers.
     deps.prisma.sportEvent.create.mockResolvedValue(
-      buildSportEventRow({ _count: { sportEventParticipants: 0, golfTiers: 0, contests: 0 } }),
+      buildSportEventRow({ _count: { sportEventParticipants: 0, tiers: 0, contests: 0 } }),
     );
     deps.prisma.sportEvent.findUnique.mockResolvedValue(
-      buildSportEventRow({ _count: { sportEventParticipants: 0, golfTiers: 6, contests: 0 } }),
+      buildSportEventRow({ _count: { sportEventParticipants: 0, tiers: 6, contests: 0 } }),
     );
     const service = new GolfTournamentService(
       deps.prisma as any,
@@ -389,7 +389,7 @@ describe('GolfTournamentService.listTournaments / getTournament', () => {
       prisma: {
         sportEvent: {
           findMany: jest.fn().mockResolvedValue([
-            buildSportEventRow({ _count: { sportEventParticipants: 5, golfTiers: 6, contests: 2 } }),
+            buildSportEventRow({ _count: { sportEventParticipants: 5, tiers: 6, contests: 2 } }),
           ]),
         },
       },

@@ -222,9 +222,12 @@ enum PrismaSportEventStatus {
   POSTPONED
 }
 
-enum PrismaGolfParticipantInactiveReason {
+/// Why a SportEventParticipant is inactive. Cross-sport: a golfer who misses
+/// the cut, a knocked-out seed and an eliminated driver are all ELIMINATED; a
+/// golf surface renders ELIMINATED as "Cut" for its audience. null means
+/// "inactive, no more specific reason recorded" — there is no OTHER.
+enum ParticipantInactiveReason {
   WITHDRAWN
-  CUT
   ELIMINATED
 }
 
@@ -234,18 +237,21 @@ enum PrismaSportEventSyncScope {
   FULL
 }
 
-enum PrismaGolfValuationSource {
+/// How a SportEventParticipantValuation's tier or price was set.
+enum ValuationSource {
   AUTO_ODDS
-  AUTO_WORLD_RANK
+  AUTO_RANKING
   MANUAL
 }
 
-enum PrismaGolfLiveStatus {
-  ACTIVE      @map("active")
-  IN_PROGRESS @map("in-progress")
-  COMPLETE    @map("complete")
-  WITHDRAWN   @map("withdrawn")
-  MISSED_CUT  @map("missed-cut")
+/// A participant's live state within one event. Cross-sport: ELIMINATED covers
+/// a golfer who missed the cut as well as a knocked-out team.
+enum ParticipantStandingStatus {
+  ACTIVE
+  IN_PROGRESS
+  COMPLETE
+  WITHDRAWN
+  ELIMINATED
 }
 
 // =============================================================================
@@ -628,15 +634,16 @@ model Season {
   @@map("seasons")
 }
 
-/// Which golfers/teams are currently affiliated with which league, plus their
-/// current world ranking. League-scoped, not season-scoped — a golfer's tour
-/// membership and ranking don't reset every year. Current value only, no
-/// history. See plans/124 §4.2.
+/// Which participants are currently affiliated with which sport league, plus
+/// their current ranking there. Sport-league-scoped, not season-scoped — a
+/// competitor's membership and ranking don't reset every year. Current value
+/// only, no history. See plans/124 §4.2.
 model ParticipantLeagueAffiliation {
   id            String   @id @default(uuid()) @db.Uuid
   participantId String   @map("participant_id") @db.Uuid
   sportLeagueId String   @map("sport_league_id") @db.Uuid
-  worldRanking  Int?     @map("world_ranking")
+  /// The competitor's current rank in this sport league (1 is best).
+  ranking       Int?
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -644,7 +651,7 @@ model ParticipantLeagueAffiliation {
   sportLeague SportLeague @relation(fields: [sportLeagueId], references: [id])
 
   @@unique([participantId, sportLeagueId])
-  @@index([sportLeagueId, worldRanking])
+  @@index([sportLeagueId, ranking])
   @@map("participant_league_affiliations")
 }
 
@@ -1038,7 +1045,7 @@ model SportEvent {
 
   contests               Contest[]
   sportEventParticipants SportEventParticipant[]
-  golfTiers              SportEventGolfTier[]
+  tiers                  SportEventTier[]
   roundSchedule          SportEventRound[]
   season                 Season?                 @relation(fields: [seasonId], references: [id])
   leagueEvent            LeagueEvent?            @relation(fields: [leagueEventId], references: [id])
@@ -1067,24 +1074,26 @@ model ContestTimingPolicy {
 }
 
 model SportEventParticipant {
-  id             String                               @id @default(uuid()) @db.Uuid
-  sportEventId   String                               @map("sport_event_id") @db.Uuid
-  participantId  String                               @map("participant_id") @db.Uuid
-  isActive       Boolean                              @default(true) @map("is_active")
-  inactiveReason PrismaGolfParticipantInactiveReason? @map("inactive_reason")
-  worldRanking   Int?                                 @map("world_ranking")
-  oddsToWin      Decimal?                             @map("odds_to_win") @db.Decimal(10, 2)
-  seedNumber     Int?                                 @map("seed_number")
-  metadata       Json                                 @default("{}")
-  createdAt      DateTime                             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime                             @updatedAt @map("updated_at") @db.Timestamptz
+  id             String                     @id @default(uuid()) @db.Uuid
+  sportEventId   String                     @map("sport_event_id") @db.Uuid
+  participantId  String                     @map("participant_id") @db.Uuid
+  isActive       Boolean                    @default(true) @map("is_active")
+  inactiveReason ParticipantInactiveReason? @map("inactive_reason")
+  /// The rank that applied to this participant at this event (1 is best) —
+  /// seeded from the provider or the sport-league affiliation, then editable.
+  ranking        Int?
+  oddsToWin      Decimal?                   @map("odds_to_win") @db.Decimal(10, 2)
+  seedNumber     Int?                       @map("seed_number")
+  metadata       Json                       @default("{}")
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent    SportEvent                          @relation(fields: [sportEventId], references: [id])
-  participant   Participant                         @relation(fields: [participantId], references: [id])
-  golfValuation SportEventParticipantGolfValuation?
-  picks         ContestEntryPick[]
-  golfRounds    SportEventParticipantGolfRound[]
-  golfStanding  SportEventParticipantGolfStanding?
+  sportEvent  SportEvent                      @relation(fields: [sportEventId], references: [id])
+  participant Participant                     @relation(fields: [participantId], references: [id])
+  valuation   SportEventParticipantValuation?
+  picks       ContestEntryPick[]
+  rounds      SportEventParticipantRound[]
+  standing    SportEventParticipantStanding?
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -1095,9 +1104,9 @@ model SportEventParticipant {
 /// A scheduled sub-period of a SportEvent with its own start/end time — a
 /// golf tournament's Round 2, an NFL Week's set of games, a World Cup's
 /// match day. Cross-sport by shape; plans/124 populates and uses it only for
-/// golf rounds. Genuinely different from SportEventParticipantGolfRound
-/// below: this holds the round's own schedule, independent of any
-/// participant; that one holds one golfer's result for a round.
+/// golf rounds. Genuinely different from SportEventParticipantRound below:
+/// this holds the round's own schedule, independent of any participant; that
+/// one joins one participant to one round.
 model SportEventRound {
   id             String    @id @default(uuid()) @db.Uuid
   sportEventId   String    @map("sport_event_id") @db.Uuid
@@ -1107,68 +1116,102 @@ model SportEventRound {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent SportEvent                       @relation(fields: [sportEventId], references: [id])
-  golfRounds SportEventParticipantGolfRound[]
+  sportEvent        SportEvent                   @relation(fields: [sportEventId], references: [id])
+  participantRounds SportEventParticipantRound[]
 
   @@unique([sportEventId, roundNumber])
   @@map("sport_event_rounds")
 }
 
-/// Per-event per-participant golf round result. Sport-polymorphic detail
-/// child of SportEventParticipant; cardinality 1..N where N is the
-/// tournament's round count (4 for standard PGA tournament). Replaces the
-/// untyped JSON storage in the dropped SportEventParticipantSourceData.
-/// See plans/117 §6.1 for the column contract. sportEventRoundId replaces
-/// the old bare `round: Int` (plans/124 §4.10) — a round number that
-/// doesn't exist for this event now fails at insert time with a foreign-key
-/// violation, not at read time with a confused leaderboard row.
-model SportEventParticipantGolfRound {
+/// One participant's part in one round of an event — the (participant, round)
+/// join, cross-sport. Its order is the round's `roundNumber`. What was scored
+/// in the round lives in the sport's extension row, never here
+/// (SportEventParticipantGolfRound for golf). sportEventRoundId replaced a
+/// bare `round: Int` (plans/124 §4.10): a round number that doesn't exist for
+/// the event fails at insert with a foreign-key violation.
+model SportEventParticipantRound {
   id                      String    @id @default(uuid()) @db.Uuid
   sportEventParticipantId String    @map("sport_event_participant_id") @db.Uuid
   sportEventRoundId       String    @map("sport_event_round_id") @db.Uuid
-  strokes                 Int
-  scoreToPar              Int       @map("score_to_par")
-  thru                    Int?
+  /// Provider-normalized progress of this participant's round.
   status                  String    @default("PENDING") @db.VarChar(20)
   completedAt             DateTime? @map("completed_at") @db.Timestamptz
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
-  sportEventRound       SportEventRound       @relation(fields: [sportEventRoundId], references: [id])
+  sportEventParticipant SportEventParticipant           @relation(fields: [sportEventParticipantId], references: [id])
+  sportEventRound       SportEventRound                 @relation(fields: [sportEventRoundId], references: [id])
+  golf                  SportEventParticipantGolfRound?
 
   @@unique([sportEventParticipantId, sportEventRoundId])
   @@index([sportEventParticipantId])
+  @@map("sport_event_participant_rounds")
+}
+
+/// Golf extension of SportEventParticipantRound: what one golfer scored in one
+/// round. Keyed 1:1 to the core round row.
+model SportEventParticipantGolfRound {
+  id                 String   @id @default(uuid()) @db.Uuid
+  participantRoundId String   @unique @map("participant_round_id") @db.Uuid
+  strokes            Int
+  scoreToPar         Int      @map("score_to_par")
+  thru               Int?
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  participantRound SportEventParticipantRound @relation(fields: [participantRoundId], references: [id])
+
   @@map("sport_event_participant_golf_rounds")
 }
 
-/// Maintained event-level Golf participant standing. One row per event golfer,
-/// updated from live/final round rows and used by member leaderboard reads.
-model SportEventParticipantGolfStanding {
-  id                      String               @id @default(uuid()) @db.Uuid
-  sportEventParticipantId String               @unique @map("sport_event_participant_id") @db.Uuid
-  eventScoreToPar         Int                  @map("event_score_to_par")
-  eventStrokes            Int                  @map("event_strokes")
-  currentRound            Int?                 @map("current_round")
-  currentRoundThru        Int?                 @map("current_round_thru")
-  status                  PrismaGolfLiveStatus @default(ACTIVE)
+/// A participant's running standing in one event, cross-sport.
+///
+/// `position` is THE cross-sport rank key, and it is direction-free: 1 is best
+/// in every sport. The raw score that produced it lives in the sport's
+/// extension row (SportEventParticipantGolfStanding for golf), never here. A
+/// cross-sport reader ranks on `position` and joins the extension only to
+/// display a score — it never needs to know whether a higher or lower score is
+/// better. Score direction is consulted at exactly one point: wherever
+/// `position` is computed from a raw score.
+model SportEventParticipantStanding {
+  id                      String                    @id @default(uuid()) @db.Uuid
+  sportEventParticipantId String                    @unique @map("sport_event_participant_id") @db.Uuid
   position                Int?
-  displayPosition         String?              @map("display_position") @db.VarChar(20)
-  asOf                    DateTime?            @map("as_of") @db.Timestamptz
-  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  displayPosition         String?                   @map("display_position") @db.VarChar(20)
+  status                  ParticipantStandingStatus @default(ACTIVE)
+  asOf                    DateTime?                 @map("as_of") @db.Timestamptz
+  currentRound            Int?                      @map("current_round")
+  createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
+  sportEventParticipant SportEventParticipant              @relation(fields: [sportEventParticipantId], references: [id])
+  golf                  SportEventParticipantGolfStanding?
 
   @@index([status])
   @@index([position])
+  @@map("sport_event_participant_standings")
+}
+
+/// Golf extension of SportEventParticipantStanding: the running event totals
+/// one golfer's position was ranked from. Keyed 1:1 to the core standing row.
+model SportEventParticipantGolfStanding {
+  id               String   @id @default(uuid()) @db.Uuid
+  standingId       String   @unique @map("standing_id") @db.Uuid
+  eventScoreToPar  Int      @map("event_score_to_par")
+  eventStrokes     Int      @map("event_strokes")
+  currentRoundThru Int?     @map("current_round_thru")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  standing SportEventParticipantStanding @relation(fields: [standingId], references: [id])
+
   @@map("sport_event_participant_golf_standings")
 }
 
-/// Per-tournament tier definition. Event-level only — no contest override
-/// (plans/124 §4.6). Tier count is however many rows exist for the event,
-/// not a separate parameter (§4.5a).
-model SportEventGolfTier {
+/// Per-event tier definition, cross-sport. Event-level only — no contest
+/// override (plans/124 §4.6). Tier count is however many rows exist for the
+/// event, not a separate parameter (§4.5a).
+model SportEventTier {
   id               String   @id @default(uuid()) @db.Uuid
   sportEventId     String   @map("sport_event_id") @db.Uuid
   tierKey          String   @map("tier_key") @db.VarChar(50)
@@ -1178,36 +1221,33 @@ model SportEventGolfTier {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent SportEvent                           @relation(fields: [sportEventId], references: [id])
-  valuations SportEventParticipantGolfValuation[]
+  sportEvent SportEvent                       @relation(fields: [sportEventId], references: [id])
+  valuations SportEventParticipantValuation[]
 
   @@unique([sportEventId, tierKey])
   @@unique([sportEventId, tierNumber])
-  @@map("sport_event_golf_tiers")
+  @@map("sport_event_tiers")
 }
 
-/// The tier and/or price for one golfer in one tournament — one row per
-/// SportEventParticipant, same 1:1 shape as worldRanking/oddsToWin/seedNumber
-/// already living there. Replaces the legacy SportEventParticipantValuation
-/// for all NEW writes; that table is not yet dropped because drafts/routes.ts
-/// still reads it as the live draft room's tier/price source — see plans/124
-/// §4.5/§4.6b. That rewiring + table drop is sequenced into a later slice.
-model SportEventParticipantGolfValuation {
-  id                      String                     @id @default(uuid()) @db.Uuid
-  sportEventParticipantId String                     @unique @map("sport_event_participant_id") @db.Uuid
-  sportEventGolfTierId    String?                    @map("sport_event_golf_tier_id") @db.Uuid
-  tierOrderIndex          Int?                       @map("tier_order_index")
-  tierAssignedSource      PrismaGolfValuationSource? @map("tier_assigned_source")
-  price                   Decimal?                   @db.Decimal(10, 2)
-  priceAssignedSource     PrismaGolfValuationSource? @map("price_assigned_source")
-  createdAt               DateTime                   @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime                   @updatedAt @map("updated_at") @db.Timestamptz
+/// The tier and/or price for one participant in one event, cross-sport — one
+/// row per SportEventParticipant, the same 1:1 shape as ranking/oddsToWin/
+/// seedNumber living there (plans/124 §4.5/§4.6b).
+model SportEventParticipantValuation {
+  id                      String           @id @default(uuid()) @db.Uuid
+  sportEventParticipantId String           @unique @map("sport_event_participant_id") @db.Uuid
+  sportEventTierId        String?          @map("sport_event_tier_id") @db.Uuid
+  tierOrderIndex          Int?             @map("tier_order_index")
+  tierAssignedSource      ValuationSource? @map("tier_assigned_source")
+  price                   Decimal?         @db.Decimal(10, 2)
+  priceAssignedSource     ValuationSource? @map("price_assigned_source")
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
-  sportEventGolfTier    SportEventGolfTier?   @relation(fields: [sportEventGolfTierId], references: [id])
+  sportEventTier        SportEventTier?       @relation(fields: [sportEventTierId], references: [id])
 
-  @@index([sportEventGolfTierId, tierOrderIndex])
-  @@map("sport_event_participant_golf_valuations")
+  @@index([sportEventTierId, tierOrderIndex])
+  @@map("sport_event_participant_valuations")
 }
 
 model IngestionJob {

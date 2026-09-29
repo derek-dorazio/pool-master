@@ -155,7 +155,7 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
             shortName: 'A. Driver',
             nationality: 'US',
             status: 'ACTIVE',
-            worldRanking: 3,
+            ranking: 3,
             oddsToWin: 12.5,
             valuationPrice: 19,
             valuationTier: 'A',

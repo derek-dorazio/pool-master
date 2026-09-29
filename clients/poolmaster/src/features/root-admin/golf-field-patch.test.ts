@@ -19,7 +19,7 @@ function entry(overrides: Partial<GolfFieldEntry> = {}): GolfFieldEntry {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null as unknown as GolfFieldEntry['inactiveReason'],
-    worldRanking: 2,
+    ranking: 2,
     oddsToWin: 8.5,
     seedNumber: 2,
     price: 9500,
@@ -30,8 +30,8 @@ function entry(overrides: Partial<GolfFieldEntry> = {}): GolfFieldEntry {
 
 describe('pool-master-za4 golf-field-patch: golfFieldCellValue', () => {
   it('pool-master-za4 shows the draft edit when present, else the server value', () => {
-    expect(golfFieldCellValue(entry(), { worldRanking: '5' }, 'worldRanking')).toBe('5');
-    expect(golfFieldCellValue(entry(), undefined, 'worldRanking')).toBe('2');
+    expect(golfFieldCellValue(entry(), { ranking: '5' }, 'ranking')).toBe('5');
+    expect(golfFieldCellValue(entry(), undefined, 'ranking')).toBe('2');
   });
 
   it('pool-master-za4 coalesces a null/undefined server value to an empty string (not "null")', () => {
@@ -54,10 +54,10 @@ describe('pool-master-za4 golf-field-patch: golfFieldCellValue', () => {
 
 describe('pool-master-za4 golf-field-patch: validators', () => {
   it('pool-master-za4 treats an empty string as valid (not edited)', () => {
-    expect(golfFieldCellInvalid('', 'worldRanking')).toBe(false);
+    expect(golfFieldCellInvalid('', 'ranking')).toBe(false);
   });
   it('pool-master-za4 rejects non-positive / non-integer rank and seed', () => {
-    expect(golfFieldCellInvalid('0', 'worldRanking')).toBe(true);
+    expect(golfFieldCellInvalid('0', 'ranking')).toBe(true);
     expect(golfFieldCellInvalid('3.5', 'seedNumber')).toBe(true);
     expect(golfFieldCellInvalid('abc', 'oddsToWin')).toBe(true);
   });
@@ -71,7 +71,7 @@ describe('pool-master-za4 golf-field-patch: validators', () => {
   it('pool-master-za4 counts invalid cells across the whole draft', () => {
     expect(
       golfFieldInvalidCount({
-        'sep-1': { worldRanking: '0', price: '10' },
+        'sep-1': { ranking: '0', price: '10' },
         'sep-2': { oddsToWin: 'x' },
       }),
     ).toBe(2);
@@ -81,13 +81,13 @@ describe('pool-master-za4 golf-field-patch: validators', () => {
 describe('pool-master-za4 golf-field-patch: buildGolfFieldPatch', () => {
   it('pool-master-za4 returns null when nothing changed', () => {
     expect(buildGolfFieldPatch(entry(), {})).toBeNull();
-    expect(buildGolfFieldPatch(entry(), { worldRanking: '2' })).toBeNull();
+    expect(buildGolfFieldPatch(entry(), { ranking: '2' })).toBeNull();
   });
 
   it('pool-master-za4 emits only the changed numeric fields', () => {
-    expect(buildGolfFieldPatch(entry(), { worldRanking: '1', price: '9500' })).toEqual({
+    expect(buildGolfFieldPatch(entry(), { ranking: '1', price: '9500' })).toEqual({
       sportEventParticipantId: 'sep-1',
-      worldRanking: 1,
+      ranking: 1,
     });
   });
 
@@ -105,15 +105,15 @@ describe('pool-master-za4 golf-field-patch: buildGolfFieldPatch', () => {
 
   it('pool-master-za4 treats a reason change on an already-inactive golfer as a change (isActive untouched)', () => {
     const inactive = entry({ isActive: false, inactiveReason: 'WITHDRAWN' });
-    expect(buildGolfFieldPatch(inactive, { inactiveReason: 'CUT' })).toEqual({
+    expect(buildGolfFieldPatch(inactive, { inactiveReason: 'ELIMINATED' })).toEqual({
       sportEventParticipantId: 'sep-1',
       isActive: false,
-      inactiveReason: 'CUT',
+      inactiveReason: 'ELIMINATED',
     });
   });
 
   it('pool-master-za4 emits no reason when re-activating a golfer', () => {
-    const inactive = entry({ isActive: false, inactiveReason: 'CUT' });
+    const inactive = entry({ isActive: false, inactiveReason: 'ELIMINATED' });
     expect(buildGolfFieldPatch(inactive, { isActive: true })).toEqual({
       sportEventParticipantId: 'sep-1',
       isActive: true,
@@ -124,7 +124,7 @@ describe('pool-master-za4 golf-field-patch: buildGolfFieldPatch', () => {
     const entries = [entry(), entry({ sportEventParticipantId: 'sep-2', participantId: 'p-2' })];
     const patches = buildGolfFieldPatches(entries, {
       'sep-2': { oddsToWin: '10' },
-      'sep-1': { worldRanking: '2' },
+      'sep-1': { ranking: '2' },
     });
     expect(patches).toEqual([{ sportEventParticipantId: 'sep-2', oddsToWin: 10 }]);
   });

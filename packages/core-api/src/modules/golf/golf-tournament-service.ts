@@ -72,7 +72,7 @@ const TOURNAMENT_INCLUDE = {
     _count: {
       select: {
         sportEventParticipants: true,
-        golfTiers: true,
+        tiers: true,
         contests: true,
       },
     },
@@ -99,7 +99,7 @@ type PrismaSportEventWithCounts = {
   autoLifecycleEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
-  _count: { sportEventParticipants: number; golfTiers: number; contests: number };
+  _count: { sportEventParticipants: number; tiers: number; contests: number };
 };
 
 export class GolfTournamentService {
@@ -397,7 +397,7 @@ function toGolfTournamentRow(row: PrismaSportEventWithCounts): GolfTournamentRow
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     fieldCount: row._count.sportEventParticipants,
-    tierCount: row._count.golfTiers,
+    tierCount: row._count.tiers,
     contestCount: row._count.contests,
   };
 }

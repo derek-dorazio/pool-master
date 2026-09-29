@@ -20,8 +20,8 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     leagueMembership: { findMany: jest.fn().mockResolvedValue([]) },
     squadMembership: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
-    sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
-    sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
+    sportEventTier: { findMany: jest.fn().mockResolvedValue([]) },
+    sportEventParticipantValuation: { findMany: jest.fn().mockResolvedValue([]) },
     ...overrides,
   };
 }
@@ -52,7 +52,7 @@ describe('loadDraftContext', () => {
             participantId: 'participant-1',
             isActive: false,
             inactiveReason: 'ELIMINATED',
-            worldRanking: null,
+            ranking: null,
             participant: { name: 'Eliminated Golfer', position: null, teamAffiliation: null },
             valuations: [],
           },
@@ -79,7 +79,7 @@ describe('loadDraftContext', () => {
   // rather than the dropped legacy SportEventParticipant.valuations table.
   it('pool-master-piv resolves selectionParticipants[].tier/price/orderIndex and context.tiers from golf-tier-service', async () => {
     const prisma = createMockPrisma({
-      sportEventGolfTier: {
+      sportEventTier: {
         findMany: jest.fn().mockResolvedValue([
           {
             id: 'tier-1',
@@ -99,14 +99,14 @@ describe('loadDraftContext', () => {
           },
         ]),
       },
-      sportEventParticipantGolfValuation: {
+      sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
             sportEventParticipantId: 'sep-1',
             tierOrderIndex: 1,
             price: 25,
             sportEventParticipant: { participantId: 'participant-1' },
-            sportEventGolfTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+            sportEventTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
           },
         ]),
       },
@@ -117,7 +117,7 @@ describe('loadDraftContext', () => {
             participantId: 'participant-1',
             isActive: true,
             inactiveReason: null,
-            worldRanking: 5,
+            ranking: 5,
             participant: { name: 'Rory McIlroy', position: null, teamAffiliation: null },
           },
         ]),
@@ -141,19 +141,19 @@ describe('loadDraftContext', () => {
 
   // pool-master-753 — a price-only valuation (budget-format contest, no
   // tier assignment) is invisible to any lookup built by walking
-  // sportEventGolfTier's nested valuations; loadDraftContext must resolve
+  // sportEventTier's nested valuations; loadDraftContext must resolve
   // price from golf-tier-service.getEffectiveValuationsForSportEvent
   // directly instead.
   it('pool-master-753 resolves price for a golfer with a valuation but no tier assignment', async () => {
     const prisma = createMockPrisma({
-      sportEventParticipantGolfValuation: {
+      sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
             sportEventParticipantId: 'sep-1',
             tierOrderIndex: null,
             price: 3200,
             sportEventParticipant: { participantId: 'participant-1' },
-            sportEventGolfTier: null,
+            sportEventTier: null,
           },
         ]),
       },
@@ -164,7 +164,7 @@ describe('loadDraftContext', () => {
             participantId: 'participant-1',
             isActive: true,
             inactiveReason: null,
-            worldRanking: 5,
+            ranking: 5,
             participant: { name: 'Rory McIlroy', position: null, teamAffiliation: null },
           },
         ]),

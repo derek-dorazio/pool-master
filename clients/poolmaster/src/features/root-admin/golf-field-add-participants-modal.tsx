@@ -31,7 +31,7 @@ const rosterBrowseColumns = [
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
   }),
-  rosterColumnHelper.accessor('worldRanking', { header: 'World rank' }),
+  rosterColumnHelper.accessor('ranking', { header: 'World rank' }),
 ];
 
 /**

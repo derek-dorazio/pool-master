@@ -212,7 +212,7 @@ export function golfAdminRoutes(
     schema: {
       tags: ['Admin Golf'],
       summary: 'Bulk-patch a golf league roster',
-      description: 'Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.',
+      description: 'Bulk row patch (ranking) — same shape as the tournament field bulk-patch.',
       operationId: 'adminUpdateGolfLeagueRoster',
       params: zodToJsonSchema(AdminGolfLeagueParamsSchema),
       body: zodToJsonSchema(AdminUpdateGolfLeagueRosterRequestSchema),
@@ -525,7 +525,7 @@ export function golfAdminRoutes(
     schema: {
       tags: ['Admin Golf'],
       summary: 'Bulk-patch a golf tournament\'s field entries',
-      description: 'One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.',
+      description: 'One request per Save on the field grid. price writes SportEventParticipantValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.',
       operationId: 'adminUpdateGolfFieldEntries',
       params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
       body: zodToJsonSchema(AdminUpdateGolfFieldEntriesRequestSchema),
@@ -575,7 +575,7 @@ export function golfAdminRoutes(
     schema: {
       tags: ['Admin Golf'],
       summary: 'Auto-assign a golf tournament\'s tiers',
-      description: 'Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.',
+      description: 'Partitions the active field across however many SportEventTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.',
       operationId: 'adminAutoAssignGolfTiers',
       params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
       body: zodToJsonSchema(AdminAutoAssignGolfTiersRequestSchema),

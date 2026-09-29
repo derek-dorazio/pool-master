@@ -100,7 +100,7 @@ function fieldEntry(overrides: Record<string, unknown> = {}) {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null,
-    worldRanking: 2,
+    ranking: 2,
     oddsToWin: 8.5,
     seedNumber: 2,
     price: 9500,
@@ -122,7 +122,7 @@ function seed(overrides: { tournament?: Record<string, unknown>; entries?: unkno
           participantId: 'p-guest',
           participantName: 'Sponsor Exemption',
           isLeagueRosterMember: false,
-          worldRanking: 400,
+          ranking: 400,
         }),
       ],
     },
@@ -199,11 +199,11 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
   it('pool-master-za4 collects a world-rank edit and an activate toggle into one save call', async () => {
     seed();
     adminUpdateGolfFieldEntriesMock.mockResolvedValue({
-      data: { entries: [fieldEntry({ worldRanking: 1 })] },
+      data: { entries: [fieldEntry({ ranking: 1 })] },
     });
     renderPage();
 
-    const rankInput = await screen.findByTestId('root-admin-golf-field-worldRanking-sep-rory');
+    const rankInput = await screen.findByTestId('root-admin-golf-field-ranking-sep-rory');
     await userEvent.clear(rankInput);
     await userEvent.type(rankInput, '1');
 
@@ -211,7 +211,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     // Reason select appears once a golfer is toggled inactive.
     await userEvent.selectOptions(
       await screen.findByTestId('root-admin-golf-field-reason-sep-guest'),
-      'CUT',
+      'ELIMINATED',
     );
 
     expect(
@@ -227,11 +227,11 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
           body: {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
             entries: expect.arrayContaining([
-              { sportEventParticipantId: 'sep-rory', worldRanking: 1 },
+              { sportEventParticipantId: 'sep-rory', ranking: 1 },
               {
                 sportEventParticipantId: 'sep-guest',
                 isActive: false,
-                inactiveReason: 'CUT',
+                inactiveReason: 'ELIMINATED',
               },
             ]),
           },
@@ -303,7 +303,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
             shortName: 'J. Rahm',
             nationality: 'ESP',
             status: 'ACTIVE',
-            worldRanking: 3,
+            ranking: 3,
           },
           {
             participantId: 'p-rory',
@@ -311,7 +311,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
             shortName: 'R. McIlroy',
             nationality: 'NIR',
             status: 'ACTIVE',
-            worldRanking: 2,
+            ranking: 2,
           },
         ],
       },

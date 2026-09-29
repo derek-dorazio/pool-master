@@ -9,12 +9,12 @@
 
 export interface SeedingRosterEntry {
   participantId: string;
-  worldRanking: number | null;
+  ranking: number | null;
 }
 
 export interface SeededParticipant {
   participantId: string;
-  worldRanking: number | null;
+  ranking: number | null;
   seedNumber: number;
   oddsToWin: number;
 }
@@ -34,17 +34,17 @@ const ODDS_JITTER_RANGE = 0.3;
 const ODDS_JITTER_OFFSET = 0.15;
 
 /**
- * Sorts the roster by worldRanking ascending (nulls last), shuffling ties
+ * Sorts the roster by ranking ascending (nulls last), shuffling ties
  * with `random` so seeds never repeat even when world rankings do. Position
  * (1..N) becomes seedNumber directly. oddsToWin is derived from position
- * (not the raw, tie-having worldRanking) via an inverse-weighted,
+ * (not the raw, tie-having ranking) via an inverse-weighted,
  * jitter-randomized probability distribution normalized across the field.
  */
 export function deriveSeedNumbersAndOdds(
   roster: SeedingRosterEntry[],
   random: () => number = Math.random,
 ): SeededParticipant[] {
-  const ordered = tieBreakByWorldRanking(roster, random);
+  const ordered = tieBreakByRanking(roster, random);
 
   const weights = ordered.map((_, index) => {
     const position = index + 1;
@@ -57,7 +57,7 @@ export function deriveSeedNumbersAndOdds(
     const probability = weights[index] / totalWeight;
     return {
       participantId: entry.participantId,
-      worldRanking: entry.worldRanking,
+      ranking: entry.ranking,
       seedNumber: index + 1,
       oddsToWin: roundToCents(1 / probability),
     };
@@ -98,13 +98,13 @@ export function deriveGolfPrices(
   });
 }
 
-function tieBreakByWorldRanking(
+function tieBreakByRanking(
   roster: SeedingRosterEntry[],
   random: () => number,
 ): SeedingRosterEntry[] {
   const groups = new Map<number | null, SeedingRosterEntry[]>();
   for (const entry of roster) {
-    const key = entry.worldRanking;
+    const key = entry.ranking;
     const group = groups.get(key) ?? [];
     group.push(entry);
     groups.set(key, group);

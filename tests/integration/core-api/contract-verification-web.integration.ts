@@ -302,6 +302,13 @@ describe('Contract verification (web)', () => {
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
+          standing: {
+            sportEventParticipant: { sportEventId: eventId },
+          },
+        },
+      });
+      await prisma.sportEventParticipantStanding.deleteMany({
+        where: {
           sportEventParticipant: { sportEventId: eventId },
         },
       });

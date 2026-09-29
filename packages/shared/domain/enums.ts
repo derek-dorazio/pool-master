@@ -223,19 +223,39 @@ export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof Spor
  * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
  * specific reason recorded." See plans/124 §4.1.
  */
-export const GolfParticipantInactiveReason = {
+/**
+ * Why a SportEventParticipant is inactive. Cross-sport: a golfer who missed the
+ * cut is ELIMINATED, as is a knocked-out seed. Golf surfaces render ELIMINATED
+ * as "Cut" for their audience; the value stays sport-agnostic. `null` means
+ * "inactive, no more specific reason recorded" — there is no OTHER.
+ */
+export const ParticipantInactiveReason = {
   WITHDRAWN: 'WITHDRAWN',
-  CUT: 'CUT',
   ELIMINATED: 'ELIMINATED',
 } as const;
-export type GolfParticipantInactiveReason =
-  (typeof GolfParticipantInactiveReason)[keyof typeof GolfParticipantInactiveReason];
+export type ParticipantInactiveReason =
+  (typeof ParticipantInactiveReason)[keyof typeof ParticipantInactiveReason];
 
-export type LegacyGolfParticipantStatus = 'ACTIVE' | 'INACTIVE' | GolfParticipantInactiveReason;
+/**
+ * A participant's live state within one event (SportEventParticipantStanding.status).
+ * Cross-sport: ELIMINATED covers a golfer who missed the cut as well as a
+ * knocked-out team, matching ParticipantInactiveReason.
+ */
+export const ParticipantStandingStatus = {
+  ACTIVE: 'ACTIVE',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETE: 'COMPLETE',
+  WITHDRAWN: 'WITHDRAWN',
+  ELIMINATED: 'ELIMINATED',
+} as const;
+export type ParticipantStandingStatus =
+  (typeof ParticipantStandingStatus)[keyof typeof ParticipantStandingStatus];
+
+export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiveReason;
 
 /**
  * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
- * (`'ACTIVE'` / `'INACTIVE'` / a `GolfParticipantInactiveReason`) some response
+ * (`'ACTIVE'` / `'INACTIVE'` / a `ParticipantInactiveReason`) some response
  * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
  * `AdminEventParticipantDto`, the draft-room selection-participant status).
  * New endpoints should read `isActive`/`inactiveReason` directly instead of this
@@ -244,8 +264,8 @@ export type LegacyGolfParticipantStatus = 'ACTIVE' | 'INACTIVE' | GolfParticipan
  */
 export function deriveLegacyParticipantStatus(
   isActive: boolean,
-  inactiveReason: GolfParticipantInactiveReason | null | undefined,
-): LegacyGolfParticipantStatus {
+  inactiveReason: ParticipantInactiveReason | null | undefined,
+): LegacyParticipantStatus {
   if (isActive) {
     return 'ACTIVE';
   }
@@ -336,13 +356,13 @@ export const GolfTierSource = {
 } as const;
 export type GolfTierSource = (typeof GolfTierSource)[keyof typeof GolfTierSource];
 
-/** How a SportEventParticipantGolfValuation's tier/price was set. See plans/124 §4.5. */
-export const GolfValuationSource = {
+/** How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. */
+export const ValuationSource = {
   AUTO_ODDS: 'AUTO_ODDS',
-  AUTO_WORLD_RANK: 'AUTO_WORLD_RANK',
+  AUTO_RANKING: 'AUTO_RANKING',
   MANUAL: 'MANUAL',
 } as const;
-export type GolfValuationSource = (typeof GolfValuationSource)[keyof typeof GolfValuationSource];
+export type ValuationSource = (typeof ValuationSource)[keyof typeof ValuationSource];
 
 export const GolfCategoryKey = {
   SENIOR: 'SENIOR',

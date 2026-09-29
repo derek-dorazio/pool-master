@@ -96,7 +96,7 @@ describe('SportLeagueService roster CRUD', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({
           participantId: 'p-1',
-          worldRanking: null,
+          ranking: null,
           participant: { name: 'Scottie Scheffler', shortName: null, nationality: 'US', status: 'ACTIVE' },
         }),
       },
@@ -126,7 +126,7 @@ describe('SportLeagueService roster CRUD', () => {
     });
   });
 
-  it('pool-master-2re bulk-patches worldRanking for multiple roster entries in one transaction', async () => {
+  it('pool-master-2re bulk-patches ranking for multiple roster entries in one transaction', async () => {
     const update = jest.fn().mockResolvedValue(undefined);
     const findMany = jest.fn().mockResolvedValue([]);
     const prisma = {
@@ -136,14 +136,14 @@ describe('SportLeagueService roster CRUD', () => {
     const service = new SportLeagueService(prisma as any);
 
     await service.bulkUpdateRoster('league-1', [
-      { participantId: 'p-1', worldRanking: 3 },
-      { participantId: 'p-2', worldRanking: 7 },
+      { participantId: 'p-1', ranking: 3 },
+      { participantId: 'p-2', ranking: 7 },
     ]);
 
     expect(update).toHaveBeenCalledTimes(2);
     expect(update).toHaveBeenCalledWith({
       where: { participantId_sportLeagueId: { participantId: 'p-1', sportLeagueId: 'league-1' } },
-      data: { worldRanking: 3 },
+      data: { ranking: 3 },
     });
   });
 });
@@ -211,9 +211,9 @@ describe('SportLeagueService roster upload preview/apply', () => {
     const prisma = { sportLeague: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportId: 'sport-1' }) } };
     const service = new SportLeagueService(prisma as any);
 
-    const preview = await service.previewRosterUpload('league-1', [{ worldRanking: 5 }]);
+    const preview = await service.previewRosterUpload('league-1', [{ ranking: 5 }]);
 
-    expect(preview).toEqual([{ row: { worldRanking: 5 }, resolution: 'UNRESOLVED', participantId: null, participantName: null }]);
+    expect(preview).toEqual([{ row: { ranking: 5 }, resolution: 'UNRESOLVED', participantId: null, participantName: null }]);
   });
 
   it('pool-master-2re rejects apply with 422 when any row is unresolved, writing nothing', async () => {
@@ -246,12 +246,12 @@ describe('SportLeagueService roster upload preview/apply', () => {
     };
     const service = new SportLeagueService(prisma as any);
 
-    await service.applyRosterUpload('league-1', [{ participantId: 'p-1', worldRanking: 3 }]);
+    await service.applyRosterUpload('league-1', [{ participantId: 'p-1', ranking: 3 }]);
 
     expect(upsert).toHaveBeenCalledWith({
       where: { participantId_sportLeagueId: { participantId: 'p-1', sportLeagueId: 'league-1' } },
-      create: { participantId: 'p-1', sportLeagueId: 'league-1', worldRanking: 3 },
-      update: { worldRanking: 3 },
+      create: { participantId: 'p-1', sportLeagueId: 'league-1', ranking: 3 },
+      update: { ranking: 3 },
     });
   });
 });

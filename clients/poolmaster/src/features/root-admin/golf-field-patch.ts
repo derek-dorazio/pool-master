@@ -7,7 +7,7 @@ export type GolfFieldPatch =
   AdminUpdateGolfFieldEntriesData['body']['entries'][number];
 
 export type GolfFieldNumericKey =
-  | 'worldRanking'
+  | 'ranking'
   | 'oddsToWin'
   | 'seedNumber'
   | 'price';
@@ -15,14 +15,14 @@ export type GolfFieldNumericKey =
 export type GolfFieldRowDraft = {
   isActive?: boolean;
   inactiveReason?: GolfFieldInactiveReason;
-  worldRanking?: string;
+  ranking?: string;
   oddsToWin?: string;
   seedNumber?: string;
   price?: string;
 };
 
 export const GOLF_FIELD_NUMERIC_KEYS: readonly GolfFieldNumericKey[] = [
-  'worldRanking',
+  'ranking',
   'oddsToWin',
   'seedNumber',
   'price',
@@ -30,7 +30,6 @@ export const GOLF_FIELD_NUMERIC_KEYS: readonly GolfFieldNumericKey[] = [
 
 export const GOLF_FIELD_INACTIVE_REASONS: readonly GolfFieldInactiveReason[] = [
   'WITHDRAWN',
-  'CUT',
   'ELIMINATED',
 ];
 
@@ -55,7 +54,7 @@ export const GOLF_FIELD_NUMERIC_VALIDATORS: Record<
   GolfFieldNumericKey,
   (raw: string) => boolean
 > = {
-  worldRanking: isPositiveInt,
+  ranking: isPositiveInt,
   seedNumber: isPositiveInt,
   price: isNonNegativeInt,
   oddsToWin: isPositiveNumber,

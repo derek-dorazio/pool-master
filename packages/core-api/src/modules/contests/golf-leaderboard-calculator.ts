@@ -202,6 +202,8 @@ export function mapGolfLeaderboardStatus(status: string): GolfLeaderboardPartici
     case 'DSQ':
     case 'withdrawn':
       return 'withdrawn';
+    // The golf leaderboard renders the cross-sport ELIMINATED as a missed cut.
+    case 'ELIMINATED':
     case 'MISSED_CUT':
     case 'missed-cut':
       return 'missed-cut';

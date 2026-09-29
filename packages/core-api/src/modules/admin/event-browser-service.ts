@@ -97,7 +97,7 @@ export class AdminEventBrowserService {
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId: eventId },
       orderBy: [
-        { worldRanking: { sort: 'asc', nulls: 'last' } },
+        { ranking: { sort: 'asc', nulls: 'last' } },
         { seedNumber: { sort: 'asc', nulls: 'last' } },
         { participant: { name: 'asc' } },
       ],
@@ -109,29 +109,25 @@ export class AdminEventBrowserService {
             nationality: true,
           },
         },
-        golfRounds: {
+        rounds: {
           orderBy: { sportEventRound: { roundNumber: 'asc' } },
           select: {
-            strokes: true,
-            scoreToPar: true,
-            thru: true,
             status: true,
             completedAt: true,
             sportEventRound: {
               select: { roundNumber: true },
             },
+            golf: { select: { strokes: true, scoreToPar: true, thru: true } },
           },
         },
-        golfStanding: {
+        standing: {
           select: {
-            eventScoreToPar: true,
-            eventStrokes: true,
             currentRound: true,
-            currentRoundThru: true,
             status: true,
             position: true,
             displayPosition: true,
             asOf: true,
+            golf: { select: { eventScoreToPar: true, eventStrokes: true, currentRoundThru: true } },
           },
         },
       },
@@ -146,11 +142,16 @@ export class AdminEventBrowserService {
       event: mapAdminEventSummaryToDto(event),
       participants: rows.map((row) => {
         const valuation = valuationBySportEventParticipantId.get(row.id);
+        const { rounds, standing, ...participant } = row;
         return mapAdminEventParticipantToDto({
-          ...row,
+          ...participant,
+          golfRounds: rounds.flatMap(({ golf, ...round }) => (golf ? [{ ...round, ...golf }] : [])),
+          golfStanding: standing?.golf
+            ? { ...standing, ...standing.golf }
+            : null,
           ...(valuation
             ? {
-                golfValuation: {
+                valuation: {
                   price: valuation.price,
                   tierLabel: valuation.tierLabel,
                   tierOrderIndex: valuation.tierOrderIndex,

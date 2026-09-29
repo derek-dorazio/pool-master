@@ -37,14 +37,14 @@ export interface LeagueRosterEntry {
   shortName: string | null;
   nationality: string | null;
   status: string;
-  worldRanking: number | null;
+  ranking: number | null;
 }
 
 export interface LeagueRosterUploadRow {
   participantId?: string;
   externalId?: string;
   playerName?: string;
-  worldRanking?: number;
+  ranking?: number;
 }
 
 export type LeagueRosterUploadResolution = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
@@ -127,7 +127,7 @@ export class SportLeagueService {
   async getRoster(leagueId: string): Promise<LeagueRosterEntry[]> {
     const affiliations = await this.prisma.participantLeagueAffiliation.findMany({
       where: { sportLeagueId: leagueId },
-      orderBy: [{ worldRanking: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
+      orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
       include: { participant: true },
     });
     return affiliations.map(toRosterEntry);
@@ -160,13 +160,13 @@ export class SportLeagueService {
 
   async bulkUpdateRoster(
     leagueId: string,
-    entries: Array<{ participantId: string; worldRanking: number | null }>,
+    entries: Array<{ participantId: string; ranking: number | null }>,
   ): Promise<LeagueRosterEntry[]> {
     await this.prisma.$transaction(
       entries.map((entry) =>
         this.prisma.participantLeagueAffiliation.update({
           where: { participantId_sportLeagueId: { participantId: entry.participantId, sportLeagueId: leagueId } },
-          data: { worldRanking: entry.worldRanking },
+          data: { ranking: entry.ranking },
         }),
       ),
     );
@@ -213,10 +213,10 @@ export class SportLeagueService {
           create: {
             participantId: resolved.participantId as string,
             sportLeagueId: leagueId,
-            worldRanking: resolved.row.worldRanking ?? null,
+            ranking: resolved.row.ranking ?? null,
           },
           update: {
-            worldRanking: resolved.row.worldRanking ?? null,
+            ranking: resolved.row.ranking ?? null,
           },
         }),
       ),
@@ -296,7 +296,7 @@ function toSportLeagueRow(league: {
 
 function toRosterEntry(affiliation: {
   participantId: string;
-  worldRanking: number | null;
+  ranking: number | null;
   participant: { name: string; shortName: string | null; nationality: string | null; status: string };
 }): LeagueRosterEntry {
   return {
@@ -305,6 +305,6 @@ function toRosterEntry(affiliation: {
     shortName: affiliation.participant.shortName,
     nationality: affiliation.participant.nationality,
     status: affiliation.participant.status,
-    worldRanking: affiliation.worldRanking,
+    ranking: affiliation.ranking,
   };
 }

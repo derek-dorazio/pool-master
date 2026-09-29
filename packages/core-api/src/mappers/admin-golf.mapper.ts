@@ -193,7 +193,7 @@ export function toGolfFieldEntriesUpdateInput(
   sportEventParticipantId: string;
   isActive?: boolean;
   inactiveReason?: AdminUpdateGolfFieldEntriesRequest['entries'][number]['inactiveReason'];
-  worldRanking?: number | null;
+  ranking?: number | null;
   oddsToWin?: number | null;
   seedNumber?: number | null;
   price?: number | null;

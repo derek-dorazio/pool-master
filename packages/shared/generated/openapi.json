@@ -2267,13 +2267,12 @@
             ],
             "enum": [
               "WITHDRAWN",
-              "CUT",
               "ELIMINATED",
               null
             ],
             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
           },
-          "worldRanking": {
+          "ranking": {
             "type": [
               "integer",
               "null"
@@ -2680,7 +2679,7 @@
           "shortName",
           "isActive",
           "inactiveReason",
-          "worldRanking",
+          "ranking",
           "oddsToWin",
           "seedNumber",
           "totalScoreToPar",
@@ -2767,13 +2766,12 @@
                 ],
                 "enum": [
                   "WITHDRAWN",
-                  "CUT",
                   "ELIMINATED",
                   null
                 ],
                 "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
               },
-              "worldRanking": {
+              "ranking": {
                 "type": [
                   "integer",
                   "null"
@@ -3180,7 +3178,7 @@
               "shortName",
               "isActive",
               "inactiveReason",
-              "worldRanking",
+              "ranking",
               "oddsToWin",
               "seedNumber",
               "totalScoreToPar",
@@ -3346,13 +3344,12 @@
                       ],
                       "enum": [
                         "WITHDRAWN",
-                        "CUT",
                         "ELIMINATED",
                         null
                       ],
                       "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                     },
-                    "worldRanking": {
+                    "ranking": {
                       "type": [
                         "integer",
                         "null"
@@ -3759,7 +3756,7 @@
                     "shortName",
                     "isActive",
                     "inactiveReason",
-                    "worldRanking",
+                    "ranking",
                     "oddsToWin",
                     "seedNumber",
                     "totalScoreToPar",
@@ -3908,13 +3905,12 @@
                   ],
                   "enum": [
                     "WITHDRAWN",
-                    "CUT",
                     "ELIMINATED",
                     null
                   ],
                   "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                 },
-                "worldRanking": {
+                "ranking": {
                   "type": [
                     "integer",
                     "null"
@@ -4321,7 +4317,7 @@
                 "shortName",
                 "isActive",
                 "inactiveReason",
-                "worldRanking",
+                "ranking",
                 "oddsToWin",
                 "seedNumber",
                 "totalScoreToPar",
@@ -4477,13 +4473,12 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -4890,7 +4885,7 @@
                           "shortName",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "totalScoreToPar",
@@ -25382,7 +25377,7 @@
                             "type": "string",
                             "description": "Provider-emitted per-event participant status."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": "integer",
                             "description": "Current per-event world-ranking snapshot when provided."
                           },
@@ -29201,7 +29196,7 @@
                           "valuationCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event."
+                            "description": "Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event."
                           },
                           "golfRoundCount": {
                             "type": "integer",
@@ -33244,7 +33239,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -33257,7 +33252,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -33382,7 +33377,7 @@
                           "type": "string",
                           "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -33395,7 +33390,7 @@
                         "shortName",
                         "nationality",
                         "status",
-                        "worldRanking"
+                        "ranking"
                       ],
                       "additionalProperties": false,
                       "description": "One golfer's current league affiliation."
@@ -33495,7 +33490,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.",
+        "description": "Bulk row patch (ranking) — same shape as the tournament field bulk-patch.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33511,7 +33506,7 @@
                         "participantId": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -33520,7 +33515,7 @@
                       },
                       "required": [
                         "participantId",
-                        "worldRanking"
+                        "ranking"
                       ],
                       "additionalProperties": false
                     },
@@ -33581,7 +33576,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -33594,7 +33589,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -33753,7 +33748,7 @@
                         "playerName": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": "integer"
                         }
                       },
@@ -33808,7 +33803,7 @@
                               "playerName": {
                                 "type": "string"
                               },
-                              "worldRanking": {
+                              "ranking": {
                                 "type": "integer"
                               }
                             },
@@ -33926,7 +33921,7 @@
                         "playerName": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": "integer"
                         }
                       },
@@ -33990,7 +33985,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -34003,7 +33998,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -38792,13 +38787,12 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -38821,7 +38815,7 @@
                               "number",
                               "null"
                             ],
-                            "description": "SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
+                            "description": "SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
                           },
                           "isLeagueRosterMember": {
                             "type": "boolean",
@@ -38836,7 +38830,7 @@
                           "nationality",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "price",
@@ -38902,7 +38896,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.",
+        "description": "One request per Save on the field grid. price writes SportEventParticipantValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.",
         "requestBody": {
           "required": true,
           "content": {
@@ -38928,12 +38922,11 @@
                           ],
                           "enum": [
                             "WITHDRAWN",
-                            "CUT",
                             "ELIMINATED",
                             null
                           ]
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -39028,13 +39021,12 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -39057,7 +39049,7 @@
                               "number",
                               "null"
                             ],
-                            "description": "SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
+                            "description": "SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
                           },
                           "isLeagueRosterMember": {
                             "type": "boolean",
@@ -39072,7 +39064,7 @@
                           "nationality",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "price",
@@ -39981,7 +39973,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.",
+        "description": "Partitions the active field across however many SportEventTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.",
         "requestBody": {
           "required": true,
           "content": {

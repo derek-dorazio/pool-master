@@ -6,7 +6,7 @@ import { registerSchema } from './schema-registry';
 import {
   ContestStatus,
   ContestFormat,
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -286,8 +286,8 @@ export const GolfLeaderboardParticipantDtoSchema = z.object({
   name: z.string().describe('Golfer display name.'),
   shortName: z.string().nullable().describe('Optional shorter golfer display name.'),
   isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
-  inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  worldRanking: z.number().int().nullable().describe('Latest copied global world ranking on this event participant.'),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
+  ranking: z.number().int().nullable().describe('Latest copied global world ranking on this event participant.'),
   oddsToWin: z.number().nullable().describe('Event-scoped odds-to-win for this golfer.'),
   seedNumber: z.number().int().nullable().describe('Event seed/order when supplied by the provider.'),
   totalScoreToPar: z.number().int().nullable().describe('TOT column value: current event total relative to par. Lower is better.'),

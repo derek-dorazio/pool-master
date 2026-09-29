@@ -1467,7 +1467,7 @@ export const adminGetGolfLeagueRoster = <ThrowOnError extends boolean = false>(o
 /**
  * Bulk-patch a golf league roster
  *
- * Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.
+ * Bulk row patch (ranking) — same shape as the tournament field bulk-patch.
  */
 export const adminUpdateGolfLeagueRoster = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfLeagueRosterData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfLeagueRosterResponses, AdminUpdateGolfLeagueRosterErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1781,7 +1781,7 @@ export const adminGetGolfTournamentField = <ThrowOnError extends boolean = false
 /**
  * Bulk-patch a golf tournament's field entries
  *
- * One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
+ * One request per Save on the field grid. price writes SportEventParticipantValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
  */
 export const adminUpdateGolfFieldEntries = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfFieldEntriesData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfFieldEntriesResponses, AdminUpdateGolfFieldEntriesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1859,7 +1859,7 @@ export const adminReplaceGolfTournamentTiers = <ThrowOnError extends boolean = f
 /**
  * Auto-assign a golf tournament's tiers
  *
- * Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.
+ * Partitions the active field across however many SportEventTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.
  */
 export const adminAutoAssignGolfTiers = <ThrowOnError extends boolean = false>(options: Options<AdminAutoAssignGolfTiersData, ThrowOnError>) => (options.client ?? client).post<AdminAutoAssignGolfTiersResponses, AdminAutoAssignGolfTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

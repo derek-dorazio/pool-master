@@ -150,7 +150,7 @@ export const AdminEventParticipantDtoSchema = z.object({
   shortName: z.string().optional().describe('Short display name when known.'),
   nationality: z.string().optional().describe('Participant nationality or country code when known.'),
   status: z.string().optional().describe('Provider-emitted per-event participant status.'),
-  worldRanking: z.number().int().optional().describe('Current per-event world-ranking snapshot when provided.'),
+  ranking: z.number().int().optional().describe('Current per-event world-ranking snapshot when provided.'),
   oddsToWin: z.number().optional().describe('Current per-event odds-to-win snapshot when provided.'),
   seedNumber: z.number().int().optional().describe('Event-relative seed number when provided.'),
   valuationPrice: z.number().optional().describe('Current PoolMaster participant valuation price when computed.'),
@@ -341,7 +341,7 @@ export const AdminProviderEventCleanupRowDtoSchema = z.object({
   blockedReasons: z.array(z.enum(['DIRECT_CONTEST_REFERENCE', 'CONTEST_ENTRY_PICK_REFERENCE'])).describe('Contest-related references that protect this event from deletion.'),
   directContestCount: z.number().int().min(0).describe('Number of Contest rows directly pointing at this event.'),
   sportEventParticipantCount: z.number().int().min(0).describe('Number of SportEventParticipant rows attached to this event.'),
-  valuationCount: z.number().int().min(0).describe('Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event.'),
+  valuationCount: z.number().int().min(0).describe('Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.'),
   golfRoundCount: z.number().int().min(0).describe('Number of SportEventParticipantGolfRound rows attached through this event.'),
   pickCount: z.number().int().min(0).describe('Number of ContestEntryPick rows referencing participants in this event.'),
 }).describe('Single stale provider event cleanup inventory row.');

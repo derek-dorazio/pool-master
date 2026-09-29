@@ -124,7 +124,7 @@ describe('Contest management integration', () => {
         sportEventId,
         participantId: topParticipantId,
         isActive: true,
-        worldRanking: 1,
+        ranking: 1,
         oddsToWin: 8.5,
       },
     });
@@ -133,7 +133,7 @@ describe('Contest management integration', () => {
         sportEventId,
         participantId: secondParticipantId,
         isActive: true,
-        worldRanking: 8,
+        ranking: 8,
         oddsToWin: 18.5,
       },
     });
@@ -141,8 +141,8 @@ describe('Contest management integration', () => {
     // Tiers/price are event-owned now (plans/124 §4.5/§4.6b) — the draft
     // room resolves selectionGroups through golf-tier-service, not a
     // contest-supplied tiers array, so the fixture needs a real
-    // SportEventGolfTier + valuation row per golfer.
-    const tier = await prisma.sportEventGolfTier.create({
+    // SportEventTier + valuation row per golfer.
+    const tier = await prisma.sportEventTier.create({
       data: {
         sportEventId,
         tierKey: 'A',
@@ -151,18 +151,18 @@ describe('Contest management integration', () => {
         defaultPickCount: 6,
       },
     });
-    await prisma.sportEventParticipantGolfValuation.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
         sportEventParticipantId: topEventParticipant.id,
-        sportEventGolfTierId: tier.id,
+        sportEventTierId: tier.id,
         tierOrderIndex: 1,
         tierAssignedSource: 'MANUAL',
       },
     });
-    await prisma.sportEventParticipantGolfValuation.create({
+    await prisma.sportEventParticipantValuation.create({
       data: {
         sportEventParticipantId: secondEventParticipant.id,
-        sportEventGolfTierId: tier.id,
+        sportEventTierId: tier.id,
         tierOrderIndex: 2,
         tierAssignedSource: 'MANUAL',
       },
