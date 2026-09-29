@@ -91,6 +91,7 @@ export function seasonsModule(fastify: FastifyInstance): void {
     },
     handler: async (request: FastifyRequest<SeasonParams>): Promise<SportLeagueResponse> => {
       const updated = await seasons.setCurrentSeason(request.params.seasonId);
+      // Read back for its counts; setCurrentSeason has just updated this row, so it exists.
       const sportLeague = await sportLeagues.getSportLeague(updated.id);
       return { sportLeague: mapSportLeagueToDto(sportLeague as NonNullable<typeof sportLeague>) };
     },
