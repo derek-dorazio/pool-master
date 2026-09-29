@@ -93,7 +93,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Layer | Files | Purpose |
 |-------|-------|---------|
-| `domain/` | `enums.ts`, `types.ts`, `scoring-config.ts`, `entitlements.ts` | Domain interfaces, enum types, and Zod-validated contest configuration |
+| `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
 | `events/` | `base.ts`, `draft.ts`, `scoring.ts`, `contest.ts`, `notification.ts`, `event-bus.ts` | Domain events + in-process EventBus |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |

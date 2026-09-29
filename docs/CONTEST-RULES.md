@@ -576,5 +576,5 @@ All survivor contests share these configurable options:
 
 - Launch scoring rules and aggregation rules are defined in `plans/51-scoring-and-participant-data-review.md`
 - Later rule expansion ideas are tracked in `plans/52-potential-rules-function-expansion.md`
-- Scoring config schemas: `packages/shared/domain/scoring-config.ts`
+- Participant scoring definitions — score direction, unit and the one display format per measure: `packages/shared/domain/contest-scoring.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

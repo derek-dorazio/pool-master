@@ -32,6 +32,7 @@ import {
   type TournamentFormat,
   getDefaultTournamentFormatForSport,
   isContestFormatValidForTournamentFormat,
+  PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/dto';
 import {
@@ -42,9 +43,10 @@ import {
 } from '../../mappers/contests.mapper';
 import {
   buildGolfLeaderboardEntry,
-  formatRelativeToPar,
+  GOLF_CONTEST_CONFIGURATION_SELECT,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
+  resolveGolfLeaderboardScoringDefinition,
 } from './golf-leaderboard-calculator';
 import { loadGolfLeaderboardParticipants } from './golf-leaderboard-participants';
 import {
@@ -491,12 +493,7 @@ export class ContestService {
           },
         },
         configuration: {
-          select: {
-            configJson: true,
-            rosterSize: true,
-            pickCount: true,
-            rounds: true,
-          },
+          select: GOLF_CONTEST_CONFIGURATION_SELECT,
         },
       },
     });
@@ -522,6 +519,13 @@ export class ContestService {
         'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
+    const scoringDefinition = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+    if (!scoringDefinition) {
+      throw new ContestOperationError(
+        'Golf leaderboard requires a participant scoring rule with a known scoring definition.',
+        'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
+      );
+    }
     const [participants, entries] = await Promise.all([
       loadGolfLeaderboardParticipants(this.requirePrisma(), sportEvent.id),
       this.loadGolfLeaderboardEntries(contestId),
@@ -531,9 +535,9 @@ export class ContestService {
     );
 
     const entryRows = entries.map((entry) =>
-      buildGolfLeaderboardEntry(entry, participantById, countingRule),
+      buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
     );
-    const rankedEntries = rankGolfLeaderboardEntries(entryRows);
+    const rankedEntries = rankGolfLeaderboardEntries(entryRows, scoringDefinition.direction);
     const latestAsOf = participants.reduce<Date | null>((latest, participant) => {
       if (!participant.asOf) return latest;
       if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
@@ -824,7 +828,10 @@ export class ContestService {
         entryId,
       ),
       submittedAt: entry.updatedAt,
-      tiebreaker: formatRelativeToPar(entry.tiebreakerValue),
+      // The tiebreaker is a predicted winning score relative to par.
+      tiebreaker: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(
+        entry.tiebreakerValue,
+      ),
       tiers: await this.buildEntryTierSelectionsForEmail(entry),
     });
 

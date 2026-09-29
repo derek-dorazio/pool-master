@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { adminListEventParticipants, listEvents, type AdminListEventParticipantsResponses, type SportEventDto } from '@/lib/api';
 import {
   Button,
@@ -39,14 +40,11 @@ function readinessTone(status: AdminEvent['readinessStatus']) {
   return 'neutral';
 }
 
-function formatSignedNumber(value: number | undefined) {
+function formatScoreToPar(value: number | undefined) {
   if (value === undefined) {
     return 'Unknown';
   }
-  if (value > 0) {
-    return `+${value}`;
-  }
-  return String(value);
+  return PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value);
 }
 
 function formatFieldCount(event: AdminEvent) {
@@ -232,7 +230,7 @@ export function RootAdminEventsPage() {
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">
-              {formatSignedNumber(row.original.scoreToPar)}
+              {formatScoreToPar(row.original.scoreToPar)}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
               {row.original.roundCount} rounds, strokes {formatOptionalText(row.original.totalStrokes)}

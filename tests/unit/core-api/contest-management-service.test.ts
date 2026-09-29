@@ -173,7 +173,7 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
       id: 'agg-existing',
       contestConfigurationId: 'config-1',
       aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-      config: { lowerIsBetter: true },
+      config: {},
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -359,14 +359,6 @@ describe('ContestManagementService', () => {
       config: {},
       active: true,
     });
-    expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
-      'agg-existing',
-      {
-        aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-        config: { lowerIsBetter: true },
-        active: true,
-      },
-    );
   });
 
   it('pool-master-piv rejects a tiered contest whose rosterSize does not divide evenly across the event\'s tiers', async () => {
