@@ -1324,8 +1324,8 @@ describe('Contract verification (root admin)', () => {
   it('pool-master-cs8: provider-catalog browse and event score-source link/unlink match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case for the three provider-linked
     // operations the epic's flagship FAPI scenario left uncovered:
-    // adminListProviderCatalogEvents, adminLinkGolfTournamentScoreSource,
-    // adminUnlinkGolfTournamentScoreSource. Drives one coherent flow through a
+    // adminListProviderCatalogEvents, linkEventScoreSource,
+    // unlinkEventScoreSource. Drives one coherent flow through a
     // dedicated admin app with a registered provider and safeParses every
     // response against its published schema. Golf admin rows are not covered by
     // cleanupTestData(), so this test tears down child-first in a finally block.

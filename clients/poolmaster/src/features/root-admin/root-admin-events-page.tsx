@@ -26,17 +26,16 @@ import {
 } from './golf-admin-utils';
 
 type AdminEvent = SportEventDto;
-type AdminEventParticipant = SportEventParticipantDto;
 
 const eventColumnHelper = createColumnHelper<AdminEvent>();
-const participantColumnHelper = createColumnHelper<AdminEventParticipant>();
+const participantColumnHelper = createColumnHelper<SportEventParticipantDto>();
 
 function formatOptionalText(value: string | number | null | undefined) {
   return value === undefined || value === null || value === '' ? 'Unknown' : String(value);
 }
 
 /** The standing's status once scoring has started, else whether the golfer is still in the field. */
-function participantStatus(participant: AdminEventParticipant): string {
+function participantStatus(participant: SportEventParticipantDto): string {
   return participant.standing?.status
     ?? (participant.isActive ? 'ACTIVE' : participant.inactiveReason ?? 'INACTIVE');
 }
@@ -88,7 +87,7 @@ export function RootAdminEventsPage() {
   const participantsQuery = useQuery({
     enabled: selectedEventId !== null,
     queryKey: QueryKeys.rootAdmin.eventParticipants(selectedEventId),
-    queryFn: async (): Promise<{ participants: AdminEventParticipant[]; tiers: SportEventTierDto[] }> => {
+    queryFn: async (): Promise<{ participants: SportEventParticipantDto[]; tiers: SportEventTierDto[] }> => {
       if (!selectedEventId) {
         throw new Error('Select an event before loading participants.');
       }

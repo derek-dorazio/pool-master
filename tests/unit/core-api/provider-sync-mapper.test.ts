@@ -1,7 +1,7 @@
 /**
  * Unit tests for the provider-sync mappers extracted in pool-master-5h3 so
  * `adminSyncProviderEventData`/`adminPrepareSportSync` and the new
- * `adminRefreshGolfTournamentField` route share one
+ * `refreshEventParticipants` route share one
  * ProviderManualSyncSubmissionResult -> DTO transform.
  */
 import {

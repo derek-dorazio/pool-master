@@ -33,17 +33,17 @@ import {
 // FAPI daemon now runs (tests/functional/server.ts):
 //
 //   1. adminListProviderCatalogEvents — browse the mock provider's live catalog.
-//   2. adminLinkGolfTournamentScoreSource — bind a manual-admin tournament's
+//   2. linkEventScoreSource — bind a manual-admin tournament's
 //      score source to a provider event (syncScope NONE -> SCORES_ONLY);
 //      409 EXTERNAL_EVENT_ALREADY_LINKED when the event is already held.
-//   3. adminRefreshGolfTournamentField + a manual EVENTLIVESCORES sync tick —
+//   3. refreshEventParticipants + a manual EVENTLIVESCORES sync tick —
 //      R1 scores land in SportEventParticipantGolfStanding via the sync path,
-//      never adminApplyGolfRoundScores.
+//      never applyEventGolfRoundScores.
 //   4. Score-sync isolation: an EVENTLIVESCORES tick never mutates the field,
 //      and an EVENTPARTICIPANTS "details" sync never mutates SportEvent.status.
 //   5. A league contest against the linked tournament settles
 //      ContestEntryGolfStanding for the sync-driven scores.
-//   6. adminUnlinkGolfTournamentScoreSource — a later sync tick does not touch
+//   6. unlinkEventScoreSource — a later sync tick does not touch
 //      the now-unlinked event's data (unlink-then-no-touch).
 //
 // UC-GOLF-ADMIN-03 (link a live score source), UC-GOLF-ADMIN-04 (sync-driven
@@ -96,7 +96,7 @@ async function ensureGolfSportRow(): Promise<string> {
 
 /**
  * Polls the provider_sync_runs ledger until the submitted async runs reach a
- * terminal state. adminSyncProviderEventData / adminRefreshGolfTournamentField
+ * terminal state. adminSyncProviderEventData / refreshEventParticipants
  * both return 202 and complete the workflow after acceptance.
  */
 async function waitForSyncRuns(ids: string[]): Promise<void> {
@@ -450,7 +450,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(r1Sync.response?.status).toBe(202);
     await waitForSyncRuns(r1Sync.data!.syncRuns.map((r) => r.id));
 
-    // Scores arrived via the sync path — adminApplyGolfRoundScores was never
+    // Scores arrived via the sync path — applyEventGolfRoundScores was never
     // called anywhere in this scenario.
     const seps = await db.sportEventParticipant.findMany({
       where: { sportEventId: eventId },
@@ -615,7 +615,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
 /**
  * Builds a minimal ACTIVE golf ROSTER/TIERED contest against `sportEventId`
- * with one entry whose picks reference the three current world-rank leaders in
+ * with one entry whose picks reference the three best-ranked golfers in
  * the (provider-loaded) field — mirroring golf-contest-settlement.integration
  * .ts's fixture. Settlement is driven by the real COMPLETED transition, not a
  * direct service call.

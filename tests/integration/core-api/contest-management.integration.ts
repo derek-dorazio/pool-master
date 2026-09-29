@@ -140,7 +140,7 @@ describe('Contest management integration', () => {
     });
 
     // Tiers/price are event-owned now (plans/124 §4.5/§4.6b) — the draft
-    // room resolves selectionGroups through golf-tier-service, not a
+    // room resolves selectionGroups through SportEventTierService, not a
     // contest-supplied tiers array, so the fixture needs a real
     // SportEventTier + valuation row per golfer.
     const tier = await prisma.sportEventTier.create({
@@ -201,7 +201,7 @@ describe('Contest management integration', () => {
       where: { contestId },
     });
     // Tiers are event-owned now (plans/124 §4.6) — a GOLF_TIERED contest no
-    // longer persists its own tierConfig snapshot; golf-tier-service is the
+    // longer persists its own tierConfig snapshot; SportEventTierService is the
     // one path to a contest's effective tiers.
     expect(createdConfiguration.tierConfig).toBeNull();
 

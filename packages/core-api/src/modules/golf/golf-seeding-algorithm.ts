@@ -35,7 +35,7 @@ const ODDS_JITTER_OFFSET = 0.15;
 
 /**
  * Sorts the roster by ranking ascending (nulls last), shuffling ties
- * with `random` so seeds never repeat even when world rankings do. Position
+ * with `random` so seeds never repeat even when rankings do. Position
  * (1..N) becomes seedNumber directly. oddsToWin is derived from position
  * (not the raw, tie-having ranking) via an inverse-weighted,
  * jitter-randomized probability distribution normalized across the field.

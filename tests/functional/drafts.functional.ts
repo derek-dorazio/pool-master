@@ -477,7 +477,7 @@ async function seedTieredDraftFixture(options: {
   createdSportEventIds.push(event.id);
 
   // Tiers are event-owned now (plans/124 §4.5/§4.6b) — the draft room
-  // resolves selectionGroups through golf-tier-service, not the legacy
+  // resolves selectionGroups through SportEventTierService, not the legacy
   // contestConfiguration.tierConfig JSON this fixture also sends, so a real
   // SportEventTier + valuation row is required per golfer.
   const tier = await prisma.sportEventTier.create({

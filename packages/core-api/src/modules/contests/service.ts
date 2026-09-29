@@ -870,7 +870,7 @@ export class ContestService {
   }
 
   /**
-   * Resolves each pick's tier label through golf-tier-service (plans/124
+   * Resolves each pick's tier label through SportEventTierService (plans/124
    * §4.6b) rather than the dropped legacy SportEventParticipant.valuations
    * table — the one remaining fallback path for entries whose contest has
    * no typed tierConfig (only the legacy contests/routes.ts create path

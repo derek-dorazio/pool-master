@@ -176,7 +176,7 @@ export class ContestManagementService {
    * linked SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — there
    * is no per-contest override — so every ContestManagementDetailDto carries
    * this so the commissioner UI can show what was inherited without a mode
-   * flag. Reads through the same golf-tier-service resolution the root-admin
+   * flag. Reads through the same SportEventTierService resolution the root-admin
    * tier routes use. Returns [] when the contest has no linked event or the
    * event has no tiers defined yet.
    */
@@ -478,7 +478,7 @@ function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
 ): Partial<ContestConfiguration> {
   // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
-  // golf-tier-service.getEffectiveTiersForContest is the one path to a
+  // SportEventTierService.getEffectiveTiersForSportEvent is the one path to a
   // contest's effective tiers now; this function no longer computes or
   // persists a contest-specific tierConfig snapshot. GOLF_TIERED is the only
   // managed configuration mode (plans/124 §4.11 removed GOLF_CATEGORY_PICKS).
@@ -626,7 +626,7 @@ function ensureTypedConfiguration(configuration: {
 
   if (configuration.selectionType === SelectionType.TIERED) {
     // Tier definitions themselves are event-owned now (plans/124 §4.6) —
-    // golf-tier-service.getEffectiveTiersForContest is the one path to
+    // SportEventTierService.getEffectiveTiersForSportEvent is the one path to
     // them; this fallback (for a contest with no typed configJson, e.g. one
     // created through the legacy tierConfig-based create path) only needs
     // to synthesize the trimmed { mode, rosterSize, countedScores } shape.

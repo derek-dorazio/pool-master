@@ -34,7 +34,7 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
 /**
  * Shrunk per plans/124 §4.6/§4.6a: tiers and price are event-owned data
  * (SportEventTier/SportEventParticipantValuation via
- * golf-tier-service.getEffectiveTiersForContest), never a per-contest
+ * SportEventTierService.getEffectiveTiersForSportEvent), never a per-contest
  * override, so tierSource/tierGeneration/tiers all drop. cutRule/
  * playoffHandling/displayScoring/tiebreaker each had exactly one possible
  * value and zero real reads downstream — dropped as dead configuration, not

@@ -1634,6 +1634,35 @@ writes the golf extension. Golf-only behaviour inside a generic operation — fo
 rounds, six default tiers, the round derivation — is dispatched on the event's sport, so
 creating a non-golf event fails loudly (422) rather than silently becoming golf.
 
+### Outcome, 2026-09-29
+
+The map held, with one change and several findings.
+
+**Changed: provider mappings are a read, not a field.** The map put `providerMappings` on the
+participant. `ParticipantDto` is returned by every participant list, so carrying mappings on
+it would have meant a join on every list for one page's benefit. The player page reads them
+through `listParticipantProviderMappings` instead, and the golf player list's
+`providerMappingCount` column is gone rather than recomputed.
+
+**Found, fixed here:**
+
+- **Deleting an event failed for any event that had rounds or tiers.** The golf delete removed
+  the event row and left the foreign keys to refuse it. Reproduced in psql; the port's delete
+  now removes children first, with a DAO test.
+- **Two participant-row resolvers** (roster upload, score upload) matched the same way in two
+  copies. There is one, `participant-row-resolver.ts`, with a unit test of its order.
+- **`seedFieldFromProvider` and `createWithProviderMapping` had no caller.** Removed.
+- **The root-admin guard at `onRequest` never saw the user.** The global auth guard is a
+  `preHandler`, so a route-level `onRequest` ran before `authUser` existed and refused every
+  root admin. The integration harness did not show it; the FAPI suite did. The guard now
+  verifies the token itself through helpers shared with the auth guard, and a unit test pins
+  the order.
+- **`ELIMINATED` had no "Cut" mapping anywhere** despite the domain comment saying golf
+  surfaces render it so. `formatParticipantStatusLabel` in the shared domain is the one place.
+
+**Left for #204 / #205:** see the naming report on #236. Contest management still takes a
+`SportEventParticipantRepository` it does not use; the contest picker still says "World rank".
+
 ## Sources / Prior Decisions
 
 - #201 — this epic. #192 — the publishing mechanism, which must follow this work for

@@ -221,7 +221,7 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
  * Defaults to reporting no tiers for the event, matching
  * assertTierConfigurationFitsTierCount's "nothing to validate against"
  * skip — the same default these fixtures relied on before tiers moved to
- * golf-tier-service (plans/124 §4.6/pool-master-piv). `withParticipants`
+ * SportEventTierService (plans/124 §4.6/pool-master-piv). `withParticipants`
  * populates each tier's assignment list so the effectiveTiers echo
  * (plans/124 §5.3/pool-master-41t) can be asserted end to end.
  */

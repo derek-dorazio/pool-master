@@ -1589,7 +1589,7 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
-    it('pool-master-piv falls back to golf-tier-service for the email tier grouping when the contest has no typed tierConfig', async () => {
+    it('pool-master-piv falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',

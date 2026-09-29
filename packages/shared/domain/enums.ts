@@ -257,7 +257,7 @@ export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiv
  * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
  * (`'ACTIVE'` / `'INACTIVE'` / a `ParticipantInactiveReason`) some response
  * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
- * `AdminEventParticipantDto`, the draft-room selection-participant status).
+ * the draft-room selection-participant status).
  * New endpoints should read `isActive`/`inactiveReason` directly instead of this
  * string — see plans/124 §4.1. Single source of truth so every call site derives
  * the same value the same way rather than re-implementing the ternary.

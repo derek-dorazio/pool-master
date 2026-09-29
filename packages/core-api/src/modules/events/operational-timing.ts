@@ -101,7 +101,7 @@ export function evaluateEventOperationalState(input: {
  * Loads a sport's active timing policies and picks the one matching
  * `metadata.eventType` (falling back to the sport's default). Shared by the
  * ingestion path (`IngestionPersistence`) and the admin
- * `adminCreateGolfTournamentFromProviderEvent` route (plans/124 §5.2) so
+ * `createEventFromProviderEvent` route (plans/124 §5.2) so
  * there is one "which policy applies" resolution, not two independently
  * drifting queries.
  */

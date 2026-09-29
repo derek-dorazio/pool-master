@@ -102,7 +102,7 @@ export class EventScoreSourceService {
   }
 
   /**
-   * The single place `adminCreateGolfTournamentFromProviderEvent` (plans/124
+   * The single place `createEventFromProviderEvent` (plans/124
    * §4.4a) resolves a browsed provider event's name/venue/dates to prefill a
    * new tournament — the same provider-registry resolution
    * `listCandidateEvents` already uses, not a direct `providerRegistry` call

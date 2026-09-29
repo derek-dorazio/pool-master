@@ -57,7 +57,7 @@ export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSch
 
 /**
  * Shrunk per plans/124 §4.6/§4.6a: tiers/price are event-owned data resolved
- * via golf-tier-service.getEffectiveTiersForContest, never a per-contest
+ * via SportEventTierService.getEffectiveTiersForSportEvent, never a per-contest
  * override, so tierSource/tierGeneration/tiers drop; cutRule/playoffHandling/
  * displayScoring/tiebreaker each locked to exactly one possible value with
  * zero real reads downstream, dropped as dead configuration.
@@ -200,7 +200,7 @@ export type AdminContestConfigTemplateResponse = z.infer<
  * SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — never
  * contest-configured — so this is display-only: the commissioner UI shows
  * what the contest inherited without a mode flag to branch on. Resolved
- * through golf-tier-service.getEffectiveTiersForSportEvent, the same
+ * through SportEventTierService.getEffectiveTiersForSportEvent, the same
  * resolution the root-admin golf tier routes read.
  */
 export const GolfEffectiveTierAssignmentDtoSchema = z.object({

@@ -23,7 +23,7 @@ export function mapContestConfigTemplateDto(
 }
 
 /**
- * Maps golf-tier-service's tier-grouped shape to the read-only
+ * Maps SportEventTierService's tier-grouped shape to the read-only
  * ContestManagementDetailDto.effectiveTiers echo (plans/124 §4.6/§5.3).
  * Structurally the same projection the root-admin toAdminSportEventTierGroupDto
  * mapper does — the commissioner surface is read-only where the root-admin
