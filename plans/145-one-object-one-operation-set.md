@@ -1475,10 +1475,25 @@ written before them. The authoritative record with full reasoning is the stage-2
 ### Why ranking on `position` matters beyond this slice
 
 Decision 4 makes `position` the cross-sport rank key, and position is direction-free: 1 is
-best in every sport. That is what keeps the hardcoded `lowerIsBetter: true` at
-`contest-management/service.ts` **out** of this slice — cross-sport sorting never needs it.
-It is a scoring-model concern, tracked separately in #234, which found the field is not only
-unread but derivable.
+best in every sport. The raw score that produced it lives in the sport extension, so a
+cross-sport surface ranks on `position` and joins the extension only to *display* a score —
+it never needs to know whether high or low is better.
+
+That confines score direction to a single point in the system: wherever `position` is
+computed from a raw score. Every reader of a standing row is downstream of that and is
+direction-free by construction.
+
+So the hardcoded `lowerIsBetter: true` at `contest-management/service.ts` is not the core
+half's to fix. It is #234, and the repo owner scoped it **into the golf half (#236)** on
+2026-09-29 rather than deferring it — #236 already owns `golf-leaderboard-calculator.ts`,
+which is the one place that computes `position` from a score, so doing it in the same pass
+avoids editing that file twice. #234 found the field is not only unread but *derivable*:
+`SUM_ALL_ENTRIES` preserves the direction of what it sums, so the aggregation row was
+restating what `GOLF_RELATIVE_TO_PAR_TOTAL` already implies.
+
+It also found a live defect on the way: `formatRelativeToPar` exists three times and the
+copies disagree, so level par renders "E" on the contest entry page and "0" on the
+leaderboard and admin event pages. One `format` per scoring definition fixes it.
 
 ### Standing obligation carried into the golf half
 
