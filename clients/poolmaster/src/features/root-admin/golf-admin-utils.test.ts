@@ -354,7 +354,7 @@ describe('pool-master-r11 golf-admin-utils: parseGolfRoundScoreUpload', () => {
   });
 });
 
-describe('#236 golf-admin-utils: golfRoundScoreRows', () => {
+describe('golf-admin-utils: golfRoundScoreRows (issue 236)', () => {
   function result(roundNumber: number, strokes: number, status = 'COMPLETED') {
     return {
       id: `r-${roundNumber}`,

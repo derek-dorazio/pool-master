@@ -118,7 +118,7 @@ describe('pool-master-dyb golf-tier-board-utils', () => {
     expect(unassigned[2].cards[0].price).toBeNull();
   });
 
-  it('#236 puts a golfer whose valuation names a tier not among the definitions in Unassigned', () => {
+  it('puts a golfer whose valuation names a tier not among the definitions in Unassigned', () => {
     const board = buildTierBoard(tiers, [entry('sep-7', 'Orphan', 'tier-id-gone', 0, 5000)]);
     expect(board[0].cards).toEqual([]);
     expect(board[2].cards.map((c) => c.sportEventParticipantId)).toEqual(['sep-7']);
