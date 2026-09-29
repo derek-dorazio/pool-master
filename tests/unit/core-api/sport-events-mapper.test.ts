@@ -1,7 +1,5 @@
 import type { SportEvent } from '@poolmaster/shared/domain';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
-import { EventService } from '../../../packages/core-api/src/modules/events/service';
-import { fakeSportEventRepo } from '../../support/repo-fakes';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
@@ -25,9 +23,13 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
   } as SportEvent;
 }
 
+function summary(sportEvent: SportEvent, loadedParticipantCount: number) {
+  return { event: sportEvent, loadedParticipantCount, tierCount: 0, contestCount: 0 };
+}
+
 describe('SportEvent readiness on the wire', () => {
   it('is contest-eligible once released with a loaded field and before the field locks', () => {
-    expect(mapSportEventToDto(event(), 72)).toMatchObject({
+    expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({
       loadedParticipantCount: 72,
       readinessStatus: 'CONTEST_ELIGIBLE',
       contestEligible: true,
@@ -36,7 +38,7 @@ describe('SportEvent readiness on the wire', () => {
   });
 
   it('is pending while no participant is loaded, even when the provider reports a field size', () => {
-    expect(mapSportEventToDto(event(), 0)).toMatchObject({
+    expect(mapSportEventToDto(summary(event(), 0))).toMatchObject({
       participantCount: 144,
       readinessStatus: 'PENDING_FIELD',
       readinessReasons: ['FIELD_NOT_LOADED'],
@@ -45,7 +47,7 @@ describe('SportEvent readiness on the wire', () => {
   });
 
   it('reports the field locked when the provider has locked it, before fieldLocksAt', () => {
-    expect(mapSportEventToDto(event({ fieldLocked: true }), 72)).toMatchObject({
+    expect(mapSportEventToDto(summary(event({ fieldLocked: true }), 72))).toMatchObject({
       fieldLocked: true,
       readinessStatus: 'FIELD_LOCKED',
       contestEligible: false,
@@ -53,7 +55,7 @@ describe('SportEvent readiness on the wire', () => {
   });
 
   it('carries null, not undefined, for absent optional columns', () => {
-    expect(mapSportEventToDto(event(), 1)).toMatchObject({
+    expect(mapSportEventToDto(summary(event(), 1))).toMatchObject({
       venue: null,
       location: null,
       endDate: null,
@@ -64,15 +66,13 @@ describe('SportEvent readiness on the wire', () => {
   });
 });
 
-describe('EventService.listEvents', () => {
-  it('pairs each event with its loaded participant count, zero where none are loaded', async () => {
-    const service = new EventService(fakeSportEventRepo({
-      findAll: jest.fn().mockResolvedValue([event({ id: 'e-1' }), event({ id: 'e-2' })]),
-      countParticipants: jest.fn().mockResolvedValue(new Map([['e-1', 72]])),
-    }));
-
-    const rows = await service.listEvents({});
-
-    expect(rows.map((row) => [row.event.id, row.loadedParticipantCount])).toEqual([['e-1', 72], ['e-2', 0]]);
+describe('SportEvent next statuses on the wire', () => {
+  it('carries the declared transitions from the event\'s current status, and its counts', () => {
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), loadedParticipantCount: 0, tierCount: 6, contestCount: 2 })).toMatchObject({
+      allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
+      tierCount: 6,
+      contestCount: 2,
+    });
+    expect(mapSportEventToDto(summary(event({ status: 'COMPLETED' }), 0)).allowedTransitions).toEqual([]);
   });
 });

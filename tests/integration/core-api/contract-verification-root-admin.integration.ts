@@ -6,20 +6,7 @@ import {
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
-  AdminCloneGolfSeasonResponseSchema,
-  AdminGolfLeagueDtoSchema,
-  AdminGolfLeagueListResponseSchema,
-  AdminGolfPlayerDetailResponseSchema,
-  AdminGolfPlayerListResponseSchema,
-  AdminGolfSeasonDtoSchema,
-  AdminGolfSeasonListResponseSchema,
-  AdminGolfTournamentDetailResponseSchema,
-  AdminGolfTournamentFieldResponseSchema,
-  AdminGolfTournamentListResponseSchema,
-  AdminGolfTournamentRoundsResponseSchema,
-  AdminGolfTournamentTiersResponseSchema,
   AdminListProviderCatalogEventsResponseSchema,
-  AdminSetCurrentGolfSeasonResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
   PollIntervalConfigSchema,
@@ -31,6 +18,18 @@ import {
   SuccessSchema,
   UserResponseSchema,
   UserListResponseSchema,
+  CloneSeasonResponseSchema,
+  ParticipantListResponseSchema,
+  ParticipantResponseSchema,
+  SeasonListResponseSchema,
+  SeasonResponseSchema,
+  SportEventListResponseSchema,
+  SportEventParticipantListResponseSchema,
+  SportEventResponseSchema,
+  SportEventRoundListResponseSchema,
+  SportEventTierListResponseSchema,
+  SportLeagueListResponseSchema,
+  SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
@@ -1025,7 +1024,7 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('pool-master-z3l: root-admin golf tournament-admin routes match their DTOs on happy paths', async () => {
+  it('pool-master-z3l: the sport-league, season, participant and event operations golf administration uses match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case per operation this epic adds to
     // the golf admin module. Drives one coherent authoring flow (tour -> season
     // -> players -> tournament -> field/tiers/rounds reads -> set-current ->
@@ -1057,37 +1056,36 @@ describe('Contract verification (root admin)', () => {
     };
 
     try {
-      // --- adminCreateGolfLeague (201: { league }) --------------------------
+      // --- createSportLeague (201: { sportLeague }) ----------------------------
       const leagueRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/leagues',
+        url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { name: `Z3L Contract Tour ${stamp}`, matchKeyword: `Z3L${stamp}` },
+        payload: { sport: 'GOLF', name: `Z3L Contract Tour ${stamp}`, matchKeyword: `Z3L${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
-      expect(AdminGolfLeagueDtoSchema.safeParse(leagueRes.json().league).success).toBe(true);
-      const leagueId = leagueRes.json().league.id as string;
+      expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
+      const leagueId = leagueRes.json().sportLeague.id as string;
       created.sportLeagueId = leagueId;
 
-      // --- adminListGolfLeagues (200) -------------------------------------
+      // --- listSportLeagues (200) --------------------------------------------
       const leagueListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/leagues?search=Z3L+Contract+Tour+${stamp}`,
+        url: '/api/v1/sport-leagues?sport=GOLF',
         headers: rootAdmin.headers,
       });
       expect(leagueListRes.statusCode).toBe(200);
-      expect(AdminGolfLeagueListResponseSchema.safeParse(leagueListRes.json()).success).toBe(true);
+      expect(SportLeagueListResponseSchema.safeParse(leagueListRes.json()).success).toBe(true);
       expect(
-        leagueListRes.json().leagues.some((l: { id: string }) => l.id === leagueId),
+        leagueListRes.json().sportLeagues.some((l: { id: string }) => l.id === leagueId),
       ).toBe(true);
 
-      // --- adminCreateGolfSeason (201: { season }) ------------------------
+      // --- createSeason (201: { season }) -------------------------------------
       const seasonRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/seasons',
+        url: `/api/v1/sport-leagues/${leagueId}/seasons`,
         headers: rootAdmin.headers,
         payload: {
-          sportLeagueId: leagueId,
           name: `Z3L Contract Season ${stamp} 2081`,
           year: 2081,
           startDate: '2081-01-05T00:00:00.000Z',
@@ -1095,35 +1093,38 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(seasonRes.statusCode).toBe(201);
-      expect(AdminGolfSeasonDtoSchema.safeParse(seasonRes.json().season).success).toBe(true);
+      expect(SeasonResponseSchema.safeParse(seasonRes.json()).success).toBe(true);
       const seasonId = seasonRes.json().season.id as string;
       created.seasonIds.push(seasonId);
 
-      // --- adminListGolfSeasons (200) -----------------------------------
+      // --- listSeasons (200) ------------------------------------------------
       const seasonListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/seasons?sportLeagueId=${leagueId}`,
+        url: `/api/v1/sport-leagues/${leagueId}/seasons`,
         headers: rootAdmin.headers,
       });
       expect(seasonListRes.statusCode).toBe(200);
-      expect(AdminGolfSeasonListResponseSchema.safeParse(seasonListRes.json()).success).toBe(true);
+      expect(SeasonListResponseSchema.safeParse(seasonListRes.json()).success).toBe(true);
 
-      // --- adminGetGolfSeason (200: { season }) ------------------------
+      // --- getSeason (200: { season }) ---------------------------------------
       const seasonDetailRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/seasons/${seasonId}`,
+        url: `/api/v1/seasons/${seasonId}`,
         headers: rootAdmin.headers,
       });
       expect(seasonDetailRes.statusCode).toBe(200);
       expect(seasonDetailRes.json().season.isCurrent).toBe(false);
 
-      // --- adminCreateGolfPlayer (201) x3 -----------------------------
+      // --- createParticipant (201) x3 — golf players are participants -------
+      const golf = await getPrisma().sport.findUniqueOrThrow({ where: { name: 'GOLF' } });
       for (let i = 0; i < 3; i += 1) {
         const playerRes = await getApp().inject({
           method: 'POST',
-          url: '/api/v1/admin/sports/golf/players',
+          url: '/api/v1/participants',
           headers: rootAdmin.headers,
           payload: {
+            sportId: golf.id,
+            participantType: 'INDIVIDUAL',
             name: `Z3L Contract Golfer ${stamp}-${i}`,
             shortName: `Z${stamp}${i}`,
             nationality: 'USA',
@@ -1132,24 +1133,25 @@ describe('Contract verification (root admin)', () => {
         });
         expect(playerRes.statusCode).toBe(201);
         if (i === 0) {
-          expect(AdminGolfPlayerDetailResponseSchema.safeParse(playerRes.json()).success).toBe(true);
+          expect(ParticipantResponseSchema.safeParse(playerRes.json()).success).toBe(true);
         }
-        created.participantIds.push(playerRes.json().player.id as string);
+        created.participantIds.push(playerRes.json().participant.id as string);
       }
 
-      // --- adminListGolfPlayers (200) --------------------------------
+      // --- listParticipants, the golf player list (200) ----------------------
       const playerListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/players?search=Z3L+Contract+Golfer+${stamp}`,
+        url: `/api/v1/participants?sportId=${golf.id}&q=Z3L+Contract+Golfer+${stamp}`,
         headers: rootAdmin.headers,
       });
       expect(playerListRes.statusCode).toBe(200);
-      expect(AdminGolfPlayerListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
+      expect(ParticipantListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
+      expect(playerListRes.json().participants).toHaveLength(3);
 
-      // --- adminCreateGolfTournament (201: detail) ------------------
+      // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/tournaments',
+        url: '/api/v1/events',
         headers: rootAdmin.headers,
         payload: {
           name: `Z3L Contract Open ${stamp}`,
@@ -1165,83 +1167,81 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(tournamentRes.statusCode).toBe(201);
-      expect(AdminGolfTournamentDetailResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
-      const eventId = tournamentRes.json().tournament.id as string;
+      expect(SportEventResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
+      const eventId = tournamentRes.json().event.id as string;
       created.eventIds.push(eventId);
 
       // pool-master-54u — the create response's counts must reflect the default
       // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
       // and must match what a subsequent GET returns.
-      expect(tournamentRes.json().tournament.tierCount).toBe(6);
-      expect(tournamentRes.json().tournament.fieldCount).toBe(0);
+      expect(tournamentRes.json().event.tierCount).toBe(6);
+      expect(tournamentRes.json().event.loadedParticipantCount).toBe(0);
       const tournamentGetRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}`,
+        url: `/api/v1/events/${eventId}`,
         headers: rootAdmin.headers,
       });
       expect(tournamentGetRes.statusCode).toBe(200);
-      expect(tournamentGetRes.json().tournament.tierCount).toBe(
-        tournamentRes.json().tournament.tierCount,
-      );
-      expect(tournamentGetRes.json().tournament.fieldCount).toBe(
-        tournamentRes.json().tournament.fieldCount,
-      );
+      expect(tournamentGetRes.json().event.tierCount).toBe(tournamentRes.json().event.tierCount);
+      expect(tournamentGetRes.json().event.loadedParticipantCount).toBe(tournamentRes.json().event.loadedParticipantCount);
 
-      // --- adminListGolfTournaments (200) -------------------------
+      // --- listEvents by season (200) ----------------------------------------
       const tournamentListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments?seasonId=${seasonId}`,
+        url: `/api/v1/events?seasonId=${seasonId}`,
         headers: rootAdmin.headers,
       });
       expect(tournamentListRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
+      expect(SportEventListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
+      expect(tournamentListRes.json().events.map((e: { id: string }) => e.id)).toEqual([eventId]);
 
-      // --- adminGetGolfTournamentField / Tiers / Rounds (200) ----
+      // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/field`,
+        url: `/api/v1/events/${eventId}/participants`,
         headers: rootAdmin.headers,
       });
       expect(fieldRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentFieldResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
+      expect(SportEventParticipantListResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
 
       const tiersRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/tiers`,
+        url: `/api/v1/events/${eventId}/tiers`,
         headers: rootAdmin.headers,
       });
       expect(tiersRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentTiersResponseSchema.safeParse(tiersRes.json()).success).toBe(true);
+      expect(SportEventTierListResponseSchema.safeParse(tiersRes.json()).success).toBe(true);
       expect(tiersRes.json().tiers).toHaveLength(6);
 
       const roundsRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/rounds`,
+        url: `/api/v1/events/${eventId}/rounds`,
         headers: rootAdmin.headers,
       });
       expect(roundsRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentRoundsResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
+      expect(SportEventRoundListResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
       expect(roundsRes.json().rounds).toHaveLength(4);
 
-      // --- adminSetCurrentGolfSeason (200) ---------------------
+      // --- setCurrentSeason (200: { sportLeague }) ----------------------------
       const setCurrentRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/admin/sports/golf/seasons/${seasonId}/set-current`,
+        url: `/api/v1/seasons/${seasonId}/set-current`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
       });
       expect(setCurrentRes.statusCode).toBe(200);
-      expect(AdminSetCurrentGolfSeasonResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
+      expect(SportLeagueResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
+      expect(setCurrentRes.json().sportLeague.currentSeasonId).toBe(seasonId);
 
-      // --- adminCloneGolfSeason (201) — the operation this branch adds ---
+      // --- cloneSeason (201) -----------------------------------------------------
       const cloneRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/admin/sports/golf/seasons/${seasonId}/clone`,
+        url: `/api/v1/seasons/${seasonId}/clone`,
         headers: rootAdmin.headers,
         payload: {},
       });
       expect(cloneRes.statusCode).toBe(201);
-      expect(AdminCloneGolfSeasonResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
-      expect(cloneRes.json().tournamentsCloned).toBe(1);
+      expect(CloneSeasonResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
+      expect(cloneRes.json().clonedEventCount).toBe(1);
       expect(cloneRes.json().season.year).toBe(2082);
       expect(cloneRes.json().season.isCurrent).toBe(false);
       const clonedSeasonId = cloneRes.json().season.id as string;
@@ -1250,19 +1250,19 @@ describe('Contract verification (root admin)', () => {
       // Source season's current flag is unchanged by the clone (§4.2a).
       const sourceAfterRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/seasons/${seasonId}`,
+        url: `/api/v1/seasons/${seasonId}`,
         headers: rootAdmin.headers,
       });
       expect(sourceAfterRes.json().season.isCurrent).toBe(true);
 
-      // Capture the cloned tournament id for teardown.
+      // Capture the cloned event id for teardown.
       const clonedListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/admin/sports/golf/tournaments?seasonId=${clonedSeasonId}`,
+        url: `/api/v1/events?seasonId=${clonedSeasonId}`,
         headers: rootAdmin.headers,
       });
-      for (const t of clonedListRes.json().tournaments as Array<{ id: string }>) {
-        created.eventIds.push(t.id);
+      for (const e of clonedListRes.json().events as Array<{ id: string }>) {
+        created.eventIds.push(e.id);
       }
     } finally {
       const prisma = getPrisma();
@@ -1321,7 +1321,7 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('pool-master-cs8: root-admin golf score-source + provider-catalog routes match their DTOs on happy paths', async () => {
+  it('pool-master-cs8: provider-catalog browse and event score-source link/unlink match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case for the three provider-linked
     // operations the epic's flagship FAPI scenario left uncovered:
     // adminListProviderCatalogEvents, adminLinkGolfTournamentScoreSource,
@@ -1366,22 +1366,21 @@ describe('Contract verification (root admin)', () => {
         catalogRes.json().events.some((e: { externalId: string }) => e.externalId === 'event-1'),
       ).toBe(true);
 
-      // --- tour -> season -> manual-admin tournament (syncScope NONE) ----
-      const leagueRes = await app.inject({
+      // --- sport league -> season -> admin-authored event (syncScope NONE) ----
+      const leagueRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/leagues',
+        url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
+        payload: { sport: 'GOLF', name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
-      created.sportLeagueId = leagueRes.json().league.id as string;
+      created.sportLeagueId = leagueRes.json().sportLeague.id as string;
 
-      const seasonRes = await app.inject({
+      const seasonRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/seasons',
+        url: `/api/v1/sport-leagues/${created.sportLeagueId}/seasons`,
         headers: rootAdmin.headers,
         payload: {
-          sportLeagueId: created.sportLeagueId,
           name: `CS8 Contract Season ${stamp} 2083`,
           year: 2083,
           startDate: '2083-01-05T00:00:00.000Z',
@@ -1391,9 +1390,9 @@ describe('Contract verification (root admin)', () => {
       expect(seasonRes.statusCode).toBe(201);
       created.seasonId = seasonRes.json().season.id as string;
 
-      const tournamentRes = await app.inject({
+      const tournamentRes = await getApp().inject({
         method: 'POST',
-        url: '/api/v1/admin/sports/golf/tournaments',
+        url: '/api/v1/events',
         headers: rootAdmin.headers,
         payload: {
           name: `CS8 Contract Open ${stamp}`,
@@ -1407,40 +1406,38 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(tournamentRes.statusCode).toBe(201);
-      const eventId = tournamentRes.json().tournament.id as string;
+      const eventId = tournamentRes.json().event.id as string;
       created.eventIds.push(eventId);
-      expect(tournamentRes.json().tournament.syncScope).toBe('NONE');
+      expect(tournamentRes.json().event.syncScope).toBe('NONE');
 
-      // --- adminLinkGolfTournamentScoreSource (200) --------------------
+      // --- linkEventScoreSource (200) ------------------------------------------
       // A shape test: linkScoreSource only guards against an externalId already
       // held by another SportEvent (409 EXTERNAL_EVENT_ALREADY_LINKED), not
       // against provider-event existence — so a synthetic externalId links fine.
-      const linkRes = await app.inject({
-        method: 'POST',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/score-source`,
+      const linkRes = await getApp().inject({
+        method: 'PUT',
+        url: `/api/v1/events/${eventId}/score-source`,
         headers: rootAdmin.headers,
         payload: { providerId: 'contract-provider', externalId: `contract-cs8-${stamp}` },
       });
       expect(linkRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentDetailResponseSchema.safeParse(linkRes.json()).success).toBe(true);
-      expect(linkRes.json().tournament.syncScope).toBe('SCORES_ONLY');
-      expect(linkRes.json().tournament.source).toBe('PROVIDER');
-      expect(linkRes.json().tournament.scoreSource).toEqual({
+      expect(SportEventResponseSchema.safeParse(linkRes.json()).success).toBe(true);
+      expect(linkRes.json().event).toMatchObject({
+        syncScope: 'SCORES_ONLY',
         providerId: 'contract-provider',
         externalId: `contract-cs8-${stamp}`,
       });
 
-      // --- adminUnlinkGolfTournamentScoreSource (200) -----------------
-      const unlinkRes = await app.inject({
+      // --- unlinkEventScoreSource (200) -----------------------------------------
+      const unlinkRes = await getApp().inject({
         method: 'DELETE',
-        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/score-source`,
+        url: `/api/v1/events/${eventId}/score-source`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
       });
       expect(unlinkRes.statusCode).toBe(200);
-      expect(AdminGolfTournamentDetailResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
-      expect(unlinkRes.json().tournament.syncScope).toBe('NONE');
-      expect(unlinkRes.json().tournament.source).toBe('MANUAL');
-      expect(unlinkRes.json().tournament.scoreSource).toBeNull();
+      expect(SportEventResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
+      expect(unlinkRes.json().event.syncScope).toBe('NONE');
+      expect(unlinkRes.json().event.providerId).toBe('manual-admin');
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {

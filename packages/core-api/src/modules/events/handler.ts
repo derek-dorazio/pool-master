@@ -1,24 +1,297 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { SportEventListQuery, SportEventListResponse } from '@poolmaster/shared/dto/events.dto';
-import { mapSportEventToDto } from '../../mappers';
-import type { EventService } from './service';
+import type {
+  AddSportEventParticipantsRequest,
+  AddSportEventParticipantsResponse,
+  AutoAssignSportEventPricesRequest,
+  AutoAssignSportEventTiersRequest,
+  CreateSportEventFromProviderEventRequest,
+  CreateSportEventRequest,
+  LinkSportEventScoreSourceRequest,
+  ReplaceSportEventTierAssignmentsRequest,
+  ReplaceSportEventTiersRequest,
+  SeedSportEventParticipantsResponse,
+  SportEventListQuery,
+  SportEventListResponse,
+  SportEventParticipantListResponse,
+  SportEventParticipantResponse,
+  SportEventResponse,
+  SportEventRoundListResponse,
+  SportEventTierListResponse,
+  TransitionSportEventRequest,
+  UpdateSportEventParticipantsRequest,
+  UpdateSportEventRequest,
+  UpdateSportEventRoundsRequest,
+} from '@poolmaster/shared/dto/events.dto';
+import type {
+  GolfRoundScorePreviewResponse,
+  GolfRoundScoreUploadRequest,
+  UpdateGolfRoundScoreRequest,
+} from '@poolmaster/shared/dto/golf-scores.dto';
+import { Sport, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { sendError } from '../../core/error-handler';
+import {
+  mapGolfRoundScorePreviewToDto,
+  mapSportEventParticipantToDto,
+  mapSportEventRoundToDto,
+  mapSportEventTierToDto,
+  mapSportEventToDto,
+  toProviderManualSyncSubmissionResponse,
+} from '../../mappers';
+import type { ProviderService } from '../admin/provider-service';
+import {
+  SportEventSyncScopeError,
+  SportProviderNotFoundError,
+  SportSyncNotConfiguredError,
+} from '../admin/provider-service';
+import { SportEventError } from './errors';
+import type { EventLifecycleService } from './event-lifecycle-service';
+import type { EventScoreSourceService } from './event-score-source-service';
+import type { SportEventServices } from './wiring';
 
-export function createEventHandlers(eventService: EventService) {
-  return {
-    listEvents,
-  };
+type EventParams = { Params: { eventId: string } };
+type RoundParams = { Params: { eventId: string; roundNumber: number } };
 
-  async function listEvents(
-    request: FastifyRequest<{ Querystring: SportEventListQuery }>,
-    _reply: FastifyReply,
-  ): Promise<SportEventListResponse> {
-    const logger = request.contextLogger ?? request.log;
-    const rows = await eventService.listEvents({ sport: request.query.sport, status: request.query.status });
-    const events = rows.map(({ event, loadedParticipantCount }) => mapSportEventToDto(event, loadedParticipantCount));
-    logger.info({
-      action: 'events.route.list.success',
-      data: { count: events.length, contestEligibleCount: events.filter((event) => event.contestEligible).length },
-    }, 'Listed sport events');
-    return { events };
+export interface EventHandlerDeps {
+  services: SportEventServices;
+  eventLifecycle: EventLifecycleService;
+  scoreSource: EventScoreSourceService;
+  providers: ProviderService;
+}
+
+/**
+ * The SportEvent operation set and its children's (#236). Every service error carries its
+ * contract code and status and reaches the caller through the global error handler; only
+ * the provider-sync errors, which carry neither, are mapped here.
+ */
+export function createEventHandlers({ services, eventLifecycle, scoreSource, providers }: EventHandlerDeps) {
+  const { sportEvents, rounds, field, tiers, golfScores } = services;
+
+  async function eventResponse(eventId: string): Promise<SportEventResponse> {
+    return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
   }
+
+  /** The golf score operations write golf rows; any other sport's event is refused. */
+  async function requireGolfEvent(eventId: string): Promise<void> {
+    const { event } = await sportEvents.requireSummary(eventId);
+    if (event.sport !== Sport.GOLF) {
+      throw new SportEventError(`Sport event ${eventId} is ${event.sport}, not golf.`, 'SPORT_NOT_SUPPORTED', 422);
+    }
+  }
+
+  async function fieldResponse(eventId: string): Promise<SportEventParticipantListResponse> {
+    return { participants: (await field.listEventParticipants(eventId)).map(mapSportEventParticipantToDto) };
+  }
+
+  return {
+    listEvents: async (request: FastifyRequest<{ Querystring: SportEventListQuery }>): Promise<SportEventListResponse> => {
+      const logger = request.contextLogger ?? request.log;
+      const events = (await sportEvents.listEvents(request.query)).map(mapSportEventToDto);
+      logger.info({
+        action: 'events.route.list.success',
+        data: { count: events.length, contestEligibleCount: events.filter((event) => event.contestEligible).length },
+      }, 'Listed sport events');
+      return { events };
+    },
+
+    getEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
+      return eventResponse(request.params.eventId);
+    },
+
+    createEvent: async (request: FastifyRequest<{ Body: CreateSportEventRequest }>, reply: FastifyReply) => {
+      const { body } = request;
+      const created = await sportEvents.createEvent({
+        ...body,
+        startDate: new Date(body.startDate),
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        releaseAt: new Date(body.releaseAt),
+        fieldLocksAt: new Date(body.fieldLocksAt),
+      });
+      return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
+    },
+
+    createEventFromProviderEvent: async (
+      request: FastifyRequest<{ Body: CreateSportEventFromProviderEventRequest }>,
+      reply: FastifyReply,
+    ) => {
+      const { seasonId, providerId, externalId, rounds: roundCount } = request.body;
+      const providerEvent = await scoreSource.getProviderEventDetail(providerId, externalId);
+      const created = await sportEvents.createEventFromProviderEvent({
+        seasonId,
+        providerId,
+        externalId,
+        rounds: roundCount,
+        providerEvent,
+      });
+      return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
+    },
+
+    updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {
+      const { startDate, endDate, releaseAt, fieldLocksAt, ...rest } = request.body;
+      const updated = await sportEvents.updateEvent(request.params.eventId, {
+        ...rest,
+        ...(startDate !== undefined && { startDate: new Date(startDate) }),
+        ...(endDate !== undefined && { endDate: endDate === null ? null : new Date(endDate) }),
+        ...(releaseAt !== undefined && { releaseAt: new Date(releaseAt) }),
+        ...(fieldLocksAt !== undefined && { fieldLocksAt: new Date(fieldLocksAt) }),
+      });
+      return { event: mapSportEventToDto(updated) };
+    },
+
+    deleteEvent: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
+      await sportEvents.deleteEvent(request.params.eventId);
+      return reply.status(204).send();
+    },
+
+    /** Status changes go through the lifecycle service, the one path that also activates and settles contests. */
+    transitionEvent: async (request: FastifyRequest<EventParams & { Body: TransitionSportEventRequest }>): Promise<SportEventResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      await eventLifecycle.applySportEventStatusTransition({
+        sportEventId: request.params.eventId,
+        toStatus: request.body.toStatus,
+        actor: { type: 'ROOT_ADMIN', userId: request.authUser?.userId ?? '', email: request.authUser?.email ?? '' },
+      });
+      return eventResponse(request.params.eventId);
+    },
+
+    linkScoreSource: async (request: FastifyRequest<EventParams & { Body: LinkSportEventScoreSourceRequest }>): Promise<SportEventResponse> => {
+      await scoreSource.linkScoreSource(request.params.eventId, request.body);
+      return eventResponse(request.params.eventId);
+    },
+
+    unlinkScoreSource: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
+      await scoreSource.unlinkScoreSource(request.params.eventId);
+      return eventResponse(request.params.eventId);
+    },
+
+    /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
+    refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
+      const { event } = await sportEvents.requireSummary(request.params.eventId);
+      if (event.syncScope === SportEventSyncScope.NONE) {
+        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} is not linked to a provider.`);
+      }
+      try {
+        const result = await providers.syncEventData(
+          { sport: event.sport, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
+          request.authUser?.userId ?? '',
+          request.authUser?.email ?? '',
+        );
+        return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
+      } catch (err) {
+        if (err instanceof SportProviderNotFoundError) return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
+        if (err instanceof SportSyncNotConfiguredError) return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
+        if (err instanceof SportEventSyncScopeError) return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
+        throw err;
+      }
+    },
+
+    listEventRounds: async (request: FastifyRequest<EventParams>): Promise<SportEventRoundListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      return { rounds: (await rounds.listRounds(request.params.eventId)).map(mapSportEventRoundToDto) };
+    },
+
+    updateEventRounds: async (
+      request: FastifyRequest<EventParams & { Body: UpdateSportEventRoundsRequest }>,
+    ): Promise<SportEventRoundListResponse> => {
+      const updated = await rounds.reschedule(request.params.eventId, request.body.rounds.map((round) => ({
+        roundNumber: round.roundNumber,
+        scheduledDate: new Date(round.scheduledDate),
+        ...(round.scheduledEndAt !== undefined && {
+          scheduledEndAt: round.scheduledEndAt === null ? null : new Date(round.scheduledEndAt),
+        }),
+      })));
+      return { rounds: updated.map(mapSportEventRoundToDto) };
+    },
+
+    listEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SportEventParticipantListResponse> => {
+      return fieldResponse(request.params.eventId);
+    },
+
+    seedEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SeedSportEventParticipantsResponse> => {
+      return field.seedFromSportLeague(request.params.eventId);
+    },
+
+    addEventParticipants: async (
+      request: FastifyRequest<EventParams & { Body: AddSportEventParticipantsRequest }>,
+    ): Promise<AddSportEventParticipantsResponse> => {
+      return field.addParticipants(request.params.eventId, request.body.participantIds);
+    },
+
+    updateEventParticipants: async (
+      request: FastifyRequest<EventParams & { Body: UpdateSportEventParticipantsRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      const updated = await field.updateParticipants(request.params.eventId, request.body.participants);
+      return { participants: updated.map(mapSportEventParticipantToDto) };
+    },
+
+    removeEventParticipant: async (
+      request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string } }>,
+      reply: FastifyReply,
+    ) => {
+      await field.removeParticipant(request.params.eventId, request.params.sportEventParticipantId);
+      return reply.status(204).send();
+    },
+
+    listEventTiers: async (request: FastifyRequest<EventParams>): Promise<SportEventTierListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      return { tiers: (await tiers.listTiers(request.params.eventId)).map(mapSportEventTierToDto) };
+    },
+
+    replaceEventTiers: async (
+      request: FastifyRequest<EventParams & { Body: ReplaceSportEventTiersRequest }>,
+    ): Promise<SportEventTierListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      const groups = await tiers.replaceTiers({ sportEventId: request.params.eventId, ...request.body });
+      return { tiers: groups.map(mapSportEventTierToDto) };
+    },
+
+    autoAssignEventTiers: async (
+      request: FastifyRequest<EventParams & { Body: AutoAssignSportEventTiersRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      await tiers.autoAssignTiers({ sportEventId: request.params.eventId, ...request.body });
+      return fieldResponse(request.params.eventId);
+    },
+
+    replaceEventTierAssignments: async (
+      request: FastifyRequest<EventParams & { Body: ReplaceSportEventTierAssignmentsRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      await tiers.replaceTierAssignments({ sportEventId: request.params.eventId, assignments: request.body.assignments });
+      return fieldResponse(request.params.eventId);
+    },
+
+    autoAssignEventPrices: async (
+      request: FastifyRequest<EventParams & { Body: AutoAssignSportEventPricesRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await sportEvents.requireSummary(request.params.eventId);
+      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, ...request.body });
+      return fieldResponse(request.params.eventId);
+    },
+
+    previewGolfRoundScores: async (
+      request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
+    ): Promise<GolfRoundScorePreviewResponse> => {
+      await requireGolfEvent(request.params.eventId);
+      const rows = await golfScores.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      return mapGolfRoundScorePreviewToDto(rows);
+    },
+
+    applyGolfRoundScores: async (
+      request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await requireGolfEvent(request.params.eventId);
+      await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      return fieldResponse(request.params.eventId);
+    },
+
+    updateGolfRoundScore: async (
+      request: FastifyRequest<{ Params: { eventId: string; roundNumber: number; sportEventParticipantId: string }; Body: UpdateGolfRoundScoreRequest }>,
+    ): Promise<SportEventParticipantResponse> => {
+      const { eventId, roundNumber, sportEventParticipantId } = request.params;
+      await requireGolfEvent(eventId);
+      await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
+      const participant = (await field.listEventParticipants(eventId)).find((view) => view.entry.id === sportEventParticipantId);
+      return { participant: mapSportEventParticipantToDto(participant as NonNullable<typeof participant>) };
+    },
+  };
 }

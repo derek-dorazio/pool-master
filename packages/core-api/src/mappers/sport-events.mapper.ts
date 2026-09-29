@@ -1,18 +1,21 @@
 /**
- * SportEvent mapper — the domain SportEvent and its loaded-participant count →
- * the canonical SportEventDto. The one place contest-setup readiness is derived
- * for the wire.
+ * SportEvent mapper — an event summary (the event and its counts) → the canonical
+ * SportEventDto, and an event's rounds and tiers → theirs. The one place contest-setup
+ * readiness and the allowed next statuses are derived for the wire.
  */
 
-import type { SportEvent } from '@poolmaster/shared/domain';
+import { SPORT_EVENT_STATUS_TRANSITIONS, type SportEventRound, type SportEventTier } from '@poolmaster/shared/domain';
 import type {
   EventReadinessReasonDto,
   EventReadinessStatusDto,
   SportEventDto,
+  SportEventRoundDto,
+  SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
+import type { SportEventSummary } from '../modules/events/service';
 
-export function mapSportEventToDto(event: SportEvent, loadedParticipantCount: number): SportEventDto {
+export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, contestCount }: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
     participantCount: loadedParticipantCount,
     releaseAt: event.releaseAt,
@@ -44,8 +47,32 @@ export function mapSportEventToDto(event: SportEvent, loadedParticipantCount: nu
     leagueEventId: event.leagueEventId ?? null,
     syncScope: event.syncScope,
     autoLifecycleEnabled: event.autoLifecycleEnabled,
+    tierCount,
+    contestCount,
+    allowedTransitions: [...SPORT_EVENT_STATUS_TRANSITIONS[event.status]],
     metadata: event.metadata,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
+  };
+}
+
+export function mapSportEventRoundToDto(round: SportEventRound): SportEventRoundDto {
+  return {
+    id: round.id,
+    sportEventId: round.sportEventId,
+    roundNumber: round.roundNumber,
+    scheduledDate: round.scheduledDate.toISOString(),
+    scheduledEndAt: round.scheduledEndAt?.toISOString() ?? null,
+  };
+}
+
+export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto {
+  return {
+    id: tier.id,
+    sportEventId: tier.sportEventId,
+    tierKey: tier.tierKey,
+    label: tier.label,
+    tierNumber: tier.tierNumber,
+    defaultPickCount: tier.defaultPickCount,
   };
 }

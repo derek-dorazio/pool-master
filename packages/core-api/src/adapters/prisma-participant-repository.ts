@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { Participant, InjuryStatus, ParticipantProviderMapping, ParticipantType } from '@poolmaster/shared/domain';
+import type { Participant, InjuryStatus, ParticipantType } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -86,21 +86,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
 
   async create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant> {
     const row = await this.prisma.participant.create({ data: toParticipantCreateData(participant) });
-    return mapToParticipant(row);
-  }
-
-  async createWithProviderMapping(
-    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
-    mapping: Pick<ParticipantProviderMapping, 'providerId' | 'externalId' | 'confidence'>,
-  ): Promise<Participant> {
-    const row = await this.prisma.participant.create({
-      data: {
-        ...toParticipantCreateData(participant),
-        providerMappings: {
-          create: { providerId: mapping.providerId, externalId: mapping.externalId, confidence: mapping.confidence },
-        },
-      },
-    });
     return mapToParticipant(row);
   }
 

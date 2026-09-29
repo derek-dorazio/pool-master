@@ -381,19 +381,17 @@ describe('Golf extension repositories', () => {
 });
 
 describe('Participant and provider-mapping repositories — additions', () => {
-  it('creates a participant with its provider identity together, and finds mappings by participants and by provider ids', async () => {
+  it('finds participants by ids, and provider mappings by participants and by a provider\'s identifiers', async () => {
     const { participants, mappings } = repos();
-    const sportId = await golfSportId();
+    const [ana] = await createParticipants(['Ana']);
+    await getPrisma().participantProviderMapping.create({
+      data: { participantId: ana.id, providerId: 'integration-test', externalId: 'pg-1', confidence: 'EXACT' },
+    });
 
-    const created = await participants.createWithProviderMapping(
-      { sportId, name: 'Provider Golfer', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, externalIds: {} },
-      { providerId: 'integration-test', externalId: 'pg-1', confidence: 'EXACT' },
-    );
-
-    await expect(participants.findByIds([created.id, randomUUID()])).resolves.toEqual([expect.objectContaining({ id: created.id })]);
-    await expect(mappings.findByParticipants([created.id])).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
+    await expect(participants.findByIds([ana.id, randomUUID()])).resolves.toEqual([expect.objectContaining({ id: ana.id })]);
+    await expect(mappings.findByParticipants([ana.id])).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
     await expect(mappings.findByProviderExternalIds('integration-test', ['pg-1', 'pg-2'])).resolves.toEqual([
-      expect.objectContaining({ participantId: created.id }),
+      expect.objectContaining({ participantId: ana.id }),
     ]);
   });
 });

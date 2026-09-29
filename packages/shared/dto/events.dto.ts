@@ -1,11 +1,16 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  ParticipantInactiveReason,
+  ParticipantStandingStatus,
   Sport,
   SportEventStatus,
   SportEventSyncScope,
+  TierSource,
+  ValuationSource,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { ParticipantDtoSchema } from './participants.dto';
 
 /** Derived from the domain SportEventStatus constant (plans/124 §4.1) — `OFFICIAL` dropped. */
 export const EventStatusDtoSchema = z.nativeEnum(SportEventStatus);
@@ -63,6 +68,9 @@ export const SportEventDtoSchema = z.object({
   leagueEventId: z.string().uuid().nullable().describe('Recurring tournament this is one year\'s instance of; null for a one-off event.'),
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
+  tierCount: z.number().int().describe(`Pick tiers defined for the event. ${ADMIN_ONLY}`),
+  contestCount: z.number().int().describe(`Contests run on the event, across every league; an event with any cannot be deleted. ${ADMIN_ONLY}`),
+  allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
   metadata: JsonObjectSchema.describe(`Provider-emitted event metadata captured at field-load time. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
   updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
@@ -73,6 +81,8 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 export const SportEventListQuerySchema = z.object({
   sport: z.nativeEnum(Sport).optional().describe('Only events of this sport.'),
   status: EventStatusDtoSchema.optional().describe('Only events in this lifecycle status.'),
+  seasonId: z.string().uuid().optional().describe('Only events in this season.'),
+  q: z.string().optional().describe('Case-insensitive substring of the event name.'),
 }).describe('Filters for the sport-event list.');
 export type SportEventListQuery = z.infer<typeof SportEventListQuerySchema>;
 
@@ -80,6 +90,241 @@ export const SportEventListResponseSchema = z.object({
   events: z.array(SportEventDtoSchema).describe('Matching events, earliest start first.'),
 }).describe('Sport events matching the filters.');
 export type SportEventListResponse = z.infer<typeof SportEventListResponseSchema>;
+
+export const SportEventResponseSchema = z.object({
+  event: SportEventDtoSchema,
+}).describe('One sport event.');
+export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
+
+export const CreateSportEventRequestSchema = z.object({
+  seasonId: z.string().uuid().describe('The season the event belongs to; its sport league decides the sport.'),
+  name: z.string().min(1),
+  venue: z.string().optional(),
+  location: z.string().optional(),
+  startDate: DateTimeSchema,
+  endDate: DateTimeSchema.optional(),
+  rounds: z.number().int().min(1).optional().describe('Round count; golf defaults to 4.'),
+  releaseAt: DateTimeSchema,
+  fieldLocksAt: DateTimeSchema,
+  autoLifecycleEnabled: z.boolean().optional(),
+}).describe('An admin-authored event. Created SCHEDULED with its default rounds and tiers, accepting no provider data.');
+export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
+
+export const CreateSportEventFromProviderEventRequestSchema = z.object({
+  seasonId: z.string().uuid(),
+  providerId: z.string().min(1),
+  externalId: z.string().min(1).describe('From a provider catalog browse (adminListProviderCatalogEvents).'),
+  rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
+}).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.');
+export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;
+
+export const UpdateSportEventRequestSchema = z.object({
+  name: z.string().min(1).optional(),
+  venue: z.string().nullable().optional().describe('null clears it.'),
+  location: z.string().nullable().optional().describe('null clears it.'),
+  startDate: DateTimeSchema.optional(),
+  endDate: z.string().datetime().nullable().optional().describe('null clears it.'),
+  rounds: z.number().int().min(1).optional(),
+  releaseAt: DateTimeSchema.optional(),
+  fieldLocksAt: DateTimeSchema.optional(),
+  autoLifecycleEnabled: z.boolean().optional(),
+}).describe('Changes to an admin-managed event; omitted fields are left alone.');
+export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
+
+export const TransitionSportEventRequestSchema = z.object({
+  toStatus: EventStatusDtoSchema.describe('One of the event\'s allowedTransitions.'),
+}).describe('Moves an event to its next lifecycle status, activating or settling its contests as that status requires.');
+export type TransitionSportEventRequest = z.infer<typeof TransitionSportEventRequestSchema>;
+
+export const LinkSportEventScoreSourceRequestSchema = z.object({
+  providerId: z.string().min(1),
+  externalId: z.string().min(1).describe('From a provider catalog browse.'),
+}).describe('Links an event to a provider event for scores.');
+export type LinkSportEventScoreSourceRequest = z.infer<typeof LinkSportEventScoreSourceRequestSchema>;
+
+// --- SportEventRound -------------------------------------------------------------
+
+export const SportEventRoundDtoSchema = z.object({
+  id: z.string().uuid(),
+  sportEventId: z.string().uuid(),
+  roundNumber: z.number().int().describe('1-based; how a score names its round.'),
+  scheduledDate: DateTimeSchema,
+  // A fresh schema rather than DateTimeSchema.nullable(): reusing the instance makes the
+  // JSON-schema output an allOf $ref without a type, which the route builder rejects.
+  scheduledEndAt: z.string().datetime().nullable(),
+}).describe('A scheduled round of an event — its own date, independent of any result in it.');
+export type SportEventRoundDto = z.infer<typeof SportEventRoundDtoSchema>;
+
+export const SportEventRoundListResponseSchema = z.object({
+  rounds: z.array(SportEventRoundDtoSchema).describe('By round number.'),
+}).describe('An event\'s rounds.');
+export type SportEventRoundListResponse = z.infer<typeof SportEventRoundListResponseSchema>;
+
+export const UpdateSportEventRoundsRequestSchema = z.object({
+  rounds: z.array(z.object({
+    roundNumber: z.number().int(),
+    scheduledDate: DateTimeSchema,
+    scheduledEndAt: z.string().datetime().nullable().optional().describe('Omitted keeps it; null clears it.'),
+  })).min(1).describe('Existing rounds to reschedule, all or none. Never creates a round.'),
+}).describe('How a rain delay or an irregular schedule is recorded.');
+export type UpdateSportEventRoundsRequest = z.infer<typeof UpdateSportEventRoundsRequestSchema>;
+
+// --- SportEventTier --------------------------------------------------------------
+
+export const SportEventTierDtoSchema = z.object({
+  id: z.string().uuid(),
+  sportEventId: z.string().uuid(),
+  tierKey: z.string().describe('Stable key; assignments name a tier by it.'),
+  label: z.string(),
+  tierNumber: z.number().int().describe('Order among the event\'s tiers; 1 first.'),
+  defaultPickCount: z.number().int().describe('Picks a contest takes from this tier by default.'),
+}).describe('A pick tier an event\'s field is divided into. Who is in it is on each field row\'s valuation.');
+export type SportEventTierDto = z.infer<typeof SportEventTierDtoSchema>;
+
+export const SportEventTierListResponseSchema = z.object({
+  tiers: z.array(SportEventTierDtoSchema).describe('By tier number.'),
+}).describe('An event\'s tiers.');
+export type SportEventTierListResponse = z.infer<typeof SportEventTierListResponseSchema>;
+
+export const ReplaceSportEventTiersRequestSchema = z.object({
+  tiers: z.array(z.object({
+    tierKey: z.string().min(1),
+    label: z.string().min(1),
+    tierNumber: z.number().int().min(1),
+    defaultPickCount: z.number().int().min(1),
+  })).min(1),
+  reassignOrphansTo: z.string().optional().describe('A tierKey from this request; required when a removed tier still has participants in it.'),
+}).describe('The event\'s full tier list, replacing the current one.');
+export type ReplaceSportEventTiersRequest = z.infer<typeof ReplaceSportEventTiersRequestSchema>;
+
+export const AutoAssignSportEventTiersRequestSchema = z.object({
+  source: z.nativeEnum(TierSource).describe('What the active field is ordered by before the tiers are filled.'),
+  tierSize: z.number().int().min(1).optional().describe('Participants per tier; the last tier takes the rest. Default 10.'),
+}).describe('Fills the event\'s tiers from the active field.');
+export type AutoAssignSportEventTiersRequest = z.infer<typeof AutoAssignSportEventTiersRequestSchema>;
+
+export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({
+  assignments: z.array(z.object({
+    sportEventParticipantId: z.string().uuid(),
+    tierKey: z.string(),
+    tierOrderIndex: z.number().int(),
+  })).min(1).describe('The full desired placement, applied all or none.'),
+}).describe('The drag-and-drop tier save.');
+export type ReplaceSportEventTierAssignmentsRequest = z.infer<typeof ReplaceSportEventTierAssignmentsRequestSchema>;
+
+export const AutoAssignSportEventPricesRequestSchema = z.object({
+  minPrice: z.number().min(0),
+  maxPrice: z.number().min(0),
+}).describe('Prices the seeded, active field between minPrice and maxPrice by seed.');
+export type AutoAssignSportEventPricesRequest = z.infer<typeof AutoAssignSportEventPricesRequestSchema>;
+
+// --- SportEventParticipant — the Participant↔SportEvent edge ----------------------
+
+export const SportEventParticipantValuationDtoSchema = z.object({
+  id: z.string().uuid(),
+  sportEventTierId: z.string().uuid().nullable().describe('The tier the participant is placed in; null when untiered.'),
+  tierOrderIndex: z.number().int().nullable().describe('Order within the tier.'),
+  tierAssignedSource: z.nativeEnum(ValuationSource).nullable(),
+  price: z.number().nullable().describe('Price in a budget contest; null when unpriced.'),
+  priceAssignedSource: z.nativeEnum(ValuationSource).nullable(),
+}).describe('A field row\'s tier placement and price, each set independently.');
+export type SportEventParticipantValuationDto = z.infer<typeof SportEventParticipantValuationDtoSchema>;
+
+export const SportEventParticipantGolfStandingDtoSchema = z.object({
+  eventScoreToPar: z.number().int(),
+  eventStrokes: z.number().int(),
+  currentRoundThru: z.number().int().nullable().describe('Holes completed in the current round.'),
+}).describe('Golf extension of a standing: the totals it was ranked from.');
+
+export const SportEventParticipantStandingDtoSchema = z.object({
+  id: z.string().uuid(),
+  position: z.number().int().nullable().describe('Cross-sport rank key, direction-free: 1 is best in every sport.'),
+  displayPosition: z.string().nullable().describe('Position as shown, e.g. "T3".'),
+  status: z.nativeEnum(ParticipantStandingStatus).describe('ELIMINATED covers a missed cut; golf surfaces show it as "Cut".'),
+  asOf: DateTimeSchema.nullable(),
+  currentRound: z.number().int().nullable(),
+  golf: SportEventParticipantGolfStandingDtoSchema.nullable().describe('Present for a golf event with scores; null otherwise.'),
+}).describe('A field row\'s running standing. The score lives in the sport\'s extension.');
+export type SportEventParticipantStandingDto = z.infer<typeof SportEventParticipantStandingDtoSchema>;
+
+export const SportEventParticipantGolfRoundDtoSchema = z.object({
+  strokes: z.number().int(),
+  scoreToPar: z.number().int(),
+  thru: z.number().int().nullable(),
+}).describe('Golf extension of a round: what was scored.');
+
+export const SportEventParticipantRoundDtoSchema = z.object({
+  id: z.string().uuid(),
+  sportEventRoundId: z.string().uuid(),
+  roundNumber: z.number().int(),
+  status: z.string().describe('Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT.'),
+  completedAt: DateTimeSchema.nullable(),
+  golf: SportEventParticipantGolfRoundDtoSchema.nullable().describe('Present once a golf round is scored.'),
+}).describe('A field row\'s part in one round.');
+export type SportEventParticipantRoundDto = z.infer<typeof SportEventParticipantRoundDtoSchema>;
+
+export const SportEventParticipantDtoSchema = z.object({
+  id: z.string().uuid().describe('Field row identifier.'),
+  sportEventId: z.string().uuid(),
+  participantId: z.string().uuid(),
+  isActive: z.boolean().describe('Whether the participant is competing; false is withdrawn or eliminated.'),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null means no more specific reason is recorded.'),
+  ranking: z.number().int().nullable().describe('Rank that applied at this event: seeded from the provider\'s ranking, then editable.'),
+  oddsToWin: z.number().nullable(),
+  seedNumber: z.number().int().nullable(),
+  participant: ParticipantDtoSchema.describe('The canonical participant.'),
+  valuation: SportEventParticipantValuationDtoSchema.nullable().describe('Null until a tier or price is set.'),
+  standing: SportEventParticipantStandingDtoSchema.nullable().describe('Null until the participant has a scored round.'),
+  rounds: z.array(SportEventParticipantRoundDtoSchema).describe('By round number.'),
+  affiliatedWithSportLeague: z.boolean().describe(`Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. ${ADMIN_ONLY}`),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
+}).describe('A participant on an event\'s field, with everything the event records about them.');
+export type SportEventParticipantDto = z.infer<typeof SportEventParticipantDtoSchema>;
+
+export const SportEventParticipantListResponseSchema = z.object({
+  participants: z.array(SportEventParticipantDtoSchema).describe('In seed order, unseeded last.'),
+}).describe('An event\'s field.');
+export type SportEventParticipantListResponse = z.infer<typeof SportEventParticipantListResponseSchema>;
+
+export const AddSportEventParticipantsRequestSchema = z.object({
+  participantIds: z.array(z.string().uuid()).min(1).describe('Any participants; ones already on the field are skipped.'),
+}).describe('Adds participants to the field.');
+export type AddSportEventParticipantsRequest = z.infer<typeof AddSportEventParticipantsRequestSchema>;
+
+export const AddSportEventParticipantsResponseSchema = z.object({
+  added: z.number().int(),
+  skipped: z.number().int().describe('Already on the field.'),
+  total: z.number().int(),
+}).describe('What adding participants did.');
+export type AddSportEventParticipantsResponse = z.infer<typeof AddSportEventParticipantsResponseSchema>;
+
+export const SeedSportEventParticipantsResponseSchema = z.object({
+  added: z.number().int(),
+  skipped: z.number().int().describe('Already on the field.'),
+  total: z.number().int().describe('Active affiliations considered.'),
+  seedNumbersDerived: z.number().int(),
+  oddsDerived: z.number().int(),
+}).describe('What seeding the field from the event\'s sport league did.');
+export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
+
+export const UpdateSportEventParticipantsRequestSchema = z.object({
+  participants: z.array(z.object({
+    sportEventParticipantId: z.string().uuid(),
+    isActive: z.boolean().optional(),
+    inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
+    ranking: z.number().int().nullable().optional(),
+    oddsToWin: z.number().nullable().optional(),
+    seedNumber: z.number().int().nullable().optional(),
+    price: z.number().nullable().optional().describe('A manual price; null clears it.'),
+  })).min(1).describe('Field rows to patch, all or none. Omitted fields are left alone; null clears.'),
+}).describe('One save of the field grid.');
+export type UpdateSportEventParticipantsRequest = z.infer<typeof UpdateSportEventParticipantsRequestSchema>;
+
+export const SportEventParticipantResponseSchema = z.object({
+  participant: SportEventParticipantDtoSchema,
+}).describe('One field row.');
+export type SportEventParticipantResponse = z.infer<typeof SportEventParticipantResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
 // The three enums are also consumed by admin.dto.ts; naming them gives the frontend
@@ -90,3 +335,28 @@ registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);
+registerSchema('SportEventResponse', SportEventResponseSchema);
+registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
+registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);
+registerSchema('UpdateSportEventRequest', UpdateSportEventRequestSchema);
+registerSchema('TransitionSportEventRequest', TransitionSportEventRequestSchema);
+registerSchema('LinkSportEventScoreSourceRequest', LinkSportEventScoreSourceRequestSchema);
+registerSchema('SportEventRoundDto', SportEventRoundDtoSchema);
+registerSchema('SportEventRoundListResponse', SportEventRoundListResponseSchema);
+registerSchema('UpdateSportEventRoundsRequest', UpdateSportEventRoundsRequestSchema);
+registerSchema('SportEventTierDto', SportEventTierDtoSchema);
+registerSchema('SportEventTierListResponse', SportEventTierListResponseSchema);
+registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSchema);
+registerSchema('AutoAssignSportEventTiersRequest', AutoAssignSportEventTiersRequestSchema);
+registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierAssignmentsRequestSchema);
+registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
+registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);
+registerSchema('SportEventParticipantStandingDto', SportEventParticipantStandingDtoSchema);
+registerSchema('SportEventParticipantRoundDto', SportEventParticipantRoundDtoSchema);
+registerSchema('SportEventParticipantDto', SportEventParticipantDtoSchema);
+registerSchema('SportEventParticipantListResponse', SportEventParticipantListResponseSchema);
+registerSchema('AddSportEventParticipantsRequest', AddSportEventParticipantsRequestSchema);
+registerSchema('AddSportEventParticipantsResponse', AddSportEventParticipantsResponseSchema);
+registerSchema('SeedSportEventParticipantsResponse', SeedSportEventParticipantsResponseSchema);
+registerSchema('UpdateSportEventParticipantsRequest', UpdateSportEventParticipantsRequestSchema);
+registerSchema('SportEventParticipantResponse', SportEventParticipantResponseSchema);

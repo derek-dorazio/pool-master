@@ -79,6 +79,7 @@ describe('loadDraftContext', () => {
   // rather than the dropped legacy SportEventParticipant.valuations table.
   it('pool-master-piv resolves selectionParticipants[].tier/price/orderIndex and context.tiers from golf-tier-service', async () => {
     const prisma = createMockPrisma({
+      // The event's tiers and valuations, as the tier service's ports read them.
       sportEventTier: {
         findMany: jest.fn().mockResolvedValue([
           {
@@ -88,25 +89,19 @@ describe('loadDraftContext', () => {
             label: 'Tier 1',
             tierNumber: 1,
             defaultPickCount: 2,
-            valuations: [
-              {
-                sportEventParticipantId: 'sep-1',
-                tierOrderIndex: 1,
-                price: 25,
-                sportEventParticipant: { participantId: 'participant-1' },
-              },
-            ],
           },
         ]),
       },
       sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
+            id: 'valuation-1',
             sportEventParticipantId: 'sep-1',
+            sportEventTierId: 'tier-1',
             tierOrderIndex: 1,
+            tierAssignedSource: 'MANUAL',
             price: 25,
-            sportEventParticipant: { participantId: 'participant-1' },
-            sportEventTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+            priceAssignedSource: 'MANUAL',
           },
         ]),
       },

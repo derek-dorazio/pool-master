@@ -18,7 +18,7 @@ import {
   ContestManagementError,
   ContestManagementService,
 } from '../../../packages/core-api/src/modules/contest-management/service';
-import type { GolfTierService } from '../../../packages/core-api/src/modules/golf/golf-tier-service';
+import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestCoreRepo,
   fakeContestEntryAggregationRuleRepo,
@@ -225,10 +225,10 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
  * populates each tier's assignment list so the effectiveTiers echo
  * (plans/124 §5.3/pool-master-41t) can be asserted end to end.
  */
-function createGolfTierServiceStub(
+function createSportEventTierServiceStub(
   tierCount = 0,
   withParticipants = false,
-): GolfTierService {
+): SportEventTierService {
   return {
     getEffectiveTiersForSportEvent: jest.fn().mockResolvedValue(
       Array.from({ length: tierCount }, (_, index) => ({
@@ -249,7 +249,7 @@ function createGolfTierServiceStub(
           : [],
       })),
     ),
-  } as unknown as GolfTierService;
+  } as unknown as SportEventTierService;
 }
 
 function createSportEventReader(overrides?: Partial<{
@@ -303,7 +303,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -371,7 +371,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(2),
+      createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
         participantCount: 80,
@@ -412,7 +412,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(2),
+      createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
         participantCount: 80,
@@ -453,7 +453,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({ sport: Sport.GOLF }),
     );
@@ -513,7 +513,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
         sport: Sport.NCAA_BASKETBALL,
@@ -576,7 +576,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
         sport: Sport.NCAA_BASKETBALL,
@@ -619,7 +619,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -671,7 +671,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(2),
+      createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
         participantCount: 80,
@@ -703,7 +703,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -724,7 +724,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
-    const golfTierService = createGolfTierServiceStub(2, true);
+    const golfTierService = createSportEventTierServiceStub(2, true);
     const service = new ContestManagementService(
       createContestCoreRepo(),
       createContestConfigTemplateRepo(),
@@ -790,7 +790,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -831,7 +831,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -867,7 +867,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -893,7 +893,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
         participantCount: 72,
@@ -932,7 +932,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createGolfTierServiceStub(),
+      createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
         releaseAt: new Date('2026-05-10T12:00:00.000Z'),

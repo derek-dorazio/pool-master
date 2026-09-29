@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { Sport } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
-import { SportEventDtoSchema } from './events.dto';
 import { IngestionFeedTypeSchema } from './ingestion.dto';
 
 const SportSchema = z.enum([
@@ -72,64 +71,6 @@ export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSche
 // the product works one league at a time, so a cross-league squad search has no caller. What
 // a root admin needs is the league (A1's unscoped league list), then that league's squads —
 // which `listLeagueSquads` already serves, and which A1 already lets them read.
-
-export const AdminEventParticipantGolfRoundDtoSchema = z.object({
-  round: z.number().int().describe('Golf round number.'),
-  strokes: z.number().int().describe('Persisted stroke count for this round.'),
-  scoreToPar: z.number().int().describe('Persisted score-to-par for this round.'),
-  thru: z.number().int().optional().describe('Completed holes in this round when known for an in-progress/live round.'),
-  status: z.string().describe('Provider-normalized round status.'),
-  completedAt: z.string().datetime().optional().describe('When this round completed, if known.'),
-}).describe('Current persisted golf-round row for an event participant.');
-export type AdminEventParticipantGolfRoundDto = z.infer<typeof AdminEventParticipantGolfRoundDtoSchema>;
-
-export const AdminEventParticipantGolfStandingDtoSchema = z.object({
-  eventScoreToPar: z.number().int().describe('Current event total score relative to par across persisted Golf rounds.'),
-  eventStrokes: z.number().int().describe('Current event total strokes across persisted Golf rounds.'),
-  currentRound: z.number().int().optional().describe('Current or latest round represented in the standing.'),
-  currentRoundThru: z.number().int().optional().describe('Completed holes for the current round when known.'),
-  status: z.enum(['active', 'in-progress', 'complete', 'withdrawn', 'missed-cut']).describe(
-    'Normalized current Golf live status for this event participant.',
-  ),
-  position: z.number().int().optional().describe('Numeric leaderboard position when available.'),
-  displayPosition: z.string().optional().describe('Provider/display leaderboard position label when available.'),
-  asOf: z.string().datetime().optional().describe('Provider or ingestion timestamp for the standing snapshot.'),
-}).describe('Current persisted Golf event-participant standing row.');
-export type AdminEventParticipantGolfStandingDto = z.infer<typeof AdminEventParticipantGolfStandingDtoSchema>;
-
-export const AdminEventParticipantsParamsSchema = z.object({
-  eventId: z.string().uuid().describe('Internal SportEvent identifier to inspect.'),
-}).describe('Route parameters for root-admin current-state event participant browsing.');
-export type AdminEventParticipantsParams = z.infer<typeof AdminEventParticipantsParamsSchema>;
-
-export const AdminEventParticipantDtoSchema = z.object({
-  id: z.string().uuid().describe('Internal SportEventParticipant identifier.'),
-  sportEventId: z.string().uuid().describe('Owning SportEvent identifier.'),
-  participantId: z.string().uuid().describe('Canonical Participant identifier.'),
-  participantName: z.string().describe('Current participant display name.'),
-  shortName: z.string().optional().describe('Short display name when known.'),
-  nationality: z.string().optional().describe('Participant nationality or country code when known.'),
-  status: z.string().optional().describe('Provider-emitted per-event participant status.'),
-  ranking: z.number().int().optional().describe('Rank that applied at this event, when one is recorded.'),
-  oddsToWin: z.number().optional().describe('Current per-event odds-to-win snapshot when provided.'),
-  seedNumber: z.number().int().optional().describe('Event-relative seed number when provided.'),
-  valuationPrice: z.number().optional().describe('Current PoolMaster participant valuation price when computed.'),
-  valuationTier: z.string().optional().describe('Current PoolMaster participant valuation tier when computed.'),
-  valuationOrderIndex: z.number().int().optional().describe('Current PoolMaster participant valuation order when computed.'),
-  roundCount: z.number().int().describe('Number of persisted golf-round rows for this event participant.'),
-  totalStrokes: z.number().int().optional().describe('Current Golf event total strokes. Prefers SportEventParticipantGolfStanding when present.'),
-  scoreToPar: z.number().int().optional().describe('Current Golf event score-to-par. Prefers SportEventParticipantGolfStanding when present.'),
-  golfStanding: AdminEventParticipantGolfStandingDtoSchema.optional().describe('Maintained current Golf event standing when live/final score data has been persisted.'),
-  golfRounds: z.array(AdminEventParticipantGolfRoundDtoSchema).describe('Current persisted golf-round detail rows.'),
-  updatedAt: z.string().datetime().describe('When this event-participant row was last updated.'),
-}).describe('Root-admin current-state event participant row with ranking, odds, valuation, and golf-score details.');
-export type AdminEventParticipantDto = z.infer<typeof AdminEventParticipantDtoSchema>;
-
-export const AdminEventParticipantListResponseSchema = z.object({
-  event: SportEventDtoSchema.describe('The event whose participants these are.'),
-  participants: z.array(AdminEventParticipantDtoSchema).describe('Current persisted participant rows for the requested event.'),
-}).describe('Root-admin current-state event participant browser response.');
-export type AdminEventParticipantListResponse = z.infer<typeof AdminEventParticipantListResponseSchema>;
 
 export const AdminServiceDependencyDtoSchema = z.object({
   name: z.string(),
@@ -435,6 +376,8 @@ export const ProviderManualSyncSubmissionResponseSchema = z.object({
   syncRuns: z.array(ProviderSyncRunDtoSchema),
 }).describe('Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.');
 export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManualSyncSubmissionResponseSchema>;
+// Registered for the event module's field refresh (#236), which returns the same submission.
+registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
 
 export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerId: z.string(),

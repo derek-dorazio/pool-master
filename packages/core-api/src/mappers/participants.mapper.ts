@@ -1,4 +1,5 @@
-import type { Participant } from '@poolmaster/shared/domain';
+import type { Participant, ParticipantProviderMapping } from '@poolmaster/shared/domain';
+import type { ParticipantProviderMappingDto } from '@poolmaster/shared/dto/participants.dto';
 
 function toIso(value?: Date | null): string | undefined {
   return value ? value.toISOString() : undefined;
@@ -30,5 +31,16 @@ export function mapParticipantToDto(participant: Participant) {
     externalIds: participant.externalIds,
     createdAt: participant.createdAt.toISOString(),
     updatedAt: participant.updatedAt.toISOString(),
+  };
+}
+
+export function mapParticipantProviderMappingToDto(mapping: ParticipantProviderMapping): ParticipantProviderMappingDto {
+  return {
+    id: mapping.id,
+    participantId: mapping.participantId,
+    providerId: mapping.providerId,
+    externalId: mapping.externalId,
+    confidence: mapping.confidence,
+    mappedAt: mapping.mappedAt.toISOString(),
   };
 }

@@ -95,6 +95,34 @@ function isPublicRoute(method: string, url: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Token reading, shared with route-level guards that must decide before validation
+// ---------------------------------------------------------------------------
+
+/** The access token a request carries: the Bearer header, else the session cookie. */
+export function readRequestAccessToken(request: FastifyRequest): string | undefined {
+  const authHeader = request.headers.authorization;
+  return authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : readAccessCookie(request.headers.cookie);
+}
+
+/** Verifies an access token and returns the user it names. Throws when it is invalid or expired. */
+export function verifyAccessToken(accessToken: string, jwtSecret: string): AuthUser {
+  const payload = jwt.verify(accessToken, jwtSecret) as {
+    sub: string;
+    email: string;
+    isRootAdmin?: boolean;
+    sid?: string;
+  };
+  return {
+    userId: payload.sub,
+    email: payload.email,
+    isRootAdmin: payload.isRootAdmin === true,
+    sessionId: payload.sid ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
 
@@ -105,29 +133,13 @@ function authGuardPlugin(fastify: FastifyInstance): void {
   fastify.decorateRequest('authUser', undefined);
 
   function tryAttachOptionalAuthUser(request: FastifyRequest) {
-    const authHeader = request.headers.authorization;
-    const accessToken = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : readAccessCookie(request.headers.cookie);
-
+    const accessToken = readRequestAccessToken(request);
     if (!accessToken) {
       return;
     }
 
     try {
-      const payload = jwt.verify(accessToken, jwtSecret) as {
-        sub: string;
-        email: string;
-        isRootAdmin?: boolean;
-        sid?: string;
-      };
-
-      request.authUser = {
-        userId: payload.sub,
-        email: payload.email,
-        isRootAdmin: payload.isRootAdmin === true,
-        sessionId: payload.sid ?? null,
-      };
+      request.authUser = verifyAccessToken(accessToken, jwtSecret);
     } catch {
       // Optional auth binding should never block a public route.
     }
@@ -144,20 +156,13 @@ function authGuardPlugin(fastify: FastifyInstance): void {
     }
 
     const authHeader = request.headers.authorization;
-    const accessToken = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : readAccessCookie(request.headers.cookie);
+    const accessToken = readRequestAccessToken(request);
     if (!accessToken) {
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
 
     try {
-      const payload = jwt.verify(accessToken, jwtSecret) as {
-        sub: string;
-        email: string;
-        isRootAdmin?: boolean;
-        sid?: string;
-      };
+      const authUser = verifyAccessToken(accessToken, jwtSecret);
 
       const usingCookieSession = !authHeader?.startsWith('Bearer ');
       if (usingCookieSession && isStateChangingMethod(request.method)) {
@@ -168,13 +173,7 @@ function authGuardPlugin(fastify: FastifyInstance): void {
         }
       }
 
-      request.authUser = {
-        userId: payload.sub,
-        email: payload.email,
-        isRootAdmin: payload.isRootAdmin === true,
-        sessionId: payload.sid ?? null,
-      };
-
+      request.authUser = authUser;
     } catch {
       return sendError(
         reply,

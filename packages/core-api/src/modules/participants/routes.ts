@@ -15,6 +15,7 @@ import {
 } from '../../adapters';
 import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
+import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 
 export function participantsModule(fastify: FastifyInstance): void {
@@ -68,6 +69,7 @@ export function participantsModule(fastify: FastifyInstance): void {
   });
 
   fastify.post('/', {
+    onRequest: requireRootAdmin,
     schema: {
       tags: ['Participants'],
       summary: 'Create a participant',
@@ -100,6 +102,7 @@ export function participantsModule(fastify: FastifyInstance): void {
   });
 
   fastify.patch('/:id', {
+    onRequest: requireRootAdmin,
     schema: {
       tags: ['Participants'],
       summary: 'Update a participant',
@@ -124,10 +127,26 @@ export function participantsModule(fastify: FastifyInstance): void {
           status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'RETIRED', 'SUSPENDED'] },
           injuryStatus: { type: 'object' },
           photoUrl: { type: 'string' },
+          externalId: { type: 'string' },
           externalIds: { type: 'object' },
         },
       },
     },
     handler: handler.updateParticipant,
+  });
+
+  fastify.get('/:id/provider-mappings', {
+    schema: {
+      tags: ['Participants'],
+      summary: 'List a participant\'s provider identities',
+      description: 'How each provider knows the participant — the identities synced data is matched by.',
+      operationId: 'listParticipantProviderMappings',
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      response: {
+        200: schemaRef('ParticipantProviderMappingListResponse'),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handler.listProviderMappings,
   });
 }

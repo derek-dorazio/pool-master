@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   InjuryStatusCode,
+  MappingConfidence,
   ParticipantStatus,
   ParticipantType,
   Sport,
@@ -145,7 +146,24 @@ export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
 }).describe('Single-participant detail response.');
 
+export const ParticipantProviderMappingDtoSchema = z.object({
+  id: z.string().uuid(),
+  participantId: z.string().uuid(),
+  providerId: z.string().describe('The provider that knows the participant by externalId.'),
+  externalId: z.string(),
+  confidence: z.nativeEnum(MappingConfidence).describe('How the identity was matched.'),
+  mappedAt: DateTimeSchema,
+}).describe('A provider\'s identifier for a participant — how synced data finds them.');
+export type ParticipantProviderMappingDto = z.infer<typeof ParticipantProviderMappingDtoSchema>;
+
+export const ParticipantProviderMappingListResponseSchema = z.object({
+  providerMappings: z.array(ParticipantProviderMappingDtoSchema),
+}).describe('A participant\'s provider identities.');
+export type ParticipantProviderMappingListResponse = z.infer<typeof ParticipantProviderMappingListResponseSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
+registerSchema('ParticipantProviderMappingDto', ParticipantProviderMappingDtoSchema);
+registerSchema('ParticipantProviderMappingListResponse', ParticipantProviderMappingListResponseSchema);
 registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);
 registerSchema('ParticipantListResponse', ParticipantListResponseSchema);

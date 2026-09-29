@@ -270,11 +270,6 @@ export interface ParticipantRepository {
   findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
-  /** A participant first seen at a provider: the row and its provider identity, together or not at all. */
-  createWithProviderMapping(
-    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
-    mapping: Pick<ParticipantProviderMapping, 'providerId' | 'externalId' | 'confidence'>,
-  ): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
 

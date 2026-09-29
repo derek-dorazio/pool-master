@@ -1,163 +1,104 @@
-/**
- * Unit tests for GolfScoreService's logic that needs no stored state: resolving an
- * upload row to a field golfer (participantId, then Participant.externalId, then an
- * exact case-insensitive playerName, ambiguous when several match), the null-score
- * read before a round is scheduled, and the 404 for a wrong-event field entry.
- *
- * Everything that reads or writes round and standing rows — preview change detection,
- * apply, patch, standing refresh — is asserted against Postgres in
- * tests/integration/core-api/golf-round-scores.integration.ts, where the core row /
- * golf extension split is observable.
- */import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { Sport } from '@poolmaster/shared/domain';
+import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
-function buildPrisma(overrides: Record<string, unknown> = {}) {
-  const prisma = {
-    sportEventRound: {
-      findUnique: jest.fn().mockResolvedValue({ id: 'round-1', sportEventId: 'event-1', roundNumber: 1 }),
-      upsert: jest.fn().mockResolvedValue({ id: 'round-1', sportEventId: 'event-1', roundNumber: 1 }),
-    },
-    sportEventParticipant: {
-      findUnique: jest.fn().mockResolvedValue(null),
-      findMany: jest.fn().mockResolvedValue([]),
-    },
-    participant: {
-      findFirst: jest.fn().mockResolvedValue(null),
-    },
-    sportEventParticipantRound: {
-      findMany: jest.fn().mockResolvedValue([]),
-    },
-    sportEvent: {
-      findUniqueOrThrow: jest.fn().mockResolvedValue({ providerId: 'mock-golf' }),
-    },
-    $transaction: jest.fn().mockImplementation((arg) => (
-      typeof arg === 'function' ? arg(prisma) : Promise.all(arg)
-    )),
-    ...overrides,
-  };
-  return prisma;
+// The golf score-correction rules against an in-memory store: what a preview reports, that
+// apply is all or none, how a correction merges, and how a standing is totalled. The sync
+// path's writes against Postgres are in golf-round-scores.integration.
+
+function setup() {
+  const store = new InMemorySportEvents();
+  const sport = store.addSport(Sport.GOLF);
+  const event = store.addEvent({ providerId: 'feed' });
+  const ana = store.addParticipant(sport.id, 'Ana Park', { externalId: 'ext-ana' });
+  const ben = store.addParticipant(sport.id, 'Ben Cole');
+  const anaEntry = store.addToField(event.id, ana.id);
+  const benEntry = store.addToField(event.id, ben.id);
+  const bus = { publish: jest.fn().mockResolvedValue(undefined) };
+  const service = new GolfScoreService({
+    sportEvents: store.sportEventRepo(),
+    rounds: store.roundRepo(),
+    field: store.fieldRepo(),
+    participants: store.participantRepo(),
+    mappings: store.mappingRepo(),
+    golfRounds: store.golfRoundRepo(),
+    golfStandings: store.golfStandingRepo(),
+    bus: bus as never,
+  });
+  return { store, service, event, anaEntry, benEntry, bus };
 }
 
-describe('GolfScoreService.resolveFieldParticipant', () => {
-  it('pool-master-blj matches directly by participantId', async () => {
-    const prisma = buildPrisma({
-      sportEventParticipant: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'sep-1', participant: { name: 'Rory McIlroy' } }),
-      },
-    });
-    const service = new GolfScoreService(prisma as any);
+const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
 
-    const result = await service.resolveFieldParticipant({ participantId: 'p-1' }, { sportEventId: 'event-1' });
+describe('GolfScoreService — preview', () => {
+  it('resolves rows within the event\'s field and reports CREATE, UPDATE or UNCHANGED against what is stored', async () => {
+    const { service, event } = setup();
+    await service.applyRoundScores(event.id, 1, [{ participantId: undefined, externalId: 'ext-ana', ...row() }]);
 
-    expect(prisma.sportEventParticipant.findUnique).toHaveBeenCalledWith({
-      where: { sportEventId_participantId: { sportEventId: 'event-1', participantId: 'p-1' } },
-      include: { participant: { select: { name: true } } },
-    });
-    expect(result).toEqual({ resolution: 'MATCHED', sportEventParticipantId: 'sep-1', participantName: 'Rory McIlroy' });
-  });
+    const preview = await service.previewRoundScores(event.id, 1, [
+      { externalId: 'ext-ana', ...row() },
+      { playerName: 'ben cole', ...row({ strokes: 72, scoreToPar: 0 }) },
+      { playerName: 'Nobody', ...row() },
+    ]);
 
-  it('pool-master-blj is UNRESOLVED when participantId is given but not in this field', async () => {
-    const prisma = buildPrisma();
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({ participantId: 'missing' }, { sportEventId: 'event-1' });
-
-    expect(result.resolution).toBe('UNRESOLVED');
-  });
-
-  it('pool-master-blj resolves externalId against the bare Participant.externalId field, not a provider mapping', async () => {
-    const prisma = buildPrisma({
-      participant: { findFirst: jest.fn().mockResolvedValue({ id: 'p-1' }) },
-      sportEventParticipant: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'sep-1', participant: { name: 'Rory McIlroy' } }),
-      },
-    });
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({ externalId: 'ext-1' }, { sportEventId: 'event-1' });
-
-    expect(prisma.participant.findFirst).toHaveBeenCalledWith({ where: { externalId: 'ext-1' } });
-    expect(result).toEqual({ resolution: 'MATCHED', sportEventParticipantId: 'sep-1', participantName: 'Rory McIlroy' });
-  });
-
-  it('pool-master-blj is UNRESOLVED when externalId matches no Participant at all', async () => {
-    const prisma = buildPrisma();
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({ externalId: 'missing' }, { sportEventId: 'event-1' });
-
-    expect(result.resolution).toBe('UNRESOLVED');
-    expect(prisma.sportEventParticipant.findUnique).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-blj matches an exact case-insensitive playerName within the field', async () => {
-    const prisma = buildPrisma({
-      sportEventParticipant: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'sep-1', participant: { name: 'Rory McIlroy' } }]),
-      },
-    });
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({ playerName: 'rory mcilroy' }, { sportEventId: 'event-1' });
-
-    expect(prisma.sportEventParticipant.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { sportEventId: 'event-1', participant: { name: { equals: 'rory mcilroy', mode: 'insensitive' } } },
-    }));
-    expect(result).toEqual({ resolution: 'MATCHED', sportEventParticipantId: 'sep-1', participantName: 'Rory McIlroy' });
-  });
-
-  it('pool-master-blj is AMBIGUOUS when more than one field participant matches the playerName', async () => {
-    const prisma = buildPrisma({
-      sportEventParticipant: {
-        findMany: jest.fn().mockResolvedValue([
-          { id: 'sep-1', participant: { name: 'Jordan Smith' } },
-          { id: 'sep-2', participant: { name: 'Jordan Smith' } },
-        ]),
-      },
-    });
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({ playerName: 'Jordan Smith' }, { sportEventId: 'event-1' });
-
-    expect(result.resolution).toBe('AMBIGUOUS');
-  });
-
-  it('pool-master-blj is UNRESOLVED when no identifier is supplied at all', async () => {
-    const prisma = buildPrisma();
-    const service = new GolfScoreService(prisma as any);
-
-    const result = await service.resolveFieldParticipant({}, { sportEventId: 'event-1' });
-
-    expect(result.resolution).toBe('UNRESOLVED');
+    expect(preview.map((entry) => [entry.resolution, entry.participantName, entry.change])).toEqual([
+      ['MATCHED', 'Ana Park', 'UNCHANGED'],
+      ['MATCHED', 'Ben Cole', 'CREATE'],
+      ['UNRESOLVED', null, 'CREATE'],
+    ]);
   });
 });
 
-describe('GolfScoreService.getRoundScores', () => {
-  it('pool-master-blj returns every field row with null scores when the round has no schedule row yet', async () => {
-    const prisma = buildPrisma({
-      sportEventRound: { findUnique: jest.fn().mockResolvedValue(null) },
-      sportEventParticipant: {
-        findMany: jest.fn().mockResolvedValue([
-          { id: 'sep-1', participantId: 'p-1', participant: { name: 'Rory McIlroy' }, golfStanding: null },
-        ]),
-      },
+describe('GolfScoreService — apply', () => {
+  it('writes nothing when any row is unresolved, 422 ROUND_SCORE_ROWS_UNRESOLVED', async () => {
+    const { store, service, event } = setup();
+
+    await expect(service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }, { playerName: 'Nobody', ...row() }]))
+      .rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED', statusCode: 422 });
+    expect(store.golfRoundRows).toEqual([]);
+  });
+
+  it('creates the round if needed, skips rows with no strokes, totals each standing, and publishes the persisted event', async () => {
+    const { store, service, event, anaEntry, bus } = setup();
+
+    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }, { playerName: 'Ben Cole', ...row({ strokes: null }) }]);
+    await service.applyRoundScores(event.id, 2, [{ playerName: 'Ana Park', ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
+
+    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
+    expect(store.golfRoundRows).toHaveLength(2);
+    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(standing).toMatchObject({
+      standing: { currentRound: 2, status: 'IN_PROGRESS' },
+      golf: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 9 },
     });
-    const service = new GolfScoreService(prisma as any);
+    expect(bus.publish).toHaveBeenCalledWith('live_score.persisted', expect.objectContaining({ sportEventId: event.id, providerId: 'feed', updatesPersisted: 1 }));
+  });
 
-    const result = await service.getRoundScores('event-1', 3);
+  it('marks a golfer who missed the cut ELIMINATED on the cross-sport standing', async () => {
+    const { service, store, event, anaEntry } = setup();
 
-    expect(result).toEqual([expect.objectContaining({ strokes: null, status: null })]);
+    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row({ status: 'MISSED_CUT' }) }]);
+
+    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(standing.standing.status).toBe('ELIMINATED');
   });
 });
 
-describe('GolfScoreService.updateRoundScore', () => {
-  it('pool-master-blj throws 404 FIELD_ENTRY_NOT_FOUND when the sportEventParticipantId is missing or belongs to a different event', async () => {
-    const prisma = buildPrisma({
-      sportEventParticipant: { findUnique: jest.fn().mockResolvedValue({ id: 'sep-1', sportEventId: 'other-event' }) },
-    });
-    const service = new GolfScoreService(prisma as any);
+describe('GolfScoreService — single-cell correction', () => {
+  it('changes only what is patched, keeping the rest of the stored round', async () => {
+    const { service, store, event, anaEntry } = setup();
+    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }]);
 
-    await expect(service.updateRoundScore('event-1', 1, 'sep-1', { strokes: 70 }))
-      .rejects.toMatchObject({ code: 'FIELD_ENTRY_NOT_FOUND', statusCode: 404 });
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 71 });
+
+    const [result] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(result).toMatchObject({ participantRound: { status: 'COMPLETED' }, golf: { strokes: 71, scoreToPar: -2, thru: 18 } });
   });
 
+  it('refuses a field row that is not on this event with 404 EVENT_PARTICIPANT_NOT_FOUND', async () => {
+    const { service, event } = setup();
+
+    await expect(service.updateRoundScore(event.id, 1, 'missing', { strokes: 70 }))
+      .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
 });

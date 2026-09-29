@@ -8,7 +8,7 @@ import type {
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
-import type { GolfTierService } from '../golf/golf-tier-service';
+import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type {
   ContestConfigTemplateDto,
   ContestManagementDetailDto,
@@ -82,7 +82,7 @@ export class ContestManagementService {
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
     private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
     private readonly sportEventParticipantRepo: SportEventParticipantRepository,
-    private readonly golfTierService: GolfTierService,
+    private readonly sportEventTierService: SportEventTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader?: ContestCreateSportEventReader,
   ) {}
@@ -186,7 +186,7 @@ export class ContestManagementService {
     if (!sportEventId) {
       return [];
     }
-    const tiers = await this.golfTierService.getEffectiveTiersForSportEvent(sportEventId);
+    const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
     return toGolfEffectiveTierDtoList(tiers);
   }
 
@@ -418,7 +418,7 @@ export class ContestManagementService {
     if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || !sportEventId) {
       return;
     }
-    const tiers = await this.golfTierService.getEffectiveTiersForSportEvent(sportEventId);
+    const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
     if (tiers.length === 0) {
       return;
     }

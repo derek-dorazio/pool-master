@@ -26,7 +26,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import { GolfScoreService } from '../../golf/golf-score-service';
+import { createGolfScoreService } from '../../events/wiring';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
@@ -114,7 +114,7 @@ export async function publishLiveScoreUpdate(
   let persistenceResult: LiveScorePersistenceResult;
   switch (validated.category) {
     case 'GOLF':
-      persistenceResult = await new GolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
+      persistenceResult = await createGolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
         sportEvent.id,
         validated.rounds,
         deps.providerId,

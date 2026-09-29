@@ -8,7 +8,7 @@ import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 import type { ParticipantListQuery, ParticipantListResponse } from '@poolmaster/shared/dto/participants.dto';
-import { mapParticipantToDto } from '../../mappers';
+import { mapParticipantProviderMappingToDto, mapParticipantToDto } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 
 export function createParticipantHandlers(participantService: ParticipantService) {
@@ -17,6 +17,7 @@ export function createParticipantHandlers(participantService: ParticipantService
     getParticipant,
     createParticipant,
     updateParticipant,
+    listProviderMappings,
   };
 
   async function searchParticipants(
@@ -35,16 +36,16 @@ export function createParticipantHandlers(participantService: ParticipantService
     return { participants: participants.map(mapParticipantToDto) };
   }
 
-  /**
-   * The participant catalog is shared reference data: any signed-in user reads it, only a
-   * root admin writes it (access rule A1). Authority is the token claim (A10).
-   */
-  function rejectUnlessRootAdmin(request: FastifyRequest, reply: FastifyReply, action: string) {
-    if (request.authUser?.isRootAdmin === true) {
-      return null;
+  async function listProviderMappings(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ) {
+    const participant = await participantService.findById(request.params.id);
+    if (!participant) {
+      return sendError(reply, 404, 'PARTICIPANT_NOT_FOUND', `Participant ${request.params.id} was not found.`);
     }
-    (request.contextLogger ?? request.log).warn({ action: `${action}.forbidden` }, 'Rejected participant write from a non-root-admin');
-    return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required to change the participant catalog');
+    const providerMappings = await participantService.getProviderMappings(request.params.id);
+    return { providerMappings: providerMappings.map(mapParticipantProviderMappingToDto) };
   }
 
   async function getParticipant(
@@ -122,8 +123,6 @@ export function createParticipantHandlers(participantService: ParticipantService
     }>,
     reply: FastifyReply,
   ) {
-    const forbidden = rejectUnlessRootAdmin(request, reply, 'participants.route.create');
-    if (forbidden) return forbidden;
     const body = request.body;
     const logger = request.contextLogger ?? request.log;
 
@@ -188,8 +187,6 @@ export function createParticipantHandlers(participantService: ParticipantService
     }>,
     reply: FastifyReply,
   ) {
-    const forbidden = rejectUnlessRootAdmin(request, reply, 'participants.route.update');
-    if (forbidden) return forbidden;
     const logger = request.contextLogger ?? request.log;
 
     logger.debug(

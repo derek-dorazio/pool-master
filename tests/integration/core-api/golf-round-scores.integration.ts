@@ -7,9 +7,9 @@ import {
 import { Sport } from '@poolmaster/shared/domain';
 import {
   GolfScoreError,
-  GolfScoreService,
   type GolfScoreRowInput,
 } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -89,18 +89,19 @@ describe('Golf round scores — admin correction surface', () => {
       },
     });
 
-    const rows = await new GolfScoreService(getPrisma()).getRoundScores(event.id, 1);
+    // #236 — the per-round score read is the field read now: every field row with its
+    // rounds and standing, each carrying its golf extension.
+    const views = await createSportEventServices(getPrisma()).field.listEventParticipants(event.id);
+    const byName = new Map(views.map((view) => [view.participant.name, view]));
 
-    expect(rows).toEqual([
-      expect.objectContaining({ participantName: 'Jordan Spieth', strokes: null, scoreToPar: null, standing: null }),
-      expect.objectContaining({
-        participantName: 'Rory McIlroy',
-        strokes: 69,
-        scoreToPar: -3,
-        status: 'COMPLETED',
-        standing: expect.objectContaining({ eventScoreToPar: -3, eventStrokes: 69, currentRound: 1, status: 'COMPLETE' }),
-      }),
-    ]);
+    expect(byName.get('Jordan Spieth')).toMatchObject({ rounds: [], standing: null });
+    expect(byName.get('Rory McIlroy')).toMatchObject({
+      rounds: [expect.objectContaining({ round: expect.objectContaining({ roundNumber: 1, status: 'COMPLETED' }), golf: expect.objectContaining({ strokes: 69, scoreToPar: -3 }) })],
+      standing: {
+        standing: expect.objectContaining({ currentRound: 1, status: 'COMPLETE' }),
+        golf: expect.objectContaining({ eventScoreToPar: -3, eventStrokes: 69 }),
+      },
+    });
   });
 
   it('previews CREATE for a new round, UNCHANGED for an identical one, UPDATE for a changed one, and never fakes a match', async () => {
@@ -113,7 +114,7 @@ describe('Golf round scores — admin correction surface', () => {
         golf: { create: { strokes: 68, scoreToPar: -4, thru: 18 } },
       },
     });
-    const service = new GolfScoreService(getPrisma());
+    const service = createGolfScoreService(getPrisma());
 
     const preview = await service.previewRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -137,7 +138,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('refuses an upload with any unresolved row with 422 ROUND_SCORE_ROWS_UNRESOLVED, and writes nothing', async () => {
     const { event, rory } = await createField('unresolved');
-    const service = new GolfScoreService(getPrisma(), undefined, recordingBus().bus as never);
+    const service = createGolfScoreService(getPrisma(), undefined, recordingBus().bus as never);
 
     const attempt = service.applyRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -153,9 +154,9 @@ describe('Golf round scores — admin correction surface', () => {
   it('applies an upload: core round and golf extension written together, standing recomputed, live_score.persisted published', async () => {
     const { event, rory } = await createField('apply');
     const { bus, published } = recordingBus();
-    const service = new GolfScoreService(getPrisma(), undefined, bus as never);
+    const service = createGolfScoreService(getPrisma(), undefined, bus as never);
 
-    const rows = await service.applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    await service.applyRoundScores(event.id, 1, [row(rory.participant.id)]);
 
     const persisted = await getPrisma().sportEventParticipantRound.findMany({
       where: { sportEventParticipantId: rory.sep.id },
@@ -179,13 +180,12 @@ describe('Golf round scores — admin correction surface', () => {
         payload: expect.objectContaining({ category: 'GOLF', sportEventId: event.id, updatesPersisted: 1 }),
       }),
     ]);
-    expect(rows.find((r) => r.sportEventParticipantId === rory.sep.id)).toMatchObject({ strokes: 68, scoreToPar: -4 });
   });
 
   it('skips a row with no strokes, as the sync path does, and still publishes that nothing persisted', async () => {
     const { event, rory } = await createField('null-strokes');
     const { bus, published } = recordingBus();
-    const service = new GolfScoreService(getPrisma(), undefined, bus as never);
+    const service = createGolfScoreService(getPrisma(), undefined, bus as never);
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id, { strokes: null })]);
 
@@ -204,9 +204,17 @@ describe('Golf round scores — admin correction surface', () => {
       },
     });
 
-    const updated = await new GolfScoreService(getPrisma()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
+    await createGolfScoreService(getPrisma()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
 
-    expect(updated).toMatchObject({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' });
-    expect(updated.standing).toMatchObject({ eventScoreToPar: -2, eventStrokes: 70 });
+    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(round).toMatchObject({ status: 'COMPLETED', golf: { strokes: 70, scoreToPar: -2, thru: 18 } });
+    const standing = await getPrisma().sportEventParticipantStanding.findUniqueOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(standing.golf).toMatchObject({ eventScoreToPar: -2, eventStrokes: 70 });
   });
 });

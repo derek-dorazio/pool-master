@@ -1,14 +1,12 @@
 /**
- * SeasonService — cross-sport Season CRUD (plans/124 §3.2/§4.2/§4.3). A
- * Season is purely a tournament-calendar grouping now, not a roster
- * boundary — the roster lives on SportLeague (sport-league-service.ts).
+ * SeasonService — cross-sport Season CRUD (plans/124 §3.2/§4.2/§4.3). A season is a
+ * sport league's calendar year: a grouping of events, not a roster boundary — who
+ * competes lives on the sport league's affiliations (sport-league-service.ts).
  *
- * cloneSeasonTournaments (plans/124 §4.2a) copies a season's tournament
- * *calendar* one year forward. It is caller-injected with the same internal
- * creation function adminCreateGolfTournament uses, so every default that
- * path already produces (empty field, fresh round schedule, 6 default
- * tiers, syncScope=NONE) comes along for free — nothing about last year's
- * field / tiers / prices / scores / provider link is ever copied.
+ * `cloneSeason` (plans/124 §4.2a) copies a season's event *calendar* one year forward.
+ * It is handed the same creation function `createEvent` uses, so every default that
+ * path produces (empty field, fresh rounds, default tiers, no provider link) comes along,
+ * and nothing about last year's field, tiers, prices, scores or provider link is copied.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -16,21 +14,19 @@ import type {
   SeasonRepository,
   SportEventRepository,
   SportLeagueRepository,
-  SportRepository,
 } from '@poolmaster/shared/db';
-import type { Season, Sport } from '@poolmaster/shared/domain';
+import type { Season, SportLeague } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 
-export interface SeasonSummary extends Season {
-  tournamentCount: number;
-}
-
-export interface SeasonDetail extends SeasonSummary {
+/** A season with what its readers derive from elsewhere: its event count, and whether it is current. */
+export interface SeasonDetail extends Season {
+  sportEventCount: number;
+  /** Derived from the sport league's pointer, never stored on the season. */
   isCurrent: boolean;
 }
 
-/** The subset of a golf tournament-creation input that a clone re-supplies (plans/124 §4.2a). */
-export interface CloneTournamentInput {
+/** The event-creation input a clone re-supplies (plans/124 §4.2a). */
+export interface CloneEventInput {
   name: string;
   venue?: string;
   location?: string;
@@ -51,7 +47,6 @@ export function shiftYears(date: Date, years: number): Date {
 }
 
 export interface SeasonServiceDeps {
-  sports: SportRepository;
   sportLeagues: SportLeagueRepository;
   seasons: SeasonRepository;
   sportEvents: SportEventRepository;
@@ -61,24 +56,20 @@ export interface SeasonServiceDeps {
 export class SeasonService {
   constructor(private readonly deps: SeasonServiceDeps) {}
 
-  async listSeasons(
-    sport: Sport,
-    options: { isActive?: boolean; sportLeagueId?: string } = {},
-  ): Promise<SeasonSummary[]> {
-    const sportRow = await this.deps.sports.findByName(sport);
-    if (!sportRow) {
-      return [];
-    }
-    const seasons = await this.deps.seasons.findAll({
-      sportId: sportRow.id,
-      sportLeagueId: options.sportLeagueId,
-      isActive: options.isActive,
-    });
+  /** A sport league's seasons, newest year first. */
+  async listSeasons(sportLeagueId: string, options: { isActive?: boolean } = {}): Promise<SeasonDetail[]> {
+    const sportLeague = await this.requireSportLeague(sportLeagueId);
+    const seasons = await this.deps.seasons.findAll({ sportLeagueId, isActive: options.isActive });
     const counts = await this.deps.sportEvents.countBySeasons(seasons.map((season) => season.id));
-    return seasons.map((season) => ({ ...season, tournamentCount: counts.get(season.id) ?? 0 }));
+    return seasons.map((season) => ({
+      ...season,
+      sportEventCount: counts.get(season.id) ?? 0,
+      isCurrent: sportLeague.currentSeasonId === season.id,
+    }));
   }
 
   async createSeason(input: Pick<Season, 'sportLeagueId' | 'name' | 'year' | 'startDate' | 'endDate'>): Promise<Season> {
+    await this.requireSportLeague(input.sportLeagueId);
     if (await this.deps.seasons.findBySportLeagueAndYear(input.sportLeagueId, input.year)) {
       throw new SportCatalogError(
         `This sport league already has a season for ${input.year}.`,
@@ -102,28 +93,29 @@ export class SeasonService {
     ]);
     return {
       ...season,
-      tournamentCount: counts.get(season.id) ?? 0,
-      // Derived from the parent's pointer, never stored on the season.
+      sportEventCount: counts.get(season.id) ?? 0,
       isCurrent: sportLeague?.currentSeasonId === season.id,
     };
   }
 
-  updateSeason(
-    seasonId: string,
-    updates: { name?: string; startDate?: Date; endDate?: Date; isActive?: boolean },
-  ): Promise<Season> {
-    return this.deps.seasons.update(seasonId, updates);
+  /**
+   * A single write on the parent SportLeague row — no separate "unset the old one" step,
+   * so a sport league never has zero or two current seasons (plans/124 §5.2). Returns the
+   * sport league it changed. 404 SEASON_NOT_FOUND for an unknown season.
+   */
+  async setCurrentSeason(seasonId: string): Promise<SportLeague> {
+    const season = await this.requireSeason(seasonId);
+    return this.deps.sportLeagues.update(season.sportLeagueId, { currentSeasonId: seasonId });
   }
 
-  /**
-   * A single write on the parent SportLeague row — no separate "unset the old
-   * one" step, so a sport league never has zero or two current seasons
-   * (plans/124 §5.2).
-   */
-  async setCurrentSeason(seasonId: string): Promise<{ sportLeagueId: string; currentSeasonId: string }> {
-    const season = await this.requireSeason(seasonId);
-    await this.deps.sportLeagues.update(season.sportLeagueId, { currentSeasonId: seasonId });
-    return { sportLeagueId: season.sportLeagueId, currentSeasonId: seasonId };
+  /** 404 SEASON_NOT_FOUND for an unknown season. */
+  async updateSeason(
+    seasonId: string,
+    updates: { name?: string; startDate?: Date; endDate?: Date; isActive?: boolean },
+  ): Promise<SeasonDetail> {
+    await this.requireSeason(seasonId);
+    await this.deps.seasons.update(seasonId, updates);
+    return this.getSeason(seasonId) as Promise<SeasonDetail>;
   }
 
   /**
@@ -137,11 +129,11 @@ export class SeasonService {
    * instance and do not carry forward, by construction. `currentSeasonId` is
    * left on the source season; the admin runs "Set as current" separately.
    */
-  async cloneSeasonTournaments(
+  async cloneSeason(
     sourceSeasonId: string,
     targetYear: number | undefined,
-    createTournament: (input: CloneTournamentInput) => Promise<unknown>,
-  ): Promise<{ season: SeasonDetail; tournamentsCloned: number }> {
+    createEvent: (input: CloneEventInput) => Promise<unknown>,
+  ): Promise<{ season: SeasonDetail; clonedEventCount: number }> {
     const source = await this.requireSeason(sourceSeasonId);
 
     const year = targetYear ?? source.year + 1;
@@ -163,7 +155,7 @@ export class SeasonService {
 
     const sourceEvents = await this.deps.sportEvents.findAll({ seasonId: sourceSeasonId });
     for (const event of sourceEvents) {
-      await createTournament({
+      await createEvent({
         name: event.name,
         venue: event.venue,
         location: event.location,
@@ -183,29 +175,18 @@ export class SeasonService {
       throw new SportCatalogError('Cloned season disappeared after creation.', 'SEASON_NOT_FOUND', 500);
     }
     this.deps.logger?.info(
-      { sourceSeasonId, targetSeasonId: newSeason.id, year, tournamentsCloned: sourceEvents.length },
-      'Cloned season tournament calendar',
+      { sourceSeasonId, targetSeasonId: newSeason.id, year, clonedEventCount: sourceEvents.length },
+      'Cloned season event calendar',
     );
-    return { season: detail, tournamentsCloned: sourceEvents.length };
+    return { season: detail, clonedEventCount: sourceEvents.length };
   }
 
-  /**
-   * Foreign-key-target validation for a caller-supplied seasonId — rejects a
-   * season whose sport league belongs to a different sport (plans/124 §4.3).
-   * Tournament create and update call it.
-   */
-  async assertSeasonBelongsToSport(seasonId: string, sport: Sport): Promise<Season> {
-    const season = await this.requireSeason(seasonId);
-    const sportLeague = await this.deps.sportLeagues.findById(season.sportLeagueId);
-    const sportRow = sportLeague ? await this.deps.sports.findById(sportLeague.sportId) : null;
-    if (sportRow?.name !== sport) {
-      throw new SportCatalogError(
-        `Season ${seasonId} belongs to ${sportRow?.name ?? 'an unknown sport'}, not ${sport}.`,
-        'SEASON_SPORT_MISMATCH',
-        422,
-      );
+  private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {
+    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
+    if (!sportLeague) {
+      throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    return season;
+    return sportLeague;
   }
 
   private async requireSeason(seasonId: string): Promise<Season> {

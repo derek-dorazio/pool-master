@@ -25,6 +25,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
+import { resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
 
 /** A sport league with the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
@@ -39,7 +40,7 @@ export interface AffiliationUploadRow {
   ranking?: number;
 }
 
-export type AffiliationUploadResolution = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+export type AffiliationUploadResolution = ParticipantRowResolution;
 
 export interface AffiliationUploadPreviewRow {
   row: AffiliationUploadRow;
@@ -60,22 +61,18 @@ export interface SportLeagueServiceDeps {
 export class SportLeagueService {
   constructor(private readonly deps: SportLeagueServiceDeps) {}
 
-  async listSportLeagues(sport: Sport, options: { isActive?: boolean } = {}): Promise<SportLeagueSummary[]> {
-    const sportRow = await requireSport(this.deps.sports, sport);
-    const sportLeagues = await this.deps.sportLeagues.findAll({ sportId: sportRow.id, isActive: options.isActive });
-    const ids = sportLeagues.map((sportLeague) => sportLeague.id);
-    const [affiliationCounts, seasonCounts] = await Promise.all([
-      this.deps.affiliations.countBySportLeagues(ids),
-      this.deps.seasons.countBySportLeagues(ids),
-    ]);
-    return sportLeagues.map((sportLeague) => ({
-      ...sportLeague,
-      affiliationCount: affiliationCounts.get(sportLeague.id) ?? 0,
-      seasonCount: seasonCounts.get(sportLeague.id) ?? 0,
-    }));
+  /** Every sport league, or one sport's; the one list that takes a sport (#203 stage 2, decision 5). */
+  async listSportLeagues(filters: { sport?: Sport; isActive?: boolean } = {}): Promise<SportLeagueSummary[]> {
+    const sportId = filters.sport ? (await requireSport(this.deps.sports, filters.sport)).id : undefined;
+    return this.summarize(await this.deps.sportLeagues.findAll({ sportId, isActive: filters.isActive }));
   }
 
-  async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string }): Promise<SportLeague> {
+  async getSportLeague(sportLeagueId: string): Promise<SportLeagueSummary | null> {
+    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
+    return sportLeague ? (await this.summarize([sportLeague]))[0] : null;
+  }
+
+  async createSportLeague(sport: Sport, input: { name: string; matchKeyword?: string }): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
     if (await this.deps.sportLeagues.findBySportAndName(sportRow.id, input.name)) {
       throw new SportCatalogError(
@@ -90,29 +87,35 @@ export class SportLeagueService {
       matchKeyword: input.matchKeyword ?? null,
     });
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
-    return sportLeague;
+    return (await this.summarize([sportLeague]))[0];
   }
 
+  /** 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
   async updateSportLeague(
     sportLeagueId: string,
     updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive'>,
-  ): Promise<SportLeague> {
-    return this.deps.sportLeagues.update(sportLeagueId, {
+  ): Promise<SportLeagueSummary> {
+    await this.requireSportLeague(sportLeagueId);
+    const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
       matchKeyword: updates.matchKeyword,
       isActive: updates.isActive,
     });
+    return (await this.summarize([updated]))[0];
   }
 
-  listAffiliations(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]> {
+  /** 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
+  async listAffiliations(sportLeagueId: string): Promise<ParticipantLeagueAffiliation[]> {
+    await this.requireSportLeague(sportLeagueId);
     return this.deps.affiliations.findBySportLeague(sportLeagueId);
   }
 
   async addAffiliation(sportLeagueId: string, participantId: string): Promise<ParticipantLeagueAffiliation> {
+    await this.requireSportLeague(sportLeagueId);
     if (await this.deps.affiliations.find(sportLeagueId, participantId)) {
       throw new SportCatalogError(
         'This participant is already affiliated with the sport league.',
-        'LEAGUE_ROSTER_ENTRY_ALREADY_EXISTS',
+        'SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS',
         409,
       );
     }
@@ -120,6 +123,13 @@ export class SportLeagueService {
   }
 
   async removeAffiliation(sportLeagueId: string, participantId: string): Promise<void> {
+    if (!(await this.deps.affiliations.find(sportLeagueId, participantId))) {
+      throw new SportCatalogError(
+        'This participant is not affiliated with the sport league.',
+        'SPORT_LEAGUE_AFFILIATION_NOT_FOUND',
+        404,
+      );
+    }
     await this.deps.affiliations.delete(sportLeagueId, participantId);
   }
 
@@ -157,7 +167,7 @@ export class SportLeagueService {
     if (unresolved.length > 0) {
       throw new SportCatalogError(
         `${unresolved.length} upload row(s) could not be resolved to a participant.`,
-        'LEAGUE_ROSTER_UPLOAD_UNRESOLVED_ROWS',
+        'SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS',
         422,
       );
     }
@@ -169,25 +179,31 @@ export class SportLeagueService {
   }
 
   private async resolveUploadRow(sportId: string, row: AffiliationUploadRow): Promise<AffiliationUploadPreviewRow> {
-    const query = row.participantId
-      ? { id: row.participantId }
-      : row.externalId
-        ? { externalId: row.externalId }
-        : row.playerName
-          ? { name: row.playerName }
-          : null;
-    if (!query) {
-      return { row, resolution: 'UNRESOLVED', participantId: null, participantName: null };
-    }
-    const matches = await this.deps.participants.findMatching(sportId, query);
-    if (matches.length === 1) {
-      return { row, resolution: 'MATCHED', participantId: matches[0].id, participantName: matches[0].name };
-    }
-    return {
+    const { resolution, participant } = await resolveParticipantRow(
       row,
-      resolution: matches.length > 1 ? 'AMBIGUOUS' : 'UNRESOLVED',
-      participantId: null,
-      participantName: null,
-    };
+      (query) => this.deps.participants.findMatching(sportId, query),
+    );
+    return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };
+  }
+
+  private async requireSportLeague(sportLeagueId: string): Promise<SportLeague> {
+    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
+    if (!sportLeague) {
+      throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    }
+    return sportLeague;
+  }
+
+  private async summarize(sportLeagues: SportLeague[]): Promise<SportLeagueSummary[]> {
+    const ids = sportLeagues.map((sportLeague) => sportLeague.id);
+    const [affiliationCounts, seasonCounts] = await Promise.all([
+      this.deps.affiliations.countBySportLeagues(ids),
+      this.deps.seasons.countBySportLeagues(ids),
+    ]);
+    return sportLeagues.map((sportLeague) => ({
+      ...sportLeague,
+      affiliationCount: affiliationCounts.get(sportLeague.id) ?? 0,
+      seasonCount: seasonCounts.get(sportLeague.id) ?? 0,
+    }));
   }
 }

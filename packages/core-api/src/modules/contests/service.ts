@@ -54,7 +54,7 @@ import {
   type ContestEntryCompletedTierSelection,
   type MailDeliveryProvider,
 } from '../email';
-import { GolfTierService } from '../golf/golf-tier-service';
+import { createSportEventTierService } from '../events/wiring';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -881,8 +881,7 @@ export class ContestService {
   ): Promise<ContestEntryCompletedTierSelection[]> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
     if (entry.contest.sportEventId) {
-      const golfTierService = new GolfTierService(this.requirePrisma(), this.logger as FastifyBaseLogger);
-      const valuations = await golfTierService.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
+      const valuations = await createSportEventTierService(this.requirePrisma(), this.logger as FastifyBaseLogger).getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
       for (const valuation of valuations) {
         if (valuation.tierLabel !== null) {
           tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);

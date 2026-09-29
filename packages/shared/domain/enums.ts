@@ -350,11 +350,12 @@ export const GolfContestConfigMode = {
 export type GolfContestConfigMode =
   (typeof GolfContestConfigMode)[keyof typeof GolfContestConfigMode];
 
-export const GolfTierSource = {
+/** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
+export const TierSource = {
   ODDS: 'ODDS',
-  WORLD_RANK: 'WORLD_RANK',
+  RANKING: 'RANKING',
 } as const;
-export type GolfTierSource = (typeof GolfTierSource)[keyof typeof GolfTierSource];
+export type TierSource = (typeof TierSource)[keyof typeof TierSource];
 
 /** How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. */
 export const ValuationSource = {

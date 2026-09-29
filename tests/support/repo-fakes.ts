@@ -291,7 +291,6 @@ export function fakeParticipantRepo(
     findMatching: many(),
     create: echoCreate('participant'),
     createMany: jest.fn().mockResolvedValue(0),
-    createWithProviderMapping: echoCreate('participant'),
     update: echoUpdate(),
     ...overrides,
   };
