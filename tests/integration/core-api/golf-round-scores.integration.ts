@@ -27,7 +27,7 @@ async function createField(suffix: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { name: Sport.GOLF },
-    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL' },
+    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({

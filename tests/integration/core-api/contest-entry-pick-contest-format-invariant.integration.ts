@@ -83,6 +83,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
     data: {
       name: `Invariant Sport ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
   });
   const sportEvent = await prisma.sportEvent.create({

@@ -242,6 +242,7 @@ describe('Contract verification (web)', () => {
         id: sportId,
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     await prisma.sportEvent.create({
@@ -466,6 +467,7 @@ describe('Contract verification (web)', () => {
       create: {
         name: Sport.GOLF,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 

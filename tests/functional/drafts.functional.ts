@@ -303,6 +303,7 @@ async function seedBudgetPickFixture() {
     data: {
       name: `DraftBudgetSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
   });
   createdSportIds.push(sport.id);
@@ -456,6 +457,7 @@ async function seedTieredDraftFixture(options: {
     data: {
       name: `DraftTieredSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
   });
   createdSportIds.push(sport.id);

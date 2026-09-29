@@ -81,6 +81,7 @@ describe('Contest management integration', () => {
       data: {
         name: `Contest Management Golf ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     sportId = sport.id;

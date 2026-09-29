@@ -45,6 +45,7 @@ describe('Sport event participant repositories', () => {
       create: {
         name: Sport.GOLF,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
     });

@@ -32,7 +32,7 @@ beforeEach(() => cleanupTestData());
 async function golfSport() {
   return getPrisma().sport.upsert({
     where: { name: Sport.GOLF },
-    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL' },
+    create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -93,7 +93,7 @@ describe('SeasonRepository', () => {
   it('scopes seasons by sport through the sport league, orders newest year first, and counts per sport league with zeros', async () => {
     const sport = await golfSport();
     const other = await getPrisma().sport.upsert({
-      where: { name: Sport.NBA }, create: { name: Sport.NBA, participantType: 'TEAM', category: 'BASKETBALL' }, update: {},
+      where: { name: Sport.NBA }, create: { name: Sport.NBA, participantType: 'TEAM', tournamentFormat: 'SERIES_PLAYOFF', category: 'BASKETBALL' }, update: {},
     });
     const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
     const seasons = new PrismaSeasonRepository(getPrisma());

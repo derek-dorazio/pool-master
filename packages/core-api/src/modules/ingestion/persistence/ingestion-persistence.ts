@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   ProviderRanking,
   SportEvent,
@@ -274,6 +274,8 @@ export class IngestionPersistence {
           create: {
             name: p.sport,
             participantType: 'INDIVIDUAL',
+            // No schema default (#236): a new sport row must not become golf by omission.
+            tournamentFormat: getDefaultTournamentFormatForSport(p.sport),
           },
           update: {},
         });
