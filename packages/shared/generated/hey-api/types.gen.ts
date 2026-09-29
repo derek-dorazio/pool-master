@@ -1148,7 +1148,7 @@ export type GolfLeaderboardParticipantDto = {
      */
     inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
     /**
-     * Latest copied global world ranking on this event participant.
+     * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
      */
     ranking: number | null;
     /**
@@ -1391,7 +1391,7 @@ export type GolfLeaderboardEntryPickDto = {
          */
         inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
-         * Latest copied global world ranking on this event participant.
+         * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
          */
         ranking: number | null;
         /**
@@ -1683,7 +1683,7 @@ export type GolfLeaderboardEntryDto = {
              */
             inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             /**
-             * Latest copied global world ranking on this event participant.
+             * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
              */
             ranking: number | null;
             /**
@@ -1939,7 +1939,7 @@ export type GolfLeaderboardResponse = {
          */
         inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
-         * Latest copied global world ranking on this event participant.
+         * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
          */
         ranking: number | null;
         /**
@@ -2229,7 +2229,7 @@ export type GolfLeaderboardResponse = {
                  */
                 inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
                 /**
-                 * Latest copied global world ranking on this event participant.
+                 * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
                  */
                 ranking: number | null;
                 /**

@@ -2277,7 +2277,7 @@
               "integer",
               "null"
             ],
-            "description": "Latest copied global world ranking on this event participant."
+            "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
           },
           "oddsToWin": {
             "type": [
@@ -2776,7 +2776,7 @@
                   "integer",
                   "null"
                 ],
-                "description": "Latest copied global world ranking on this event participant."
+                "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
               },
               "oddsToWin": {
                 "type": [
@@ -3354,7 +3354,7 @@
                         "integer",
                         "null"
                       ],
-                      "description": "Latest copied global world ranking on this event participant."
+                      "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                     },
                     "oddsToWin": {
                       "type": [
@@ -3915,7 +3915,7 @@
                     "integer",
                     "null"
                   ],
-                  "description": "Latest copied global world ranking on this event participant."
+                  "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                 },
                 "oddsToWin": {
                   "type": [
@@ -4483,7 +4483,7 @@
                               "integer",
                               "null"
                             ],
-                            "description": "Latest copied global world ranking on this event participant."
+                            "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                           },
                           "oddsToWin": {
                             "type": [

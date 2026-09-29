@@ -3621,7 +3621,7 @@ export interface components {
              * @enum {string|null}
              */
             inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
-            /** @description Latest copied global world ranking on this event participant. */
+            /** @description Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked. */
             ranking: number | null;
             /** @description Event-scoped odds-to-win for this golfer. */
             oddsToWin: number | null;
@@ -3781,7 +3781,7 @@ export interface components {
                  * @enum {string|null}
                  */
                 inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
-                /** @description Latest copied global world ranking on this event participant. */
+                /** @description Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked. */
                 ranking: number | null;
                 /** @description Event-scoped odds-to-win for this golfer. */
                 oddsToWin: number | null;
@@ -3969,7 +3969,7 @@ export interface components {
                      * @enum {string|null}
                      */
                     inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
-                    /** @description Latest copied global world ranking on this event participant. */
+                    /** @description Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked. */
                     ranking: number | null;
                     /** @description Event-scoped odds-to-win for this golfer. */
                     oddsToWin: number | null;
@@ -4143,7 +4143,7 @@ export interface components {
                  * @enum {string|null}
                  */
                 inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
-                /** @description Latest copied global world ranking on this event participant. */
+                /** @description Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked. */
                 ranking: number | null;
                 /** @description Event-scoped odds-to-win for this golfer. */
                 oddsToWin: number | null;
@@ -4330,7 +4330,7 @@ export interface components {
                          * @enum {string|null}
                          */
                         inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
-                        /** @description Latest copied global world ranking on this event participant. */
+                        /** @description Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked. */
                         ranking: number | null;
                         /** @description Event-scoped odds-to-win for this golfer. */
                         oddsToWin: number | null;
