@@ -117,7 +117,7 @@ export interface SportEventParticipant extends DomainEntity {
   isActive: boolean;
   /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
   inactiveReason?: ParticipantInactiveReason;
-  /** Latest global world-ranking snapshot copied onto this event participant. */
+  /** Rank that applied at this event: copied from the provider's ranking snapshot, then editable. */
   ranking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */
   oddsToWin?: number;

@@ -13216,7 +13216,7 @@ export type AdminListEventParticipantsResponses = {
              */
             status?: string;
             /**
-             * Current per-event world-ranking snapshot when provided.
+             * Rank that applied at this event, when one is recorded.
              */
             ranking?: number;
             /**
