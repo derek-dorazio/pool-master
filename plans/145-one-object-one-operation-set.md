@@ -1583,8 +1583,10 @@ the event-sync page moved to `listEvents` / `SportEventDto`.
 
 - **Standing `position` is never written by production code** — not on the golf standing
   before this slice, and not on the base standing it moved to. The column moved; the gap did
-  not. The contest leaderboard ranks entries itself, so nothing reads the empty column today,
-  but the `position` contract only holds once whatever writes standings computes it.
+  not. Two readers select it — the golf-leaderboard participant loader and the admin event
+  browser — and always get null; contest entries are ranked by the calculator from scores, so
+  nothing breaks. But the `position` contract only holds once whatever writes standings
+  computes it, and #204 should not build a reader on the column before then.
 - `ContestService.createContest` writes no scoring-rule rows, and there are two
   `createContest` implementations.
 
