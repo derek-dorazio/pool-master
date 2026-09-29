@@ -6,7 +6,6 @@ import type {
   ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
-  SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import type {
   ContestConfigTemplate,
@@ -14,9 +13,7 @@ import type {
   ContestCoreSummary,
   ContestEntryAggregationRule,
   ContestPrizeDefinition,
-  ParticipantInactiveReason,
   ParticipantContestScoringRule,
-  SportEventParticipant,
 } from '@poolmaster/shared/domain';
 
 export class PrismaContestCoreRepository implements ContestCoreRepository {
@@ -77,64 +74,6 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
     await this.prisma.contest.delete({ where: { id } });
   }
 }
-
-export class PrismaSportEventParticipantRepository
-  implements SportEventParticipantRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<SportEventParticipant | null> {
-    const row = await this.prisma.sportEventParticipant.findUnique({
-      where: { id },
-    });
-    return row ? mapSportEventParticipant(row) : null;
-  }
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]> {
-    const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId },
-      orderBy: { createdAt: 'asc' },
-    });
-    return rows.map(mapSportEventParticipant);
-  }
-
-  async create(
-    participant: Omit<SportEventParticipant, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<SportEventParticipant> {
-    const row = await this.prisma.sportEventParticipant.create({
-      data: {
-        sportEventId: participant.sportEventId,
-        participantId: participant.participantId,
-        isActive: participant.isActive,
-        inactiveReason: participant.inactiveReason,
-        ranking: participant.ranking,
-        oddsToWin: participant.oddsToWin,
-        seedNumber: participant.seedNumber,
-        metadata: participant.metadata as object,
-      },
-    });
-    return mapSportEventParticipant(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<SportEventParticipant>,
-  ): Promise<SportEventParticipant> {
-    const row = await this.prisma.sportEventParticipant.update({
-      where: { id },
-      data: {
-        ...(updates.isActive !== undefined && { isActive: updates.isActive }),
-        ...(updates.inactiveReason !== undefined && { inactiveReason: updates.inactiveReason }),
-        ...(updates.ranking !== undefined && { ranking: updates.ranking }),
-        ...(updates.oddsToWin !== undefined && { oddsToWin: updates.oddsToWin }),
-        ...(updates.seedNumber !== undefined && { seedNumber: updates.seedNumber }),
-        ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
-      },
-    });
-    return mapSportEventParticipant(row);
-  }
-}
-
 
 export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
@@ -535,38 +474,6 @@ function mapContest(row: {
     contestFormat: row.contestFormat as ContestCoreSummary['contestFormat'],
     selectionType: row.selectionType as ContestCoreSummary['selectionType'],
     scoringEngine: row.scoringEngine as ContestCoreSummary['scoringEngine'],
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapSportEventParticipant(row: {
-  id: string;
-  sportEventId: string;
-  participantId: string;
-  isActive: boolean;
-  inactiveReason: string | null;
-  ranking: number | null;
-  oddsToWin: { toNumber(): number } | number | null;
-  seedNumber: number | null;
-  metadata: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-}): SportEventParticipant {
-  const oddsToWin = typeof row.oddsToWin === 'number'
-    ? row.oddsToWin
-    : row.oddsToWin?.toNumber();
-
-  return {
-    id: row.id,
-    sportEventId: row.sportEventId,
-    participantId: row.participantId,
-    isActive: row.isActive,
-    inactiveReason: (row.inactiveReason as ParticipantInactiveReason) ?? undefined,
-    ranking: row.ranking ?? undefined,
-    oddsToWin: oddsToWin ?? undefined,
-    seedNumber: row.seedNumber ?? undefined,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

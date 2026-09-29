@@ -4,7 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { Participant, InjuryStatus, ParticipantType } from '@poolmaster/shared/domain';
+import type { Participant, InjuryStatus, ParticipantProviderMapping, ParticipantType } from '@poolmaster/shared/domain';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -78,24 +78,27 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return rows.map(mapToParticipant);
   }
 
+  async findByIds(ids: readonly string[]): Promise<Participant[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.participant.findMany({ where: { id: { in: [...ids] } }, orderBy: { name: 'asc' } });
+    return rows.map(mapToParticipant);
+  }
+
   async create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant> {
+    const row = await this.prisma.participant.create({ data: toParticipantCreateData(participant) });
+    return mapToParticipant(row);
+  }
+
+  async createWithProviderMapping(
+    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
+    mapping: Pick<ParticipantProviderMapping, 'providerId' | 'externalId' | 'confidence'>,
+  ): Promise<Participant> {
     const row = await this.prisma.participant.create({
       data: {
-        sportId: participant.sportId,
-        name: participant.name,
-        participantType: participant.participantType,
-        externalId: participant.externalId,
-        firstName: participant.firstName,
-        lastName: participant.lastName,
-        shortName: participant.shortName,
-        nationality: participant.nationality,
-        position: participant.position,
-        teamAffiliation: participant.teamAffiliation,
-        status: participant.status,
-        injuryStatus: participant.injuryStatus as object,
-        photoUrl: participant.photoUrl,
-        photoLastUpdated: participant.photoLastUpdated,
-        externalIds: participant.externalIds as object,
+        ...toParticipantCreateData(participant),
+        providerMappings: {
+          create: { providerId: mapping.providerId, externalId: mapping.externalId, confidence: mapping.confidence },
+        },
       },
     });
     return mapToParticipant(row);
@@ -187,5 +190,25 @@ export function mapToParticipant(row: {
     externalIds: (row.externalIds ?? {}) as Record<string, string>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>) {
+  return {
+    sportId: participant.sportId,
+    name: participant.name,
+    participantType: participant.participantType,
+    externalId: participant.externalId,
+    firstName: participant.firstName,
+    lastName: participant.lastName,
+    shortName: participant.shortName,
+    nationality: participant.nationality,
+    position: participant.position,
+    teamAffiliation: participant.teamAffiliation,
+    status: participant.status,
+    injuryStatus: participant.injuryStatus as object,
+    photoUrl: participant.photoUrl,
+    photoLastUpdated: participant.photoLastUpdated,
+    externalIds: participant.externalIds as object,
   };
 }

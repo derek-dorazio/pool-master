@@ -261,6 +261,7 @@ export interface ParticipantSearchFilters {
 
 export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
+  findByIds(ids: readonly string[]): Promise<Participant[]>;
   findBySport(sportId: string): Promise<Participant[]>;
   findByExternalId(providerId: string, externalId: string): Promise<Participant | null>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
@@ -269,12 +270,20 @@ export interface ParticipantRepository {
   findMatching(sportId: string, query: ParticipantMatchQuery): Promise<Participant[]>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
   createMany(participants: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<number>;
+  /** A participant first seen at a provider: the row and its provider identity, together or not at all. */
+  createWithProviderMapping(
+    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
+    mapping: Pick<ParticipantProviderMapping, 'providerId' | 'externalId' | 'confidence'>,
+  ): Promise<Participant>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
 
 export interface ParticipantProviderMappingRepository {
   findByProvider(providerId: string, externalId: string): Promise<ParticipantProviderMapping | null>;
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
+  findByParticipants(participantIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
+  /** Every mapping a provider has for these of its identifiers. */
+  findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   create(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
 }
 

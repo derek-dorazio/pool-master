@@ -1,11 +1,10 @@
 export type {
   ContestConfigTemplateRepository,
-  ContestCoreRepository,
   ContestConfigurationRepository,
+  ContestCoreRepository,
   ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
-  SportEventParticipantRepository,
 } from './contest-management-ports';
 export type {
   ActionItemRepository,
@@ -27,19 +26,38 @@ export type {
   UserUpdate,
 } from './ports';
 export type {
+  GolfRoundWrite,
+  GolfStandingWrite,
+  SportEventParticipantGolfRoundRepository,
+  SportEventParticipantGolfStandingRepository,
+} from './golf-ports';
+export type {
+  LeagueEventRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,
   ParticipantRanking,
+  PriceAssignment,
   SeasonFilters,
   SeasonRepository,
   SeasonUpdate,
+  SportEventCreate,
   SportEventFilters,
+  SportEventParticipantCreate,
+  SportEventParticipantFieldUpdate,
+  SportEventParticipantPatch,
+  SportEventParticipantRepository,
   SportEventParticipantRoundRepository,
   SportEventParticipantStandingRepository,
+  SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventRoundRepository,
+  SportEventRoundSchedule,
+  SportEventTierDefinition,
+  SportEventTierRepository,
+  SportEventUpdate,
   SportLeagueFilters,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportRepository,
+  TierAssignment,
 } from './sport-catalog-ports';

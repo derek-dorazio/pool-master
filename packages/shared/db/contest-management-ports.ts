@@ -5,7 +5,6 @@ import type {
   ContestEntryAggregationRule,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
-  SportEventParticipant,
 } from '../domain';
 
 export interface ContestCoreRepository {
@@ -19,18 +18,6 @@ export interface ContestCoreRepository {
     updates: Partial<ContestCoreSummary>,
   ): Promise<ContestCoreSummary>;
   delete(id: string): Promise<void>;
-}
-
-export interface SportEventParticipantRepository {
-  findById(id: string): Promise<SportEventParticipant | null>;
-  findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]>;
-  create(
-    participant: Omit<SportEventParticipant, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<SportEventParticipant>;
-  update(
-    id: string,
-    updates: Partial<SportEventParticipant>,
-  ): Promise<SportEventParticipant>;
 }
 
 export interface ContestConfigurationRepository {

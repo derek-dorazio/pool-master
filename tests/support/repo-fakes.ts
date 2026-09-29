@@ -266,8 +266,14 @@ export function fakeParticipantLeagueAffiliationRepo(
 export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}): SportEventRepository {
   return {
     findById: one(),
+    findByProviderRef: one(),
     findAll: many(),
+    create: echoCreate('sport-event'),
+    update: echoUpdate(),
+    delete: nothing(),
     countParticipants: noCounts(),
+    countTiers: noCounts(),
+    countContests: noCounts(),
     countBySeasons: noCounts(),
     ...overrides,
   };
@@ -278,12 +284,14 @@ export function fakeParticipantRepo(
 ): ParticipantRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findBySport: many(),
     findByExternalId: one(),
     search: many(),
     findMatching: many(),
     create: echoCreate('participant'),
     createMany: jest.fn().mockResolvedValue(0),
+    createWithProviderMapping: echoCreate('participant'),
     update: echoUpdate(),
     ...overrides,
   };
@@ -296,6 +304,8 @@ export function fakeParticipantProviderMappingRepo(
     // findByProvider is a single row per the port; findByParticipant is a collection.
     findByProvider: one(),
     findByParticipant: many(),
+    findByParticipants: many(),
+    findByProviderExternalIds: many(),
     create: echoCreate('participant-provider-mapping'),
     ...overrides,
   };
@@ -377,6 +387,11 @@ export function fakeSportEventParticipantRepo(
     findBySportEvent: many(),
     create: echoCreate('sport-event-participant'),
     update: echoUpdate(),
+    createMany: nothing(),
+    upsertMany: nothing(),
+    updateMany: nothing(),
+    delete: nothing(),
+    countPicks: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }

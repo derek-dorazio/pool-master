@@ -6,7 +6,7 @@
  */
 
 import type { DomainEntity, Participant } from './types';
-import type { ParticipantStandingStatus } from './enums';
+import type { ParticipantStandingStatus, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -70,4 +70,66 @@ export interface SportEventParticipantStanding extends DomainEntity {
   status: ParticipantStandingStatus;
   asOf: Date | null;
   currentRound: number | null;
+}
+
+/**
+ * A recurring, named competition within a sport league — "The Masters" — that each
+ * year's SportEvent resolves to. Found or created by (sportLeagueId, name).
+ */
+export interface LeagueEvent extends DomainEntity {
+  sportLeagueId: string;
+  name: string;
+}
+
+/** A pick tier an event's field is divided into. Cross-sport: nothing here is golf. */
+export interface SportEventTier extends DomainEntity {
+  sportEventId: string;
+  tierKey: string;
+  label: string;
+  tierNumber: number;
+  defaultPickCount: number;
+}
+
+/**
+ * A participant's tier placement and price at one event. Tier and price are set
+ * independently — either may be null — and each records how it was set.
+ */
+export interface SportEventParticipantValuation extends DomainEntity {
+  sportEventParticipantId: string;
+  sportEventTierId: string | null;
+  tierOrderIndex: number | null;
+  tierAssignedSource: ValuationSource | null;
+  price: number | null;
+  priceAssignedSource: ValuationSource | null;
+}
+
+// --- Golf extension rows (#236) ---------------------------------------------
+// Keyed 1:1 to their core row. The score lives here, never on the core.
+
+/** What one golfer scored in one round. Extends a SportEventParticipantRound. */
+export interface SportEventParticipantGolfRound extends DomainEntity {
+  participantRoundId: string;
+  strokes: number;
+  scoreToPar: number;
+  thru: number | null;
+}
+
+/** The running event totals one golfer's standing was ranked from. Extends a SportEventParticipantStanding. */
+export interface SportEventParticipantGolfStanding extends DomainEntity {
+  standingId: string;
+  eventScoreToPar: number;
+  eventStrokes: number;
+  currentRoundThru: number | null;
+}
+
+/** A core round row with its golf extension — the unit a golf score write produces. */
+export interface GolfRoundResult {
+  participantRound: SportEventParticipantRound;
+  golf: SportEventParticipantGolfRound;
+}
+
+/** A core standing row with its golf extension. */
+export interface GolfStandingResult {
+  standing: SportEventParticipantStanding;
+  golf: SportEventParticipantGolfStanding;
 }
