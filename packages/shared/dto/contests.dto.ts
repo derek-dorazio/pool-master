@@ -214,10 +214,10 @@ export const ContestEntryPickDtoSchema = z.object({
   tier: z.string().nullable().describe('Selection tier (tiered ROSTER); null otherwise.'),
   cost: z.number().nullable().describe('Budget cost (budget ROSTER); null otherwise.'),
   isAutoPicked: z.boolean().describe(
-    'Whether this pick was auto-assigned (snake-draft auto-pick, Survivor missed-week auto-loss, etc.).',
+    'Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick.',
   ),
-  draftRound: z.number().int().nullable().describe('Snake-draft round; null outside snake-draft mechanism.'),
-  draftPickNumber: z.number().int().nullable().describe('Snake-draft pick order; null outside snake-draft mechanism.'),
+  draftRound: z.number().int().nullable().describe('Position of this pick within its entry\'s roster. Tiered: counted across tier quotas in tier order; budget: the entry\'s pick ordinal. Null when the pick was not recorded through contest selection.'),
+  draftPickNumber: z.number().int().nullable().describe('Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.'),
   pickedAt: z.string().datetime().describe('When the pick was made (or auto-picked).'),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
