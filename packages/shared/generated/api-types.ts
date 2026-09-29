@@ -3435,11 +3435,11 @@ export interface components {
             tier: string | null;
             /** @description Budget cost (budget ROSTER); null otherwise. */
             cost: number | null;
-            /** @description Whether this pick was auto-assigned (snake-draft auto-pick, Survivor missed-week auto-loss, etc.). */
+            /** @description Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick. */
             isAutoPicked: boolean;
-            /** @description Snake-draft round; null outside snake-draft mechanism. */
+            /** @description Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection. */
             draftRound: number | null;
-            /** @description Snake-draft pick order; null outside snake-draft mechanism. */
+            /** @description Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection. */
             draftPickNumber: number | null;
             /**
              * Format: date-time
