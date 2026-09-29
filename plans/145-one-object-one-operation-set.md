@@ -1304,6 +1304,9 @@ React Query cache), and the client-log rate limit halved to 60 because the limit
 and prod runs two tasks, so a default of 120 meant 240/min in front of one IP.
 
 ### Slice 2 — Events and participants (the cross-sport core)
+Tracked by **#235** (core) and **#236** (golf) after the stage-2 split; #203 carried stages 1
+and 2 and is closed. Outcome and decisions: "Slice 2 stage 2 — outcome" below.
+
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
 `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`
@@ -1383,36 +1386,132 @@ These surfaced while establishing the approach. **The rest are expected to surfa
 slice's stage 2**, which is the point of the workflow: they are discovered with the cluster's
 context loaded, not guessed at up front.
 
-### Q0. Golf has leaked into the cross-sport core — rename the enum?
+### Q0. Golf has leaked into the cross-sport core — SETTLED in slice 2's stage 2
 
 `SportEventParticipant` is the cross-sport entity, but its `inactiveReason` column is typed
 `PrismaGolfParticipantInactiveReason`. The values are `WITHDRAWN`, `CUT`, `ELIMINATED` —
-`WITHDRAWN` and `ELIMINATED` are sport-agnostic; only `CUT` is golf-flavoured, and it has a
-natural analogue in other cut/elimination formats.
+`WITHDRAWN` and `ELIMINATED` are sport-agnostic; only `CUT` is golf-flavoured.
 
-**Proposal:** rename the enum to `ParticipantInactiveReason` and keep the values. The core
-entity then carries no sport-specific type. It is a Prisma enum rename, so it needs a
-migration — cheap, but not free while `migrate-qa` is broken (#191).
+**Settled with the repo owner 2026-09-28, and it supersedes this section's original
+proposal.** That proposal was to rename the enum and *keep* the values. The decision drops
+`CUT`:
 
-This is the only instance found of sport particulars sitting in the core. Everything else
-golf-specific is correctly in an extension table.
+- Enum renames to **`ParticipantInactiveReason`**, values **`WITHDRAWN` / `ELIMINATED`**.
+- **`CUT` is dropped**; `ELIMINATED` covers it, and existing `CUT` rows migrate.
+- **No `OTHER`** — the column is nullable and `null` already means "inactive, no more
+  specific reason recorded".
+- `CUT` is user-visible (`deriveLegacyParticipantStatus` passes `inactiveReason` through as
+  `participantStatus`), so **golf surfaces render `ELIMINATED` as "Cut"**. The audience keeps
+  its word; the core stays sport-agnostic.
 
+Still a Prisma enum rename, so still gated on #191. Full record and the six other decisions
+are in the slice-2 outcome below.
 
-- **Embed or reference?** An edge carries `userId`. When a consumer needs the person's
-  name inline — a member list, a squad roster — does the edge embed the canonical `UserDto`,
-  or does the client resolve it? Embedding is one round trip and risks re-introducing
-  partial copies if anyone embeds a subset; referencing is strictly normalised but chattier
-  for list views. Decide once; the answer shapes every edge DTO.
-- **Viewer-scoped fields: one sub-object or computed top-level fields?** A
-  `viewer: { relationship, canEdit, … }` block is explicit and greppable; top-level fields
-  read more naturally. Decide once, apply everywhere.
-- **Field visibility: omit, null, or always include?** With a single first-party client and
-  auth-gated routes, always-include is simplest — but it publishes admin field names to
-  every caller.
-- **Does `/account/*` survive as a `me` alias**, or do its operations move to
-  `/users/me/*`? Affects the frontend either way; the alias is cheaper.
-- **What replaces the `admin` name** for the 68 genuinely administrative operations? They
-  are real domains and deserve real names.
+**What this section got wrong, worth keeping:** it called this "the only instance found of
+sport particulars sitting in the core. Everything else golf-specific is correctly in an
+extension table." Slice 2's stage 2 refuted the second sentence in both directions — see
+below.
+
+### The cross-cutting questions — all but one now settled
+
+These five surfaced while establishing the approach. Four were answered during slice 1 and
+are recorded in [`docs/DOMAIN-OPERATIONS.md`](../docs/DOMAIN-OPERATIONS.md); they are listed
+here with their answers so nobody reopens them from this file.
+
+| Question | Answer | Where |
+|---|---|---|
+| Embed or reference on edges? | **Embed** the canonical `UserDto`; a member reads peer users through the league join and gets the full object (rule 3) | DOMAIN-OPERATIONS "Settled during review" |
+| Viewer-scoped fields: sub-object or top-level? | Neither — **off the domain DTOs entirely**, delivered once per league context | A8 |
+| Field visibility: omit, null, or always include? | **Always include**, admin-only fields annotated not enforced. Field-level redaction is out of scope by design | DOMAIN-OPERATIONS §13 |
+| Does `/account/*` survive as a `me` alias? | **No.** The seven `/account/*` routes and eight `/admin/users/*` routes collapsed into `/users/*` | `modules/users/routes.ts:9` |
+
+**Still open:** *what replaces the `admin` name* for the 68 genuinely administrative
+operations. They are real domains and deserve real names. This is slice 4's (#205) by
+design, not an unanswered question blocking anything earlier.
+
+## Slice 2 stage 2 — outcome, 2026-09-28
+
+Recorded here because the decisions change the slice's stated scope, and #203's own body was
+written before them. The authoritative record with full reasoning is the stage-2 comment on
+#203; this is the plan-side narrative.
+
+**The ticket asked four questions. Three more surfaced, and two of those widen the slice.**
+
+1. **Q0** — settled above.
+2. **`worldRanking` → `ranking`, on both tables.** The ticket suspected `worldRanking`,
+   `oddsToWin` and `seedNumber` were golf/bracket particulars that had leaked into the core.
+   **Refuted:** rank, seed and odds are all genuinely cross-sport and all stay. What is wrong
+   is the *name* — a rank is not always a world rank. The table each sits on carries the
+   meaning: an affiliation row is the competitor's current rank, an event-participant row is
+   the rank that applied at that event. Scale: **234 hand-written references across 56
+   files**, plus the generated contract.
+3. **Two "golf" extension tables have no golf columns — scope change.** `SportEventGolfTier`
+   (`tierKey`, `label`, `tierNumber`, `defaultPickCount`) → **`SportEventTier`**;
+   `SportEventParticipantGolfValuation` (tier FK, `tierOrderIndex`, `price`, source enums) →
+   **`SportEventParticipantValuation`**; `PrismaGolfValuationSource` → **`ValuationSource`**.
+   This is Q0's leak pointing the other way — a core concept behind a golf name. Tier, round,
+   valuation and standing are common to many sports, not golf inventions.
+4. **Standing and round split into base + optional sport extension — scope change.** The
+   pattern the core already uses, applied one level down. Round rows hold per-round scores or
+   achievements; standing holds the running totals.
+   `SportEventParticipantStanding` (core: `position`, `displayPosition`, `status`, `asOf`,
+   `currentRound`) + `SportEventParticipantGolfStanding` (extension: `eventStrokes`,
+   `eventScoreToPar`, `currentRoundThru`); `SportEventParticipantRound` (core: the
+   (participant, round) join and its order) + `SportEventParticipantGolfRound` (extension:
+   `strokes`, `scoreToPar`, `thru`).
+   **The total number lives in the extension, not the base.** A cross-sport surface ranks on
+   `position` and joins the extension only when it needs the score.
+5. **Naming rule for the ~40 operations.** Generic model names wherever the concept is
+   generic; sport-specific names only for genuinely sport-specific extension objects — which,
+   per §3, is fewer tables than the schema currently implies. **Sport is not a filter on most
+   routes**: it is established once by selecting a `SportLeague` and inherited from the parent
+   thereafter. Only the sport-league list needs a sport filter.
+6. **`League` vs `SportLeague` — both names stay.** `SportLeague` is **never abbreviated to
+   "league"** in a DTO field, route segment, operationId or comment. Rejected: renaming it to
+   `Tour` (wrong for team sports, and it repeats the mistake Q0 fixes) and renaming the
+   product's `League` to `Pool` (reopens finished slice-1 work).
+7. **The slice splits in two.** Core first, golf second — see below.
+
+### Why ranking on `position` matters beyond this slice
+
+Decision 4 makes `position` the cross-sport rank key, and position is direction-free: 1 is
+best in every sport. That is what keeps the hardcoded `lowerIsBetter: true` at
+`contest-management/service.ts` **out** of this slice — cross-sport sorting never needs it.
+It is a scoring-model concern, tracked separately in #234, which found the field is not only
+unread but derivable.
+
+### Standing obligation carried into the golf half
+
+Set by the repo owner: **actively look for cross-sport concepts wearing sport-specific names
+and report them**, rather than renaming only what the slice happens to touch. The test is
+"would another sport need this same thing?" Three shapes to watch: a golf-named table with no
+golf columns (found: tier, valuation); a golf-named operation over a cross-sport entity; a
+cross-sport table with golf-shaped types or defaults (found: Q0's enum).
+
+Seeds already confirmed, recorded on #203: **`ParticipantLeagueAffiliation`** is reachable
+only through six golf-named roster operations while its service sits in the generically-named
+`modules/sport-catalog/`, a module that registers no routes at all; and **`Sport` carries golf
+defaults** — `category` defaults to `GOLF`, `tournamentFormat` to `STROKE_PLAY_TOURNAMENT`, on
+the table that is supposed to discriminate *between* sports. Checked and clean, so nobody
+re-checks: `SportLeague` and `Season`.
+
+### The split, and a naming caution
+
+**Slice 2 — core** (#235): the schema decisions above, plus ports and DTOs for `SportEvent` /
+`SportEventParticipant` / `SportEventRound`. The `ranking` rename spans both halves and lands
+here. This half alone unblocks slice 3 (#204).
+
+**Slice 2 — golf** (#236): the golf extension tables, the ~40 admin operations, and the
+root-admin frontend, carrying the standing obligation above.
+
+*Do not call these "2a" and "2b" in this document.* §2a and §2b above already mean "User is
+the object" and "Viewer context is delivered once per league", and the collision reads badly
+in a file where both appear.
+
+### Sequencing
+
+All schema work in either half is gated on **#191** (`migrate-qa` broken), addressed by
+PR #232. Nothing in step 3.1 can start until that lands.
 
 ## Sources / Prior Decisions
 
