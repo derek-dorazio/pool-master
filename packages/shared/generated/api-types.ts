@@ -13608,7 +13608,7 @@ export interface operations {
                             nationality?: string;
                             /** @description Provider-emitted per-event participant status. */
                             status?: string;
-                            /** @description Current per-event world-ranking snapshot when provided. */
+                            /** @description Rank that applied at this event, when one is recorded. */
                             ranking?: number;
                             /** @description Current per-event odds-to-win snapshot when provided. */
                             oddsToWin?: number;

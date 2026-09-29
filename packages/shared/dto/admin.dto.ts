@@ -110,7 +110,7 @@ export const AdminEventParticipantDtoSchema = z.object({
   shortName: z.string().optional().describe('Short display name when known.'),
   nationality: z.string().optional().describe('Participant nationality or country code when known.'),
   status: z.string().optional().describe('Provider-emitted per-event participant status.'),
-  ranking: z.number().int().optional().describe('Current per-event world-ranking snapshot when provided.'),
+  ranking: z.number().int().optional().describe('Rank that applied at this event, when one is recorded.'),
   oddsToWin: z.number().optional().describe('Current per-event odds-to-win snapshot when provided.'),
   seedNumber: z.number().int().optional().describe('Event-relative seed number when provided.'),
   valuationPrice: z.number().optional().describe('Current PoolMaster participant valuation price when computed.'),

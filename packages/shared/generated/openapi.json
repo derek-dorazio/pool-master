@@ -25440,7 +25440,7 @@
                           },
                           "ranking": {
                             "type": "integer",
-                            "description": "Current per-event world-ranking snapshot when provided."
+                            "description": "Rank that applied at this event, when one is recorded."
                           },
                           "oddsToWin": {
                             "type": "number",
