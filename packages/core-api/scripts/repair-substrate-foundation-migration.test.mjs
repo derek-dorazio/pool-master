@@ -23,6 +23,7 @@ const expectedObjectChecks = [
   ['old_column:sports.stat_schema_absent', false],
   ['column:contests.contest_format', false],
   ['old_column:contests.contest_type_absent', false],
+  // Historical name: renamed to ranking by 20260929120000; see the probe's comment.
   ['column:sport_event_participants.world_ranking', false],
   ['column:sport_event_participants.odds_to_win', false],
   ['column:sport_event_participants.seed_number', false],
