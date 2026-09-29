@@ -10,10 +10,6 @@ import { sendError } from '../../core/error-handler';
 
 export function createOverrideHandlers(overrideService: OverrideService) {
   return {
-    undoPick,
-    pauseDraft,
-    resumeDraft,
-    extendPickClock,
     reopenContest,
     closeContest,
     extendDeadline,
@@ -27,70 +23,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
       return;
     }
     throw err;
-  }
-
-  async function undoPick(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Body: { pickId: string; reason: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      await overrideService.undoPick(
-        request.params.contestId,
-        request.body.pickId,
-        request.body.reason,
-      );
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
-  async function pauseDraft(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Body: { reason: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      await overrideService.pauseDraft(request.params.contestId, request.body.reason);
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
-  async function resumeDraft(
-    request: FastifyRequest<{ Params: { contestId: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      await overrideService.resumeDraft(request.params.contestId);
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
-  async function extendPickClock(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Body: { additionalSeconds: number };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      await overrideService.extendPickClock(
-        request.params.contestId,
-        request.body.additionalSeconds,
-      );
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
   }
 
   async function reopenContest(

@@ -119,7 +119,6 @@ export const API_ROUTES = {
 
   // Drafts
   drafts: {
-    start: (contestId: string) => `/api/v1/drafts/${contestId}/start`,
     state: (contestId: string) => `/api/v1/drafts/${contestId}`,
     pick: (contestId: string) => `/api/v1/drafts/${contestId}/pick`,
   },

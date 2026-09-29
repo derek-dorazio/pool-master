@@ -1,9 +1,8 @@
 /**
- * Draft module — REST routes for async snake draft and roster-based selection.
+ * Draft module — REST routes for roster-based selection.
  *
- * The route surface is shared by snake drafts plus roster-based selection modes
- * such as tiered and budget pick so the web draft room can consume one honest
- * contract instead of frontend-only mock state.
+ * The route surface serves the independent selection modes (tiered and budget
+ * pick). Any other configured SelectionType returns 501 DRAFT_MODE_UNSUPPORTED.
  */
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
@@ -20,29 +19,11 @@ import {
   DraftStateResponseSchema,
   DraftPickResponseSchema,
   ErrorEnvelopeSchema,
-  ExtendCurrentTurnRequestSchema,
-  StartDraftRequestSchema,
   SubmitPickRequestSchema,
 } from '@poolmaster/shared/dto';
-import {
-  PrismaContestEntryRepository,
-} from '../../adapters';
 import { ContestEntryPickService } from '../contest-entry-picks';
 import { createErrorEnvelope } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
-import crypto from 'node:crypto';
-import { SnakeDraftEngine } from './engine/snake-draft-engine';
-import type { DraftState } from './engine/snake-draft-engine';
-import {
-  startSession,
-  isPickExpired,
-  pauseSession,
-  resumeSession,
-  extendCurrentTurn,
-} from './engine/draft-session-manager';
-import type { SessionState } from './engine/draft-session-manager';
-import { draftStore } from './storage/draft-store';
-import { draftQueue } from './engine/draft-queue';
 import { GolfTierService } from '../golf/golf-tier-service';
 import type { GolfParticipantValuationRow, GolfTierGroup } from '../golf/golf-tier-service';
 
@@ -60,13 +41,6 @@ interface ContestRecord {
 type ContestEntryRecord = Awaited<ReturnType<PrismaClient['contestEntry']['findMany']>>[number];
 type MembershipRecord = Awaited<ReturnType<PrismaClient['leagueMembership']['findMany']>>[number];
 type SquadMembershipRecord = Awaited<ReturnType<PrismaClient['squadMembership']['findMany']>>[number];
-type SportEventParticipantLookupRecord = Awaited<
-  ReturnType<
-    PrismaClient['sportEventParticipant']['findMany']
-  >
->[number] & {
-  participant: Awaited<ReturnType<PrismaClient['participant']['findMany']>>[number];
-};
 interface SelectionParticipantRecord {
   sportEventParticipantId: string;
   participantId: string;
@@ -180,62 +154,6 @@ function buildEntryUserIdMap(context: DraftContext): Map<string, string> {
   );
 }
 
-async function loadSportEventParticipantsByIds(
-  prisma: PrismaClient,
-  sportEventParticipantIds: string[],
-): Promise<Map<string, SportEventParticipantLookupRecord>> {
-  if (sportEventParticipantIds.length === 0) {
-    return new Map();
-  }
-
-  const records = await prisma.sportEventParticipant.findMany({
-    where: { id: { in: sportEventParticipantIds } },
-    include: {
-      participant: true,
-    },
-  });
-
-  return new Map(records.map((record) => [record.id, record]));
-}
-
-function rewindSnakeDraftState(state: DraftState): DraftState {
-  const lastPick = state.picks[state.picks.length - 1];
-  if (!lastPick) {
-    throw new Error('No picks are available to undo');
-  }
-
-  return {
-    ...state,
-    status: DraftStatus.LIVE,
-    currentPickNumber: lastPick.pickNumber,
-    picks: state.picks.slice(0, -1),
-  };
-}
-
-function skipSnakeDraftPick(state: DraftState): DraftState {
-  const engine = new SnakeDraftEngine();
-  const position = engine.getCurrentPickPosition(state);
-  const totalPicks = state.entryIds.length * state.rounds;
-  const skippedPick = {
-    pickNumber: state.currentPickNumber,
-    round: position.round,
-    pickInRound: position.pickInRound,
-    entryId: engine.getCurrentEntryId(state),
-    participantId: null,
-    autoPicked: false,
-    isSkipped: true,
-    pickedAt: new Date(),
-  };
-  const nextPickNumber = state.currentPickNumber + 1;
-
-  return {
-    ...state,
-    currentPickNumber: nextPickNumber,
-    status: nextPickNumber > totalPicks ? DraftStatus.COMPLETE : state.status,
-    picks: [...state.picks, skippedPick],
-  };
-}
-
 function mapContestStatusToDraftStatus(
   contestStatus: string,
   isComplete: boolean,
@@ -252,7 +170,6 @@ function getRosterSize(
   contestConfiguration: ContestConfigurationRecord,
   tiers: DraftTierConfig[],
 ): number {
-  if (selectionType === SelectionType.SNAKE_DRAFT) return contestConfiguration?.rounds ?? 0;
   if (selectionType === SelectionType.BUDGET_PICK) return contestConfiguration?.rosterSize ?? 0;
   if (selectionType === SelectionType.TIERED) {
     return tiers.reduce((sum, tier) => sum + tier.picksFromTier, 0);
@@ -471,100 +388,6 @@ function buildSelectionGroups(
   });
 }
 
-async function buildSnakeDraftResponse(
-  prisma: PrismaClient,
-  context: DraftContext,
-  session: SessionState,
-  state: DraftState,
-  availableParticipantIds: string[],
-  requestUserId?: string,
-) {
-  const engine = new SnakeDraftEngine();
-  const takenIds = engine.getTakenParticipantIds(state);
-  const remaining = availableParticipantIds.filter((id) => !takenIds.includes(id));
-  const contestEntryRepo = new PrismaContestEntryRepository(prisma);
-
-  const contestEntries = await contestEntryRepo.findByContest(state.contestId);
-  const contestEntryById = new Map(contestEntries.map((entry) => [entry.id, entry]));
-  const entryUserIdMap = buildEntryUserIdMap(context);
-  const sportEventParticipantIds = Array.from(new Set(
-    state.picks.map((pick) => pick.participantId).filter((value): value is string => Boolean(value)),
-  ));
-  const sportEventParticipantById = await loadSportEventParticipantsByIds(
-    prisma,
-    sportEventParticipantIds,
-  );
-  const tiers = context.tiers;
-  const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
-
-  const entries = state.entryIds.map((entryId) => {
-    const contestEntry = contestEntryById.get(entryId);
-    return {
-      id: entryId,
-      userId: contestEntry ? entryUserIdMap.get(contestEntry.id) ?? '' : '',
-      name: contestEntry?.name ?? entryId,
-      isOnClock: session.currentEntryId === entryId && session.status === DraftStatus.LIVE,
-    };
-  });
-
-  const myEntryId = requestUserId
-    ? entries.find((entry) => entry.userId === requestUserId)?.id ?? null
-    : null;
-  const isCommissioner = getIsCommissioner(context, requestUserId);
-
-  return {
-    contestId: state.contestId,
-    contestName: context.contest?.name ?? state.contestId,
-    selectionType: context.contest.selectionType,
-    isTurnBased: true,
-    isCommissioner,
-    rosterSize,
-    contestConfiguration: buildContestConfigurationResponse(context.contestConfiguration, tiers, rosterSize),
-    status: session.status,
-    currentPickNumber: state.currentPickNumber,
-    currentRound: engine.getCurrentPickPosition(state).round,
-    totalPicks: state.entryIds.length * state.rounds,
-    totalRounds: state.rounds,
-    currentEntryId: state.status === DraftStatus.LIVE && !engine.isComplete(state)
-      ? engine.getCurrentEntryId(state)
-      : null,
-    currentEntryName: state.status === DraftStatus.LIVE && !engine.isComplete(state)
-      ? (contestEntryById.get(engine.getCurrentEntryId(state))?.name ?? engine.getCurrentEntryId(state))
-      : null,
-    myEntryId,
-    isMyPick: myEntryId !== null && session.currentEntryId === myEntryId && session.status === DraftStatus.LIVE,
-    currentTurnStartedAt:
-      session.currentTurnStartedAt?.toISOString?.() ?? session.currentTurnStartedAt ?? null,
-    timePerPickSeconds: session.timePerPickSeconds,
-    entries,
-    draftPickHistories: state.picks.map((pick) => {
-      const contestEntry = contestEntryById.get(pick.entryId);
-      const sportEventParticipant = pick.participantId
-        ? sportEventParticipantById.get(pick.participantId)
-        : undefined;
-      const participant = sportEventParticipant?.participant;
-      return {
-        pickNumber: pick.pickNumber,
-        round: pick.round,
-        pickInRound: pick.pickInRound,
-        entryId: pick.entryId,
-        entryName: contestEntry?.name ?? pick.entryId,
-        participantId: pick.participantId,
-        participantName: pick.isSkipped ? null : participant?.name ?? pick.participantId,
-        position: participant?.position ?? undefined,
-        team: participant?.teamAffiliation ?? undefined,
-        tierId: undefined,
-        tierName: undefined,
-        autoPicked: pick.autoPicked,
-        isSkipped: pick.isSkipped,
-        pickedAt: pick.pickedAt.toISOString(),
-      };
-    }),
-    availableParticipantIds: remaining,
-    isComplete: engine.isComplete(state),
-  };
-}
-
 async function buildRosterSelectionResponse(
   prisma: PrismaClient,
   context: DraftContext,
@@ -747,31 +570,12 @@ async function buildDraftStateResponse(
     return { kind: 'error' as const, statusCode: 404, payload: { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` } };
   }
 
-  if (context.contest.selectionType === SelectionType.SNAKE_DRAFT) {
-    const session = draftStore.getSession(contestId);
-    if (!session) {
-      return { kind: 'error' as const, statusCode: 404, payload: { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` } };
-    }
-
-    const state = draftStore.getState(contestId);
-    if (!state) {
-      return { kind: 'error' as const, statusCode: 404, payload: { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` } };
-    }
-
-    const available = draftStore.getAvailableParticipants(contestId);
-    return {
-      kind: 'success' as const,
-      payload: await buildSnakeDraftResponse(prisma, context, session, state, available, requestUserId),
-      context,
-    };
-  }
-
   if (
     context.contest.selectionType === SelectionType.TIERED
     || context.contest.selectionType === SelectionType.BUDGET_PICK
   ) {
     return {
-        kind: 'success' as const,
+      kind: 'success' as const,
       payload: await buildRosterSelectionResponse(prisma, context, selectedEntryId, requestUserId),
       context,
     };
@@ -789,7 +593,6 @@ async function buildDraftStateResponse(
 
 export function draftsModule(fastify: FastifyInstance): void {
   const prisma = getAppPrisma(fastify);
-  const engine = new SnakeDraftEngine(fastify.log);
   // Module-scoped (one per fastify register) — see plans/117 §7.1; the service
   // resolves Contest.contestFormat in the same Prisma transaction at insert time.
   const pickService = new ContestEntryPickService(prisma, fastify.log);
@@ -821,87 +624,6 @@ export function draftsModule(fastify: FastifyInstance): void {
         return sendWithStatus(reply, result.statusCode, result.payload);
       }
       return result.payload;
-    },
-  });
-
-  fastify.post('/:contestId/start', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Start a new draft session',
-      description:
-        'Starts a draft session for the contest and returns the initial draft state used by the draft-room client.',
-      operationId: 'startDraft',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      body: zodToJsonSchema(StartDraftRequestSchema),
-      response: {
-        201: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(404, 409),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const body = (request.body ?? {}) as {
-        entryIds?: string[];
-        rounds?: number;
-        timePerPickSeconds?: number;
-        availableParticipantIds?: string[];
-        autoPickPolicy?: string;
-      };
-
-      if (draftStore.has(contestId)) {
-        return sendWithStatus(reply, 409, { error: 'DRAFT_EXISTS', message: `Draft already exists for contest ${contestId}` });
-      }
-
-      const entryIds = body.entryIds ?? [crypto.randomUUID(), crypto.randomUUID()];
-      const rounds = body.rounds ?? 5;
-      const timePerPickSeconds = body.timePerPickSeconds ?? 120;
-      const availableParticipantIds = body.availableParticipantIds ?? [];
-      const autoPickPolicy = (body.autoPickPolicy as 'QUEUE_THEN_BEST' | 'BEST_AVAILABLE' | 'RANDOM') ?? 'BEST_AVAILABLE';
-
-      const pendingSession: SessionState = {
-        sessionId: crypto.randomUUID(),
-        contestId,
-        status: DraftStatus.PENDING,
-        currentPickNumber: 0,
-        currentEntryId: null,
-        startedAt: null,
-        currentTurnStartedAt: null,
-        timePerPickSeconds,
-      };
-
-      const liveSession = startSession(pendingSession, fastify.log);
-
-      const initialState: DraftState = {
-        contestId,
-        status: DraftStatus.LIVE,
-        entryIds,
-        rounds,
-        currentPickNumber: 1,
-        picks: [],
-        autoPickPolicy,
-      };
-
-      liveSession.currentEntryId = engine.getCurrentEntryId(initialState);
-
-      draftStore.setSession(contestId, liveSession);
-      draftStore.setState(contestId, initialState);
-      draftStore.setAvailableParticipants(contestId, availableParticipantIds);
-
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-
-      return sendWithStatus(
-        reply,
-        201,
-        await buildSnakeDraftResponse(prisma, context, liveSession, initialState, availableParticipantIds, requestUserId),
-      );
     },
   });
 
@@ -953,69 +675,6 @@ export function draftsModule(fastify: FastifyInstance): void {
           error: 'DRAFT_ENTRY_ACCESS_DENIED',
           message: 'You can only submit draft picks for your own contest entry',
         });
-      }
-
-      if (context.contest.selectionType === SelectionType.SNAKE_DRAFT) {
-        const session = draftStore.getSession(contestId);
-        if (!session) {
-          return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-        }
-
-        let state = draftStore.getState(contestId);
-        if (!state) {
-          return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-        }
-
-        const available = draftStore.getAvailableParticipants(contestId);
-
-        if (isPickExpired(session, fastify.log)) {
-          const currentEntryId = engine.getCurrentEntryId(state);
-          const queueEntries = draftQueue.getQueue(currentEntryId);
-          const autoPickId = engine.resolveAutoPick(state, {
-            entryId: currentEntryId,
-            queue: queueEntries,
-            availableParticipantIds: available,
-          });
-
-          if (autoPickId) {
-            state = engine.applyPick(state, { entryId: currentEntryId, participantId: autoPickId }, true);
-            session.currentTurnStartedAt = new Date();
-
-            if (!engine.isComplete(state)) {
-              session.currentEntryId = engine.getCurrentEntryId(state);
-            } else {
-              session.status = DraftStatus.COMPLETE;
-              session.currentTurnStartedAt = null;
-              session.currentEntryId = null;
-            }
-
-            draftStore.setSession(contestId, session);
-            draftStore.setState(contestId, state);
-          }
-        }
-
-        const validation = engine.validatePick(state, { entryId, participantId });
-        if (!validation.valid) {
-          return sendWithStatus(reply, 400, { error: 'INVALID_PICK', message: validation.reason });
-        }
-
-        state = engine.applyPick(state, { entryId, participantId });
-
-        if (!engine.isComplete(state)) {
-          session.currentEntryId = engine.getCurrentEntryId(state);
-          session.currentPickNumber = state.currentPickNumber;
-          session.currentTurnStartedAt = new Date();
-        } else {
-          session.status = DraftStatus.COMPLETE;
-          state = { ...state, status: DraftStatus.COMPLETE };
-          session.currentEntryId = null;
-          session.currentTurnStartedAt = null;
-        }
-
-        draftStore.setSession(contestId, session);
-        draftStore.setState(contestId, state);
-
-        return buildSnakeDraftResponse(prisma, context, session, state, available, requestUserId);
       }
 
       if (
@@ -1181,313 +840,6 @@ export function draftsModule(fastify: FastifyInstance): void {
       });
 
       return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/pause', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Pause an active draft',
-      description:
-        'Pauses an active draft session so the clock and turn progression stop until resumed.',
-      operationId: 'pauseDraft',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.SNAKE_DRAFT) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Pause is only available for snake drafts' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
-      }
-      if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, {
-          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-          message: 'Only commissioners can pause drafts',
-        });
-      }
-
-      const session = draftStore.getSession(contestId);
-      if (!session) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-      }
-      const state = draftStore.getState(contestId);
-      if (!state) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-      }
-      const available = draftStore.getAvailableParticipants(contestId);
-
-      const pausedSession = pauseSession(session, fastify.log);
-      const pausedState = { ...state, status: DraftStatus.PAUSED };
-      draftStore.setSession(contestId, pausedSession);
-      draftStore.setState(contestId, pausedState);
-
-      return buildSnakeDraftResponse(prisma, context, pausedSession, pausedState, available, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/resume', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Resume a paused draft',
-      description:
-        'Resumes a paused draft session and returns the refreshed draft state.',
-      operationId: 'resumeDraft',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.SNAKE_DRAFT) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Resume is only available for snake drafts' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
-      }
-      if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, {
-          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-          message: 'Only commissioners can resume drafts',
-        });
-      }
-
-      const session = draftStore.getSession(contestId);
-      if (!session) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-      }
-      const state = draftStore.getState(contestId);
-      if (!state) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-      }
-      const available = draftStore.getAvailableParticipants(contestId);
-
-      const resumedSession = resumeSession(session, fastify.log);
-      const resumedState = { ...state, status: DraftStatus.LIVE };
-      draftStore.setSession(contestId, resumedSession);
-      draftStore.setState(contestId, resumedState);
-
-      return buildSnakeDraftResponse(prisma, context, resumedSession, resumedState, available, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/extend', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Shift the current turn start time',
-      description:
-        'Extends or shifts the current draft turn timing so commissioner or admin controls can grant more time.',
-      operationId: 'extendCurrentTurn',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      body: zodToJsonSchema(ExtendCurrentTurnRequestSchema),
-      response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const { additionalSeconds } = request.body as { additionalSeconds: number };
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.SNAKE_DRAFT) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Clock extension is only available for snake drafts' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
-      }
-      if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, {
-          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-          message: 'Only commissioners can extend draft clocks',
-        });
-      }
-
-      const session = draftStore.getSession(contestId);
-      if (!session) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-      }
-      const state = draftStore.getState(contestId);
-      if (!state) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-      }
-      const available = draftStore.getAvailableParticipants(contestId);
-
-      const extendedSession = extendCurrentTurn(session, additionalSeconds, fastify.log);
-      draftStore.setSession(contestId, extendedSession);
-
-      return buildSnakeDraftResponse(prisma, context, extendedSession, state, available, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/undo', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Undo the most recent snake draft pick',
-      description:
-        'Removes the most recent snake-draft pick and rewinds the draft state when a commissioner override is required.',
-      operationId: 'undoSnakeDraftSelection',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.SNAKE_DRAFT) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Undo is only available for snake drafts' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
-      }
-      if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, {
-          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-          message: 'Only commissioners can undo draft picks',
-        });
-      }
-
-      const session = draftStore.getSession(contestId);
-      if (!session) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-      }
-      const state = draftStore.getState(contestId);
-      if (!state) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-      }
-      if (state.picks.length === 0) {
-        return sendWithStatus(reply, 400, { error: 'NO_PICKS_TO_UNDO', message: 'This draft has no picks to undo' });
-      }
-
-      const available = draftStore.getAvailableParticipants(contestId);
-      const rewoundState = rewindSnakeDraftState(state);
-      const rewoundEntryId = engine.getCurrentEntryId(rewoundState);
-      const rewoundSession = {
-        ...session,
-        status: DraftStatus.LIVE,
-        currentPickNumber: rewoundState.currentPickNumber,
-        currentEntryId: rewoundEntryId,
-        currentTurnStartedAt: new Date(),
-      };
-
-      draftStore.setState(contestId, rewoundState);
-      draftStore.setSession(contestId, rewoundSession);
-
-      return buildSnakeDraftResponse(prisma, context, rewoundSession, rewoundState, available, requestUserId);
-    },
-  });
-
-  fastify.post('/:contestId/skip', {
-    schema: {
-      tags: ['Drafts'],
-      summary: 'Skip the current snake draft pick',
-      description:
-        'Skips the current snake-draft pick and advances the draft when a drafter turn should be bypassed.',
-      operationId: 'skipSnakeDraftTurn',
-      params: {
-        type: 'object',
-        required: ['contestId'],
-        properties: { contestId: { type: 'string', format: 'uuid' } },
-      },
-      response: {
-        200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(400, 401, 403, 404),
-      },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const requestUserId = request.authUser?.userId;
-      const context = await loadDraftContext(prisma, contestId);
-
-      if (!context) {
-        return sendWithStatus(reply, 404, { error: 'CONTEST_NOT_FOUND', message: `Contest ${contestId} was not found` });
-      }
-      if (context.contest.selectionType !== SelectionType.SNAKE_DRAFT) {
-        return sendWithStatus(reply, 400, { error: 'INVALID_CONTEST_MODE', message: 'Skip is only available for snake drafts' });
-      }
-      if (!requestUserId) {
-        return sendWithStatus(reply, 401, { error: 'AUTH_SESSION_REQUIRED', message: 'Authenticated session required' });
-      }
-      if (!getIsCommissioner(context, requestUserId)) {
-        return sendWithStatus(reply, 403, {
-          error: 'DRAFT_COMMISSIONER_ACCESS_REQUIRED',
-          message: 'Only commissioners can skip draft picks',
-        });
-      }
-
-      const session = draftStore.getSession(contestId);
-      if (!session) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_NOT_FOUND', message: `No draft session for contest ${contestId}` });
-      }
-      const state = draftStore.getState(contestId);
-      if (!state) {
-        return sendWithStatus(reply, 404, { error: 'DRAFT_STATE_MISSING', message: `No draft state for contest ${contestId}` });
-      }
-      if (state.status !== DraftStatus.LIVE) {
-        return sendWithStatus(reply, 400, { error: 'DRAFT_NOT_LIVE', message: 'Only live drafts can skip the current pick' });
-      }
-
-      const available = draftStore.getAvailableParticipants(contestId);
-      const skippedState = skipSnakeDraftPick(state);
-      const isComplete = engine.isComplete(skippedState);
-      const skippedSession = {
-        ...session,
-        status: isComplete ? DraftStatus.COMPLETE : DraftStatus.LIVE,
-        currentPickNumber: skippedState.currentPickNumber,
-        currentEntryId: isComplete ? null : engine.getCurrentEntryId(skippedState),
-        currentTurnStartedAt: isComplete ? null : new Date(),
-      };
-
-      draftStore.setState(contestId, skippedState);
-      draftStore.setSession(contestId, skippedSession);
-
-      return buildSnakeDraftResponse(prisma, context, skippedSession, skippedState, available, requestUserId);
     },
   });
 }

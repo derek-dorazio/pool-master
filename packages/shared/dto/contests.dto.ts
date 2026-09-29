@@ -98,22 +98,6 @@ export const UpdateContestEntryRequestSchema = z.object({
 }).describe('Request payload for updating a contest entry while the contest is still joinable.');
 export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequestSchema>;
 
-export const UndoContestDraftSelectionRequestSchema = z.object({
-  pickId: z.string().describe('Draft pick to undo.'),
-  reason: z.string().describe('Commissioner reason recorded for the undo action.'),
-}).describe('Commissioner request payload for undoing a contest draft selection.');
-export type UndoContestDraftSelectionRequest = z.infer<typeof UndoContestDraftSelectionRequestSchema>;
-
-export const PauseContestDraftRequestSchema = z.object({
-  reason: z.string().describe('Reason recorded for pausing the draft.'),
-}).describe('Commissioner request payload for pausing a draft.');
-export type PauseContestDraftRequest = z.infer<typeof PauseContestDraftRequestSchema>;
-
-export const ExtendPickClockRequestSchema = z.object({
-  additionalSeconds: z.number().int().min(1).describe('How many seconds to add to the current draft pick clock.'),
-}).describe('Commissioner request payload for extending the current draft turn.');
-export type ExtendPickClockRequest = z.infer<typeof ExtendPickClockRequestSchema>;
-
 export const ReopenContestRequestSchema = z.object({
   reason: z.string().describe('Reason recorded for reopening the contest.'),
 }).describe('Request payload for reopening a closed contest.');
@@ -470,9 +454,6 @@ registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationReques
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
-registerSchema('UndoContestDraftSelectionRequest', UndoContestDraftSelectionRequestSchema);
-registerSchema('PauseContestDraftRequest', PauseContestDraftRequestSchema);
-registerSchema('ExtendPickClockRequest', ExtendPickClockRequestSchema);
 registerSchema('ReopenContestRequest', ReopenContestRequestSchema);
 registerSchema('CloseContestRequest', CloseContestRequestSchema);
 registerSchema('ExtendContestDeadlineRequest', ExtendContestDeadlineRequestSchema);

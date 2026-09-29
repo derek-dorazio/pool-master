@@ -47,12 +47,14 @@ Pure-function engines that take state + input and return new state (immutable).
 
 | Engine | Description | Contest Types |
 |--------|-------------|---------------|
-| `SnakeDraftEngine` | Turn-based exclusive selection with snake order | NFL/NBA/MLB fantasy |
 | `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Golf majors, NHL playoffs |
 | `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | F1 season-long, DFS |
-| `SnakeDraftEngine` | Turn-based exclusive selection with snake order | Snake-draft roster contests |
 | `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Tiered roster contests |
 | `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | Budget roster contests |
+
+Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
+rebuild is deferred to #199. `SelectionType.SNAKE_DRAFT` remains a valid enum value, and a
+contest configured with it gets `501 DRAFT_MODE_UNSUPPORTED` from the draft-room endpoints.
 
 The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
 
