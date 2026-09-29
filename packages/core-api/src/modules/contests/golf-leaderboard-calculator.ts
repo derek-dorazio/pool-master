@@ -1,3 +1,10 @@
+import {
+  compareScores,
+  PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantScoringDefinitionIdSchema,
+  type ParticipantScoringDefinition,
+  type ScoreDirection,
+} from '@poolmaster/shared/domain';
 import type {
   GolfLeaderboardEntryPickRow,
   GolfLeaderboardEntryRow,
@@ -15,7 +22,27 @@ export interface GolfContestConfigurationRow {
   rosterSize: number | null;
   pickCount: number | null;
   rounds: number | null;
+  participantScoringRules: Array<{
+    participantScoringDefinitionId: string;
+    sortOrder: number;
+    active: boolean;
+  }>;
 }
+
+/** Selects exactly the `GolfContestConfigurationRow` fields off a contest configuration. */
+export const GOLF_CONTEST_CONFIGURATION_SELECT = {
+  configJson: true,
+  rosterSize: true,
+  pickCount: true,
+  rounds: true,
+  participantScoringRules: {
+    select: {
+      participantScoringDefinitionId: true,
+      sortOrder: true,
+      active: true,
+    },
+  },
+} as const;
 
 export interface GolfLeaderboardEntryInput {
   id: string;
@@ -55,10 +82,35 @@ export function resolveGolfLeaderboardCountingRule(
   };
 }
 
+/**
+ * The scoring definition a golf leaderboard ranks by, read from the
+ * configuration's first active participant scoring rule.
+ *
+ * A configuration with no rule row falls back to `GOLF_RELATIVE_TO_PAR_TOTAL`:
+ * only the contest-management path writes rule rows, and `createContest`
+ * configurations have none. Golf stroke play is the only golf scoring
+ * definition, and this leaderboard serves golf contests only. A rule naming an
+ * id the registry does not know returns `null` — ranking by a guessed
+ * direction would silently invert the standings.
+ */
+export function resolveGolfLeaderboardScoringDefinition(
+  configuration: GolfContestConfigurationRow | null,
+): ParticipantScoringDefinition | null {
+  const rule = [...(configuration?.participantScoringRules ?? [])]
+    .filter((candidate) => candidate.active)
+    .sort((left, right) => left.sortOrder - right.sortOrder)[0];
+  if (!rule) {
+    return PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
+  }
+  const id = ParticipantScoringDefinitionIdSchema.safeParse(rule.participantScoringDefinitionId);
+  return id.success ? PARTICIPANT_SCORING_DEFINITIONS[id.data] : null;
+}
+
 export function buildGolfLeaderboardEntry(
   entry: GolfLeaderboardEntryInput,
   participantById: Map<string, GolfLeaderboardParticipantRow>,
   countingRule: GolfLeaderboardCountingRule,
+  direction: ScoreDirection,
 ): GolfLeaderboardEntryRow {
   const scoredPicks = entry.picks
     .map((pick) => ({
@@ -70,7 +122,8 @@ export function buildGolfLeaderboardEntry(
       participant: GolfLeaderboardParticipantRow;
     } => row.participant !== null && row.participant.totalScoreToPar !== null)
     .sort((left, right) =>
-      compareGolfScores(
+      compareScores(
+        direction,
         left.participant.totalScoreToPar,
         right.participant.totalScoreToPar,
       )
@@ -100,7 +153,7 @@ export function buildGolfLeaderboardEntry(
       };
     })
     .filter((pick): pick is GolfLeaderboardEntryPickRow => pick !== null)
-    .sort(compareGolfLeaderboardEntryPicks);
+    .sort((left, right) => compareGolfLeaderboardEntryPicks(direction, left, right));
   const countingScores: number[] = [];
   for (const pick of picks) {
     if (pick.isCounting && pick.participant.totalScoreToPar !== null) {
@@ -126,9 +179,12 @@ export function buildGolfLeaderboardEntry(
   };
 }
 
-export function rankGolfLeaderboardEntries(entries: GolfLeaderboardEntryRow[]): GolfLeaderboardEntryRow[] {
+export function rankGolfLeaderboardEntries(
+  entries: GolfLeaderboardEntryRow[],
+  direction: ScoreDirection,
+): GolfLeaderboardEntryRow[] {
   const sorted = [...entries].sort((left, right) =>
-    compareGolfScores(left.totalScoreToPar, right.totalScoreToPar)
+    compareScores(direction, left.totalScoreToPar, right.totalScoreToPar)
     || left.entryNumber - right.entryNumber
     || left.entryName.localeCompare(right.entryName)
     || left.entryId.localeCompare(right.entryId),
@@ -213,33 +269,22 @@ export function mapGolfLeaderboardStatus(status: string): GolfLeaderboardPartici
   }
 }
 
-export function compareGolfScores(left: number | null, right: number | null): number {
-  if (left === null && right === null) return 0;
-  if (left === null) return 1;
-  if (right === null) return -1;
-  return left - right;
-}
-
-export function formatRelativeToPar(value: number): string {
-  if (value > 0) return `+${value}`;
-  return String(value);
-}
-
 function compareGolfLeaderboardEntryPicks(
+  direction: ScoreDirection,
   left: GolfLeaderboardEntryPickRow,
   right: GolfLeaderboardEntryPickRow,
 ): number {
   const leftScore = left.participant.totalScoreToPar;
   const rightScore = right.participant.totalScoreToPar;
   if (leftScore !== null && rightScore !== null) {
-    return compareGolfScores(leftScore, rightScore)
+    return compareScores(direction, leftScore, rightScore)
       || left.participant.name.localeCompare(right.participant.name)
       || left.pickId.localeCompare(right.pickId);
   }
   if (leftScore !== null) return -1;
   if (rightScore !== null) return 1;
 
-  return compareGolfScores(left.slot, right.slot)
+  return compareSlots(left.slot, right.slot)
     || left.pickedAt.getTime() - right.pickedAt.getTime()
     || left.pickId.localeCompare(right.pickId);
 }
@@ -261,8 +306,19 @@ function toGolfRoundCell(round: {
     scoreToPar: round.scoreToPar,
     thru: status === 'in-progress' ? round.thru ?? null : null,
     displayType,
-    displayValue: isComplete ? String(round.strokes) : formatRelativeToPar(round.scoreToPar),
+    // A golf round's scoreToPar is strokes to par whatever the contest scores by.
+    displayValue: isComplete
+      ? String(round.strokes)
+      : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(round.scoreToPar),
   };
+}
+
+/** Roster slots order ascending, with an unslotted pick last. Not a score: no direction. */
+function compareSlots(left: number | null, right: number | null): number {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return left - right;
 }
 
 function readPositiveInteger(value: unknown): number | null {

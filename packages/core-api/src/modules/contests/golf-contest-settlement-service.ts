@@ -8,9 +8,11 @@ import type { GolfLeaderboardParticipantRow } from '../../mappers/contests.mappe
 import {
   buildGolfLeaderboardEntry,
   buildGolfRoundColumns,
+  GOLF_CONTEST_CONFIGURATION_SELECT,
   mapGolfLeaderboardStatus,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
+  resolveGolfLeaderboardScoringDefinition,
 } from './golf-leaderboard-calculator';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -77,12 +79,7 @@ export class GolfContestSettlementService {
       },
       include: {
         configuration: {
-          select: {
-            configJson: true,
-            rosterSize: true,
-            pickCount: true,
-            rounds: true,
-          },
+          select: GOLF_CONTEST_CONFIGURATION_SELECT,
         },
         entries: {
           where: { status: 'ACTIVE' },
@@ -125,10 +122,19 @@ export class GolfContestSettlementService {
         }, 'Skipped Golf contest settlement because contest has no counting rule');
         continue;
       }
+      const scoringDefinition = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+      if (!scoringDefinition) {
+        this.logger.error({
+          contestId: contest.id,
+          sportEventId,
+        }, 'Skipped Golf contest settlement because its participant scoring rule names an unknown scoring definition');
+        continue;
+      }
       const rankedEntries = rankGolfLeaderboardEntries(
         contest.entries.map((entry) =>
-          buildGolfLeaderboardEntry(entry, participantById, countingRule),
+          buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
         ),
+        scoringDefinition.direction,
       );
       contestsSettled++;
 
