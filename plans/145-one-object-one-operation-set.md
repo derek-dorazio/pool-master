@@ -1340,40 +1340,22 @@ that epic's `SelectionEngine` sits on this cluster's DAO, so **#198's first impl
 slice follows #247**, not the whole of slice 3.
 
 ### Slice 4 — Platform and operations
-Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
+Providers, sync runs, health, operational config. Tracked by **#205**; the audit work is
+**#255**, carved out to run in parallel. Outcome and decisions: "Slice 4 stage 1 — outcome"
+below.
 
-**Answered by removal, 2026-09-30 — see "Audit-log deletion — outcome" below.** Both audit
-tables are gone (#255), so the three paragraphs that follow are the question as it stood, not
-open work. The audit-atomicity question is moot, and self-service lifecycle actions are not
-audited because nothing is.
+**The original framing of this slice was wrong, and stage 1 is what showed it.** It said
+there was "no collapse to do" because nothing user-facing reads these objects, so this would
+be naming and consistency only. That is true about *shared objects* — there are no shadows
+here. But it missed that **over half the cluster is scaffolding for features that were never
+built**, which is a great deal to delete. See the outcome section.
 
-**Carried in from slice 1, 2026-09-26: there are two audit tables for one concept.**
-`AdminAuditEntry` and `CommissionerAuditLog` share nine columns — `id`, `actorId`,
-`action`, `description`, `beforeState`, `afterState`, `reason`, `ipAddress`, `createdAt`.
-They differ only in that the admin one adds `actorEmail`, `resourceType`, `resourceId` and
-`userAgent`, and the commissioner one adds a required `leagueId` FK, an optional
-`contestId`, and `category`.
-
-They are split **by actor role** — the same mistake this whole pass exists to undo, one
-layer down, in the schema. `AdminAuditEntry`'s relation is literally named
-`RootAdminAuditActor`.
-
-Slice 1 asked whether self-service user actions should be audited and the repo owner
-deferred it here, which is right: the answer depends on how many audit tables there should
-be. Writing self actions into `AdminAuditEntry` would give that table a third meaning, and
-a new `UserAuditLog` would be a third table for one concept, which working rule 5 forbids.
-So **self-service user lifecycle actions are currently not audited**, deliberately, pending
-this slice.
-
-One related defect found while looking: `logAdminAction` writes through a module-level
-Prisma singleton and takes no transaction client, so calls placed inside a
-`$transaction` callback were never enrolled in it — the entry committed immediately and
-would have survived a rollback. Slice 1 moved those calls after their transactions
-(#202); whether the audit write *should* be atomic is this slice's call, and there is a
-real argument that a record of a failed attempt is worth keeping.
-
-The genuinely admin-only operations. No shared objects and no collapse: this slice is naming
-(stop calling it "admin") and bringing services onto ports for consistency.
+**The audit question is answered by deletion, in #255.** This section previously carried
+three open items — whether `AdminAuditEntry` and `CommissionerAuditLog` are one idea or two,
+whether self-service user lifecycle actions should be audited (deferred here from slice 1),
+and whether the audit write should be transactional. All three dissolve: there is no audit
+table, so nothing is audited, deliberately and for a stated reason rather than as a deferral.
+`ProviderSyncRun` is the sync-run log that was actually wanted, and it already works.
 
 ### Phase 2 — the frontend, per slice
 
@@ -1879,6 +1861,83 @@ table, two stale comments, and "aggregation rules" from A11's tenant-scoped row 
 `docs/DOMAIN-OPERATIONS.md`. Left on purpose: the comment inside `mapSelectionType` (#245
 deletes the function), and `tech-specs/features/contest-event-feed-integration/`, which is a
 design input, not a live description.
+
+## Slice 4 stage 1 — outcome, 2026-09-30
+
+#205 had never had its stage 1 done. Doing it changed the slice from an epic stage into a
+single pull request, and produced the epic's sharpest finding about how this codebase
+accumulated its shape.
+
+### What stage 1 found
+
+**Four dead tables**, none of them mentioned in any plan:
+
+| Table | Designed to be | State |
+|---|---|---|
+| `PlanTier` | SaaS subscription billing — monthly and annual prices in cents, trial days, Stripe price ids, an entitlements map | Appears **only** in `schema.prisma`. Zero references anywhere |
+| `MigrationRun` | An admin-run data-migration tool with progress tracking | Nothing ever creates one |
+| `CommissionerActionItem` | A commissioner to-do list on the league dashboard, with `actionUrl` and resolve semantics | Nothing creates one; the dashboard read is live and always empty. Slice-1 residue #202 half-cleaned |
+| `IngestionJob` | A per-ingestion-run record | Superseded — see below |
+
+**Two fully stubbed features**, published as API: alerting (4 operations) and an error log
+(2 operations). `searchErrors` ignores its query argument and returns `{items: [], total: 0}`;
+`getAlertRules` returns `[]`; `updateAlertRule` carries the comment *"always throws today
+(stub)"*. Neither has a backing table.
+
+**Two partly stubbed features**: business metrics is 3 real fields of 9, infrastructure
+metrics is reachability plus three hardcoded zeros.
+
+**17 of 32 operations have no caller anywhere**, and the one exception is called only from a
+functional test.
+
+### `IngestionJob` was settled from the schema, not from data
+
+`ProviderSyncRunPayloadDto.jobPayload` — *"Serialized ingestion job details for a provider
+sync run"* — is a **field-for-field superset** of the `IngestionJob` table, down to
+`errorLog`. Three sibling fields on the same payload are each described as *"Legacy top-level
+… retained for summary compatibility."* The data was moved into the sync-run payload at some
+point and the table was left behind with shims pointing at it.
+
+The QA database is not reachable from a Claude Code session, so this was settled by reading
+the schema. That is conclusive about *shape* but not about *population* — `jobPayload` is
+optional — so #205 carries a verification step rather than an assumption.
+
+### The ruling, and the standard it sets
+
+The repo owner's instruction: **delete all of it unless there is a real purpose with high
+value; design and implement in the future when it is actually needed.** Two things cleared
+that bar.
+
+**`adminGetUnmappedParticipants` + `adminMapParticipant`.** These are the only way, through
+any API, to fix a competitor the provider could not match. `participant_provider_mappings`
+has exactly two writers — automatic creation during ingestion, and this operation writing
+`confidence: 'MANUAL'`. Slice 2 shipped a *read* of the mappings and no write at all. Without
+these, a golfer whose external id never matched has no correction path, their scores never
+arrive, and the leaderboard is quietly wrong rather than visibly broken. They need a screen;
+that is this slice's one build.
+
+**`adminCleanupStaleProviderEvents`.** A dry-run `INVENTORY` mode against `EXECUTE`, a
+`deletable`/`blocked` split so it will not delete an event something references, grouped
+summaries, and an integration test. The safety logic is the expensive part to recreate.
+
+Everything else goes.
+
+### Why this matters beyond slice 4
+
+The pattern is consistent and worth naming, because it is the same shape as every earlier
+slice's findings one level up: **a designed schema with no implementation behind it.** Stripe
+billing columns with no billing, alert thresholds with no evaluator, an error store with no
+writer, metrics fields with no collector, a to-do table with no generator. None of it appears
+in a plan. It was built ahead of need, and then need never came.
+
+Two of the deletions have a real alternative already in flight, which is the test of whether
+a deletion is safe: the error log's answer is CloudWatch, which #238 is the work to reach;
+and `ReIngestEvent`'s answer is `adminSyncProviderEventData`, the async feed-aware path the
+live UI already calls.
+
+**One defect found on the way**, independent of what happens to the feature:
+`getBusinessMetrics` reports `activeUsersLast24h` but computes a count of users *created* in
+the last 24 hours. It is a signup count wearing an activity label.
 
 ## Audit-log deletion — outcome, 2026-09-30
 
