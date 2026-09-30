@@ -28,14 +28,16 @@ everything, and repeating it on every row adds noise.
 ## Access rules
 
 **These rules decide every row in the tables below.** A1–A7 decide *who may call* an
-operation; A8 decides *what viewer context the response carries*; A9 decides what
-`isActive` does and does not constrain. Where a table and a rule
-disagree, the rule wins and the table is a bug. New operations are assigned a role by
+operation; A11 decides which objects A1 applies to; A8 decides *what viewer context the
+response carries*; A9 decides what `isActive` does and does not constrain. Where a table
+and a rule disagree, the rule wins and the table is a bug. New operations are assigned a role by
 applying these rules, not by precedent from a similar-looking route.
 
-**A1. Only `rootAdmin` may read across all rows.** An unscoped `findAll` is a root-admin
-operation. Every other caller reads through a scope — their leagues, their league's
-squads, their own user.
+**A1. Only `rootAdmin` may read across all rows of a tenant-scoped object.** An unscoped
+`findAll` over tenant-scoped data is a root-admin operation. Every other caller reads
+through a scope — their leagues, their league's squads, their own user. **A11 decides which
+objects are tenant-scoped.** A1 says nothing about global objects, where there is no scope
+to read through.
 
 **A2. A member sees only leagues they are a member of.** League visibility is
 `LeagueMembership`, not a query filter someone remembered to apply.
@@ -260,6 +262,80 @@ late.
   as a plain 403, the same answer for the caller with one fewer code to distinguish.
   `ROOT_ADMIN_SESSION_REQUIRED` and `ROOT_ADMIN_SESSION_INVALID` are unchanged, which matters
   because `clients/poolmaster/src/lib/api.ts` treats both as refresh-triggering.
+
+---
+
+## A11. The model has a tenant half and a global half, and only the tenant half is scoped
+
+**Settled 2026-09-29 with the repo owner**, after #236 widened the sport-catalog reads and A1
+as written appeared to forbid it.
+
+PoolMaster's domain divides in two, and the division is **ownership, not sensitivity**:
+
+- **Tenant-scoped objects** belong to somebody — a `User`, a `League`, a `Squad`. Two members
+  of different pools see different rows, and one must never see the other's.
+- **Global objects** describe the world outside the product. The NCAA March Madness bracket
+  and the Masters field are the same facts for every account on the platform. Scottie
+  Scheffler is on the PGA Tour whether or not anyone has ever created a pool.
+
+A1 was written when every unscoped table in the schema happened to be tenant-scoped, so it
+generalised from a sample of one kind. Applied to a global object its own wording breaks
+down: there is no "your sports" to read through.
+
+### The rule
+
+**On a global object, reads are `authenticated` and writes are `rootAdmin`.**
+
+Reads are open because there is nothing to protect: every authenticated caller would see
+byte-identical rows, so withholding them guards no one's data. It only forces the product to
+invent a second, member-visible copy of the same facts — the shadow-DTO duplication this
+epic exists to remove. A member choosing golfers for a contest needs the field and the
+rankings; that is the product working, not a leak.
+
+Writes stay `rootAdmin` because global rows are platform state: one bad edit is wrong for
+every tenant at once.
+
+### The test — all three, or it is tenant-scoped
+
+1. **No owner.** No column, directly or transitively, resolves to a `User`, `League` or
+   `Squad`.
+2. **Identical for every viewer.** Two users in different pools see the same rows. "Yours"
+   is meaningless for it.
+3. **Not produced by anyone's activity.** Nothing in the row exists because a user did
+   something in the product.
+
+Default to tenant-scoped. An object that fails any condition is tenant-scoped, and a
+borderline object is tenant-scoped until the repo owner says otherwise.
+
+### Classification
+
+| | Objects |
+|---|---|
+| **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows |
+| **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring and aggregation rules, prizes — and both audit logs |
+
+The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
+tournament), `ContestEntryPick` is tenant-scoped (a squad chose that golfer). The pick fails
+condition 3.
+
+**Not yet classified: `ContestConfigTemplate`.** It passes all three conditions — platform
+seeded, no owner, not produced by user activity — which would make it global and readable by
+any signed-in user. That is probably right, since a commissioner needs the templates to
+create a contest, but it is contest-cluster work and belongs to slice 3 (#204), not to the
+decision this rule was written for. Until #204 settles it, it stays `rootAdmin`.
+
+### What this rule does not do
+
+- **Global is not public.** A valid session is still required. A11 moves an object from
+  `rootAdmin` to `authenticated`, never to anonymous.
+- **Global is not a field-level exemption.** A11 decides which *rows* a caller may read.
+  Whether a particular column should be visible stays §13: admin-only fields are annotated on
+  the canonical DTO, not enforced. If a field on a global object turns out to be genuinely
+  operational — provider identifiers are the live example — that is a §13 question, and
+  answering it does not require re-gating the object.
+- **Global is not an argument for widening tenant reads.** No tenant-scoped object becomes
+  readable because it is "not very sensitive". A11 is a structural test, not a judgement
+  about harm.
 
 ---
 
