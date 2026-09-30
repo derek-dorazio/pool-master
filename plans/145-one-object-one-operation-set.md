@@ -1903,7 +1903,8 @@ every other contest route answers.
   expressible without a second, all-optional schema; and a merge makes the stored configuration
   depend on template state the commissioner never saw. The template is recorded as provenance
   (`templateId`, `templateVersion`). The webapp already sends the full form configuration, so
-  no client loses anything.
+  no client loses anything. **Confirmed by the repo owner, 2026-09-30:** replacement, not a
+  field-level merge.
 
 **`mapSelectionType` is gone** with the managed create, and with it the update path's rewrite of
 `selectionType` on every save — it is fixed at create now.
