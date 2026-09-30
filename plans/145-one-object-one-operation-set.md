@@ -2214,9 +2214,13 @@ local (plans/129); none of the five tables had a production writer except `inges
 whose rows duplicate the sync-run ledger (below).
 
 **`ProviderHealthLog` went too — the repo owner's call during the work.** Stage 1 and the ticket
-kept it as a table needing a port. It has no writer: nothing records provider health, and the
-provider list already makes a live check per request. A port over a table nothing writes is
-the pattern this slice exists to remove.
+kept it as a table needing a port. On `main` it had one writer and two readers — the writer
+inside `triggerHealthCheck`, the readers in `getProviderDetail` and the provider-summary
+lookup — and all three are operations this slice deletes. So the table died with its
+operations: after them nothing writes or reads it, and the provider list already makes a live
+check per request. The ticket kept the table while deleting everything that touched it; a port
+over it would have been a port over nothing. (Corrected after #264 merged: the first version
+of this note said it never had a writer.)
 
 **Deleted operations: 14, not 15.** The ticket's list counts to 14 — alerting (4), error log
 (2), business and infrastructure metrics, service health, the manual health check, provider
@@ -2328,7 +2332,8 @@ surviving path.
 ### Corrections to the ticket
 
 - 14 operations deleted, not 15.
-- `ProviderHealthLog` had no writer, so it was dropped rather than given a port.
+- `ProviderHealthLog` was kept for a port, but its one writer and both readers were operations
+  this slice deletes; it was dropped with them.
 - `IngestionJob` had a live writer; it was redundant, not dead.
 - "`ProviderSyncRun` is already indexed so a `createdAt` predicate rides an existing index in
   every filter combination" — not for the unfiltered call, which is the dashboard's default.
