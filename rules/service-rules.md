@@ -214,20 +214,28 @@ definition of done.
 
 ### List Envelope Discipline
 
-List endpoints must return a consistent envelope rather than ad hoc arrays or
-per-route pagination shapes.
+List endpoints must return a consistent envelope rather than ad hoc arrays.
+
+**There is no pagination in this API.** See §16 of
+`rules/domain-model-conventions-rules.md`, set by the repo owner 2026-09-26: no operation
+takes `page`, `pageSize`, `limit`, `offset`, `perPage` or a cursor, and no response carries
+a paging envelope. This section previously told you how to build one — it was written
+before §16 and contradicted it. Where a set could grow without bound, the answer is a
+tighter filter or a retention policy: a date range narrows *which rows you want*, which the
+caller can answer, while a page answers *how many at a time*, which is transport leaking
+into the contract.
 
 Rules:
 
-- Collection responses should use a named DTO envelope with the item array and
-  any metadata clients need.
-- Paginated endpoints should expose consistent pagination fields across the API
-  such as `items`, `page`, `pageSize`, `totalItems`, and `totalPages`, unless a
-  route has a documented domain-specific reason to use cursor pagination.
-- Non-paginated lookup lists should still use an explicit response object, for
-  example `{ events: [...] }`, not a bare array.
-- Route schemas and OpenAPI descriptions must document whether the list is
-  paginated, filtered, sorted, and what the default ordering is.
+- Collection responses use a named DTO envelope with the item array and any metadata
+  clients need — `{ events: [...] }`, `{ leagues: [...] }` — not a bare array.
+- **No paging parameters and no paging envelope.** No `total`, `page`, `pageSize` or
+  `totalPages` beside `items`. §16 lists what this rules out and what remains to be
+  converted.
+- Narrow with filters instead: a status, a league, a search term, a date range. An
+  append-only log gets a window, not a page.
+- Route schemas and OpenAPI descriptions must document how the list is filtered and
+  sorted, and what the default ordering is.
 - Frontend code must consume the DTO envelope from the generated SDK rather
   than guessing at route-specific array shapes.
 
