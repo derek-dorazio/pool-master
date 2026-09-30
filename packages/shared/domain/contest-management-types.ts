@@ -1,8 +1,6 @@
 import type {
-  ContestStatus,
   ContestFormat,
   ParticipantInactiveReason,
-  ScoringEngine,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -196,13 +194,3 @@ export interface ContestPrizeDefinition extends DomainEntity {
   active: boolean;
 }
 
-/** Condensed contest summary used by contest-management flows. */
-export interface ContestCoreSummary extends DomainEntity {
-  leagueId: string;
-  sportEventId: string;
-  name: string;
-  status: ContestStatus;
-  contestFormat: ContestFormat;
-  selectionType: SelectionType;
-  scoringEngine: ScoringEngine;
-}

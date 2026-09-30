@@ -1,12 +1,22 @@
 export type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestCoreRepository,
+  ContestEntryPickParticipant,
+  ContestEntryPickRepository,
+  ContestEntryPickWithParticipant,
+  ContestEntryStandingRepository,
+  ContestEntryStandingResult,
+  ContestEntryStandingWrite,
   ContestPrizeDefinitionRepository,
+  ContestTimingPolicyRepository,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';
 export type {
+  ContestCreate,
+  ContestStatusFilter,
+  ContestStatusTransition,
   ContestEntryRepository,
+  ContestEntryWithSquad,
   ContestRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,

@@ -1,9 +1,26 @@
-import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type SportEvent } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  LeagueRole,
+  SPORT_EVENT_STATUS_TRANSITIONS,
+  SportEventStatus,
+  SquadMembershipStatus,
+  type SportEvent,
+} from '@poolmaster/shared/domain';
 import {
   EventLifecycleError,
   EventLifecycleService,
+  type EventLifecycleContestDeps,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
+import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import {
+  fakeContestEntryRepo,
+  fakeContestRepo,
+  fakeLeagueMembershipRepo,
+  fakeLeagueRepo,
+  fakeSquadMembershipRepo,
+  fakeUserRepo,
+} from '../../support/repo-fakes';
 
 function createLogger() {
   return {
@@ -15,53 +32,81 @@ function createLogger() {
   };
 }
 
-function buildStartedContestCandidate() {
-  return {
+const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
+
+const USERS = [
+  buildUser({
+    id: 'commissioner-1',
+    email: 'commissioner@example.com',
+    firstName: 'Chris',
+    lastName: 'Commissioner',
+    username: 'commissioner',
+  }),
+  buildUser({
+    id: 'member-1',
+    email: 'member@example.com',
+    firstName: 'Mia',
+    lastName: 'Member',
+    username: 'member',
+  }),
+];
+
+/**
+ * The contest ports, empty by default. `startedContest` adds one OPEN contest on the event, in a
+ * league with one commissioner and one entry whose squad has one member; `transitioned` is
+ * whether the guarded write finds it still startable.
+ */
+function contestDeps(options: { startedContest?: boolean; transitioned?: boolean } = {}): EventLifecycleContestDeps {
+  const contest = buildContest({
     id: 'contest-1',
     leagueId: 'league-1',
+    sportEventId: 'sport-event-1',
     name: 'Masters Pick 6',
-    league: {
-      name: 'Mathworks',
-      leagueCode: 'MATHWORKS',
-      memberships: [
-        {
-          role: 'COMMISSIONER',
-          user: {
-            id: 'commissioner-1',
-            email: 'commissioner@example.com',
-            firstName: 'Chris',
-            lastName: 'Commissioner',
-            username: 'commissioner',
-            isActive: true,
-          },
-        },
-      ],
-    },
-    sportEvent: {
-      name: 'Manual Test Golf Tournament',
-      startDate: new Date('2026-05-02T20:00:00.000Z'),
-    },
-    entries: [
-      {
+    status: ContestStatus.OPEN,
+  });
+  return {
+    contests: fakeContestRepo({
+      findBySportEvent: jest.fn().mockResolvedValue(options.startedContest ? [contest] : []),
+      transitionStatus: jest.fn().mockResolvedValue(options.transitioned ?? true),
+    }),
+    entries: fakeContestEntryRepo({
+      findByContestWithSquad: jest.fn().mockResolvedValue([{
         id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        entryNumber: 1,
         name: 'Entry 1',
-        squad: {
-          name: 'Derek Team',
-          memberships: [
-            {
-              user: {
-                id: 'member-1',
-                email: 'member@example.com',
-                firstName: 'Mia',
-                lastName: 'Member',
-                username: 'member',
-                isActive: true,
-              },
-            },
-          ],
-        },
-      },
-    ],
+        status: 'ACTIVE',
+        isEliminated: false,
+        createdAt: new Date('2026-05-01'),
+        updatedAt: new Date('2026-05-01'),
+        squadName: 'Derek Team',
+      }]),
+    }),
+    leagues: fakeLeagueRepo({
+      findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' })),
+    }),
+    memberships: fakeLeagueMembershipRepo({
+      findByLeague: jest.fn().mockResolvedValue([
+        buildMembership({ leagueId: 'league-1', userId: 'commissioner-1', role: LeagueRole.COMMISSIONER }),
+        buildMembership({ leagueId: 'league-1', userId: 'member-1', role: LeagueRole.MEMBER }),
+      ]),
+    }),
+    squadMemberships: fakeSquadMembershipRepo({
+      findBySquad: jest.fn().mockResolvedValue([{
+        id: 'squad-membership-1',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'member-1',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date('2026-05-01'),
+        createdAt: new Date('2026-05-01'),
+        updatedAt: new Date('2026-05-01'),
+      }]),
+    }),
+    users: fakeUserRepo({
+      findById: jest.fn().mockImplementation(async (id: string) => USERS.find((user) => user.id === id) ?? null),
+    }),
   };
 }
 
@@ -94,12 +139,8 @@ describe('SPORT_EVENT_STATUS_TRANSITIONS exhaustiveness', () => {
 describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z allows a declared transition for a ROOT_ADMIN actor', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -114,8 +155,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-g1z rejects an undeclared transition for a ROOT_ADMIN actor with 422 SPORT_EVENT_INVALID_TRANSITION', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {};
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -135,12 +176,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z applies an undeclared transition anyway for a PROVIDER actor, only logging it', async () => {
     const logger = createLogger();
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, logger as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, logger as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -157,14 +194,10 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
+    const contests = contestDeps();
     const golfContestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
     const service = new EventLifecycleService(
-      prisma as any,
+      contests,
       sportEvents,
       createLogger() as any,
       undefined,
@@ -183,12 +216,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-g1z sets endDate on completion only when it is not already set', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -203,12 +232,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z leaves an already-set endDate alone on completion', async () => {
     const existingEndDate = new Date('2026-05-31T22:00:00.000Z');
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: existingEndDate });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -222,12 +247,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('allows a declared transition for a SYSTEM actor, the lifecycle scheduler', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -241,8 +262,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-k6q rejects an undeclared transition for a SYSTEM actor with 422 SPORT_EVENT_INVALID_TRANSITION, same as ROOT_ADMIN', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {};
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
+    const contests = contestDeps();
+    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -267,9 +288,9 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
-    const prisma = {};
+    const contests = contestDeps();
     const service = new EventLifecycleService(
-      prisma as any,
+      contests,
       sportEvents,
       createLogger() as any,
       undefined,
@@ -291,18 +312,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
   it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
-    };
+    const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
       providerName: 'smtp' as const,
       send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
     };
     const service = new EventLifecycleService(
-      prisma as any,
+      contests,
       sportEvents,
       createLogger() as any,
       mailDelivery,
@@ -315,15 +331,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'PROVIDER' },
     });
 
-    expect(prisma.contest.updateMany).toHaveBeenCalledWith({
-      where: {
-        id: 'contest-1',
-        status: { in: ['OPEN', 'LOCKED'] },
-      },
-      data: {
-        status: 'ACTIVE',
-        startsAt: new Date('2026-05-02T20:00:00.000Z'),
-      },
+    expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
+      statuses: [ContestStatus.OPEN, ContestStatus.LOCKED],
+    });
+    expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', {
+      from: [ContestStatus.OPEN, ContestStatus.LOCKED],
+      to: ContestStatus.ACTIVE,
+      startsAt: STARTED_EVENT_START,
     });
     expect(mailDelivery.send).toHaveBeenCalledTimes(2);
     expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -349,18 +363,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-9ya does not resend contest-started email when the contest is already active', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-      },
-    };
+    const contests = contestDeps({ startedContest: true, transitioned: false });
     const mailDelivery = {
       providerName: 'smtp' as const,
       send: jest.fn(),
     };
     const service = new EventLifecycleService(
-      prisma as any,
+      contests,
       sportEvents,
       createLogger() as any,
       mailDelivery,
@@ -378,18 +387,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-9ya keeps the transition successful when contest-started email delivery fails', async () => {
     const logger = createLogger();
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
-    };
+    const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
       providerName: 'ses' as const,
       send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
     };
     const service = new EventLifecycleService(
-      prisma as any,
+      contests,
       sportEvents,
       logger as any,
       mailDelivery,
@@ -417,7 +421,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 describe('EventLifecycleService on an unknown event', () => {
   it('refuses with 404 SPORT_EVENT_NOT_FOUND and changes nothing', async () => {
     const { sportEvents, storedEvent } = seededEvents();
-    const service = new EventLifecycleService({} as any, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contestDeps(), sportEvents, createLogger() as any);
 
     await expect(
       service.applySportEventStatusTransition({

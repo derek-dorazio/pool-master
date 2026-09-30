@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { EventBus } from '@poolmaster/shared/events/event-bus';
 import { Sport } from '@poolmaster/shared/domain';
-import { GolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/golf-contest-settlement-service';
+import { createGolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -25,7 +25,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     bus.subscribe('contest.completed', async (event) => {
       completedEvents.push(event);
     });
-    const service = new GolfContestSettlementService(prisma, undefined, bus);
+    const service = createGolfContestSettlementService(prisma, undefined, bus);
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({

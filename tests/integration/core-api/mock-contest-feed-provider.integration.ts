@@ -3,11 +3,11 @@ import { Sport } from '@poolmaster/shared/domain';
 import { EventBus } from '@poolmaster/shared/events/event-bus';
 import { GolfLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
-import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
+import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
-import { GolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/golf-contest-settlement-service';
+import { createGolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -862,15 +862,11 @@ describe('mock contest feed provider event-first verification', () => {
     bus.subscribe('contest.completed', async (event) => {
       contestCompletedEvents.push(event);
     });
-    const settlement = new GolfContestSettlementService(prisma, undefined, bus);
-    const eventLifecycleService = new EventLifecycleService(
-      prisma,
-      new PrismaSportEventRepository(prisma),
-      undefined,
-      undefined,
-      'http://localhost:5173',
-      settlement,
-    );
+    const settlement = createGolfContestSettlementService(prisma, undefined, bus);
+    const eventLifecycleService = createEventLifecycleService(prisma, {
+      appBaseUrl: 'http://localhost:5173',
+      golfContestSettlement: settlement,
+    });
     const persistence = new IngestionPersistence(
       prisma,
       undefined,

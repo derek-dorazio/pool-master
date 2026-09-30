@@ -14,17 +14,13 @@ import { SuccessSchema,
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaContestRepository,
-  PrismaContestConfigurationRepository,
   PrismaLeagueMembershipRepository,
-  PrismaContestEntryRepository,
-  PrismaSquadMembershipRepository,
-  PrismaSquadRepository,
 } from '../../adapters';
 import {
   requireCommissioner,
   requireCommissionerForContest,
 } from '../leagues/permissions';
-import { ContestService } from './service';
+import { createContestService } from './wiring';
 import { OverrideService } from './override-service';
 import { createContestHandlers, createCreateContestHandler } from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
@@ -40,29 +36,11 @@ export function contestsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const contestRepo = new PrismaContestRepository(prisma);
-  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const squadRepo = new PrismaSquadRepository(prisma);
-  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    fastify.log,
-  );
-  const appBaseUrl = readApplicationBaseUrl(process.env);
-
-  const contestService = new ContestService(
-    contestRepo,
-    contestConfigurationRepo,
-    membershipRepo,
-    squadRepo,
-    squadMembershipRepo,
-    undefined,
-    prisma,
-    fastify.log,
-    mailDelivery,
-    appBaseUrl,
-  );
+  const contestService = createContestService(prisma, fastify.log, {
+    mailDelivery: createMailDeliveryProvider(readMailDeliveryConfig(process.env), fastify.log),
+    appBaseUrl: readApplicationBaseUrl(process.env),
+  });
   const handlers = createContestHandlers(contestService);
   const createContest = createCreateContestHandler(
     contestService,
@@ -119,30 +97,12 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const contestRepo = new PrismaContestRepository(prisma);
-  const contestConfigurationRepo = new PrismaContestConfigurationRepository(prisma);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const squadRepo = new PrismaSquadRepository(prisma);
-  const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const entryRepo = new PrismaContestEntryRepository(prisma);
-  const mailDelivery = createMailDeliveryProvider(
-    readMailDeliveryConfig(process.env),
-    fastify.log,
-  );
-  const appBaseUrl = readApplicationBaseUrl(process.env);
-
-  const contestService = new ContestService(
-    contestRepo,
-    contestConfigurationRepo,
-    membershipRepo,
-    squadRepo,
-    squadMembershipRepo,
-    entryRepo,
-    prisma,
-    fastify.log,
-    mailDelivery,
-    appBaseUrl,
-  );
+  const contestService = createContestService(prisma, fastify.log, {
+    mailDelivery: createMailDeliveryProvider(readMailDeliveryConfig(process.env), fastify.log),
+    appBaseUrl: readApplicationBaseUrl(process.env),
+  });
+  const contestRepo = new PrismaContestRepository(prisma);
   const overrideService = new OverrideService(contestRepo);
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);

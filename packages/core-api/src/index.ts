@@ -55,12 +55,12 @@ import type { IngestionCallbacks } from './modules/ingestion/core';
 import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
-import { EventLifecycleService } from './modules/events/event-lifecycle-service';
+import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
-import { GolfContestSettlementService } from './modules/contests/golf-contest-settlement-service';
+import { createGolfContestSettlementService } from './modules/contests/wiring';
 import {
   createMailDeliveryProvider,
   readApplicationBaseUrl,
@@ -81,15 +81,13 @@ export function buildApp() {
     app.log,
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
-  const golfContestSettlement = new GolfContestSettlementService(prisma, app.log);
-  const eventLifecycleService = new EventLifecycleService(
-    prisma,
-    new PrismaSportEventRepository(prisma),
-    app.log,
+  const golfContestSettlement = createGolfContestSettlementService(prisma, app.log);
+  const eventLifecycleService = createEventLifecycleService(prisma, {
+    logger: app.log,
     mailDelivery,
     appBaseUrl,
     golfContestSettlement,
-  );
+  });
   const ingestionPersistence = new IngestionPersistence(
     prisma,
     app.log,

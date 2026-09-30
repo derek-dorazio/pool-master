@@ -617,6 +617,9 @@ and an optional event type.
 |---|---|---|
 | Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released and its field loaded (422 `SPORT_EVENT_*`). Answers 201 with the canonical contest read |
 | Update configuration | `commissioner` | `updateManagedContestConfiguration`. Refused with 409 `CONTEST_CONFIGURATION_SETTLED` while the contest is `COMPLETED` (#246): the settled result is frozen against the configuration it settled under. Reopening the contest (commissioner-gated, reason recorded) is the path back |
+| List for a league | `authenticated` today | `listContests`. **No league check** — any signed-in user can list any league's contests; contest authorization is #193, which does not yet list this route. Each row carries `entryCount`; until #247 the league-scoped list reported 0 for every contest, because its service was built without the entry reads |
+| Delete | `authenticated` today | `deleteContest`, `DRAFT` only. **No league check** (#193, held for discussion: any signed-in user can delete any `DRAFT` contest). Takes the entries, picks, draft state, configuration and the configuration's scoring rules and prize definitions with it; before #247 a configuration with a scoring rule made the delete fail |
+| Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` or `LOCKED` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
 | Read the golf leaderboard | `member` | `getGolfContestLeaderboard`. Live contests compute from event scores; a `COMPLETED` contest answers from its `ContestEntryStanding` rows (#246), so a score correction after settlement does not rewrite a finished result. A configuration with no scoring rule is 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — there is no golf fallback |
 
 ### ContestEntryStanding
@@ -629,6 +632,15 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 |---|---|---|
 | Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; reopening moves it back to `ACTIVE`, and the next settlement recomputes |
 | Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
+
+### ContestEntryPick
+
+A selection on an entry. **One insert path**, `ContestEntryPickService.createPick`, which
+copies the contest's format onto the pick inside its transaction so the per-format unique
+indexes hold (plans/117 §7.1). Its port, `ContestEntryPickRepository`, is read-only by
+design (#247), so no adapter or fake can become a second way in. The selection operations
+themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
+and move to #198's `SelectionEngine`.
 
 ## Slice 4 — Platform and operations
 

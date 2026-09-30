@@ -2,7 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestCoreRepository,
+  ContestRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -37,7 +37,7 @@ interface CreateContestManagementContext {
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
-interface ContestCreateSportEventState {
+export interface ContestCreateSportEventState {
   id: string;
   releaseAt: Date;
   fieldLocksAt: Date;
@@ -48,7 +48,7 @@ interface ContestCreateSportEventState {
   loadedParticipantCount: number;
 }
 
-interface ContestCreateSportEventReader {
+export interface ContestCreateSportEventReader {
   findById(
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
@@ -67,7 +67,7 @@ function createNoopLogger(): LifecycleLogger {
 
 export class ContestManagementService {
   constructor(
-    private readonly contestCoreRepo: ContestCoreRepository,
+    private readonly contestRepo: ContestRepository,
     private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository,
     private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
@@ -119,7 +119,7 @@ export class ContestManagementService {
     this.assertContestCreationSupported(sportEvent, input.contestFormat);
     await this.assertTierConfigurationFitsTierCount(input.sportEventId, resolvedConfiguration.configuration);
     const { selectionType } = input;
-    const contest = await this.contestCoreRepo.create({
+    const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
@@ -200,7 +200,7 @@ export class ContestManagementService {
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
     this.logger.debug({ contestId }, 'contest management get contest start');
-    const contest = await this.contestCoreRepo.findById(contestId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management get contest missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
@@ -242,7 +242,7 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
-    const contest = await this.contestCoreRepo.findById(contestId);
+    const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
@@ -354,10 +354,10 @@ export class ContestManagementService {
   }
 
   private async assertTierConfigurationFitsSportEvent(
-    sportEventId: string,
+    sportEventId: string | undefined,
     configuration: ContestConfigurationRequest,
   ): Promise<void> {
-    if (!this.sportEventReader) {
+    if (!this.sportEventReader || !sportEventId) {
       return;
     }
 
@@ -488,7 +488,7 @@ function buildContestManagementDetail(
   contest: {
     id: string;
     leagueId: string;
-    sportEventId: string;
+    sportEventId?: string;
     name: string;
     status: ContestManagementDetailDto['status'];
     createdAt: Date;
@@ -513,7 +513,10 @@ function buildContestManagementDetail(
   return {
     id: contest.id,
     leagueId: contest.leagueId,
-    sportEventId: contest.sportEventId,
+    // Every contest the one create makes has an event (#245); only rows from before it can lack
+    // one. The response field is a required string, and the serializer always rendered a missing
+    // value as "" — kept as is here rather than hidden behind a cast.
+    sportEventId: contest.sportEventId ?? '',
     name: contest.name,
     status: contest.status,
     createdAt: contest.createdAt.toISOString(),

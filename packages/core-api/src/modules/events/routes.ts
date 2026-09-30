@@ -22,11 +22,10 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { IngestionService } from '../ingestion/ingestion-service';
-import { EventLifecycleService } from './event-lifecycle-service';
+import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
-import { createSportEventServices } from './wiring';
-import { PrismaSportEventRepository } from '../../adapters';
+import { createEventLifecycleService, createSportEventServices } from './wiring';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
@@ -56,7 +55,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   const prisma = getAppPrisma(fastify);
   const handler = createEventHandlers({
     services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' })),
-    eventLifecycle: opts.eventLifecycleService ?? new EventLifecycleService(prisma, new PrismaSportEventRepository(prisma), fastify.log),
+    eventLifecycle: opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log }),
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
   });

@@ -1,18 +1,26 @@
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import type {
+  ContestEntryStandingRepository,
+  ContestRepository,
+  SportEventRepository,
+} from '@poolmaster/shared/db';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { eventBus, type EventBus } from '@poolmaster/shared/events/event-bus';
 import type { ContestCompletedEvent } from '@poolmaster/shared/events/contest';
 import type { GolfLeaderboardParticipantRow } from '../../mappers/contests.mapper';
 import {
   buildGolfLeaderboardEntry,
-  GOLF_CONTEST_CONFIGURATION_SELECT,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
   resolveGolfLeaderboardScoringDefinition,
 } from './golf-leaderboard-calculator';
-import { loadGolfLeaderboardParticipants } from './golf-leaderboard-participants';
+import {
+  loadGolfContestConfiguration,
+  loadGolfLeaderboardEntries,
+  loadGolfLeaderboardParticipants,
+  type GolfContestReadDeps,
+} from './golf-leaderboard-reads';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -27,6 +35,9 @@ function createNoopLogger(): LifecycleLogger {
   };
 }
 
+
+/** Every status settlement may complete a contest from: anything it is not already. */
+const NOT_COMPLETED = Object.values(ContestStatus).filter((status) => status !== ContestStatus.COMPLETED);
 export interface GolfContestSettlementSummary {
   sportEventId: string;
   contestsSettled: number;
@@ -34,28 +45,28 @@ export interface GolfContestSettlementSummary {
   standingsUpserted: number;
 }
 
+export interface GolfContestSettlementDeps extends GolfContestReadDeps {
+  sportEvents: SportEventRepository;
+  contests: ContestRepository;
+  standings: ContestEntryStandingRepository;
+  logger?: LifecycleLogger;
+  bus?: EventBus;
+}
+
 export class GolfContestSettlementService {
-  constructor(
-    private readonly prisma: PrismaClient,
-    private readonly logger: LifecycleLogger = createNoopLogger(),
-    private readonly bus: EventBus = eventBus,
-  ) {}
+  private readonly logger: LifecycleLogger;
+  private readonly bus: EventBus;
+
+  constructor(private readonly deps: GolfContestSettlementDeps) {
+    this.logger = deps.logger ?? createNoopLogger();
+    this.bus = deps.bus ?? eventBus;
+  }
 
   async settleCompletedSportEvent(
     sportEventId: string,
     input?: { completedAt?: Date },
   ): Promise<GolfContestSettlementSummary> {
-    const sportEvent = await this.prisma.sportEvent.findUnique({
-      where: { id: sportEventId },
-      select: {
-        id: true,
-        sport: true,
-        status: true,
-        name: true,
-        endDate: true,
-        startDate: true,
-      },
-    });
+    const sportEvent = await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent || sportEvent.sport !== Sport.GOLF || sportEvent.status !== 'COMPLETED') {
       return {
         sportEventId,
@@ -66,7 +77,7 @@ export class GolfContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
-    const participants = await loadGolfLeaderboardParticipants(this.prisma, sportEventId);
+    const participants = await loadGolfLeaderboardParticipants(this.deps, sportEventId);
     const participantById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
     );
@@ -75,49 +86,16 @@ export class GolfContestSettlementService {
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Reopening a contest (OverrideService.reopenContest) moves it back to ACTIVE, which is
     // the deliberate way to have it settled again.
-    const contests = await this.prisma.contest.findMany({
-      where: {
-        status: { notIn: [ContestStatus.CANCELLED, ContestStatus.COMPLETED] },
-        sportEventId,
-      },
-      include: {
-        configuration: {
-          select: GOLF_CONTEST_CONFIGURATION_SELECT,
-        },
-        entries: {
-          where: { status: 'ACTIVE' },
-          orderBy: [{ entryNumber: 'asc' }, { createdAt: 'asc' }],
-          select: {
-            id: true,
-            entryNumber: true,
-            name: true,
-            status: true,
-            squadId: true,
-            squad: {
-              select: {
-                name: true,
-              },
-            },
-            picks: {
-              orderBy: [{ slot: 'asc' }, { pickedAt: 'asc' }, { id: 'asc' }],
-              select: {
-                id: true,
-                sportEventParticipantId: true,
-                pickedAt: true,
-                slot: true,
-                tier: true,
-              },
-            },
-          },
-        },
-      },
+    const contests = await this.deps.contests.findBySportEvent(sportEventId, {
+      excludeStatuses: [ContestStatus.CANCELLED, ContestStatus.COMPLETED],
     });
 
     let standingsUpserted = 0;
     let contestsCompleted = 0;
     let contestsSettled = 0;
     for (const contest of contests) {
-      const countingRule = resolveGolfLeaderboardCountingRule(contest.configuration);
+      const configuration = await loadGolfContestConfiguration(this.deps, contest.id);
+      const countingRule = resolveGolfLeaderboardCountingRule(configuration);
       if (!countingRule) {
         this.logger.error({
           contestId: contest.id,
@@ -125,7 +103,7 @@ export class GolfContestSettlementService {
         }, 'Skipped Golf contest settlement because contest has no counting rule');
         continue;
       }
-      const scoring = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+      const scoring = resolveGolfLeaderboardScoringDefinition(configuration);
       if (!scoring.ok) {
         // Skip rather than guess a direction. Settling with the wrong direction pays the
         // wrong entries, and a payout is hard to undo; a skipped settlement is logged at
@@ -140,8 +118,9 @@ export class GolfContestSettlementService {
         continue;
       }
       const scoringDefinition = scoring.definition;
+      const entries = await loadGolfLeaderboardEntries(this.deps, contest.id);
       const rankedEntries = rankGolfLeaderboardEntries(
-        contest.entries.map((entry) =>
+        entries.map((entry) =>
           buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
         ),
         scoringDefinition.direction,
@@ -150,35 +129,26 @@ export class GolfContestSettlementService {
 
       for (const entry of rankedEntries) {
         // The single writer of ContestEntryStanding (and so of its denormalized contestId).
-        const standing = {
+        await this.deps.standings.upsert({
           contestId: contest.id,
+          contestEntryId: entry.entryId,
           position: entry.position,
           displayPosition: entry.displayPosition,
           countingPickLimit: entry.countingPickCount,
           scoredPickCount: entry.scoredPickCount,
           asOf,
           settledAt: completedAt,
-        };
-        const golf = { totalScoreToPar: entry.totalScoreToPar };
-        await this.prisma.contestEntryStanding.upsert({
-          where: { contestEntryId: entry.entryId },
-          create: { contestEntryId: entry.entryId, ...standing, golf: { create: golf } },
-          update: { ...standing, golf: { upsert: { create: golf, update: golf } } },
+          golf: { totalScoreToPar: entry.totalScoreToPar },
         });
         standingsUpserted++;
       }
 
-      const completion = await this.prisma.contest.updateMany({
-        where: {
-          id: contest.id,
-          status: { not: ContestStatus.COMPLETED },
-        },
-        data: {
-          status: ContestStatus.COMPLETED,
-          endsAt: completedAt,
-        },
+      const completed = await this.deps.contests.transitionStatus(contest.id, {
+        from: NOT_COMPLETED,
+        to: ContestStatus.COMPLETED,
+        endsAt: completedAt,
       });
-      if (completion.count > 0) {
+      if (completed) {
         contestsCompleted++;
         await this.publishContestCompleted(contest.id, rankedEntries, completedAt);
       }

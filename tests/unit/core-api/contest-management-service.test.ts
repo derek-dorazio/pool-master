@@ -12,7 +12,7 @@ import {
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestCoreRepository,
+  ContestRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -21,14 +21,14 @@ import {
 } from '../../../packages/core-api/src/modules/contest-management/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
-  fakeContestCoreRepo,
+  fakeContestRepo,
   fakeParticipantContestScoringRuleRepo,
 } from '../../support/repo-fakes';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
-function createContestCoreRepo(): ContestCoreRepository {
-  return fakeContestCoreRepo({
+function createContestRepo(): ContestRepository {
+  return fakeContestRepo({
     findById: jest.fn().mockResolvedValue({
       id: 'contest-1',
       leagueId: 'league-1',
@@ -233,7 +233,7 @@ describe('ContestManagementService', () => {
   });
 
   it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
@@ -302,7 +302,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-piv rejects a tiered contest whose rosterSize does not divide evenly across the event\'s tiers', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -340,7 +340,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-piv rejects a tiered contest whose countedScores exceeds rosterSize', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -378,7 +378,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-rop.78.14 rejects contest creation when the event sport does not allow the requested format', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -435,7 +435,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-rop.78.14 rejects valid future formats until creation support exists', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -495,7 +495,7 @@ describe('ContestManagementService', () => {
   });
 
   it('pool-master-rop.78.14 rejects non-golf managed creation until sport-specific configs exist', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -534,7 +534,7 @@ describe('ContestManagementService', () => {
 
   // #246 — a settled contest's configuration is frozen with its result; reopening is the path back.
   it('refuses a configuration edit while the contest is COMPLETED, and allows it once reopened', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
@@ -565,7 +565,7 @@ describe('ContestManagementService', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
@@ -609,7 +609,7 @@ describe('ContestManagementService', () => {
   it('pool-master-piv rejects a tiered contest update whose rosterSize does not divide evenly across the event\'s tiers', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       createParticipantScoringRuleRepo(),
@@ -637,7 +637,7 @@ describe('ContestManagementService', () => {
 
   it('returns contest management detail by contest id', async () => {
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
@@ -660,7 +660,7 @@ describe('ContestManagementService', () => {
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
     const golfTierService = createSportEventTierServiceStub(2, true);
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
@@ -707,7 +707,7 @@ describe('ContestManagementService', () => {
   });
 
   it('creates a contest from a seeded template and stores template provenance', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
@@ -757,7 +757,7 @@ describe('ContestManagementService', () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       contestConfigTemplateRepo,
       contestConfigurationRepo,
       createParticipantScoringRuleRepo(),
@@ -793,7 +793,7 @@ describe('ContestManagementService', () => {
   // #245 — neither a template nor a configuration: the service holds the rule even without the
   // route's refine in front of it.
   it('rejects a create naming neither a template nor a configuration', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -827,7 +827,7 @@ describe('ContestManagementService', () => {
       ...template,
       selectionType: 'BUDGET_PICK',
     });
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       contestConfigTemplateRepo,
@@ -861,7 +861,7 @@ describe('ContestManagementService', () => {
     (contestConfigTemplateRepo.findById as jest.Mock).mockResolvedValueOnce(null);
 
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       contestConfigTemplateRepo,
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
@@ -895,7 +895,7 @@ describe('ContestManagementService', () => {
     (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
 
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      createContestRepo(),
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       createParticipantScoringRuleRepo(),
@@ -916,7 +916,7 @@ describe('ContestManagementService', () => {
   });
 
   it('rejects contest creation when the sporting event field has not loaded yet', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),
@@ -952,7 +952,7 @@ describe('ContestManagementService', () => {
   });
 
   it('rejects contest creation when the sporting event is not released yet', async () => {
-    const contestCoreRepo = createContestCoreRepo();
+    const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
       createContestConfigTemplateRepo(),

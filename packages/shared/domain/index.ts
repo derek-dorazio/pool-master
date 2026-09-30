@@ -19,7 +19,6 @@ export type {
   ContestConfigTemplate,
   ContestTimingPolicy,
   ContestConfiguration,
-  ContestCoreSummary,
   ContestPrizeDefinition,
   GolfContestConfig,
   GolfContestTierDefinition,

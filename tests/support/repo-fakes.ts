@@ -51,10 +51,12 @@
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestCoreRepository,
+  ContestEntryPickRepository,
   ContestEntryRepository,
+  ContestEntryStandingRepository,
   ContestPrizeDefinitionRepository,
   ContestRepository,
+  ContestTimingPolicyRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -315,7 +317,10 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
+    findBySportEvent: many(),
+    create: echoCreate('contest'),
     update: echoUpdate(),
+    transitionStatus: jest.fn().mockResolvedValue(true),
     delete: nothing(),
     ...overrides,
   };
@@ -326,7 +331,9 @@ export function fakeContestEntryRepo(
 ): ContestEntryRepository {
   return {
     findById: one(),
+    findByIdWithSquad: one(),
     findByContest: many(),
+    findByContestWithSquad: many(),
     findBySquad: many(),
     create: echoCreate('contest-entry'),
     update: echoUpdate(),
@@ -349,15 +356,33 @@ export function fakeDraftSessionRepo(
   };
 }
 
-export function fakeContestCoreRepo(
-  overrides: Partial<ContestCoreRepository> = {},
-): ContestCoreRepository {
+/** Read-only, like the port: a pick is only ever inserted through ContestEntryPickService. */
+export function fakeContestEntryPickRepo(
+  overrides: Partial<ContestEntryPickRepository> = {},
+): ContestEntryPickRepository {
   return {
-    findById: one(),
-    findByLeague: many(),
-    create: echoCreate('contest'),
-    update: echoUpdate(),
-    delete: nothing(),
+    findByEntries: many(),
+    findByEntriesWithParticipant: many(),
+    countByEntries: jest.fn().mockResolvedValue(new Map()),
+    ...overrides,
+  };
+}
+
+export function fakeContestEntryStandingRepo(
+  overrides: Partial<ContestEntryStandingRepository> = {},
+): ContestEntryStandingRepository {
+  return {
+    findByContest: many(),
+    upsert: nothing(),
+    ...overrides,
+  };
+}
+
+export function fakeContestTimingPolicyRepo(
+  overrides: Partial<ContestTimingPolicyRepository> = {},
+): ContestTimingPolicyRepository {
+  return {
+    findActiveBySport: many(),
     ...overrides,
   };
 }

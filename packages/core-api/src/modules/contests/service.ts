@@ -6,14 +6,20 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { PrismaClient } from '@prisma/client';
 import type {
   ContestConfigurationRepository,
+  ContestEntryPickRepository,
+  ContestEntryPickWithParticipant,
+  ContestEntryStandingRepository,
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
+  LeagueRepository,
+  ParticipantContestScoringRuleRepository,
+  SportEventRepository,
   SquadMembershipRepository,
   SquadRepository,
+  UserRepository,
 } from '@poolmaster/shared/db';
 import type {
   Contest,
@@ -36,19 +42,23 @@ import {
 } from '../../mappers/contests.mapper';
 import {
   buildGolfLeaderboardEntry,
-  GOLF_CONTEST_CONFIGURATION_SELECT,
   applySettledContestStandings,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
   resolveGolfLeaderboardScoringDefinition,
 } from './golf-leaderboard-calculator';
-import { loadGolfLeaderboardParticipants } from './golf-leaderboard-participants';
+import {
+  loadGolfContestConfiguration,
+  loadGolfLeaderboardEntries,
+  loadGolfLeaderboardParticipants,
+} from './golf-leaderboard-reads';
+import type { SportEventParticipantService } from '../events/sport-event-participant-service';
+import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
   renderSystemEmailTemplate,
   type ContestEntryCompletedTierSelection,
   type MailDeliveryProvider,
 } from '../email';
-import { createSportEventTierService } from '../events/wiring';
 export interface UpdateContestInput {
   name?: string;
   startsAt?: Date;
@@ -122,30 +132,50 @@ function createNoopLogger(): LifecycleLogger {
   };
 }
 
+/**
+ * Everything ContestService reads and writes, all through ports (#247). It replaced a
+ * ten-parameter positional constructor whose optional repositories and raw PrismaClient were
+ * checked at run time; every repository here is required.
+ */
+export interface ContestServiceDeps {
+  contests: ContestRepository;
+  configurations: ContestConfigurationRepository;
+  scoringRules: ParticipantContestScoringRuleRepository;
+  entries: ContestEntryRepository;
+  picks: ContestEntryPickRepository;
+  standings: ContestEntryStandingRepository;
+  memberships: LeagueMembershipRepository;
+  squads: SquadRepository;
+  squadMemberships: SquadMembershipRepository;
+  leagues: LeagueRepository;
+  users: UserRepository;
+  sportEvents: SportEventRepository;
+  eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
+  tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent'>;
+  logger?: LifecycleLogger;
+  mailDelivery?: MailDeliveryProvider;
+  appBaseUrl?: string;
+}
+
 export class ContestService {
-  constructor(
-    private readonly contestRepo: ContestRepository,
-    private readonly contestConfigurationRepo: ContestConfigurationRepository,
-    private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly squadRepo?: SquadRepository,
-    private readonly squadMembershipRepo?: SquadMembershipRepository,
-    private readonly entryRepo?: ContestEntryRepository,
-    private readonly prisma?: PrismaClient,
-    private readonly logger: LifecycleLogger = createNoopLogger(),
-    private readonly mailDelivery?: MailDeliveryProvider,
-    private readonly appBaseUrl = 'http://localhost:5173',
-  ) {}
+  private readonly logger: LifecycleLogger;
+  private readonly appBaseUrl: string;
+
+  constructor(private readonly deps: ContestServiceDeps) {
+    this.logger = deps.logger ?? createNoopLogger();
+    this.appBaseUrl = deps.appBaseUrl ?? 'http://localhost:5173';
+  }
 
   async getContest(
     contestId: string,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
     this.logger.debug({ contestId }, 'contest get start');
-    const contest = await this.contestRepo.findById(contestId);
+    const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest get missing contest');
       return null;
     }
-    const contestConfiguration = await this.contestConfigurationRepo.findByContest(contestId);
+    const contestConfiguration = await this.deps.configurations.findByContest(contestId);
     this.logger.info({
       contestId,
       hasConfiguration: contestConfiguration !== null,
@@ -154,19 +184,19 @@ export class ContestService {
   }
 
   async listByLeague(leagueId: string): Promise<Contest[]> {
-    return this.contestRepo.findByLeague(leagueId);
+    return this.deps.contests.findByLeague(leagueId);
   }
 
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
-    if (!contestIds.length || !this.entryRepo) {
+    if (!contestIds.length) {
       return counts;
     }
 
     const entryLists = await Promise.all(
       contestIds.map(async (contestId) => ({
         contestId,
-        entries: await this.entryRepo!.findByContest(contestId),
+        entries: await this.deps.entries.findByContest(contestId),
       })),
     );
 
@@ -183,7 +213,7 @@ export class ContestService {
     updates: UpdateContestInput,
   ): Promise<Contest> {
     this.logger.debug({ contestId, updates }, 'contest update start');
-    const contest = await this.contestRepo.findById(contestId);
+    const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest update missing contest');
       throw new ContestNotFoundError(contestId);
@@ -195,7 +225,7 @@ export class ContestService {
         'CONTEST_EDIT_STATUS_INVALID',
       );
     }
-    const updatedContest = await this.contestRepo.update(contestId, updates as Partial<Contest>);
+    const updatedContest = await this.deps.contests.update(contestId, updates as Partial<Contest>);
     this.logger.info({ contestId }, 'contest update completed');
     return updatedContest;
   }
@@ -203,7 +233,7 @@ export class ContestService {
   /** Deletes a contest. Only allowed when status is DRAFT. */
   async deleteContest(contestId: string): Promise<void> {
     this.logger.debug({ contestId }, 'contest delete start');
-    const contest = await this.contestRepo.findById(contestId);
+    const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest delete missing contest');
       throw new ContestNotFoundError(contestId);
@@ -215,7 +245,7 @@ export class ContestService {
         'CONTEST_DELETE_STATUS_INVALID',
       );
     }
-    await this.contestRepo.delete(contestId);
+    await this.deps.contests.delete(contestId);
     this.logger.info({ contestId }, 'contest delete completed');
   }
 
@@ -275,27 +305,8 @@ export class ContestService {
     const requesterSquadId = context.squadMembership?.squadId ?? null;
     const picksRevealed = contestPicksRevealed(context.contest.status);
 
-    const prisma = this.requirePrisma();
-    const row = await prisma.contestEntry.findFirst({
-      where: {
-        id: entryId,
-        contestId,
-      },
-      include: {
-        squad: true,
-        picks: {
-          include: {
-            sportEventParticipant: {
-              include: {
-                participant: true,
-              },
-            },
-          },
-          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
-        },
-      },
-    });
-
+    const found = await this.deps.entries.findByIdWithSquad(entryId);
+    const row = found?.contestId === contestId ? found : null;
     if (!row) {
       throw new ContestEntryNotFoundError(contestId, entryId);
     }
@@ -305,31 +316,17 @@ export class ContestService {
     // regardless of contest status.
     const isOwner = requesterSquadId !== null && row.squadId === requesterSquadId;
     const includeParticipants = picksRevealed || isOwner;
+    const picks = await this.deps.picks.findByEntriesWithParticipant([row.id]);
 
     const entry = toContestEntryDetailDto(
       {
         ...row,
-        status: row.status as ContestEntry['status'],
-        picksCount: row.picks.length,
+        picksCount: picks.length,
       },
       {
-        name: row.squad.name,
+        name: row.squadName,
       },
-      includeParticipants
-        ? row.picks.map((pick) => ({
-          pickId: pick.id,
-          sportEventParticipantId: pick.sportEventParticipantId,
-          participantId: pick.sportEventParticipant.participantId,
-          participantName: pick.sportEventParticipant.participant.name,
-          participantStatus: deriveLegacyParticipantStatus(
-            pick.sportEventParticipant.isActive,
-            pick.sportEventParticipant.inactiveReason,
-          ),
-          role: pick.sportEventParticipant.participant.role ?? null,
-          teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
-          pickedAt: pick.pickedAt,
-        }))
-        : null,
+      includeParticipants ? picks.map(toContestEntryParticipantRow) : null,
     );
 
     return { entry, picksRevealed };
@@ -347,25 +344,15 @@ export class ContestService {
       );
     }
 
-    const prisma = this.requirePrisma();
-    const contest = await prisma.contest.findUnique({
-      where: { id: contestId },
-      select: {
-        id: true,
-        sportEvent: {
-          select: {
-            id: true,
-            sport: true,
-          },
-        },
-        configuration: {
-          select: GOLF_CONTEST_CONFIGURATION_SELECT,
-        },
-      },
-    });
-
-    const sportEvent = contest?.sportEvent ?? null;
-    if (!contest || !sportEvent) {
+    const { contest } = context;
+    if (!contest.sportEventId) {
+      throw new ContestOperationError(
+        'Golf leaderboard requires a contest sport event.',
+        'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
+      );
+    }
+    const sportEvent = await this.deps.sportEvents.findById(contest.sportEventId);
+    if (!sportEvent) {
       throw new ContestOperationError(
         'Golf leaderboard requires a contest sport event.',
         'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
@@ -378,14 +365,15 @@ export class ContestService {
       );
     }
 
-    const countingRule = resolveGolfLeaderboardCountingRule(contest.configuration);
+    const configuration = await loadGolfContestConfiguration(this.deps, contestId);
+    const countingRule = resolveGolfLeaderboardCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
         'Golf leaderboard requires a contest configuration with countedScores, rosterSize, or pickCount.',
         'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
-    const scoring = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+    const scoring = resolveGolfLeaderboardScoringDefinition(configuration);
     if (!scoring.ok) {
       throw scoring.reason === 'RULE_MISSING'
         ? new ContestOperationError(
@@ -399,8 +387,8 @@ export class ContestService {
     }
     const scoringDefinition = scoring.definition;
     const [participants, entries] = await Promise.all([
-      loadGolfLeaderboardParticipants(this.requirePrisma(), sportEvent.id),
-      this.loadGolfLeaderboardEntries(contestId),
+      loadGolfLeaderboardParticipants(this.deps, sportEvent.id),
+      loadGolfLeaderboardEntries(this.deps, contestId),
     ]);
     const participantById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
@@ -418,18 +406,7 @@ export class ContestService {
 
     // A settled contest answers from its frozen standings (#246); a live one computes.
     if (context.contest.status === ContestStatus.COMPLETED) {
-      const standings = await prisma.contestEntryStanding.findMany({
-        where: { contestId },
-        select: {
-          contestEntryId: true,
-          position: true,
-          displayPosition: true,
-          countingPickLimit: true,
-          scoredPickCount: true,
-          asOf: true,
-          golf: { select: { totalScoreToPar: true } },
-        },
-      });
+      const standings = await this.deps.standings.findByContest(contestId);
       if (standings.length > 0) {
         return {
           contestId,
@@ -508,7 +485,7 @@ export class ContestService {
     }
 
     const nextEntryNumber = existingEntries.length + 1;
-    const created = await this.requireEntryRepo().create({
+    const created = await this.deps.entries.create({
       contestId,
       squadId: squad.id,
       entryNumber: nextEntryNumber,
@@ -571,7 +548,7 @@ export class ContestService {
       );
     }
 
-    await this.requireEntryRepo().delete(existing.id);
+    await this.deps.entries.delete(existing.id);
     this.logger.info({ contestId, userId, entryId: existing.id }, 'contest entry delete completed');
   }
 
@@ -649,7 +626,7 @@ export class ContestService {
       pendingUpdates.tiebreakerValue = updates.tiebreakerValue;
     }
 
-    await this.requireEntryRepo().update(entryId, pendingUpdates);
+    await this.deps.entries.update(entryId, pendingUpdates);
     const dto = await this.loadEntryDtoById(entryId);
     await this.deliverContestEntryCompletedEmail(contestId, entryId, userId);
     this.logger.info({ contestId, entryId, userId }, 'contest entry update completed');
@@ -661,7 +638,7 @@ export class ContestService {
     entryId: string,
     userId: string,
   ): Promise<void> {
-    if (!this.mailDelivery || !this.prisma) {
+    if (!this.deps.mailDelivery) {
       this.logger.debug({
         action: 'contestEntry.emailDelivery.skipped',
         data: { contestId, entryId },
@@ -671,20 +648,7 @@ export class ContestService {
 
     const [entry, user] = await Promise.all([
       this.loadContestEntryReceiptData(entryId),
-      // #202 step 3.6 — NOT on `UserRepository`, and recorded rather than converted. This
-      // service's constructor is a twelve-parameter positional list with three trailing
-      // optionals, so adding a port to it means counting arguments at thirty-two call sites;
-      // the fix is to replace the positional list with an options object, which is its own
-      // change. The read itself is a plain user-by-id.
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          email: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-        },
-      }),
+      this.deps.users.findById(userId),
     ]);
 
     if (!entry || entry.contestId !== contestId) {
@@ -745,7 +709,7 @@ export class ContestService {
     });
 
     try {
-      await this.mailDelivery.send({
+      await this.deps.mailDelivery.send({
         to: user.email,
         subject: message.subject,
         text: message.text,
@@ -790,7 +754,7 @@ export class ContestService {
   ): Promise<ContestEntryCompletedTierSelection[]> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
     if (entry.contest.sportEventId) {
-      const valuations = await createSportEventTierService(this.requirePrisma(), this.logger as FastifyBaseLogger).getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
+      const valuations = await this.deps.tiers.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
       for (const valuation of valuations) {
         if (valuation.tierLabel !== null) {
           tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
@@ -803,48 +767,52 @@ export class ContestService {
   private async loadContestEntryReceiptData(
     entryId: string,
   ): Promise<ContestEntryReceiptData | null> {
-    const row = await this.requirePrisma().contestEntry.findUnique({
-      where: { id: entryId },
-      include: {
-        squad: {
-          select: { name: true },
-        },
-        contest: {
-          include: {
-            configuration: {
-              select: {
-                tierConfig: true,
-                rosterSize: true,
-                pickCount: true,
-                rounds: true,
-              },
-            },
-            league: {
-              select: {
-                name: true,
-                leagueCode: true,
-              },
-            },
-          },
-        },
-        picks: {
-          include: {
-            sportEventParticipant: {
-              include: {
-                participant: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
-        },
+    const entry = await this.deps.entries.findByIdWithSquad(entryId);
+    if (!entry) {
+      return null;
+    }
+    const contest = await this.deps.contests.findById(entry.contestId);
+    if (!contest) {
+      return null;
+    }
+    const [configuration, league, picks] = await Promise.all([
+      this.deps.configurations.findByContest(contest.id),
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.picks.findByEntriesWithParticipant([entry.id]),
+    ]);
+    if (!league) {
+      return null;
+    }
+    return {
+      id: entry.id,
+      contestId: entry.contestId,
+      name: entry.name,
+      tiebreakerValue: entry.tiebreakerValue ?? null,
+      updatedAt: entry.updatedAt,
+      squad: { name: entry.squadName },
+      contest: {
+        id: contest.id,
+        leagueId: contest.leagueId,
+        name: contest.name,
+        sportEventId: contest.sportEventId ?? null,
+        configuration: configuration
+          ? {
+            tierConfig: configuration.tierConfig ?? null,
+            rosterSize: configuration.rosterSize ?? null,
+            pickCount: configuration.pickCount ?? null,
+            rounds: configuration.rounds ?? null,
+          }
+          : null,
+        league: { name: league.name, leagueCode: league.leagueCode },
       },
-    });
-    return row as ContestEntryReceiptData | null;
+      picks: picks.map((pick) => ({
+        pickedAt: pick.pickedAt,
+        sportEventParticipant: {
+          id: pick.sportEventParticipantId,
+          participant: { id: pick.participant.participantId, name: pick.participant.participantName },
+        },
+      })),
+    };
   }
 
   private async getEntryContext(
@@ -855,14 +823,14 @@ export class ContestService {
     membership: Awaited<ReturnType<LeagueMembershipRepository['findByLeagueAndUser']>>;
     squadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>;
   }> {
-    const contest = await this.contestRepo.findById(contestId);
+    const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId, userId }, 'contest entry context missing contest');
       throw new ContestNotFoundError(contestId);
     }
-    const membership = await this.membershipRepo.findByLeagueAndUser(contest.leagueId, userId);
+    const membership = await this.deps.memberships.findByLeagueAndUser(contest.leagueId, userId);
     const squadMembership = membership
-      ? await this.requireSquadMembershipRepo().findByLeagueAndUser(contest.leagueId, userId)
+      ? await this.deps.squadMemberships.findByLeagueAndUser(contest.leagueId, userId)
       : null;
     return { contest, membership, squadMembership };
   }
@@ -871,7 +839,7 @@ export class ContestService {
     contestId: string,
     squadId: string,
   ): Promise<ContestEntry[]> {
-    const entries = await this.requireEntryRepo().findBySquad(squadId);
+    const entries = await this.deps.entries.findBySquad(squadId);
     return entries
       .filter((entry) => entry.contestId === contestId && entry.status === 'ACTIVE')
       .sort((left, right) => left.entryNumber - right.entryNumber);
@@ -886,27 +854,15 @@ export class ContestService {
   }
 
   private async loadEntryDtos(contestId: string): Promise<ContestEntryDto[]> {
-    const prisma = this.requirePrisma();
-    const rows = await prisma.contestEntry.findMany({
-      where: { contestId },
-      include: {
-        squad: true,
-      },
-      orderBy: [
-        { entryNumber: 'asc' },
-        { createdAt: 'asc' },
-      ],
-    });
-
-    const pickCountByEntry = await this.loadPickCountsForEntries(rows.map((row) => row.id));
+    const rows = await this.deps.entries.findByContestWithSquad(contestId);
+    const pickCountByEntry = await this.deps.picks.countByEntries(rows.map((row) => row.id));
 
     return rows.map((row) =>
       toContestEntryDto({
         ...row,
-        status: row.status as ContestEntry['status'],
         picksCount: pickCountByEntry.get(row.id) ?? 0,
       }, {
-        name: row.squad.name,
+        name: row.squadName,
       }),
     );
   }
@@ -915,20 +871,10 @@ export class ContestService {
     contestId: string,
     options: { requesterSquadId: string | null; revealAll: boolean },
   ): Promise<ContestEntryDetailDto[]> {
-    const prisma = this.requirePrisma();
-    const rows = await prisma.contestEntry.findMany({
-      where: { contestId },
-      include: {
-        squad: true,
-      },
-      orderBy: [
-        { entryNumber: 'asc' },
-        { createdAt: 'asc' },
-      ],
-    });
+    const rows = await this.deps.entries.findByContestWithSquad(contestId);
 
     const entryIds = rows.map((row) => row.id);
-    const pickCountByEntry = await this.loadPickCountsForEntries(entryIds);
+    const pickCountByEntry = await this.deps.picks.countByEntries(entryIds);
 
     // Determine which entries get participant detail bundled in.
     // - Always include for the requester's own squad (owners see their picks pre-reveal).
@@ -949,121 +895,29 @@ export class ContestService {
       return toContestEntryDetailDto(
         {
           ...row,
-          status: row.status as ContestEntry['status'],
           picksCount: pickCountByEntry.get(row.id) ?? 0,
         },
-        { name: row.squad.name },
+        { name: row.squadName },
         includeParticipants ? (participantsByEntry.get(row.id) ?? []) : null,
       );
     });
   }
 
-  private async loadPickCountsForEntries(entryIds: string[]): Promise<Map<string, number>> {
-    if (entryIds.length === 0) {
-      return new Map();
-    }
-    const prisma = this.requirePrisma();
-    const rows = await prisma.contestEntryPick.groupBy({
-      by: ['entryId'],
-      where: { entryId: { in: entryIds } },
-      _count: { id: true },
-    });
-    return new Map(rows.map((row) => [row.entryId, row._count.id]));
-  }
-
   private async loadParticipantsForEntries(
     entryIds: string[],
   ): Promise<Map<string, ContestEntryParticipantRow[]>> {
-    const prisma = this.requirePrisma();
-    const picks = await prisma.contestEntryPick.findMany({
-      where: { entryId: { in: entryIds } },
-      include: {
-        sportEventParticipant: {
-          include: {
-            participant: true,
-          },
-        },
-      },
-      orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
-    });
-
+    const picks = await this.deps.picks.findByEntriesWithParticipant(entryIds);
     const grouped = new Map<string, ContestEntryParticipantRow[]>();
     for (const pick of picks) {
       const list = grouped.get(pick.entryId) ?? [];
-      list.push({
-        pickId: pick.id,
-        sportEventParticipantId: pick.sportEventParticipantId,
-        participantId: pick.sportEventParticipant.participantId,
-        participantName: pick.sportEventParticipant.participant.name,
-        participantStatus: deriveLegacyParticipantStatus(
-          pick.sportEventParticipant.isActive,
-          pick.sportEventParticipant.inactiveReason,
-        ),
-        role: pick.sportEventParticipant.participant.role ?? null,
-        teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
-        pickedAt: pick.pickedAt,
-      });
+      list.push(toContestEntryParticipantRow(pick));
       grouped.set(pick.entryId, list);
     }
     return grouped;
   }
 
-  private async loadGolfLeaderboardEntries(contestId: string): Promise<Array<{
-    id: string;
-    entryNumber: number;
-    name: string;
-    status: string;
-    squadId: string;
-    squad: { name: string };
-    picks: Array<{
-      id: string;
-      sportEventParticipantId: string;
-      pickedAt: Date;
-      slot: number | null;
-      tier: string | null;
-    }>;
-  }>> {
-    return this.requirePrisma().contestEntry.findMany({
-      where: {
-        contestId,
-        status: 'ACTIVE',
-      },
-      select: {
-        id: true,
-        entryNumber: true,
-        name: true,
-        status: true,
-        squadId: true,
-        squad: {
-          select: { name: true },
-        },
-        picks: {
-          select: {
-            id: true,
-            sportEventParticipantId: true,
-            pickedAt: true,
-            slot: true,
-            tier: true,
-          },
-          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
-        },
-      },
-      orderBy: [
-        { entryNumber: 'asc' },
-        { createdAt: 'asc' },
-      ],
-    });
-  }
-
   private async loadEntryDtoById(entryId: string): Promise<ContestEntryDto> {
-    const prisma = this.requirePrisma();
-    const row = await prisma.contestEntry.findUnique({
-      where: { id: entryId },
-      include: {
-        squad: true,
-      },
-    });
-
+    const row = await this.deps.entries.findByIdWithSquad(entryId);
     if (!row) {
       throw new ContestEntryOperationError(
         `Contest entry not found: ${entryId}`,
@@ -1071,16 +925,12 @@ export class ContestService {
       );
     }
 
-    const pickCount = await this.requirePrisma().contestEntryPick.count({
-      where: { entryId: row.id },
-    });
-
+    const pickCounts = await this.deps.picks.countByEntries([row.id]);
     return toContestEntryDto({
       ...row,
-      status: row.status as ContestEntry['status'],
-      picksCount: pickCount,
+      picksCount: pickCounts.get(row.id) ?? 0,
     }, {
-      name: row.squad.name,
+      name: row.squadName,
     });
   }
 
@@ -1089,11 +939,8 @@ export class ContestService {
       return;
     }
 
-    const loadedParticipantCount = await this.requirePrisma().sportEventParticipant.count({
-      where: {
-        sportEventId: contest.sportEventId,
-      },
-    });
+    const loadedParticipantCount = (await this.deps.sportEvents.countParticipants([contest.sportEventId]))
+      .get(contest.sportEventId) ?? 0;
     if (loadedParticipantCount > 0) {
       return;
     }
@@ -1110,12 +957,11 @@ export class ContestService {
   }
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
-    const prisma = this.requirePrisma();
-    const [pickCount, draftPickHistoryCount] = await Promise.all([
-      prisma.contestEntryPick.count({ where: { entryId } }),
-      prisma.draftPickHistory.count({ where: { entryId } }),
-    ]);
-    return pickCount + draftPickHistoryCount > 0;
+    // Picks alone decide it: every DraftPickHistory row references an existing pick (a required
+    // foreign key), so the draft-history count the raw read also added could never be non-zero
+    // while the pick count was zero.
+    const pickCounts = await this.deps.picks.countByEntries([entryId]);
+    return (pickCounts.get(entryId) ?? 0) > 0;
   }
 
   private async requireSquadForEntry(
@@ -1123,7 +969,7 @@ export class ContestService {
     existingSquadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>,
   ) {
     if (existingSquadMembership?.status === SquadMembershipStatus.ACTIVE) {
-      const squad = await this.requireSquadRepo().findById(existingSquadMembership.squadId);
+      const squad = await this.deps.squads.findById(existingSquadMembership.squadId);
       if (squad) {
         return squad;
       }
@@ -1136,14 +982,7 @@ export class ContestService {
   }
 
   private async getMaxEntriesPerSquad(contestId: string): Promise<number | null> {
-    const prisma = this.requirePrisma();
-    const configuration = await prisma.contestConfiguration.findUnique({
-      where: { contestId },
-      select: {
-        configJson: true,
-        maxEntriesPerSquad: true,
-      },
-    });
+    const configuration = await this.deps.configurations.findByContest(contestId);
     if (!configuration) {
       return 1;
     }
@@ -1157,42 +996,7 @@ export class ContestService {
     return configuration.maxEntriesPerSquad ?? null;
   }
 
-  private requireEntryRepo(): ContestEntryRepository {
-    if (!this.entryRepo) {
-      throw new ContestEntryOperationError(
-        'Contest entry repository is unavailable',
-        'CONTEST_ENTRY_REPOSITORY_UNAVAILABLE',
-      );
-    }
-    return this.entryRepo;
-  }
 
-  private requireSquadRepo(): SquadRepository {
-    if (!this.squadRepo) {
-      throw new ContestEntryOperationError(
-        'Squad repository is unavailable',
-        'SQUAD_REPOSITORY_UNAVAILABLE',
-      );
-    }
-    return this.squadRepo;
-  }
-
-  private requireSquadMembershipRepo(): SquadMembershipRepository {
-    if (!this.squadMembershipRepo) {
-      throw new ContestEntryOperationError(
-        'Squad membership repository is unavailable',
-        'SQUAD_MEMBERSHIP_REPOSITORY_UNAVAILABLE',
-      );
-    }
-    return this.squadMembershipRepo;
-  }
-
-  private requirePrisma(): PrismaClient {
-    if (!this.prisma) {
-      throw new ContestEntryOperationError('Prisma client is unavailable', 'PRISMA_UNAVAILABLE');
-    }
-    return this.prisma;
-  }
 }
 
 export class ContestNotFoundError extends Error {
@@ -1231,6 +1035,23 @@ export class ContestEntryNotFoundError extends Error {
 
 function buildDefaultEntryName(squadName: string, entryNumber: number): string {
   return `${squadName} Entry ${entryNumber}`;
+}
+
+/** A pick as a contest entry shows it: the pick and the participant it points at. */
+function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): ContestEntryParticipantRow {
+  return {
+    pickId: pick.id,
+    sportEventParticipantId: pick.sportEventParticipantId,
+    participantId: pick.participant.participantId,
+    participantName: pick.participant.participantName,
+    participantStatus: deriveLegacyParticipantStatus(
+      pick.participant.isActive,
+      pick.participant.inactiveReason,
+    ),
+    role: pick.participant.role,
+    teamAffiliation: pick.participant.teamAffiliation,
+    pickedAt: pick.pickedAt,
+  };
 }
 
 function getRequiredSelectionCount(
