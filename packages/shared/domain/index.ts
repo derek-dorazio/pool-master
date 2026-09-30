@@ -5,11 +5,15 @@ export * from './providers';
 export * from './system';
 export {
   AggregationDefinitionIdSchema,
+  compareScores,
+  PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
 } from './contest-scoring';
 export type {
   AggregationDefinitionId,
+  ParticipantScoringDefinition,
   ParticipantScoringDefinitionId,
+  ScoreDirection,
 } from './contest-scoring';
 export type {
   ContestConfigTemplate,
@@ -28,38 +32,6 @@ export type {
   SportEventReadinessStatus,
   SportEventParticipant,
 } from './contest-management-types';
-export {
-  BonusRuleSchema,
-  BonusTriggerSchema,
-  BracketRoundRuleSchema,
-  CountingMethod,
-  DNFHandling,
-  MultiplierRuleSchema,
-  PenaltyRuleSchema,
-  PositionRuleSchema,
-  RuleConditionSchema,
-  ScoringConfigSchema,
-  ScoringType,
-  SpecialSlotConfigSchema,
-  StatRuleSchema,
-  TiebreakerConfigSchema,
-  TiebreakerMethod,
-  UpsetBonusConfigSchema,
-} from './scoring-config';
-export type {
-  BonusRule,
-  BonusTrigger,
-  BracketRoundRule,
-  MultiplierRule,
-  PenaltyRule,
-  PositionRule,
-  RuleCondition,
-  ScoringConfig,
-  SpecialSlotConfig,
-  StatRule,
-  TiebreakerConfig,
-  UpsetBonusConfig,
-} from './scoring-config';
 export type {
   AdminAuditEntry,
   AdminPermission,

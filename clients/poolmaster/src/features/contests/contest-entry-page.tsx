@@ -6,6 +6,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -37,17 +38,8 @@ type DraftState = GetDraftStateResponses[200];
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
-function formatRelativeToPar(value: number | null | undefined) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return null;
-  }
-
-  if (value === 0) {
-    return 'E';
-  }
-
-  return value > 0 ? `+${value}` : `${value}`;
-}
+// The tiebreaker is a predicted winning score relative to par.
+const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
 
 function getContestPhaseLabel(contest: ContestDetailDto) {
   switch (contest.status) {
@@ -538,8 +530,8 @@ export function ContestEntryPage() {
   const lineupComplete =
     completionStats.requiredSelections > 0
     && completionStats.totalSelections >= completionStats.requiredSelections;
-  const hasSavedTiebreaker =
-    draftState.tiebreakerValue !== null && draftState.tiebreakerValue !== undefined;
+  const savedTiebreaker = draftState.tiebreakerValue ?? null;
+  const hasSavedTiebreaker = savedTiebreaker !== null;
   const selectedTiebreakerValue =
     tiebreakerDraft.trim().length > 0
       ? Number.parseInt(tiebreakerDraft.trim(), 10)
@@ -628,8 +620,8 @@ export function ContestEntryPage() {
           <MetricTile
             helperText={(
               <span data-testid="contest-entry-tiebreaker-summary">
-                {hasSavedTiebreaker
-                  ? `Relative to par ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`
+                {savedTiebreaker !== null
+                  ? `Relative to par ${formatTiebreaker(savedTiebreaker)}`
                   : isEditable
                     ? 'Needed after lineup is complete'
                     : 'No tiebreaker was saved'}
@@ -698,7 +690,7 @@ export function ContestEntryPage() {
                   >
                     {draftState.tiebreakerValue === null || draftState.tiebreakerValue === undefined
                       ? 'No tiebreaker prediction was saved.'
-                      : `Winning score relative to par: ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`}
+                      : `Winning score relative to par: ${formatTiebreaker(draftState.tiebreakerValue)}`}
                   </div>
                 </Alert>
               )

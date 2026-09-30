@@ -174,6 +174,18 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
             ],
             updatedAt: '2026-05-08T22:00:00.000Z',
           },
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            sportEventId: eventId,
+            participantId: '55555555-5555-4555-8555-555555555555',
+            participantName: 'Level Par Player',
+            status: 'ACTIVE',
+            roundCount: 1,
+            totalStrokes: 72,
+            scoreToPar: 0,
+            golfRounds: [],
+            updatedAt: '2026-05-08T22:00:00.000Z',
+          },
         ],
       },
     });
@@ -192,6 +204,9 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
     expect(within(modal).getByText('12.5')).toBeInTheDocument();
     expect(within(modal).getByText('-3')).toBeInTheDocument();
     expect(within(modal).getByText('2 rounds, strokes 141')).toBeInTheDocument();
+    // Level par renders "E", as on the contest entry page and the leaderboard.
+    expect(within(modal).getByText('E')).toBeInTheDocument();
+    expect(within(modal).queryByText('0')).not.toBeInTheDocument();
     expect(adminListEventParticipantsMock).toHaveBeenLastCalledWith({
       path: { eventId },
     });

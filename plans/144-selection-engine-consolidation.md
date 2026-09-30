@@ -221,6 +221,44 @@ twice.
   config-driven and type-agnostic) or the engine (it interacts with capacity)? Current code
   puts it in the shared path, which is probably right.
 
+## Scoring rule sketch — carried from the deleted `scoring-config.ts` (#234)
+
+`packages/shared/domain/scoring-config.ts` was deleted in #234: 189 lines, 27 exports, zero
+consumers, never parsed. Its shapes sketched a configurable scoring engine and are recorded
+here as intent, not as a design — nothing below was built, and none of it constrains the
+engines this epic defines. There is no scoring epic yet; this is the nearest home, because
+#234 trimmed `ParticipantScoringDefinitionIdSchema` to its one live id and ids are re-added
+per engine as this epic lands them.
+
+What the sketch modelled, one JSON document per contest:
+
+- **Scoring type** — `CUMULATIVE`, `KNOCKOUT`, `BRACKET`, `STROKE_PLAY`, `POSITION`.
+- **Stat rules** — `stat_key`, `points_per_unit`, optional `unit_size` and a condition
+  (`eq`/`gt`/`gte`/`lt`/`lte`/`between` against one or two values).
+- **Position rules** — points for a finishing position, a position range, `LAST` or `CUT`.
+- **Bonus and penalty rules** — a stat trigger with a condition, or a named trigger, worth
+  a fixed number of points.
+- **Multipliers** — applied to all points, one stat, position points, or one roster slot.
+- **Bracket round rules and upset bonus** — points per correct pick per round; a bonus by
+  seed difference or seed multiplier, optionally scaled by round.
+- **Special slots** — captain/MVP/double-down: a slot with a multiplier, an optional cost
+  multiplier, a per-roster cap and eligible positions.
+- **Tiebreakers** — primary/secondary/tertiary from championship-score prediction, most
+  correct picks, earlier submission, best single score, most birdies, lowest round,
+  head-to-head, most wins, coin flip, commissioner decision.
+- **DNF handling** — `ZERO`, `EXCLUDE`, `LAST_PLACE`, `PENALTY`, `MISSED_CUT_SCORE`, with a
+  missed-event score or points.
+- **Counting** — `ALL`, `BEST_N`, `DROP_LOWEST_N`.
+- **`lower_is_better`** — superseded. Direction is now a property of the participant
+  scoring definition (`PARTICIPANT_SCORING_DEFINITIONS` in
+  `packages/shared/domain/contest-scoring.ts`), never of a contest's configuration.
+
+**One part was not speculative.** "Best N" is live: `resolveGolfLeaderboardCountingRule`
+reads `countedScores` out of `ContestConfiguration.configJson` and the leaderboard counts
+the best N golfers. The sketch's `CountingMethod`/`best_n` is the same mechanism under
+another name, and the live one bypasses any registry. Expressing the counting rule through
+the scoring definitions is a follow-on, not part of #234.
+
 ## Sources / Prior Decisions
 
 - #198 — this epic. #200 — snake removal. #199 — deferred coordinated selection, which
