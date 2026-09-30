@@ -271,17 +271,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(await prisma.participantProviderMapping.count()).toBe(3);
     expect(await prisma.participant.count()).toBe(3);
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: directContest.id } })).resolves.toBeDefined();
-    await expect(prisma.adminAuditEntry.findFirstOrThrow({
-      where: {
-        actorId: rootAdmin.user.id,
-        action: 'sportsdata.cleanup_stale_events',
-        resourceType: 'SPORT_EVENT',
-        resourceId: 'stale-provider-events',
-      },
-    })).resolves.toMatchObject({
-      actorEmail: rootAdmin.user.email,
-      description: 'Deleted 3 stale provider event(s) after inventorying 5.',
-    });
   });
 
   it('pool-master-rop.68.1.6: rejects stale provider event cleanup requests without an explicit mode', async () => {

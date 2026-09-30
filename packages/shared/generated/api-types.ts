@@ -431,7 +431,7 @@ export interface paths {
          * Delete an inactive league permanently
          * @description Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.
          *
-         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin's use is recorded in the platform audit log, with the league's member and active-contest counts captured before the delete; a commissioner administering their own league writes no entry. This replaced `deleteLeague` + `adminDeleteLeague`.
+         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. This replaced `deleteLeague` + `adminDeleteLeague`.
          */
         delete: operations["deleteLeague"];
         options?: never;
@@ -512,7 +512,7 @@ export interface paths {
          * Inactivate a league
          * @description Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.
          *
-         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin's use is recorded in the platform audit log; a commissioner administering their own league is not an exercise of root-admin authority and writes no entry. This replaced `inactivateLeague` + `adminInactivateLeague`.
+         *     One operation for both callers: a commissioner of the league, or a root admin exercising platform authority. This replaced `inactivateLeague` + `adminInactivateLeague`.
          */
         post: operations["inactivateLeague"];
         delete?: never;
@@ -1278,26 +1278,6 @@ export interface paths {
          * @description Changes the contest lock time that governs when picks or entries stop being editable.
          */
         post: operations["updateContestLockTime"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/audit-log": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the audit log for a contest
-         * @description Returns the audit trail for contest-level actions so commissioner and admin surfaces can review what changed.
-         */
-        get: operations["getContestAuditLog"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2453,66 +2433,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/audit-log/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Export audit log entries
-         * @description Exports audit log entries using the provided filters for administrative review or offline analysis.
-         */
-        get: operations["adminExportAuditLog"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/audit-log": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List audit log entries
-         * @description Returns the administrative audit log feed with filtering, pagination, and search support.
-         */
-        get: operations["adminListAuditLog"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/audit-log/{entryId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get audit log entry detail
-         * @description Returns the detail view for a single audit log entry.
-         */
-        get: operations["adminGetAuditEntry"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/admin/config/poll-intervals": {
         parameters: {
             query?: never;
@@ -2876,20 +2796,10 @@ export interface components {
             /** @description Repeat of the new password to guard against confirmation mistakes. */
             confirmNewPassword: string;
         };
-        /** @description Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition. */
-        UserResetPasswordRequest: {
-            /** @description Optional human reason captured in the root-admin audit log. */
-            reason?: string;
-        };
         /** @description Password-reset response. */
         UserResetPasswordResponse: {
             /** @description Temporary password to relay to the user. Existing sessions are revoked and the user should change this after signing in. */
             temporaryPassword: string;
-        };
-        /** @description Disable payload. The reason is optional because self-inactivation has nobody to explain itself to. */
-        UserDisableRequest: {
-            /** @description Optional human reason captured in the root-admin audit log when an admin disables somebody else. */
-            reason?: string;
         };
         /** @description Permanent-delete confirmation payload. */
         UserDeleteRequest: {
@@ -2898,15 +2808,11 @@ export interface components {
              * @description Exact email confirmation required before permanently deleting the inactive account.
              */
             email: string;
-            /** @description Optional human reason captured in the root-admin audit log. */
-            reason?: string;
         };
         /** @description Root-admin role-change payload. */
         SetUserRootAdminRequest: {
             /** @description Whether the target user should hold the platform-level root-admin role after the change. */
             isRootAdmin: boolean;
-            /** @description Optional human reason captured in the root-admin audit log. */
-            reason?: string;
         };
         /** @description Session-revocation response. */
         RevokeUserSessionsResponse: {
@@ -4737,82 +4643,6 @@ export interface components {
              * @enum {boolean}
              */
             deleted: true;
-        };
-        /** @description Commissioner audit-log entry. */
-        ContestAuditLogEntryDto: {
-            /** @description Audit-log entry id. */
-            id: string;
-            /** @description League this entry belongs to. */
-            leagueId: string;
-            /** @description Contest this entry references when the action is contest-scoped. */
-            contestId?: string;
-            /** @description User id of the commissioner / actor that performed the action. */
-            actorId: string;
-            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-            action: string;
-            /**
-             * @description Audit-log entry category — broad classification of the action that produced this entry.
-             * @enum {string}
-             */
-            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-            /** @description Human-readable description of what happened. */
-            description: string;
-            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-            beforeState?: {
-                [key: string]: unknown;
-            };
-            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-            afterState?: {
-                [key: string]: unknown;
-            };
-            /** @description Optional human-supplied reason / justification for the action. */
-            reason?: string;
-            /** @description IP address from which the action originated, when available. */
-            ipAddress?: string;
-            /**
-             * Format: date-time
-             * @description When the audit entry was recorded.
-             */
-            createdAt: string;
-        };
-        /** @description Contest audit-log response. */
-        ContestAuditLogResponse: {
-            entries: {
-                /** @description Audit-log entry id. */
-                id: string;
-                /** @description League this entry belongs to. */
-                leagueId: string;
-                /** @description Contest this entry references when the action is contest-scoped. */
-                contestId?: string;
-                /** @description User id of the commissioner / actor that performed the action. */
-                actorId: string;
-                /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                action: string;
-                /**
-                 * @description Audit-log entry category — broad classification of the action that produced this entry.
-                 * @enum {string}
-                 */
-                category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                /** @description Human-readable description of what happened. */
-                description: string;
-                /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                beforeState?: {
-                    [key: string]: unknown;
-                };
-                /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                afterState?: {
-                    [key: string]: unknown;
-                };
-                /** @description Optional human-supplied reason / justification for the action. */
-                reason?: string;
-                /** @description IP address from which the action originated, when available. */
-                ipAddress?: string;
-                /**
-                 * Format: date-time
-                 * @description When the audit entry was recorded.
-                 */
-                createdAt: string;
-            }[];
         };
         /** @description Squad membership summary. */
         SquadMembershipDto: {
@@ -6988,59 +6818,6 @@ export interface components {
                     [key: string]: unknown;
                 };
             }[];
-        };
-        /** @description Admin audit-log entry. */
-        AuditEntryDto: {
-            id: string;
-            actorEmail: string;
-            actorName: string;
-            action: string;
-            resourceType: string;
-            resourceId: string;
-            description: string;
-            reason?: string;
-            ipAddress?: string;
-            /** Format: date-time */
-            createdAt: string;
-            hasStateChanges: boolean;
-        };
-        /** @description Admin audit-log list response. */
-        AuditListResponse: {
-            items: {
-                id: string;
-                actorEmail: string;
-                actorName: string;
-                action: string;
-                resourceType: string;
-                resourceId: string;
-                description: string;
-                reason?: string;
-                ipAddress?: string;
-                /** Format: date-time */
-                createdAt: string;
-                hasStateChanges: boolean;
-            }[];
-            total: number;
-            page: number;
-            pageSize: number;
-        };
-        /** @description Single admin audit-entry response. */
-        AuditEntryResponse: {
-            /** @description Admin audit-log entry. */
-            entry: {
-                id: string;
-                actorEmail: string;
-                actorName: string;
-                action: string;
-                resourceType: string;
-                resourceId: string;
-                description: string;
-                reason?: string;
-                ipAddress?: string;
-                /** Format: date-time */
-                createdAt: string;
-                hasStateChanges: boolean;
-            };
         };
         /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
         PollIntervalConfig: {
@@ -10430,11 +10207,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserResetPasswordRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Password-reset response. */
             200: {
@@ -10513,11 +10286,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserDisableRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Single-user response. */
             200: {
@@ -14762,28 +14531,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContestResponse"];
-                };
-            };
-        };
-    };
-    getContestAuditLog: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contest audit-log response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContestAuditLogResponse"];
                 };
             };
         };
@@ -20570,170 +20317,6 @@ export interface operations {
                         /** Format: date-time */
                         updatedAt: string;
                     };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminExportAuditLog: {
-        parameters: {
-            query?: {
-                actorUserId?: string;
-                action?: string;
-                resourceType?: string;
-                resourceId?: string;
-                dateFrom?: string;
-                dateTo?: string;
-                search?: string;
-                page?: string;
-                pageSize?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListAuditLog: {
-        parameters: {
-            query?: {
-                actorUserId?: string;
-                action?: string;
-                resourceType?: string;
-                resourceId?: string;
-                dateFrom?: string;
-                dateTo?: string;
-                search?: string;
-                page?: string;
-                pageSize?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Admin audit-log list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuditListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetAuditEntry: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                entryId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single admin audit-entry response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuditEntryResponse"];
                 };
             };
             /** @description Standard API error envelope. */

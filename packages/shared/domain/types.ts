@@ -343,25 +343,7 @@ export type AdminPermission =
   | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
   | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
   | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
-  | 'platform.health' | 'platform.migrations'
-  | 'audit.view';
-
-/** Audit log entry written for an administrative action. */
-export interface AdminAuditEntry {
-  id: string;
-  actorUserId: string;
-  actorEmail: string;
-  action: string;
-  resourceType: string;
-  resourceId: string;
-  description: string;
-  beforeState?: Record<string, unknown>;
-  afterState?: Record<string, unknown>;
-  reason?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: Date;
-}
+  | 'platform.health' | 'platform.migrations';
 
 /** Runtime record for a platform migration initiated from admin tooling. */
 export interface MigrationRun {

@@ -1,7 +1,7 @@
 /**
  * EventLifecycleService — the one place a SportEvent's status changes and its
- * downstream side effects (contest activation, contest settlement, admin
- * audit) fire. Extracted from IngestionPersistence per plans/124 §3.3 so an
+ * downstream side effects (contest activation, contest settlement) fire.
+ * Extracted from IngestionPersistence per plans/124 §3.3 so an
  * admin-triggered transition (a later slice) and a provider-triggered one
  * produce byte-identical downstream behavior — there is exactly one code
  * path for "what happens when a sport event's status changes."
@@ -10,24 +10,20 @@
  * an undeclared jump in SPORT_EVENT_STATUS_TRANSITIONS is applied anyway,
  * only logged. Admin- and scheduler-driven transitions (`actor.type ===
  * 'ROOT_ADMIN'` or `'SYSTEM'`) are strict and throw EventLifecycleError
- * (422 SPORT_EVENT_INVALID_TRANSITION) on an undeclared jump, and write an
- * AdminAuditEntry. `SYSTEM` (the plans/124 §3.6 lifecycle scheduler)
- * attributes to the seeded "system" User row (plans/124 §9 item 11) since
- * AdminAuditEntry.actorId is a required FK.
+ * (422 SPORT_EVENT_INVALID_TRANSITION) on an undeclared jump.
  */
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository } from '@poolmaster/shared/db';
 import type { SportEvent } from '@poolmaster/shared/domain';
-import { ContestStatus, SportEventStatus, isDeclaredSportEventTransition, SYSTEM_USER_ID, SYSTEM_USER_EMAIL } from '@poolmaster/shared/domain';
+import { ContestStatus, SportEventStatus, isDeclaredSportEventTransition } from '@poolmaster/shared/domain';
 import type { LeagueRole } from '@poolmaster/shared/domain';
 import {
   renderSystemEmailTemplate,
   type ContestStartedEntrySummary,
   type MailDeliveryProvider,
 } from '../email';
-import { logAdminAction } from '../admin/admin-audit-service';
 
 export interface CompletedSportEventSettlement {
   settleCompletedSportEvent(
@@ -36,10 +32,11 @@ export interface CompletedSportEventSettlement {
   ): Promise<unknown>;
 }
 
+/** Who drove the transition. Only the kind is read: it decides strict versus permissive. */
 export type SportEventStatusTransitionActor =
   | { type: 'PROVIDER' }
-  | { type: 'ROOT_ADMIN'; userId: string; email: string }
-  | { type: 'SYSTEM'; reason: string };
+  | { type: 'ROOT_ADMIN' }
+  | { type: 'SYSTEM' };
 
 export interface SportEventStatusTransitionInput {
   sportEventId: string;
@@ -152,39 +149,12 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.COMPLETED) {
       await this.settleContestsForCompletedEvent(updated);
     }
-    if (input.actor.type === 'ROOT_ADMIN' || input.actor.type === 'SYSTEM') {
-      await this.writeTransitionAuditEntry(updated, fromStatus, input.toStatus, input.actor);
-    }
 
     return {
       sportEvent: updated,
       fromStatus,
       toStatus: input.toStatus,
     };
-  }
-
-  private async writeTransitionAuditEntry(
-    sportEvent: SportEvent,
-    fromStatus: SportEventStatus,
-    toStatus: SportEventStatus,
-    actor: { type: 'ROOT_ADMIN'; userId: string; email: string } | { type: 'SYSTEM'; reason: string },
-  ): Promise<void> {
-    const actorUserId = actor.type === 'ROOT_ADMIN' ? actor.userId : SYSTEM_USER_ID;
-    const actorEmail = actor.type === 'ROOT_ADMIN' ? actor.email : SYSTEM_USER_EMAIL;
-    const description = actor.type === 'ROOT_ADMIN'
-      ? `Root-admin transitioned sport event ${sportEvent.name} from ${fromStatus} to ${toStatus}`
-      : `Scheduler transitioned sport event ${sportEvent.name} from ${fromStatus} to ${toStatus} (${actor.reason})`;
-
-    await logAdminAction({
-      actorUserId,
-      actorEmail,
-      action: 'sport_event.transition',
-      resourceType: 'SPORT_EVENT',
-      resourceId: sportEvent.id,
-      description,
-      beforeState: { status: fromStatus },
-      afterState: { status: toStatus },
-    });
   }
 
   private async settleContestsForCompletedEvent(

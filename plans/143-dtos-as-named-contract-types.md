@@ -225,7 +225,8 @@ is nearly spent.
    `AuthenticatedSessionUserDto` and publishes nothing new.
 
    When unblocked: `admin.dto.ts` + `ingestion.dto.ts` + `contest-management.dto.ts`
-   across `admin/routes.ts`, `admin/audit-routes.ts` and `contest-management/routes.ts`.
+   across `admin/routes.ts` and `contest-management/routes.ts` (`admin/audit-routes.ts` was
+   deleted with the audit feature in #255).
    **This is what deletes the `#192-mixed:` marker.** Until it lands, check 5 is blind to
    the second-largest route file in the repo, so this should not sit to the end. It may be
    split into several PRs; the marker stays until the last one.

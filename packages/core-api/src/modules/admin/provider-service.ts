@@ -9,7 +9,6 @@
 import { type PrismaClient, Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { Sport , SportEventSyncScope} from '@poolmaster/shared/domain';
-import { logAdminAction } from './admin-audit-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type {
   SportDataProvider,
@@ -35,7 +34,6 @@ import {
 } from '../ingestion/core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
-  buildNormalizedSyncRequestContext,
   isEventSyncFeedType,
   isSportSyncFeedType,
   mapProviderSyncRunRow,
@@ -761,11 +759,7 @@ export class ProviderService {
     throw new ProviderConfigUnsupportedError(providerId);
   }
 
-  async triggerHealthCheck(
-    providerId: string,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
-  ): Promise<ProviderHealthCheck> {
+  async triggerHealthCheck(providerId: string): Promise<ProviderHealthCheck> {
     this.logger?.debug({ providerId }, 'Triggering manual provider health check');
     const provider = this.getProviderOrThrow(providerId);
     const health = await provider.healthCheck();
@@ -793,16 +787,6 @@ export class ProviderService {
         ? 'Provider responded successfully.'
         : 'Provider returned a degraded health status.'),
     };
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'sportsdata.health_check',
-      resourceType: 'PROVIDER',
-      resourceId: providerId,
-      description: `Manual health check for ${provider.providerName} — status: ${result.status}`,
-      afterState: result,
-    });
 
     this.logger?.info({
       providerId,
@@ -872,22 +856,6 @@ export class ProviderService {
         normalizedScope,
         syncRuns,
       });
-    });
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'sportsdata.sync_sport_submitted',
-      resourceType: 'SPORT',
-      resourceId: normalizedScope.sport,
-      description: `Submitted ${normalizedScope.sport} manual feed sync for ${normalizedScope.feeds.join(', ')}`,
-      afterState: {
-        sport: normalizedScope.sport,
-        providerId: provider.providerId,
-        requestedFeeds: normalizedScope.feeds,
-        effectiveWindow: buildNormalizedSyncRequestContext(normalizedRequest).effectiveWindow,
-        syncRunIds: syncRuns.map((run) => run.id),
-      },
     });
 
     this.logger?.info({
@@ -975,23 +943,6 @@ export class ProviderService {
         normalizedScope,
         syncRuns,
       });
-    });
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'sportsdata.sync_event_submitted',
-      resourceType: 'SPORT_EVENT',
-      resourceId: `${normalizedScope.sport}:${normalizedScope.eventId}`,
-      description: `Submitted ${normalizedScope.sport} manual event sync for ${normalizedScope.eventId}`,
-      afterState: {
-        sport: normalizedScope.sport,
-        eventId: normalizedScope.eventId,
-        providerId: provider.providerId,
-        requestedFeeds: normalizedScope.feeds,
-        mockEventState: normalizedScope.mockEventState ?? null,
-        syncRunIds: syncRuns.map((run) => run.id),
-      },
     });
 
     this.logger?.info({
@@ -1150,8 +1101,6 @@ export class ProviderService {
     mode: ProviderEventCleanupMode,
     options: {
       now?: Date;
-      rootAdminUserId?: string;
-      rootAdminEmail?: string;
     } = {},
   ): Promise<ProviderEventCleanupResult> {
     const inventoriedAt = options.now ?? new Date();
@@ -1187,28 +1136,6 @@ export class ProviderService {
       deletedEventCount: result.summary.deletedEventCount,
       blockedEventCount: result.summary.blockedEventCount,
     }, 'Completed stale provider event cleanup');
-
-    if (mode === 'EXECUTE' && options.rootAdminUserId && options.rootAdminEmail) {
-      await logAdminAction({
-        actorUserId: options.rootAdminUserId,
-        actorEmail: options.rootAdminEmail,
-        action: 'sportsdata.cleanup_stale_events',
-        resourceType: 'SPORT_EVENT',
-        resourceId: 'stale-provider-events',
-        description: `Deleted ${result.summary.deletedEventCount} stale provider event(s) after inventorying ${result.summary.inventoriedEventCount}.`,
-        afterState: {
-          mode: result.mode,
-          inventoriedAt: result.inventoriedAt.toISOString(),
-          summary: result.summary,
-          deletedEventIds: result.events
-            .filter((row) => row.deleted)
-            .map((row) => row.id),
-          blockedEventIds: result.events
-            .filter((row) => !row.deletable)
-            .map((row) => row.id),
-        },
-      });
-    }
 
     return result;
   }
@@ -1387,8 +1314,6 @@ export class ProviderService {
   async reIngestEvent(
     providerId: string,
     eventId: string,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<IngestionJob> {
     this.logger?.debug({ providerId, eventId }, 'Starting manual provider event re-ingest');
     const provider = this.getProviderOrThrow(providerId);
@@ -1435,16 +1360,6 @@ export class ProviderService {
       throw new Error(`Re-ingestion job ${job.id} was not persisted`);
     }
 
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'sportsdata.re_ingest',
-      resourceType: 'PROVIDER',
-      resourceId: providerId,
-      description: `Triggered re-ingestion for event ${eventId} from ${provider.providerName}`,
-      afterState: { jobId: completed.id, eventId },
-    });
-
     this.logger?.info({
       providerId,
       eventId,
@@ -1469,10 +1384,8 @@ export class ProviderService {
     providerId: string,
     externalId: string,
     internalId: string,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<void> {
-    const provider = this.getProviderOrThrow(providerId);
+    this.getProviderOrThrow(providerId);
     const participant = await this.prisma.participant.findUnique({
       where: { id: internalId },
       select: { id: true },
@@ -1498,16 +1411,6 @@ export class ProviderService {
         participantId: participant.id,
         confidence: 'MANUAL',
       },
-    });
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'sportsdata.map_participant',
-      resourceType: 'PARTICIPANT',
-      resourceId: externalId,
-      description: `Mapped provider participant ${externalId} from ${provider.providerName} to internal participant ${internalId}`,
-      afterState: { providerId, externalId, internalId },
     });
   }
 }

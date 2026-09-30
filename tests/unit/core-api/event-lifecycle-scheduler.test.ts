@@ -10,17 +10,14 @@
  *     sport-event-repositories.integration.ts.
  *   - SCHEDULED -> IN_PROGRESS fires once the earliest SportEventRound.
  *     scheduledDate (or SportEvent.startDate when no rounds exist) has
- *     passed, with actor { type: 'SYSTEM', reason: 'SCHEDULED_LIFECYCLE' }.
+ *     passed, with actor { type: 'SYSTEM' }.
  *   - IN_PROGRESS -> COMPLETED fires once the latest SportEventRound.
  *     scheduledEndAt (or SportEvent.endDate) has passed.
  *   - No transition fires before the due date.
  *   - One event's failure does not stop the sweep from processing the rest.
  */
 import type { SportEvent } from '@poolmaster/shared/domain';
-import {
-  EventLifecycleScheduler,
-  SCHEDULED_LIFECYCLE_REASON,
-} from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
+import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 function createLogger() {
@@ -79,7 +76,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
       sportEventId: 'evt-1',
       toStatus: 'IN_PROGRESS',
-      actor: { type: 'SYSTEM', reason: SCHEDULED_LIFECYCLE_REASON },
+      actor: { type: 'SYSTEM' },
     });
   });
 
@@ -150,7 +147,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
       sportEventId: 'evt-2',
       toStatus: 'COMPLETED',
-      actor: { type: 'SYSTEM', reason: SCHEDULED_LIFECYCLE_REASON },
+      actor: { type: 'SYSTEM' },
     });
   });
 

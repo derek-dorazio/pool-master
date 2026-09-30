@@ -139,7 +139,6 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Generates a temporary password for the target user, revokes their live sessions, and returns the credential for the root admin to relay. Root admin only (A6).',
       operationId: 'resetUserPassword',
-      body: schemaRef('UserResetPasswordRequest'),
       response: withUserErrorResponses({ 200: schemaRef('UserResetPasswordResponse') }),
     },
     handler: handlers.resetPassword,
@@ -152,7 +151,6 @@ export function usersModule(fastify: FastifyInstance): void {
       description:
         'Sets isActive = false and revokes every live session, atomically. Self-inactivation and admin-disable are ONE operation (A6). Idempotent: already inactive succeeds unchanged. Rejected for the last remaining root admin. Disabling yourself clears your session cookies.',
       operationId: 'disableUser',
-      body: schemaRef('UserDisableRequest'),
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [409]),
     },
     handler: handlers.disableUser,

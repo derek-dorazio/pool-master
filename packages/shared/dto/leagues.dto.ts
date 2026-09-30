@@ -16,15 +16,6 @@ import { ContestSummaryDtoSchema } from './contests.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
-export {
-  LeagueAuditCategorySchema,
-  LeagueAuditEntryDtoSchema,
-} from './audit.dto';
-export type {
-  LeagueAuditCategory,
-  LeagueAuditEntryDto,
-} from './audit.dto';
-
 // --- Requests ---
 
 export const CreateLeagueRequestSchema = z.object({
@@ -391,10 +382,6 @@ export const GenerateInviteLinkResponseSchema = z.object({
   invitation: LeagueInvitationDtoSchema,
 }).describe('Generated invite-link response.');
 export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkResponseSchema>;
-
-// #202 — `LeagueAuditEntriesResponseSchema` is gone with the two league audit-log reads. The
-// contest audit route keeps its own response schema in `contests.dto.ts`, and both still share
-// `LeagueAuditEntryDtoSchema`.
 
 /**
  * Commissioner dashboard response. The `league` and `contests` fields are typed against the

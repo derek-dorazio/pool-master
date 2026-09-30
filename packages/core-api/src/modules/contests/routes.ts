@@ -373,25 +373,4 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     preHandler: requireContestCommissioner,
     handler: overrides.updateLockTime,
   });
-  // --- Contest Audit Log ---
-  fastify.get('/:contestId/audit-log', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Get the audit log for a contest',
-      description:
-        'Returns the audit trail for contest-level actions so commissioner and admin surfaces can review what changed.',
-      operationId: 'getContestAuditLog',
-      response: { 200: schemaRef('ContestAuditLogResponse') },
-    },
-    handler: async (request, reply) => {
-      const { contestId } = request.params as { contestId: string };
-      const { AuditService: AuditSvc } = await import('../leagues/audit-service.js');
-      const { mapLeagueAuditEntryToDto } = await import(
-        '../../mappers/leagues-audit.mapper.js'
-      );
-      const auditService = new AuditSvc(prisma);
-      const entries = await auditService.getContestAuditLog(contestId);
-      return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
-    },
-  });
 }

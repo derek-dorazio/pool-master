@@ -17,7 +17,6 @@ import type {
 } from '@poolmaster/shared/domain';
 import { ContestStatus, JoinPolicy, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
-import { logAdminAction } from '../admin/admin-audit-service';
 
 export interface CreateLeagueInput {
   createdBy: string;
@@ -55,21 +54,6 @@ export interface LeagueListRow {
 }
 
 export type LeagueListScope = 'mine' | 'all';
-
-/**
- * Who is performing a league lifecycle write (#202).
- *
- * `inactivateLeague` and `deleteLeague` were each split into a commissioner route and a
- * root-admin route, and the only behaviour the root-admin half added was an
- * `AdminAuditEntry`. So the actor comes in, and the audit is keyed on it — the same rule
- * `UserService.auditRootAdminAction` states: the entry records an exercise of root-admin
- * authority, and a commissioner acting inside their own league is not that.
- */
-export interface LeagueWriteActor {
-  userId: string;
-  email: string;
-  isRootAdmin: boolean;
-}
 
 /** Statuses that make a contest count as active for a league's `activeContestCount`. */
 const ACTIVE_LEAGUE_CONTEST_STATUSES = [
@@ -278,10 +262,10 @@ export class LeagueService {
     };
   }
 
-  async inactivateLeague(leagueId: string, actor?: LeagueWriteActor): Promise<League> {
+  async inactivateLeague(leagueId: string): Promise<League> {
     this.logger?.debug({
       action: 'league.inactivate.enter',
-      data: { leagueId, actorIsRootAdmin: actor?.isRootAdmin ?? null },
+      data: { leagueId },
     }, 'Inactivating league');
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
@@ -304,13 +288,6 @@ export class LeagueService {
     }
 
     const updatedLeague = await this.leagueRepo.update(leagueId, { isActive: false });
-    await this.auditRootAdminAction(actor, {
-      action: 'league.inactivate',
-      resourceId: leagueId,
-      description: `Root-admin inactivated league ${league.leagueCode} (${league.name})`,
-      beforeState: { isActive: league.isActive },
-      afterState: { isActive: updatedLeague.isActive },
-    });
     this.logger?.info({
       action: 'league.inactivate.success',
       data: { leagueId },
@@ -434,11 +411,10 @@ export class LeagueService {
   async deleteInactiveLeague(
     leagueId: string,
     confirmationLeagueCode: string,
-    actor?: LeagueWriteActor,
   ): Promise<void> {
     this.logger?.debug({
       action: 'league.delete.enter',
-      data: { leagueId, confirmationLeagueCode, actorIsRootAdmin: actor?.isRootAdmin ?? null },
+      data: { leagueId, confirmationLeagueCode },
     }, 'Deleting inactive league');
     const league = await this.leagueRepo.findById(leagueId);
     if (!league) {
@@ -483,12 +459,6 @@ export class LeagueService {
       );
     }
 
-    // Read for the audit entry BEFORE the delete, because after it there is nothing to count.
-    // Only a root admin's delete is audited, so only then is the read worth making.
-    const auditCounts = actor?.isRootAdmin
-      ? await this.countLeagueActivity([leagueId])
-      : null;
-
     this.logger?.info({
       action: 'league.delete.transaction.start',
       data: { leagueId },
@@ -521,9 +491,6 @@ export class LeagueService {
       await tx.commissionerActionItem.deleteMany({
         where: { leagueId },
       });
-      await tx.commissionerAuditLog.deleteMany({
-        where: { leagueId },
-      });
       await tx.leagueInvitation.deleteMany({
         where: { leagueId },
       });
@@ -540,63 +507,10 @@ export class LeagueService {
         where: { id: leagueId },
       });
     });
-    // AFTER the transaction: `logAdminAction` writes through its own Prisma singleton and
-    // takes no transaction client, so an entry written inside the callback would commit
-    // immediately and survive a rollback (#205 carries the defect).
-    await this.auditRootAdminAction(actor, {
-      action: 'league.delete',
-      resourceId: leagueId,
-      description: `Root-admin deleted league ${league.leagueCode} (${league.name})`,
-      beforeState: {
-        leagueCode: league.leagueCode,
-        name: league.name,
-        isActive: league.isActive,
-        memberCount: auditCounts?.memberCounts.get(leagueId) ?? 0,
-        activeContestCount: auditCounts?.activeContestCounts.get(leagueId) ?? 0,
-      },
-      reason: `Confirmed with league code ${confirmationLeagueCode}`,
-    });
     this.logger?.info({
       action: 'league.delete.success',
       data: { leagueId },
     }, 'Deleted inactive league');
-  }
-
-  /**
-   * Writes the platform audit entry when — and only when — a root admin exercised their
-   * authority over a league they do not run.
-   *
-   * The same rule as `UserService.auditRootAdminAction`, and stated rather than merged for the
-   * same reason: the two halves of each league lifecycle operation disagreed about auditing,
-   * and the honest resolution is that the entry records an exercise of root-admin authority. A
-   * commissioner inactivating or deleting their own league is doing ordinary league
-   * administration, not that.
-   */
-  private async auditRootAdminAction(
-    actor: LeagueWriteActor | undefined,
-    entry: {
-      action: string;
-      resourceId: string;
-      description: string;
-      beforeState?: Record<string, unknown>;
-      afterState?: Record<string, unknown>;
-      reason?: string;
-    },
-  ): Promise<void> {
-    if (!actor?.isRootAdmin) {
-      return;
-    }
-    await logAdminAction({
-      actorUserId: actor.userId,
-      actorEmail: actor.email,
-      action: entry.action,
-      resourceType: 'LEAGUE',
-      resourceId: entry.resourceId,
-      description: entry.description,
-      ...(entry.beforeState ? { beforeState: entry.beforeState } : {}),
-      ...(entry.afterState ? { afterState: entry.afterState } : {}),
-      ...(entry.reason ? { reason: entry.reason } : {}),
-    });
   }
 
   /** Returns the league together with its member list. */

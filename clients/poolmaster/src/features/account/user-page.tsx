@@ -279,7 +279,7 @@ export function UserPage() {
 
   const inactivateAccountAction = useMutationActionWorkflow({
     action: async () => {
-      const response = await disableUser({ path: { userId: SELF_USER_ID }, body: {} });
+      const response = await disableUser({ path: { userId: SELF_USER_ID } });
       if (!response.data?.user) {
         throwApiError(response.error, 'Inactivate-account response is missing data.');
       }

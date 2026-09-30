@@ -584,9 +584,6 @@ describe('UserPage', () => {
     await screen.findByTestId('root-admin-user-page');
     fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
     await screen.findByTestId('root-admin-user-role-dialog');
-    fireEvent.change(screen.getByTestId('root-admin-user-role-reason'), {
-      target: { value: 'Coverage promotion' },
-    });
     fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
 
     await waitFor(() =>
@@ -596,7 +593,6 @@ describe('UserPage', () => {
         },
         body: {
           isRootAdmin: true,
-          reason: 'Coverage promotion',
         },
       }),
     );

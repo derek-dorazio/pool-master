@@ -590,9 +590,6 @@ export async function cleanupTestData(): Promise<void> {
     await prisma.squad.deleteMany({
       where: { leagueId: { in: leagueIds } },
     });
-    await prisma.commissionerAuditLog.deleteMany({
-      where: { leagueId: { in: leagueIds } },
-    });
     await prisma.commissionerActionItem.deleteMany({
       where: { leagueId: { in: leagueIds } },
     });
@@ -638,9 +635,6 @@ export async function cleanupTestData(): Promise<void> {
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },
-    }).catch(() => {});
-    await prisma.adminAuditEntry.deleteMany({
-      where: { actorId: { in: userIds } },
     }).catch(() => {});
     await prisma.user.deleteMany({
       where: { id: { in: userIds } },

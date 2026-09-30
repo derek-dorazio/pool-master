@@ -8,7 +8,7 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueService, LeagueWriteActor } from './service';
+import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
@@ -35,25 +35,6 @@ export function createLeagueHandlers(
     activateLeague,
     deleteLeague,
   };
-
-  /**
-   * The actor for a league lifecycle write (#202).
-   *
-   * `requireCommissioner` already grants root admins, so these routes always served both
-   * callers; the `/api/v1/admin/leagues/*` duplicates added nothing but an audit entry. The
-   * actor travels so the service can key that entry on root-admin authority.
-   */
-  function writeActor(request: FastifyRequest): LeagueWriteActor | undefined {
-    const actor = request.authUser;
-    if (!actor) {
-      return undefined;
-    }
-    return {
-      userId: actor.userId,
-      email: actor.email,
-      isRootAdmin: actor.isRootAdmin,
-    };
-  }
 
   /**
    * #202 step 3.4 — `getLeagueViewerShape()` is gone. It built
@@ -336,10 +317,7 @@ export function createLeagueHandlers(
       data: { leagueId: request.params.id },
     }, 'Handling inactivate league request');
     try {
-      const league = await leagueService.inactivateLeague(
-        request.params.id,
-        writeActor(request),
-      );
+      const league = await leagueService.inactivateLeague(request.params.id);
       logger.info({
         action: 'leagueRoute.inactivate.success',
         data: { leagueId: request.params.id },
@@ -501,7 +479,6 @@ export function createLeagueHandlers(
       await leagueService.deleteInactiveLeague(
         request.params.id,
         request.body.leagueCode,
-        writeActor(request),
       );
       logger.info({
         action: 'leagueRoute.delete.success',

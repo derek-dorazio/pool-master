@@ -60,16 +60,12 @@ export function createProviderHandlers(
     request: FastifyRequest<{ Body: AdminProviderEventCleanupRequest }>,
     reply: FastifyReply,
   ) {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const logger = request.contextLogger ?? request.log;
     logger.debug({
       mode: request.body.mode,
     }, 'Running stale provider event cleanup');
 
-    const result = await providerService.cleanupStaleProviderEvents(request.body.mode, {
-      rootAdminUserId,
-      rootAdminEmail,
-    });
+    const result = await providerService.cleanupStaleProviderEvents(request.body.mode);
     logger.info({
       mode: result.mode,
       inventoriedEventCount: result.summary.inventoriedEventCount,
@@ -196,17 +192,12 @@ export function createProviderHandlers(
     request: FastifyRequest<{ Params: { providerId: string } }>,
     reply: FastifyReply,
   ) {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId } = request.params;
     const logger = request.contextLogger ?? request.log;
     logger.debug({ providerId }, 'Triggering provider health check');
 
     try {
-      const result = await providerService.triggerHealthCheck(
-        providerId,
-        rootAdminUserId,
-        rootAdminEmail,
-      );
+      const result = await providerService.triggerHealthCheck(providerId);
       logger.info({ providerId, status: result.status }, 'Triggered provider health check');
       return reply.send(result);
     } catch (err) {
@@ -355,18 +346,12 @@ export function createProviderHandlers(
     }>,
     reply: FastifyReply,
   ) {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, eventId } = request.params;
     const logger = request.contextLogger ?? request.log;
     logger.debug({ providerId, eventId }, 'Re-ingesting provider event');
 
     try {
-      const job = await providerService.reIngestEvent(
-        providerId,
-        eventId,
-        rootAdminUserId,
-        rootAdminEmail,
-      );
+      const job = await providerService.reIngestEvent(providerId, eventId);
       logger.info({
         providerId,
         eventId,
@@ -411,18 +396,11 @@ export function createProviderHandlers(
     }>,
     reply: FastifyReply,
   ) {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, externalId, internalId } = request.body;
     const logger = request.contextLogger ?? request.log;
     logger.debug({ providerId, externalId, internalId }, 'Mapping provider participant');
 
-    await providerService.mapParticipant(
-      providerId,
-      externalId,
-      internalId,
-      rootAdminUserId,
-      rootAdminEmail,
-    );
+    await providerService.mapParticipant(providerId, externalId, internalId);
     logger.info({ providerId, externalId, internalId }, 'Mapped provider participant');
     return reply.status(204).send();
   }

@@ -2013,6 +2013,114 @@ live UI already calls.
 `getBusinessMetrics` reports `activeUsersLast24h` but computes a count of users *created* in
 the last 24 hours. It is a signup count wearing an activity label.
 
+## Audit-log deletion — outcome, 2026-09-30
+
+#255, carved out of slice 4 (#205) by the repo owner so it could run beside slice 3. Both audit
+tables are gone, with every writer and every read. **`ProviderSyncRun` is untouched** — the
+ledger, `adminListProviderSyncRuns` and the sync dashboard are the sync-run history the owner
+wanted, and none of the three is in the diff.
+
+**3.1 — schema.** One migration drops `admin_audit_log` and `commissioner_audit_log` and the
+three relations into them (`User` ×2 and `League.auditLog`, which the ticket did not list), and
+deletes the seeded SYSTEM user. Verified against a database built at `main` and seeded with a
+SYSTEM-attributed admin entry, a root-admin entry and a commissioner entry: both tables are
+gone, the SYSTEM row is gone, the real user, the league and `provider_sync_runs` are
+unchanged, and `prisma migrate diff` shows the same pre-existing drifts as `main` and none on
+an audit table. One-way: the dropped rows are not recoverable.
+
+**The SYSTEM user is deleted, not kept.** Its only reason to exist was the required actor FK
+on the admin audit table, and its only consumer attributed a scheduler transition's audit
+entry. Two things made deletion the answer rather than a rewritten comment. There is no
+second use waiting for it — every other `SYSTEM` in the code is the actor *kind* on a sync
+or lifecycle request, a string, never this row. And the row was not inert: the user list is
+unfiltered, so every environment showed root admins an active account called "PoolMaster
+System" that nobody could sign in as. The constants, `shared/domain/system.ts` and its
+barrel export go with it. The one fact worth keeping — the id was deliberately not the
+all-zero nil UUID, because "not found" contract tests use that value as a known-nonexistent
+id — is written into the migration that deletes the row, which is where anyone reintroducing
+a sentinel row would look.
+
+**3.2–3.4 — services, routes, DTOs.** The eight files the ticket listed are deleted, and the
+17 `logAdminAction` calls with them (the ticket counted 18; its `admin/routes.ts` entry was
+the Prisma-singleton wiring, not a call — also gone). Four operations leave the published
+spec: `adminListAuditLog`, `adminGetAuditEntry`, `adminExportAuditLog` and
+`getContestAuditLog` (which had no `preHandler`, so any authenticated caller could read any
+contest's always-empty log). Seven components leave with them.
+
+Deleting the writes left inputs that fed nothing, and those went too, because an unread
+parameter reads as a convention being followed:
+
+- **Four request fields.** `reason` on reset-password, disable, delete and set-root-admin was
+  documented as "captured in the root-admin audit log" and had no other destination.
+  Reset-password and disable had no other body field, so those two operations lose their
+  body and their request components. **The webapp's root-admin user page collected that
+  reason in four textareas — and gated the disable button on one** — so those went in the
+  same change: a form that requires text and discards it is worse than no form. This is the
+  one place the work reached `clients/`, and the ticket had not counted it.
+- **Actor fields.** `LeagueWriteActor` existed only to key the audit and is gone;
+  `UserWriteActor` loses `email`; the sport-event transition actor keeps only its `type`,
+  which still decides strict versus permissive, and `SCHEDULED_LIFECYCLE_REASON` goes.
+- **Service parameters.** `rootAdminEmail` on the poll and ingestion config writes;
+  `rootAdminUserId` and `rootAdminEmail` on the health check, re-ingest, participant mapping
+  and template update. Found by compiling with `--noUnusedParameters --noUnusedLocals` and
+  diffing against `main`, because ESLint's `after-used` default cannot see an unread leading
+  parameter. The config writes keep `rootAdminUserId`, which stamps `updatedById`; the two
+  sync submissions keep both, because they feed the sync-run ledger's actor.
+- **Snapshots.** Every `before` copy in the config services, and the league activity count
+  that ran before a root-admin delete purely so the audit entry could record it.
+
+**3.5 — tests.** 16 unit tests deleted — the audit mapper's 7, the two audit-query tests, and
+seven service tests whose only subject was the audit call — and one rewritten: the SYSTEM
+lifecycle test still asserts a scheduler transition along a declared edge succeeds, without
+the audit half. The root-admin functional test and the stale-event integration test keep
+their bodies and lose their audit assertions. Four teardown `deleteMany` calls and two
+Prisma mocks of the dropped tables went with the schema.
+
+**Two documents taught with audit, and now teach with live examples.**
+
+- `rules/domain-model-conventions-rules.md` §9's worked case for a correct single table is
+  now `league_memberships`, not the audit tables. `ProviderSyncRun` was the suggested
+  candidate and was rejected on inspection: its `payloadJson` holds shapes the ledger
+  constructs itself, which the rule's own guiding principle forbids, and its `event_id` is
+  null exactly for sport-scoped runs — neither is what a model example should show.
+  `league_memberships` has every column non-null for every role, and splitting it by role
+  would make `UNIQUE (league_id, user_id)` unenforceable, which is the rule's own argument.
+  The guiding principle's second example of an acceptable opaque shape ("audit-log
+  snapshots") is dropped; raw provider payloads carry the point alone.
+- `docs/LAYERS.md`: the drift list's audit item became the 204-versus-account response
+  split between the two disable halves; the "assert the audit entry's content" row became
+  the contest-started email's subject and body; the audit-mapper exemplar became
+  `sport-events-mapper.test.ts`; the sequence diagram's audit step became the re-read the
+  service actually does; `admin-audit-hook` left the plugin list; and the `logAdminAction`
+  soft-boundary paragraph went, because no module-level Prisma singleton remains.
+
+`PaginatedSchema` survives, and the note about it is corrected rather than acted on: its
+only caller is `adminSearchErrors`. The ticket said `adminListProviderSyncRuns` used it too;
+that operation pages by `limit` but returns its own `{ items }` envelope.
+
+**3.6 — the sweep.** Every deleted name was searched across `packages`, `clients`, `tests`,
+`docs`, `rules`, `.claude`, `plans`, `scripts`, `.github` and the README; what remains is
+tombstone prose naming deleted operations and `plans/143`'s record of its own completed
+steps (its one forward-looking line was corrected). Also removed: `'audit.view'` from both
+`AdminPermission` unions, the #192 "PARTIAL on purpose" note in `admin.dto.ts`, a stale
+"audit" in a test comment and in the shared-UI README. Left on purpose, with reasons:
+
+- `core/admin-permissions.ts` has had **zero callers since before this change** —
+  `requireAdminPermission` ignores its argument and is imported nowhere, and
+  `shared/domain`'s `AdminPermission` twin is unread. That is dead code encoding a
+  permission matrix that does not exist, but it is not audit residue; it is #205's, which
+  owns the `admin` naming pass.
+- `ProviderService.updateProviderConfig` keeps its pre-existing `_rootAdminUserId` /
+  `_rootAdminEmail` on a method that always throws; same owner.
+- The contest override operations accept a required `reason` and ignore it (`_reason`); that
+  predates the audit feature's removal and was never wired to it. Contest cluster, slice 3.
+- Three mentions in `requirements/` and `tech-specs/contest-event-feed-integration/`, which
+  are design inputs, not live descriptions.
+
+**Consequences for #205.** Its stage-2 question 1 is answered by removal, so its naming split
+drops from `platform` / `ingestion` / `audit` to `platform` / `ingestion`; #205 is being
+amended separately.
+
 ## Sources / Prior Decisions
 
 - #201 — this epic. #192 — the publishing mechanism, which must follow this work for

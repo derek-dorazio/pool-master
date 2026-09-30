@@ -312,7 +312,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 | | Objects |
 |---|---|
 | **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
-| **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes — and both audit logs |
+| **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
 tournament), `ContestEntryPick` is tenant-scoped (a squad chose that golfer). The pick fails
@@ -656,9 +656,9 @@ pairs, the two halves disagreed about more than scope:
   answers to one question.
 - **Filters.** `search` and `isActive` existed only on the root-admin half, though they
   describe the query rather than the caller.
-- **Audit.** Only the root-admin half wrote an `AdminAuditEntry`. Settled the same way
-  `UserService` settles it: the entry records an exercise of root-admin authority, so it is
-  keyed on the actor and a commissioner administering their own league writes none.
+- **Audit.** Only the root-admin half wrote an audit entry. #202 settled it by keying the
+  entry on the actor, as `UserService` did; #255 then deleted the audit feature outright, so
+  neither half writes one.
 - **Nothing else.** `requireCommissioner` already granted root admins, so the `/admin/leagues/*`
   routes were never the only way a root admin could act — they added the audit entry and
   otherwise duplicated behaviour.

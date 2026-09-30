@@ -10,7 +10,6 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
-import { LeagueAuditEntryDtoSchema, type LeagueAuditEntryDto } from './audit.dto';
 import {
   ContestConfigurationRequestSchema,
   GolfCategoryDefinitionSchema,
@@ -426,22 +425,6 @@ export const ContestEntryDeletionResponseSchema = z.object({
 }).describe('Contest-entry deletion response.');
 export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionResponseSchema>;
 
-// Per pool-master-rop.14.1: the audit-log entry shape is identical for league
-// and contest scopes — both endpoints query the same `commissionerAuditLog`
-// table via `AuditService` and emit the same `AuditLogEntry` interface. The
-// previous duplication (this schema diverged from `LeagueAuditEntryDtoSchema`
-// with `category: z.string()` and slightly different optionality) was a
-// contract-drift hazard. Aliased to the canonical schema in `audit.dto.ts`
-// so both endpoints stay type-aligned and the same `mapLeagueAuditEntryToDto`
-// mapper serves both route handlers.
-export const ContestAuditLogEntryDtoSchema = LeagueAuditEntryDtoSchema;
-export type ContestAuditLogEntryDto = LeagueAuditEntryDto;
-
-export const ContestAuditLogResponseSchema = z.object({
-  entries: z.array(ContestAuditLogEntryDtoSchema),
-}).describe('Contest audit-log response.');
-export type ContestAuditLogResponse = z.infer<typeof ContestAuditLogResponseSchema>;
-
 // --- Published contract (#192) -------------------------------------------------
 // Each name becomes `components.schemas.<name>` and an importable generated type.
 // The frontend imports these; it must not re-derive a shape from a response map.
@@ -475,5 +458,3 @@ registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
 registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);
 registerSchema('MyContestEntryResponse', MyContestEntryResponseSchema);
 registerSchema('ContestEntryDeletionResponse', ContestEntryDeletionResponseSchema);
-registerSchema('ContestAuditLogEntryDto', ContestAuditLogEntryDtoSchema);
-registerSchema('ContestAuditLogResponse', ContestAuditLogResponseSchema);

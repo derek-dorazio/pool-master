@@ -18,7 +18,7 @@
  * collapses the route pairs into this module.
  *
  * The cross-table cascade stays on Prisma rather than moving behind a repository port, and
- * that is the correct boundary: a port owns one aggregate, and this spans eight tables
+ * that is the correct boundary: a port owns one aggregate, and this spans six tables
  * inside one transaction. Reads and single-entity writes DO go through `UserRepository`.
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
@@ -78,7 +78,7 @@ export async function revokeUserSessions(prisma: PrismaLike, userId: string): Pr
  * Deletes the user and everything that references them, in one transaction.
  *
  * Takes a transaction client because partial completion would leave orphan rows pointing at
- * a deleted user. The eight tables here are those with a `userId`-shaped column and no
+ * a deleted user. The six tables here are those with a `userId`-shaped column and no
  * cascade in the schema; league- and squad-scoped rows are NOT among them, which is why the
  * dependency guard above must run first and block.
  */
@@ -89,8 +89,6 @@ export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: st
   await tx.leagueInvitation.deleteMany({
     where: { OR: [{ invitedBy: userId }, { acceptedBy: userId }] },
   });
-  await tx.commissionerAuditLog.deleteMany({ where: { actorId: userId } });
-  await tx.adminAuditEntry.deleteMany({ where: { actorId: userId } });
   await tx.migrationRun.deleteMany({ where: { startedById: userId } });
   await tx.user.delete({ where: { id: userId } });
 }
