@@ -13660,7 +13660,7 @@ export type ListManagedContestTemplatesResponses = {
             /**
              * How an entry picks in a contest created from this template.
              */
-            configMode: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */
@@ -19792,7 +19792,7 @@ export type AdminListContestConfigTemplatesResponses = {
             /**
              * How an entry picks in a contest created from this template.
              */
-            configMode: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */
@@ -20001,7 +20001,7 @@ export type AdminUpdateContestConfigTemplateResponses = {
             /**
              * How an entry picks in a contest created from this template.
              */
-            configMode: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */

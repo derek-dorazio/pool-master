@@ -26733,7 +26733,7 @@
                             ],
                             "description": "Contest type that may use the template."
                           },
-                          "configMode": {
+                          "selectionType": {
                             "type": "string",
                             "enum": [
                               "SNAKE_DRAFT",
@@ -26815,7 +26815,7 @@
                           "id",
                           "sport",
                           "contestFormat",
-                          "configMode",
+                          "selectionType",
                           "templateKey",
                           "name",
                           "description",
@@ -37843,7 +37843,7 @@
                             ],
                             "description": "Contest type that may use the template."
                           },
-                          "configMode": {
+                          "selectionType": {
                             "type": "string",
                             "enum": [
                               "SNAKE_DRAFT",
@@ -37925,7 +37925,7 @@
                           "id",
                           "sport",
                           "contestFormat",
-                          "configMode",
+                          "selectionType",
                           "templateKey",
                           "name",
                           "description",
@@ -38141,7 +38141,7 @@
                           ],
                           "description": "Contest type that may use the template."
                         },
-                        "configMode": {
+                        "selectionType": {
                           "type": "string",
                           "enum": [
                             "SNAKE_DRAFT",
@@ -38223,7 +38223,7 @@
                         "id",
                         "sport",
                         "contestFormat",
-                        "configMode",
+                        "selectionType",
                         "templateKey",
                         "name",
                         "description",

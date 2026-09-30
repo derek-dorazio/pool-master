@@ -353,7 +353,7 @@ export function CreateContestPage() {
     [eventsQuery.data],
   );
   const visibleTemplates = useMemo(
-    () => (templatesQuery.data ?? []).filter((template) => template.configMode === SelectionType.TIERED),
+    () => (templatesQuery.data ?? []).filter((template) => template.selectionType === SelectionType.TIERED),
     [templatesQuery.data],
   );
   const derivedLockAt = useMemo(

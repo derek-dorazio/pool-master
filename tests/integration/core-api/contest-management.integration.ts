@@ -284,7 +284,7 @@ describe('Contest management integration', () => {
     expect(templateRes.statusCode).toBe(200);
     const templates = templateRes.json().templates;
     expect(templates.length).toBeGreaterThan(0);
-    expect(templates[0].configMode).toBe('TIERED');
+    expect(templates[0].selectionType).toBe('TIERED');
 
     const defaultTemplate = templates.find(
       (template: { isDefault: boolean }) => template.isDefault,

@@ -801,8 +801,8 @@ model ContestConfigTemplate {
   sport         String   @db.VarChar(50)
   eventType     String?  @map("event_type") @db.VarChar(100)
   contestFormat String   @map("contest_type") @db.VarChar(50)
-  /// A `SelectionType` value: how an entry picks. Renamed `selectionType` by #248.
-  configMode    String   @map("config_mode") @db.VarChar(50)
+  /// A `SelectionType` value: how an entry in a contest created from this template picks.
+  selectionType String   @map("selection_type") @db.VarChar(50)
   templateKey   String   @map("template_key") @db.VarChar(100)
   name          String   @db.VarChar(120)
   description   String   @db.VarChar(500)
@@ -816,7 +816,7 @@ model ContestConfigTemplate {
 
   configurations ContestConfiguration[]
 
-  @@unique([sport, eventType, contestFormat, configMode, templateKey])
+  @@unique([sport, eventType, contestFormat, selectionType, templateKey])
   @@index([sport, contestFormat, active, sortOrder])
   @@map("contest_config_templates")
 }

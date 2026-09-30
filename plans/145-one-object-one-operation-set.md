@@ -1725,7 +1725,7 @@ advanced mode."* One operation with an optional first step, expressed as two ope
 | Q1 | Does `ContestEntryGolfStanding` keep `totalScoreToPar`? | Yes, but the table splits: `ContestEntryStanding` (core) + `ContestEntryGolfStanding` (golf extension holding only `totalScoreToPar`). `status` is removed — settlement writes the literal `'FINAL'` in both branches and nothing reads it. `countingPickCount` is renamed `countingPickLimit`: it holds the rule's N, not a count, and it is kept because configuration stays editable after settlement, so without the captured N a frozen result is unexplainable. `scoredPickCount` and the denormalized `contestId` stay, the latter documented |
 | Q2 | Are there three `position` fields? | No — one each on three objects, and only one is wrong. `Participant.position` means playing role and becomes `role`. `position`-as-rank on both standing tables is the deliberate usage slice 2's decision 4 established and it stays. Ranking entries is not golf-specific, so the pool-rank DTO goes cross-sport with the rest of the `GolfLeaderboard` family (~25 symbols, #248) |
 | Q3 | `PricingMethod`, `TierAssignmentMethod`, `tierAssignmentMethod`, `pricingMethod` | All four go. Provenance is already recorded better per-participant by `SportEventParticipantValuation.priceAssignedSource` / `tierAssignedSource` — right grain, enum-enforced, and on the global side of A11. The two enums' value sets move to `plans/128` as narrative first, because `CONFERENCE`/`DIVISION`/`POT`/`BOUT_POSITION` are real cross-sport strategies worth not losing |
-| Q4 | Is `GolfContestConfigMode` what distinguishes tier/budget/category selection? | No — `SelectionType` is, and always was. The enum and `ContestConfiguration.configMode` both go; `ContestConfigTemplate.configMode` is renamed `selectionType` inside its unique key (#248). Full category support is #99's, and the system gets fully functional on tiered first |
+| Q4 | Is `GolfContestConfigMode` what distinguishes tier/budget/category selection? | No — `SelectionType` is, and always was. The enum and `ContestConfiguration.configMode` both go; `ContestConfigTemplate.configMode` is renamed `selectionType` inside its unique key (landed in #244, not #248 — see its outcome below). Full category support is #99's, and the system gets fully functional on tiered first |
 | Q5 | `scoringMode` | Delete it. A `z.literal` cannot describe a second sport without a breaking change, and `PARTICIPANT_SCORING_DEFINITIONS` now holds direction, unit and format keyed by an id the client reads off the configuration |
 | Q6a | Is the configuration edit guarded once a contest settles? | No, and it must be. `updateManagedContestConfiguration` guards only existence, so a commissioner can change `countedScores` on a `COMPLETED` contest. Refuse while settled; `OverrideService.reopenContest` is already the deliberate path back, commissioner-gated and reason-recorded, so no new mechanism |
 | Q6b | Are template-based and from-scratch creation two paths? | One path with an optional first step. `createContest` gains optional `templateId` and optional `configuration`; `createManagedContest` and the union go. The two template *reads* collapse independently — `adminListContestConfigTemplates` is the same read as the commissioner's, with "Managed" encoding which screen called it rather than a difference in the object |
@@ -1797,21 +1797,36 @@ it across #245 and #248:
   is now a plain object schema — `selectionType` on the contest says how an entry picks, and
   a second selection type with a different configuration shape gets its own schema when it
   is built (category picks, #99).
-- `ContestConfigTemplate.configMode` now holds `SelectionType` values: the two seeded rows
-  moved `GOLF_TIERED` → `TIERED`. **#248 is left with only the column rename**; the data move
-  its ticket describes is done.
+- `ContestConfigTemplate.configMode` became **`selectionType`**, holding `SelectionType`
+  values: the two seeded rows moved `GOLF_TIERED` → `TIERED`, and the column and its unique
+  index were renamed in the same migration. The rename was first left for #248; the repo
+  owner ruled in review that it lands here, so the published field changes once rather than
+  twice with a window where its name contradicts its values. **#248 no longer has a
+  migration.**
 - Removing `mode` removed the two `configuration.mode !== GOLF_TIERED` clauses in the tier
   guards, which no longer compile. Only those clauses went; `mapSelectionType` itself is
   untouched, as the sequencing requires, and #245 still deletes it.
 
 **3.1 — schema.** Three migrations: drop `contest_configurations.pricing_method`; drop
 `contest_configurations.config_mode`, strip `mode` from both tables' `config_json` and move the
-template rows to `TIERED`; drop `contest_entry_aggregation_rules`. Verified against a database
+template rows to `TIERED`, then rename that column to `selection_type` and its unique index to
+the name Prisma derives (`…_sele_key`, read off `prisma migrate diff` — Postgres keeps an
+index's name through a column rename, and no test would notice the mismatch); drop
+`contest_entry_aggregation_rules`. The rename is written as `RENAME COLUMN` / `ALTER INDEX`,
+not the drop-and-add `migrate diff` emits, which would have discarded the converted rows.
+Verified against a database
 built at `main` and seeded with managed, template-seeded and legacy configurations plus
 aggregation rows: only the `mode` key leaves each document, every other key and value is
-unchanged, the legacy row keeps its `budget`, scoring rules are untouched, and
-`prisma migrate diff` shows the same five pre-existing drifts as `main` and none on a contest
-table.
+unchanged, the legacy row keeps its `budget`, scoring rules are untouched, the templates keep
+`TIERED` under `selection_type` with the index renamed, and `prisma migrate diff` shows the same
+five pre-existing drifts as `main` and none on a contest table.
+
+**A client that still sends `mode` gets a 400, and that is accepted.** The three managed bodies
+publish `additionalProperties: false` without `mode` (verified in the committed spec in review),
+so Fastify rejects the key rather than stripping it. `plans/129` means there is no deployed
+client to strand — the exposure is a QA browser holding a stale bundle — and re-adding a
+tolerated `mode` would restore exactly what this slice removes. #245 and #248 change these same
+bodies again; the same reasoning applies there.
 
 **3.2–3.4 — ports, services, DTOs.** `ContestEntryAggregationRuleRepository`, its adapter and
 fake, `AggregationDefinitionIdSchema`, and the three enums are deleted. `pricingMethod` and the

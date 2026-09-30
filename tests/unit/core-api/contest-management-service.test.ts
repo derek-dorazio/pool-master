@@ -105,7 +105,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
     contestFormat: 'ROSTER',
-    configMode: 'TIERED',
+    selectionType: 'TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
     description: 'Default golf tiered template',

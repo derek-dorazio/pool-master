@@ -473,7 +473,7 @@ function mapContestConfigTemplate(row: {
   sport: string;
   eventType: string | null;
   contestFormat: string;
-  configMode: string;
+  selectionType: string;
   templateKey: string;
   name: string;
   description: string;
@@ -490,7 +490,7 @@ function mapContestConfigTemplate(row: {
     sport: row.sport as ContestConfigTemplate['sport'],
     eventType: row.eventType ?? undefined,
     contestFormat: row.contestFormat as ContestConfigTemplate['contestFormat'],
-    configMode: row.configMode as ContestConfigTemplate['configMode'],
+    selectionType: row.selectionType as ContestConfigTemplate['selectionType'],
     templateKey: row.templateKey,
     name: row.name,
     description: row.description,

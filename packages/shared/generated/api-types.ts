@@ -13745,7 +13745,7 @@ export interface operations {
                              * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -19258,7 +19258,7 @@ export interface operations {
                              * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -19383,7 +19383,7 @@ export interface operations {
                              * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */

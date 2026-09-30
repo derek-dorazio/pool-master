@@ -162,8 +162,8 @@ export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
   eventType?: string | null;
   contestFormat: ContestFormat;
-  /** The `SelectionType` this template seeds. Renamed `selectionType` by #248. */
-  configMode: SelectionType;
+  /** How an entry in a contest created from this template picks. */
+  selectionType: SelectionType;
   templateKey: string;
   name: string;
   description: string;

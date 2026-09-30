@@ -130,7 +130,7 @@ export const ContestConfigTemplateDtoSchema = z.object({
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
   eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
-  configMode: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
+  selectionType: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
   name: z.string().describe('Commissioner-facing template label.'),
   description: z.string().describe('Commissioner-facing template description.'),
