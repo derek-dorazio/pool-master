@@ -70,11 +70,10 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', { from, to });
   });
 
-  it('pool-master-753 maps provider rows to the plain catalog shape with no scoring', async () => {
+  it('pool-master-753 returns the provider events themselves, unscored and unreshaped', async () => {
+    const event = buildProviderEvent({ externalId: 'ext-1', name: 'The Masters', endDate: undefined });
     const provider = buildProvider({
-      getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'ext-1', name: 'The Masters', endDate: undefined }),
-      ]),
+      getUpcomingEvents: jest.fn().mockResolvedValue([event]),
     });
     const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
     const prisma = { sportLeague: { findUnique: jest.fn() } };
@@ -82,15 +81,8 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
     const result = await service.listCandidateEvents('mock-golf', 'GOLF' as any);
 
-    expect(result).toEqual([
-      {
-        externalId: 'ext-1',
-        name: 'The Masters',
-        startDate: new Date('2027-04-08T00:00:00.000Z'),
-        endDate: null,
-        status: 'SCHEDULED',
-      },
-    ]);
+    // #205 — the browse returns provider events; the DTO mapper owns the wire shape.
+    expect(result).toEqual([event]);
   });
 
   it('pool-master-753 filters by the sportLeagueId\'s matchKeyword as a plain substring match', async () => {

@@ -1,13 +1,12 @@
 /**
- * Unit tests for the provider-sync mappers extracted in pool-master-5h3 so
- * `adminSyncProviderEventData`/`adminPrepareSportSync` and the new
- * `refreshEventParticipants` route share one
+ * Unit tests for the ingestion mappers. pool-master-5h3 made the manual event sync
+ * (`submitEventSync` since #205) and the events module's `refreshEventParticipants` share one
  * ProviderManualSyncSubmissionResult -> DTO transform.
  */
 import {
   toProviderManualSyncSubmissionResponse,
   toProviderSyncRunDto,
-} from '../../../packages/core-api/src/mappers/provider-sync.mapper';
+} from '../../../packages/core-api/src/mappers/ingestion.mapper';
 
 function buildRun(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,6 +64,6 @@ describe('toProviderManualSyncSubmissionResponse', () => {
     const response = toProviderManualSyncSubmissionResponse(result as any);
 
     expect(response.submittedAt).toBe('2026-01-01T00:00:00.000Z');
-    expect(response.syncRuns.map((run) => run.id)).toEqual(['run-1', 'run-2']);
+    expect(response.syncRuns.map((run: { id: string }) => run.id)).toEqual(['run-1', 'run-2']);
   });
 });

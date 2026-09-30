@@ -35,14 +35,6 @@ export class EventScoreSourceError extends Error {
   }
 }
 
-export interface ProviderCatalogEventRow {
-  externalId: string;
-  name: string;
-  startDate: Date;
-  endDate: Date | null;
-  status: ProviderCatalogSportEvent['status'];
-}
-
 export interface ProviderEventDetailSummary {
   name: string;
   venue: string | null;
@@ -70,7 +62,7 @@ export class EventScoreSourceService {
     providerId: string,
     sport: Sport,
     options: { sportLeagueId?: string; from?: Date; to?: Date; search?: string } = {},
-  ): Promise<ProviderCatalogEventRow[]> {
+  ): Promise<ProviderCatalogSportEvent[]> {
     const provider = this.providerRegistry.getProviderById(providerId);
     if (!provider) {
       throw new EventScoreSourceError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
@@ -91,14 +83,7 @@ export class EventScoreSourceService {
 
     return events
       .filter((event) => !matchKeyword || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
-      .filter((event) => !search || event.name.toLowerCase().includes(search))
-      .map((event) => ({
-        externalId: event.externalId,
-        name: event.name,
-        startDate: event.startDate,
-        endDate: event.endDate ?? null,
-        status: event.status,
-      }));
+      .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 
   /**

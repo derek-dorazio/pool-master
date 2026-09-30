@@ -1966,14 +1966,18 @@ export interface paths {
          */
         get: operations["listParticipantProviderMappings"];
         put?: never;
-        post?: never;
+        /**
+         * Bind a provider identity to a participant
+         * @description How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.
+         */
+        post: operations["bindParticipantProviderMapping"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/providers/health": {
+    "/api/v1/platform/poll-intervals": {
         parameters: {
             query?: never;
             header?: never;
@@ -1981,31 +1985,15 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List sports data providers and health status
-         * @description Returns provider health and provider-summary information for platform ingestion operations.
+         * Get poll interval configuration
+         * @description Returns the platform poll interval configuration that governs recommended client refresh timing.
          */
-        get: operations["adminListProviders"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/sync-runs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
+        get: operations["getPollIntervals"];
         /**
-         * List recent provider sync runs
-         * @description Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.
+         * Update poll interval configuration
+         * @description Updates the platform poll interval configuration used by client polling guidance.
          */
-        get: operations["adminListProviderSyncRuns"];
-        put?: never;
+        put: operations["updatePollIntervals"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2013,7 +2001,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/providers/sync/{sport}": {
+    "/api/v1/platform/poll-intervals/reset": {
         parameters: {
             query?: never;
             header?: never;
@@ -2023,17 +2011,61 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Run explicit manual sport sync feeds
-         * @description Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.
+         * Reset poll intervals to defaults
+         * @description Resets poll interval configuration back to the platform defaults.
          */
-        post: operations["adminPrepareSportSync"];
+        post: operations["resetPollIntervals"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/providers/events/{sport}/{eventId}/sync": {
+    "/api/v1/platform/ingestion-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get ingestion schedule configuration
+         * @description Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
+         */
+        get: operations["getIngestionSchedule"];
+        /**
+         * Update ingestion schedule configuration
+         * @description Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.
+         */
+        put: operations["updateIngestionSchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/ingestion-schedule/{sport}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set per-sport ingestion schedule override
+         * @description Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.
+         */
+        put: operations["setSportIngestionOverride"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/ingestion-schedule/{sport}/reset": {
         parameters: {
             query?: never;
             header?: never;
@@ -2043,10 +2075,170 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Run explicit manual event sync feeds
-         * @description Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.
+         * Clear per-sport ingestion schedule override
+         * @description Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.
          */
-        post: operations["adminSyncProviderEventData"];
+        post: operations["resetSportIngestionOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/ingestion-schedule/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset ingestion schedule to defaults
+         * @description Resets ingestion scheduling back to the platform defaults.
+         */
+        post: operations["resetIngestionSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List sports-data providers with their live health
+         * @description Every registered provider, each with a live health check made for this request, the sports ingestion is scheduled for, and how many of its events are scheduled or in progress.
+         */
+        get: operations["listProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List provider sync runs inside a time window
+         * @description The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.
+         */
+        get: operations["listProviderSyncRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sports/{sport}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a manual sport sync
+         * @description Submits one sync run per requested sport-level feed. The runs execute asynchronously after acceptance; follow them in the sync-run history.
+         */
+        post: operations["submitSportSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sports/{sport}/events/{eventId}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a manual event sync
+         * @description Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
+         */
+        post: operations["submitEventSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/unmapped-participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List competitors a provider could not match
+         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.
+         */
+        get: operations["listUnmappedProviderParticipants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/stale-events/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inventory or delete stale provider events
+         * @description Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes the eligible ones. Non-Golf events are stale because the current provider workflow is Golf-only; Golf events are stale once their end time has passed. A contest on the event, or a pick on one of its participants, protects it from deletion. Each event is deleted in its own transaction, and one that cannot be deleted is left in place and reported as not deleted.
+         */
+        post: operations["cleanupStaleProviderEvents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/providers/{providerId}/catalog-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Browse a provider's live event catalog
+         * @description Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.
+         */
+        get: operations["listProviderCatalogEvents"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2067,494 +2259,6 @@ export interface paths {
          */
         put: operations["adminUpdateContestConfigTemplate"];
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/ingestion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get ingestion dashboard metrics
-         * @description Returns ingestion dashboard metrics used by root-admin operational monitoring surfaces.
-         */
-        get: operations["adminGetIngestionDashboard"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/unmapped-participants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List unmapped participants from providers
-         * @description Returns provider participant records that still need mapping to internal participants.
-         */
-        get: operations["adminGetUnmappedParticipants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/map-participant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Map an external participant to an internal ID
-         * @description Creates or updates a provider-to-participant mapping for ingestion normalization.
-         */
-        post: operations["adminMapParticipant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/stale-events/cleanup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Inventory or delete stale provider event rows
-         * @description Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.
-         */
-        post: operations["adminCleanupStaleProviderEvents"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/{providerId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get provider detail and configuration
-         * @description Returns administrative provider detail including mutable configuration and status information.
-         */
-        get: operations["adminGetProviderDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/{providerId}/config": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update provider configuration
-         * @description Updates the configuration for a specific ingestion provider.
-         */
-        put: operations["adminUpdateProviderConfig"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/{providerId}/health-check": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Trigger manual health check for a provider
-         * @description Triggers an on-demand provider health check through the admin operations surface.
-         */
-        post: operations["adminTriggerHealthCheck"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/{providerId}/re-ingest/{eventId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Re-ingest event data from a provider
-         * @description Triggers on-demand event-data re-ingestion for a provider and event identifier.
-         */
-        post: operations["adminReIngestEvent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/providers/{providerId}/catalog-events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Browse a provider's live event catalog
-         * @description Calls provider.getUpcomingEvents live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. The only candidate-lookup operation: serves the tournament-creation browse mode and the score-source linking picker, a plain filtered list with no scoring or ranking.
-         */
-        get: operations["adminListProviderCatalogEvents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/services": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get service health status
-         * @description Returns service-level health diagnostics for root-admin monitoring views.
-         */
-        get: operations["adminGetServiceHealth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/infrastructure": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get infrastructure metrics
-         * @description Returns infrastructure metrics used by platform monitoring and operational dashboards.
-         */
-        get: operations["adminGetInfrastructureMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/metrics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get business metrics
-         * @description Returns business and product metrics used by root-admin reporting surfaces.
-         */
-        get: operations["adminGetBusinessMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/errors": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Search platform errors
-         * @description Searches captured platform errors for operational debugging and support investigation.
-         */
-        get: operations["adminSearchErrors"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/errors/{errorId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get error detail
-         * @description Returns detailed information for a captured platform error.
-         */
-        get: operations["adminGetErrorDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/alerts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get alert rules
-         * @description Returns the configured alert rules for operational monitoring.
-         */
-        get: operations["adminGetAlertRules"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/alerts/{alertId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update an alert rule
-         * @description Updates an alert rule configuration through the root-admin monitoring surface.
-         */
-        put: operations["adminUpdateAlertRule"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/alerts/{alertId}/mute": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Mute an alert for a duration
-         * @description Temporarily mutes an alert rule for a specified duration.
-         */
-        post: operations["adminMuteAlert"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/health/alerts/{alertId}/unmute": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Unmute an alert
-         * @description Removes a mute from an alert rule so it resumes normal signaling.
-         */
-        post: operations["adminUnmuteAlert"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/poll-intervals": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get poll interval configuration
-         * @description Returns the root-admin poll interval configuration that governs recommended client refresh timing.
-         */
-        get: operations["adminGetPollIntervals"];
-        /**
-         * Update poll interval configuration
-         * @description Updates the root-admin poll interval configuration used by client polling guidance.
-         */
-        put: operations["adminUpdatePollIntervals"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/poll-intervals/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset poll intervals to defaults
-         * @description Resets poll interval configuration back to the platform defaults.
-         */
-        post: operations["adminResetPollIntervals"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/ingestion-schedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get ingestion schedule configuration
-         * @description Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
-         */
-        get: operations["adminGetIngestionSchedule"];
-        /**
-         * Update ingestion schedule configuration
-         * @description Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.
-         */
-        put: operations["adminUpdateIngestionSchedule"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/ingestion-schedule/{sport}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set per-sport ingestion schedule override
-         * @description Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.
-         */
-        put: operations["adminSetSportIngestionOverride"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/ingestion-schedule/{sport}/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Clear per-sport ingestion schedule override
-         * @description Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.
-         */
-        post: operations["adminResetSportIngestionOverride"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/config/ingestion-schedule/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset ingestion schedule to defaults
-         * @description Resets ingestion scheduling back to the platform defaults.
-         */
-        post: operations["adminResetIngestionSchedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5411,26 +5115,6 @@ export interface components {
                 };
             };
         };
-        /** @description Commissioner dashboard action item. */
-        LeagueActionItemDto: {
-            id: string;
-            leagueId: string;
-            contestId?: string | null;
-            title: string;
-            description: string;
-            actionUrl?: string | null;
-            resolved: boolean;
-            /**
-             * Format: date-time
-             * @description When the action item was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the action item was last updated.
-             */
-            updatedAt: string;
-        };
         /** @description Recent member activity row used on commissioner dashboards. */
         MemberActivityEventDto: {
             /** @description User involved in the activity event. */
@@ -6085,26 +5769,6 @@ export interface components {
                  */
                 createdAt?: string;
             };
-            /** @description Outstanding commissioner action items. */
-            actionItems: {
-                id: string;
-                leagueId: string;
-                contestId?: string | null;
-                title: string;
-                description: string;
-                actionUrl?: string | null;
-                resolved: boolean;
-                /**
-                 * Format: date-time
-                 * @description When the action item was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the action item was last updated.
-                 */
-                updatedAt: string;
-            }[];
             /** @description Contest summaries included in the dashboard payload. */
             contests: {
                 id: string;
@@ -6419,6 +6083,36 @@ export interface components {
                 mappedAt: string;
             }[];
         };
+        /** @description Binds a provider identity to this participant. An identity already bound to another participant moves here. */
+        BindParticipantProviderMappingRequest: {
+            /** @description The provider whose identifier this binds. */
+            providerId: string;
+            /** @description The provider's identifier for the competitor — from the unmapped-competitor list. */
+            externalId: string;
+        };
+        /** @description A single provider identity of a participant. */
+        ParticipantProviderMappingResponse: {
+            /** @description A provider's identifier for a participant — how synced data finds them. */
+            providerMapping: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                participantId: string;
+                /** @description The provider that knows the participant by externalId. */
+                providerId: string;
+                externalId: string;
+                /**
+                 * @description How the identity was matched.
+                 * @enum {string}
+                 */
+                confidence: "EXACT" | "HIGH" | "MANUAL";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                mappedAt: string;
+            };
+        };
         /** @description Participant summary returned by participant-search and detail APIs. */
         ParticipantDto: {
             /** @description Participant identifier. */
@@ -6667,161 +6361,6 @@ export interface components {
                  */
                 updatedAt: string;
             };
-        };
-        /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
-        ProviderManualSyncSubmissionResponse: {
-            /** @enum {string} */
-            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            eventId: string | null;
-            requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
-            /** Format: date-time */
-            submittedAt: string;
-            syncRuns: {
-                id: string;
-                providerId: string;
-                /** @enum {string} */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                eventId: string | null;
-                /** @enum {string} */
-                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                /** Format: date-time */
-                startedAt: string | null;
-                /** Format: date-time */
-                completedAt: string | null;
-                /** Format: date-time */
-                createdAt: string;
-                /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
-                payload: {
-                    /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
-                    runType?: string;
-                    /** @description Feeds represented by the originating manual or scheduled sync request. */
-                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
-                    /**
-                     * @description Explicit ingestion feed type requested by the caller.
-                     * @enum {string}
-                     */
-                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                    /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
-                    requestPayload?: {
-                        [key: string]: unknown;
-                    };
-                    /** @description Raw/debug provider payload captured for this run. */
-                    providerPayload?: {
-                        /**
-                         * @description Provider feed operation represented by this payload.
-                         * @enum {string}
-                         */
-                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                        /** @description Whether raw provider response JSON was captured for this run. */
-                        rawCaptured: boolean;
-                        /** @description Whether the captured raw provider payload was truncated before storage. */
-                        rawTruncated: boolean;
-                        /** @description Raw provider response JSON retained for debugging when capture is available. */
-                        raw?: unknown;
-                    } & {
-                        [key: string]: unknown;
-                    };
-                    /** @description Serialized ingestion job details after an ingestion job is available. */
-                    jobPayload?: {
-                        /** @description Internal ingestion job type that executed this sync feed. */
-                        jobType: string;
-                        /** @description Provider that executed the ingestion job. */
-                        providerId: string;
-                        /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                        /** @description External event id for event-scoped jobs, when applicable. */
-                        eventExternalId?: string;
-                        /**
-                         * @description Internal ingestion job status.
-                         * @enum {string}
-                         */
-                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job started.
-                         */
-                        startedAt?: string;
-                        /**
-                         * Format: date-time
-                         * @description When the ingestion job completed.
-                         */
-                        completedAt?: string;
-                        /** @description Canonical records processed by the ingestion job. */
-                        recordsProcessed: number;
-                        /** @description Error count captured by the ingestion job. */
-                        errors: number;
-                        /** @description Raw ingestion error-log entries for root-admin investigation. */
-                        errorLog: unknown[];
-                    };
-                    /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
-                    writeDiagnostics?: {
-                        /** @description Aggregate normalized write-effect counts for a provider sync run. */
-                        summary: {
-                            total: number;
-                            unchanged: number;
-                            created: number;
-                            updated: number;
-                            deleted: number;
-                        };
-                        rows: {
-                            /** @description Stable row id for this normalized write diagnostic row. */
-                            id: string;
-                            /** @description Normalized PoolMaster entity type represented by this row. */
-                            entityType: string;
-                            /**
-                             * @description Write effect for the normalized row.
-                             * @enum {string}
-                             */
-                            disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
-                            /** @description Provider id associated with this row, when applicable. */
-                            providerId?: string;
-                            /** @description Provider external id associated with this row, when applicable. */
-                            externalId?: string;
-                            /** @description Provider participant id associated with this row, when applicable. */
-                            participantExternalId?: string;
-                            /** @description PoolMaster internal id associated with this row, when known. */
-                            internalId?: string;
-                            /** @description Display name for the row, when known. */
-                            name?: string;
-                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                            before?: unknown;
-                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                            after?: unknown;
-                        }[];
-                    };
-                    /** @description Admin-facing outcome and warning summary for the sync run. */
-                    outcome?: {
-                        /**
-                         * @description Admin-facing severity derived from run status, errors, and warnings.
-                         * @enum {string}
-                         */
-                        severity: "SUCCESS" | "WARNING" | "ERROR";
-                        /** @description Human-readable root-admin summary of the sync outcome. */
-                        summary: string;
-                        /** @description Warnings that did not fail the run but should be visible to an operator. */
-                        warnings: {
-                            /** @description Stable warning code emitted by the ingestion/sync layer. */
-                            code: string;
-                            /** @description Human-readable warning detail for root-admin investigation. */
-                            message: string;
-                        }[];
-                        /** @description Count of errors captured for the run. */
-                        errors: number;
-                    };
-                    /** @description Canonical numeric sync stats used by admin diagnostics. */
-                    stats?: {
-                        [key: string]: number;
-                    };
-                    /** @description Legacy top-level processed-record count retained for summary compatibility. */
-                    recordsProcessed?: number;
-                    /** @description Legacy top-level error count retained for summary compatibility. */
-                    errors?: number;
-                    /** @description Legacy human-readable detail retained for summary compatibility. */
-                    detail?: string;
-                } & {
-                    [key: string]: unknown;
-                };
-            }[];
         };
         /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
         PollIntervalConfig: {
@@ -7444,7 +6983,7 @@ export interface components {
             /** Format: uuid */
             seasonId: string;
             providerId: string;
-            /** @description From a provider catalog browse (adminListProviderCatalogEvents). */
+            /** @description From a provider catalog browse (listProviderCatalogEvents). */
             externalId: string;
             /** @description Round count; omitted, the provider schedule decides. */
             rounds?: number;
@@ -9137,6 +8676,866 @@ export interface components {
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
             /** Format: date-time */
             completedAt?: string;
+        };
+        /** @description Feed-aware sport sync request. */
+        SportSyncRequest: {
+            /** @description Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint. */
+            feeds: ("EVENTSCHEDULE" | "PARTICIPANTRANKINGS")[];
+            /**
+             * Format: date-time
+             * @description Optional lower bound for sport-level event discovery.
+             */
+            from?: string;
+            /**
+             * Format: date-time
+             * @description Optional lower bound for sport-level event discovery.
+             */
+            to?: string;
+        };
+        /** @description Feed-aware event sync request. */
+        EventSyncRequest: {
+            /** @description Feed types to run for a specific event sync request. */
+            feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+            /**
+             * @description Optional mock-provider-only event state override for manual QA event syncs.
+             * @enum {string}
+             */
+            mockEventState?: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction";
+        };
+        /** @description A registered sports-data provider with its live health. */
+        ProviderSummaryDto: {
+            /** @description Registered provider identifier. */
+            providerId: string;
+            /** @description Provider display name. */
+            providerName: string;
+            /**
+             * @description Health from a live check made for this request.
+             * @enum {string}
+             */
+            status: "HEALTHY" | "DEGRADED" | "DOWN";
+            /** @description Provider-reported error rate over the last hour. */
+            errorRate: number;
+            /** @description Provider-reported p95 latency. */
+            latencyMs: number;
+            /**
+             * Format: date-time
+             * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
+             */
+            lastEventAt: string | null;
+            /** @description Sports the provider covers that ingestion is scheduled for. */
+            sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+            /** @description The provider's events that are scheduled or in progress. */
+            activeEventCount: number;
+        };
+        /** @description Every registered provider. */
+        ProviderListResponse: {
+            providers: {
+                /** @description Registered provider identifier. */
+                providerId: string;
+                /** @description Provider display name. */
+                providerName: string;
+                /**
+                 * @description Health from a live check made for this request.
+                 * @enum {string}
+                 */
+                status: "HEALTHY" | "DEGRADED" | "DOWN";
+                /** @description Provider-reported error rate over the last hour. */
+                errorRate: number;
+                /** @description Provider-reported p95 latency. */
+                latencyMs: number;
+                /**
+                 * Format: date-time
+                 * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
+                 */
+                lastEventAt: string | null;
+                /** @description Sports the provider covers that ingestion is scheduled for. */
+                sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                /** @description The provider's events that are scheduled or in progress. */
+                activeEventCount: number;
+            }[];
+        };
+        /** @description One feed's sync against a provider, with its diagnostics. */
+        ProviderSyncRunDto: {
+            id: string;
+            providerId: string;
+            /** @enum {string} */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+            eventId: string | null;
+            /** @enum {string} */
+            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            completedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the run was submitted.
+             */
+            createdAt: string;
+            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+            payload: {
+                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                runType?: string;
+                /** @description Feeds represented by the originating manual or scheduled sync request. */
+                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                /**
+                 * @description Explicit ingestion feed type requested by the caller.
+                 * @enum {string}
+                 */
+                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
+                requestPayload?: {
+                    [key: string]: unknown;
+                };
+                /** @description Raw/debug provider payload captured for this run. */
+                providerPayload?: {
+                    /**
+                     * @description Provider feed operation represented by this payload.
+                     * @enum {string}
+                     */
+                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    /** @description Whether raw provider response JSON was captured for this run. */
+                    rawCaptured: boolean;
+                    /** @description Whether the captured raw provider payload was truncated before storage. */
+                    rawTruncated: boolean;
+                    /** @description Raw provider response JSON retained for debugging when capture is available. */
+                    raw?: unknown;
+                } & {
+                    [key: string]: unknown;
+                };
+                /** @description Serialized ingestion job details after an ingestion job is available. */
+                jobPayload?: {
+                    /** @description Internal ingestion job type that executed this sync feed. */
+                    jobType: string;
+                    /** @description Provider that executed the ingestion job. */
+                    providerId: string;
+                    /** @enum {string} */
+                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                    /** @description External event id for event-scoped jobs, when applicable. */
+                    eventExternalId?: string;
+                    /**
+                     * @description Internal ingestion job status.
+                     * @enum {string}
+                     */
+                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                    /**
+                     * Format: date-time
+                     * @description When the ingestion job started.
+                     */
+                    startedAt?: string;
+                    /**
+                     * Format: date-time
+                     * @description When the ingestion job completed.
+                     */
+                    completedAt?: string;
+                    /** @description Canonical records processed by the ingestion job. */
+                    recordsProcessed: number;
+                    /** @description Error count captured by the ingestion job. */
+                    errors: number;
+                    /** @description Raw ingestion error-log entries for root-admin investigation. */
+                    errorLog: unknown[];
+                };
+                /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
+                writeDiagnostics?: {
+                    /** @description Aggregate normalized write-effect counts for a provider sync run. */
+                    summary: {
+                        total: number;
+                        unchanged: number;
+                        created: number;
+                        updated: number;
+                        deleted: number;
+                    };
+                    rows: {
+                        /** @description Stable row id for this normalized write diagnostic row. */
+                        id: string;
+                        /** @description Normalized PoolMaster entity type represented by this row. */
+                        entityType: string;
+                        /**
+                         * @description Write effect for the normalized row.
+                         * @enum {string}
+                         */
+                        disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
+                        /** @description Provider id associated with this row, when applicable. */
+                        providerId?: string;
+                        /** @description Provider external id associated with this row, when applicable. */
+                        externalId?: string;
+                        /** @description Provider participant id associated with this row, when applicable. */
+                        participantExternalId?: string;
+                        /** @description PoolMaster internal id associated with this row, when known. */
+                        internalId?: string;
+                        /** @description Display name for the row, when known. */
+                        name?: string;
+                        /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
+                        before?: unknown;
+                        /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
+                        after?: unknown;
+                    }[];
+                };
+                /** @description Admin-facing outcome and warning summary for the sync run. */
+                outcome?: {
+                    /**
+                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                     * @enum {string}
+                     */
+                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                    /** @description Human-readable root-admin summary of the sync outcome. */
+                    summary: string;
+                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                    warnings: {
+                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                        code: string;
+                        /** @description Human-readable warning detail for root-admin investigation. */
+                        message: string;
+                    }[];
+                    /** @description Count of errors captured for the run. */
+                    errors: number;
+                };
+                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                stats?: {
+                    [key: string]: number;
+                };
+                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                recordsProcessed?: number;
+                /** @description Legacy top-level error count retained for summary compatibility. */
+                errors?: number;
+                /** @description Legacy human-readable detail retained for summary compatibility. */
+                detail?: string;
+            } & {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Filters over the sync-run history. A submission-time window bounds it; nothing pages it. */
+        ProviderSyncRunListQuery: {
+            providerId?: string;
+            /** @enum {string} */
+            sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @enum {string} */
+            status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
+             */
+            from?: string;
+            /**
+             * Format: date-time
+             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
+             */
+            to?: string;
+        };
+        /** @description Sync runs submitted inside the requested window. */
+        ProviderSyncRunListResponse: {
+            syncRuns: {
+                id: string;
+                providerId: string;
+                /** @enum {string} */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+                eventId: string | null;
+                /** @enum {string} */
+                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                completedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the run was submitted.
+                 */
+                createdAt: string;
+                /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+                payload: {
+                    /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                    runType?: string;
+                    /** @description Feeds represented by the originating manual or scheduled sync request. */
+                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    /**
+                     * @description Explicit ingestion feed type requested by the caller.
+                     * @enum {string}
+                     */
+                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
+                    requestPayload?: {
+                        [key: string]: unknown;
+                    };
+                    /** @description Raw/debug provider payload captured for this run. */
+                    providerPayload?: {
+                        /**
+                         * @description Provider feed operation represented by this payload.
+                         * @enum {string}
+                         */
+                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                        /** @description Whether raw provider response JSON was captured for this run. */
+                        rawCaptured: boolean;
+                        /** @description Whether the captured raw provider payload was truncated before storage. */
+                        rawTruncated: boolean;
+                        /** @description Raw provider response JSON retained for debugging when capture is available. */
+                        raw?: unknown;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                    /** @description Serialized ingestion job details after an ingestion job is available. */
+                    jobPayload?: {
+                        /** @description Internal ingestion job type that executed this sync feed. */
+                        jobType: string;
+                        /** @description Provider that executed the ingestion job. */
+                        providerId: string;
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        /** @description External event id for event-scoped jobs, when applicable. */
+                        eventExternalId?: string;
+                        /**
+                         * @description Internal ingestion job status.
+                         * @enum {string}
+                         */
+                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                        /**
+                         * Format: date-time
+                         * @description When the ingestion job started.
+                         */
+                        startedAt?: string;
+                        /**
+                         * Format: date-time
+                         * @description When the ingestion job completed.
+                         */
+                        completedAt?: string;
+                        /** @description Canonical records processed by the ingestion job. */
+                        recordsProcessed: number;
+                        /** @description Error count captured by the ingestion job. */
+                        errors: number;
+                        /** @description Raw ingestion error-log entries for root-admin investigation. */
+                        errorLog: unknown[];
+                    };
+                    /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
+                    writeDiagnostics?: {
+                        /** @description Aggregate normalized write-effect counts for a provider sync run. */
+                        summary: {
+                            total: number;
+                            unchanged: number;
+                            created: number;
+                            updated: number;
+                            deleted: number;
+                        };
+                        rows: {
+                            /** @description Stable row id for this normalized write diagnostic row. */
+                            id: string;
+                            /** @description Normalized PoolMaster entity type represented by this row. */
+                            entityType: string;
+                            /**
+                             * @description Write effect for the normalized row.
+                             * @enum {string}
+                             */
+                            disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
+                            /** @description Provider id associated with this row, when applicable. */
+                            providerId?: string;
+                            /** @description Provider external id associated with this row, when applicable. */
+                            externalId?: string;
+                            /** @description Provider participant id associated with this row, when applicable. */
+                            participantExternalId?: string;
+                            /** @description PoolMaster internal id associated with this row, when known. */
+                            internalId?: string;
+                            /** @description Display name for the row, when known. */
+                            name?: string;
+                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
+                            before?: unknown;
+                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
+                            after?: unknown;
+                        }[];
+                    };
+                    /** @description Admin-facing outcome and warning summary for the sync run. */
+                    outcome?: {
+                        /**
+                         * @description Admin-facing severity derived from run status, errors, and warnings.
+                         * @enum {string}
+                         */
+                        severity: "SUCCESS" | "WARNING" | "ERROR";
+                        /** @description Human-readable root-admin summary of the sync outcome. */
+                        summary: string;
+                        /** @description Warnings that did not fail the run but should be visible to an operator. */
+                        warnings: {
+                            /** @description Stable warning code emitted by the ingestion/sync layer. */
+                            code: string;
+                            /** @description Human-readable warning detail for root-admin investigation. */
+                            message: string;
+                        }[];
+                        /** @description Count of errors captured for the run. */
+                        errors: number;
+                    };
+                    /** @description Canonical numeric sync stats used by admin diagnostics. */
+                    stats?: {
+                        [key: string]: number;
+                    };
+                    /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                    recordsProcessed?: number;
+                    /** @description Legacy top-level error count retained for summary compatibility. */
+                    errors?: number;
+                    /** @description Legacy human-readable detail retained for summary compatibility. */
+                    detail?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            }[];
+        };
+        /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
+        ProviderManualSyncSubmissionResponse: {
+            /** @enum {string} */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            eventId: string | null;
+            requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            submittedAt: string;
+            syncRuns: {
+                id: string;
+                providerId: string;
+                /** @enum {string} */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+                eventId: string | null;
+                /** @enum {string} */
+                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                completedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the run was submitted.
+                 */
+                createdAt: string;
+                /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
+                payload: {
+                    /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
+                    runType?: string;
+                    /** @description Feeds represented by the originating manual or scheduled sync request. */
+                    requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    /**
+                     * @description Explicit ingestion feed type requested by the caller.
+                     * @enum {string}
+                     */
+                    requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                    /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
+                    requestPayload?: {
+                        [key: string]: unknown;
+                    };
+                    /** @description Raw/debug provider payload captured for this run. */
+                    providerPayload?: {
+                        /**
+                         * @description Provider feed operation represented by this payload.
+                         * @enum {string}
+                         */
+                        operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                        /** @description Whether raw provider response JSON was captured for this run. */
+                        rawCaptured: boolean;
+                        /** @description Whether the captured raw provider payload was truncated before storage. */
+                        rawTruncated: boolean;
+                        /** @description Raw provider response JSON retained for debugging when capture is available. */
+                        raw?: unknown;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                    /** @description Serialized ingestion job details after an ingestion job is available. */
+                    jobPayload?: {
+                        /** @description Internal ingestion job type that executed this sync feed. */
+                        jobType: string;
+                        /** @description Provider that executed the ingestion job. */
+                        providerId: string;
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        /** @description External event id for event-scoped jobs, when applicable. */
+                        eventExternalId?: string;
+                        /**
+                         * @description Internal ingestion job status.
+                         * @enum {string}
+                         */
+                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                        /**
+                         * Format: date-time
+                         * @description When the ingestion job started.
+                         */
+                        startedAt?: string;
+                        /**
+                         * Format: date-time
+                         * @description When the ingestion job completed.
+                         */
+                        completedAt?: string;
+                        /** @description Canonical records processed by the ingestion job. */
+                        recordsProcessed: number;
+                        /** @description Error count captured by the ingestion job. */
+                        errors: number;
+                        /** @description Raw ingestion error-log entries for root-admin investigation. */
+                        errorLog: unknown[];
+                    };
+                    /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
+                    writeDiagnostics?: {
+                        /** @description Aggregate normalized write-effect counts for a provider sync run. */
+                        summary: {
+                            total: number;
+                            unchanged: number;
+                            created: number;
+                            updated: number;
+                            deleted: number;
+                        };
+                        rows: {
+                            /** @description Stable row id for this normalized write diagnostic row. */
+                            id: string;
+                            /** @description Normalized PoolMaster entity type represented by this row. */
+                            entityType: string;
+                            /**
+                             * @description Write effect for the normalized row.
+                             * @enum {string}
+                             */
+                            disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
+                            /** @description Provider id associated with this row, when applicable. */
+                            providerId?: string;
+                            /** @description Provider external id associated with this row, when applicable. */
+                            externalId?: string;
+                            /** @description Provider participant id associated with this row, when applicable. */
+                            participantExternalId?: string;
+                            /** @description PoolMaster internal id associated with this row, when known. */
+                            internalId?: string;
+                            /** @description Display name for the row, when known. */
+                            name?: string;
+                            /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
+                            before?: unknown;
+                            /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
+                            after?: unknown;
+                        }[];
+                    };
+                    /** @description Admin-facing outcome and warning summary for the sync run. */
+                    outcome?: {
+                        /**
+                         * @description Admin-facing severity derived from run status, errors, and warnings.
+                         * @enum {string}
+                         */
+                        severity: "SUCCESS" | "WARNING" | "ERROR";
+                        /** @description Human-readable root-admin summary of the sync outcome. */
+                        summary: string;
+                        /** @description Warnings that did not fail the run but should be visible to an operator. */
+                        warnings: {
+                            /** @description Stable warning code emitted by the ingestion/sync layer. */
+                            code: string;
+                            /** @description Human-readable warning detail for root-admin investigation. */
+                            message: string;
+                        }[];
+                        /** @description Count of errors captured for the run. */
+                        errors: number;
+                    };
+                    /** @description Canonical numeric sync stats used by admin diagnostics. */
+                    stats?: {
+                        [key: string]: number;
+                    };
+                    /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                    recordsProcessed?: number;
+                    /** @description Legacy top-level error count retained for summary compatibility. */
+                    errors?: number;
+                    /** @description Legacy human-readable detail retained for summary compatibility. */
+                    detail?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            }[];
+        };
+        /** @description A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is. */
+        UnmappedProviderParticipantDto: {
+            providerId: string;
+            providerName: string;
+            /** @description The provider's identifier for the competitor. */
+            externalId: string;
+            /** @description The competitor's name as the provider reports it. */
+            externalName: string;
+            /** @enum {string} */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+        };
+        /** @description Every unmapped competitor across the scheduled sports of every provider. */
+        UnmappedProviderParticipantListResponse: {
+            participants: {
+                providerId: string;
+                providerName: string;
+                /** @description The provider's identifier for the competitor. */
+                externalId: string;
+                /** @description The competitor's name as the provider reports it. */
+                externalName: string;
+                /** @enum {string} */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            }[];
+        };
+        /** @description Stale provider event cleanup request. */
+        ProviderEventCleanupRequest: {
+            /**
+             * @description DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
+             * @enum {string}
+             */
+            mode: "DRY_RUN" | "EXECUTE";
+        };
+        /** @description Single stale provider event cleanup inventory row. */
+        ProviderEventCleanupRowDto: {
+            /**
+             * Format: uuid
+             * @description Internal SportEvent identifier.
+             */
+            id: string;
+            /** @description Provider/source associated with the stale event row. */
+            providerId: string;
+            /** @description Provider-side event identifier. */
+            externalId: string;
+            /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
+            sport: string;
+            /** @description Current persisted event name. */
+            name: string;
+            /** @description Current persisted event status. */
+            status: string;
+            /**
+             * Format: date-time
+             * @description Persisted event start date.
+             */
+            startDate: string;
+            /**
+             * Format: date-time
+             * @description Persisted event end date, when known.
+             */
+            endDate: string | null;
+            /**
+             * @description Cleanup rule that selected this stale event for inventory.
+             * @enum {string}
+             */
+            staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
+            /** @description Whether EXECUTE mode will delete this event. */
+            deletable: boolean;
+            /** @description Whether this request deleted this event. Always false for dry runs. */
+            deleted: boolean;
+            /** @description Contest-related references that protect this event from deletion. */
+            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
+            /** @description Number of Contest rows directly pointing at this event. */
+            directContestCount: number;
+            /** @description Number of SportEventParticipant rows attached to this event. */
+            sportEventParticipantCount: number;
+            /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
+            valuationCount: number;
+            /** @description Number of per-round participant rows (SportEventParticipantRound) attached through this event. */
+            roundCount: number;
+            /** @description Number of ContestEntryPick rows referencing participants in this event. */
+            pickCount: number;
+        };
+        /** @description Stale provider event cleanup result: the inventory, and what an EXECUTE deleted. */
+        ProviderEventCleanupResponse: {
+            /**
+             * @description Requested cleanup mode.
+             * @enum {string}
+             */
+            mode: "DRY_RUN" | "EXECUTE";
+            /** @description Whether this request performed deletion. */
+            executed: boolean;
+            /**
+             * Format: date-time
+             * @description When the inventory was computed.
+             */
+            inventoriedAt: string;
+            /** @description Aggregate stale provider event cleanup summary. */
+            summary: {
+                /** @description Total stale provider events inventoried by the cleanup rules. */
+                inventoriedEventCount: number;
+                /** @description Inventoried events eligible for deletion. */
+                deletableEventCount: number;
+                /** @description Inventoried events retained because contest or pick references protect them. */
+                blockedEventCount: number;
+                /** @description Events deleted by this request. Zero for dry runs. */
+                deletedEventCount: number;
+                /** @description Event participant rows attached to inventoried stale events. */
+                sportEventParticipantCount: number;
+                /** @description Event participant valuation rows attached to inventoried stale events. */
+                valuationCount: number;
+                /** @description Per-round participant rows attached to inventoried stale events. */
+                roundCount: number;
+                /** @description Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion. */
+                pickCount: number;
+            };
+            /** @description Inventory grouped by event sport. */
+            bySport: {
+                /** @description Grouping key, such as a sport, provider id, or status. */
+                key: string;
+                /** @description Number of inventoried stale events in this group. */
+                eventCount: number;
+                /** @description Number of events in this group eligible for deletion. */
+                deletableEventCount: number;
+                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                deletedEventCount: number;
+            }[];
+            /** @description Inventory grouped by provider id. */
+            byProvider: {
+                /** @description Grouping key, such as a sport, provider id, or status. */
+                key: string;
+                /** @description Number of inventoried stale events in this group. */
+                eventCount: number;
+                /** @description Number of events in this group eligible for deletion. */
+                deletableEventCount: number;
+                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                deletedEventCount: number;
+            }[];
+            /** @description Inventory grouped by persisted event status. */
+            byStatus: {
+                /** @description Grouping key, such as a sport, provider id, or status. */
+                key: string;
+                /** @description Number of inventoried stale events in this group. */
+                eventCount: number;
+                /** @description Number of events in this group eligible for deletion. */
+                deletableEventCount: number;
+                /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                deletedEventCount: number;
+            }[];
+            /** @description Per-event cleanup inventory rows. */
+            events: {
+                /**
+                 * Format: uuid
+                 * @description Internal SportEvent identifier.
+                 */
+                id: string;
+                /** @description Provider/source associated with the stale event row. */
+                providerId: string;
+                /** @description Provider-side event identifier. */
+                externalId: string;
+                /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
+                sport: string;
+                /** @description Current persisted event name. */
+                name: string;
+                /** @description Current persisted event status. */
+                status: string;
+                /**
+                 * Format: date-time
+                 * @description Persisted event start date.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description Persisted event end date, when known.
+                 */
+                endDate: string | null;
+                /**
+                 * @description Cleanup rule that selected this stale event for inventory.
+                 * @enum {string}
+                 */
+                staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
+                /** @description Whether EXECUTE mode will delete this event. */
+                deletable: boolean;
+                /** @description Whether this request deleted this event. Always false for dry runs. */
+                deleted: boolean;
+                /** @description Contest-related references that protect this event from deletion. */
+                blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
+                /** @description Number of Contest rows directly pointing at this event. */
+                directContestCount: number;
+                /** @description Number of SportEventParticipant rows attached to this event. */
+                sportEventParticipantCount: number;
+                /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
+                valuationCount: number;
+                /** @description Number of per-round participant rows (SportEventParticipantRound) attached through this event. */
+                roundCount: number;
+                /** @description Number of ContestEntryPick rows referencing participants in this event. */
+                pickCount: number;
+            }[];
+        };
+        /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
+        ProviderEventDto: {
+            /** @description The provider's identifier for the event. */
+            externalId: string;
+            providerId: string;
+            /** @enum {string} */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            name: string;
+            venue: string | null;
+            location: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            endDate: string | null;
+            /** @enum {string} */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            rounds: number | null;
+            /** @description Field size the provider reports, when it reports one. */
+            participantCount: number | null;
+            /** @description Whether the provider has locked the field. */
+            fieldLocked: boolean;
+            /** @description Provider-emitted event metadata, unnormalized. */
+            metadata: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Filters over a provider's live catalog. */
+        ProviderCatalogEventListQuery: {
+            /** @enum {string} */
+            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+            sportLeagueId?: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            from?: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            to?: string;
+            search?: string;
+        };
+        /** @description Live provider catalog browse results — serves both tournament-creation browse and score-source linking. */
+        ProviderCatalogEventListResponse: {
+            events: {
+                /** @description The provider's identifier for the event. */
+                externalId: string;
+                providerId: string;
+                /** @enum {string} */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                name: string;
+                venue: string | null;
+                location: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                endDate: string | null;
+                /** @enum {string} */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                rounds: number | null;
+                /** @description Field size the provider reports, when it reports one. */
+                participantCount: number | null;
+                /** @description Whether the provider has locked the field. */
+                fieldLocked: boolean;
+                /** @description Provider-emitted event metadata, unnormalized. */
+                metadata: {
+                    [key: string]: unknown;
+                };
+            }[];
         };
         /** @enum {string} */
         ClientLogLevel: "debug" | "info" | "warn" | "error" | "fatal";
@@ -16002,7 +16401,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
+            /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -18251,7 +18650,90 @@ export interface operations {
             };
         };
     };
-    adminListProviders: {
+    bindParticipantProviderMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BindParticipantProviderMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description A single provider identity of a participant. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParticipantProviderMappingResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getPollIntervals: {
         parameters: {
             query?: never;
             header?: never;
@@ -18260,26 +18742,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Provider-list response. */
+            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        items: {
-                            providerId: string;
-                            providerName: string;
-                            /** @enum {string} */
-                            status: "HEALTHY" | "DEGRADED" | "DOWN";
-                            errorRate: number;
-                            latencyMs: number;
-                            /** Format: date-time */
-                            lastEventAt: string | null;
-                            sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
-                            activeEventCount: number;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["PollIntervalConfig"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -18301,176 +18770,105 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
-    adminListProviderSyncRuns: {
+    updatePollIntervals: {
         parameters: {
-            query?: {
-                providerId?: string;
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                limit?: number;
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PollIntervalConfigPatch"];
             };
+        };
+        responses: {
+            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollIntervalConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resetPollIntervals: {
+        parameters: {
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Recent provider sync runs returned for root-admin operational visibility. */
+            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        items: {
-                            id: string;
-                            providerId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            eventId: string | null;
-                            /** @enum {string} */
-                            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                            /** Format: date-time */
-                            startedAt: string | null;
-                            /** Format: date-time */
-                            completedAt: string | null;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
-                            payload: {
-                                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
-                                runType?: string;
-                                /** @description Feeds represented by the originating manual or scheduled sync request. */
-                                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
-                                /**
-                                 * @description Explicit ingestion feed type requested by the caller.
-                                 * @enum {string}
-                                 */
-                                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
-                                requestPayload?: {
-                                    [key: string]: unknown;
-                                };
-                                /** @description Raw/debug provider payload captured for this run. */
-                                providerPayload?: {
-                                    /**
-                                     * @description Provider feed operation represented by this payload.
-                                     * @enum {string}
-                                     */
-                                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                    /** @description Whether raw provider response JSON was captured for this run. */
-                                    rawCaptured: boolean;
-                                    /** @description Whether the captured raw provider payload was truncated before storage. */
-                                    rawTruncated: boolean;
-                                    /** @description Raw provider response JSON retained for debugging when capture is available. */
-                                    raw?: unknown;
-                                } & {
-                                    [key: string]: unknown;
-                                };
-                                /** @description Serialized ingestion job details after an ingestion job is available. */
-                                jobPayload?: {
-                                    /** @description Internal ingestion job type that executed this sync feed. */
-                                    jobType: string;
-                                    /** @description Provider that executed the ingestion job. */
-                                    providerId: string;
-                                    /** @enum {string} */
-                                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                                    /** @description External event id for event-scoped jobs, when applicable. */
-                                    eventExternalId?: string;
-                                    /**
-                                     * @description Internal ingestion job status.
-                                     * @enum {string}
-                                     */
-                                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                                    /**
-                                     * Format: date-time
-                                     * @description When the ingestion job started.
-                                     */
-                                    startedAt?: string;
-                                    /**
-                                     * Format: date-time
-                                     * @description When the ingestion job completed.
-                                     */
-                                    completedAt?: string;
-                                    /** @description Canonical records processed by the ingestion job. */
-                                    recordsProcessed: number;
-                                    /** @description Error count captured by the ingestion job. */
-                                    errors: number;
-                                    /** @description Raw ingestion error-log entries for root-admin investigation. */
-                                    errorLog: unknown[];
-                                };
-                                /** @description Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes. */
-                                writeDiagnostics?: {
-                                    /** @description Aggregate normalized write-effect counts for a provider sync run. */
-                                    summary: {
-                                        total: number;
-                                        unchanged: number;
-                                        created: number;
-                                        updated: number;
-                                        deleted: number;
-                                    };
-                                    rows: {
-                                        /** @description Stable row id for this normalized write diagnostic row. */
-                                        id: string;
-                                        /** @description Normalized PoolMaster entity type represented by this row. */
-                                        entityType: string;
-                                        /**
-                                         * @description Write effect for the normalized row.
-                                         * @enum {string}
-                                         */
-                                        disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
-                                        /** @description Provider id associated with this row, when applicable. */
-                                        providerId?: string;
-                                        /** @description Provider external id associated with this row, when applicable. */
-                                        externalId?: string;
-                                        /** @description Provider participant id associated with this row, when applicable. */
-                                        participantExternalId?: string;
-                                        /** @description PoolMaster internal id associated with this row, when known. */
-                                        internalId?: string;
-                                        /** @description Display name for the row, when known. */
-                                        name?: string;
-                                        /** @description Normalized before-state JSON for UPDATED or DELETED rows. */
-                                        before?: unknown;
-                                        /** @description Normalized after-state JSON for CREATED or UPDATED rows. */
-                                        after?: unknown;
-                                    }[];
-                                };
-                                /** @description Admin-facing outcome and warning summary for the sync run. */
-                                outcome?: {
-                                    /**
-                                     * @description Admin-facing severity derived from run status, errors, and warnings.
-                                     * @enum {string}
-                                     */
-                                    severity: "SUCCESS" | "WARNING" | "ERROR";
-                                    /** @description Human-readable root-admin summary of the sync outcome. */
-                                    summary: string;
-                                    /** @description Warnings that did not fail the run but should be visible to an operator. */
-                                    warnings: {
-                                        /** @description Stable warning code emitted by the ingestion/sync layer. */
-                                        code: string;
-                                        /** @description Human-readable warning detail for root-admin investigation. */
-                                        message: string;
-                                    }[];
-                                    /** @description Count of errors captured for the run. */
-                                    errors: number;
-                                };
-                                /** @description Canonical numeric sync stats used by admin diagnostics. */
-                                stats?: {
-                                    [key: string]: number;
-                                };
-                                /** @description Legacy top-level processed-record count retained for summary compatibility. */
-                                recordsProcessed?: number;
-                                /** @description Legacy top-level error count retained for summary compatibility. */
-                                errors?: number;
-                                /** @description Legacy human-readable detail retained for summary compatibility. */
-                                detail?: string;
-                            } & {
-                                [key: string]: unknown;
-                            };
-                        }[];
-                    };
+                    "application/json": components["schemas"]["PollIntervalConfig"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -18492,9 +18890,148 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
-    adminPrepareSportSync: {
+    getIngestionSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateIngestionSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IngestionScheduleConfigOverride"];
+            };
+        };
+        responses: {
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    setSportIngestionOverride: {
         parameters: {
             query?: never;
             header?: never;
@@ -18503,27 +19040,319 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Feed-aware sport sync request. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint. */
-                    feeds: ("EVENTSCHEDULE" | "PARTICIPANTRANKINGS")[];
-                    /**
-                     * Format: date-time
-                     * @description Optional lower bound for sport-level event discovery.
-                     */
-                    from?: string;
-                    /**
-                     * Format: date-time
-                     * @description Optional lower bound for sport-level event discovery.
-                     */
-                    to?: string;
-                };
+                "application/json": components["schemas"]["IngestionScheduleConfigOverride"];
             };
         };
         responses: {
-            /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resetSportIngestionOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    resetIngestionSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    listProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every registered provider. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    listProviderSyncRuns: {
+        parameters: {
+            query?: {
+                providerId?: string;
+                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
+                from?: string;
+                /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sync runs submitted inside the requested window. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncRunListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    submitSportSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SportSyncRequest"];
+            };
+        };
+        responses: {
+            /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -18534,6 +19363,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18591,32 +19439,23 @@ export interface operations {
             };
         };
     };
-    adminSyncProviderEventData: {
+    submitEventSync: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                sport: string;
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 eventId: string;
             };
             cookie?: never;
         };
-        /** @description Feed-aware event sync request. */
         requestBody: {
             content: {
-                "application/json": {
-                    /** @description Feed types to run for a specific event sync request. */
-                    feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
-                    /**
-                     * @description Optional mock-provider-only event state override for manual QA event syncs.
-                     * @enum {string}
-                     */
-                    mockEventState?: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction";
-                };
+                "application/json": components["schemas"]["EventSyncRequest"];
             };
         };
         responses: {
-            /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
+            /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -18627,6 +19466,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18684,6 +19542,214 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    listUnmappedProviderParticipants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every unmapped competitor across the scheduled sports of every provider. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnmappedProviderParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    cleanupStaleProviderEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderEventCleanupRequest"];
+            };
+        };
+        responses: {
+            /** @description Stale provider event cleanup result: the inventory, and what an EXECUTE deleted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderEventCleanupResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    listProviderCatalogEvents: {
+        parameters: {
+            query: {
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+                sportLeagueId?: string;
+                /** @description ISO 8601 datetime string. */
+                from?: string;
+                /** @description ISO 8601 datetime string. */
+                to?: string;
+                search?: string;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live provider catalog browse results — serves both tournament-creation browse and score-source linking. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderCatalogEventListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18862,1831 +19928,6 @@ export interface operations {
                             details?: unknown;
                         };
                     };
-                };
-            };
-        };
-    };
-    adminGetIngestionDashboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Admin provider-ingestion dashboard response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        sportProviderStatus: {
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            providerId: string;
-                            /** Format: date-time */
-                            lastPollAt: string | null;
-                            /** Format: date-time */
-                            lastEventReceivedAt: string | null;
-                            eventsToday: number;
-                            errorsToday: number;
-                            activeEventCount: number;
-                            contestsDepending: number;
-                        }[];
-                        recentErrors: {
-                            providerId: string;
-                            errorType: string;
-                            message: string;
-                            /** Format: date-time */
-                            occurredAt: string;
-                            eventId?: string | null;
-                        }[];
-                        activeJobs: {
-                            id: string;
-                            providerId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            eventId: string | null;
-                            /** @enum {string} */
-                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                            /** Format: date-time */
-                            startedAt: string | null;
-                            /** Format: date-time */
-                            completedAt: string | null;
-                            recordsProcessed: number;
-                            errors: number;
-                        }[];
-                        recentCompletedJobs: {
-                            id: string;
-                            providerId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            eventId: string | null;
-                            /** @enum {string} */
-                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                            /** Format: date-time */
-                            startedAt: string | null;
-                            /** Format: date-time */
-                            completedAt: string | null;
-                            recordsProcessed: number;
-                            errors: number;
-                        }[];
-                        throughputPerMinute: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetUnmappedParticipants: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        providerId: string;
-                        providerName: string;
-                        externalId: string;
-                        externalName: string;
-                        /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                    }[];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminMapParticipant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    providerId: string;
-                    externalId: string;
-                    internalId: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminCleanupStaleProviderEvents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Root-admin stale provider event cleanup request. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * @description DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
-                     * @enum {string}
-                     */
-                    mode: "DRY_RUN" | "EXECUTE";
-                };
-            };
-        };
-        responses: {
-            /** @description Root-admin stale provider event cleanup response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Requested cleanup mode.
-                         * @enum {string}
-                         */
-                        mode: "DRY_RUN" | "EXECUTE";
-                        /** @description Whether this request performed deletion. */
-                        executed: boolean;
-                        /**
-                         * Format: date-time
-                         * @description When the inventory was computed.
-                         */
-                        inventoriedAt: string;
-                        /** @description Aggregate stale provider event cleanup summary. */
-                        summary: {
-                            /** @description Total stale provider events inventoried by the cleanup rules. */
-                            inventoriedEventCount: number;
-                            /** @description Inventoried events eligible for deletion. */
-                            deletableEventCount: number;
-                            /** @description Inventoried events retained because contest or pick references protect them. */
-                            blockedEventCount: number;
-                            /** @description Events deleted by this request. Zero for dry runs. */
-                            deletedEventCount: number;
-                            /** @description Event participant rows attached to inventoried stale events. */
-                            sportEventParticipantCount: number;
-                            /** @description Event participant valuation rows attached to inventoried stale events. */
-                            valuationCount: number;
-                            /** @description Golf round rows attached to inventoried stale events. */
-                            golfRoundCount: number;
-                            /** @description Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion. */
-                            pickCount: number;
-                        };
-                        /** @description Inventory grouped by event sport. */
-                        bySport: {
-                            /** @description Grouping key, such as a sport, provider id, or status. */
-                            key: string;
-                            /** @description Number of inventoried stale events in this group. */
-                            eventCount: number;
-                            /** @description Number of events in this group eligible for deletion. */
-                            deletableEventCount: number;
-                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                            deletedEventCount: number;
-                        }[];
-                        /** @description Inventory grouped by provider id. */
-                        byProvider: {
-                            /** @description Grouping key, such as a sport, provider id, or status. */
-                            key: string;
-                            /** @description Number of inventoried stale events in this group. */
-                            eventCount: number;
-                            /** @description Number of events in this group eligible for deletion. */
-                            deletableEventCount: number;
-                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                            deletedEventCount: number;
-                        }[];
-                        /** @description Inventory grouped by persisted event status. */
-                        byStatus: {
-                            /** @description Grouping key, such as a sport, provider id, or status. */
-                            key: string;
-                            /** @description Number of inventoried stale events in this group. */
-                            eventCount: number;
-                            /** @description Number of events in this group eligible for deletion. */
-                            deletableEventCount: number;
-                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
-                            deletedEventCount: number;
-                        }[];
-                        /** @description Per-event cleanup inventory rows. */
-                        events: {
-                            /**
-                             * Format: uuid
-                             * @description Internal SportEvent identifier.
-                             */
-                            id: string;
-                            /** @description Provider/source associated with the stale event row. */
-                            providerId: string;
-                            /** @description Provider-side event identifier. */
-                            externalId: string;
-                            /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
-                            sport: string;
-                            /** @description Current persisted event name. */
-                            name: string;
-                            /** @description Current persisted event status. */
-                            status: string;
-                            /**
-                             * Format: date-time
-                             * @description Persisted event start date.
-                             */
-                            startDate: string;
-                            /**
-                             * Format: date-time
-                             * @description Persisted event end date, when known.
-                             */
-                            endDate: string | null;
-                            /**
-                             * @description Cleanup rule that selected this stale event for inventory.
-                             * @enum {string}
-                             */
-                            staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
-                            /** @description Whether EXECUTE mode will delete this event. */
-                            deletable: boolean;
-                            /** @description Whether this request deleted this event. Always false for dry runs. */
-                            deleted: boolean;
-                            /** @description Contest-related references that protect this event from deletion. */
-                            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
-                            /** @description Number of Contest rows directly pointing at this event. */
-                            directContestCount: number;
-                            /** @description Number of SportEventParticipant rows attached to this event. */
-                            sportEventParticipantCount: number;
-                            /** @description Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event. */
-                            valuationCount: number;
-                            /** @description Number of SportEventParticipantGolfRound rows attached through this event. */
-                            golfRoundCount: number;
-                            /** @description Number of ContestEntryPick rows referencing participants in this event. */
-                            pickCount: number;
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetProviderDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Expanded provider detail response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        providerId: string;
-                        providerName: string;
-                        /** @enum {string} */
-                        status: "HEALTHY" | "DEGRADED" | "DOWN";
-                        errorRate: number;
-                        latencyMs: number;
-                        /** Format: date-time */
-                        lastEventAt: string | null;
-                        sportsCovered: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
-                        activeEventCount: number;
-                        recentHealthChecks: {
-                            providerId: string;
-                            providerName: string;
-                            /** @enum {string} */
-                            status: "HEALTHY" | "DEGRADED" | "DOWN";
-                            errorRate: number;
-                            latencyMs: number;
-                            /** Format: date-time */
-                            checkedAt: string;
-                            details: string;
-                        }[];
-                        ingestionStats: {
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            providerId: string;
-                            /** Format: date-time */
-                            lastPollAt: string | null;
-                            /** Format: date-time */
-                            lastEventReceivedAt: string | null;
-                            eventsToday: number;
-                            errorsToday: number;
-                            activeEventCount: number;
-                            contestsDepending: number;
-                        }[];
-                        recentErrors: {
-                            providerId: string;
-                            errorType: string;
-                            message: string;
-                            /** Format: date-time */
-                            occurredAt: string;
-                            eventId?: string | null;
-                        }[];
-                        recentJobs: {
-                            id: string;
-                            providerId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            eventId: string | null;
-                            /** @enum {string} */
-                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                            /** Format: date-time */
-                            startedAt: string | null;
-                            /** Format: date-time */
-                            completedAt: string | null;
-                            recordsProcessed: number;
-                            errors: number;
-                        }[];
-                        unmappedParticipants: {
-                            providerId: string;
-                            providerName: string;
-                            externalId: string;
-                            externalName: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                        }[];
-                        mappedParticipantCount: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateProviderConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    apiKey?: string;
-                    apiSecret?: string;
-                    webhookSecret?: string;
-                    webhookUrl?: string;
-                    webhookEvents?: string[];
-                    degradedErrorRate?: number;
-                    downErrorRate?: number;
-                    maxLatencyMs?: number;
-                    monthlyBudgetUsd?: number;
-                    budgetAlertThreshold?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminTriggerHealthCheck: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single provider health-check result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        providerId: string;
-                        providerName: string;
-                        /** @enum {string} */
-                        status: "HEALTHY" | "DEGRADED" | "DOWN";
-                        errorRate: number;
-                        latencyMs: number;
-                        /** Format: date-time */
-                        checkedAt: string;
-                        details: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminReIngestEvent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                providerId: string;
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Recent or active provider ingestion job. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        providerId: string;
-                        /** @enum {string} */
-                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                        eventId: string | null;
-                        /** @enum {string} */
-                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                        /** Format: date-time */
-                        startedAt: string | null;
-                        /** Format: date-time */
-                        completedAt: string | null;
-                        recordsProcessed: number;
-                        errors: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListProviderCatalogEvents: {
-        parameters: {
-            query: {
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
-                sportLeagueId?: string;
-                from?: string;
-                to?: string;
-                search?: string;
-            };
-            header?: never;
-            path: {
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Live provider catalog browse results — serves both tournament-creation browse and score-source linking. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        events: {
-                            externalId: string;
-                            name: string;
-                            /** Format: date-time */
-                            startDate: string;
-                            /** Format: date-time */
-                            endDate: string | null;
-                            /** @enum {string} */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetServiceHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Admin service-health list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        services: {
-                            name: string;
-                            /** @enum {string} */
-                            status: "UP" | "DEGRADED" | "DOWN";
-                            uptimePercent: number;
-                            errorRatePercent: number;
-                            p95LatencyMs: number;
-                            version: string;
-                            uptimeSeconds: number;
-                            /** Format: date-time */
-                            checkedAt: string;
-                            dependencies: {
-                                name: string;
-                                /** @enum {string} */
-                                status: "UP" | "DOWN";
-                                latencyMs: number;
-                            }[];
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetInfrastructureMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Infrastructure-metrics response for admin dashboards. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        postgres: {
-                            /** @enum {string} */
-                            status: "UP" | "DEGRADED" | "DOWN";
-                            cpuPercent: number;
-                            connectionsCurrent: number;
-                            connectionsMax: number;
-                            diskUsageGb: number;
-                            diskTotalGb: number;
-                            replicationLagMs: number;
-                            slowQueriesLast24h: number;
-                        };
-                        messageBus: {
-                            /** @enum {string} */
-                            status: "UP" | "DEGRADED" | "DOWN";
-                            queueDepth: number;
-                            consumerLagSeconds: number;
-                            messagesPerSecond: number;
-                            deadLetterCount: number;
-                        };
-                        s3Cdn: {
-                            /** @enum {string} */
-                            status: "UP" | "DEGRADED" | "DOWN";
-                            bandwidthGbPerDay: number;
-                            requestsLast24h: number;
-                            errorRatePercent: number;
-                            storageUsedGb: number;
-                        };
-                        /**
-                         * Format: date-time
-                         * @description When the infrastructure metrics snapshot was captured.
-                         */
-                        checkedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetBusinessMetrics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Business-metrics response for admin dashboards. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        activeUsersLast24h: number;
-                        websocketConnectionsCurrent: number;
-                        apiRequestsLast24h: number;
-                        notificationsSent: number;
-                        notificationsDelivered: number;
-                        notificationDeliveryRatePercent: number;
-                        activeContests: number;
-                        liveDrafts: number;
-                        /**
-                         * Format: date-time
-                         * @description When the business metrics snapshot was captured.
-                         */
-                        checkedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminSearchErrors: {
-        parameters: {
-            query?: {
-                service?: string;
-                severity?: "ERROR" | "CRITICAL" | "WARNING";
-                dateFrom?: string;
-                dateTo?: string;
-                page?: number;
-                pageSize?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Generic paginated response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Current result page items. */
-                        items: {
-                            id: string;
-                            service: string;
-                            /** @enum {string} */
-                            severity: "ERROR" | "CRITICAL" | "WARNING";
-                            message: string;
-                            errorType: string;
-                            requestId: string;
-                            userId?: string;
-                            stackTrace: string;
-                            metadata: {
-                                [key: string]: unknown;
-                            };
-                            /** Format: date-time */
-                            occurredAt: string;
-                        }[];
-                        /** @description Total number of matching records. */
-                        total: number;
-                        /** @description Current page number. */
-                        page: number;
-                        /** @description Number of items requested per page. */
-                        pageSize: number;
-                        /** @description Total page count for the current query. */
-                        totalPages: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetErrorDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                errorId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Expanded error-log detail response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        service: string;
-                        /** @enum {string} */
-                        severity: "ERROR" | "CRITICAL" | "WARNING";
-                        message: string;
-                        errorType: string;
-                        requestId: string;
-                        userId?: string;
-                        stackTrace: string;
-                        metadata: {
-                            [key: string]: unknown;
-                        };
-                        /** Format: date-time */
-                        occurredAt: string;
-                        httpMethod?: string;
-                        httpPath?: string;
-                        httpStatusCode?: number;
-                        headers?: {
-                            [key: string]: string;
-                        };
-                        requestBody?: {
-                            [key: string]: unknown;
-                        };
-                        responseTimeMs?: number;
-                        hostName: string;
-                        environment: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetAlertRules: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Alert-rules response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        rules: {
-                            id: string;
-                            name: string;
-                            description: string;
-                            /** @enum {string} */
-                            category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
-                            isEnabled: boolean;
-                            isMuted: boolean;
-                            /** Format: date-time */
-                            mutedUntil?: string;
-                            /** @enum {string} */
-                            severity: "P1" | "P2" | "P3";
-                            channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
-                            thresholds: {
-                                [key: string]: number;
-                            };
-                            windowMinutes: number;
-                            /** Format: date-time */
-                            lastTriggeredAt?: string;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            updatedAt: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateAlertRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                alertId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    isEnabled?: boolean;
-                    /** @enum {string} */
-                    severity?: "P1" | "P2" | "P3";
-                    channels?: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
-                    thresholds?: Record<string, never>;
-                    windowMinutes?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Alert-rule configuration row used by admin monitoring surfaces. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        /** @enum {string} */
-                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
-                        isEnabled: boolean;
-                        isMuted: boolean;
-                        /** Format: date-time */
-                        mutedUntil?: string;
-                        /** @enum {string} */
-                        severity: "P1" | "P2" | "P3";
-                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
-                        thresholds: {
-                            [key: string]: number;
-                        };
-                        windowMinutes: number;
-                        /** Format: date-time */
-                        lastTriggeredAt?: string;
-                        /** Format: date-time */
-                        createdAt: string;
-                        /** Format: date-time */
-                        updatedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminMuteAlert: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                alertId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @enum {string} */
-                    duration: "1h" | "4h" | "24h" | "indefinite";
-                };
-            };
-        };
-        responses: {
-            /** @description Alert-rule configuration row used by admin monitoring surfaces. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        /** @enum {string} */
-                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
-                        isEnabled: boolean;
-                        isMuted: boolean;
-                        /** Format: date-time */
-                        mutedUntil?: string;
-                        /** @enum {string} */
-                        severity: "P1" | "P2" | "P3";
-                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
-                        thresholds: {
-                            [key: string]: number;
-                        };
-                        windowMinutes: number;
-                        /** Format: date-time */
-                        lastTriggeredAt?: string;
-                        /** Format: date-time */
-                        createdAt: string;
-                        /** Format: date-time */
-                        updatedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUnmuteAlert: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                alertId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Alert-rule configuration row used by admin monitoring surfaces. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        description: string;
-                        /** @enum {string} */
-                        category: "SERVICE" | "ERROR_RATE" | "INFRASTRUCTURE" | "BUSINESS";
-                        isEnabled: boolean;
-                        isMuted: boolean;
-                        /** Format: date-time */
-                        mutedUntil?: string;
-                        /** @enum {string} */
-                        severity: "P1" | "P2" | "P3";
-                        channels: ("SLACK" | "PAGERDUTY" | "EMAIL")[];
-                        thresholds: {
-                            [key: string]: number;
-                        };
-                        windowMinutes: number;
-                        /** Format: date-time */
-                        lastTriggeredAt?: string;
-                        /** Format: date-time */
-                        createdAt: string;
-                        /** Format: date-time */
-                        updatedAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetPollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUpdatePollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PollIntervalConfigPatch"];
-            };
-        };
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminResetPollIntervals: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Poll-interval configuration payload exposed to clients and root-admin tools. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PollIntervalConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminGetIngestionSchedule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IngestionScheduleConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminUpdateIngestionSchedule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IngestionScheduleConfigOverride"];
-            };
-        };
-        responses: {
-            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IngestionScheduleConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminSetSportIngestionOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sport: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IngestionScheduleConfigOverride"];
-            };
-        };
-        responses: {
-            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IngestionScheduleConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminResetSportIngestionOverride: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sport: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IngestionScheduleConfig"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminResetIngestionSchedule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IngestionScheduleConfig"];
                 };
             };
         };

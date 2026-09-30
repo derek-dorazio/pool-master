@@ -14,8 +14,8 @@ const {
   getEventMock,
   listEventRoundsMock,
   linkEventScoreSourceMock,
-  adminListProviderCatalogEventsMock,
-  adminListProvidersMock,
+  listProviderCatalogEventsMock,
+  listProvidersMock,
   transitionEventMock,
   unlinkEventScoreSourceMock,
   updateEventMock,
@@ -36,8 +36,8 @@ const {
     getEventMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     linkEventScoreSourceMock: vi.fn(),
-    adminListProviderCatalogEventsMock: vi.fn(),
-    adminListProvidersMock: vi.fn(),
+    listProviderCatalogEventsMock: vi.fn(),
+    listProvidersMock: vi.fn(),
     transitionEventMock: vi.fn(),
     unlinkEventScoreSourceMock: vi.fn(),
     updateEventMock: vi.fn(),
@@ -51,8 +51,8 @@ bindApiMocks({
   getEvent: getEventMock,
   listEventRounds: listEventRoundsMock,
   linkEventScoreSource: linkEventScoreSourceMock,
-  adminListProviderCatalogEvents: adminListProviderCatalogEventsMock,
-  adminListProviders: adminListProvidersMock,
+  listProviderCatalogEvents: listProviderCatalogEventsMock,
+  listProviders: listProvidersMock,
   transitionEvent: transitionEventMock,
   unlinkEventScoreSource: unlinkEventScoreSourceMock,
   updateEvent: updateEventMock,
@@ -187,10 +187,10 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
 
   it('pool-master-3dg opens the score-source picker for an unlinked tournament', async () => {
     seedDefaults();
-    adminListProvidersMock.mockResolvedValue({
-      data: { items: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+    listProvidersMock.mockResolvedValue({
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
     });
-    adminListProviderCatalogEventsMock.mockResolvedValue({
+    listProviderCatalogEventsMock.mockResolvedValue({
       data: {
         events: [
           {

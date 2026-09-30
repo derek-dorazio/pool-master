@@ -29,7 +29,6 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
         memberCount: dashboard.memberCount,
         activeContestCount: dashboard.contests.length,
       }),
-      actionItems: dashboard.actionItems,
       contests: dashboard.contests.map((contest) => toContestSummaryDto({
         id: contest.id,
         name: contest.name,

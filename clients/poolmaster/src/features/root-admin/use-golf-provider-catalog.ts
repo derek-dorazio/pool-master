@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviderCatalogEvents, adminListProviders } from '@/lib/api';
+import { listProviderCatalogEvents, listProviders } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListProviderCatalogEventsResponses } from '@/lib/api';
+import type { ProviderEventDto } from '@/lib/api';
 import { resolveGolfProviderId } from './golf-admin-utils';
 import { throwApiError } from '@/lib/errors';
 
-export type GolfProviderCatalogEvent =
-  AdminListProviderCatalogEventsResponses[200]['events'][number];
+export type GolfProviderCatalogEvent = ProviderEventDto;
 
 /**
  * plans/124 §4.4 — one place that resolves "the" golf provider and browses its
@@ -29,11 +28,11 @@ export function useGolfProviderCatalog(params: {
     enabled: params.enabled,
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async () => {
-      const response = await adminListProviders();
-      if (!response.data?.items) {
+      const response = await listProviders();
+      if (!response.data?.providers) {
         throwApiError(response.error, 'Provider list response is missing data.');
       }
-      return response.data.items;
+      return response.data.providers;
     },
     retry: false,
   });
@@ -53,7 +52,7 @@ export function useGolfProviderCatalog(params: {
       if (!providerId) {
         throw new Error('No golf provider is configured.');
       }
-      const response = await adminListProviderCatalogEvents({
+      const response = await listProviderCatalogEvents({
         path: { providerId },
         query: {
           sport: 'GOLF',

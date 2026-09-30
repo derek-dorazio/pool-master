@@ -21,6 +21,7 @@ import type {
   LeagueMembershipStatus,
   LeagueRole,
   MappingConfidence,
+  ProviderSyncRunStatus,
   ParticipantStatus,
   ParticipantType,
   ScoringEngine,
@@ -338,42 +339,37 @@ export interface IntermediatePrize {
   percentage?: number;
 }
 
-// --- Admin & Platform Operations ---
+// --- Platform & Ingestion ---
 
-export type AdminPermission =
-  | 'user.view' | 'user.edit' | 'user.reset_password' | 'user.force_logout' | 'user.merge'
-  | 'contest.view' | 'contest.override' | 'contest.recalculate' | 'contest.close'
-  | 'sportsdata.view' | 'sportsdata.configure' | 'sportsdata.re_ingest'
-  | 'platform.health' | 'platform.migrations';
-
-/** Runtime record for a platform migration initiated from admin tooling. */
-export interface MigrationRun {
+/**
+ * One feed's sync against a provider — the ingestion history. `eventId` is the provider's
+ * event identifier when the run was narrowed to one event, null for a whole-sport run.
+ * `payload` is the ledger's record of the run: request, provider operation, stats,
+ * outcome, and the serialized ingestion job once it completes.
+ */
+export interface ProviderSyncRun {
   id: string;
-  migrationId: string;
-  status: string;
-  options: Record<string, unknown>;
-  progress: Record<string, unknown>;
-  errors: Record<string, unknown>[];
-  startedAt: Date;
-  completedAt?: Date;
-  startedById: string;
+  providerId: string;
+  sport: Sport;
+  eventId: string | null;
+  status: ProviderSyncRunStatus;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  payload: Record<string, unknown>;
+}
+
+/** A runtime-tunable platform setting, stored as one JSON document per key. */
+export interface PlatformRuntimeConfig extends DomainEntity {
+  configKey: string;
+  configJson: unknown;
+  updatedById: string | null;
 }
 
 // --- Commissioner Dashboard ---
 
-export interface ActionItem extends DomainEntity {
-  leagueId: string;
-  contestId?: string;
-  title: string;
-  description?: string;
-  actionUrl?: string;
-  resolved: boolean;
-  resolvedAt?: Date;
-}
-
 export interface CommissionerDashboard {
   league: League;
-  actionItems: ActionItem[];
   contests: Contest[];
   memberCount: number;
   pendingInvites: number;

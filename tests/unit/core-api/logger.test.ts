@@ -70,10 +70,10 @@ describe('core-api logging foundation', () => {
       const request = {
         id: 'req-admin',
         method: 'POST',
-        url: '/api/v1/admin/providers/sync/GOLF',
+        url: '/api/v1/ingestion/sports/GOLF/sync',
         ip: '10.0.0.10',
         headers: {},
-        routeOptions: { url: '/api/v1/admin/providers/sync/:sport' },
+        routeOptions: { url: '/api/v1/ingestion/sports/:sport/sync' },
         rootAdminContext: {
           rootAdminUser: {
             id: 'admin-1',
@@ -93,7 +93,7 @@ describe('core-api logging foundation', () => {
         clientRequestId: null,
         ip: '10.0.0.10',
         method: 'POST',
-        route: '/api/v1/admin/providers/sync/:sport',
+        route: '/api/v1/ingestion/sports/:sport/sync',
       });
     });
   });
@@ -139,9 +139,9 @@ describe('core-api logging foundation', () => {
       const request = {
         id: 'req-error',
         method: 'POST',
-        url: '/api/v1/admin/providers/sync/GOLF',
+        url: '/api/v1/ingestion/sports/GOLF/sync',
         ip: '127.0.0.1',
-        routeOptions: { url: '/api/v1/admin/providers/sync/:sport' },
+        routeOptions: { url: '/api/v1/ingestion/sports/:sport/sync' },
         contextLogger: { warn, error },
         log: { warn: jest.fn(), error: jest.fn() },
       } as unknown as FastifyRequest;

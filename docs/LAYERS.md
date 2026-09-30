@@ -234,7 +234,7 @@ caller.
 **Tests:** mappers are covered through the layer that uses them — the integration contract
 tests parse real responses against the DTO schema, which is a stronger check than asserting a
 mapper's return value against a literal. Two mappers have their own unit tests
-(`sport-events-mapper.test.ts`, `provider-sync-mapper.test.ts`) because they do real
+(`sport-events-mapper.test.ts`, `ingestion-mapper.test.ts`) because they do real
 transformation rather than projection — the first derives an event's contest readiness from
 its release, field and lock times.
 
@@ -342,12 +342,17 @@ these suites import from `@poolmaster/shared/generated/hey-api` rather than usin
 ### 2.8 `plugins/` and `core/` — the cross-cutting parts
 
 `plugins/` holds Fastify plugins: `auth-guard` (validates the access token and attaches
-`request.authUser`), `admin-auth` (the older root-admin gate, still guarding what remains under
-`/admin/*`), `request-logging-context`, `schema-components`, `etag-support`, `swagger`,
-`health`, `poll-config`.
+`request.authUser`), `admin-auth` (the older root-admin gate, still guarding the one operation
+left under `/admin/*`, the contest-template write), `request-logging-context`,
+`schema-components`, `etag-support`, `swagger`, `health` (the process liveness probe), `poll-config`.
 
 `core/` holds process-level helpers with no domain content: `config`, `error-handler`
-(`sendError`), `logger`, `prisma-context`, `session-cookies`, `admin-permissions`.
+(`sendError`), `logger`, `prisma-context`, `session-cookies`, `root-admin-guard` (the
+`requireRootAdmin` onRequest hook every root-admin route uses), `user-name`.
+
+Root-admin operations live in the module of what they administer, not under `/admin` (#205):
+the runtime settings in `platform` (`/api/v1/platform`), the providers, syncs and sync history in
+`ingestion` (`/api/v1/ingestion`). `admin` is the permission, not a place.
 
 One thing to know about `request.authUser`: it carries `isRootAdmin` **from the token claim**.
 Because the user operations take their actor from the authenticated request, a promotion
@@ -528,11 +533,11 @@ adding a dependency mid-list silently shifts every argument at every call site. 
 produced exactly that — a Prisma mock landing in a logger slot, a repository in a base-URL
 slot — and was reverted. The fix is to replace those parameter lists with options objects.
 
-**One user read stays on Prisma by design.** `admin/health-service.ts` counts users for a
-platform metric, which is not an aggregate read. `plugins/admin-auth.ts` used to be the second:
-it re-read the user row per request while the user routes trusted the token claim. Access rule
-A10 settled that — root-admin authority is the claim on every surface — so the plugin reads no
-row at all now and the inconsistency is gone.
+**No user read stays on Prisma any more.** `admin/health-service.ts` counted users for a platform
+metric; it went with the unbuilt health surface in #205. `plugins/admin-auth.ts` used to be the
+other: it re-read the user row per request while the user routes trusted the token claim. Access
+rule A10 settled that — root-admin authority is the claim on every surface — so the plugin reads
+no row at all now and the inconsistency is gone.
 
 **Three route maps describe the same routes, and only one is written by hand.** The Fastify
 registrations are the truth; `openapi.json` is generated from them; `packages/shared/api-routes.ts`
@@ -544,8 +549,8 @@ operationId the spec does not contain fails the generator rather than drifting q
 **The webapp has moved (updated 2026-09-27).** This section previously said phase 1 was
 backend-only and the webapp was expected not to compile. Slice 1's frontend is now reconnected
 to the contract, so section 3 describes a finished state for the objects slice 1 covers —
-`User`, `League`, `LeagueMembership`, `Squad`. Slices 2–4 have not been reconnected, so it is
-not yet a finished state for events, contests or platform operations.
+`User`, `League`, `LeagueMembership`, `Squad`. Each later slice reconnects its own screens at its
+boundary; slice 4's platform and ingestion screens were reconnected in #205.
 
 **The squad list is the member roster (corrected 2026-09-27).** An earlier version of this
 section said there was no league-members surface. That was wrong. `ensureDefaultSquadForLeagueMember`
@@ -596,7 +601,7 @@ data). Their siblings `resolveActionItem`, `getLeagueAuditLog`, `getMemberAuditL
 were deleted: the first three were APIs in front of tables nothing writes to, and the fourth had no
 caller and was descoped.
 
-**One live read sits in front of a table nothing writes.** `getLeagueDashboard`'s `actionItems`
-can only be populated by writing `CommissionerActionItem` directly, which only an integration
-test does. There were two: `getContestAuditLog` read a commissioner audit table with no writer,
-and went with the audit feature in #255.
+**No live read sits in front of a table nothing writes.** There were two: `getContestAuditLog`
+read a commissioner audit table with no writer, and went with the audit feature in #255;
+`getLeagueDashboard`'s `actionItems` could only be populated by writing `CommissionerActionItem`
+directly, and went with that table in #205.

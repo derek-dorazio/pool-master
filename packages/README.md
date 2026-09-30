@@ -85,7 +85,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 | OpenF1 | F1 | Free |
 | Mock contest feed | Golf and QA scenarios | Local/QA only |
 
-**Routes:** root-admin sync operations are exposed through `POST /api/v1/admin/providers/sync/:sport` and `POST /api/v1/admin/providers/events/:sport/:eventId/sync`; scheduled ingestion uses the internal scheduler directly.
+**Routes:** root-admin sync operations are exposed through `POST /api/v1/ingestion/sports/:sport/sync` and `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync`; scheduled ingestion uses the internal scheduler directly.
 
 ---
 

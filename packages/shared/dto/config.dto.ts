@@ -120,8 +120,7 @@ export const IngestionScheduleConfigSchema = IngestionScheduleConfigBodySchema.e
 export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
-// Served by BOTH config/routes.ts and admin/platform-config-routes.ts, so both convert
-// together. IngestionFeedSchedulePolicy is not registered directly: it appears only
+// Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
 // nested inside IngestionScheduleConfig, and no route serves it on its own (check 2).
 registerSchema('PollIntervalConfig', PollIntervalConfigSchema);
 registerSchema('PollIntervalConfigPatch', PollIntervalConfigPatchSchema);

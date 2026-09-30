@@ -16,18 +16,6 @@ export const StringRecordSchema = z.record(z.string()).describe('String-keyed re
 export const ApiErrorSchema = ErrorEnvelopeSchema;
 export type ApiError = z.infer<typeof ApiErrorSchema>;
 
-// --- Pagination ---
-
-export function PaginatedSchema<T extends z.ZodType>(itemSchema: T) {
-  return z.object({
-    items: z.array(itemSchema).describe('Current result page items.'),
-    total: z.number().describe('Total number of matching records.'),
-    page: z.number().describe('Current page number.'),
-    pageSize: z.number().describe('Number of items requested per page.'),
-    totalPages: z.number().describe('Total page count for the current query.'),
-  }).describe('Generic paginated response envelope.');
-}
-
 // --- Success Envelope ---
 
 export const SuccessSchema = z.object({

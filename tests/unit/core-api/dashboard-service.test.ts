@@ -1,6 +1,5 @@
 import { DashboardService } from '../../../packages/core-api/src/modules/leagues/dashboard-service';
 import type {
-  ActionItemRepository,
   ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -9,7 +8,6 @@ import type {
 import { ContestStatus, InvitationStatus } from '@poolmaster/shared/domain';
 import { buildContest, buildInvitation, buildLeague, buildMembership } from '../../factories';
 import {
-  fakeActionItemRepo,
   fakeContestRepo,
   fakeLeagueInvitationRepo,
   fakeLeagueMembershipRepo,
@@ -70,39 +68,6 @@ function createMockInvitationRepo(
   });
 }
 
-function createMockActionItemRepo(
-  overrides: Partial<ActionItemRepository> = {},
-): ActionItemRepository {
-  return fakeActionItemRepo({
-    findUnresolved: jest.fn().mockResolvedValue([
-      {
-        id: 'ai-1',
-        leagueId: 'league-1',
-        title: 'New join request',
-        resolved: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]),
-    create: jest.fn().mockImplementation(async (input) => ({
-      ...input,
-      id: 'new-ai-id',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    resolve: jest.fn().mockImplementation(async (id) => ({
-      id,
-      leagueId: 'league-1',
-      title: 'Resolved',
-      resolved: true,
-      resolvedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    ...overrides,
-  });
-}
-
 describe('DashboardService', () => {
   describe('getDashboard', () => {
     it('returns full dashboard with all widgets', async () => {
@@ -111,7 +76,6 @@ describe('DashboardService', () => {
         createMockMembershipRepo(),
         createMockContestRepo(),
         createMockInvitationRepo(),
-        createMockActionItemRepo(),
       );
       const dashboard = await service.getDashboard('league-1');
       expect(dashboard).not.toBeNull();
@@ -119,7 +83,6 @@ describe('DashboardService', () => {
       expect(dashboard!.memberCount).toBe(2);
       expect(dashboard!.pendingInvites).toBe(2);
       expect(dashboard!.contests).toHaveLength(2);
-      expect(dashboard!.actionItems).toHaveLength(1);
       expect(dashboard!.recentMemberActivity.length).toBeGreaterThan(0);
     });
 
@@ -137,7 +100,6 @@ describe('DashboardService', () => {
         }),
         createMockContestRepo(),
         createMockInvitationRepo(),
-        createMockActionItemRepo(),
       );
 
       const dashboard = await service.getDashboard('league-1');
@@ -170,7 +132,6 @@ describe('DashboardService', () => {
           findByLeague: jest.fn().mockResolvedValue(contests),
         }),
         createMockInvitationRepo(),
-        createMockActionItemRepo(),
       );
 
       const dashboard = await service.getDashboard('league-1');
@@ -186,7 +147,6 @@ describe('DashboardService', () => {
         createMockMembershipRepo(),
         createMockContestRepo(),
         createMockInvitationRepo(),
-        createMockActionItemRepo(),
       );
       const dashboard = await service.getDashboard('league-1');
       expect(dashboard!.upcomingEvents.length).toBeGreaterThan(0);
@@ -199,14 +159,12 @@ describe('DashboardService', () => {
         createMockMembershipRepo(),
         createMockContestRepo(),
         createMockInvitationRepo(),
-        createMockActionItemRepo(),
       );
       const dashboard = await service.getDashboard('missing');
       expect(dashboard).toBeNull();
     });
   });
 
-  // #202 — the `createActionItem` and `resolveActionItem` suites are gone with the methods
-  // they covered (§1D). Nothing in the product ever created an action item, so the resolve
-  // route could never have anything to resolve; both halves went.
+  // #202 — the `createActionItem` and `resolveActionItem` suites went with their methods (§1D),
+  // and #205 dropped the action-item table and the dashboard's `actionItems` with them.
 });

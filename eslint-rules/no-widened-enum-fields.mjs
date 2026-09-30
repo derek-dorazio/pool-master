@@ -21,8 +21,7 @@
  * ONLY UNAMBIGUOUS FIELD NAMES ARE FLAGGED. A name counts only when EVERY model that
  * declares it types it as an enum. `status` is deliberately excluded today: it is an
  * enum on SportEvent, LeagueMembership, LeagueInvitation and Participant, but plain
- * `String` on Contest, ContestEntry, DraftSession, IngestionJob, ProviderSyncRun and
- * MigrationRun. A hand-written row type does not say which model it mirrors, so
+ * `String` on Contest, ContestEntry, DraftSession and ProviderSyncRun. A hand-written row type does not say which model it mirrors, so
  * flagging `status: string` would be wrong wherever the schema itself says `String`.
  *
  * This is self-expanding rather than a permanent carve-out: when those columns become

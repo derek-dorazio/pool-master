@@ -53,7 +53,6 @@ function createMockCallbacks(): IngestionCallbacks {
     onEventDetail: jest.fn().mockResolvedValue(undefined),
     onRankings: jest.fn().mockResolvedValue(undefined),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
-    onJobComplete: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -289,7 +288,7 @@ describe('IngestionScheduler', () => {
       const job = await scheduler.syncSport('GOLF' as Sport);
 
       expect(mockCallbacks.onEvents).toHaveBeenCalledWith(mockEvents);
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledWith(
+      expect(job).toEqual(
         expect.objectContaining({
           status: 'COMPLETED',
           jobType: 'EVENT_SCHEDULE_SYNC',
@@ -315,7 +314,7 @@ describe('IngestionScheduler', () => {
       expect(job.writeDiagnostics?.rows).toHaveLength(2);
     });
 
-    it('invokes onJobComplete with COMPLETED status on success', async () => {
+    it('returns a COMPLETED job on success', async () => {
       const registry = createMockRegistry(mockProvider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
@@ -325,9 +324,6 @@ describe('IngestionScheduler', () => {
       expect(job.errors).toBe(0);
       expect(job.errorLog).toEqual([]);
       expect(job.completedAt).toBeInstanceOf(Date);
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'COMPLETED' }),
-      );
     });
 
     it('returns FAILED job when no provider is registered', async () => {
@@ -342,8 +338,6 @@ describe('IngestionScheduler', () => {
       expect(job.errorLog[0]).toEqual(
         expect.objectContaining({ error: 'No provider registered' }),
       );
-      // onJobComplete should NOT be called for early-return failures
-      expect(mockCallbacks.onJobComplete).not.toHaveBeenCalled();
     });
 
     it('returns FAILED job when provider throws an error', async () => {
@@ -359,9 +353,6 @@ describe('IngestionScheduler', () => {
       expect(job.errors).toBe(1);
       expect(job.errorLog[0]).toEqual(
         expect.objectContaining({ error: 'API timeout' }),
-      );
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'FAILED' }),
       );
     });
 
@@ -716,12 +707,6 @@ describe('IngestionScheduler', () => {
       expect(jobs[0]?.errorLog[0]).toEqual(expect.objectContaining({
         error: 'Provider returned no event detail for event masters-2026',
       }));
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledWith(
-        expect.objectContaining({
-          eventExternalId: 'masters-2026',
-          status: 'FAILED',
-        }),
-      );
     });
   });
 
@@ -782,7 +767,7 @@ describe('IngestionScheduler', () => {
           feeds: ['EVENTPARTICIPANTS'],
         }),
       }));
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(2);
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledTimes(2);
     });
 
     it('pool-master-rop.68.2.4 records configured sport syncs in the provider sync run ledger once per ingestion job', async () => {
@@ -853,7 +838,7 @@ describe('IngestionScheduler', () => {
         }),
       }));
       expect(syncRunLedger.executeFeedRun).toHaveBeenCalledWith(syncRun, expect.any(Function));
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
+      expect(syncRunLedger.executeFeedRun).toHaveBeenCalledTimes(1);
     });
 
     it('pool-master-rop.68.2.4 records configured event syncs in the provider sync run ledger once per ingestion job', async () => {
@@ -928,7 +913,7 @@ describe('IngestionScheduler', () => {
       }));
       expect(syncRunLedger.executeFeedRun).toHaveBeenCalledWith(syncRun, expect.any(Function));
       expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
+      expect(syncRunLedger.executeFeedRun).toHaveBeenCalledTimes(1);
     });
 
     it('pool-master-eux.3 skips duplicate scheduled live-score runs while the same event/feed is in flight', async () => {
@@ -978,11 +963,11 @@ describe('IngestionScheduler', () => {
       await liveScoreCallStarted;
       await runConfiguredEventSyncSweep.call(scheduler, 'GOLF' as Sport, 'EVENTLIVESCORES');
       expect(provider.getLiveScores).toHaveBeenCalledTimes(1);
-      expect(mockCallbacks.onJobComplete).not.toHaveBeenCalled();
+      expect(mockCallbacks.onLiveScores).not.toHaveBeenCalled();
 
       releaseLiveScore?.();
       await firstRun;
-      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
+      expect(mockCallbacks.onLiveScores).toHaveBeenCalledTimes(1);
     });
 
     it('pool-master-rop.68.2.2 submits configured event loops as scheduled system sync requests', async () => {

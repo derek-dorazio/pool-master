@@ -8,8 +8,8 @@
  * league member roster, the squad roster and every root-admin user surface all return the
  * same object and had no reason to import it from the authentication module.
  *
- * One object, one shape, one module. `auth.dto.ts`, `account.dto.ts` and `admin.dto.ts` all
- * reference this schema rather than restating any part of it.
+ * One object, one shape, one module. Every DTO module that returns a user references this
+ * schema rather than restating any part of it.
  *
  * **No viewer context lives here.** Access rule A8: the requester's relationship to what they
  * are reading travels once per league, not as fields on the entity. `UserDetailResponse`'s

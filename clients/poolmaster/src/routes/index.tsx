@@ -40,6 +40,7 @@ import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
+import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
 import { CanonicalTeamHomeRoute } from '@/features/teams/canonical-team-home-route';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
@@ -263,6 +264,10 @@ export const router = createBrowserRouter([
               {
                 path: 'sync/run-event-sync',
                 element: <RootAdminRunEventSyncPage />,
+              },
+              {
+                path: 'sync/unmapped-participants',
+                element: <RootAdminUnmappedParticipantsPage />,
               },
               {
                 path: 'sync-config',

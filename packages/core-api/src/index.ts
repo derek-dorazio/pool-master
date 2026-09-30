@@ -29,11 +29,18 @@ import { seasonsModule } from './modules/seasons/routes';
 import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
 import { adminModule } from './modules/admin/routes';
-import { IngestionConfigService } from './modules/admin/ingestion-config-service';
-import { PollConfigService } from './modules/admin/poll-config-service';
-import { PrismaPlatformRuntimeConfigRepository } from './modules/admin/platform-runtime-config-repository';
-import { ProviderService } from './modules/admin/provider-service';
-import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from './adapters';
+import { platformModule } from './modules/platform/routes';
+import { IngestionConfigService } from './modules/platform/ingestion-config-service';
+import { PollConfigService } from './modules/platform/poll-config-service';
+import { ingestionModule } from './modules/ingestion/routes';
+import { IngestionService } from './modules/ingestion/ingestion-service';
+import {
+  PrismaParticipantProviderMappingRepository,
+  PrismaPlatformRuntimeConfigRepository,
+  PrismaProviderSyncRunRepository,
+  PrismaSportEventRepository,
+  PrismaSportEventRoundRepository,
+} from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
 
@@ -44,7 +51,7 @@ import { draftsModule } from './modules/drafts/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
-import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion/core';
+import type { IngestionCallbacks } from './modules/ingestion/core';
 import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
@@ -167,49 +174,25 @@ export function buildApp() {
         logger: app.log,
       });
     },
-    async onJobComplete(job: IngestionJobRecord) {
-      app.log.info({
-        jobType: job.jobType,
-        providerId: job.providerId,
-        sport: job.sport,
-        eventExternalId: job.eventExternalId ?? null,
-        status: job.status,
-        recordsProcessed: job.recordsProcessed,
-        errors: job.errors,
-        startedAt: job.startedAt?.toISOString() ?? null,
-        completedAt: job.completedAt?.toISOString() ?? null,
-      }, 'Job complete');
-      try {
-        await ingestionPersistence.persistIngestionJob(job);
-      } catch (error) {
-        app.log.error({
-          error,
-          jobType: job.jobType,
-          providerId: job.providerId,
-          sport: job.sport,
-          eventExternalId: job.eventExternalId ?? null,
-        }, 'Failed to persist ingestion job completion');
-      }
-    },
   };
 
-  const providerSyncRunLedger = new ProviderSyncRunLedger(prisma, app.log);
+  const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
+  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
   });
-  const providerService = new ProviderService(
-    prisma,
+  const ingestionService = new IngestionService({
     registry,
-    ingestionScheduler,
-    app.log,
-    ingestionConfigService,
-    mailDelivery,
-    appBaseUrl,
-    undefined,
-    providerSyncRunLedger,
-  );
+    sportEvents: new PrismaSportEventRepository(prisma),
+    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
+    syncRuns: providerSyncRuns,
+    scheduler: ingestionScheduler,
+    ingestionConfigReader: ingestionConfigService,
+    syncRunLedger: providerSyncRunLedger,
+    logger: app.log,
+  });
 
   // =========================================================================
   // Domain modules (protected by auth-guard)
@@ -227,20 +210,16 @@ export function buildApp() {
   app.register(eventsModule, {
     prefix: '/api/v1/events',
     eventLifecycleService,
-    providerService,
+    ingestionService,
     providerRegistry: registry,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   app.register(seasonsModule, { prefix: '/api/v1/seasons' });
-  app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerRegistry: registry,
-    providerService,
-    pollConfigService,
-    ingestionConfigService,
-  });
+  app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
+  app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
+  app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
   // =========================================================================

@@ -13,8 +13,8 @@ const {
   createEventMock,
   listSeasonsMock,
   listSportLeaguesMock,
-  adminListProviderCatalogEventsMock,
-  adminListProvidersMock,
+  listProviderCatalogEventsMock,
+  listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -31,8 +31,8 @@ const {
     createEventMock: vi.fn(),
     listSeasonsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
-    adminListProviderCatalogEventsMock: vi.fn(),
-    adminListProvidersMock: vi.fn(),
+    listProviderCatalogEventsMock: vi.fn(),
+    listProvidersMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -42,8 +42,8 @@ bindApiMocks({
   createEventFromProviderEvent: createEventFromProviderEventMock,
   listSeasons: listSeasonsMock,
   listSportLeagues: listSportLeaguesMock,
-  adminListProviderCatalogEvents: adminListProviderCatalogEventsMock,
-  adminListProviders: adminListProvidersMock,
+  listProviderCatalogEvents: listProviderCatalogEventsMock,
+  listProviders: listProvidersMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -92,8 +92,8 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     createEventMock.mockReset();
     createEventFromProviderEventMock.mockReset();
     listSeasonsMock.mockReset();
-    adminListProviderCatalogEventsMock.mockReset();
-    adminListProvidersMock.mockReset();
+    listProviderCatalogEventsMock.mockReset();
+    listProvidersMock.mockReset();
   });
 
   it('pool-master-3dg blocks creation with a link to Seasons when no golf season exists', async () => {
@@ -144,10 +144,10 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
 
   it('pool-master-3dg browses provider events, selects one, and creates a linked tournament', async () => {
     listSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
-    adminListProvidersMock.mockResolvedValue({
-      data: { items: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
+    listProvidersMock.mockResolvedValue({
+      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
     });
-    adminListProviderCatalogEventsMock.mockResolvedValue({
+    listProviderCatalogEventsMock.mockResolvedValue({
       data: {
         events: [
           {

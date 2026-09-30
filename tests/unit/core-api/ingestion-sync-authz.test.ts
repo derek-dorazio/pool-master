@@ -2,9 +2,11 @@ import Fastify from 'fastify';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import { ErrorEnvelopeSchema, ProviderManualSyncSubmissionResponseSchema } from '@poolmaster/shared/dto';
-import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
+import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
-import type { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
+import type { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import type { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { SyncRequestValidationError } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
@@ -28,7 +30,7 @@ function authHeaders(userId: string, isRootAdmin: boolean): Record<string, strin
   };
 }
 
-function createProviderServiceMock() {
+function createIngestionServiceMock() {
   return {
     prepareSportSync: jest.fn().mockResolvedValue({
       sport: 'GOLF',
@@ -47,31 +49,35 @@ function createProviderServiceMock() {
   };
 }
 
-async function buildAdminSyncApp() {
+async function buildIngestionSyncApp() {
   const app = Fastify({ logger: false });
-  const providerService = createProviderServiceMock();
+  const providerService = createIngestionServiceMock();
   // No `user.findUnique` stub: authorization reads the token claim and never the row (A10).
   // The decoration stays because the module expects the instance to carry a Prisma client.
   const prisma = {} as unknown as PrismaClient;
 
   app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);
-  await app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerService: providerService as unknown as ProviderService,
+  // Registered as the app registers it: the module's `requireRootAdmin` hook runs at
+  // onRequest, and the auth guard's preHandler sets the user the handlers read.
+  await app.register(authGuard);
+  await app.register(ingestionModule, {
+    prefix: '/api/v1/ingestion',
+    ingestionService: providerService as unknown as IngestionService,
+    providerRegistry: {} as unknown as ProviderRegistry,
   });
   await app.ready();
 
   return { app, providerService };
 }
 
-describe('pool-master-rop.68.4.1 retained admin provider sync route authorization', () => {
+describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
   it('pool-master-rop.68.4.1 rejects non-root users before sport sync submission', async () => {
-    const { app, providerService } = await buildAdminSyncApp();
+    const { app, providerService } = await buildIngestionSyncApp();
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/sync/GOLF',
+      url: '/api/v1/ingestion/sports/GOLF/sync',
       headers: authHeaders('member-user', false),
       payload: {
         feeds: ['EVENTSCHEDULE'],
@@ -87,11 +93,11 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
   });
 
   it('pool-master-rop.68.4.1 rejects non-root users before event sync submission', async () => {
-    const { app, providerService } = await buildAdminSyncApp();
+    const { app, providerService } = await buildIngestionSyncApp();
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
+      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('member-user', false),
       payload: {
         feeds: ['EVENTLIVESCORES'],
@@ -106,12 +112,12 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
     await app.close();
   });
 
-  it('pool-master-rop.68.4.1 allows root admins to submit the retained sync endpoints', async () => {
-    const { app, providerService } = await buildAdminSyncApp();
+  it('pool-master-rop.68.4.1 allows root admins to submit sport and event syncs', async () => {
+    const { app, providerService } = await buildIngestionSyncApp();
 
     const sportRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/sync/GOLF',
+      url: '/api/v1/ingestion/sports/GOLF/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTSCHEDULE'],
@@ -126,7 +132,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
 
     const eventRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
+      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTLIVESCORES'],
@@ -144,7 +150,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
   });
 
   it('pool-master-rop.68.2.3 maps sync request validation errors to 422 responses', async () => {
-    const { app, providerService } = await buildAdminSyncApp();
+    const { app, providerService } = await buildIngestionSyncApp();
     providerService.prepareSportSync.mockRejectedValueOnce(
       new SyncRequestValidationError('INVALID_SYNC_WINDOW', 'Sync request window end must be greater than or equal to its start.'),
     );
@@ -154,7 +160,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
 
     const sportRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/sync/GOLF',
+      url: '/api/v1/ingestion/sports/GOLF/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTSCHEDULE'],
@@ -171,7 +177,7 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
 
     const eventRes = await app.inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
+      url: '/api/v1/ingestion/sports/GOLF/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
         feeds: ['EVENTLIVESCORES'],
