@@ -850,7 +850,7 @@ export const updateContestEntry = <ThrowOnError extends boolean = false>(options
 /**
  * Get Golf contest leaderboard
  *
- * Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.
+ * Returns the member-facing Golf leaderboard for a contest. While the contest is live, entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers. Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the picks and the event field still show current scores.
  */
 export const getGolfContestLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetGolfContestLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetGolfContestLeaderboardResponses, GetGolfContestLeaderboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

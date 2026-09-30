@@ -14262,7 +14262,7 @@ export type GetGolfContestLeaderboardData = {
 
 export type GetGolfContestLeaderboardErrors = {
     /**
-     * Standard API error envelope.
+     * CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).
      */
     400: {
         /**
