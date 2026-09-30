@@ -546,13 +546,13 @@ function buildAggregationRule(_configuration: GolfContestConfig): {
   active: boolean;
 } {
   // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11 removed
-  // the GOLF_CATEGORY_PICKS stub); every managed contest sums entry totals with
-  // lower-is-better golf scoring.
+  // the GOLF_CATEGORY_PICKS stub); every managed contest sums entry totals.
+  // No direction is stored: a sum ranks in the direction of what it sums, so
+  // entry direction is always the participant scoring definition's
+  // (PARTICIPANT_SCORING_DEFINITIONS in @poolmaster/shared/domain).
   return {
     aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-    config: {
-      lowerIsBetter: true,
-    },
+    config: {},
     active: true,
   };
 }

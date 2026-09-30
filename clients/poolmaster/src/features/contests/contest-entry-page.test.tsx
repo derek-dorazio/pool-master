@@ -527,7 +527,10 @@ describe('ContestEntryPage', () => {
     expect(screen.getByTestId('contest-entry-tiebreaker-select')).toHaveValue('-12');
   });
 
-  it('shows read-only entry detail once the contest is locked', async () => {
+  it.each([
+    [-12, '-12'],
+    [0, 'E'],
+  ])('shows read-only entry detail once the contest is locked, with a %i tiebreaker rendered as "%s"', async (tiebreakerValue, expectedText) => {
     primeCommonMocks({ contestStatus: 'LOCKED' });
     getDraftStateMock.mockResolvedValue({
       data: {
@@ -554,7 +557,7 @@ describe('ContestEntryPage', () => {
         ],
         selectedEntryId: 'entry-1',
         selectedEntryName: 'Birdie Hunters Entry 1',
-        tiebreakerValue: -12,
+        tiebreakerValue,
         selectionGroups: [
           {
             groupId: 'tier-1',
@@ -590,7 +593,7 @@ describe('ContestEntryPage', () => {
 
     expect(await screen.findByText('Saved lineup detail')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent(
-      'Winning score relative to par: -12',
+      `Winning score relative to par: ${expectedText}`,
     );
     expect(screen.getByTestId('contest-entry-locked-participant-tier-1-sep-1')).toHaveTextContent(
       'Scottie Scheffler',

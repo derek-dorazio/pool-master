@@ -1,3 +1,4 @@
+import { PARTICIPANT_SCORING_DEFINITIONS } from "@poolmaster/shared/domain";
 import type { GetDraftStateResponses } from "@/lib/api";
 import {
   Alert,
@@ -334,7 +335,7 @@ export function TiebreakerSelector({
           <option value="">Select score</option>
           {options.map((option) => (
             <option key={option} value={option}>
-              {option === 0 ? "E" : option > 0 ? `+${option}` : `${option}`}
+              {PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(option)}
             </option>
           ))}
         </Select>
