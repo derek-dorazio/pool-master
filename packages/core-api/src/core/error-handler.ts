@@ -22,10 +22,6 @@ function inferStatusCode(error: ErrorLike): number {
     case 'MemberNotFoundError':
     case 'SquadNotFoundError':
     case 'UserNotFoundError':
-    case 'ProviderNotFoundError':
-    case 'ProviderEventNotFoundError':
-    case 'ErrorLogEntryNotFoundError':
-    case 'AlertRuleNotFoundError':
       return 404;
     default:
       return 500;
@@ -54,14 +50,6 @@ function inferErrorCode(error: ErrorLike, statusCode: number): string {
       return 'SQUAD_NOT_FOUND';
     case 'UserNotFoundError':
       return 'USER_NOT_FOUND';
-    case 'ProviderNotFoundError':
-      return 'PROVIDER_NOT_FOUND';
-    case 'ProviderEventNotFoundError':
-      return 'PROVIDER_EVENT_NOT_FOUND';
-    case 'ErrorLogEntryNotFoundError':
-      return 'ERROR_LOG_ENTRY_NOT_FOUND';
-    case 'AlertRuleNotFoundError':
-      return 'ALERT_RULE_NOT_FOUND';
     case 'ContestOperationError':
     case 'ContestEntryOperationError':
     case 'InvitationInvalidError':

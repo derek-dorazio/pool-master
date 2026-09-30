@@ -8,7 +8,6 @@ export * from './contest-management.dto';
 export * from './contests.dto';
 export * from './drafts.dto';
 export * from './participants.dto';
-export * from './admin.dto';
 export * from './config.dto';
 export * from './events.dto';
 export * from './sport-catalog.dto';

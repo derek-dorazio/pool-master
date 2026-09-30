@@ -110,7 +110,6 @@ export interface IngestionCallbacks {
   onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
   onRankings(rankings: ProviderRanking[]): Promise<SyncWriteDiagnostics | void>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
-  onJobComplete(job: IngestionJobRecord): Promise<void>;
 }
 
 export interface IngestionScheduleConfigReader {
@@ -930,7 +929,6 @@ export class IngestionScheduler {
       job.completedAt = new Date();
     }
 
-    await this.callbacks.onJobComplete(job);
     this.logger?.info({
       ...toJobLogPayload(job),
       durationMs: job.completedAt && job.startedAt

@@ -327,7 +327,7 @@ export const SportEventParticipantResponseSchema = z.object({
 export type SportEventParticipantResponse = z.infer<typeof SportEventParticipantResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
-// The three enums are also consumed by admin.dto.ts; naming them gives the frontend
+// EventStatusDto is also the status of ingestion.dto.ts's ProviderEventDto; naming them gives the frontend
 // importable unions instead of re-spelled literals.
 registerSchema('EventStatusDto', EventStatusDtoSchema);
 registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);

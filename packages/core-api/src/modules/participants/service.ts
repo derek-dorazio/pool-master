@@ -13,8 +13,8 @@ import type {
   ParticipantProviderMapping,
   InjuryStatus,
 } from '@poolmaster/shared/domain';
-import { InjuryStatusCode, ParticipantStatus } from '@poolmaster/shared/domain';
-import type { ParticipantType, MappingConfidence } from '@poolmaster/shared/domain';
+import { InjuryStatusCode, MappingConfidence, ParticipantStatus } from '@poolmaster/shared/domain';
+import type { ParticipantType } from '@poolmaster/shared/domain';
 
 // --- Input DTOs ---
 
@@ -208,19 +208,31 @@ export class ParticipantService {
     return this.participantRepo.findByExternalId(providerId, externalId);
   }
 
-  async addProviderMapping(
+  /**
+   * A root admin binding a provider identity to this participant by hand — how a competitor
+   * the provider could not match gets their synced data. An identity already bound to another
+   * participant moves here.
+   */
+  async bindProviderMapping(
     participantId: string,
     providerId: string,
     externalId: string,
-    confidence: MappingConfidence,
   ): Promise<ParticipantProviderMapping> {
-    return this.providerMappingRepo.create({
+    if (!(await this.participantRepo.findById(participantId))) {
+      throw new ParticipantNotFoundError(participantId);
+    }
+    const mapping = await this.providerMappingRepo.bind({
       participantId,
       providerId,
       externalId,
-      confidence,
+      confidence: MappingConfidence.MANUAL,
       mappedAt: new Date(),
     });
+    this.logger?.info(
+      { action: 'participants.service.bindProviderMapping.success', data: { participantId, providerId, externalId } },
+      'Bound provider identity to participant',
+    );
+    return mapping;
   }
 }
 

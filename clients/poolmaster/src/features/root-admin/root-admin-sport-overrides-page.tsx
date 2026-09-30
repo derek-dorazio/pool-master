@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminGetIngestionSchedule, adminResetSportIngestionOverride, adminSetSportIngestionOverride } from '@/lib/api';
+import { getIngestionSchedule, resetSportIngestionOverride, setSportIngestionOverride } from '@/lib/api';
 import {
   Button,
   Checkbox,
@@ -35,7 +35,7 @@ export function RootAdminSportOverridesPage() {
   const ingestionConfigQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.ingestionConfig,
     queryFn: async (): Promise<IngestionScheduleConfig> => {
-      const response = await adminGetIngestionSchedule();
+      const response = await getIngestionSchedule();
       if (!response.data) {
         throwApiError(response.error, 'Ingestion schedule response is missing data.');
       }
@@ -66,7 +66,7 @@ export function RootAdminSportOverridesPage() {
       sport: SyncSport;
       draft: Record<IngestionPolicyKey, boolean>;
     }) => {
-      const response = await adminSetSportIngestionOverride({
+      const response = await setSportIngestionOverride({
         path: { sport: input.sport },
         body: {
           healthCheck: { enabled: input.draft.healthCheck },
@@ -94,7 +94,7 @@ export function RootAdminSportOverridesPage() {
 
   const resetSportOverrideMutation = useInvalidatingMutation({
     mutationFn: async (sport: SyncSport) => {
-      const response = await adminResetSportIngestionOverride({
+      const response = await resetSportIngestionOverride({
         path: { sport },
       });
 

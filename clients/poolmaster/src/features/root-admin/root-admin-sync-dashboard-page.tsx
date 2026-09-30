@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviderSyncRuns, adminListProviders } from '@/lib/api';
+import { listProviderSyncRuns, listProviders } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -166,11 +166,11 @@ export function RootAdminSyncDashboardPage() {
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
-      const response = await adminListProviders();
-      if (!response.data?.items) {
+      const response = await listProviders();
+      if (!response.data?.providers) {
         throwApiError(response.error, 'Provider list response is missing data.');
       }
-      return response.data.items;
+      return response.data.providers;
     },
     retry: false,
   });
@@ -178,17 +178,14 @@ export function RootAdminSyncDashboardPage() {
   const syncRunsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providerSyncRuns,
     queryFn: async (): Promise<ProviderSyncRun[]> => {
-      const response = await adminListProviderSyncRuns({
-        query: {
-          limit: 25,
-        },
-      });
+      // #205 — no row limit: the server's default window (the past six hours) bounds the list.
+      const response = await listProviderSyncRuns();
 
-      if (!response.data?.items) {
+      if (!response.data?.syncRuns) {
         throwApiError(response.error, 'Provider sync run response is missing data.');
       }
 
-      return response.data.items;
+      return response.data.syncRuns;
     },
     retry: false,
   });
@@ -402,6 +399,13 @@ export function RootAdminSyncDashboardPage() {
               variant="subtle"
             >
               Run event sync
+            </LinkButton>
+            <LinkButton
+              data-testid="root-admin-open-unmapped-participants-page"
+              to="/manage/sync/unmapped-participants"
+              variant="subtle"
+            >
+              Unmapped competitors
             </LinkButton>
           </div>
         </div>

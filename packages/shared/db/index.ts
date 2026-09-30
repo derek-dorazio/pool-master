@@ -6,7 +6,6 @@ export type {
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';
 export type {
-  ActionItemRepository,
   ContestEntryRepository,
   ContestRepository,
   DraftSessionRepository,
@@ -25,6 +24,13 @@ export type {
   UserUpdate,
 } from './ports';
 export type {
+  PlatformRuntimeConfigRepository,
+  ProviderSyncRunCreate,
+  ProviderSyncRunFilters,
+  ProviderSyncRunRepository,
+  ProviderSyncRunUpdate,
+} from './platform-ports';
+export type {
   GolfRoundWrite,
   GolfStandingWrite,
   SportEventParticipantGolfRoundRepository,
@@ -40,6 +46,7 @@ export type {
   SeasonRepository,
   SeasonUpdate,
   SportEventCreate,
+  SportEventFieldRecordCounts,
   SportEventFilters,
   SportEventParticipantCreate,
   SportEventParticipantFieldUpdate,
@@ -48,6 +55,7 @@ export type {
   SportEventParticipantRoundRepository,
   SportEventParticipantStandingRepository,
   SportEventParticipantValuationRepository,
+  SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,

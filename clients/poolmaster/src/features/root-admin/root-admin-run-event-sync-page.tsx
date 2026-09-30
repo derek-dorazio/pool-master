@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviders, adminSyncProviderEventData, listEvents, type SportEventDto } from '@/lib/api';
+import { listProviders, submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,
@@ -89,11 +89,11 @@ export function RootAdminRunEventSyncPage() {
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
-      const response = await adminListProviders();
-      if (!response.data?.items) {
+      const response = await listProviders();
+      if (!response.data?.providers) {
         throwApiError(response.error, 'Provider list response is missing data.');
       }
-      return response.data.items;
+      return response.data.providers;
     },
     retry: false,
   });
@@ -176,7 +176,7 @@ export function RootAdminRunEventSyncPage() {
       mockEventState?: MockEventState;
     }): Promise<EventSyncSubmission> => {
       const preset = getEventSyncPreset(input.presetId);
-      const response = await adminSyncProviderEventData({
+      const response = await submitEventSync({
         path: {
           sport: input.sport,
           eventId: input.eventId,

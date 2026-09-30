@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddEventParticipantsData, AddEventParticipantsErrors, AddEventParticipantsResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListProviderCatalogEventsData, AdminListProviderCatalogEventsErrors, AdminListProviderCatalogEventsResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ApplyEventGolfRoundScoresData, ApplyEventGolfRoundScoresErrors, ApplyEventGolfRoundScoresResponses, ApplyParticipantLeagueAffiliationUploadData, ApplyParticipantLeagueAffiliationUploadErrors, ApplyParticipantLeagueAffiliationUploadResponses, AutoAssignEventPricesData, AutoAssignEventPricesErrors, AutoAssignEventPricesResponses, AutoAssignEventTiersData, AutoAssignEventTiersErrors, AutoAssignEventTiersResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, ChangeUserPasswordData, ChangeUserPasswordErrors, ChangeUserPasswordResponses, CloneSeasonData, CloneSeasonErrors, CloneSeasonResponses, CloseContestData, CloseContestResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateEventData, CreateEventErrors, CreateEventFromProviderEventData, CreateEventFromProviderEventErrors, CreateEventFromProviderEventResponses, CreateEventResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantErrors, CreateParticipantLeagueAffiliationData, CreateParticipantLeagueAffiliationErrors, CreateParticipantLeagueAffiliationResponses, CreateParticipantResponses, CreateSeasonData, CreateSeasonErrors, CreateSeasonResponses, CreateSportLeagueData, CreateSportLeagueErrors, CreateSportLeagueResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DeleteParticipantLeagueAffiliationData, DeleteParticipantLeagueAffiliationErrors, DeleteParticipantLeagueAffiliationResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DisableUserData, DisableUserErrors, DisableUserResponses, EnableUserData, EnableUserErrors, EnableUserResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetEventData, GetEventErrors, GetEventResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetRootVersionData, GetRootVersionResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetSportLeagueData, GetSportLeagueErrors, GetSportLeagueResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUserData, GetUserErrors, GetUserResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, LinkEventScoreSourceData, LinkEventScoreSourceErrors, LinkEventScoreSourceResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventParticipantsData, ListEventParticipantsErrors, ListEventParticipantsResponses, ListEventRoundsData, ListEventRoundsErrors, ListEventRoundsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListEventTiersData, ListEventTiersErrors, ListEventTiersResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListParticipantLeagueAffiliationsData, ListParticipantLeagueAffiliationsErrors, ListParticipantLeagueAffiliationsResponses, ListParticipantProviderMappingsData, ListParticipantProviderMappingsErrors, ListParticipantProviderMappingsResponses, ListParticipantsData, ListParticipantsResponses, ListSeasonsData, ListSeasonsErrors, ListSeasonsResponses, ListSportLeaguesData, ListSportLeaguesErrors, ListSportLeaguesResponses, ListSportsData, ListSportsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, PreviewEventGolfRoundScoresData, PreviewEventGolfRoundScoresErrors, PreviewEventGolfRoundScoresResponses, PreviewParticipantLeagueAffiliationUploadData, PreviewParticipantLeagueAffiliationUploadErrors, PreviewParticipantLeagueAffiliationUploadResponses, RefreshEventParticipantsData, RefreshEventParticipantsErrors, RefreshEventParticipantsResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RegisterWithTeamOwnerInvitationData, RegisterWithTeamOwnerInvitationErrors, RegisterWithTeamOwnerInvitationResponses, RemoveEventParticipantData, RemoveEventParticipantErrors, RemoveEventParticipantResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceEventTierAssignmentsData, ReplaceEventTierAssignmentsErrors, ReplaceEventTierAssignmentsResponses, ReplaceEventTiersData, ReplaceEventTiersErrors, ReplaceEventTiersResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResetUserPasswordData, ResetUserPasswordErrors, ResetUserPasswordResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, RevokeUserSessionsData, RevokeUserSessionsErrors, RevokeUserSessionsResponses, SeedEventParticipantsData, SeedEventParticipantsErrors, SeedEventParticipantsResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SetCurrentSeasonData, SetCurrentSeasonErrors, SetCurrentSeasonResponses, SetUserRootAdminData, SetUserRootAdminErrors, SetUserRootAdminResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, TransitionEventData, TransitionEventErrors, TransitionEventResponses, UnlinkEventScoreSourceData, UnlinkEventScoreSourceErrors, UnlinkEventScoreSourceResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateEventData, UpdateEventErrors, UpdateEventParticipantGolfRoundScoreData, UpdateEventParticipantGolfRoundScoreErrors, UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantsData, UpdateEventParticipantsErrors, UpdateEventParticipantsResponses, UpdateEventResponses, UpdateEventRoundsData, UpdateEventRoundsErrors, UpdateEventRoundsResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantLeagueAffiliationRankingsData, UpdateParticipantLeagueAffiliationRankingsErrors, UpdateParticipantLeagueAffiliationRankingsResponses, UpdateParticipantResponses, UpdateSeasonData, UpdateSeasonErrors, UpdateSeasonResponses, UpdateSportLeagueData, UpdateSportLeagueErrors, UpdateSportLeagueResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserProfileData, UpdateUserProfileErrors, UpdateUserProfileResponses, UpdateUserUsernameData, UpdateUserUsernameErrors, UpdateUserUsernameResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddEventParticipantsData, AddEventParticipantsErrors, AddEventParticipantsResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, ApplyEventGolfRoundScoresData, ApplyEventGolfRoundScoresErrors, ApplyEventGolfRoundScoresResponses, ApplyParticipantLeagueAffiliationUploadData, ApplyParticipantLeagueAffiliationUploadErrors, ApplyParticipantLeagueAffiliationUploadResponses, AutoAssignEventPricesData, AutoAssignEventPricesErrors, AutoAssignEventPricesResponses, AutoAssignEventTiersData, AutoAssignEventTiersErrors, AutoAssignEventTiersResponses, BindParticipantProviderMappingData, BindParticipantProviderMappingErrors, BindParticipantProviderMappingResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, ChangeUserPasswordData, ChangeUserPasswordErrors, ChangeUserPasswordResponses, CleanupStaleProviderEventsData, CleanupStaleProviderEventsErrors, CleanupStaleProviderEventsResponses, CloneSeasonData, CloneSeasonErrors, CloneSeasonResponses, CloseContestData, CloseContestResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateEventData, CreateEventErrors, CreateEventFromProviderEventData, CreateEventFromProviderEventErrors, CreateEventFromProviderEventResponses, CreateEventResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantErrors, CreateParticipantLeagueAffiliationData, CreateParticipantLeagueAffiliationErrors, CreateParticipantLeagueAffiliationResponses, CreateParticipantResponses, CreateSeasonData, CreateSeasonErrors, CreateSeasonResponses, CreateSportLeagueData, CreateSportLeagueErrors, CreateSportLeagueResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DeleteParticipantLeagueAffiliationData, DeleteParticipantLeagueAffiliationErrors, DeleteParticipantLeagueAffiliationResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DisableUserData, DisableUserErrors, DisableUserResponses, EnableUserData, EnableUserErrors, EnableUserResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetEventData, GetEventErrors, GetEventResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetIngestionScheduleData, GetIngestionScheduleErrors, GetIngestionScheduleResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetPollIntervalsData, GetPollIntervalsErrors, GetPollIntervalsResponses, GetRootVersionData, GetRootVersionResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetSportLeagueData, GetSportLeagueErrors, GetSportLeagueResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUserData, GetUserErrors, GetUserResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, LinkEventScoreSourceData, LinkEventScoreSourceErrors, LinkEventScoreSourceResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventParticipantsData, ListEventParticipantsErrors, ListEventParticipantsResponses, ListEventRoundsData, ListEventRoundsErrors, ListEventRoundsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListEventTiersData, ListEventTiersErrors, ListEventTiersResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListParticipantLeagueAffiliationsData, ListParticipantLeagueAffiliationsErrors, ListParticipantLeagueAffiliationsResponses, ListParticipantProviderMappingsData, ListParticipantProviderMappingsErrors, ListParticipantProviderMappingsResponses, ListParticipantsData, ListParticipantsResponses, ListProviderCatalogEventsData, ListProviderCatalogEventsErrors, ListProviderCatalogEventsResponses, ListProvidersData, ListProvidersErrors, ListProvidersResponses, ListProviderSyncRunsData, ListProviderSyncRunsErrors, ListProviderSyncRunsResponses, ListSeasonsData, ListSeasonsErrors, ListSeasonsResponses, ListSportLeaguesData, ListSportLeaguesErrors, ListSportLeaguesResponses, ListSportsData, ListSportsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, ListUnmappedProviderParticipantsData, ListUnmappedProviderParticipantsErrors, ListUnmappedProviderParticipantsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, PreviewEventGolfRoundScoresData, PreviewEventGolfRoundScoresErrors, PreviewEventGolfRoundScoresResponses, PreviewParticipantLeagueAffiliationUploadData, PreviewParticipantLeagueAffiliationUploadErrors, PreviewParticipantLeagueAffiliationUploadResponses, RefreshEventParticipantsData, RefreshEventParticipantsErrors, RefreshEventParticipantsResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RegisterWithTeamOwnerInvitationData, RegisterWithTeamOwnerInvitationErrors, RegisterWithTeamOwnerInvitationResponses, RemoveEventParticipantData, RemoveEventParticipantErrors, RemoveEventParticipantResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceEventTierAssignmentsData, ReplaceEventTierAssignmentsErrors, ReplaceEventTierAssignmentsResponses, ReplaceEventTiersData, ReplaceEventTiersErrors, ReplaceEventTiersResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResetIngestionScheduleData, ResetIngestionScheduleErrors, ResetIngestionScheduleResponses, ResetPollIntervalsData, ResetPollIntervalsErrors, ResetPollIntervalsResponses, ResetSportIngestionOverrideData, ResetSportIngestionOverrideErrors, ResetSportIngestionOverrideResponses, ResetUserPasswordData, ResetUserPasswordErrors, ResetUserPasswordResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, RevokeUserSessionsData, RevokeUserSessionsErrors, RevokeUserSessionsResponses, SeedEventParticipantsData, SeedEventParticipantsErrors, SeedEventParticipantsResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SetCurrentSeasonData, SetCurrentSeasonErrors, SetCurrentSeasonResponses, SetSportIngestionOverrideData, SetSportIngestionOverrideErrors, SetSportIngestionOverrideResponses, SetUserRootAdminData, SetUserRootAdminErrors, SetUserRootAdminResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, SubmitEventSyncData, SubmitEventSyncErrors, SubmitEventSyncResponses, SubmitSportSyncData, SubmitSportSyncErrors, SubmitSportSyncResponses, TransitionEventData, TransitionEventErrors, TransitionEventResponses, UnlinkEventScoreSourceData, UnlinkEventScoreSourceErrors, UnlinkEventScoreSourceResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateEventData, UpdateEventErrors, UpdateEventParticipantGolfRoundScoreData, UpdateEventParticipantGolfRoundScoreErrors, UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantsData, UpdateEventParticipantsErrors, UpdateEventParticipantsResponses, UpdateEventResponses, UpdateEventRoundsData, UpdateEventRoundsErrors, UpdateEventRoundsResponses, UpdateIngestionScheduleData, UpdateIngestionScheduleErrors, UpdateIngestionScheduleResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantLeagueAffiliationRankingsData, UpdateParticipantLeagueAffiliationRankingsErrors, UpdateParticipantLeagueAffiliationRankingsResponses, UpdateParticipantResponses, UpdatePollIntervalsData, UpdatePollIntervalsErrors, UpdatePollIntervalsResponses, UpdateSeasonData, UpdateSeasonErrors, UpdateSeasonResponses, UpdateSportLeagueData, UpdateSportLeagueErrors, UpdateSportLeagueResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserProfileData, UpdateUserProfileErrors, UpdateUserProfileResponses, UpdateUserUsernameData, UpdateUserUsernameErrors, UpdateUserUsernameResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -1591,35 +1591,13 @@ export const listParticipantProviderMappings = <ThrowOnError extends boolean = f
 });
 
 /**
- * List sports data providers and health status
+ * Bind a provider identity to a participant
  *
- * Returns provider health and provider-summary information for platform ingestion operations.
+ * How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider's identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.
  */
-export const adminListProviders = <ThrowOnError extends boolean = false>(options?: Options<AdminListProvidersData, ThrowOnError>) => (options?.client ?? client).get<AdminListProvidersResponses, AdminListProvidersErrors, ThrowOnError>({
+export const bindParticipantProviderMapping = <ThrowOnError extends boolean = false>(options: Options<BindParticipantProviderMappingData, ThrowOnError>) => (options.client ?? client).post<BindParticipantProviderMappingResponses, BindParticipantProviderMappingErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/health',
-    ...options
-});
-
-/**
- * List recent provider sync runs
- *
- * Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.
- */
-export const adminListProviderSyncRuns = <ThrowOnError extends boolean = false>(options?: Options<AdminListProviderSyncRunsData, ThrowOnError>) => (options?.client ?? client).get<AdminListProviderSyncRunsResponses, AdminListProviderSyncRunsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/sync-runs',
-    ...options
-});
-
-/**
- * Run explicit manual sport sync feeds
- *
- * Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.
- */
-export const adminPrepareSportSync = <ThrowOnError extends boolean = false>(options: Options<AdminPrepareSportSyncData, ThrowOnError>) => (options.client ?? client).post<AdminPrepareSportSyncResponses, AdminPrepareSportSyncErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/sync/{sport}',
+    url: '/api/v1/participants/{id}/provider-mappings',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1628,18 +1606,192 @@ export const adminPrepareSportSync = <ThrowOnError extends boolean = false>(opti
 });
 
 /**
- * Run explicit manual event sync feeds
+ * Get poll interval configuration
  *
- * Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.
+ * Returns the platform poll interval configuration that governs recommended client refresh timing.
  */
-export const adminSyncProviderEventData = <ThrowOnError extends boolean = false>(options: Options<AdminSyncProviderEventDataData, ThrowOnError>) => (options.client ?? client).post<AdminSyncProviderEventDataResponses, AdminSyncProviderEventDataErrors, ThrowOnError>({
+export const getPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<GetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<GetPollIntervalsResponses, GetPollIntervalsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/events/{sport}/{eventId}/sync',
+    url: '/api/v1/platform/poll-intervals',
+    ...options
+});
+
+/**
+ * Update poll interval configuration
+ *
+ * Updates the platform poll interval configuration used by client polling guidance.
+ */
+export const updatePollIntervals = <ThrowOnError extends boolean = false>(options: Options<UpdatePollIntervalsData, ThrowOnError>) => (options.client ?? client).put<UpdatePollIntervalsResponses, UpdatePollIntervalsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/poll-intervals',
     ...options,
     headers: {
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Reset poll intervals to defaults
+ *
+ * Resets poll interval configuration back to the platform defaults.
+ */
+export const resetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<ResetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).post<ResetPollIntervalsResponses, ResetPollIntervalsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/poll-intervals/reset',
+    ...options
+});
+
+/**
+ * Get ingestion schedule configuration
+ *
+ * Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
+ */
+export const getIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<GetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).get<GetIngestionScheduleResponses, GetIngestionScheduleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/ingestion-schedule',
+    ...options
+});
+
+/**
+ * Update ingestion schedule configuration
+ *
+ * Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.
+ */
+export const updateIngestionSchedule = <ThrowOnError extends boolean = false>(options: Options<UpdateIngestionScheduleData, ThrowOnError>) => (options.client ?? client).put<UpdateIngestionScheduleResponses, UpdateIngestionScheduleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/ingestion-schedule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Set per-sport ingestion schedule override
+ *
+ * Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.
+ */
+export const setSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<SetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).put<SetSportIngestionOverrideResponses, SetSportIngestionOverrideErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/ingestion-schedule/{sport}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Clear per-sport ingestion schedule override
+ *
+ * Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.
+ */
+export const resetSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<ResetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).post<ResetSportIngestionOverrideResponses, ResetSportIngestionOverrideErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/ingestion-schedule/{sport}/reset',
+    ...options
+});
+
+/**
+ * Reset ingestion schedule to defaults
+ *
+ * Resets ingestion scheduling back to the platform defaults.
+ */
+export const resetIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<ResetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).post<ResetIngestionScheduleResponses, ResetIngestionScheduleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/platform/ingestion-schedule/reset',
+    ...options
+});
+
+/**
+ * List sports-data providers with their live health
+ *
+ * Every registered provider, each with a live health check made for this request, the sports ingestion is scheduled for, and how many of its events are scheduled or in progress.
+ */
+export const listProviders = <ThrowOnError extends boolean = false>(options?: Options<ListProvidersData, ThrowOnError>) => (options?.client ?? client).get<ListProvidersResponses, ListProvidersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/providers',
+    ...options
+});
+
+/**
+ * List provider sync runs inside a time window
+ *
+ * The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 24 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.
+ */
+export const listProviderSyncRuns = <ThrowOnError extends boolean = false>(options?: Options<ListProviderSyncRunsData, ThrowOnError>) => (options?.client ?? client).get<ListProviderSyncRunsResponses, ListProviderSyncRunsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/sync-runs',
+    ...options
+});
+
+/**
+ * Submit a manual sport sync
+ *
+ * Submits one sync run per requested sport-level feed. The runs execute asynchronously after acceptance; follow them in the sync-run history.
+ */
+export const submitSportSync = <ThrowOnError extends boolean = false>(options: Options<SubmitSportSyncData, ThrowOnError>) => (options.client ?? client).post<SubmitSportSyncResponses, SubmitSportSyncErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/sports/{sport}/sync',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Submit a manual event sync
+ *
+ * Submits one sync run per requested event-level feed for the provider event `eventId`. Refused with 409 when a feed is not allowed by the event's syncScope. The runs execute asynchronously after acceptance.
+ */
+export const submitEventSync = <ThrowOnError extends boolean = false>(options: Options<SubmitEventSyncData, ThrowOnError>) => (options.client ?? client).post<SubmitEventSyncResponses, SubmitEventSyncErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/sports/{sport}/events/{eventId}/sync',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List competitors a provider could not match
+ *
+ * Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.
+ */
+export const listUnmappedProviderParticipants = <ThrowOnError extends boolean = false>(options?: Options<ListUnmappedProviderParticipantsData, ThrowOnError>) => (options?.client ?? client).get<ListUnmappedProviderParticipantsResponses, ListUnmappedProviderParticipantsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/unmapped-participants',
+    ...options
+});
+
+/**
+ * Inventory or delete stale provider events
+ *
+ * Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes the eligible ones. Non-Golf events are stale because the current provider workflow is Golf-only; Golf events are stale once their end time has passed. A contest on the event, or a pick on one of its participants, protects it from deletion. Each event is deleted in its own transaction, and one that cannot be deleted is left in place and reported as not deleted.
+ */
+export const cleanupStaleProviderEvents = <ThrowOnError extends boolean = false>(options: Options<CleanupStaleProviderEventsData, ThrowOnError>) => (options.client ?? client).post<CleanupStaleProviderEventsResponses, CleanupStaleProviderEventsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/stale-events/cleanup',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Browse a provider's live event catalog
+ *
+ * Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.
+ */
+export const listProviderCatalogEvents = <ThrowOnError extends boolean = false>(options: Options<ListProviderCatalogEventsData, ThrowOnError>) => (options.client ?? client).get<ListProviderCatalogEventsResponses, ListProviderCatalogEventsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/ingestion/providers/{providerId}/catalog-events',
+    ...options
 });
 
 /**
@@ -1666,324 +1818,6 @@ export const adminUpdateContestConfigTemplate = <ThrowOnError extends boolean = 
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Get ingestion dashboard metrics
- *
- * Returns ingestion dashboard metrics used by root-admin operational monitoring surfaces.
- */
-export const adminGetIngestionDashboard = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionDashboardData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionDashboardResponses, AdminGetIngestionDashboardErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/ingestion',
-    ...options
-});
-
-/**
- * List unmapped participants from providers
- *
- * Returns provider participant records that still need mapping to internal participants.
- */
-export const adminGetUnmappedParticipants = <ThrowOnError extends boolean = false>(options?: Options<AdminGetUnmappedParticipantsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetUnmappedParticipantsResponses, AdminGetUnmappedParticipantsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/unmapped-participants',
-    ...options
-});
-
-/**
- * Map an external participant to an internal ID
- *
- * Creates or updates a provider-to-participant mapping for ingestion normalization.
- */
-export const adminMapParticipant = <ThrowOnError extends boolean = false>(options: Options<AdminMapParticipantData, ThrowOnError>) => (options.client ?? client).post<AdminMapParticipantResponses, AdminMapParticipantErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/map-participant',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Inventory or delete stale provider event rows
- *
- * Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.
- */
-export const adminCleanupStaleProviderEvents = <ThrowOnError extends boolean = false>(options: Options<AdminCleanupStaleProviderEventsData, ThrowOnError>) => (options.client ?? client).post<AdminCleanupStaleProviderEventsResponses, AdminCleanupStaleProviderEventsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/stale-events/cleanup',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get provider detail and configuration
- *
- * Returns administrative provider detail including mutable configuration and status information.
- */
-export const adminGetProviderDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetProviderDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetProviderDetailResponses, AdminGetProviderDetailErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/{providerId}',
-    ...options
-});
-
-/**
- * Update provider configuration
- *
- * Updates the configuration for a specific ingestion provider.
- */
-export const adminUpdateProviderConfig = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateProviderConfigData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateProviderConfigResponses, AdminUpdateProviderConfigErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/{providerId}/config',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Trigger manual health check for a provider
- *
- * Triggers an on-demand provider health check through the admin operations surface.
- */
-export const adminTriggerHealthCheck = <ThrowOnError extends boolean = false>(options: Options<AdminTriggerHealthCheckData, ThrowOnError>) => (options.client ?? client).post<AdminTriggerHealthCheckResponses, AdminTriggerHealthCheckErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/{providerId}/health-check',
-    ...options
-});
-
-/**
- * Re-ingest event data from a provider
- *
- * Triggers on-demand event-data re-ingestion for a provider and event identifier.
- */
-export const adminReIngestEvent = <ThrowOnError extends boolean = false>(options: Options<AdminReIngestEventData, ThrowOnError>) => (options.client ?? client).post<AdminReIngestEventResponses, AdminReIngestEventErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/{providerId}/re-ingest/{eventId}',
-    ...options
-});
-
-/**
- * Browse a provider's live event catalog
- *
- * Calls provider.getUpcomingEvents live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. The only candidate-lookup operation: serves the tournament-creation browse mode and the score-source linking picker, a plain filtered list with no scoring or ranking.
- */
-export const adminListProviderCatalogEvents = <ThrowOnError extends boolean = false>(options: Options<AdminListProviderCatalogEventsData, ThrowOnError>) => (options.client ?? client).get<AdminListProviderCatalogEventsResponses, AdminListProviderCatalogEventsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/providers/{providerId}/catalog-events',
-    ...options
-});
-
-/**
- * Get service health status
- *
- * Returns service-level health diagnostics for root-admin monitoring views.
- */
-export const adminGetServiceHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminGetServiceHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminGetServiceHealthResponses, AdminGetServiceHealthErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/services',
-    ...options
-});
-
-/**
- * Get infrastructure metrics
- *
- * Returns infrastructure metrics used by platform monitoring and operational dashboards.
- */
-export const adminGetInfrastructureMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetInfrastructureMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetInfrastructureMetricsResponses, AdminGetInfrastructureMetricsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/infrastructure',
-    ...options
-});
-
-/**
- * Get business metrics
- *
- * Returns business and product metrics used by root-admin reporting surfaces.
- */
-export const adminGetBusinessMetrics = <ThrowOnError extends boolean = false>(options?: Options<AdminGetBusinessMetricsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetBusinessMetricsResponses, AdminGetBusinessMetricsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/metrics',
-    ...options
-});
-
-/**
- * Search platform errors
- *
- * Searches captured platform errors for operational debugging and support investigation.
- */
-export const adminSearchErrors = <ThrowOnError extends boolean = false>(options?: Options<AdminSearchErrorsData, ThrowOnError>) => (options?.client ?? client).get<AdminSearchErrorsResponses, AdminSearchErrorsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/errors',
-    ...options
-});
-
-/**
- * Get error detail
- *
- * Returns detailed information for a captured platform error.
- */
-export const adminGetErrorDetail = <ThrowOnError extends boolean = false>(options: Options<AdminGetErrorDetailData, ThrowOnError>) => (options.client ?? client).get<AdminGetErrorDetailResponses, AdminGetErrorDetailErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/errors/{errorId}',
-    ...options
-});
-
-/**
- * Get alert rules
- *
- * Returns the configured alert rules for operational monitoring.
- */
-export const adminGetAlertRules = <ThrowOnError extends boolean = false>(options?: Options<AdminGetAlertRulesData, ThrowOnError>) => (options?.client ?? client).get<AdminGetAlertRulesResponses, AdminGetAlertRulesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/alerts',
-    ...options
-});
-
-/**
- * Update an alert rule
- *
- * Updates an alert rule configuration through the root-admin monitoring surface.
- */
-export const adminUpdateAlertRule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateAlertRuleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateAlertRuleResponses, AdminUpdateAlertRuleErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/alerts/{alertId}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Mute an alert for a duration
- *
- * Temporarily mutes an alert rule for a specified duration.
- */
-export const adminMuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminMuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminMuteAlertResponses, AdminMuteAlertErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/alerts/{alertId}/mute',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unmute an alert
- *
- * Removes a mute from an alert rule so it resumes normal signaling.
- */
-export const adminUnmuteAlert = <ThrowOnError extends boolean = false>(options: Options<AdminUnmuteAlertData, ThrowOnError>) => (options.client ?? client).post<AdminUnmuteAlertResponses, AdminUnmuteAlertErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/health/alerts/{alertId}/unmute',
-    ...options
-});
-
-/**
- * Get poll interval configuration
- *
- * Returns the root-admin poll interval configuration that governs recommended client refresh timing.
- */
-export const adminGetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminGetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).get<AdminGetPollIntervalsResponses, AdminGetPollIntervalsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/poll-intervals',
-    ...options
-});
-
-/**
- * Update poll interval configuration
- *
- * Updates the root-admin poll interval configuration used by client polling guidance.
- */
-export const adminUpdatePollIntervals = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePollIntervalsData, ThrowOnError>) => (options.client ?? client).put<AdminUpdatePollIntervalsResponses, AdminUpdatePollIntervalsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/poll-intervals',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Reset poll intervals to defaults
- *
- * Resets poll interval configuration back to the platform defaults.
- */
-export const adminResetPollIntervals = <ThrowOnError extends boolean = false>(options?: Options<AdminResetPollIntervalsData, ThrowOnError>) => (options?.client ?? client).post<AdminResetPollIntervalsResponses, AdminResetPollIntervalsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/poll-intervals/reset',
-    ...options
-});
-
-/**
- * Get ingestion schedule configuration
- *
- * Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
- */
-export const adminGetIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<AdminGetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).get<AdminGetIngestionScheduleResponses, AdminGetIngestionScheduleErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/ingestion-schedule',
-    ...options
-});
-
-/**
- * Update ingestion schedule configuration
- *
- * Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.
- */
-export const adminUpdateIngestionSchedule = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateIngestionScheduleData, ThrowOnError>) => (options.client ?? client).put<AdminUpdateIngestionScheduleResponses, AdminUpdateIngestionScheduleErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/ingestion-schedule',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Set per-sport ingestion schedule override
- *
- * Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.
- */
-export const adminSetSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminSetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).put<AdminSetSportIngestionOverrideResponses, AdminSetSportIngestionOverrideErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/ingestion-schedule/{sport}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Clear per-sport ingestion schedule override
- *
- * Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.
- */
-export const adminResetSportIngestionOverride = <ThrowOnError extends boolean = false>(options: Options<AdminResetSportIngestionOverrideData, ThrowOnError>) => (options.client ?? client).post<AdminResetSportIngestionOverrideResponses, AdminResetSportIngestionOverrideErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/ingestion-schedule/{sport}/reset',
-    ...options
-});
-
-/**
- * Reset ingestion schedule to defaults
- *
- * Resets ingestion scheduling back to the platform defaults.
- */
-export const adminResetIngestionSchedule = <ThrowOnError extends boolean = false>(options?: Options<AdminResetIngestionScheduleData, ThrowOnError>) => (options?.client ?? client).post<AdminResetIngestionScheduleResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/admin/config/ingestion-schedule/reset',
-    ...options
 });
 
 /**

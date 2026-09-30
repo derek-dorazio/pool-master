@@ -8,7 +8,8 @@ export { PrismaSquadOwnerInvitationRepository } from './prisma-squad-owner-invit
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
-export { PrismaActionItemRepository } from './prisma-action-item-repository';
+export { PrismaPlatformRuntimeConfigRepository } from './prisma-platform-runtime-config-repository';
+export { PrismaProviderSyncRunRepository } from './prisma-provider-sync-run-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
 export {

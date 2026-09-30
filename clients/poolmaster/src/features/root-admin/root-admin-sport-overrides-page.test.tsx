@@ -16,9 +16,9 @@ const {
 }));
 
 bindApiMocks({
-  adminGetIngestionSchedule: adminGetIngestionScheduleMock,
-  adminResetSportIngestionOverride: adminResetSportIngestionOverrideMock,
-  adminSetSportIngestionOverride: adminSetSportIngestionOverrideMock,
+  getIngestionSchedule: adminGetIngestionScheduleMock,
+  resetSportIngestionOverride: adminResetSportIngestionOverrideMock,
+  setSportIngestionOverride: adminSetSportIngestionOverrideMock,
 });
 
 function renderPage() {

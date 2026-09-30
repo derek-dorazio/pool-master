@@ -12,7 +12,7 @@ import type {
   IngestionScheduleConfigOverride,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
-import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
+import type { PlatformRuntimeConfigRepository } from '@poolmaster/shared/db';
 
 type FeedPolicyKey = keyof Omit<IngestionScheduleConfigBody, 'scheduledSports'>;
 
@@ -52,11 +52,11 @@ const INGESTION_RUNTIME_CONFIG_KEY = 'INGESTION_SCHEDULE_CONFIG';
 
 export class IngestionConfigService {
   private initialized = false;
-  private readonly repository?: PrismaPlatformRuntimeConfigRepository;
+  private readonly repository?: PlatformRuntimeConfigRepository;
   private readonly logger?: FastifyBaseLogger;
 
   constructor(
-    repositoryOrLogger?: PrismaPlatformRuntimeConfigRepository | FastifyBaseLogger,
+    repositoryOrLogger?: PlatformRuntimeConfigRepository | FastifyBaseLogger,
     logger?: FastifyBaseLogger,
   ) {
     if (repositoryOrLogger && 'findByKey' in repositoryOrLogger) {

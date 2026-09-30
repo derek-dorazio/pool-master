@@ -8,7 +8,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import { PollIntervalConfigSchema } from '@poolmaster/shared/dto';
-import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
+import type { PlatformRuntimeConfigRepository } from '@poolmaster/shared/db';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,11 +48,11 @@ const POLL_RUNTIME_CONFIG_KEY = 'POLL_INTERVAL_CONFIG';
 
 export class PollConfigService {
   private initialized = false;
-  private readonly repository?: PrismaPlatformRuntimeConfigRepository;
+  private readonly repository?: PlatformRuntimeConfigRepository;
   private readonly logger?: FastifyBaseLogger;
 
   constructor(
-    repositoryOrLogger?: PrismaPlatformRuntimeConfigRepository | FastifyBaseLogger,
+    repositoryOrLogger?: PlatformRuntimeConfigRepository | FastifyBaseLogger,
     logger?: FastifyBaseLogger,
   ) {
     if (repositoryOrLogger && 'findByKey' in repositoryOrLogger) {

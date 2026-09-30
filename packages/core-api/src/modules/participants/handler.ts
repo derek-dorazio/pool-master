@@ -7,17 +7,26 @@ import type { ParticipantService } from './service';
 import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
-import type { ParticipantListQuery, ParticipantListResponse } from '@poolmaster/shared/dto/participants.dto';
+import type {
+  BindParticipantProviderMappingRequest,
+  ParticipantListQuery,
+  ParticipantListResponse,
+} from '@poolmaster/shared/dto/participants.dto';
+import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import { mapParticipantProviderMappingToDto, mapParticipantToDto } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 
-export function createParticipantHandlers(participantService: ParticipantService) {
+export function createParticipantHandlers(
+  participantService: ParticipantService,
+  providerRegistry: ProviderRegistry,
+) {
   return {
     searchParticipants,
     getParticipant,
     createParticipant,
     updateParticipant,
     listProviderMappings,
+    bindProviderMapping,
   };
 
   async function searchParticipants(
@@ -46,6 +55,26 @@ export function createParticipantHandlers(participantService: ParticipantService
     }
     const providerMappings = await participantService.getProviderMappings(request.params.id);
     return { providerMappings: providerMappings.map(mapParticipantProviderMappingToDto) };
+  }
+
+  async function bindProviderMapping(
+    request: FastifyRequest<{ Params: { id: string }; Body: BindParticipantProviderMappingRequest }>,
+    reply: FastifyReply,
+  ) {
+    const { providerId, externalId } = request.body;
+    // A mapping names a registered provider, or no sync will ever use it.
+    if (!providerRegistry.getProviderById(providerId)) {
+      return sendError(reply, 404, 'PROVIDER_NOT_FOUND', `Provider ${providerId} was not found.`);
+    }
+    try {
+      const providerMapping = await participantService.bindProviderMapping(request.params.id, providerId, externalId);
+      return reply.send({ providerMapping: mapParticipantProviderMappingToDto(providerMapping) });
+    } catch (err) {
+      if (err instanceof ParticipantNotFoundError) {
+        return sendError(reply, 404, 'PARTICIPANT_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
   }
 
   async function getParticipant(

@@ -6,7 +6,6 @@
  */
 
 import type {
-  ActionItem,
   Contest,
   ContestEntry,
   DraftPickHistory,
@@ -280,6 +279,11 @@ export interface ParticipantProviderMappingRepository {
   /** Every mapping a provider has for these of its identifiers. */
   findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   create(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
+  /**
+   * Binds a provider identity to a participant. A provider identity maps to one participant,
+   * so an identity already bound elsewhere moves to this one.
+   */
+  bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
 }
 
 // --- Contest ---
@@ -314,14 +318,4 @@ export interface DraftSessionRepository {
   addPickHistory(
     pickHistory: Omit<DraftPickHistory, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<DraftPickHistory>;
-}
-
-// --- Commissioner Action Items ---
-
-export interface ActionItemRepository {
-  findByLeague(leagueId: string, includeResolved?: boolean): Promise<ActionItem[]>;
-  findUnresolved(leagueId: string): Promise<ActionItem[]>;
-  create(item: Omit<ActionItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionItem>;
-  resolve(id: string): Promise<ActionItem>;
-  delete(id: string): Promise<void>;
 }

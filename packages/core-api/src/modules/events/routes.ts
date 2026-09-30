@@ -12,16 +12,16 @@ import type { FastifyInstance } from 'fastify';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-// Registers the named components this module's routes $ref (#192). admin.dto holds the
+// Registers the named components this module's routes $ref (#192). ingestion.dto holds the
 // provider sync submission the field refresh returns.
-import '@poolmaster/shared/dto/admin.dto';
+import '@poolmaster/shared/dto/ingestion.dto';
 import '@poolmaster/shared/dto/events.dto';
 import '@poolmaster/shared/dto/golf-scores.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
-import { ProviderService } from '../admin/provider-service';
+import type { IngestionService } from '../ingestion/ingestion-service';
 import { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
@@ -30,7 +30,7 @@ import { PrismaSportEventRepository } from '../../adapters';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
-  providerService?: ProviderService;
+  ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
 }
 
@@ -50,7 +50,7 @@ const ROUND_PARAMS = {
 };
 const NO_CONTENT = { 204: { type: 'null' } };
 
-export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions = {}): void {
+export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -58,7 +58,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' })),
     eventLifecycle: opts.eventLifecycleService ?? new EventLifecycleService(prisma, new PrismaSportEventRepository(prisma), fastify.log),
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
-    providers: opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log),
+    ingestion: opts.ingestionService,
   });
   const write = { onRequest: requireRootAdmin };
 

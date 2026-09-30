@@ -488,9 +488,6 @@ export class LeagueService {
       await tx.contest.deleteMany({
         where: { leagueId },
       });
-      await tx.commissionerActionItem.deleteMany({
-        where: { leagueId },
-      });
       await tx.leagueInvitation.deleteMany({
         where: { leagueId },
       });

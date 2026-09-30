@@ -19,7 +19,6 @@ import {
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
   PrismaContestRepository,
-  PrismaActionItemRepository,
   PrismaUserRepository,
 } from '../../adapters';
 import { LeagueService } from './service';
@@ -53,7 +52,6 @@ export function leaguesModule(fastify: FastifyInstance): void {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const userRepo = new PrismaUserRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
-  const actionItemRepo = new PrismaActionItemRepository(prisma);
   const mailDelivery = createMailDeliveryProvider(
     readMailDeliveryConfig(process.env),
     fastify.log,
@@ -92,7 +90,6 @@ export function leaguesModule(fastify: FastifyInstance): void {
     membershipRepo,
     contestRepo,
     invitationRepo,
-    actionItemRepo,
   );
   const bulkService = new BulkService(
     leagueRepo,
@@ -421,7 +418,8 @@ export function leaguesModule(fastify: FastifyInstance): void {
    *   so both audit reads always returned an empty array. `getLeagueAuditLog` also took
    *   `limit`/`offset`, which §16 forbids.
    *
-   * #255 then deleted the audit feature outright — both tables, every writer and every read.
+   * #255 then deleted the audit feature outright — both tables, every writer and every read —
+   * and #205 dropped the action-item table and the dashboard's always-empty `actionItems`.
    */
 
   /*

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminGetIngestionSchedule, adminResetIngestionSchedule, adminUpdateIngestionSchedule } from '@/lib/api';
+import { getIngestionSchedule, resetIngestionSchedule, updateIngestionSchedule } from '@/lib/api';
 import {
   AdminConfigPage,
   Button,
@@ -34,7 +34,7 @@ export function RootAdminIngestionSchedulePage() {
   const ingestionConfigQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.ingestionConfig,
     queryFn: async (): Promise<IngestionScheduleConfig> => {
-      const response = await adminGetIngestionSchedule();
+      const response = await getIngestionSchedule();
       if (!response.data) {
         throwApiError(response.error, 'Ingestion schedule response is missing data.');
       }
@@ -57,7 +57,7 @@ export function RootAdminIngestionSchedulePage() {
 
   const ingestionConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: IngestionScheduleConfig) => {
-      const response = await adminUpdateIngestionSchedule({
+      const response = await updateIngestionSchedule({
         body: {
           healthCheck: nextDraft.healthCheck,
           eventSchedule: nextDraft.eventSchedule,
@@ -82,7 +82,7 @@ export function RootAdminIngestionSchedulePage() {
 
   const resetIngestionConfigMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminResetIngestionSchedule();
+      const response = await resetIngestionSchedule();
       if (!response.data) {
         throwApiError(response.error, 'Ingestion schedule reset response is missing data.');
       }

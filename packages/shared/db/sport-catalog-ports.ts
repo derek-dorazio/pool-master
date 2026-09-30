@@ -111,6 +111,17 @@ export interface SportEventUpdate {
   syncScope?: SportEventSyncScope;
 }
 
+export interface SportEventProviderSummary {
+  activeEventCount: number;
+  lastChangedAt: Date | null;
+}
+
+export interface SportEventFieldRecordCounts {
+  valuations: number;
+  rounds: number;
+  picks: number;
+}
+
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
   /** The event a provider knows by this identity, if one is linked to it. */
@@ -129,6 +140,16 @@ export interface SportEventRepository {
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per season, for each id asked about (0 where none). */
   countBySeasons(seasonIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * Per provider asked about: its `SCHEDULED` or `IN_PROGRESS` events, and when any of its
+   * events last changed (null where it has none).
+   */
+  summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>>;
+  /**
+   * The field records each event holds beyond its participants, for each id asked about
+   * (zeros where none): valuations, per-round rows, and contest picks on its participants.
+   */
+  countFieldRecords(sportEventIds: readonly string[]): Promise<Map<string, SportEventFieldRecordCounts>>;
   /**
    * The events the lifecycle scheduler may move on: auto lifecycle on, not provider-owned
    * (`syncScope` other than `FULL`), and `SCHEDULED` or `IN_PROGRESS`. Unordered.

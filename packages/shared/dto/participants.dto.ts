@@ -161,9 +161,22 @@ export const ParticipantProviderMappingListResponseSchema = z.object({
 }).describe('A participant\'s provider identities.');
 export type ParticipantProviderMappingListResponse = z.infer<typeof ParticipantProviderMappingListResponseSchema>;
 
+export const BindParticipantProviderMappingRequestSchema = z.object({
+  providerId: z.string().min(1).describe('The provider whose identifier this binds.'),
+  externalId: z.string().min(1).describe('The provider\'s identifier for the competitor — from the unmapped-competitor list.'),
+}).describe('Binds a provider identity to this participant. An identity already bound to another participant moves here.');
+export type BindParticipantProviderMappingRequest = z.infer<typeof BindParticipantProviderMappingRequestSchema>;
+
+export const ParticipantProviderMappingResponseSchema = z.object({
+  providerMapping: ParticipantProviderMappingDtoSchema,
+}).describe('A single provider identity of a participant.');
+export type ParticipantProviderMappingResponse = z.infer<typeof ParticipantProviderMappingResponseSchema>;
+
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('ParticipantProviderMappingDto', ParticipantProviderMappingDtoSchema);
 registerSchema('ParticipantProviderMappingListResponse', ParticipantProviderMappingListResponseSchema);
+registerSchema('BindParticipantProviderMappingRequest', BindParticipantProviderMappingRequestSchema);
+registerSchema('ParticipantProviderMappingResponse', ParticipantProviderMappingResponseSchema);
 registerSchema('ParticipantDto', ParticipantDtoSchema);
 registerSchema('ParticipantListQuery', ParticipantListQuerySchema);
 registerSchema('ParticipantListResponse', ParticipantListResponseSchema);

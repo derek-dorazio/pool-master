@@ -347,7 +347,6 @@ model User {
   invitationsAccepted           LeagueInvitation[]     @relation("AcceptedBy")
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
-  migrationRunsStarted          MigrationRun[]         @relation("MigrationStartedBy")
   notifications                 Notification[]
 
   refreshTokens RefreshToken[]
@@ -392,7 +391,6 @@ model League {
   contests              Contest[]
   invitations           LeagueInvitation[]
   squadOwnerInvitations SquadOwnerInvitation[]
-  actionItems           CommissionerActionItem[]
 
   @@map("leagues")
 }
@@ -503,24 +501,6 @@ model SquadOwnerInvitation {
   @@index([leagueId, status])
   @@index([squadId, status])
   @@map("squad_owner_invitations")
-}
-
-model CommissionerActionItem {
-  id          String    @id @default(uuid()) @db.Uuid
-  leagueId    String    @map("league_id") @db.Uuid
-  contestId   String?   @map("contest_id") @db.Uuid
-  title       String    @db.VarChar(255)
-  description String?
-  actionUrl   String?   @map("action_url") @db.VarChar(500)
-  resolved    Boolean   @default(false)
-  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-
-  league League @relation(fields: [leagueId], references: [id])
-
-  @@index([leagueId, resolved, createdAt(sort: Desc)])
-  @@map("commissioner_action_items")
 }
 
 // =============================================================================
@@ -1214,25 +1194,6 @@ model SportEventParticipantValuation {
   @@map("sport_event_participant_valuations")
 }
 
-model IngestionJob {
-  id               String    @id @default(uuid()) @db.Uuid
-  jobType          String    @map("job_type") @db.VarChar(50)
-  providerId       String    @map("provider_id") @db.VarChar(100)
-  sport            String    @db.VarChar(50)
-  eventExternalId  String?   @map("event_external_id") @db.VarChar(255)
-  status           String    @default("PENDING") @db.VarChar(50)
-  startedAt        DateTime? @map("started_at") @db.Timestamptz
-  completedAt      DateTime? @map("completed_at") @db.Timestamptz
-  recordsProcessed Int       @default(0) @map("records_processed")
-  errors           Int       @default(0)
-  errorLog         Json      @default("[]") @map("error_log")
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([status, createdAt])
-  @@index([providerId, sport])
-  @@map("ingestion_jobs")
-}
-
 model ProviderSyncRun {
   id          String    @id @default(uuid()) @db.Uuid
   providerId  String    @map("provider_id") @db.VarChar(100)
@@ -1244,23 +1205,11 @@ model ProviderSyncRun {
   payloadJson Json      @default("{}") @map("payload_json")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
+  @@index([createdAt(sort: Desc)])
   @@index([providerId, createdAt(sort: Desc)])
   @@index([sport, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
-}
-
-model ProviderHealthLog {
-  id                  String   @id @default(uuid()) @db.Uuid
-  providerId          String   @map("provider_id") @db.VarChar(100)
-  status              String   @db.VarChar(20)
-  errorRate           Decimal? @map("error_rate") @db.Decimal(5, 4)
-  avgLatencyMs        Int?     @map("avg_latency_ms")
-  consecutiveFailures Int      @default(0) @map("consecutive_failures")
-  recordedAt          DateTime @default(now()) @map("recorded_at") @db.Timestamptz
-
-  @@index([providerId, recordedAt])
-  @@map("provider_health_log")
 }
 
 // =============================================================================
@@ -1310,7 +1259,7 @@ model ConsentRecord {
 }
 
 // =============================================================================
-// Root Admin & Platform Operations
+// Platform
 // =============================================================================
 
 model PlatformRuntimeConfig {
@@ -1322,43 +1271,4 @@ model PlatformRuntimeConfig {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("platform_runtime_configs")
-}
-
-model MigrationRun {
-  id          String    @id @default(uuid()) @db.Uuid
-  migrationId String    @map("migration_id") @db.VarChar(255)
-  status      String    @default("RUNNING") @db.VarChar(20)
-  options     Json
-  progress    Json      @default("{}")
-  errors      Json      @default("[]")
-  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz
-  completedAt DateTime? @map("completed_at") @db.Timestamptz
-  startedById String    @map("started_by") @db.Uuid
-
-  startedBy User @relation("MigrationStartedBy", fields: [startedById], references: [id])
-
-  @@index([status])
-  @@map("migration_runs")
-}
-
-// =============================================================================
-// Billing & Entitlements
-// =============================================================================
-
-model PlanTier {
-  id                   String   @id @default(uuid()) @db.Uuid
-  name                 String   @db.VarChar(50)
-  slug                 String   @unique @db.VarChar(50)
-  displayOrder         Int      @default(0) @map("display_order")
-  monthlyPriceCents    Int      @default(0) @map("monthly_price_cents")
-  annualPriceCents     Int      @default(0) @map("annual_price_cents")
-  trialDays            Int      @default(0) @map("trial_days")
-  stripeMonthlyPriceId String?  @map("stripe_monthly_price_id") @db.VarChar(255)
-  stripeAnnualPriceId  String?  @map("stripe_annual_price_id") @db.VarChar(255)
-  entitlements         Json     @default("{}")
-  isPublic             Boolean  @default(true) @map("is_public")
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("plan_tiers")
 }

@@ -37,12 +37,12 @@ import {
   mapSportEventToDto,
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
-import type { ProviderService } from '../admin/provider-service';
+import type { IngestionService } from '../ingestion/ingestion-service';
 import {
   SportEventSyncScopeError,
   SportProviderNotFoundError,
   SportSyncNotConfiguredError,
-} from '../admin/provider-service';
+} from '../ingestion/ingestion-service';
 import { SportEventError } from './errors';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { EventScoreSourceService } from './event-score-source-service';
@@ -55,7 +55,7 @@ export interface EventHandlerDeps {
   services: SportEventServices;
   eventLifecycle: EventLifecycleService;
   scoreSource: EventScoreSourceService;
-  providers: ProviderService;
+  ingestion: IngestionService;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, scoreSource, providers }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores } = services;
 
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
@@ -170,7 +170,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, pro
         return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} is not linked to a provider.`);
       }
       try {
-        const result = await providers.syncEventData(
+        const result = await ingestion.syncEventData(
           { sport: event.sport, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',

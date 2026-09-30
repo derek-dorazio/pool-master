@@ -16,9 +16,9 @@ const {
 }));
 
 bindApiMocks({
-  adminGetIngestionSchedule: adminGetIngestionScheduleMock,
-  adminResetIngestionSchedule: adminResetIngestionScheduleMock,
-  adminUpdateIngestionSchedule: adminUpdateIngestionScheduleMock,
+  getIngestionSchedule: adminGetIngestionScheduleMock,
+  resetIngestionSchedule: adminResetIngestionScheduleMock,
+  updateIngestionSchedule: adminUpdateIngestionScheduleMock,
 });
 
 function renderPage() {

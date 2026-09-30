@@ -17,8 +17,13 @@ import { ParticipantService } from './service';
 import { createParticipantHandlers } from './handler';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
+import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
-export function participantsModule(fastify: FastifyInstance): void {
+export interface ParticipantsModuleOptions {
+  providerRegistry: ProviderRegistry;
+}
+
+export function participantsModule(fastify: FastifyInstance, opts: ParticipantsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -31,7 +36,7 @@ export function participantsModule(fastify: FastifyInstance): void {
     fastify.log.child({ module: 'participants.service' }),
   );
 
-  const handler = createParticipantHandlers(participantService);
+  const handler = createParticipantHandlers(participantService, opts.providerRegistry);
 
   // --- Search / List ---
 
@@ -148,5 +153,24 @@ export function participantsModule(fastify: FastifyInstance): void {
       },
     },
     handler: handler.listProviderMappings,
+  });
+
+  fastify.post('/:id/provider-mappings', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: ['Participants'],
+      summary: 'Bind a provider identity to a participant',
+      description: 'How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider\'s identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.',
+      operationId: 'bindParticipantProviderMapping',
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      body: schemaRef('BindParticipantProviderMappingRequest'),
+      response: {
+        200: schemaRef('ParticipantProviderMappingResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handler.bindProviderMapping,
   });
 }

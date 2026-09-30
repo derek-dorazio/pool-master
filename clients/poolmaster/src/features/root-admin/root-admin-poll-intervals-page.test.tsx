@@ -16,9 +16,9 @@ const {
 }));
 
 bindApiMocks({
-  adminGetPollIntervals: adminGetPollIntervalsMock,
-  adminResetPollIntervals: adminResetPollIntervalsMock,
-  adminUpdatePollIntervals: adminUpdatePollIntervalsMock,
+  getPollIntervals: adminGetPollIntervalsMock,
+  resetPollIntervals: adminResetPollIntervalsMock,
+  updatePollIntervals: adminUpdatePollIntervalsMock,
 });
 
 function renderPage() {

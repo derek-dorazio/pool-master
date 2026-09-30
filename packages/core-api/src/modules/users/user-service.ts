@@ -14,7 +14,7 @@
  * on — which is how the two halves came to disagree about their guards in the first place.
  *
  * `prisma` is a constructor parameter for the three things that are not single-aggregate
- * operations — `$transaction`, the six-table delete cascade, the refresh-token revoke, all
+ * operations — `$transaction`, the five-table delete cascade, the refresh-token revoke, all
  * in `user-lifecycle.ts` — plus the one column `UserRepository` deliberately never serves,
  * `passwordHash`.
  */
