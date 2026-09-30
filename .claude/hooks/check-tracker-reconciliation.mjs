@@ -45,15 +45,36 @@ import { join } from 'node:path';
 const TIMEOUT_MS = 5000;
 const MAX_PAGES = 5;
 const PER_PAGE = 100;
+// execFileSync's default is 1 MiB. One page of this repo's issue listing passed that in
+// 2026-09 (1,054,080 bytes), and the child was killed with ENOBUFS -- which the old catch-all
+// turned into "returned nothing usable" while curl itself was answering 200 in a second.
+const MAX_BUFFER = 32 * 1024 * 1024;
+
+/** Why the most recent run() returned null, for the DID NOT RUN message. */
+let lastFailure = null;
+
+function describeFailure(error) {
+  if (error.code === 'ENOBUFS') return 'output exceeded the buffer (ENOBUFS)';
+  if (error.code === 'ETIMEDOUT') return `timed out after ${TIMEOUT_MS / 1000}s`;
+  if (error.code === 'ENOENT') return 'not installed (ENOENT)';
+  const stderr = String(error.stderr ?? '').trim().split('\n')[0];
+  if (typeof error.status === 'number') {
+    return `exit ${error.status}${stderr ? `: ${stderr}` : ''}`;
+  }
+  return error.code ?? error.message;
+}
 
 function run(cmd, args) {
   try {
+    lastFailure = null;
     return execFileSync(cmd, args, {
       encoding: 'utf8',
       timeout: TIMEOUT_MS,
-      stdio: ['ignore', 'pipe', 'ignore'],
+      maxBuffer: MAX_BUFFER,
+      stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
-  } catch {
+  } catch (error) {
+    lastFailure = describeFailure(error);
     return null;
   }
 }
@@ -64,6 +85,9 @@ function toIssueMap(records) {
   );
 }
 
+/** Why each transport failed, reported when neither produced a listing. */
+const transportFailures = {};
+
 /** Transport 1: the gh CLI. Already filters pull requests out for us. */
 function loadViaGh() {
   const out = run('gh', [
@@ -72,10 +96,14 @@ function loadViaGh() {
     '--limit', String(MAX_PAGES * PER_PAGE),
     '--json', 'number,state,title',
   ]);
-  if (!out) return null;
+  if (!out) {
+    transportFailures.gh = lastFailure ?? 'empty output';
+    return null;
+  }
   try {
     return toIssueMap(JSON.parse(out));
   } catch {
+    transportFailures.gh = 'malformed JSON';
     return null;
   }
 }
@@ -118,15 +146,22 @@ function loadViaApi() {
       '-H', 'User-Agent: poolmaster-tracker-reconciliation-hook',
       `https://api.github.com/repos/${slug}/issues?state=all&per_page=${PER_PAGE}&page=${page}`,
     ]);
-    if (!out) return null;
+    if (!out) {
+      transportFailures.curl = `page ${page}: ${lastFailure ?? 'empty output'}`;
+      return null;
+    }
 
     let batch;
     try {
       batch = JSON.parse(out);
     } catch {
+      transportFailures.curl = `page ${page}: malformed JSON`;
       return null;
     }
-    if (!Array.isArray(batch)) return null;
+    if (!Array.isArray(batch)) {
+      transportFailures.curl = `page ${page}: response is not an issue list`;
+      return null;
+    }
 
     // /issues returns pull requests too -- they carry a `pull_request` key.
     // Without this filter a plan tracking, say, #141 would resolve against a PR
@@ -150,8 +185,9 @@ function loadIssues() {
 
   return {
     error:
-      '`gh` is unavailable or failed, and the curl call to api.github.com returned nothing usable '
-      + '(no curl, no network, auth rejected, or malformed JSON)',
+      'neither transport produced an issue listing -- '
+      + `gh: ${transportFailures.gh ?? 'not tried'}; `
+      + `curl to api.github.com: ${transportFailures.curl ?? 'not tried'}`,
   };
 }
 
