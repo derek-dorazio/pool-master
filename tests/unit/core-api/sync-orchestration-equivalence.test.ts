@@ -6,87 +6,50 @@
  * different source, actor, and runType fields.
  */
 
-import { Prisma } from '@prisma/client';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
+import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type {
   IngestionFeedType,
   IngestionJobRecord,
 } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import type { ProviderSyncRunRecord } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
-interface StoredSyncRunRow {
-  id: string;
-  providerId: string;
-  sport: string;
-  eventId: string | null;
-  status: string;
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-  payloadJson: Prisma.JsonValue;
-}
-
 function createLedgerStore() {
-  const rows = new Map<string, StoredSyncRunRow>();
+  const rows = new Map<string, ProviderSyncRun>();
   let nextId = 1;
 
-  const providerSyncRun = {
-    create: jest.fn(async (args: Prisma.ProviderSyncRunCreateArgs) => {
-      const data = args.data as {
-        providerId: string;
-        sport: string;
-        eventId: string | null;
-        status: string;
-        startedAt: Date | null;
-        completedAt: Date | null;
-        createdAt: Date;
-        payloadJson: Prisma.JsonValue;
-      };
-      const row: StoredSyncRunRow = {
+  const syncRuns: ProviderSyncRunRepository = {
+    create: jest.fn(async (input) => {
+      const row: ProviderSyncRun = {
+        ...input,
         id: `sync-run-${nextId}`,
-        providerId: data.providerId,
-        sport: data.sport,
-        eventId: data.eventId,
-        status: data.status,
-        startedAt: data.startedAt,
-        completedAt: data.completedAt,
-        createdAt: data.createdAt,
-        payloadJson: data.payloadJson,
+        createdAt: input.createdAt ?? new Date(),
       };
       nextId += 1;
       rows.set(row.id, row);
       return row;
     }),
-    update: jest.fn(async (args: Prisma.ProviderSyncRunUpdateArgs) => {
-      const id = String(args.where.id);
+    update: jest.fn(async (id, update) => {
       const current = rows.get(id);
       if (!current) {
         throw new Error(`Missing sync run ${id}`);
       }
-      const data = args.data as {
-        status?: string;
-        startedAt?: Date | null;
-        completedAt?: Date | null;
-        payloadJson?: Prisma.JsonValue;
-      };
-      const row: StoredSyncRunRow = {
+      rows.set(id, {
         ...current,
-        status: data.status ?? current.status,
-        startedAt: data.startedAt ?? current.startedAt,
-        completedAt: data.completedAt ?? current.completedAt,
-        payloadJson: data.payloadJson ?? current.payloadJson,
-      };
-      rows.set(id, row);
-      return row;
+        status: update.status,
+        startedAt: update.startedAt ?? current.startedAt,
+        completedAt: update.completedAt ?? current.completedAt,
+        payload: update.payload,
+      });
     }),
+    findAll: jest.fn(),
   };
 
   return {
-    ledger: new ProviderSyncRunLedger({ providerSyncRun }),
-    rowFor(syncRun: ProviderSyncRunRecord) {
+    ledger: new ProviderSyncRunLedger(syncRuns),
+    rowFor(syncRun: ProviderSyncRun) {
       const row = rows.get(syncRun.id);
       if (!row) {
         throw new Error(`Missing sync run ${syncRun.id}`);
@@ -179,11 +142,11 @@ function createJob(input: {
   };
 }
 
-function clonePayload(payload: Prisma.JsonValue): Record<string, unknown> {
+function clonePayload(payload: unknown): Record<string, unknown> {
   return JSON.parse(JSON.stringify(payload)) as Record<string, unknown>;
 }
 
-function stripAllowedSourceDifferences(payload: Prisma.JsonValue): Record<string, unknown> {
+function stripAllowedSourceDifferences(payload: unknown): Record<string, unknown> {
   const clone = clonePayload(payload);
   delete clone.runType;
   const requestPayload = clone.requestPayload;
@@ -198,7 +161,7 @@ async function runAndReadPayload(input: {
   normalizedRequest: NormalizedSyncRequest;
   runType: string;
   job: IngestionJobRecord;
-}): Promise<Prisma.JsonValue> {
+}): Promise<unknown> {
   const { ledger, rowFor } = createLedgerStore();
   const [syncRun] = await ledger.createSubmissions({
     normalizedRequest: input.normalizedRequest,
@@ -211,7 +174,7 @@ async function runAndReadPayload(input: {
   }
 
   await ledger.executeFeedRun(syncRun, async () => input.job);
-  return rowFor(syncRun).payloadJson;
+  return rowFor(syncRun).payload;
 }
 
 describe('sync orchestration equivalence', () => {

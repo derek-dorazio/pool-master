@@ -1,6 +1,4 @@
 import {
-  adminListProviderCatalogEvents,
-  adminSyncProviderEventData,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createEvent,
@@ -10,8 +8,10 @@ import {
   linkEventScoreSource,
   listEventParticipants,
   listEventTiers,
+  listProviderCatalogEvents,
   refreshEventParticipants,
   replaceEventTiers,
+  submitEventSync,
   transitionEvent,
   unlinkEventScoreSource,
 } from '@poolmaster/shared/generated/hey-api';
@@ -32,7 +32,7 @@ import {
 // SDK, with one real interaction with the mock contest-feed provider that the
 // FAPI daemon now runs (tests/functional/server.ts):
 //
-//   1. adminListProviderCatalogEvents — browse the mock provider's live catalog.
+//   1. listProviderCatalogEvents — browse the mock provider's live catalog.
 //   2. linkEventScoreSource — bind a manual-admin tournament's
 //      score source to a provider event (syncScope NONE -> SCORES_ONLY);
 //      409 EXTERNAL_EVENT_ALREADY_LINKED when the event is already held.
@@ -54,7 +54,7 @@ import {
 // scheduled-event-reader concern, not reachable through the SDK — the manual
 // event-sync endpoint deliberately *permits* EVENTPARTICIPANTS for SCORES_ONLY
 // (plans/125 §3.2). Existing coverage for the real behaviour:
-//   - admin-support-services.test.ts "pool-master-5h3" — the manual event-sync
+//   - ingestion-service.test.ts "pool-master-5h3" — the manual event-sync
 //     guard permits EVENTPARTICIPANTS for SCORES_ONLY (rejects only NONE).
 //   - scheduled-event-reader.test.ts "pool-master-cgb" — the *scheduled* per-feed
 //     syncScope gate: EVENTPARTICIPANTS never returns a NONE/SCORES_ONLY event.
@@ -96,7 +96,7 @@ async function ensureGolfSportRow(): Promise<string> {
 
 /**
  * Polls the provider_sync_runs ledger until the submitted async runs reach a
- * terminal state. adminSyncProviderEventData / refreshEventParticipants
+ * terminal state. submitEventSync / refreshEventParticipants
  * both return 202 and complete the workflow after acceptance.
  */
 async function waitForSyncRuns(ids: string[]): Promise<void> {
@@ -178,7 +178,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.providerSyncRun.deleteMany({ where: { providerId: MOCK_PROVIDER_ID, eventId: MOCK_EVENT_EXTERNAL_ID } });
-    await db.ingestionJob.deleteMany({ where: { providerId: MOCK_PROVIDER_ID } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
 
@@ -291,7 +290,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(tournament.data!.event.providerId).toBe('manual-admin');
 
     // --- 1. Browse the provider's live catalog for the tournament window ---
-    const catalog = await adminListProviderCatalogEvents({
+    const catalog = await listProviderCatalogEvents({
       client: admin,
       path: { providerId: MOCK_PROVIDER_ID },
       query: {
@@ -306,13 +305,16 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const usOpen = catalogEvents.find((e) => e.externalId === MOCK_EVENT_EXTERNAL_ID);
     expect(usOpen).toBeDefined();
     expect(usOpen!.name).toContain('U.S. Open');
+    // #205 — a catalog result is a provider event, provider and sport included.
+    expect(usOpen!.providerId).toBe(MOCK_PROVIDER_ID);
+    expect(usOpen!.sport).toBe('GOLF');
     expect(new Date(usOpen!.startDate).getUTCFullYear()).toBe(2026);
     // Plain filtered list — the wall-clock-relative generated scenario is far
     // outside this window, so it must not leak in.
     expect(catalogEvents.every((e) => !e.externalId.startsWith('golf-relative-'))).toBe(true);
 
     // matchKeyword (from the linked SportLeague) narrows the same browse.
-    const filtered = await adminListProviderCatalogEvents({
+    const filtered = await listProviderCatalogEvents({
       client: admin,
       path: { providerId: MOCK_PROVIDER_ID },
       query: {
@@ -440,7 +442,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // --- 3c. One manual EVENTLIVESCORES sync tick -> R1 scores via sync -
     const db = getFunctionalPrisma();
-    const r1Sync = await adminSyncProviderEventData({
+    const r1Sync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-r1-complete' },
@@ -497,7 +499,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const roundsBeforeFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
     expect(roundsBeforeFinalSync).toBe(4);
 
-    const finalSync = await adminSyncProviderEventData({
+    const finalSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-completed' },
@@ -543,7 +545,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // The mock externalId no longer resolves to any SportEvent row: the tick
     // is accepted but persists nothing against the now-unlinked tournament.
-    const staleSync = await adminSyncProviderEventData({
+    const staleSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
       body: { feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-late-correction' },
@@ -577,7 +579,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     expectFunctionalError(
-      await adminListProviderCatalogEvents({
+      await listProviderCatalogEvents({
         client: c,
         path: { providerId: MOCK_PROVIDER_ID },
         query: { sport: 'GOLF' },
@@ -601,7 +603,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
       deny,
     );
     expectFunctionalError(
-      await adminSyncProviderEventData({
+      await submitEventSync({
         client: c,
         path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
         body: { feeds: ['EVENTLIVESCORES'] },

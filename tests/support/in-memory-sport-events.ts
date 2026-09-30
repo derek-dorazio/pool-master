@@ -224,6 +224,12 @@ export class InMemorySportEvents {
       findByParticipants: async (ids) => this.mappings.filter((row) => ids.includes(row.participantId)),
       findByProviderExternalIds: async (providerId, externalIds) => this.mappings.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
       create: async () => { throw new Error('not used'); },
+      bind: async (mapping) => {
+        this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId));
+        const row = stamp({ id: this.id('mapping'), ...mapping });
+        this.mappings.push(row);
+        return row;
+      },
     };
   }
 
@@ -299,6 +305,22 @@ export class InMemorySportEvents {
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       countBySeasons: async (ids) => count(ids, (id) => this.events.filter((row) => row.seasonId === id).length),
+      summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
+        const events = this.events.filter((row) => row.providerId === providerId);
+        const changed = events.map((row) => row.updatedAt.getTime());
+        return [providerId, {
+          activeEventCount: events.filter((row) => row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS').length,
+          lastChangedAt: changed.length > 0 ? new Date(Math.max(...changed)) : null,
+        }];
+      })),
+      countFieldRecords: async (ids) => new Map(ids.map((id) => {
+        const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
+        return [id, {
+          valuations: this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
+          rounds: this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).length,
+          picks: [...entryIds].reduce((sum, entryId) => sum + (this.picksByEntry.get(entryId) ?? 0), 0),
+        }];
+      })),
       findAutoLifecycleCandidates: async () => this.events.filter((row) => (
         row.autoLifecycleEnabled
         && row.syncScope !== 'FULL'

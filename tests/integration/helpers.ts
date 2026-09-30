@@ -41,6 +41,18 @@ import { sportsModule } from '../../packages/core-api/src/modules/sports/routes'
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
 import { seasonsModule } from '../../packages/core-api/src/modules/seasons/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
+import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
+import { PollConfigService } from '../../packages/core-api/src/modules/platform/poll-config-service';
+import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
+import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import {
+  PrismaParticipantProviderMappingRepository,
+  PrismaPlatformRuntimeConfigRepository,
+  PrismaProviderSyncRunRepository,
+  PrismaSportEventRepository,
+} from '../../packages/core-api/src/adapters';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -112,6 +124,19 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(authGuard);
   testApp.setErrorHandler(globalErrorHandler);
 
+  // The ingestion and platform services index.ts builds, without the background scheduler.
+  const providerRegistry = new ProviderRegistry();
+  const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
+  const pollConfigService = new PollConfigService(runtimeConfigRepository);
+  const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository);
+  const ingestionService = new IngestionService({
+    registry: providerRegistry,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
+    syncRuns: new PrismaProviderSyncRunRepository(prisma),
+    ingestionConfigReader: ingestionConfigService,
+  });
+
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth' });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues' });
@@ -123,14 +148,16 @@ async function buildTestApp(): Promise<FastifyInstance> {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
-  testApp.register(participantsModule, { prefix: '/api/v1/participants' });
+  testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users' });
-  testApp.register(eventsModule, { prefix: '/api/v1/events' });
+  testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   testApp.register(seasonsModule, { prefix: '/api/v1/seasons' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
+  testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
+  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
 
   await testApp.ready();
@@ -588,9 +615,6 @@ export async function cleanupTestData(): Promise<void> {
       where: { leagueId: { in: leagueIds } },
     });
     await prisma.squad.deleteMany({
-      where: { leagueId: { in: leagueIds } },
-    });
-    await prisma.commissionerActionItem.deleteMany({
       where: { leagueId: { in: leagueIds } },
     });
     await prisma.leagueInvitation.deleteMany({

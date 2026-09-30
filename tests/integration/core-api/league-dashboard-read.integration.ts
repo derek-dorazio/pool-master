@@ -111,24 +111,9 @@ describe('League Dashboard Read Integration', () => {
       },
     });
     contestId = contest.id;
-
-    // #202 — note what this insert proves: there is no product path that creates a
-    // `CommissionerActionItem`. `createActionItem` and `resolveActionItem` are deleted, so the
-    // dashboard's `actionItems` field can only ever be populated the way it is here — by writing
-    // the table directly. Whether action items live or die is on the dashboard follow-up.
-    const prisma = getPrisma();
-    await prisma.commissionerActionItem.create({
-      data: {
-        leagueId,
-        contestId,
-        title: 'Contest ending soon',
-        description: 'Review payout settings before the contest closes.',
-        actionUrl: `/leagues/${leagueId}/contests/${contestId}`,
-      },
-    });
   });
 
-  it('returns dashboard aggregates from the live league, contest, invite, and action-item data', async () => {
+  it('returns dashboard aggregates from the live league, contest, and invite data', async () => {
     const dashboardRes = await getApp().inject({
       method: 'GET',
       url: API_ROUTES.leagues.detail(leagueId) + '/dashboard',
@@ -149,14 +134,8 @@ describe('League Dashboard Read Integration', () => {
         expect.objectContaining({ contestId, eventType: 'CONTEST_END' }),
       ]),
     );
-    expect(dashboard.actionItems).toHaveLength(1);
-    expect(dashboard.actionItems[0]).toEqual(
-      expect.objectContaining({
-        leagueId,
-        contestId,
-        resolved: false,
-      }),
-    );
+    // #205 dropped the action-item table, and the dashboard's `actionItems` with it.
+    expect(dashboard).not.toHaveProperty('actionItems');
     expect(dashboard.recentMemberActivity).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

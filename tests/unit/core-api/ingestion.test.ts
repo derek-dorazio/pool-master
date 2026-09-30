@@ -46,7 +46,6 @@ function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): Inges
     onEventDetail: jest.fn().mockResolvedValue(undefined),
     onRankings: jest.fn().mockResolvedValue(undefined),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
-    onJobComplete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -260,7 +259,6 @@ describe('IngestionScheduler', () => {
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);
       expect(callbacks.onEvents).toHaveBeenCalledWith(mockEvents);
-      expect(callbacks.onJobComplete).toHaveBeenCalledWith(expect.objectContaining({ status: 'COMPLETED' }));
     });
 
     it('returns FAILED job when provider throws', async () => {

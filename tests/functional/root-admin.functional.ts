@@ -3,21 +3,20 @@ import {
   deleteUser,
   disableUser,
   enableUser,
-  adminGetIngestionSchedule,
-  adminGetPollIntervals,
-  adminPrepareSportSync,
+  getIngestionSchedule,
+  getPollIntervals,
+  submitSportSync,
   setUserRootAdmin,
   listContestConfigTemplates,
-  adminListProviderSyncRuns,
-  adminReIngestEvent,
+  listProviderCatalogEvents,
+  listProviderSyncRuns,
   resetUserPassword,
-  adminResetSportIngestionOverride,
-  adminTriggerHealthCheck,
+  resetSportIngestionOverride,
   getUser,
   listUsers,
   adminUpdateContestConfigTemplate,
-  adminUpdateIngestionSchedule,
-  adminUpdatePollIntervals,
+  updateIngestionSchedule,
+  updatePollIntervals,
   deleteLeague,
   inactivateLeague,
   listLeagues,
@@ -69,7 +68,7 @@ describe('SDK Functional: Root Admin', () => {
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
 
-    const providerResponse = await adminListProviderSyncRuns({
+    const providerResponse = await listProviderSyncRuns({
       client: user.client,
     });
 
@@ -91,7 +90,7 @@ describe('SDK Functional: Root Admin', () => {
       code: 'LEAGUE_SCOPE_FORBIDDEN',
     });
 
-    const prepareSyncResponse = await adminPrepareSportSync({
+    const prepareSyncResponse = await submitSportSync({
       client: user.client,
       path: {
         sport: 'GOLF',
@@ -330,19 +329,19 @@ describe('SDK Functional: Root Admin', () => {
       ],
     });
 
-    const response = await adminListProviderSyncRuns({
+    const response = await listProviderSyncRuns({
       client: user.client,
       query: {
         providerId,
         sport: 'GOLF',
         status: 'COMPLETED',
-        limit: 10,
       },
     });
 
-    expect(response.data?.items).toHaveLength(1);
-    expect(response.data?.items[0]?.providerId).toBe(providerId);
-    expect(response.data?.items[0]?.payload.detail).toBe('Imported event and field snapshot.');
+    // #205 — no `from`/`to`: the default window (the last 6 hours) holds both rows just written.
+    expect(response.data?.syncRuns).toHaveLength(1);
+    expect(response.data?.syncRuns[0]?.providerId).toBe(providerId);
+    expect(response.data?.syncRuns[0]?.payload.detail).toBe('Imported event and field snapshot.');
   });
 
   it('returns stable provider not-found codes for root-admin operational actions', async () => {
@@ -351,32 +350,22 @@ describe('SDK Functional: Root Admin', () => {
     });
     await promoteToRootAdmin(user);
 
-    const healthCheckResponse = await adminTriggerHealthCheck({
+    const catalogResponse = await listProviderCatalogEvents({
       client: user.client,
       path: {
         providerId: 'missing-provider',
       },
-    });
-
-    expectFunctionalError(healthCheckResponse, {
-      status: 404,
-      code: 'PROVIDER_NOT_FOUND',
-    });
-
-    const reIngestResponse = await adminReIngestEvent({
-      client: user.client,
-      path: {
-        providerId: 'missing-provider',
-        eventId: 'missing-event',
+      query: {
+        sport: 'GOLF',
       },
     });
 
-    expectFunctionalError(reIngestResponse, {
+    expectFunctionalError(catalogResponse, {
       status: 404,
       code: 'PROVIDER_NOT_FOUND',
     });
 
-    const prepareSyncResponse = await adminPrepareSportSync({
+    const prepareSyncResponse = await submitSportSync({
       client: user.client,
       path: {
         sport: 'UFC',
@@ -398,7 +387,7 @@ describe('SDK Functional: Root Admin', () => {
     });
     await promoteToRootAdmin(user);
 
-    const pollResponse = await adminUpdatePollIntervals({
+    const pollResponse = await updatePollIntervals({
       client: user.client,
       body: {
         standings: 15000,
@@ -406,12 +395,12 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(pollResponse.data?.standings).toBe(15000);
 
-    const pollRead = await adminGetPollIntervals({
+    const pollRead = await getPollIntervals({
       client: user.client,
     });
     expect(pollRead.data?.standings).toBe(15000);
 
-    const ingestionUpdate = await adminUpdateIngestionSchedule({
+    const ingestionUpdate = await updateIngestionSchedule({
       client: user.client,
       body: {
         eventLiveScores: {
@@ -421,12 +410,12 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(ingestionUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
 
-    const ingestionRead = await adminGetIngestionSchedule({
+    const ingestionRead = await getIngestionSchedule({
       client: user.client,
     });
     expect(ingestionRead.data?.eventLiveScores.intervalSeconds).toBe(45);
 
-    const resetSportOverride = await adminResetSportIngestionOverride({
+    const resetSportOverride = await resetSportIngestionOverride({
       client: user.client,
       path: {
         sport: 'GOLF',

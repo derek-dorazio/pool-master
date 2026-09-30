@@ -10,9 +10,6 @@ import { Sport } from '@poolmaster/shared/domain';
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.ingestionJob.deleteMany({
-    where: { providerId: 'TEST_PROVIDER' },
-  });
   await prisma.sportEventParticipantGolfStanding.deleteMany({
     where: {
       standing: {
@@ -114,35 +111,6 @@ describe('IngestionPersistence', () => {
     // contribution table.
   });
 
-  it('pool-master-8yh persists scheduler job completions for dashboard history', async () => {
-    const prisma = getPrisma();
-    const persistence = new IngestionPersistence(prisma);
-
-    await persistence.persistIngestionJob({
-      jobType: 'EVENT_SCHEDULE_SYNC',
-      providerId: 'TEST_PROVIDER',
-      sport: Sport.GOLF,
-      status: 'COMPLETED',
-      startedAt: new Date('2026-04-27T00:00:00.000Z'),
-      completedAt: new Date('2026-04-27T00:00:01.000Z'),
-      recordsProcessed: 10,
-      errors: 0,
-      errorLog: [],
-    });
-
-    const job = await prisma.ingestionJob.findFirstOrThrow({
-      where: {
-        providerId: 'TEST_PROVIDER',
-        jobType: 'EVENT_SCHEDULE_SYNC',
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    expect(job.status).toBe('COMPLETED');
-    expect(job.sport).toBe(Sport.GOLF);
-    expect(job.recordsProcessed).toBe(10);
-    expect(job.errors).toBe(0);
-    expect(job.startedAt?.toISOString()).toBe('2026-04-27T00:00:00.000Z');
-    expect(job.completedAt?.toISOString()).toBe('2026-04-27T00:00:01.000Z');
-  });
+  // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the
+  // `ingestion_jobs` table: the sync-run ledger records the same job on the run (`jobPayload`).
 });

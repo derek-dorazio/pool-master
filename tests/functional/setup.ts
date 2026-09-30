@@ -479,13 +479,6 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
-    await database.commissionerActionItem.deleteMany({
-      where: {
-        leagueId: {
-          in: leagueIds,
-        },
-      },
-    });
     await database.league.deleteMany({
       where: {
         id: {

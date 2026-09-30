@@ -5,7 +5,7 @@ import {
   PrismaTournamentFormat,
 } from '@prisma/client';
 import {
-  AdminProviderEventCleanupResponseSchema,
+  ProviderEventCleanupResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
@@ -186,12 +186,12 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
 
     const dryRunResponse = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/stale-events/cleanup',
+      url: '/api/v1/ingestion/stale-events/cleanup',
       headers: rootAdmin.headers,
       payload: { mode: 'DRY_RUN' },
     });
     expect(dryRunResponse.statusCode).toBe(200);
-    expect(AdminProviderEventCleanupResponseSchema.safeParse(dryRunResponse.json()).success).toBe(true);
+    expect(ProviderEventCleanupResponseSchema.safeParse(dryRunResponse.json()).success).toBe(true);
     expect(dryRunResponse.json().summary).toMatchObject({
       inventoriedEventCount: 5,
       deletableEventCount: 3,
@@ -199,7 +199,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       deletedEventCount: 0,
       sportEventParticipantCount: 3,
       valuationCount: 2,
-      golfRoundCount: 2,
+      roundCount: 2,
       pickCount: 1,
     });
     expect(dryRunResponse.json().events).toEqual(
@@ -243,12 +243,12 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
 
     const executeResponse = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/stale-events/cleanup',
+      url: '/api/v1/ingestion/stale-events/cleanup',
       headers: rootAdmin.headers,
       payload: { mode: 'EXECUTE' },
     });
     expect(executeResponse.statusCode).toBe(200);
-    expect(AdminProviderEventCleanupResponseSchema.safeParse(executeResponse.json()).success).toBe(true);
+    expect(ProviderEventCleanupResponseSchema.safeParse(executeResponse.json()).success).toBe(true);
     expect(executeResponse.json().summary).toMatchObject({
       inventoriedEventCount: 5,
       deletableEventCount: 3,
@@ -281,7 +281,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
 
     const response = await getApp().inject({
       method: 'POST',
-      url: '/api/v1/admin/providers/stale-events/cleanup',
+      url: '/api/v1/ingestion/stale-events/cleanup',
       headers: rootAdmin.headers,
       payload: {},
     });
