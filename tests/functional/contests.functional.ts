@@ -1,6 +1,5 @@
 import {
   createContest,
-  createManagedContest,
   deleteContest,
   enterContest,
   getContest,
@@ -9,8 +8,8 @@ import {
   getMyContestEntry,
   leaveContest,
   listContestEntries,
+  listContestConfigTemplates,
   listContests,
-  listManagedContestTemplates,
   updateContestEntry,
   updateContest,
   submitContestSelection,
@@ -23,7 +22,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -247,14 +246,12 @@ describe('SDK Functional: Contests and Entries', () => {
       participantCount: 80,
     });
 
-    const templatesResponse = await listManagedContestTemplates({
+    const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
-      path: {
-        id: league.id,
-      },
       query: {
         sport: Sport.GOLF,
         contestFormat: ContestFormat.ROSTER,
+        active: true,
       },
     });
 
@@ -264,7 +261,7 @@ describe('SDK Functional: Contests and Entries', () => {
     );
     expect(defaultTemplate).toBeDefined();
 
-    const createResponse = await createManagedContest({
+    const createResponse = await createContest({
       client: commissioner.client,
       path: {
         id: league.id,
@@ -273,17 +270,21 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `${league.name} Managed Masters Functional Event`,
         sportEventId: importedEvent.sportEventId,
         contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
         templateId: defaultTemplate?.id as string,
       },
     });
 
+    // #245 — create answers with the canonical contest read; the template's configuration is the
+    // contest's when none is supplied.
+    expect(createResponse.response.status).toBe(201);
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.OPEN);
-    expect(createResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
-    expect(createResponse.data?.contest.configuration.rosterSize).toBe(
+    expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
+    expect(createResponse.data?.contestConfiguration?.rosterSize).toBe(
       defaultTemplate?.configuration.rosterSize,
     );
-    expect(createResponse.data?.contest.configuration.countedScores).toBe(
+    expect(createResponse.data?.contestConfiguration?.countedScores).toBe(
       defaultTemplate?.configuration.countedScores,
     );
 
@@ -297,6 +298,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     expect(managedDetailResponse.data?.contest.id).toBe(contestId);
+    expect(managedDetailResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
     expect(managedDetailResponse.data?.contest.sportEventId).toBe(
       importedEvent.sportEventId,
     );
@@ -346,14 +348,12 @@ describe('SDK Functional: Contests and Entries', () => {
       participantCount: 1,
     });
 
-    const templatesResponse = await listManagedContestTemplates({
+    const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
-      path: {
-        id: league.id,
-      },
       query: {
         sport: Sport.GOLF,
         contestFormat: ContestFormat.ROSTER,
+        active: true,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -361,7 +361,7 @@ describe('SDK Functional: Contests and Entries', () => {
     );
     expect(defaultTemplate).toBeDefined();
 
-    const createResponse = await createManagedContest({
+    const createResponse = await createContest({
       client: commissioner.client,
       path: {
         id: league.id,
@@ -370,8 +370,9 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `${league.name} Managed Selection Event`,
         sportEventId: importedEvent.sportEventId,
         contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
         templateId: defaultTemplate?.id as string,
-        configurationOverrides: {
+        configuration: {
           locksAt: '2026-04-10T11:55:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 1,
@@ -448,7 +449,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
   });
 
-  it('rejects invalid template-first managed contest creation requests through the generated SDK', async () => {
+  it('rejects invalid contest creation requests through the generated SDK', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Managed Invalid Commissioner',
       leagueName: 'Managed Invalid Functional League',
@@ -457,14 +458,12 @@ describe('SDK Functional: Contests and Entries', () => {
       eventName: 'Managed Invalid Event',
       participantCount: 1,
     });
-    const templatesResponse = await listManagedContestTemplates({
+    const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
-      path: {
-        id: league.id,
-      },
       query: {
         sport: Sport.GOLF,
         contestFormat: ContestFormat.ROSTER,
+        active: true,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -472,7 +471,7 @@ describe('SDK Functional: Contests and Entries', () => {
     );
     expect(defaultTemplate).toBeDefined();
 
-    const missingTemplateResponse = await createManagedContest({
+    const missingTemplateResponse = await createContest({
       client: commissioner.client,
       path: {
         id: league.id,
@@ -481,6 +480,7 @@ describe('SDK Functional: Contests and Entries', () => {
         name: 'Missing Template Contest',
         sportEventId: importedEvent.sportEventId,
         contestFormat: ContestFormat.ROSTER,
+        selectionType: SelectionType.TIERED,
         templateId: '00000000-0000-4000-8000-000000000000',
       },
     });
@@ -489,36 +489,38 @@ describe('SDK Functional: Contests and Entries', () => {
       status: 422,
       code: 'CONTEST_CONFIGURATION_INVALID',
     });
-  });
 
-  it('creates, lists, reads, updates, and deletes a contest through the generated SDK', async () => {
-    const { commissioner, league } = await buildLeagueWithCommissioner({
-      displayName: 'Contest Commissioner',
-      leagueName: 'Contest Functional League',
-    });
-
-    const createResponse = await createContest({
+    // #245 — neither a template nor a configuration: the documented 400, not a generic one.
+    const emptyCreateResponse = await createContest({
       client: commissioner.client,
       path: {
         id: league.id,
       },
       body: {
-        name: 'Functional Contest',
+        name: 'Empty Create Contest',
+        sportEventId: importedEvent.sportEventId,
         contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.BUDGET_PICK,
-        scoringEngine: ScoringEngine.POSITION,
+        selectionType: SelectionType.TIERED,
       },
     });
 
-    expect(createResponse.data).toBeDefined();
-    expect(createResponse.data?.contest.name).toBe('Functional Contest');
-    expect(createResponse.data?.contest.leagueId).toBe(league.id);
-    expect(createResponse.data?.contest.status).toBe('DRAFT');
-    expect(createResponse.data?.contest.selectionType).toBe('BUDGET_PICK');
-    expect(createResponse.data?.contest.scoringEngine).toBe('POSITION');
+    expectFunctionalError(emptyCreateResponse, {
+      status: 400,
+      code: 'CONTEST_CONFIGURATION_REQUIRED',
+    });
+  });
 
-    const contestId = createResponse.data?.contest.id;
-    expect(contestId).toBeTruthy();
+  it('lists, reads, updates, and deletes a contest through the generated SDK', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Contest Commissioner',
+      leagueName: 'Contest Functional League',
+    });
+
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Functional Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
+    });
 
     const listResponse = await listContests({
       client: commissioner.client,
@@ -544,6 +546,9 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(detailResponse.data?.contest.id).toBe(contestId);
     expect(detailResponse.data?.contest.name).toBe('Functional Contest');
     expect(detailResponse.data?.contest.status).toBe('DRAFT');
+    expect(detailResponse.data?.contest.leagueId).toBe(league.id);
+    expect(detailResponse.data?.contest.selectionType).toBe('BUDGET_PICK');
+    expect(detailResponse.data?.contest.scoringEngine).toBe('POSITION');
 
     const updateResponse = await updateContest({
       client: commissioner.client,
@@ -583,28 +588,17 @@ describe('SDK Functional: Contests and Entries', () => {
     });
   });
 
-  it('creates, enters, lists, leaves, and re-enters a contest through the generated SDK', async () => {
+  it('enters, lists, leaves, and re-enters a contest through the generated SDK', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Entry Commissioner',
       leagueName: 'Entry Functional League',
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Entry Lifecycle Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.BUDGET_PICK,
-        scoringEngine: ScoringEngine.POSITION,
-      },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Entry Lifecycle Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
     });
-
-    const contestId = createResponse.data?.contest.id;
-    expect(contestId).toBeTruthy();
-    expect(createResponse.data?.contestConfiguration?.maxEntriesPerSquad).toBe(1);
 
     const enterResponse = await enterContest({
       client: commissioner.client,
@@ -728,20 +722,12 @@ describe('SDK Functional: Contests and Entries', () => {
       leagueName: 'Rename Functional League',
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Rename Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.BUDGET_PICK,
-        scoringEngine: ScoringEngine.POSITION,
-      },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Rename Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
     });
 
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const prisma = getFunctionalPrisma();
@@ -822,20 +808,12 @@ describe('SDK Functional: Contests and Entries', () => {
       leagueName: 'Tiebreaker Functional League',
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Tiebreaker Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.BUDGET_PICK,
-        scoringEngine: ScoringEngine.POSITION,
-      },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Tiebreaker Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
     });
 
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const prisma = getFunctionalPrisma();
@@ -889,32 +867,24 @@ describe('SDK Functional: Contests and Entries', () => {
       leagueName: 'Entry Detail Functional League',
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Entry Detail Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Entry Detail Contest',
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      configuration: {
+        rounds: 1,
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
       },
     });
 
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const prisma = getFunctionalPrisma();
@@ -1043,20 +1013,12 @@ describe('SDK Functional: Contests and Entries', () => {
       displayName: 'Contest Outsider',
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Outsider Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.BUDGET_PICK,
-        scoringEngine: ScoringEngine.POSITION,
-      },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Outsider Contest',
+      selectionType: SelectionType.BUDGET_PICK,
+      scoringEngine: ScoringEngine.POSITION,
     });
 
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const enterResponse = await enterContest({
@@ -1110,58 +1072,42 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     expect(acceptResponse.data?.membership.userId).toBe(member.userId);
 
-    const lockedContestResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Locked Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+    const { contestId: lockedContestId } = await seedContestFixture(league.id, {
+      name: 'Locked Contest',
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      configuration: {
+        rounds: 1,
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
       },
     });
 
-    const selectableContestResponse = await createContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Selection Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+    const { contestId: selectableContestId } = await seedContestFixture(league.id, {
+      name: 'Selection Contest',
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      configuration: {
+        rounds: 1,
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
       },
     });
 
-    const lockedContestId = lockedContestResponse.data?.contest.id;
-    const selectableContestId = selectableContestResponse.data?.contest.id;
     expect(lockedContestId).toBeTruthy();
     expect(selectableContestId).toBeTruthy();
 
@@ -1344,30 +1290,24 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     expect(acceptResponse.data?.membership.userId).toBe(member.userId);
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: {
-        name: 'Visibility Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'Visibility Contest',
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      configuration: {
+        rounds: 1,
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
       },
     });
 
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const prisma = getFunctionalPrisma();
@@ -1531,29 +1471,23 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    const createResponse = await createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: {
-        name: 'List Visibility Contest',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+    const { contestId } = await seedContestFixture(league.id, {
+      name: 'List Visibility Contest',
+      selectionType: SelectionType.TIERED,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
+      configuration: {
+        rounds: 1,
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [],
+          },
+        ],
       },
     });
-    const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
 
     const prisma = getFunctionalPrisma();

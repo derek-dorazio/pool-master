@@ -7,7 +7,7 @@ import {
   adminGetPollIntervals,
   adminPrepareSportSync,
   setUserRootAdmin,
-  adminListContestConfigTemplates,
+  listContestConfigTemplates,
   adminListProviderSyncRuns,
   adminReIngestEvent,
   resetUserPassword,
@@ -492,7 +492,7 @@ describe('SDK Functional: Root Admin', () => {
     });
     await promoteToRootAdmin(user);
 
-    const listResponse = await adminListContestConfigTemplates({
+    const listResponse = await listContestConfigTemplates({
       client: user.client,
       query: {
         sport: 'GOLF',
@@ -505,6 +505,28 @@ describe('SDK Functional: Root Admin', () => {
       throw new Error('Expected at least one contest template');
     }
     const originalTemplate = structuredClone(template);
+
+    // #245 / A11 — templates are global: any signed-in user reads them, only a root admin writes.
+    const plainUser = await buildRegisteredUser({
+      displayName: 'Contest Template Reader',
+    });
+    const plainListResponse = await listContestConfigTemplates({
+      client: plainUser.client,
+      query: {
+        sport: 'GOLF',
+      },
+    });
+    expect(plainListResponse.data?.templates.map((entry) => entry.id)).toContain(template.id);
+    const plainUpdateResponse = await adminUpdateContestConfigTemplate({
+      client: plainUser.client,
+      path: {
+        templateId: template.id,
+      },
+      body: {
+        description: 'A plain user may not write a global template.',
+      },
+    });
+    expect(plainUpdateResponse.response.status).toBe(403);
 
     try {
       const updateResponse = await adminUpdateContestConfigTemplate({

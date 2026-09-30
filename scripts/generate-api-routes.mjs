@@ -83,7 +83,6 @@ const MANIFEST = {
     inviteLink: 'generateInviteLink',
     contests: 'listContests',
     squads: 'listLeagueSquads',
-    contestManagement: 'createManagedContest',
   },
   squads: {
     list: 'listLeagueSquads',
@@ -113,7 +112,6 @@ const MANIFEST = {
     myEntry: 'getMyContestEntry',
   },
   contestManagement: {
-    templates: 'listManagedContestTemplates',
     detail: 'getManagedContest',
     configuration: 'updateManagedContestConfiguration',
   },

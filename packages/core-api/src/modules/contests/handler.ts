@@ -4,11 +4,8 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
-  ContestFormat,
-  ScoringEngine,
-  SelectionType,
-} from '@poolmaster/shared/domain';
-import {
+  CONTEST_CONFIGURATION_REQUIRED,
+  CreateContestRequestSchema,
   UpdateContestEntryRequestSchema,
 } from '@poolmaster/shared/dto';
 import type { z } from 'zod';
@@ -25,69 +22,16 @@ import {
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import type { ContestService } from './service';
-import type { CreateContestInput } from './service';
+import {
+  ContestManagementError,
+  type ContestManagementService,
+} from '../contest-management/service';
 import {
   ContestEntryNotFoundError,
   ContestEntryOperationError,
   ContestNotFoundError,
   ContestOperationError,
 } from './service';
-
-const TierDefinitionBodySchema = zod.object({
-  tierId: zod.string(),
-  tierName: zod.string(),
-  tierNumber: zod.number().int(),
-  picksFromTier: zod.number().int(),
-  rankingRange: zod.tuple([zod.number(), zod.number()]).optional(),
-  priceRange: zod.tuple([zod.number(), zod.number()]).optional(),
-  maxParticipants: zod.number().int().optional(),
-  participantIds: zod.array(zod.string()),
-});
-
-const ContestConfigurationBodySchema = zod.object({
-  draftMode: zod.string().optional(),
-  rounds: zod.number().int().optional(),
-  timePerPickSeconds: zod.number().int().optional(),
-  autoPickPolicy: zod.string().optional(),
-  tierConfig: zod.array(TierDefinitionBodySchema).optional(),
-  budget: zod.number().optional(),
-  rosterSize: zod.number().int().optional(),
-  pickCount: zod.number().int().optional(),
-  picksPerPeriod: zod.number().int().optional(),
-  roundValues: zod.array(zod.number()).optional(),
-  startRound: zod.string().optional(),
-  isExclusive: zod.boolean().optional(),
-  bestBallN: zod.number().int().optional(),
-  missedCutPenalty: zod.number().optional(),
-  captainSlot: zod.boolean().optional(),
-  captainMultiplier: zod.number().optional(),
-});
-
-const CreateContestBodySchema = zod.object({
-  name: zod.string().min(1).max(100),
-  eventId: zod.string().optional(),
-  contestFormat: zod.enum(Object.values(ContestFormat) as [string, ...string[]]),
-  selectionType: zod.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-  ]),
-  contestConfiguration: ContestConfigurationBodySchema.optional(),
-  scoringEngine: zod.enum([
-    ScoringEngine.ADVANCEMENT,
-    ScoringEngine.STAT_ACCUMULATION,
-    ScoringEngine.STROKE_PLAY,
-    ScoringEngine.POSITION,
-    ScoringEngine.BRACKET,
-    ScoringEngine.FIGHT_RESULT,
-    ScoringEngine.CUMULATIVE,
-  ]),
-  startsAt: zod.string().datetime().optional(),
-  endsAt: zod.string().datetime().optional(),
-  lockAt: zod.string().datetime().optional(),
-  isExclusive: zod.boolean().optional(),
-  scoringStopsOnElimination: zod.boolean().optional(),
-});
 
 const UpdateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100).optional(),
@@ -99,7 +43,6 @@ const UpdateContestBodySchema = zod.object({
 
 export function createContestHandlers(contestService: ContestService) {
   return {
-    createContest,
     listContests,
     getContest,
     listEntries,
@@ -112,56 +55,6 @@ export function createContestHandlers(contestService: ContestService) {
     updateContest,
     deleteContest,
   };
-
-  async function createContest(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: z.infer<typeof CreateContestBodySchema>;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = createRequestContextLogger(request);
-    const userId = request.authUser?.userId;
-    if (!userId) {
-      logger.warn({ leagueId: request.params.id }, 'contest create route missing auth session');
-      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-    }
-    const body = CreateContestBodySchema.parse(request.body);
-    logger.debug({
-      leagueId: request.params.id,
-      userId,
-      contestFormat: body.contestFormat,
-      selectionType: body.selectionType,
-    }, 'contest create route start');
-    try {
-      validateCreateContestBody(body);
-      const result = await contestService.createContest({
-        leagueId: request.params.id,
-        createdBy: userId,
-        sportEventId: body.eventId,
-        name: body.name,
-        contestFormat: body.contestFormat as ContestFormat,
-        selectionType: body.selectionType,
-        contestConfiguration: mapContestConfiguration(body.contestConfiguration),
-        scoringEngine: body.scoringEngine,
-        startsAt: body.startsAt ? new Date(body.startsAt) : undefined,
-        endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
-        lockAt: body.lockAt ? new Date(body.lockAt) : undefined,
-        isExclusive: body.isExclusive,
-        scoringStopsOnElimination: body.scoringStopsOnElimination,
-      });
-
-      logger.info({ contestId: result.contest.id, leagueId: request.params.id, userId }, 'contest create route completed');
-      return reply.status(201).send(toContestResponse(result.contest, result.contestConfiguration));
-    } catch (err) {
-      if (err instanceof ContestOperationError) {
-        logger.warn({ leagueId: request.params.id, userId, code: err.code }, 'contest create route rejected');
-        return sendError(reply, 400, err.code, err.message);
-      }
-      logger.error({ leagueId: request.params.id, userId, err }, 'contest create route failed');
-      throw err;
-    }
-  }
 
   async function listContests(
     request: FastifyRequest<{ Params: { id: string } }>,
@@ -491,31 +384,52 @@ export function createContestHandlers(contestService: ContestService) {
   }
 }
 
-function validateCreateContestBody(body: z.infer<typeof CreateContestBodySchema>): void {
-  if (body.selectionType === SelectionType.TIERED) {
-    const tiers = body.contestConfiguration?.tierConfig;
-    if (!tiers || tiers.length === 0) {
-      throw new ContestOperationError(
-        'Tiered contests require tier configuration',
-        'CONTEST_TIER_CONFIGURATION_REQUIRED',
+/**
+ * `createContest` (#245) — the one creation path. The body's refine carries the rule OpenAPI
+ * cannot state structurally: a template, a configuration, or both. Creation itself is the
+ * contest-management service's; the response is the canonical contest read.
+ */
+export function createCreateContestHandler(
+  contestService: ContestService,
+  contestManagementService: ContestManagementService,
+) {
+  return async function createContest(
+    request: FastifyRequest<{ Params: { id: string }; Body: unknown }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    // Fastify has already validated the structure against the published schema, so the one
+    // failure left for zod is the refine: neither a template nor a configuration.
+    const parsed = CreateContestRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      const [issue] = parsed.error.issues;
+      const isPairingRule = issue?.code === 'custom';
+      logger.warn({ leagueId: request.params.id, isPairingRule }, 'contest create route rejected');
+      return sendError(
+        reply,
+        400,
+        isPairingRule ? CONTEST_CONFIGURATION_REQUIRED : 'FST_ERR_VALIDATION',
+        issue?.message ?? 'Invalid contest create request.',
       );
     }
-  }
-}
-
-function mapContestConfiguration(
-  contestConfiguration: z.infer<typeof ContestConfigurationBodySchema> | undefined,
-): CreateContestInput['contestConfiguration'] {
-  if (!contestConfiguration) {
-    return {};
-  }
-
-  return {
-    ...contestConfiguration,
-    tierConfig: contestConfiguration.tierConfig?.map((tier) => ({
-      ...tier,
-      rankingRange: tier.rankingRange ? [tier.rankingRange[0], tier.rankingRange[1]] as [number, number] : undefined,
-      priceRange: tier.priceRange ? [tier.priceRange[0], tier.priceRange[1]] as [number, number] : undefined,
-    })),
-  } as CreateContestInput['contestConfiguration'];
+    try {
+      const contestId = await contestManagementService.createContest(
+        { leagueId: request.params.id },
+        parsed.data,
+      );
+      const created = await contestService.getContest(contestId);
+      if (!created) {
+        throw new ContestNotFoundError(contestId);
+      }
+      logger.info({ contestId, leagueId: request.params.id }, 'contest create route completed');
+      return reply.status(201).send(toContestResponse(created.contest, created.contestConfiguration));
+    } catch (error) {
+      if (error instanceof ContestManagementError) {
+        logger.warn({ leagueId: request.params.id, code: error.code }, 'contest create route rejected');
+        return sendError(reply, error.statusCode, error.code, error.message);
+      }
+      logger.error({ leagueId: request.params.id, err: error }, 'contest create route failed');
+      throw error;
+    }
+  };
 }

@@ -209,3 +209,50 @@ export async function buildLeagueWithCommissioner(overrides?: {
     commissionerClient: commissioner.client,
   };
 }
+
+/**
+ * A contest row with no sporting event, written straight to the database. #245 retired the
+ * event-less create that used to make these through the API; the one create now needs a
+ * contest-ready event and makes tiered contests only. Tests whose subject is entries, visibility
+ * or draft state rather than creation — and budget/snake contests, which nothing can create yet
+ * (#93) — seed the same rows that create wrote: a DRAFT contest and a configuration defaulting
+ * to one entry per team.
+ */
+export async function seedContestFixture(leagueId: string, options: {
+  name: string;
+  selectionType: string;
+  scoringEngine: string;
+  configuration?: {
+    rounds?: number;
+    timePerPickSeconds?: number;
+    budget?: number;
+    pickCount?: number;
+    rosterSize?: number;
+    maxEntriesPerSquad?: number;
+    isExclusive?: boolean;
+    tierConfig?: unknown[];
+  };
+}): Promise<{ contestId: string }> {
+  const prisma = getFunctionalPrisma();
+  const contest = await prisma.contest.create({
+    data: {
+      leagueId,
+      name: options.name,
+      status: 'DRAFT',
+      contestFormat: 'ROSTER',
+      selectionType: options.selectionType,
+      scoringEngine: options.scoringEngine,
+    },
+  });
+  const { tierConfig, ...configuration } = options.configuration ?? {};
+  await prisma.contestConfiguration.create({
+    data: {
+      contestId: contest.id,
+      selectionType: options.selectionType,
+      maxEntriesPerSquad: 1,
+      ...configuration,
+      ...(tierConfig !== undefined && { tierConfig: tierConfig as object[] }),
+    },
+  });
+  return { contestId: contest.id };
+}

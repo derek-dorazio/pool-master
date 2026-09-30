@@ -6,7 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminContentConfigurationDetailPage } from './root-admin-content-configuration-detail-page';
 
 const {
-  adminListContestConfigTemplatesMock,
+  listContestConfigTemplatesMock,
   adminUpdateContestConfigTemplateMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -21,14 +21,14 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminListContestConfigTemplatesMock: vi.fn(),
+    listContestConfigTemplatesMock: vi.fn(),
     adminUpdateContestConfigTemplateMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminListContestConfigTemplates: adminListContestConfigTemplatesMock,
+  listContestConfigTemplates: listContestConfigTemplatesMock,
   adminUpdateContestConfigTemplate: adminUpdateContestConfigTemplateMock,
 });
 
@@ -61,7 +61,7 @@ function buildTemplate() {
 }
 
 function seedTemplates() {
-  adminListContestConfigTemplatesMock.mockResolvedValue({
+  listContestConfigTemplatesMock.mockResolvedValue({
     data: {
       templates: [buildTemplate()],
     },
@@ -96,7 +96,7 @@ function renderPage() {
 
 describe('RootAdminContentConfigurationDetailPage', () => {
   afterEach(() => {
-    adminListContestConfigTemplatesMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
     adminUpdateContestConfigTemplateMock.mockReset();
     mockLogger.info.mockReset();
   });

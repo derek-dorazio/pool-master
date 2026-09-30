@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { adminListContestConfigTemplates, adminUpdateContestConfigTemplate, type AdminUpdateContestConfigTemplateResponses } from '@/lib/api';
+import { listContestConfigTemplates, adminUpdateContestConfigTemplate, type AdminUpdateContestConfigTemplateResponses } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,
@@ -36,9 +36,9 @@ export function RootAdminContentConfigurationDetailPage() {
   const [draft, setDraft] = useState<ContestConfigTemplate | null>(null);
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
+    queryKey: QueryKeys.contestConfigTemplates.list({}),
     queryFn: async (): Promise<ContestConfigTemplate[]> => {
-      const response = await adminListContestConfigTemplates();
+      const response = await listContestConfigTemplates();
 
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');
@@ -96,7 +96,7 @@ export function RootAdminContentConfigurationDetailPage() {
         'Saved root-admin content configuration template',
       );
     },
-    invalidates: [QueryKeys.rootAdmin.contestConfigTemplates],
+    invalidates: [QueryKeys.contestConfigTemplates.all],
   });
 
   function updateDraft(updater: (current: ContestConfigTemplate) => ContestConfigTemplate) {

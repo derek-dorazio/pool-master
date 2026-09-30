@@ -922,10 +922,13 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "description": "Contest name shown to commissioners and members."
           },
-          "eventId": {
-            "type": "string"
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Sport event the contest is run on."
           },
           "contestFormat": {
             "type": "string",
@@ -937,175 +940,58 @@
           "selectionType": {
             "type": "string",
             "enum": [
-              "SNAKE_DRAFT",
-              "TIERED",
-              "BUDGET_PICK"
-            ]
+              "TIERED"
+            ],
+            "description": "How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template's selection type when a template is named."
           },
-          "contestConfiguration": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create."
+          },
+          "configuration": {
             "type": "object",
             "properties": {
-              "draftMode": {
-                "type": "string"
+              "locksAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "Contest entry lock timestamp."
               },
-              "rounds": {
-                "type": "integer"
-              },
-              "timePerPickSeconds": {
-                "type": "integer"
-              },
-              "autoPickPolicy": {
-                "type": "string"
-              },
-              "tierConfig": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "tierId": {
-                      "type": "string",
-                      "description": "Stable tier identifier."
-                    },
-                    "tierName": {
-                      "type": "string",
-                      "description": "Tier label shown in commissioner and draft UI."
-                    },
-                    "tierNumber": {
-                      "type": "integer",
-                      "description": "Tier order number."
-                    },
-                    "picksFromTier": {
-                      "type": "integer",
-                      "description": "How many picks each entry must make from the tier."
-                    },
-                    "rankingRange": {
-                      "type": "array",
-                      "minItems": 2,
-                      "maxItems": 2,
-                      "items": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "number"
-                        }
-                      ],
-                      "description": "Optional ranking range that produced the tier."
-                    },
-                    "priceRange": {
-                      "type": "array",
-                      "minItems": 2,
-                      "maxItems": 2,
-                      "items": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "number"
-                        }
-                      ],
-                      "description": "Optional pricing range that produced the tier."
-                    },
-                    "maxParticipants": {
-                      "type": "integer",
-                      "description": "Optional cap on how many participants can live in the tier."
-                    },
-                    "participantIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Participants assigned to the tier."
-                    }
-                  },
-                  "required": [
-                    "tierId",
-                    "tierName",
-                    "tierNumber",
-                    "picksFromTier",
-                    "participantIds"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Tier definition used in contest create and update flows."
-                }
-              },
-              "budget": {
-                "type": "number"
+              "maxEntriesPerSquad": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "Maximum entries a Team may create. Null means unlimited."
               },
               "rosterSize": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfers each Team entry must pick."
               },
-              "pickCount": {
-                "type": "integer"
-              },
-              "picksPerPeriod": {
-                "type": "integer"
-              },
-              "roundValues": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              },
-              "startRound": {
-                "type": "string"
-              },
-              "isExclusive": {
-                "type": "boolean"
-              },
-              "bestBallN": {
-                "type": "integer"
-              },
-              "missedCutPenalty": {
-                "type": "number"
-              },
-              "captainSlot": {
-                "type": "boolean"
-              },
-              "captainMultiplier": {
-                "type": "number"
+              "countedScores": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How many golfer scores count toward the Team total."
               }
             },
+            "required": [
+              "rosterSize",
+              "countedScores"
+            ],
             "additionalProperties": false,
-            "description": "Contest-configuration payload used by contest create and update endpoints."
-          },
-          "scoringEngine": {
-            "type": "string",
-            "enum": [
-              "ADVANCEMENT",
-              "STAT_ACCUMULATION",
-              "STROKE_PLAY",
-              "POSITION",
-              "BRACKET",
-              "FIGHT_RESULT",
-              "CUMULATIVE"
-            ]
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lockAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "isExclusive": {
-            "type": "boolean"
-          },
-          "scoringStopsOnElimination": {
-            "type": "boolean",
-            "description": "Whether eliminated entries stop accumulating score events."
+            "description": "The contest configuration. With a template, replaces the template's configuration; without one, is the configuration."
           }
         },
         "required": [
           "name",
+          "sportEventId",
           "contestFormat",
-          "selectionType",
-          "scoringEngine"
+          "selectionType"
         ],
         "additionalProperties": false,
         "description": "Request payload for creating a contest."
@@ -18153,12 +18039,12 @@
           "from": {
             "type": "string",
             "format": "date-time",
-            "description": "Earliest submission time to include. Defaults to 24 hours before `to`."
+            "description": "Earliest submission time to include. Defaults to 6 hours before `to`."
           },
           "to": {
             "type": "string",
             "format": "date-time",
-            "description": "Earliest submission time to include. Defaults to 24 hours before `to`."
+            "description": "Earliest submission time to include. Defaults to 6 hours before `to`."
           }
         },
         "additionalProperties": false,
@@ -28021,7 +27907,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Creates a contest inside the target league using the league-scoped contest creation flow for commissioners.",
+        "description": "The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -28054,7 +27940,7 @@
             }
           },
           "400": {
-            "description": "Standard API error envelope.",
+            "description": "CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema.",
             "content": {
               "application/json": {
                 "schema": {
@@ -28087,819 +27973,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/contest-management/templates": {
-      "get": {
-        "operationId": "listManagedContestTemplates",
-        "summary": "List seeded contest templates for commissioner create flow",
-        "tags": [
-          "Contest Management"
-        ],
-        "description": "Returns the seeded contest configuration templates available for a sport and contest type so commissioner create flows can default to smart presets before advanced editing.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
-              ]
-            },
-            "in": "query",
-            "name": "sport",
-            "required": true,
-            "description": "Sport to filter templates by."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ROSTER",
-                "BRACKET",
-                "PICKEM_CONFIDENCE",
-                "SURVIVOR",
-                "PREDICT_TOP_N"
-              ]
-            },
-            "in": "query",
-            "name": "contestFormat",
-            "required": true,
-            "description": "Contest type to filter templates by."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "eventType",
-            "required": false,
-            "description": "Optional event type used to narrow template selection."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Available seeded contest templates for commissioner create flow.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "templates": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "Seeded contest template identifier."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport this template applies to."
-                          },
-                          "eventType": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional event-type scope for the template."
-                          },
-                          "contestFormat": {
-                            "type": "string",
-                            "enum": [
-                              "ROSTER",
-                              "BRACKET",
-                              "PICKEM_CONFIDENCE",
-                              "SURVIVOR",
-                              "PREDICT_TOP_N"
-                            ],
-                            "description": "Contest type that may use the template."
-                          },
-                          "selectionType": {
-                            "type": "string",
-                            "enum": [
-                              "SNAKE_DRAFT",
-                              "TIERED",
-                              "BUDGET_PICK",
-                              "OPEN_SELECTION",
-                              "PICK_EM",
-                              "BRACKET_PICK_EM"
-                            ],
-                            "description": "How an entry picks in a contest created from this template."
-                          },
-                          "templateKey": {
-                            "type": "string",
-                            "description": "Stable machine key for the template."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Commissioner-facing template label."
-                          },
-                          "description": {
-                            "type": "string",
-                            "description": "Commissioner-facing template description."
-                          },
-                          "sortOrder": {
-                            "type": "integer",
-                            "description": "Display order for template selection."
-                          },
-                          "isDefault": {
-                            "type": "boolean",
-                            "description": "Whether the template should be preselected in the create flow."
-                          },
-                          "active": {
-                            "type": "boolean",
-                            "description": "Whether the template is currently selectable."
-                          },
-                          "schemaVersion": {
-                            "type": "integer",
-                            "description": "Version of the configuration schema metadata expected by the template."
-                          },
-                          "configuration": {
-                            "type": "object",
-                            "properties": {
-                              "locksAt": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
-                                "format": "date-time",
-                                "description": "Contest entry lock timestamp."
-                              },
-                              "maxEntriesPerSquad": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 1,
-                                "description": "Maximum entries a Team may create. Null means unlimited."
-                              },
-                              "rosterSize": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfers each Team entry must pick."
-                              },
-                              "countedScores": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfer scores count toward the Team total."
-                              }
-                            },
-                            "required": [
-                              "rosterSize",
-                              "countedScores"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "sport",
-                          "contestFormat",
-                          "selectionType",
-                          "templateKey",
-                          "name",
-                          "description",
-                          "sortOrder",
-                          "isDefault",
-                          "active",
-                          "schemaVersion",
-                          "configuration"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Seeded commissioner-facing contest configuration template."
-                      }
-                    }
-                  },
-                  "required": [
-                    "templates"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Available seeded contest templates for commissioner create flow."
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/contest-management/contests": {
-      "post": {
-        "operationId": "createManagedContest",
-        "summary": "Create a commissioner-managed contest with configuration",
-        "tags": [
-          "Contest Management"
-        ],
-        "description": "Creates a contest together with its commissioner-managed configuration so league administration surfaces can launch a fully configured contest in one flow.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 100,
-                        "description": "Contest name shown to commissioners and members."
-                      },
-                      "sportEventId": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Sport-event identifier that anchors the contest."
-                      },
-                      "contestFormat": {
-                        "type": "string",
-                        "enum": [
-                          "ROSTER"
-                        ],
-                        "description": "First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility."
-                      },
-                      "configuration": {
-                        "type": "object",
-                        "properties": {
-                          "locksAt": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "description": "Contest entry lock timestamp."
-                          },
-                          "maxEntriesPerSquad": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 1,
-                            "description": "Maximum entries a Team may create. Null means unlimited."
-                          },
-                          "rosterSize": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfers each Team entry must pick."
-                          },
-                          "countedScores": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfer scores count toward the Team total."
-                          }
-                        },
-                        "required": [
-                          "rosterSize",
-                          "countedScores"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "sportEventId",
-                      "contestFormat",
-                      "configuration"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Legacy commissioner request payload that supplies the full contest configuration directly."
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 100,
-                        "description": "Contest name shown to commissioners and members."
-                      },
-                      "sportEventId": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Sport-event identifier that anchors the contest."
-                      },
-                      "contestFormat": {
-                        "type": "string",
-                        "enum": [
-                          "ROSTER"
-                        ],
-                        "description": "First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility."
-                      },
-                      "templateId": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Seeded contest template selected for the create flow."
-                      },
-                      "configurationOverrides": {
-                        "type": "object",
-                        "properties": {
-                          "locksAt": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "description": "Contest entry lock timestamp."
-                          },
-                          "maxEntriesPerSquad": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 1,
-                            "description": "Maximum entries a Team may create. Null means unlimited."
-                          },
-                          "rosterSize": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfers each Team entry must pick."
-                          },
-                          "countedScores": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfer scores count toward the Team total."
-                          }
-                        },
-                        "required": [
-                          "rosterSize",
-                          "countedScores"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "sportEventId",
-                      "contestFormat",
-                      "templateId"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Template-first commissioner request payload for creating a managed contest."
-                  }
-                ],
-                "description": "Commissioner request payload for creating a golf-first managed contest."
-              }
-            }
-          },
-          "description": "Commissioner request payload for creating a golf-first managed contest."
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Managed-contest detail response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "contest": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "description": "Contest identifier."
-                        },
-                        "leagueId": {
-                          "type": "string",
-                          "description": "League that owns the contest."
-                        },
-                        "sportEventId": {
-                          "type": "string",
-                          "description": "Sport event attached to the contest."
-                        },
-                        "name": {
-                          "type": "string",
-                          "description": "Contest display name."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "DRAFT",
-                            "OPEN",
-                            "DRAFTING",
-                            "LOCKED",
-                            "ACTIVE",
-                            "COMPLETED",
-                            "CANCELLED"
-                          ]
-                        },
-                        "configuration": {
-                          "type": "object",
-                          "properties": {
-                            "locksAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ],
-                              "format": "date-time",
-                              "description": "Contest entry lock timestamp."
-                            },
-                            "maxEntriesPerSquad": {
-                              "type": [
-                                "integer",
-                                "null"
-                              ],
-                              "minimum": 1,
-                              "description": "Maximum entries a Team may create. Null means unlimited."
-                            },
-                            "rosterSize": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "How many golfers each Team entry must pick."
-                            },
-                            "countedScores": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "How many golfer scores count toward the Team total."
-                            },
-                            "id": {
-                              "type": "string",
-                              "description": "Contest-configuration identifier."
-                            },
-                            "contestId": {
-                              "type": "string",
-                              "description": "Contest that owns the configuration."
-                            }
-                          },
-                          "required": [
-                            "rosterSize",
-                            "countedScores",
-                            "id",
-                            "contestId"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Current commissioner-managed contest configuration."
-                        },
-                        "effectiveTiers": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "tierKey": {
-                                "type": "string",
-                                "description": "Stable per-event tier key."
-                              },
-                              "label": {
-                                "type": "string",
-                                "description": "Commissioner-facing tier label."
-                              },
-                              "tierNumber": {
-                                "type": "integer",
-                                "description": "1-based tier ordering."
-                              },
-                              "defaultPickCount": {
-                                "type": "integer",
-                                "description": "Default number of golfers picked from this tier."
-                              },
-                              "assignments": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "sportEventParticipantId": {
-                                      "type": "string",
-                                      "description": "Field entry the assignment belongs to."
-                                    },
-                                    "participantId": {
-                                      "type": "string",
-                                      "description": "Global golfer identity."
-                                    },
-                                    "tierOrderIndex": {
-                                      "type": [
-                                        "integer",
-                                        "null"
-                                      ],
-                                      "description": "Within-tier ordering position; null when the golfer has no explicit order."
-                                    },
-                                    "price": {
-                                      "type": [
-                                        "number",
-                                        "null"
-                                      ],
-                                      "description": "Per-golfer budget price when the event defines one; null otherwise."
-                                    }
-                                  },
-                                  "required": [
-                                    "sportEventParticipantId",
-                                    "participantId",
-                                    "tierOrderIndex",
-                                    "price"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "One golfer's inherited tier placement for the contest's linked event."
-                                },
-                                "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
-                              }
-                            },
-                            "required": [
-                              "tierKey",
-                              "label",
-                              "tierNumber",
-                              "defaultPickCount",
-                              "assignments"
-                            ],
-                            "additionalProperties": false,
-                            "description": "One inherited event tier and its golfer assignments."
-                          },
-                          "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the contest was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the contest was last updated."
-                        },
-                        "templateId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "uuid",
-                          "description": "Seeded template chosen when the contest was created, if any."
-                        },
-                        "templateVersion": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "description": "Schema/template version captured when the contest was created, if any."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "leagueId",
-                        "sportEventId",
-                        "name",
-                        "status",
-                        "configuration",
-                        "effectiveTiers",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Golf-first contest-management detail returned to commissioner tooling."
-                    }
-                  },
-                  "required": [
-                    "contest"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Managed-contest detail response."
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
+                  "description": "CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema."
                 }
               }
             }
@@ -28983,7 +28057,7 @@
             }
           },
           "422": {
-            "description": "Standard API error envelope.",
+            "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29016,7 +28090,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Standard API error envelope."
+                  "description": "The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type)."
                 }
               }
             }
@@ -31198,6 +30272,318 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contest-config-templates/": {
+      "get": {
+        "operationId": "listContestConfigTemplates",
+        "summary": "List contest configuration templates",
+        "tags": [
+          "Contest Config Templates"
+        ],
+        "description": "The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "in": "query",
+            "name": "sport",
+            "required": false,
+            "description": "Only templates for this sport."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ROSTER",
+                "BRACKET",
+                "PICKEM_CONFIDENCE",
+                "SURVIVOR",
+                "PREDICT_TOP_N"
+              ]
+            },
+            "in": "query",
+            "name": "contestFormat",
+            "required": false,
+            "description": "Only templates for this contest format."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "eventType",
+            "required": false,
+            "description": "Templates for this event type, plus the ones that apply to any event type."
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "description": "Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available seeded contest templates for commissioner create flow.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Seeded contest template identifier."
+                          },
+                          "sport": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ],
+                            "description": "Sport this template applies to."
+                          },
+                          "eventType": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Optional event-type scope for the template."
+                          },
+                          "contestFormat": {
+                            "type": "string",
+                            "enum": [
+                              "ROSTER",
+                              "BRACKET",
+                              "PICKEM_CONFIDENCE",
+                              "SURVIVOR",
+                              "PREDICT_TOP_N"
+                            ],
+                            "description": "Contest type that may use the template."
+                          },
+                          "selectionType": {
+                            "type": "string",
+                            "enum": [
+                              "SNAKE_DRAFT",
+                              "TIERED",
+                              "BUDGET_PICK",
+                              "OPEN_SELECTION",
+                              "PICK_EM",
+                              "BRACKET_PICK_EM"
+                            ],
+                            "description": "How an entry picks in a contest created from this template."
+                          },
+                          "templateKey": {
+                            "type": "string",
+                            "description": "Stable machine key for the template."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Commissioner-facing template label."
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Commissioner-facing template description."
+                          },
+                          "sortOrder": {
+                            "type": "integer",
+                            "description": "Display order for template selection."
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "description": "Whether the template should be preselected in the create flow."
+                          },
+                          "active": {
+                            "type": "boolean",
+                            "description": "Whether the template is currently selectable."
+                          },
+                          "schemaVersion": {
+                            "type": "integer",
+                            "description": "Version of the configuration schema metadata expected by the template."
+                          },
+                          "configuration": {
+                            "type": "object",
+                            "properties": {
+                              "locksAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time",
+                                "description": "Contest entry lock timestamp."
+                              },
+                              "maxEntriesPerSquad": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "description": "Maximum entries a Team may create. Null means unlimited."
+                              },
+                              "rosterSize": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfers each Team entry must pick."
+                              },
+                              "countedScores": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfer scores count toward the Team total."
+                              }
+                            },
+                            "required": [
+                              "rosterSize",
+                              "countedScores"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sport",
+                          "contestFormat",
+                          "selectionType",
+                          "templateKey",
+                          "name",
+                          "description",
+                          "sortOrder",
+                          "isDefault",
+                          "active",
+                          "schemaVersion",
+                          "configuration"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Seeded commissioner-facing contest configuration template."
+                      }
+                    }
+                  },
+                  "required": [
+                    "templates"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Available seeded contest templates for commissioner create flow."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -39213,7 +38599,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 24 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.",
+        "description": "The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.",
         "parameters": [
           {
             "schema": {
@@ -39270,7 +38656,7 @@
             "in": "query",
             "name": "from",
             "required": false,
-            "description": "Earliest submission time to include. Defaults to 24 hours before `to`."
+            "description": "Earliest submission time to include. Defaults to 6 hours before `to`."
           },
           {
             "schema": {
@@ -39280,7 +38666,7 @@
             "in": "query",
             "name": "to",
             "required": false,
-            "description": "Earliest submission time to include. Defaults to 24 hours before `to`."
+            "description": "Earliest submission time to include. Defaults to 6 hours before `to`."
           }
         ],
         "responses": {
@@ -40229,270 +39615,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/contest-config-templates": {
-      "get": {
-        "operationId": "adminListContestConfigTemplates",
-        "summary": "List persisted contest configuration templates",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Returns the persisted commissioner contest configuration templates that root-admins can manage from the /manage page.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
-              ]
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false,
-            "description": "Optional sport filter for root-admin contest template management."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ROSTER",
-                "BRACKET",
-                "PICKEM_CONFIDENCE",
-                "SURVIVOR",
-                "PREDICT_TOP_N"
-              ]
-            },
-            "in": "query",
-            "name": "contestFormat",
-            "required": false,
-            "description": "Optional contest-type filter for root-admin contest template management."
-          },
-          {
-            "schema": {
-              "type": "boolean"
-            },
-            "in": "query",
-            "name": "active",
-            "required": false,
-            "description": "Optional active-state filter for root-admin contest template management."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Available seeded contest templates for commissioner create flow.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "templates": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "Seeded contest template identifier."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport this template applies to."
-                          },
-                          "eventType": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "description": "Optional event-type scope for the template."
-                          },
-                          "contestFormat": {
-                            "type": "string",
-                            "enum": [
-                              "ROSTER",
-                              "BRACKET",
-                              "PICKEM_CONFIDENCE",
-                              "SURVIVOR",
-                              "PREDICT_TOP_N"
-                            ],
-                            "description": "Contest type that may use the template."
-                          },
-                          "selectionType": {
-                            "type": "string",
-                            "enum": [
-                              "SNAKE_DRAFT",
-                              "TIERED",
-                              "BUDGET_PICK",
-                              "OPEN_SELECTION",
-                              "PICK_EM",
-                              "BRACKET_PICK_EM"
-                            ],
-                            "description": "How an entry picks in a contest created from this template."
-                          },
-                          "templateKey": {
-                            "type": "string",
-                            "description": "Stable machine key for the template."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Commissioner-facing template label."
-                          },
-                          "description": {
-                            "type": "string",
-                            "description": "Commissioner-facing template description."
-                          },
-                          "sortOrder": {
-                            "type": "integer",
-                            "description": "Display order for template selection."
-                          },
-                          "isDefault": {
-                            "type": "boolean",
-                            "description": "Whether the template should be preselected in the create flow."
-                          },
-                          "active": {
-                            "type": "boolean",
-                            "description": "Whether the template is currently selectable."
-                          },
-                          "schemaVersion": {
-                            "type": "integer",
-                            "description": "Version of the configuration schema metadata expected by the template."
-                          },
-                          "configuration": {
-                            "type": "object",
-                            "properties": {
-                              "locksAt": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
-                                "format": "date-time",
-                                "description": "Contest entry lock timestamp."
-                              },
-                              "maxEntriesPerSquad": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 1,
-                                "description": "Maximum entries a Team may create. Null means unlimited."
-                              },
-                              "rosterSize": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfers each Team entry must pick."
-                              },
-                              "countedScores": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfer scores count toward the Team total."
-                              }
-                            },
-                            "required": [
-                              "rosterSize",
-                              "countedScores"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "sport",
-                          "contestFormat",
-                          "selectionType",
-                          "templateKey",
-                          "name",
-                          "description",
-                          "sortOrder",
-                          "isDefault",
-                          "active",
-                          "schemaVersion",
-                          "configuration"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Seeded commissioner-facing contest configuration template."
-                      }
-                    }
-                  },
-                  "required": [
-                    "templates"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Available seeded contest templates for commissioner create flow."
-                }
-              }
-            }
-          },
-          "401": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

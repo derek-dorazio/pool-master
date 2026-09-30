@@ -12,7 +12,6 @@ import type {
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
-  LeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -23,15 +22,9 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
-  ContestFormat,
   deriveLegacyParticipantStatus,
-  type ScoringEngine,
-  type SelectionType,
   Sport,
   SquadMembershipStatus,
-  type TournamentFormat,
-  getDefaultTournamentFormatForSport,
-  isContestFormatValidForTournamentFormat,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/dto';
@@ -55,22 +48,6 @@ import {
   type MailDeliveryProvider,
 } from '../email';
 import { createSportEventTierService } from '../events/wiring';
-export interface CreateContestInput {
-  leagueId: string;
-  createdBy: string;
-  sportEventId?: string;
-  name: string;
-  contestFormat: ContestFormat;
-  selectionType: SelectionType;
-  contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
-  scoringEngine: ScoringEngine;
-  startsAt?: Date;
-  endsAt?: Date;
-  lockAt?: Date;
-  isExclusive?: boolean;
-  scoringStopsOnElimination?: boolean;
-}
-
 export interface UpdateContestInput {
   name?: string;
   startsAt?: Date;
@@ -149,7 +126,6 @@ export class ContestService {
     private readonly contestRepo: ContestRepository,
     private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly leagueRepo: LeagueRepository,
     private readonly squadRepo?: SquadRepository,
     private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly entryRepo?: ContestEntryRepository,
@@ -158,117 +134,6 @@ export class ContestService {
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
   ) {}
-
-  /** Creates a contest and its selection configuration atomically. */
-  async createContest(
-    input: CreateContestInput,
-  ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration }> {
-    this.logger.debug({
-      leagueId: input.leagueId,
-      sportEventId: input.sportEventId ?? null,
-      contestFormat: input.contestFormat,
-      selectionType: input.selectionType,
-    }, 'contest create start');
-    const league = await this.leagueRepo.findById(input.leagueId);
-    if (!league) {
-      this.logger.warn({ leagueId: input.leagueId }, 'contest create missing league');
-      throw new ContestOperationError('League not found', 'LEAGUE_NOT_FOUND');
-    }
-    await this.assertContestFormatAllowedForSportEvent(input);
-    this.assertContestCreationSupported(input.contestFormat);
-    const contest = await this.contestRepo.create({
-      leagueId: input.leagueId,
-      sportEventId: input.sportEventId || undefined,
-      name: input.name,
-      status: ContestStatus.DRAFT,
-      contestFormat: input.contestFormat,
-      selectionType: input.selectionType,
-      scoringEngine: input.scoringEngine,
-      isExclusive: input.isExclusive ?? false,
-      scoringStopsOnElimination: input.scoringStopsOnElimination ?? false,
-      startsAt: input.startsAt,
-      endsAt: input.endsAt,
-      lockAt: input.lockAt,
-    } as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>);
-    const contestConfiguration = await this.contestConfigurationRepo.create({
-      contestId: contest.id,
-      selectionType: input.selectionType,
-      isExclusive:
-        input.contestConfiguration.isExclusive
-          ?? input.isExclusive
-          ?? false,
-      maxEntriesPerSquad:
-        input.contestConfiguration.maxEntriesPerSquad ?? 1,
-      ...input.contestConfiguration,
-    } as Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>);
-    this.logger.info({
-      contestId: contest.id,
-      leagueId: input.leagueId,
-      selectionType: input.selectionType,
-    }, 'contest create completed');
-    return { contest, contestConfiguration };
-  }
-
-  private assertContestCreationSupported(contestFormat: ContestFormat): void {
-    if (contestFormat === ContestFormat.ROSTER) {
-      return;
-    }
-
-    throw new ContestOperationError(
-      'This contest format is not available for contest creation yet.',
-      'CONTEST_FORMAT_NOT_SUPPORTED',
-    );
-  }
-
-  private async assertContestFormatAllowedForSportEvent(
-    input: Pick<CreateContestInput, 'sportEventId' | 'contestFormat'>,
-  ): Promise<void> {
-    if (!input.sportEventId || !this.prisma) {
-      return;
-    }
-
-    const sportEvent = await this.prisma.sportEvent.findUnique({
-      where: { id: input.sportEventId },
-      select: { sport: true },
-    });
-    if (!sportEvent) {
-      this.logger.warn(
-        { sportEventId: input.sportEventId },
-        'contest create missing sport event',
-      );
-      throw new ContestOperationError(
-        'Selected sporting event was not found.',
-        'SPORT_EVENT_NOT_FOUND',
-      );
-    }
-
-    const sport = sportEvent.sport as Sport;
-    const sportRow = await this.prisma.sport.findUnique({
-      where: { name: sportEvent.sport },
-      select: { tournamentFormat: true },
-    });
-    const tournamentFormat =
-      (sportRow?.tournamentFormat as TournamentFormat | undefined)
-      ?? getDefaultTournamentFormatForSport(sport);
-
-    if (isContestFormatValidForTournamentFormat(tournamentFormat, input.contestFormat)) {
-      return;
-    }
-
-    this.logger.warn(
-      {
-        sportEventId: input.sportEventId,
-        sport,
-        tournamentFormat,
-        contestFormat: input.contestFormat,
-      },
-      'contest create rejected for invalid sport contest format',
-    );
-    throw new ContestOperationError(
-      'Selected sporting event does not support that contest format.',
-      'CONTEST_FORMAT_NOT_ALLOWED',
-    );
-  }
 
   async getContest(
     contestId: string,

@@ -9,8 +9,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { SportEventDto, GetManagedContestResponses, ListManagedContestTemplatesResponses } from '@/lib/api';
-import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
+import type { SportEventDto, GetManagedContestResponses, ListContestConfigTemplatesResponses } from '@/lib/api';
+import type { CreateContestRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   SelectionType,
@@ -18,7 +18,7 @@ import {
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { createManagedContest, deleteContest, getManagedContest, listManagedContestTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
+import { createContest, deleteContest, getManagedContest, listContestConfigTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -55,7 +55,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ManagedContest = GetManagedContestResponses[200]['contest'];
-type ManagedContestTemplate = ListManagedContestTemplatesResponses[200]['templates'][number];
+type ContestConfigTemplate = ListContestConfigTemplatesResponses[200]['templates'][number];
 type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
 
 const contestSetupFormSchema = z.object({
@@ -247,6 +247,17 @@ export function CreateContestPage() {
     countedScores,
   } = contestForm.watch();
   const [formError, setFormError] = useState<string | null>(null);
+  // Create needs a template, a complete configuration, or both (#245); the server answers the
+  // empty state with CONTEST_CONFIGURATION_REQUIRED, and this keeps the form from reaching it.
+  const parsedRosterSizeValue = Number(rosterSize);
+  const parsedCountedScoresValue = Number(countedScores);
+  const configurationComplete =
+    Number.isInteger(parsedRosterSizeValue)
+    && parsedRosterSizeValue >= 1
+    && Number.isInteger(parsedCountedScoresValue)
+    && parsedCountedScoresValue >= 1
+    && parsedCountedScoresValue <= parsedRosterSizeValue;
+  const createNeedsConfiguration = !isEditMode && !selectedTemplateId && !configurationComplete;
   const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
 
   const setContestFormValue = useCallback(<Field extends FieldPath<ContestSetupFormValues>>(
@@ -316,17 +327,17 @@ export function CreateContestPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.managedContests.templates(
-      league?.id,
-      selectedEventSport,
-      selectedContestFormat,
-    ),
-    queryFn: async (): Promise<ManagedContestTemplate[]> => {
-      const response = await listManagedContestTemplates({
-        path: { id: league!.id },
+    queryKey: QueryKeys.contestConfigTemplates.list({
+      sport: selectedEventSport,
+      contestFormat: selectedContestFormat,
+      active: true,
+    }),
+    queryFn: async (): Promise<ContestConfigTemplate[]> => {
+      const response = await listContestConfigTemplates({
         query: {
           sport: selectedEventSport,
           contestFormat: selectedContestFormat,
+          active: true,
         },
       });
 
@@ -368,7 +379,7 @@ export function CreateContestPage() {
   );
 
   function applyTemplateConfiguration(
-    configuration: ManagedContestTemplate['configuration'],
+    configuration: ContestConfigTemplate['configuration'],
   ) {
     setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
     setContestFormValue(
@@ -619,21 +630,21 @@ export function CreateContestPage() {
       };
 
       if (!isEditMode) {
-        if (!values.selectedTemplateId || !selectedTemplateForSubmission) {
-          throw new Error('Select a contest template before creating the contest.');
-        }
-
-        const body: CreateContestManagementRequest = {
+        // A template is an optional first step; the configuration the form holds is always
+        // complete here (validated above), so it is sent either way and, with a template,
+        // replaces the template's.
+        const body: CreateContestRequest = {
           name: trimmedName,
           sportEventId: values.sportEventId,
           contestFormat: ContestFormat.ROSTER,
-          templateId: values.selectedTemplateId,
-          configurationOverrides: configuration,
+          selectionType: SelectionType.TIERED,
+          ...(selectedTemplateForSubmission ? { templateId: selectedTemplateForSubmission.id } : {}),
+          configuration,
         };
 
-        const response = await createManagedContest({
+        const response = await createContest({
           path: { id: league.id },
-          body: body as never,
+          body,
         });
 
         if (!response.data?.contest) {
@@ -1062,6 +1073,7 @@ export function CreateContestPage() {
                     || eventsQuery.isError
                     || !eligibleEvents.length
                     || !selectedEvent?.contestEligible
+                    || createNeedsConfiguration
                   }
                   onClick={() => {
                     setFormError(null);

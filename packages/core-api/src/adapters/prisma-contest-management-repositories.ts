@@ -204,7 +204,8 @@ export class PrismaContestConfigTemplateRepository
       where: {
         ...(input.sport !== undefined && { sport: input.sport }),
         ...(input.contestFormat !== undefined && { contestFormat: input.contestFormat }),
-        ...(input.eventType !== undefined && { eventType: input.eventType }),
+        // An event type narrows to that type's templates plus the ones for any event type.
+        ...(input.eventType !== undefined && { OR: [{ eventType: input.eventType }, { eventType: null }] }),
         ...(input.active !== undefined && { active: input.active }),
       },
       orderBy: [
@@ -213,27 +214,6 @@ export class PrismaContestConfigTemplateRepository
         { sortOrder: 'asc' },
         { name: 'asc' },
       ],
-    });
-
-    return rows.map(mapContestConfigTemplate);
-  }
-
-  async listBySportAndContestFormat(input: {
-    sport: ContestConfigTemplate['sport'];
-    contestFormat: ContestConfigTemplate['contestFormat'];
-    eventType?: string | null;
-  }): Promise<ContestConfigTemplate[]> {
-    const rows = await this.prisma.contestConfigTemplate.findMany({
-      where: {
-        sport: input.sport,
-        contestFormat: input.contestFormat,
-        active: true,
-        OR: [
-          { eventType: input.eventType ?? null },
-          { eventType: null },
-        ],
-      },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     return rows.map(mapContestConfigTemplate);

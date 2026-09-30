@@ -570,82 +570,47 @@ export type ContestCrudConfigurationRequest = {
  * Request payload for creating a contest.
  */
 export type CreateContestRequest = {
+    /**
+     * Contest name shown to commissioners and members.
+     */
     name: string;
-    eventId?: string;
+    /**
+     * Sport event the contest is run on.
+     */
+    sportEventId: string;
     /**
      * First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
      */
     contestFormat: 'ROSTER';
-    selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
     /**
-     * Contest-configuration payload used by contest create and update endpoints.
+     * How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template's selection type when a template is named.
      */
-    contestConfiguration?: {
-        draftMode?: string;
-        rounds?: number;
-        timePerPickSeconds?: number;
-        autoPickPolicy?: string;
-        tierConfig?: Array<{
-            /**
-             * Stable tier identifier.
-             */
-            tierId: string;
-            /**
-             * Tier label shown in commissioner and draft UI.
-             */
-            tierName: string;
-            /**
-             * Tier order number.
-             */
-            tierNumber: number;
-            /**
-             * How many picks each entry must make from the tier.
-             */
-            picksFromTier: number;
-            /**
-             * Optional ranking range that produced the tier.
-             */
-            rankingRange?: [
-                unknown,
-                unknown
-            ];
-            /**
-             * Optional pricing range that produced the tier.
-             */
-            priceRange?: [
-                unknown,
-                unknown
-            ];
-            /**
-             * Optional cap on how many participants can live in the tier.
-             */
-            maxParticipants?: number;
-            /**
-             * Participants assigned to the tier.
-             */
-            participantIds: Array<string>;
-        }>;
-        budget?: number;
-        rosterSize?: number;
-        pickCount?: number;
-        picksPerPeriod?: number;
-        roundValues?: Array<number>;
-        startRound?: string;
-        isExclusive?: boolean;
-        bestBallN?: number;
-        missedCutPenalty?: number;
-        captainSlot?: boolean;
-        captainMultiplier?: number;
+    selectionType: 'TIERED';
+    /**
+     * Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
+     */
+    templateId?: string;
+    /**
+     * The contest configuration. With a template, replaces the template's configuration; without one, is the configuration.
+     */
+    configuration?: {
+        /**
+         * Contest entry lock timestamp.
+         */
+        locksAt?: string | null;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number | null;
+        /**
+         * How many golfers each Team entry must pick.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the Team total.
+         */
+        countedScores: number;
     };
-    scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
-    startsAt?: string;
-    endsAt?: string;
-    lockAt?: string;
-    isExclusive?: boolean;
-    /**
-     * Whether eliminated entries stop accumulating score events.
-     */
-    scoringStopsOnElimination?: boolean;
 };
 
 /**
@@ -8781,11 +8746,11 @@ export type ProviderSyncRunListQuery = {
     sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
-     * Earliest submission time to include. Defaults to 24 hours before `to`.
+     * Earliest submission time to include. Defaults to 6 hours before `to`.
      */
     from?: string;
     /**
-     * Earliest submission time to include. Defaults to 24 hours before `to`.
+     * Earliest submission time to include. Defaults to 6 hours before `to`.
      */
     to?: string;
 };
@@ -14271,7 +14236,7 @@ export type CreateContestData = {
 
 export type CreateContestErrors = {
     /**
-     * Standard API error envelope.
+     * CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema.
      */
     400: {
         /**
@@ -14296,6 +14261,50 @@ export type CreateContestErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).
+     */
+    422: {
         /**
          * Error payload object.
          */
@@ -14326,476 +14335,6 @@ export type CreateContestResponses = {
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
-
-export type ListManagedContestTemplatesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query: {
-        /**
-         * Sport to filter templates by.
-         */
-        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        /**
-         * Contest type to filter templates by.
-         */
-        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-        /**
-         * Optional event type used to narrow template selection.
-         */
-        eventType?: string;
-    };
-    url: '/api/v1/leagues/{id}/contest-management/templates';
-};
-
-export type ListManagedContestTemplatesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type ListManagedContestTemplatesError = ListManagedContestTemplatesErrors[keyof ListManagedContestTemplatesErrors];
-
-export type ListManagedContestTemplatesResponses = {
-    /**
-     * Available seeded contest templates for commissioner create flow.
-     */
-    200: {
-        templates: Array<{
-            /**
-             * Seeded contest template identifier.
-             */
-            id: string;
-            /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Optional event-type scope for the template.
-             */
-            eventType?: string | null;
-            /**
-             * Contest type that may use the template.
-             */
-            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-            /**
-             * How an entry picks in a contest created from this template.
-             */
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-            /**
-             * Stable machine key for the template.
-             */
-            templateKey: string;
-            /**
-             * Commissioner-facing template label.
-             */
-            name: string;
-            /**
-             * Commissioner-facing template description.
-             */
-            description: string;
-            /**
-             * Display order for template selection.
-             */
-            sortOrder: number;
-            /**
-             * Whether the template should be preselected in the create flow.
-             */
-            isDefault: boolean;
-            /**
-             * Whether the template is currently selectable.
-             */
-            active: boolean;
-            /**
-             * Version of the configuration schema metadata expected by the template.
-             */
-            schemaVersion: number;
-            /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
-             */
-            configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers each Team entry must pick.
-                 */
-                rosterSize: number;
-                /**
-                 * How many golfer scores count toward the Team total.
-                 */
-                countedScores: number;
-            };
-        }>;
-    };
-};
-
-export type ListManagedContestTemplatesResponse = ListManagedContestTemplatesResponses[keyof ListManagedContestTemplatesResponses];
-
-export type CreateManagedContestData = {
-    /**
-     * Commissioner request payload for creating a golf-first managed contest.
-     */
-    body: {
-        /**
-         * Contest name shown to commissioners and members.
-         */
-        name: string;
-        /**
-         * Sport-event identifier that anchors the contest.
-         */
-        sportEventId: string;
-        /**
-         * First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
-         */
-        contestFormat: 'ROSTER';
-        /**
-         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
-         */
-        configuration: {
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string | null;
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
-            /**
-             * How many golfers each Team entry must pick.
-             */
-            rosterSize: number;
-            /**
-             * How many golfer scores count toward the Team total.
-             */
-            countedScores: number;
-        };
-    } | {
-        /**
-         * Contest name shown to commissioners and members.
-         */
-        name: string;
-        /**
-         * Sport-event identifier that anchors the contest.
-         */
-        sportEventId: string;
-        /**
-         * First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
-         */
-        contestFormat: 'ROSTER';
-        /**
-         * Seeded contest template selected for the create flow.
-         */
-        templateId: string;
-        /**
-         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
-         */
-        configurationOverrides?: {
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string | null;
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number | null;
-            /**
-             * How many golfers each Team entry must pick.
-             */
-            rosterSize: number;
-            /**
-             * How many golfer scores count toward the Team total.
-             */
-            countedScores: number;
-        };
-    };
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/contest-management/contests';
-};
-
-export type CreateManagedContestErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    403: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    422: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type CreateManagedContestError = CreateManagedContestErrors[keyof CreateManagedContestErrors];
-
-export type CreateManagedContestResponses = {
-    /**
-     * Managed-contest detail response.
-     */
-    201: {
-        /**
-         * Golf-first contest-management detail returned to commissioner tooling.
-         */
-        contest: {
-            /**
-             * Contest identifier.
-             */
-            id: string;
-            /**
-             * League that owns the contest.
-             */
-            leagueId: string;
-            /**
-             * Sport event attached to the contest.
-             */
-            sportEventId: string;
-            /**
-             * Contest display name.
-             */
-            name: string;
-            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            /**
-             * Current commissioner-managed contest configuration.
-             */
-            configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers each Team entry must pick.
-                 */
-                rosterSize: number;
-                /**
-                 * How many golfer scores count toward the Team total.
-                 */
-                countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            };
-            /**
-             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
-             */
-            effectiveTiers: Array<{
-                /**
-                 * Stable per-event tier key.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * 1-based tier ordering.
-                 */
-                tierNumber: number;
-                /**
-                 * Default number of golfers picked from this tier.
-                 */
-                defaultPickCount: number;
-                /**
-                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
-                 */
-                assignments: Array<{
-                    /**
-                     * Field entry the assignment belongs to.
-                     */
-                    sportEventParticipantId: string;
-                    /**
-                     * Global golfer identity.
-                     */
-                    participantId: string;
-                    /**
-                     * Within-tier ordering position; null when the golfer has no explicit order.
-                     */
-                    tierOrderIndex: number | null;
-                    /**
-                     * Per-golfer budget price when the event defines one; null otherwise.
-                     */
-                    price: number | null;
-                }>;
-            }>;
-            /**
-             * When the contest was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Seeded template chosen when the contest was created, if any.
-             */
-            templateId?: string | null;
-            /**
-             * Schema/template version captured when the contest was created, if any.
-             */
-            templateVersion?: number | null;
-        };
-    };
-};
-
-export type CreateManagedContestResponse = CreateManagedContestResponses[keyof CreateManagedContestResponses];
 
 export type GetManagedContestData = {
     body?: never;
@@ -16031,6 +15570,160 @@ export type UpdateContestLockTimeResponses = {
 };
 
 export type UpdateContestLockTimeResponse = UpdateContestLockTimeResponses[keyof UpdateContestLockTimeResponses];
+
+export type ListContestConfigTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Only templates for this sport.
+         */
+        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Only templates for this contest format.
+         */
+        contestFormat?: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * Templates for this event type, plus the ones that apply to any event type.
+         */
+        eventType?: string;
+        /**
+         * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
+         */
+        active?: boolean;
+    };
+    url: '/api/v1/contest-config-templates/';
+};
+
+export type ListContestConfigTemplatesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ListContestConfigTemplatesError = ListContestConfigTemplatesErrors[keyof ListContestConfigTemplatesErrors];
+
+export type ListContestConfigTemplatesResponses = {
+    /**
+     * Available seeded contest templates for commissioner create flow.
+     */
+    200: {
+        templates: Array<{
+            /**
+             * Seeded contest template identifier.
+             */
+            id: string;
+            /**
+             * Sport this template applies to.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Optional event-type scope for the template.
+             */
+            eventType?: string | null;
+            /**
+             * Contest type that may use the template.
+             */
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+            /**
+             * How an entry picks in a contest created from this template.
+             */
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            /**
+             * Stable machine key for the template.
+             */
+            templateKey: string;
+            /**
+             * Commissioner-facing template label.
+             */
+            name: string;
+            /**
+             * Commissioner-facing template description.
+             */
+            description: string;
+            /**
+             * Display order for template selection.
+             */
+            sortOrder: number;
+            /**
+             * Whether the template should be preselected in the create flow.
+             */
+            isDefault: boolean;
+            /**
+             * Whether the template is currently selectable.
+             */
+            active: boolean;
+            /**
+             * Version of the configuration schema metadata expected by the template.
+             */
+            schemaVersion: number;
+            /**
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             */
+            configuration: {
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string | null;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number | null;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+            };
+        }>;
+    };
+};
+
+export type ListContestConfigTemplatesResponse = ListContestConfigTemplatesResponses[keyof ListContestConfigTemplatesResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -20638,11 +20331,11 @@ export type ListProviderSyncRunsData = {
         sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
-         * Earliest submission time to include. Defaults to 24 hours before `to`.
+         * Earliest submission time to include. Defaults to 6 hours before `to`.
          */
         from?: string;
         /**
-         * Earliest submission time to include. Defaults to 24 hours before `to`.
+         * Earliest submission time to include. Defaults to 6 hours before `to`.
          */
         to?: string;
     };
@@ -21185,134 +20878,6 @@ export type ListProviderCatalogEventsResponses = {
 };
 
 export type ListProviderCatalogEventsResponse = ListProviderCatalogEventsResponses[keyof ListProviderCatalogEventsResponses];
-
-export type AdminListContestConfigTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Optional sport filter for root-admin contest template management.
-         */
-        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        /**
-         * Optional contest-type filter for root-admin contest template management.
-         */
-        contestFormat?: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-        /**
-         * Optional active-state filter for root-admin contest template management.
-         */
-        active?: boolean;
-    };
-    url: '/api/v1/admin/contest-config-templates';
-};
-
-export type AdminListContestConfigTemplatesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminListContestConfigTemplatesError = AdminListContestConfigTemplatesErrors[keyof AdminListContestConfigTemplatesErrors];
-
-export type AdminListContestConfigTemplatesResponses = {
-    /**
-     * Available seeded contest templates for commissioner create flow.
-     */
-    200: {
-        templates: Array<{
-            /**
-             * Seeded contest template identifier.
-             */
-            id: string;
-            /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Optional event-type scope for the template.
-             */
-            eventType?: string | null;
-            /**
-             * Contest type that may use the template.
-             */
-            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
-            /**
-             * How an entry picks in a contest created from this template.
-             */
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-            /**
-             * Stable machine key for the template.
-             */
-            templateKey: string;
-            /**
-             * Commissioner-facing template label.
-             */
-            name: string;
-            /**
-             * Commissioner-facing template description.
-             */
-            description: string;
-            /**
-             * Display order for template selection.
-             */
-            sortOrder: number;
-            /**
-             * Whether the template should be preselected in the create flow.
-             */
-            isDefault: boolean;
-            /**
-             * Whether the template is currently selectable.
-             */
-            active: boolean;
-            /**
-             * Version of the configuration schema metadata expected by the template.
-             */
-            schemaVersion: number;
-            /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
-             */
-            configuration: {
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string | null;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number | null;
-                /**
-                 * How many golfers each Team entry must pick.
-                 */
-                rosterSize: number;
-                /**
-                 * How many golfer scores count toward the Team total.
-                 */
-                countedScores: number;
-            };
-        }>;
-    };
-};
-
-export type AdminListContestConfigTemplatesResponse = AdminListContestConfigTemplatesResponses[keyof AdminListContestConfigTemplatesResponses];
 
 export type AdminUpdateContestConfigTemplateData = {
     /**

@@ -21,6 +21,7 @@ import { invitationsModule } from './modules/invitations/routes';
 import { teamInvitationsModule } from './modules/team-invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
+import { contestConfigTemplatesModule } from './modules/contest-config-templates/routes';
 import { eventsModule } from './modules/events/routes';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
@@ -205,6 +206,7 @@ export function buildApp() {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
+  app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {
     prefix: '/api/v1/events',
     eventLifecycleService,

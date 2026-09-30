@@ -14,6 +14,10 @@ import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 
+// No api-routes manifest entry for the new template list (the manifest is not extended without
+// approval); the literal is the published path.
+const CONTEST_CONFIG_TEMPLATES_URL = '/api/v1/contest-config-templates/';
+
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   await cleanupTestData();
@@ -173,12 +177,13 @@ describe('Contest management integration', () => {
   it('pool-master-rop.68.1.3: creates, reads, and updates golf-first contest management configuration', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.contestManagement(leagueId),
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Masters Pick 6',
         sportEventId,
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           locksAt: entryLocksAt,
           maxEntriesPerSquad: 3,
@@ -193,7 +198,8 @@ describe('Contest management integration', () => {
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.OPEN);
     expect(createdContest.sportEventId).toBe(sportEventId);
-    expect(createdContest.configuration.countedScores).toBe(4);
+    // #245 — create answers with the canonical contest read, as every contest route does.
+    expect(createRes.json().contestConfiguration.countedScores).toBe(4);
 
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
@@ -277,7 +283,7 @@ describe('Contest management integration', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestFormat=ROSTER`,
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&contestFormat=ROSTER&active=true`,
       headers: ownerHeaders,
     });
 
@@ -293,12 +299,13 @@ describe('Contest management integration', () => {
 
     const createRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.contestManagement(leagueId),
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Masters Template Contest',
         sportEventId,
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         templateId: defaultTemplate.id,
       },
     });
@@ -306,9 +313,9 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json().contest;
     expect(createdContest.status).toBe(ContestStatus.OPEN);
-    expect(createdContest.templateId).toBe(defaultTemplate.id);
-    expect(createdContest.templateVersion).toBe(1);
-    expect(createdContest.configuration.rosterSize).toBe(defaultTemplate.configuration.rosterSize);
+    expect(createRes.json().contestConfiguration.rosterSize).toBe(
+      defaultTemplate.configuration.rosterSize,
+    );
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId: createdContest.id },
@@ -320,12 +327,13 @@ describe('Contest management integration', () => {
   it('rejects unsupported legacy contest-management payloads', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.contestManagement(leagueId),
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Invalid Masters Pick 6',
         sportEventId,
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           selectionType: 'BUDGET_PICK',
         },
@@ -335,5 +343,104 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(400);
     const body = createRes.json();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
+  });
+  // #245 — the empty state is a documented 400, not a generic validation failure.
+  it('refuses a create naming neither a template nor a configuration with CONTEST_CONFIGURATION_REQUIRED', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Empty Create',
+        sportEventId,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+      },
+    });
+
+    expect(createRes.statusCode).toBe(400);
+    const body = createRes.json();
+    expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
+    expect(body.error.code).toBe('CONTEST_CONFIGURATION_REQUIRED');
+  });
+
+  // #245 — a selection type with no typed configuration yet is refused at the schema.
+  it('refuses a selection type other than TIERED', async () => {
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Budget Create',
+        sportEventId,
+        contestFormat: 'ROSTER',
+        selectionType: 'BUDGET_PICK',
+        configuration: { rosterSize: 6, countedScores: 4 },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(createRes.json()).success).toBe(true);
+  });
+
+  // #245 — template plus configuration: the template is provenance, the configuration is whole.
+  it('creates from a template with a supplied configuration replacing the template configuration', async () => {
+    await addContestReadyGolfField(80);
+    const templatesRes = await getApp().inject({
+      method: 'GET',
+      url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&contestFormat=ROSTER&active=true`,
+      headers: ownerHeaders,
+    });
+    const defaultTemplate = templatesRes.json().templates.find(
+      (template: { isDefault: boolean }) => template.isDefault,
+    );
+
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contests(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Masters Template Override',
+        sportEventId,
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateId: defaultTemplate.id,
+        configuration: {
+          locksAt: entryLocksAt,
+          rosterSize: 6,
+          countedScores: 3,
+        },
+      },
+    });
+
+    expect(createRes.statusCode).toBe(201);
+    const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
+      where: { contestId: createRes.json().contest.id },
+    });
+    expect(configuration.templateId).toBe(defaultTemplate.id);
+    expect(configuration.configJson).toEqual({
+      locksAt: entryLocksAt,
+      rosterSize: 6,
+      countedScores: 3,
+    });
+  });
+
+  // #245 / A11 — templates are a global object: any authenticated caller reads them, no league
+  // membership involved; an anonymous caller does not.
+  it('lists templates for any authenticated caller and refuses anonymous callers', async () => {
+    const outsider = await createTestUser({ displayName: 'Template Reader' });
+    const readRes = await getApp().inject({
+      method: 'GET',
+      url: CONTEST_CONFIG_TEMPLATES_URL,
+      headers: outsider.headers,
+    });
+    expect(readRes.statusCode).toBe(200);
+    expect(readRes.json().templates.length).toBeGreaterThan(0);
+
+    const anonymousRes = await getApp().inject({
+      method: 'GET',
+      url: CONTEST_CONFIG_TEMPLATES_URL,
+    });
+    expect(anonymousRes.statusCode).toBe(401);
   });
 });

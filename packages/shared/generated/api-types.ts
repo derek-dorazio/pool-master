@@ -1034,49 +1034,9 @@ export interface paths {
         put?: never;
         /**
          * Create a new contest in a league
-         * @description Creates a contest inside the target league using the league-scoped contest creation flow for commissioners.
+         * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.
          */
         post: operations["createContest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/contest-management/templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List seeded contest templates for commissioner create flow
-         * @description Returns the seeded contest configuration templates available for a sport and contest type so commissioner create flows can default to smart presets before advanced editing.
-         */
-        get: operations["listManagedContestTemplates"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/leagues/{id}/contest-management/contests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a commissioner-managed contest with configuration
-         * @description Creates a contest together with its commissioner-managed configuration so league administration surfaces can launch a fully configured contest in one flow.
-         */
-        post: operations["createManagedContest"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1318,6 +1278,26 @@ export interface paths {
          * @description Changes the contest lock time that governs when picks or entries stop being editable.
          */
         post: operations["updateContestLockTime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contest-config-templates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List contest configuration templates
+         * @description The seeded configurations a contest can be created from. Any signed-in user may read them. Every filter is optional; the create flow asks for active templates of one sport and contest format.
+         */
+        get: operations["listContestConfigTemplates"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2154,7 +2134,7 @@ export interface paths {
         };
         /**
          * List provider sync runs inside a time window
-         * @description The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 24 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.
+         * @description The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.
          */
         get: operations["listProviderSyncRuns"];
         put?: never;
@@ -2257,26 +2237,6 @@ export interface paths {
          * @description Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.
          */
         get: operations["listProviderCatalogEvents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/contest-config-templates": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List persisted contest configuration templates
-         * @description Returns the persisted commissioner contest configuration templates that root-admins can manage from the /manage page.
-         */
-        get: operations["adminListContestConfigTemplates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2732,68 +2692,42 @@ export interface components {
         };
         /** @description Request payload for creating a contest. */
         CreateContestRequest: {
+            /** @description Contest name shown to commissioners and members. */
             name: string;
-            eventId?: string;
+            /**
+             * Format: uuid
+             * @description Sport event the contest is run on.
+             */
+            sportEventId: string;
             /**
              * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
              * @enum {string}
              */
             contestFormat: "ROSTER";
-            /** @enum {string} */
-            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-            /** @description Contest-configuration payload used by contest create and update endpoints. */
-            contestConfiguration?: {
-                draftMode?: string;
-                rounds?: number;
-                timePerPickSeconds?: number;
-                autoPickPolicy?: string;
-                tierConfig?: {
-                    /** @description Stable tier identifier. */
-                    tierId: string;
-                    /** @description Tier label shown in commissioner and draft UI. */
-                    tierName: string;
-                    /** @description Tier order number. */
-                    tierNumber: number;
-                    /** @description How many picks each entry must make from the tier. */
-                    picksFromTier: number;
-                    /** @description Optional ranking range that produced the tier. */
-                    rankingRange?: [
-                        number,
-                        number
-                    ];
-                    /** @description Optional pricing range that produced the tier. */
-                    priceRange?: [
-                        number,
-                        number
-                    ];
-                    /** @description Optional cap on how many participants can live in the tier. */
-                    maxParticipants?: number;
-                    /** @description Participants assigned to the tier. */
-                    participantIds: string[];
-                }[];
-                budget?: number;
-                rosterSize?: number;
-                pickCount?: number;
-                picksPerPeriod?: number;
-                roundValues?: number[];
-                startRound?: string;
-                isExclusive?: boolean;
-                bestBallN?: number;
-                missedCutPenalty?: number;
-                captainSlot?: boolean;
-                captainMultiplier?: number;
+            /**
+             * @description How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template's selection type when a template is named.
+             * @enum {string}
+             */
+            selectionType: "TIERED";
+            /**
+             * Format: uuid
+             * @description Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.
+             */
+            templateId?: string;
+            /** @description The contest configuration. With a template, replaces the template's configuration; without one, is the configuration. */
+            configuration?: {
+                /**
+                 * Format: date-time
+                 * @description Contest entry lock timestamp.
+                 */
+                locksAt?: string | null;
+                /** @description Maximum entries a Team may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description How many golfers each Team entry must pick. */
+                rosterSize: number;
+                /** @description How many golfer scores count toward the Team total. */
+                countedScores: number;
             };
-            /** @enum {string} */
-            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
-            /** Format: date-time */
-            startsAt?: string;
-            /** Format: date-time */
-            endsAt?: string;
-            /** Format: date-time */
-            lockAt?: string;
-            isExclusive?: boolean;
-            /** @description Whether eliminated entries stop accumulating score events. */
-            scoringStopsOnElimination?: boolean;
         };
         /** @description Patch payload for updating editable contest metadata. */
         UpdateContestRequest: {
@@ -8982,12 +8916,12 @@ export interface components {
             status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
             /**
              * Format: date-time
-             * @description Earliest submission time to include. Defaults to 24 hours before `to`.
+             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
              */
             from?: string;
             /**
              * Format: date-time
-             * @description Earliest submission time to include. Defaults to 24 hours before `to`.
+             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
              */
             to?: string;
         };
@@ -13826,127 +13760,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestResponse"];
                 };
             };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    listManagedContestTemplates: {
-        parameters: {
-            query: {
-                /** @description Sport to filter templates by. */
-                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /** @description Contest type to filter templates by. */
-                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                /** @description Optional event type used to narrow template selection. */
-                eventType?: string;
-            };
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Available seeded contest templates for commissioner create flow. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        templates: {
-                            /**
-                             * Format: uuid
-                             * @description Seeded contest template identifier.
-                             */
-                            id: string;
-                            /**
-                             * @description Sport this template applies to.
-                             * @enum {string}
-                             */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            /** @description Optional event-type scope for the template. */
-                            eventType?: string | null;
-                            /**
-                             * @description Contest type that may use the template.
-                             * @enum {string}
-                             */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /**
-                             * @description How an entry picks in a contest created from this template.
-                             * @enum {string}
-                             */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @description Stable machine key for the template. */
-                            templateKey: string;
-                            /** @description Commissioner-facing template label. */
-                            name: string;
-                            /** @description Commissioner-facing template description. */
-                            description: string;
-                            /** @description Display order for template selection. */
-                            sortOrder: number;
-                            /** @description Whether the template should be preselected in the create flow. */
-                            isDefault: boolean;
-                            /** @description Whether the template is currently selectable. */
-                            active: boolean;
-                            /** @description Version of the configuration schema metadata expected by the template. */
-                            schemaVersion: number;
-                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
-                            configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
-                                countedScores: number;
-                            };
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
+            /** @description CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -14003,221 +13817,7 @@ export interface operations {
                     };
                 };
             };
-        };
-    };
-    createManagedContest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        /** @description Commissioner request payload for creating a golf-first managed contest. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Contest name shown to commissioners and members. */
-                    name: string;
-                    /**
-                     * Format: uuid
-                     * @description Sport-event identifier that anchors the contest.
-                     */
-                    sportEventId: string;
-                    /**
-                     * @description First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
-                     * @enum {string}
-                     */
-                    contestFormat: "ROSTER";
-                    /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
-                    configuration: {
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
-                        maxEntriesPerSquad?: number | null;
-                        /** @description How many golfers each Team entry must pick. */
-                        rosterSize: number;
-                        /** @description How many golfer scores count toward the Team total. */
-                        countedScores: number;
-                    };
-                } | {
-                    /** @description Contest name shown to commissioners and members. */
-                    name: string;
-                    /**
-                     * Format: uuid
-                     * @description Sport-event identifier that anchors the contest.
-                     */
-                    sportEventId: string;
-                    /**
-                     * @description First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
-                     * @enum {string}
-                     */
-                    contestFormat: "ROSTER";
-                    /**
-                     * Format: uuid
-                     * @description Seeded contest template selected for the create flow.
-                     */
-                    templateId: string;
-                    /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
-                    configurationOverrides?: {
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
-                        maxEntriesPerSquad?: number | null;
-                        /** @description How many golfers each Team entry must pick. */
-                        rosterSize: number;
-                        /** @description How many golfer scores count toward the Team total. */
-                        countedScores: number;
-                    };
-                };
-            };
-        };
-        responses: {
-            /** @description Managed-contest detail response. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Golf-first contest-management detail returned to commissioner tooling. */
-                        contest: {
-                            /** @description Contest identifier. */
-                            id: string;
-                            /** @description League that owns the contest. */
-                            leagueId: string;
-                            /** @description Sport event attached to the contest. */
-                            sportEventId: string;
-                            /** @description Contest display name. */
-                            name: string;
-                            /** @enum {string} */
-                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-                            /** @description Current commissioner-managed contest configuration. */
-                            configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
-                                countedScores: number;
-                                /** @description Contest-configuration identifier. */
-                                id: string;
-                                /** @description Contest that owns the configuration. */
-                                contestId: string;
-                            };
-                            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
-                            effectiveTiers: {
-                                /** @description Stable per-event tier key. */
-                                tierKey: string;
-                                /** @description Commissioner-facing tier label. */
-                                label: string;
-                                /** @description 1-based tier ordering. */
-                                tierNumber: number;
-                                /** @description Default number of golfers picked from this tier. */
-                                defaultPickCount: number;
-                                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
-                                assignments: {
-                                    /** @description Field entry the assignment belongs to. */
-                                    sportEventParticipantId: string;
-                                    /** @description Global golfer identity. */
-                                    participantId: string;
-                                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
-                                    tierOrderIndex: number | null;
-                                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
-                                    price: number | null;
-                                }[];
-                            }[];
-                            /**
-                             * Format: date-time
-                             * @description When the contest was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest was last updated.
-                             */
-                            updatedAt: string;
-                            /**
-                             * Format: uuid
-                             * @description Seeded template chosen when the contest was created, if any.
-                             */
-                            templateId?: string | null;
-                            /** @description Schema/template version captured when the contest was created, if any. */
-                            templateVersion?: number | null;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -15330,6 +14930,126 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContestResponse"];
+                };
+            };
+        };
+    };
+    listContestConfigTemplates: {
+        parameters: {
+            query?: {
+                /** @description Only templates for this sport. */
+                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Only templates for this contest format. */
+                contestFormat?: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                /** @description Templates for this event type, plus the ones that apply to any event type. */
+                eventType?: string;
+                /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
+                active?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available seeded contest templates for commissioner create flow. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        templates: {
+                            /**
+                             * Format: uuid
+                             * @description Seeded contest template identifier.
+                             */
+                            id: string;
+                            /**
+                             * @description Sport this template applies to.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Optional event-type scope for the template. */
+                            eventType?: string | null;
+                            /**
+                             * @description Contest type that may use the template.
+                             * @enum {string}
+                             */
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                            /**
+                             * @description How an entry picks in a contest created from this template.
+                             * @enum {string}
+                             */
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                            /** @description Stable machine key for the template. */
+                            templateKey: string;
+                            /** @description Commissioner-facing template label. */
+                            name: string;
+                            /** @description Commissioner-facing template description. */
+                            description: string;
+                            /** @description Display order for template selection. */
+                            sortOrder: number;
+                            /** @description Whether the template should be preselected in the create flow. */
+                            isDefault: boolean;
+                            /** @description Whether the template is currently selectable. */
+                            active: boolean;
+                            /** @description Version of the configuration schema metadata expected by the template. */
+                            schemaVersion: number;
+                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                            configuration: {
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
                 };
             };
         };
@@ -19534,9 +19254,9 @@ export interface operations {
                 providerId?: string;
                 sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                /** @description Earliest submission time to include. Defaults to 24 hours before `to`. */
+                /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 from?: string;
-                /** @description Earliest submission time to include. Defaults to 24 hours before `to`. */
+                /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 to?: string;
             };
             header?: never;
@@ -20007,105 +19727,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    adminListContestConfigTemplates: {
-        parameters: {
-            query?: {
-                /** @description Optional sport filter for root-admin contest template management. */
-                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /** @description Optional contest-type filter for root-admin contest template management. */
-                contestFormat?: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                /** @description Optional active-state filter for root-admin contest template management. */
-                active?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Available seeded contest templates for commissioner create flow. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        templates: {
-                            /**
-                             * Format: uuid
-                             * @description Seeded contest template identifier.
-                             */
-                            id: string;
-                            /**
-                             * @description Sport this template applies to.
-                             * @enum {string}
-                             */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            /** @description Optional event-type scope for the template. */
-                            eventType?: string | null;
-                            /**
-                             * @description Contest type that may use the template.
-                             * @enum {string}
-                             */
-                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
-                            /**
-                             * @description How an entry picks in a contest created from this template.
-                             * @enum {string}
-                             */
-                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
-                            /** @description Stable machine key for the template. */
-                            templateKey: string;
-                            /** @description Commissioner-facing template label. */
-                            name: string;
-                            /** @description Commissioner-facing template description. */
-                            description: string;
-                            /** @description Display order for template selection. */
-                            sortOrder: number;
-                            /** @description Whether the template should be preselected in the create flow. */
-                            isDefault: boolean;
-                            /** @description Whether the template is currently selectable. */
-                            active: boolean;
-                            /** @description Version of the configuration schema metadata expected by the template. */
-                            schemaVersion: number;
-                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
-                            configuration: {
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description How many golfers each Team entry must pick. */
-                                rosterSize: number;
-                                /** @description How many golfer scores count toward the Team total. */
-                                countedScores: number;
-                            };
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -540,7 +540,7 @@ describe('Contract verification (root admin)', () => {
 
     const templateListRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/contest-config-templates?sport=GOLF',
+      url: '/api/v1/contest-config-templates/?sport=GOLF',
       headers: rootAdmin.headers,
     });
     expect(templateListRes.statusCode).toBe(200);

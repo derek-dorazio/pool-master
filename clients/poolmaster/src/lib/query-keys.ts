@@ -58,11 +58,12 @@ export const QueryKeys = {
     detail: (contestId: QueryKeyId) => ['poolmaster', 'managed-contest', contestId] as const,
     byLeagueAndContest: (leagueId: QueryKeyId, contestId: QueryKeyId) =>
       ['poolmaster', 'managed-contest', leagueId, contestId] as const,
-    templates: (
-      leagueId: QueryKeyId,
-      sport: QueryKeyId,
-      contestFormat: QueryKeyId,
-    ) => ['poolmaster', 'managed-contest-templates', leagueId, sport, contestFormat] as const,
+  },
+  /** `listContestConfigTemplates` — one global read (A11), so no league in the key. */
+  contestConfigTemplates: {
+    all: ['poolmaster', 'contest-config-templates'] as const,
+    list: (filters: { sport?: QueryKeyId; contestFormat?: QueryKeyId; active?: boolean }) =>
+      ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {
     all: ['poolmaster', 'contest-entries'] as const,
@@ -128,7 +129,6 @@ export const QueryKeys = {
   },
   rootAdmin: {
     all: ['poolmaster', 'root-admin'] as const,
-    contestConfigTemplates: ['poolmaster', 'root-admin', 'contest-config-templates'] as const,
     eventParticipants: (eventId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
     eventSyncEvents: (sport: QueryKeyId) =>
