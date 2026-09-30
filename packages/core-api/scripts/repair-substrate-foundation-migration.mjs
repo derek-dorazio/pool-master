@@ -133,6 +133,13 @@ async function readObjectChecks(prisma) {
           SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'contests' AND column_name = 'contest_type'
         )),
+        -- world_ranking is the column's historical name: the foundation migration created it,
+        -- and slice 2 (20260929120000) renamed it to ranking. This probe describes the
+        -- database as it stood before the foundation migration applied, which is the only
+        -- state this repair handles; there it correctly reads false. After a full migrate
+        -- deploy it also reads false, so the post-repair check below would fail on it, as it
+        -- already does on the three probes for objects removed by 20260531143000 and
+        -- 20260902200000. The post-repair check is stale for any database migrated past May.
         ('column:sport_event_participants.world_ranking', EXISTS (
           SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'sport_event_participants' AND column_name = 'world_ranking'

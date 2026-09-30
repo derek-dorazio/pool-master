@@ -123,6 +123,10 @@ export class GolfContestSettlementService {
       }
       const scoringDefinition = resolveGolfLeaderboardScoringDefinition(contest.configuration);
       if (!scoringDefinition) {
+        // Skip rather than guess a direction. Settling with the wrong direction pays the
+        // wrong entries, and a payout is hard to undo; a skipped settlement is logged at
+        // error and can be run again once the rule names a known definition. The
+        // leaderboard read refuses the same case with 400 instead, because nothing is paid.
         this.logger.error({
           contestId: contest.id,
           sportEventId,
