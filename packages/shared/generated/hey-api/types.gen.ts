@@ -6335,7 +6335,7 @@ export type CreateSportEventFromProviderEventRequest = {
     seasonId: string;
     providerId: string;
     /**
-     * From a provider catalog browse (adminListProviderCatalogEvents).
+     * From a provider catalog browse (listProviderCatalogEvents).
      */
     externalId: string;
     /**

@@ -13130,7 +13130,7 @@
           "externalId": {
             "type": "string",
             "minLength": 1,
-            "description": "From a provider catalog browse (adminListProviderCatalogEvents)."
+            "description": "From a provider catalog browse (listProviderCatalogEvents)."
           },
           "rounds": {
             "type": "integer",

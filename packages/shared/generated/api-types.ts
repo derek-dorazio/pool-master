@@ -6979,7 +6979,7 @@ export interface components {
             /** Format: uuid */
             seasonId: string;
             providerId: string;
-            /** @description From a provider catalog browse (adminListProviderCatalogEvents). */
+            /** @description From a provider catalog browse (listProviderCatalogEvents). */
             externalId: string;
             /** @description Round count; omitted, the provider schedule decides. */
             rounds?: number;
