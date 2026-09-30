@@ -2163,9 +2163,10 @@ on one `onRequest` hook for every route; neither uses the `admin-auth` plugin.
 **The competitor bind is an operation on the mapping, not on ingestion.**
 `adminMapParticipant` (`POST /admin/providers/map-participant`, both ids in the body) became
 `bindParticipantProviderMapping` (`POST /participants/:id/provider-mappings`), beside
-slice 2's read of the same mappings. It upserts on `(providerId, externalId)`, so an identity
-bound to the wrong participant moves; it 404s on a provider that is not registered, which the
-old operation did not check. The participants module now takes the provider registry.
+slice 2's read of the same mappings. Its behaviour is the old operation's: an upsert on
+`(providerId, externalId)`, so an identity bound to the wrong participant moves, and a 404 on a
+provider that is not registered. It now also re-stamps `mappedAt` when it moves one. The
+participants module takes the provider registry for that check.
 
 **Ports.** `ProviderSyncRunRepository` (create, update, a windowed `findAll`),
 `PlatformRuntimeConfigRepository`, and on existing ports `ParticipantProviderMappingRepository.bind`,
