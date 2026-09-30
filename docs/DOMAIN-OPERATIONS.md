@@ -660,7 +660,7 @@ Two runtime-tunable documents: the client poll intervals and the ingestion sched
 
 | Operation | Role | Notes |
 |---|---|---|
-| List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` had no writer and was dropped |
+| List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
 | List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
 | Submit a sport sync, an event sync | `rootAdmin` | `submitSportSync`, `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
