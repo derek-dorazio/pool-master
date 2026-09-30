@@ -38,7 +38,7 @@ Typical fields in a runtime log event:
   "isRootAdmin": true,
   "ip": "127.0.0.1",
   "method": "POST",
-  "route": "/api/v1/admin/providers/sync/:sport",
+  "route": "/api/v1/ingestion/sports/:sport/sync",
   "action": "admin.prepareSportSync.noProviders",
   "data": {
     "sport": "UFC"

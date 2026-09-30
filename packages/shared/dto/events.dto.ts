@@ -113,7 +113,7 @@ export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSche
 export const CreateSportEventFromProviderEventRequestSchema = z.object({
   seasonId: z.string().uuid(),
   providerId: z.string().min(1),
-  externalId: z.string().min(1).describe('From a provider catalog browse (adminListProviderCatalogEvents).'),
+  externalId: z.string().min(1).describe('From a provider catalog browse (listProviderCatalogEvents).'),
   rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
 }).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.');
 export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;

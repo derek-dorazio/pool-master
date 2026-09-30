@@ -122,7 +122,7 @@ async function cleanup(): Promise<void> {
   // ASSUMPTION: functional tests run maxWorkers: 1 (tests/functional/jest.config.js)
   // and this is the only provider-linked functional suite, so the deletes below
   // that key off MOCK_PROVIDER_ID / MOCK_EVENT_EXTERNAL_ID rather than this run's
-  // RUN stamp (the ingestionJob sweep, and the sport_events match on the fixed
+  // RUN stamp (the provider_sync_runs sweep, and the sport_events match on the fixed
   // golf-us-open-2026 externalId) cannot race a sibling suite. A second
   // provider-linked functional suite must scope its own mock rows by RUN (or a
   // per-suite externalId) and this sweep must be tightened alongside it.

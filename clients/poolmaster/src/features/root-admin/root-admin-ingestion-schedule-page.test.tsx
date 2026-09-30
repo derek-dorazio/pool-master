@@ -6,19 +6,19 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminIngestionSchedulePage } from './root-admin-ingestion-schedule-page';
 
 const {
-  adminGetIngestionScheduleMock,
-  adminResetIngestionScheduleMock,
-  adminUpdateIngestionScheduleMock,
+  getIngestionScheduleMock,
+  resetIngestionScheduleMock,
+  updateIngestionScheduleMock,
 } = vi.hoisted(() => ({
-  adminGetIngestionScheduleMock: vi.fn(),
-  adminResetIngestionScheduleMock: vi.fn(),
-  adminUpdateIngestionScheduleMock: vi.fn(),
+  getIngestionScheduleMock: vi.fn(),
+  resetIngestionScheduleMock: vi.fn(),
+  updateIngestionScheduleMock: vi.fn(),
 }));
 
 bindApiMocks({
-  getIngestionSchedule: adminGetIngestionScheduleMock,
-  resetIngestionSchedule: adminResetIngestionScheduleMock,
-  updateIngestionSchedule: adminUpdateIngestionScheduleMock,
+  getIngestionSchedule: getIngestionScheduleMock,
+  resetIngestionSchedule: resetIngestionScheduleMock,
+  updateIngestionSchedule: updateIngestionScheduleMock,
 });
 
 function renderPage() {
@@ -41,9 +41,9 @@ function renderPage() {
 
 describe('RootAdminIngestionSchedulePage', () => {
   beforeEach(() => {
-    adminGetIngestionScheduleMock.mockReset();
-    adminResetIngestionScheduleMock.mockReset();
-    adminUpdateIngestionScheduleMock.mockReset();
+    getIngestionScheduleMock.mockReset();
+    resetIngestionScheduleMock.mockReset();
+    updateIngestionScheduleMock.mockReset();
 
     const response = {
       data: {
@@ -61,9 +61,9 @@ describe('RootAdminIngestionSchedulePage', () => {
       },
     };
 
-    adminGetIngestionScheduleMock.mockResolvedValue(response);
-    adminResetIngestionScheduleMock.mockResolvedValue(response);
-    adminUpdateIngestionScheduleMock.mockResolvedValue(response);
+    getIngestionScheduleMock.mockResolvedValue(response);
+    resetIngestionScheduleMock.mockResolvedValue(response);
+    updateIngestionScheduleMock.mockResolvedValue(response);
   });
 
   it('pool-master-rop.68.1.5 renders and saves the global ingestion schedule with separate schedule and field windows', async () => {
@@ -78,7 +78,7 @@ describe('RootAdminIngestionSchedulePage', () => {
     fireEvent.click(screen.getByTestId('root-admin-ingestion-page-save'));
 
     await waitFor(() =>
-      expect(adminUpdateIngestionScheduleMock).toHaveBeenCalledWith({
+      expect(updateIngestionScheduleMock).toHaveBeenCalledWith({
         body: {
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
