@@ -460,10 +460,10 @@ Cluster: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 Core tracked by #235, golf extensions and the admin operations by #236. Decisions: the
 stage-2 comment on #203.
 
-**The catalog is shared reference data, not league data.** No row here belongs to a league,
-so A2–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one exception
-is a read that exposes operational detail — it still returns the canonical object, with the
-admin-only fields annotated in the DTO rather than stripped (rule 4, §13).
+**Every object in this cluster is global (A11).** No row here belongs to a user, league or
+squad, so A1–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one
+exception is a read that exposes operational detail — it still returns the canonical object,
+with the admin-only fields annotated in the DTO rather than stripped (rule 4, §13).
 
 **Sport is established once, then inherited** (stage 2, decision 5). Selecting a
 `SportLeague` fixes the sport; an event, a season, a roster or a participant is reached
@@ -474,50 +474,57 @@ parent — take one.
 **`SportLeague` is never abbreviated to "league"** (decision 6). `League` is the product's
 pool of players; `SportLeague` is the PGA Tour or the NFL.
 
+**One guard for every write** (#236). Each write on these objects takes the route-level
+`requireRootAdmin` hook (`core/root-admin-guard.ts`): 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the
+access-token claim (A10). It runs at `onRequest`, before validation, so a non-admin never learns
+an operation's shape from a 400 — the answer the `/admin` routes these replaced gave too.
+
 ### Sport
 
 | Operation | Role | Notes |
 |---|---|---|
-| Read one, list | `authenticated` | Rows are seeded with the platform; there is no create operation. The port is `SportRepository` |
+| List | `authenticated` | `listSports`. Rows are seeded with the platform; there is no create operation. The port is `SportRepository` |
 
 ### SportLeague
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for a sport | `rootAdmin` | Takes the sport — the one list that does. Each row carries its affiliation and season counts |
-| Create, update | `rootAdmin` | Unique on `(sportId, name)`. Adding a tour is one call, not a migration |
+| List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and season counts |
+| Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
 
 ### Season
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for a sport league, read one | `rootAdmin` | `isCurrent` is derived from the sport league's `currentSeasonId`, not stored |
-| Create, update | `rootAdmin` | Unique on `(sportLeagueId, year)` |
-| Set current | `rootAdmin` | Moves the sport league's pointer; 404 for an unknown season |
+| List for a sport league, read one | `authenticated` | `listSeasons` is under its sport league. `isCurrent` is derived from the sport league's `currentSeasonId`, not stored; `sportEventCount` is counted |
+| Create, update | `rootAdmin` | Unique on `(sportLeagueId, year)`; create 404s for an unknown sport league |
+| Set current | `rootAdmin` | Moves the sport league's pointer and returns the sport league; 404 for an unknown season |
 | Clone one year forward | `rootAdmin` | New season plus one event per source event; leaves the current-season pointer alone |
 
 ### ParticipantLeagueAffiliation — the Participant↔SportLeague edge
 
-Who competes on a tour, with their current `ranking`.
+Who competes on a tour, with their current `ranking` — the tour's ranking, not a world ranking.
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for a sport league | `rootAdmin` | Embeds the canonical `Participant` |
-| Add, remove | `rootAdmin` | Unique on `(sportLeagueId, participantId)` |
+| List for a sport league | `authenticated` | Embeds the canonical `Participant` |
+| Add, remove | `rootAdmin` | Unique on `(sportLeagueId, participantId)`. 409 `SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS`, 404 `SPORT_LEAGUE_AFFILIATION_NOT_FOUND` |
 | Update rankings | `rootAdmin` | One write for the set |
-| Preview / apply an upload | `rootAdmin` | Rows resolve by participant id, then external id, then exact name, within the sport league's sport. Apply refuses any unresolved or ambiguous row and writes nothing |
+| Preview / apply an upload | `rootAdmin` | Rows resolve by participant id, then external id, then exact name, within the sport league's sport — one resolver, shared with the golf score upload. Apply refuses any unresolved or ambiguous row and writes nothing (422 `SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS`) |
 
-**Today these are reachable only through six golf-named operations** in
-`modules/admin/golf/routes.ts` (`adminGetGolfLeagueRoster` and siblings) — a cross-sport
-edge behind golf doors. Renaming them is #236's.
+The six golf-named roster operations these replace (`adminGetGolfLeagueRoster` and siblings)
+are gone (#236).
 
 ### SportEvent
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `authenticated` | `listEvents`, filtered by sport and status, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount` and contest-setup readiness — to every caller. The admin copy, `adminListEvents`, is gone (#235) |
-| Read one | `authenticated` | Target; no route yet |
-| Create, update, lifecycle | `rootAdmin` | Today only through the golf tournament operations (#236) and provider sync (slice 4) |
+| List | `authenticated` | `listEvents`, filtered by sport, status, season and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, `contestCount`, contest-setup readiness and `allowedTransitions` — to every caller |
+| Read one | `authenticated` | `getEvent` |
+| Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores). The sport comes from the season's sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers |
+| Update | `rootAdmin` | 409 `EVENT_NOT_ADMIN_MANAGED` once a provider owns the event in full |
+| Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
+| Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource` |
 
 ### SportEventRound, SportEventTier
 
@@ -525,8 +532,9 @@ Children of an event; always reached through it.
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for an event | `authenticated` | Rounds in `roundNumber` order (`SportEventRoundRepository`). Tiers have no core port yet — #236 |
-| Replace for an event | `rootAdmin` | Today golf-named (`adminUpdateGolfTournamentRounds`, `adminReplaceGolfTournamentTiers`) — #236 |
+| List for an event | `authenticated` | `listEventRounds` in `roundNumber` order; `listEventTiers` in `tierNumber` order |
+| Reschedule rounds | `rootAdmin` | `updateEventRounds` |
+| Replace tiers | `rootAdmin` | `replaceEventTiers`. 409 `TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS` unless `reassignOrphansTo` names a tier that survives |
 
 ### SportEventParticipant — the Participant↔SportEvent edge
 
@@ -535,11 +543,13 @@ Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWi
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for an event | `authenticated` | Embeds the canonical `Participant`. Today `adminListEventParticipants`, golf-shaped, root-admin only — collapsed onto the canonical DTO in #236 |
-| Load / edit the field | `rootAdmin` | Provider sync, or the golf field operations (#236) |
+| List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows. One read serves the field grid, the tier board and the score corrections |
+| Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it |
+| Seed from the sport league, refresh from the provider | `rootAdmin` | `seedEventParticipants` (golf only for now); `refreshEventParticipants` queues a provider sync (202) |
 
 **Golf surfaces render `ELIMINATED` as "Cut"** (decision 1). That is a display mapping, not
-a stored value, and it lives in #236.
+a stored value: `formatParticipantStatusLabel` in the shared domain, used by every surface
+that shows the status.
 
 ### SportEventParticipantRound, SportEventParticipantStanding — base rows
 
@@ -548,8 +558,8 @@ The per-round join and the running standing. **The score lives in the sport exte
 
 | Operation | Role | Notes |
 |---|---|---|
-| Read for an event | `authenticated` | Standing `position` is the cross-sport rank key and is direction-free: **1 is best in every sport.** A reader ranks on it and joins the extension only to display a score |
-| Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write |
+| Read for an event | `authenticated` | Through `listEventParticipants`. Standing `position` is the cross-sport rank key and is direction-free: **1 is best in every sport.** A reader ranks on it and joins the extension only to display a score |
+| Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write. Golf corrections: `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event |
 
 ### SportEventParticipantValuation
 
@@ -558,21 +568,23 @@ The tier assignment and price for a participant at an event. 1:1 with
 
 | Operation | Role | Notes |
 |---|---|---|
-| Read for an event | `authenticated` | |
-| Auto-assign, replace | `rootAdmin` | Today golf-named — #236 |
+| Read for an event | `authenticated` | On each `listEventParticipants` row |
+| Auto-assign tiers, replace assignments, auto-assign prices | `rootAdmin` | `autoAssignEventTiers` (source `ODDS` or `RANKING`), `replaceEventTierAssignments`, `autoAssignEventPrices` |
 
 ### Participant
 
 | Operation | Role | Notes |
 |---|---|---|
-| List / search | `authenticated` | Filtered, unpaged (§16) |
+| List / search | `authenticated` | Filtered by sport, status and more, unpaged (§16) |
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
 
 ### ParticipantProviderMapping, ParticipantRankingSnapshot
 
 Provider plumbing. Written by sync; read and repaired by `rootAdmin`. Slice 4 owns the
-operations.
+operations. #236 adds one read, `listParticipantProviderMappings` (`authenticated`, like
+every catalog read), for the player page — the mapping count the golf player list carried is
+gone.
 
 ---
 

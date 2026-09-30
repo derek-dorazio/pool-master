@@ -6,12 +6,15 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192). The DTOs live in
 // leagues.dto.ts -- DTO ownership does not follow route-module boundaries.
 import '@poolmaster/shared/dto/leagues.dto';
 // Registers the canonical UserDto and its response envelopes (#202 step 3.4).
 import '@poolmaster/shared/dto/users.dto';
+// The provider sync submission, shared with the events module's field refresh (#236).
+import '@poolmaster/shared/dto/admin.dto';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { HealthService } from './health-service';
@@ -24,40 +27,15 @@ import { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { ContestTemplateAdminService } from './contest-template-service';
 import { createContestTemplateAdminHandlers } from './contest-template-handler';
-import { AdminEventBrowserService } from './event-browser-service';
-import { createEventBrowserAdminHandlers } from './event-browser-handler';
 import { auditRoutes } from './audit-routes';
-import { golfAdminRoutes } from './golf/routes';
-import { SportLeagueService } from '../sport-catalog/sport-league-service';
-import { SeasonService } from '../sport-catalog/season-service';
-import { GolfRoundScheduleService } from '../golf/golf-round-schedule-service';
-import { GolfTierService } from '../golf/golf-tier-service';
-import { GolfTournamentService } from '../golf/golf-tournament-service';
-import { GolfFieldService } from '../golf/golf-field-service';
-import { GolfPlayerService } from '../golf/golf-player-service';
-import { GolfScoreService } from '../golf/golf-score-service';
-import { EventLifecycleService } from '../events/event-lifecycle-service';
 import { EventScoreSourceService } from '../events/event-score-source-service';
 import {
-  PrismaParticipantLeagueAffiliationRepository,
-  PrismaParticipantProviderMappingRepository,
-  PrismaParticipantRepository,
-  PrismaSeasonRepository,
-  PrismaSportEventRepository,
-  PrismaSportLeagueRepository,
-  PrismaSportRepository,
-} from '../../adapters';
-import { ParticipantService } from '../participants/service';
-import {
-  AdminEventParticipantsParamsSchema,
-  AdminEventParticipantListResponseSchema,
   AdminProviderEventCleanupRequestSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
   ContestConfigTemplateListResponseSchema,
-  ProviderManualSyncSubmissionResponseSchema,
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
@@ -111,7 +89,6 @@ export interface AdminModuleOptions {
   providerRegistry?: ProviderRegistry;
   ingestionConfigService?: IngestionConfigService;
   pollConfigService?: PollConfigService;
-  eventLifecycleService?: EventLifecycleService;
 }
 
 // #192-mixed: admin's own DTOs convert in their own slice (see plans/143); the league
@@ -148,46 +125,11 @@ export async function adminModule(
     new PrismaContestConfigTemplateRepository(prisma),
     fastify.log,
   );
-  const sports = new PrismaSportRepository(prisma);
-  const sportLeagues = new PrismaSportLeagueRepository(prisma);
-  const seasons = new PrismaSeasonRepository(prisma);
-  const sportEvents = new PrismaSportEventRepository(prisma);
-  const participantRepo = new PrismaParticipantRepository(prisma);
-  const adminEventBrowserService = new AdminEventBrowserService(prisma, sportEvents, fastify.log);
-  const sportLeagueService = new SportLeagueService({
-    sports,
-    sportLeagues,
-    seasons,
-    affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
-    participants: participantRepo,
-    logger: fastify.log,
-  });
-  const seasonService = new SeasonService({ sports, sportLeagues, seasons, sportEvents, logger: fastify.log });
-  const golfRoundScheduleService = new GolfRoundScheduleService(prisma, fastify.log);
-  const golfTierService = new GolfTierService(prisma, fastify.log);
-  const golfTournamentService = new GolfTournamentService(
-    prisma,
-    seasonService,
-    golfRoundScheduleService,
-    golfTierService,
-    fastify.log,
-  );
-  const eventLifecycleService = opts.eventLifecycleService ?? new EventLifecycleService(prisma, fastify.log);
-  const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, opts.providerRegistry, fastify.log);
   const eventScoreSourceService = new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log);
-  const participantService = new ParticipantService(
-    participantRepo,
-    new PrismaParticipantProviderMappingRepository(prisma),
-    fastify.log,
-  );
-  const golfPlayerService = new GolfPlayerService(prisma, participantService, fastify.log);
-  const golfScoreService = new GolfScoreService(prisma, fastify.log);
-
   // --- Handlers ---
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
-  const eventBrowser = createEventBrowserAdminHandlers(adminEventBrowserService);
 
   // --- User Management Routes ---
 
@@ -195,20 +137,8 @@ export async function adminModule(
   // under an admin prefix, each with its own mapper deriving the same readiness. The one
   // operation is GET /api/v1/events, returning the canonical SportEventDto.
 
-  fastify.get('/events/:eventId/participants', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List current persisted participants for an event',
-      description:
-        'Returns the latest persisted SportEventParticipant rows for a root-admin event detail modal, including participant display data, rankings, odds, valuations, and golf rounds. This endpoint reflects current database state, not a specific sync-run payload.',
-      operationId: 'adminListEventParticipants',
-      params: zodToJsonSchema(AdminEventParticipantsParamsSchema),
-      response: withAdminErrorResponses({
-        200: zodToJsonSchema(AdminEventParticipantListResponseSchema),
-      }, [404]),
-    },
-    handler: eventBrowser.listEventParticipants,
-  });
+  // #236 — `adminListEventParticipants` is gone too: it was a golf-shaped projection of the
+  // event's field. GET /api/v1/events/{eventId}/participants returns SportEventParticipantDto.
 
 /*
    * #202 — the three root-admin league routes are GONE, not re-pointed.
@@ -268,7 +198,7 @@ export async function adminModule(
       operationId: 'adminPrepareSportSync',
       body: zodToJsonSchema(SportSyncRequestSchema),
       response: withAdminErrorResponses({
-        202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
+        202: schemaRef('ProviderManualSyncSubmissionResponse'),
       }, [404, 422]),
     },
     handler: provider.prepareSportSync,
@@ -282,7 +212,7 @@ export async function adminModule(
       operationId: 'adminSyncProviderEventData',
       body: zodToJsonSchema(EventSyncRequestSchema),
       response: withAdminErrorResponses({
-        202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
+        202: schemaRef('ProviderManualSyncSubmissionResponse'),
       }, [404, 409, 422]),
     },
     handler: provider.syncEventData,
@@ -579,20 +509,9 @@ export async function adminModule(
   // Permission: platform.config
 
   await fastify.register(auditRoutes);
-  await fastify.register(golfAdminRoutes, {
-    prefix: '/sports/golf',
-    sportLeagueService,
-    golfRoundScheduleService,
-    golfTournamentService,
-    eventLifecycleService,
-    golfFieldService,
-    golfTierService,
-    seasonService,
-    eventScoreSourceService,
-    golfPlayerService,
-    providerService,
-    golfScoreService,
-  });
+  // #236 — the 45 `/sports/golf/*` operations are gone: each moved onto the object it acts
+  // on (plans/145, "Slice 2 golf — the operation map") under /sport-leagues, /seasons,
+  // /events and /participants.
 
   registerPlatformConfigRoutes(fastify, {
     pollConfig: pollConfigService,

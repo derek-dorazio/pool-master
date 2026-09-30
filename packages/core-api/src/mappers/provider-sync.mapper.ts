@@ -1,7 +1,7 @@
 /**
  * Provider sync mappers — shared by the generic manual-sync route
  * (`adminSyncProviderEventData`) and the golf-scoped
- * `adminRefreshGolfTournamentField` route (plans/124 §4.4a), so there is one
+ * `refreshEventParticipants` route (plans/124 §4.4a), so there is one
  * `ProviderManualSyncSubmissionResult` → DTO transform, not two
  * independently-drifting copies.
  */

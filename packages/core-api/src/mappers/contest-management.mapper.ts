@@ -1,6 +1,6 @@
 import type { ContestConfigTemplateDto, GolfEffectiveTierDto } from '@poolmaster/shared/dto';
 import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
-import type { GolfTierGroup } from '../modules/golf/golf-tier-service';
+import type { SportEventTierGroup } from '../modules/events/sport-event-tier-service';
 
 export function mapContestConfigTemplateDto(
   template: ContestConfigTemplate,
@@ -23,14 +23,14 @@ export function mapContestConfigTemplateDto(
 }
 
 /**
- * Maps golf-tier-service's tier-grouped shape to the read-only
+ * Maps SportEventTierService's tier-grouped shape to the read-only
  * ContestManagementDetailDto.effectiveTiers echo (plans/124 §4.6/§5.3).
- * Structurally the same projection the root-admin toAdminGolfTierGroupDto
+ * Structurally the same projection the root-admin toAdminSportEventTierGroupDto
  * mapper does — the commissioner surface is read-only where the root-admin
  * one is editable, but both read through getEffectiveTiersForSportEvent.
  */
 export function toGolfEffectiveTierDtoList(
-  tiers: GolfTierGroup[],
+  tiers: SportEventTierGroup[],
 ): GolfEffectiveTierDto[] {
   return tiers.map((tier) => ({
     tierKey: tier.tierKey,

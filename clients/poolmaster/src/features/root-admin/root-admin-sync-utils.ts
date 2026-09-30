@@ -1,9 +1,9 @@
-import type { AdminListProviderSyncRunsResponses, AdminListProvidersResponses, AdminPrepareSportSyncResponses, AdminSyncProviderEventDataResponses } from '@/lib/api';
+import type { AdminListProviderSyncRunsResponses, AdminListProvidersResponses, ProviderManualSyncSubmissionResponse } from '@/lib/api';
 
 export type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 export type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
-export type SportSyncSubmission = AdminPrepareSportSyncResponses[202];
-export type EventSyncSubmission = AdminSyncProviderEventDataResponses[202];
+export type SportSyncSubmission = ProviderManualSyncSubmissionResponse;
+export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
 export const ALL_SYNC_SPORT_OPTIONS = [
   'GOLF',

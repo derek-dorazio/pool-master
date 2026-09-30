@@ -30,6 +30,7 @@ describe('events routes', () => {
         id: randomUUID(),
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 
@@ -145,6 +146,7 @@ describe('events routes', () => {
         id: randomUUID(),
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 

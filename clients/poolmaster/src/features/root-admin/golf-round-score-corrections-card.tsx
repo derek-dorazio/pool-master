@@ -1,20 +1,21 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { adminUpdateGolfRoundScore } from '@/lib/api';
+import { updateEventParticipantGolfRoundScore } from '@/lib/api';
 import { Alert, Button, DataGrid, Input, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfRoundScoresResponses, AdminUpdateGolfRoundScoreData } from '@/lib/api';
+import type { UpdateGolfRoundScoreRequest } from '@/lib/api';
 import {
   GOLF_ROUND_SCORE_STATUSES,
   formatGolfRoundStatus,
+  type GolfRoundScoreRow,
   type GolfRoundScoreStatus,
 } from './golf-admin-utils';
 
-type ScoreRow = AdminGetGolfRoundScoresResponses[200]['rows'][number];
-type ScorePatch = AdminUpdateGolfRoundScoreData['body'];
+type ScoreRow = GolfRoundScoreRow;
+type ScorePatch = UpdateGolfRoundScoreRequest;
 
 type RowDraft = { strokes?: string; thru?: string; status?: GolfRoundScoreStatus };
 type CorrectionsMeta = {
@@ -209,7 +210,7 @@ const correctionColumns = [
 /**
  * plans/124 §6.3 Round scores section 2 — inline strokes / thru / status
  * corrections for one round, saved one row at a time via
- * `adminUpdateGolfRoundScore`.
+ * `updateEventParticipantGolfRoundScore`.
  */
 export function GolfRoundScoreCorrectionsCard({
   eventId,
@@ -240,8 +241,8 @@ export function GolfRoundScoreCorrectionsCard({
       sportEventParticipantId: string;
       body: ScorePatch;
     }) => {
-      const response = await adminUpdateGolfRoundScore({
-        path: { eventId, round, sportEventParticipantId },
+      const response = await updateEventParticipantGolfRoundScore({
+        path: { eventId, roundNumber: round, sportEventParticipantId },
         body,
       });
       if (response.error) {
@@ -249,7 +250,8 @@ export function GolfRoundScoreCorrectionsCard({
       }
       return response.data;
     },
-    invalidates: [QueryKeys.rootAdmin.golf.roundScores(eventId, round)],
+    // Round scores are read from the field (#236).
+    invalidates: [QueryKeys.rootAdmin.golf.field(eventId)],
     onSuccess: (_data, variables) =>
       setDraft((current) => {
         const next = { ...current };

@@ -36,6 +36,9 @@ import { participantsModule } from '../../packages/core-api/src/modules/particip
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
+import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
+import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
+import { seasonsModule } from '../../packages/core-api/src/modules/seasons/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
@@ -122,6 +125,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });
   testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
+  testApp.register(sportsModule, { prefix: '/api/v1/sports' });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
+  testApp.register(seasonsModule, { prefix: '/api/v1/seasons' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
 
@@ -627,6 +633,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
+  await prisma.leagueEvent.deleteMany();
   // A sport league points at its current season and every season at its sport league, so
   // the pointer clears before the seasons, and the seasons before the sport leagues.
   await prisma.sportLeague.updateMany({ data: { currentSeasonId: null } });

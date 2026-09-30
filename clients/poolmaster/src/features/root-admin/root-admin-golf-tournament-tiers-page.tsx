@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfTournament, adminGetGolfTournamentField, adminGetGolfTournamentTiers } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -9,21 +7,15 @@ import {
   LinkButton,
   SplitContentLayout,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
-import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/errors';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
   isAdminManagedGolfTournament,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
 import { GolfTierAutoAssignActions } from './golf-tier-auto-assign-actions';
 import { GolfTierBoard } from './golf-tier-board';
 import { GolfTierDefinitionsPanel } from './golf-tier-definitions-panel';
-
-type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
-type FieldEntry =
-  AdminGetGolfTournamentFieldResponses[200]['entries'][number];
+import { useGolfFieldQuery, useGolfTiersQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
  * plans/124 §6.3 — /manage/golf/tournaments/:eventId/tiers. Owns the tournament /
@@ -33,44 +25,9 @@ type FieldEntry =
 export function RootAdminGolfTournamentTiersPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
 
-  const tournamentQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournament(eventId),
-    queryFn: async (): Promise<AdminGolfTournamentDetail> => {
-      const response = await adminGetGolfTournament({ path: { eventId } });
-      if (!response.data?.tournament) {
-        throwApiError(response.error, 'Golf tournament response is missing data.');
-      }
-      return response.data.tournament;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
-
-  const tiersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tiers(eventId),
-    queryFn: async (): Promise<TierDto[]> => {
-      const response = await adminGetGolfTournamentTiers({ path: { eventId } });
-      if (!response.data?.tiers) {
-        throwApiError(response.error, 'Golf tiers response is missing data.');
-      }
-      return response.data.tiers;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
-
-  const fieldQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.field(eventId),
-    queryFn: async (): Promise<FieldEntry[]> => {
-      const response = await adminGetGolfTournamentField({ path: { eventId } });
-      if (!response.data?.entries) {
-        throwApiError(response.error, 'Golf tournament field response is missing data.');
-      }
-      return response.data.entries;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const tournamentQuery = useGolfTournamentQuery(eventId);
+  const tiersQuery = useGolfTiersQuery(eventId);
+  const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
@@ -79,12 +36,15 @@ export function RootAdminGolfTournamentTiersPage() {
   const field = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
 
   const assignmentCountByTierKey = useMemo(() => {
+    // A tier's assignments are the golfers whose valuation names it (#236).
     const counts: Record<string, number> = {};
     for (const tier of tiers) {
-      counts[tier.tierKey] = tier.assignments.length;
+      counts[tier.tierKey] = field.filter(
+        (entry) => entry.valuation?.sportEventTierId === tier.id,
+      ).length;
     }
     return counts;
-  }, [tiers]);
+  }, [field, tiers]);
 
   const pageState = tournamentQuery.isLoading || tiersQuery.isLoading || fieldQuery.isLoading
     ? 'loading'

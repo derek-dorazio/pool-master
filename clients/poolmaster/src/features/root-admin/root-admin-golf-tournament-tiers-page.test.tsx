@@ -5,19 +5,26 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentTiersPage } from './root-admin-golf-tournament-tiers-page';
+import {
+  fieldEntryFixture,
+  participantFixture,
+  sportEventFixture,
+  tierFixture,
+  valuationFixture,
+} from './golf-test-fixtures';
 
 // plans/124 §6.3 / §8 — Tier editor: assert the keyboard reassignment path
 // (Move-to-tier Select + up/down), not only drag (pool-master-dyb).
 
 const {
-  adminGetGolfTournamentMock,
-  adminGetGolfTournamentTiersMock,
-  adminGetGolfTournamentFieldMock,
-  adminReplaceGolfTierAssignmentsMock,
-  adminReplaceGolfTournamentTiersMock,
-  adminAutoAssignGolfTiersMock,
-  adminAutoAssignGolfPricesMock,
-  adminUpdateGolfFieldEntriesMock,
+  getEventMock,
+  listEventTiersMock,
+  listEventParticipantsMock,
+  replaceEventTierAssignmentsMock,
+  replaceEventTiersMock,
+  autoAssignEventTiersMock,
+  autoAssignEventPricesMock,
+  updateEventParticipantsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -30,27 +37,27 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminGetGolfTournamentMock: vi.fn(),
-    adminGetGolfTournamentTiersMock: vi.fn(),
-    adminGetGolfTournamentFieldMock: vi.fn(),
-    adminReplaceGolfTierAssignmentsMock: vi.fn(),
-    adminReplaceGolfTournamentTiersMock: vi.fn(),
-    adminAutoAssignGolfTiersMock: vi.fn(),
-    adminAutoAssignGolfPricesMock: vi.fn(),
-    adminUpdateGolfFieldEntriesMock: vi.fn(),
+    getEventMock: vi.fn(),
+    listEventTiersMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
+    replaceEventTierAssignmentsMock: vi.fn(),
+    replaceEventTiersMock: vi.fn(),
+    autoAssignEventTiersMock: vi.fn(),
+    autoAssignEventPricesMock: vi.fn(),
+    updateEventParticipantsMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminGetGolfTournament: adminGetGolfTournamentMock,
-  adminGetGolfTournamentTiers: adminGetGolfTournamentTiersMock,
-  adminGetGolfTournamentField: adminGetGolfTournamentFieldMock,
-  adminReplaceGolfTierAssignments: adminReplaceGolfTierAssignmentsMock,
-  adminReplaceGolfTournamentTiers: adminReplaceGolfTournamentTiersMock,
-  adminAutoAssignGolfTiers: adminAutoAssignGolfTiersMock,
-  adminAutoAssignGolfPrices: adminAutoAssignGolfPricesMock,
-  adminUpdateGolfFieldEntries: adminUpdateGolfFieldEntriesMock,
+  getEvent: getEventMock,
+  listEventTiers: listEventTiersMock,
+  listEventParticipants: listEventParticipantsMock,
+  replaceEventTierAssignments: replaceEventTierAssignmentsMock,
+  replaceEventTiers: replaceEventTiersMock,
+  autoAssignEventTiers: autoAssignEventTiersMock,
+  autoAssignEventPrices: autoAssignEventPricesMock,
+  updateEventParticipants: updateEventParticipantsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -59,8 +66,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({
     id: 'evt-1',
     name: 'The Open',
     venue: 'Royal Liverpool',
@@ -74,68 +81,56 @@ function tournament(overrides: Record<string, unknown> = {}) {
     fieldLocked: false,
     seasonId: 'season-2026',
     leagueEventId: '',
-    source: 'MANUAL',
     syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
     autoLifecycleEnabled: true,
-    par: 71,
-    fieldCount: 3,
+    loadedParticipantCount: 3,
     tierCount: 2,
     contestCount: 0,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    workflow: { currentStatus: 'SCHEDULED', allowedTransitions: [] },
+    allowedTransitions: [],
     ...overrides,
-  };
+  });
 }
 
-function fieldEntry(sep: string, name: string, price: number | null = 9000) {
-  return {
-    sportEventParticipantId: sep,
+// #236: a golfer's tier and order are on its valuation; tiers carry no assignments.
+function fieldEntry(
+  sep: string,
+  name: string,
+  price: number | null = 9000,
+  tierId: string | null = null,
+  tierOrderIndex: number | null = null,
+) {
+  return fieldEntryFixture({
+    id: sep,
     participantId: `p-${sep}`,
-    participantName: name,
-    shortName: name,
-    nationality: 'NIR',
-    isActive: true,
-    inactiveReason: null,
+    participant: participantFixture({ id: `p-${sep}`, name }),
     ranking: 3,
     oddsToWin: 8,
     seedNumber: 3,
-    price,
-    isLeagueRosterMember: true,
-  };
+    valuation: valuationFixture({ sportEventTierId: tierId, tierOrderIndex, price }),
+  });
 }
 
-function seed(overrides: { tournament?: Record<string, unknown> } = {}) {
-  adminGetGolfTournamentMock.mockResolvedValue({
-    data: { tournament: tournament(overrides.tournament) },
+function tier(n: number, label = `Tier ${n}`, tierNumber = n) {
+  return tierFixture({ id: `tier-id-${n}`, sportEventId: 'evt-1', tierKey: `tier-${n}`, label, tierNumber });
+}
+
+function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {}) {
+  getEventMock.mockResolvedValue({
+    data: { event: tournament(overrides.tournament) },
   });
-  adminGetGolfTournamentFieldMock.mockResolvedValue({
+  listEventParticipantsMock.mockResolvedValue({
     data: {
-      entries: [
-        fieldEntry('sep-1', 'Rory'),
-        fieldEntry('sep-2', 'Scottie', 9800),
+      participants: [
+        fieldEntry('sep-1', 'Rory', 9000, 'tier-id-1', 0),
+        fieldEntry('sep-2', 'Scottie', 9800, 'tier-id-1', 1),
         fieldEntry('sep-3', 'Jon', 8500),
       ],
     },
   });
-  adminGetGolfTournamentTiersMock.mockResolvedValue({
-    data: {
-      tiers: [
-        {
-          tierKey: 'tier-1',
-          label: 'Tier 1',
-          tierNumber: 1,
-          defaultPickCount: 1,
-          assignments: [
-            { sportEventParticipantId: 'sep-1', participantId: 'p-sep-1', tierOrderIndex: 0, price: 9000 },
-            { sportEventParticipantId: 'sep-2', participantId: 'p-sep-2', tierOrderIndex: 1, price: 9800 },
-          ],
-        },
-        { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1, assignments: [] },
-        { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3, defaultPickCount: 1, assignments: [] },
-      ],
-    },
+  listEventTiersMock.mockResolvedValue({
+    data: { tiers: [tier(1), tier(2), tier(3)] },
   });
 }
 
@@ -178,7 +173,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb reassigns a golfer via the "Move to tier" select and saves the full desired state', async () => {
     seed();
-    adminReplaceGolfTierAssignmentsMock.mockResolvedValue({ data: null });
+    replaceEventTierAssignmentsMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.selectOptions(
@@ -192,7 +187,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-board-save'));
 
     await waitFor(() =>
-      expect(adminReplaceGolfTierAssignmentsMock).toHaveBeenCalledWith(
+      expect(replaceEventTierAssignmentsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: {
@@ -208,7 +203,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb reorders within a tier with the up button', async () => {
     seed();
-    adminReplaceGolfTierAssignmentsMock.mockResolvedValue({ data: null });
+    replaceEventTierAssignmentsMock.mockResolvedValue({ data: null });
     renderPage();
 
     // sep-2 is second in tier-1; move it up.
@@ -216,7 +211,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-board-save'));
 
     await waitFor(() =>
-      expect(adminReplaceGolfTierAssignmentsMock).toHaveBeenCalledWith(
+      expect(replaceEventTierAssignmentsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           body: {
             assignments: [
@@ -231,7 +226,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb edits a price inline and saves it via the field bulk-patch', async () => {
     seed();
-    adminUpdateGolfFieldEntriesMock.mockResolvedValue({ data: { entries: [] } });
+    updateEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     const priceInput = await screen.findByTestId('root-admin-golf-tier-price-sep-1');
@@ -240,35 +235,25 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-board-save'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfFieldEntriesMock).toHaveBeenCalledWith(
+      expect(updateEventParticipantsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { entries: [{ sportEventParticipantId: 'sep-1', price: 12000 }] },
+          body: { participants: [{ sportEventParticipantId: 'sep-1', price: 12000 }] },
         }),
       ),
     );
   });
 
   it('pool-master-z3l renders an empty price input (not "null") for an unpriced golfer', async () => {
-    adminGetGolfTournamentFieldMock.mockResolvedValue({
-      data: { entries: [fieldEntry('sep-1', 'Rory', null), fieldEntry('sep-2', 'Scottie', null)] },
-    });
-    adminGetGolfTournamentTiersMock.mockResolvedValue({
+    listEventParticipantsMock.mockResolvedValue({
       data: {
-        tiers: [
-          {
-            tierKey: 'tier-1',
-            label: 'Tier 1',
-            tierNumber: 1,
-            defaultPickCount: 1,
-            assignments: [
-              { sportEventParticipantId: 'sep-1', participantId: 'p-sep-1', tierOrderIndex: 0, price: null },
-            ],
-          },
-          { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1, assignments: [] },
+        participants: [
+          fieldEntry('sep-1', 'Rory', null, 'tier-id-1', 0),
+          fieldEntry('sep-2', 'Scottie', null),
         ],
       },
     });
+    listEventTiersMock.mockResolvedValue({ data: { tiers: [tier(1), tier(2)] } });
     renderPage();
 
     const priceInput = await screen.findByTestId('root-admin-golf-tier-price-sep-1');
@@ -279,19 +264,19 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     expect(screen.queryByTestId('root-admin-golf-tier-board-dirty-bar')).not.toBeInTheDocument();
   });
 
-  it('pool-master-dyb auto-assigns tiers from world rank behind a confirmation', async () => {
+  it('pool-master-dyb auto-assigns tiers from ranking behind a confirmation', async () => {
     seed();
-    adminAutoAssignGolfTiersMock.mockResolvedValue({ data: null });
+    autoAssignEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-rank'));
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
-      expect(adminAutoAssignGolfTiersMock).toHaveBeenCalledWith(
+      expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { source: 'WORLD_RANK' },
+          body: { source: 'RANKING' },
         }),
       ),
     );
@@ -299,14 +284,14 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb auto-assigns prices with a validated min/max range', async () => {
     seed();
-    adminAutoAssignGolfPricesMock.mockResolvedValue({ data: null });
+    autoAssignEventPricesMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-tier-auto-prices'));
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-prices-confirm'));
 
     await waitFor(() =>
-      expect(adminAutoAssignGolfPricesMock).toHaveBeenCalledWith(
+      expect(autoAssignEventPricesMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: { minPrice: 1000, maxPrice: 10000 },
@@ -317,7 +302,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb deletes a tier, reassigning its golfers to another tier', async () => {
     seed();
-    adminReplaceGolfTournamentTiersMock.mockResolvedValue({ data: null });
+    replaceEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-tier-def-delete-tier-1'));
@@ -326,7 +311,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-delete-confirm'));
 
     await waitFor(() =>
-      expect(adminReplaceGolfTournamentTiersMock).toHaveBeenCalledWith(
+      expect(replaceEventTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: {
@@ -358,7 +343,7 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
 
   it('pool-master-dyb keeps an in-progress board edit across an identical refetch, and reseeds on a real server change (form-state-hazard)', async () => {
     seed();
-    adminAutoAssignGolfTiersMock.mockResolvedValue({ data: null });
+    autoAssignEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     // Dirty the board.
@@ -371,34 +356,19 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
     // An unrelated action refetches tiers with IDENTICAL data -> edit survives.
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-rank'));
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-auto-tiers-confirm'));
-    await waitFor(() => expect(adminAutoAssignGolfTiersMock).toHaveBeenCalled());
+    await waitFor(() => expect(autoAssignEventTiersMock).toHaveBeenCalled());
     expect(screen.getByTestId('root-admin-golf-tier-board-dirty-bar')).toBeInTheDocument();
     const tier2 = screen.getByTestId('root-admin-golf-tier-column-tier-2');
     expect(within(tier2).getByText('Rory')).toBeInTheDocument();
 
     // Now the server actually changes (sep-1 landed in tier-2) -> board reseeds, dirty clears.
-    adminGetGolfTournamentTiersMock.mockResolvedValue({
+    // #236: the change arrives on the field's valuations.
+    listEventParticipantsMock.mockResolvedValue({
       data: {
-        tiers: [
-          {
-            tierKey: 'tier-1',
-            label: 'Tier 1',
-            tierNumber: 1,
-            defaultPickCount: 1,
-            assignments: [
-              { sportEventParticipantId: 'sep-2', participantId: 'p-sep-2', tierOrderIndex: 0, price: 9800 },
-            ],
-          },
-          {
-            tierKey: 'tier-2',
-            label: 'Tier 2',
-            tierNumber: 2,
-            defaultPickCount: 1,
-            assignments: [
-              { sportEventParticipantId: 'sep-1', participantId: 'p-sep-1', tierOrderIndex: 0, price: 9000 },
-            ],
-          },
-          { tierKey: 'tier-3', label: 'Tier 3', tierNumber: 3, defaultPickCount: 1, assignments: [] },
+        participants: [
+          fieldEntry('sep-1', 'Rory', 9000, 'tier-id-2', 0),
+          fieldEntry('sep-2', 'Scottie', 9800, 'tier-id-1', 0),
+          fieldEntry('sep-3', 'Jon', 8500),
         ],
       },
     });
@@ -413,24 +383,24 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
   });
 
   it('pool-master-dyb adds a tier without colliding with a sparse existing key set', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({ data: { tournament: tournament() } });
-    adminGetGolfTournamentFieldMock.mockResolvedValue({ data: { entries: [] } });
-    adminGetGolfTournamentTiersMock.mockResolvedValue({
+    getEventMock.mockResolvedValue({ data: { event: tournament() } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    listEventTiersMock.mockResolvedValue({
       data: {
         tiers: [
-          { tierKey: 'tier-2', label: 'Tier A', tierNumber: 1, defaultPickCount: 1, assignments: [] },
-          { tierKey: 'tier-3', label: 'Tier B', tierNumber: 2, defaultPickCount: 1, assignments: [] },
+          tier(2, 'Tier A', 1),
+          tier(3, 'Tier B', 2),
         ],
       },
     });
-    adminReplaceGolfTournamentTiersMock.mockResolvedValue({ data: null });
+    replaceEventTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-tier-def-add'));
     await userEvent.click(screen.getByTestId('root-admin-golf-tier-def-save'));
 
     await waitFor(() =>
-      expect(adminReplaceGolfTournamentTiersMock).toHaveBeenCalledWith(
+      expect(replaceEventTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({
           body: {
             tiers: [
@@ -446,9 +416,9 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
   });
 
   it('pool-master-dyb surfaces the tiers load error', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({ data: { tournament: tournament() } });
-    adminGetGolfTournamentFieldMock.mockResolvedValue({ data: { entries: [] } });
-    adminGetGolfTournamentTiersMock.mockResolvedValue({
+    getEventMock.mockResolvedValue({ data: { event: tournament() } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    listEventTiersMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Tiers index offline' },
       response: { status: 500 },
     });

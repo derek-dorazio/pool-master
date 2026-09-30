@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { adminSeedGolfTournamentField } from '@/lib/api';
+import { seedEventParticipants } from '@/lib/api';
 import { Alert, Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminSeedGolfTournamentFieldResponses } from '@/lib/api';
+import type { SeedSportEventParticipantsResponse } from '@/lib/api';
 
-type SeedResult = AdminSeedGolfTournamentFieldResponses[200];
+type SeedResult = SeedSportEventParticipantsResponse;
 
 /**
  * plans/124 §6.3 Field editor header — "Seed field from league roster": copies
  * the tour's current roster into the field and derives seedNumber / oddsToWin
- * from world ranking (§4.7). Always available; golfers already in the field are
+ * from the tour ranking (§4.7). Always available; golfers already in the field are
  * skipped.
  */
 export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
@@ -24,7 +24,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
 
   const seedMutation = useInvalidatingMutation({
     mutationFn: async (): Promise<SeedResult> => {
-      const response = await adminSeedGolfTournamentField({ path: { eventId } });
+      const response = await seedEventParticipants({ path: { eventId } });
       if (!response.data) {
         throwApiError(response.error, 'Seed response is missing data.');
       }
@@ -77,7 +77,7 @@ export function GolfFieldSeedAction({ eventId }: { eventId: string }) {
       <ConfirmationModal
         confirmLabel="Seed field"
         confirmTestId="root-admin-golf-field-seed-confirm"
-        description="Copies the tour's current roster into this tournament's field and derives seed numbers and odds-to-win from each golfer's world ranking. Golfers already in the field are left untouched."
+        description="Copies the tour's current roster into this tournament's field and derives seed numbers and odds-to-win from each golfer's tour ranking. Golfers already in the field are left untouched."
         errorMessage={
           seedMutation.isError
             ? extractErrorMessage(seedMutation.error, {

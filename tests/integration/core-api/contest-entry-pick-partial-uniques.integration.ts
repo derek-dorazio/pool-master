@@ -92,6 +92,7 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
     data: {
       name: `Partial Uniques Sport ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
   });
   const sportEvent = await prisma.sportEvent.create({

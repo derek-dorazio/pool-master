@@ -1,16 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminUpdateGolfSeason } from '@/lib/api';
+import { updateSeason } from '@/lib/api';
 import { FormField, FormModal, Input } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfSeasonResponses } from '@/lib/api';
+import type { SeasonDto } from '@/lib/api';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import { throwApiError } from '@/lib/errors';
 
-type GolfSeason = AdminGetGolfSeasonResponses[200]['season'];
 
 const editSeasonSchema = z.object({
   name: z.string().trim().min(1, 'Season name is required'),
@@ -20,7 +19,7 @@ const editSeasonSchema = z.object({
 
 type EditSeasonValues = z.infer<typeof editSeasonSchema>;
 
-function toDefaults(season: GolfSeason): EditSeasonValues {
+function toDefaults(season: SeasonDto): EditSeasonValues {
   return {
     name: season.name,
     startDate: season.startDate.slice(0, 10),
@@ -40,7 +39,7 @@ export function GolfSeasonEditModal({
   seasonId,
   onClose,
 }: {
-  season: GolfSeason;
+  season: SeasonDto;
   seasonId: string;
   onClose: () => void;
 }) {
@@ -56,7 +55,7 @@ export function GolfSeasonEditModal({
 
   const editMutation = useInvalidatingMutation({
     mutationFn: async (values: EditSeasonValues) => {
-      const response = await adminUpdateGolfSeason({
+      const response = await updateSeason({
         path: { seasonId },
         body: {
           name: values.name,

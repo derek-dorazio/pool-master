@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfRoundScores, adminGetGolfTournament, adminGetGolfTournamentField, adminGetGolfTournamentRounds } from '@/lib/api';
+import { listEventRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -11,47 +11,32 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfRoundScoresResponses, AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentRoundsResponses } from '@/lib/api';
+import type { SportEventRoundDto } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
+  golfRoundScoreRows,
   golfTournamentHasScoreSync,
   isAdminManagedGolfTournament,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
 import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
 import { GolfRoundScoreUploadCard } from './golf-round-score-upload-card';
-
-type GolfRound = AdminGetGolfTournamentRoundsResponses[200]['rounds'][number];
-type ScoreRow = AdminGetGolfRoundScoresResponses[200]['rows'][number];
-type FieldEntry =
-  AdminGetGolfTournamentFieldResponses[200]['entries'][number];
+import { useGolfFieldQuery, useGolfTournamentQuery } from './use-golf-tournament';
 
 /**
  * plans/124 §6.3 — /manage/golf/tournaments/:eventId/scores. Owns the tournament
- * / rounds / field / round-score queries and the round selector; bulk load and
+ * / rounds / field queries and the round selector; bulk load and
  * corrections are each their own component.
  */
 export function RootAdminGolfTournamentScoresPage() {
   const { eventId = '' } = useParams<{ eventId: string }>();
   const [round, setRound] = useState(1);
 
-  const tournamentQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournament(eventId),
-    queryFn: async (): Promise<AdminGolfTournamentDetail> => {
-      const response = await adminGetGolfTournament({ path: { eventId } });
-      if (!response.data?.tournament) {
-        throwApiError(response.error, 'Golf tournament response is missing data.');
-      }
-      return response.data.tournament;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  const tournamentQuery = useGolfTournamentQuery(eventId);
 
   const roundsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.rounds(eventId),
-    queryFn: async (): Promise<GolfRound[]> => {
-      const response = await adminGetGolfTournamentRounds({ path: { eventId } });
+    queryFn: async (): Promise<SportEventRoundDto[]> => {
+      const response = await listEventRounds({ path: { eventId } });
       if (!response.data?.rounds) {
         throwApiError(response.error, 'Golf tournament rounds response is missing data.');
       }
@@ -61,31 +46,9 @@ export function RootAdminGolfTournamentScoresPage() {
     retry: false,
   });
 
-  const fieldQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.field(eventId),
-    queryFn: async (): Promise<FieldEntry[]> => {
-      const response = await adminGetGolfTournamentField({ path: { eventId } });
-      if (!response.data?.entries) {
-        throwApiError(response.error, 'Golf tournament field response is missing data.');
-      }
-      return response.data.entries;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
-
-  const scoresQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.roundScores(eventId, round),
-    queryFn: async (): Promise<ScoreRow[]> => {
-      const response = await adminGetGolfRoundScores({ path: { eventId, round } });
-      if (!response.data?.rows) {
-        throwApiError(response.error, 'Golf round scores response is missing data.');
-      }
-      return response.data.rows;
-    },
-    enabled: eventId !== '',
-    retry: false,
-  });
+  // #236: the field carries each golfer's per-round golf results, so one read serves
+  // the CSV template and the chosen round's corrections.
+  const fieldQuery = useGolfFieldQuery(eventId);
 
   const tournament = tournamentQuery.data;
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
@@ -108,8 +71,16 @@ export function RootAdminGolfTournamentScoresPage() {
   }, [roundsQuery.data, tournament?.rounds]);
 
   const fieldPlayers = useMemo(
-    () => (fieldQuery.data ?? []).map((entry) => ({ playerName: entry.participantName })),
+    () => (fieldQuery.data ?? []).map((entry) => ({
+        externalId: entry.participant.externalId,
+        playerName: entry.participant.name,
+      })),
     [fieldQuery.data],
+  );
+
+  const roundScoreRows = useMemo(
+    () => golfRoundScoreRows(fieldQuery.data ?? [], round),
+    [fieldQuery.data, round],
   );
 
   const pageState = tournamentQuery.isLoading
@@ -200,15 +171,15 @@ export function RootAdminGolfTournamentScoresPage() {
                 eventId={eventId}
                 readOnly={readOnly}
                 round={round}
-                rows={scoresQuery.data ?? []}
+                rows={roundScoreRows}
                 rowsError={
-                  scoresQuery.isError
-                    ? extractErrorMessage(scoresQuery.error, {
+                  fieldQuery.isError
+                    ? extractErrorMessage(fieldQuery.error, {
                         fallback: 'We could not load this round’s scores.',
                       })
                     : null
                 }
-                rowsLoading={scoresQuery.isLoading}
+                rowsLoading={fieldQuery.isLoading}
               />
             </>
           ) : null}

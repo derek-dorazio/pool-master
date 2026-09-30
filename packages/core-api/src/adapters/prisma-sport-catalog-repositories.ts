@@ -1,7 +1,8 @@
 /**
- * Prisma adapters for the cross-sport catalog and event-core ports (#235):
- * Sport, SportLeague, Season, ParticipantLeagueAffiliation, SportEvent,
- * SportEventRound, and the core SportEventParticipantRound / Standing rows.
+ * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
+ * Sport, SportLeague, Season, ParticipantLeagueAffiliation, SportEvent, LeagueEvent,
+ * SportEventRound, SportEventParticipant, SportEventTier,
+ * SportEventParticipantValuation, and the core SportEventParticipantRound / Standing rows.
  *
  * Sport extension rows (the golf round and standing tables) are not read here —
  * a core row never carries a sport particular.
@@ -9,22 +10,37 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
+  LeagueEventRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
+  PriceAssignment,
   SeasonFilters,
   SeasonRepository,
   SeasonUpdate,
+  SportEventCreate,
   SportEventFilters,
+  SportEventParticipantCreate,
+  SportEventParticipantFieldUpdate,
+  SportEventParticipantPatch,
+  SportEventParticipantRepository,
   SportEventParticipantRoundRepository,
+  SportEventParticipantValuationRepository,
   SportEventParticipantStandingRepository,
   SportEventRepository,
   SportEventRoundRepository,
+  SportEventRoundSchedule,
+  SportEventTierDefinition,
+  SportEventTierRepository,
+  SportEventUpdate,
   SportLeagueFilters,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportRepository,
+  TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
+  LeagueEvent,
+  ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
   ParticipantType,
   Season,
@@ -32,13 +48,17 @@ import type {
   SportCategory,
   SportConfig,
   SportEvent,
+  SportEventParticipant,
   SportEventParticipantRound,
   SportEventParticipantStanding,
+  SportEventParticipantValuation,
   SportEventRound,
   SportEventStatus,
   SportEventSyncScope,
+  SportEventTier,
   SportLeague,
   TournamentFormat,
+  ValuationSource,
 } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
@@ -231,16 +251,83 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return row ? toSportEvent(row) : null;
   }
 
+  async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
+    const row = await this.prisma.sportEvent.findFirst({ where: { providerId, externalId } });
+    return row ? toSportEvent(row) : null;
+  }
+
   async findAll(filters: SportEventFilters): Promise<SportEvent[]> {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
         ...(filters.status !== undefined && { status: filters.status }),
         ...(filters.seasonId !== undefined && { seasonId: filters.seasonId }),
+        ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
       },
       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
     });
     return rows.map(toSportEvent);
+  }
+
+  async create(input: SportEventCreate): Promise<SportEvent> {
+    return toSportEvent(await this.prisma.sportEvent.create({
+      data: {
+        externalId: input.externalId,
+        providerId: input.providerId,
+        sport: input.sport,
+        name: input.name,
+        venue: input.venue ?? null,
+        location: input.location ?? null,
+        startDate: input.startDate,
+        endDate: input.endDate ?? null,
+        status: input.status,
+        rounds: input.rounds ?? null,
+        releaseAt: input.releaseAt,
+        fieldLocksAt: input.fieldLocksAt,
+        seasonId: input.seasonId ?? null,
+        leagueEventId: input.leagueEventId ?? null,
+        syncScope: input.syncScope,
+        autoLifecycleEnabled: input.autoLifecycleEnabled,
+      },
+    }));
+  }
+
+  async update(id: string, updates: SportEventUpdate): Promise<SportEvent> {
+    return toSportEvent(await this.prisma.sportEvent.update({
+      where: { id },
+      data: {
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.venue !== undefined && { venue: updates.venue }),
+        ...(updates.location !== undefined && { location: updates.location }),
+        ...(updates.startDate !== undefined && { startDate: updates.startDate }),
+        ...(updates.endDate !== undefined && { endDate: updates.endDate }),
+        ...(updates.rounds !== undefined && { rounds: updates.rounds }),
+        ...(updates.releaseAt !== undefined && { releaseAt: updates.releaseAt }),
+        ...(updates.fieldLocksAt !== undefined && { fieldLocksAt: updates.fieldLocksAt }),
+        ...(updates.autoLifecycleEnabled !== undefined && { autoLifecycleEnabled: updates.autoLifecycleEnabled }),
+        ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.providerId !== undefined && { providerId: updates.providerId }),
+        ...(updates.externalId !== undefined && { externalId: updates.externalId }),
+        ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
+      },
+    }));
+  }
+
+  async delete(id: string): Promise<void> {
+    // Every child holds a RESTRICT foreign key, so they go first, extension rows before
+    // their core rows. Deleting only the event row failed for any event with a round.
+    const field = { sportEventParticipant: { sportEventId: id } };
+    await this.prisma.$transaction([
+      this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
+      this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
+      this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
+      this.prisma.sportEventParticipantStanding.deleteMany({ where: field }),
+      this.prisma.sportEventParticipantValuation.deleteMany({ where: field }),
+      this.prisma.sportEventParticipant.deleteMany({ where: { sportEventId: id } }),
+      this.prisma.sportEventRound.deleteMany({ where: { sportEventId: id } }),
+      this.prisma.sportEventTier.deleteMany({ where: { sportEventId: id } }),
+      this.prisma.sportEvent.delete({ where: { id } }),
+    ]);
   }
 
   async countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
@@ -250,6 +337,24 @@ export class PrismaSportEventRepository implements SportEventRepository {
       _count: { _all: true },
     });
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.sportEventTier.groupBy({
+      by: ['sportEventId'],
+      where: { sportEventId: { in: [...sportEventIds] } },
+      _count: { _all: true },
+    });
+    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+  }
+
+  async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
+    const groups = await this.prisma.contest.groupBy({
+      by: ['sportEventId'],
+      where: { sportEventId: { in: [...sportEventIds] } },
+      _count: { _all: true },
+    });
+    return countMap(sportEventIds, groups.flatMap((group) => (group.sportEventId ? [[group.sportEventId, group._count._all] as [string, number]] : [])));
   }
 
   async countBySeasons(seasonIds: readonly string[]): Promise<Map<string, number>> {
@@ -262,6 +367,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 }
 
+export class PrismaLeagueEventRepository implements LeagueEventRepository {
+  constructor(private readonly prisma: Db) {}
+
+  async findOrCreate(sportLeagueId: string, name: string): Promise<LeagueEvent> {
+    const row = await this.prisma.leagueEvent.upsert({
+      where: { sportLeagueId_name: { sportLeagueId, name } },
+      create: { sportLeagueId, name },
+      update: {},
+    });
+    return { id: row.id, sportLeagueId: row.sportLeagueId, name: row.name, createdAt: row.createdAt, updatedAt: row.updatedAt };
+  }
+}
+
 export class PrismaSportEventRoundRepository implements SportEventRoundRepository {
   constructor(private readonly prisma: Db) {}
 
@@ -270,14 +388,218 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       where: { sportEventId },
       orderBy: { roundNumber: 'asc' },
     });
-    return rows.map((row) => ({
-      id: row.id,
-      sportEventId: row.sportEventId,
-      roundNumber: row.roundNumber,
-      scheduledDate: row.scheduledDate,
-      scheduledEndAt: row.scheduledEndAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+    return rows.map(toSportEventRound);
+  }
+
+  async createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+    await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.create({
+      data: {
+        sportEventId,
+        roundNumber: round.roundNumber,
+        scheduledDate: round.scheduledDate,
+        scheduledEndAt: round.scheduledEndAt ?? null,
+      },
+    })));
+  }
+
+  async reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+    await this.prisma.$transaction(rounds.map((round) => this.prisma.sportEventRound.update({
+      where: { sportEventId_roundNumber: { sportEventId, roundNumber: round.roundNumber } },
+      data: {
+        scheduledDate: round.scheduledDate,
+        ...(round.scheduledEndAt !== undefined && { scheduledEndAt: round.scheduledEndAt }),
+      },
+    })));
+  }
+
+  async findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound> {
+    return toSportEventRound(await this.prisma.sportEventRound.upsert({
+      where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
+      create: { sportEventId, roundNumber, scheduledDate: new Date() },
+      update: {},
+    }));
+  }
+}
+
+export class PrismaSportEventParticipantRepository implements SportEventParticipantRepository {
+  constructor(private readonly prisma: Db) {}
+
+  async findById(id: string): Promise<SportEventParticipant | null> {
+    const row = await this.prisma.sportEventParticipant.findUnique({ where: { id } });
+    return row ? toSportEventParticipant(row) : null;
+  }
+
+  async findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]> {
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId },
+      orderBy: [{ seedNumber: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
+    });
+    return rows.map(toSportEventParticipant);
+  }
+
+  async create(
+    participant: Omit<SportEventParticipant, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<SportEventParticipant> {
+    return toSportEventParticipant(await this.prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: participant.sportEventId,
+        participantId: participant.participantId,
+        isActive: participant.isActive,
+        inactiveReason: participant.inactiveReason,
+        ranking: participant.ranking,
+        oddsToWin: participant.oddsToWin,
+        seedNumber: participant.seedNumber,
+        metadata: participant.metadata as object,
+      },
+    }));
+  }
+
+  async update(id: string, updates: Partial<SportEventParticipant>): Promise<SportEventParticipant> {
+    return toSportEventParticipant(await this.prisma.sportEventParticipant.update({
+      where: { id },
+      data: {
+        ...fieldPatch(updates),
+        ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
+      },
+    }));
+  }
+
+  async createMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
+    await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.create({
+      data: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
+    })));
+  }
+
+  async upsertMany(sportEventId: string, rows: readonly SportEventParticipantCreate[]): Promise<void> {
+    await this.prisma.$transaction(rows.map((row) => this.prisma.sportEventParticipant.upsert({
+      where: { sportEventId_participantId: { sportEventId, participantId: row.participantId } },
+      create: { sportEventId, participantId: row.participantId, ...fieldPatch(row) },
+      update: fieldPatch(row),
+    })));
+  }
+
+  async updateMany(entries: readonly SportEventParticipantFieldUpdate[]): Promise<void> {
+    await this.prisma.$transaction(entries.map((entry) => this.prisma.sportEventParticipant.update({
+      where: { id: entry.id },
+      data: {
+        ...fieldPatch(entry.updates),
+        ...(entry.price !== undefined && {
+          valuation: {
+            upsert: {
+              create: { price: entry.price, priceAssignedSource: 'MANUAL' },
+              update: { price: entry.price, priceAssignedSource: 'MANUAL' },
+            },
+          },
+        }),
+      },
+    })));
+  }
+
+  async delete(id: string): Promise<void> {
+    const own = { sportEventParticipantId: id };
+    await this.prisma.$transaction([
+      this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
+      this.prisma.sportEventParticipantRound.deleteMany({ where: own }),
+      this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: own } }),
+      this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
+      this.prisma.sportEventParticipantValuation.deleteMany({ where: own }),
+      this.prisma.sportEventParticipant.delete({ where: { id } }),
+    ]);
+  }
+
+  async countPicks(id: string): Promise<number> {
+    return this.prisma.contestEntryPick.count({ where: { sportEventParticipantId: id } });
+  }
+}
+
+export class PrismaSportEventTierRepository implements SportEventTierRepository {
+  constructor(private readonly prisma: Db) {}
+
+  async findBySportEvent(sportEventId: string): Promise<SportEventTier[]> {
+    const rows = await this.prisma.sportEventTier.findMany({ where: { sportEventId }, orderBy: { tierNumber: 'asc' } });
+    return rows.map(toTier);
+  }
+
+  async createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
+    await this.prisma.$transaction(tiers.map((tier) => this.prisma.sportEventTier.create({
+      data: { sportEventId, ...tierColumns(tier) },
+    })));
+  }
+
+  async replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void> {
+    const keep = new Set(tiers.map((tier) => tier.tierKey));
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.sportEventTier.findMany({ where: { sportEventId } });
+      // Park every current tier number out of range first, so two tiers swapping numbers
+      // never collide on the (sportEventId, tierNumber) unique index.
+      for (const tier of existing) {
+        await tx.sportEventTier.update({ where: { id: tier.id }, data: { tierNumber: -(tier.tierNumber + 1) } });
+      }
+      for (const tier of tiers) {
+        await tx.sportEventTier.upsert({
+          where: { sportEventId_tierKey: { sportEventId, tierKey: tier.tierKey } },
+          create: { sportEventId, ...tierColumns(tier) },
+          update: { label: tier.label, tierNumber: tier.tierNumber, defaultPickCount: tier.defaultPickCount },
+        });
+      }
+      const removedIds = existing.filter((tier) => !keep.has(tier.tierKey)).map((tier) => tier.id);
+      if (removedIds.length === 0) {
+        return;
+      }
+      const target = reassignTo
+        ? await tx.sportEventTier.findUniqueOrThrow({ where: { sportEventId_tierKey: { sportEventId, tierKey: reassignTo } } })
+        : null;
+      await tx.sportEventParticipantValuation.updateMany({
+        where: { sportEventTierId: { in: removedIds } },
+        data: { sportEventTierId: target?.id ?? null, tierOrderIndex: null },
+      });
+      await tx.sportEventTier.deleteMany({ where: { id: { in: removedIds } } });
+    });
+  }
+
+  async countValuations(sportEventId: string): Promise<Map<string, number>> {
+    const tiers = await this.prisma.sportEventTier.findMany({
+      where: { sportEventId },
+      select: { id: true, _count: { select: { valuations: true } } },
+    });
+    return new Map(tiers.map((tier) => [tier.id, tier._count.valuations]));
+  }
+}
+
+export class PrismaSportEventParticipantValuationRepository implements SportEventParticipantValuationRepository {
+  constructor(private readonly prisma: Db) {}
+
+  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]> {
+    const rows = await this.prisma.sportEventParticipantValuation.findMany({
+      where: { sportEventParticipant: { sportEventId } },
+      orderBy: [{ sportEventTier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
+    });
+    return rows.map(toValuation);
+  }
+
+  async assignTiers(assignments: readonly TierAssignment[]): Promise<void> {
+    await this.prisma.$transaction(assignments.map((assignment) => {
+      const tier = {
+        sportEventTierId: assignment.sportEventTierId,
+        tierOrderIndex: assignment.tierOrderIndex,
+        tierAssignedSource: assignment.source,
+      };
+      return this.prisma.sportEventParticipantValuation.upsert({
+        where: { sportEventParticipantId: assignment.sportEventParticipantId },
+        create: { sportEventParticipantId: assignment.sportEventParticipantId, ...tier },
+        update: tier,
+      });
+    }));
+  }
+
+  async assignPrices(assignments: readonly PriceAssignment[]): Promise<void> {
+    await this.prisma.$transaction(assignments.map((assignment) => {
+      const price = { price: assignment.price, priceAssignedSource: assignment.source };
+      return this.prisma.sportEventParticipantValuation.upsert({
+        where: { sportEventParticipantId: assignment.sportEventParticipantId },
+        create: { sportEventParticipantId: assignment.sportEventParticipantId, ...price },
+        update: price,
+      });
     }));
   }
 }
@@ -286,6 +608,15 @@ const PARTICIPANT_ROUND_INCLUDE = { sportEventRound: { select: { roundNumber: tr
 
 export class PrismaSportEventParticipantRoundRepository implements SportEventParticipantRoundRepository {
   constructor(private readonly prisma: Db) {}
+
+  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantRound[]> {
+    const rows = await this.prisma.sportEventParticipantRound.findMany({
+      where: { sportEventParticipant: { sportEventId } },
+      include: PARTICIPANT_ROUND_INCLUDE,
+      orderBy: [{ sportEventParticipantId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }],
+    });
+    return rows.map(toParticipantRound);
+  }
 
   async findBySportEventParticipant(sportEventParticipantId: string): Promise<SportEventParticipantRound[]> {
     const rows = await this.prisma.sportEventParticipantRound.findMany({
@@ -435,6 +766,73 @@ function toStanding(row: Prisma.SportEventParticipantStandingGetPayload<object>)
     status: row.status,
     asOf: row.asOf,
     currentRound: row.currentRound,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function toSportEventRound(row: Prisma.SportEventRoundGetPayload<object>): SportEventRound {
+  return {
+    id: row.id,
+    sportEventId: row.sportEventId,
+    roundNumber: row.roundNumber,
+    scheduledDate: row.scheduledDate,
+    scheduledEndAt: row.scheduledEndAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+/** The field columns a patch sets; undefined leaves one alone, null clears it. */
+function fieldPatch(patch: SportEventParticipantPatch) {
+  return {
+    ...(patch.isActive !== undefined && { isActive: patch.isActive }),
+    ...(patch.inactiveReason !== undefined && { inactiveReason: patch.inactiveReason }),
+    ...(patch.ranking !== undefined && { ranking: patch.ranking }),
+    ...(patch.oddsToWin !== undefined && { oddsToWin: patch.oddsToWin }),
+    ...(patch.seedNumber !== undefined && { seedNumber: patch.seedNumber }),
+  };
+}
+
+export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayload<object>): SportEventParticipant {
+  return {
+    id: row.id,
+    sportEventId: row.sportEventId,
+    participantId: row.participantId,
+    isActive: row.isActive,
+    inactiveReason: (row.inactiveReason ?? undefined) as ParticipantInactiveReason | undefined,
+    ranking: row.ranking ?? undefined,
+    oddsToWin: row.oddsToWin === null ? undefined : Number(row.oddsToWin),
+    seedNumber: row.seedNumber ?? undefined,
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function tierColumns(tier: SportEventTierDefinition) {
+  return { tierKey: tier.tierKey, label: tier.label, tierNumber: tier.tierNumber, defaultPickCount: tier.defaultPickCount };
+}
+
+function toTier(row: Prisma.SportEventTierGetPayload<object>): SportEventTier {
+  return {
+    id: row.id,
+    sportEventId: row.sportEventId,
+    ...tierColumns(row),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function toValuation(row: Prisma.SportEventParticipantValuationGetPayload<object>): SportEventParticipantValuation {
+  return {
+    id: row.id,
+    sportEventParticipantId: row.sportEventParticipantId,
+    sportEventTierId: row.sportEventTierId,
+    tierOrderIndex: row.tierOrderIndex,
+    tierAssignedSource: row.tierAssignedSource as ValuationSource | null,
+    price: row.price === null ? null : Number(row.price),
+    priceAssignedSource: row.priceAssignedSource as ValuationSource | null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

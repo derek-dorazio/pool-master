@@ -146,6 +146,7 @@ async function seedImportedGolfEvent(options: {
     data: {
       name: `ManagedContestSport-${randomUUID().slice(0, 8)}`,
       participantType: ParticipantType.INDIVIDUAL,
+      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
   });
   createdSportIds.push(sport.id);
@@ -937,6 +938,7 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `EntryDetailSport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     createdSportIds.push(sport.id);
@@ -1186,6 +1188,7 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `FunctionalContestSport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     createdSportIds.push(sport.id);
@@ -1387,6 +1390,7 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `VisibilitySport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     createdSportIds.push(sport.id);
@@ -1573,6 +1577,7 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `ListVisibilitySport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
     createdSportIds.push(sport.id);

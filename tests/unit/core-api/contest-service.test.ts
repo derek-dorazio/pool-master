@@ -1589,7 +1589,7 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
-    it('pool-master-piv falls back to golf-tier-service for the email tier grouping when the contest has no typed tierConfig', async () => {
+    it('pool-master-piv falls back to SportEventTierService for the email tier grouping when the contest has no typed tierConfig', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1679,22 +1679,23 @@ describe('ContestService', () => {
           groupBy: jest.fn().mockResolvedValue([]),
           findMany: jest.fn().mockResolvedValue([]),
         },
+        // The event's tiers, valuations and field, as the tier service's ports read them.
+        sportEventTier: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'tier-a', sportEventId: 'event-1', tierKey: 'A', label: 'Tier A', tierNumber: 1, defaultPickCount: 1, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'tier-b', sportEventId: 'event-1', tierKey: 'B', label: 'Tier B', tierNumber: 2, defaultPickCount: 1, createdAt: new Date(), updatedAt: new Date() },
+          ]),
+        },
         sportEventParticipantValuation: {
           findMany: jest.fn().mockResolvedValue([
-            {
-              sportEventParticipantId: 'sport-event-participant-1',
-              tierOrderIndex: 1,
-              price: null,
-              sportEventParticipant: { participantId: 'participant-1' },
-              sportEventTier: { id: 'tier-a', tierKey: 'A', label: 'Tier A', tierNumber: 1 },
-            },
-            {
-              sportEventParticipantId: 'sport-event-participant-2',
-              tierOrderIndex: 1,
-              price: null,
-              sportEventParticipant: { participantId: 'participant-2' },
-              sportEventTier: { id: 'tier-b', tierKey: 'B', label: 'Tier B', tierNumber: 2 },
-            },
+            { id: 'v-1', sportEventParticipantId: 'sport-event-participant-1', sportEventTierId: 'tier-a', tierOrderIndex: 1, price: null, tierAssignedSource: 'MANUAL', priceAssignedSource: null, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'v-2', sportEventParticipantId: 'sport-event-participant-2', sportEventTierId: 'tier-b', tierOrderIndex: 1, price: null, tierAssignedSource: 'MANUAL', priceAssignedSource: null, createdAt: new Date(), updatedAt: new Date() },
+          ]),
+        },
+        sportEventParticipant: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'sport-event-participant-1', sportEventId: 'event-1', participantId: 'participant-1', isActive: true, inactiveReason: null, ranking: null, oddsToWin: null, seedNumber: null, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'sport-event-participant-2', sportEventId: 'event-1', participantId: 'participant-2', isActive: true, inactiveReason: null, ranking: null, oddsToWin: null, seedNumber: null, metadata: {}, createdAt: new Date(), updatedAt: new Date() },
           ]),
         },
         user: {

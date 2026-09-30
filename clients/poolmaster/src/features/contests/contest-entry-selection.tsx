@@ -43,7 +43,7 @@ function getParticipantMetaSummary(participant: SelectionParticipant) {
     parts.push(`Contest rank #${participant.orderIndex}`);
   }
   if (participant.ranking !== undefined && participant.ranking !== null) {
-    parts.push(`World rank #${participant.ranking}`);
+    parts.push(`Ranking #${participant.ranking}`);
   }
   if (participant.price !== undefined && participant.price !== null) {
     parts.push(`${participant.price} salary`);
@@ -261,7 +261,7 @@ export function LockedSelectionGroup({
         <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
           <span>Golfer</span>
           <span className="text-right">Contest rank</span>
-          <span className="text-right">World rank</span>
+          <span className="text-right">Ranking</span>
           <span className="text-right">Status</span>
         </div>
         <div className="divide-y divide-border">

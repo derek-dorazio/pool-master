@@ -1,10 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminCreateGolfLeague, adminListGolfLeagues } from '@/lib/api';
+import { createSportLeague } from '@/lib/api';
 import {
   Button,
   DataGridPage,
@@ -17,12 +16,11 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfLeaguesResponses } from '@/lib/api';
+import type { SportLeagueDto } from '@/lib/api';
+import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 
-type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];
-
-const columnHelper = createColumnHelper<GolfLeague>();
+const columnHelper = createColumnHelper<SportLeagueDto>();
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'Tour name is required'),
@@ -33,7 +31,7 @@ type NewTourValues = z.infer<typeof newTourSchema>;
 
 /**
  * plans/124 §6.3 — /manage/golf/leagues "Tours list". Read-only DataGrid over
- * adminListGolfLeagues plus a "New tour" FormModal; rows link to Tour Home,
+ * the golf sport leagues plus a "New tour" FormModal; rows link to Tour Home,
  * following the app-wide list -> Home pattern.
  */
 export function RootAdminGolfLeagueListPage() {
@@ -44,17 +42,7 @@ export function RootAdminGolfLeagueListPage() {
   });
   const [createOpen, setCreateOpen] = useState(false);
 
-  const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tours,
-    queryFn: async (): Promise<GolfLeague[]> => {
-      const response = await adminListGolfLeagues();
-      if (!response.data?.leagues) {
-        throwApiError(response.error, 'Golf tour list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-    retry: false,
-  });
+  const leaguesQuery = useGolfSportLeaguesQuery();
 
   const form = useForm<NewTourValues>({
     resolver: zodResolver(newTourSchema),
@@ -64,18 +52,19 @@ export function RootAdminGolfLeagueListPage() {
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: NewTourValues) => {
-      const response = await adminCreateGolfLeague({
+      const response = await createSportLeague({
         body: {
+          sport: 'GOLF',
           name: values.name,
           ...(values.matchKeyword?.trim()
             ? { matchKeyword: values.matchKeyword.trim() }
             : {}),
         },
       });
-      if (!response.data?.league) {
+      if (!response.data?.sportLeague) {
         throwApiError(response.error, 'Golf tour creation response is missing data.');
       }
-      return response.data.league;
+      return response.data.sportLeague;
     },
     invalidates: [QueryKeys.rootAdmin.golf.tours],
     onSuccess: () => {
@@ -102,7 +91,7 @@ export function RootAdminGolfLeagueListPage() {
         header: 'Match keyword',
         cell: ({ getValue }) => getValue() || '—',
       }),
-      columnHelper.accessor('rosterSize', {
+      columnHelper.accessor('affiliationCount', {
         header: 'Roster size',
         cell: ({ getValue }) => getValue(),
       }),

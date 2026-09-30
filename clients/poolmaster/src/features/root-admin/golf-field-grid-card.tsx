@@ -1,6 +1,7 @@
+import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { adminUpdateGolfFieldEntries } from '@/lib/api';
+import { updateEventParticipants } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -37,7 +38,7 @@ type FieldGridMeta = {
 };
 
 const NUMERIC_COLUMN_LABEL: Record<GolfFieldNumericKey, string> = {
-  ranking: 'World rank',
+  ranking: 'Ranking',
   oddsToWin: 'Odds',
   seedNumber: 'Seed',
   price: 'Price',
@@ -63,17 +64,17 @@ function numericCell(key: GolfFieldNumericKey) {
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as FieldGridMeta;
       const entry = row.original;
-      const raw = golfFieldCellValue(entry, draft[entry.sportEventParticipantId], key);
+      const raw = golfFieldCellValue(entry, draft[entry.id], key);
       const invalid = golfFieldCellInvalid(raw, key);
       return (
         <div className="max-w-[7rem]">
           <Input
             aria-invalid={invalid || undefined}
-            aria-label={`${NUMERIC_COLUMN_LABEL[key]} for ${entry.participantName}`}
-            data-testid={`root-admin-golf-field-${key}-${entry.sportEventParticipantId}`}
+            aria-label={`${NUMERIC_COLUMN_LABEL[key]} for ${entry.participant.name}`}
+            data-testid={`root-admin-golf-field-${key}-${entry.id}`}
             inputMode={key === 'oddsToWin' ? 'decimal' : 'numeric'}
             onChange={(event) =>
-              patchRowDraft(setDraft, entry.sportEventParticipantId, {
+              patchRowDraft(setDraft, entry.id, {
                 [key]: event.target.value,
               })
             }
@@ -88,14 +89,15 @@ function numericCell(key: GolfFieldNumericKey) {
 }
 
 const fieldColumns = [
-  columnHelper.accessor('participantName', {
+  columnHelper.accessor((entry) => entry.participant.name, {
+    id: 'participantName',
     header: 'Player',
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-medium text-foreground">
-          {row.original.participantName}
+          {row.original.participant.name}
         </span>
-        {row.original.isLeagueRosterMember ? null : (
+        {row.original.affiliatedWithSportLeague ? null : (
           <StatusBadge tone="warning">Guest</StatusBadge>
         )}
       </div>
@@ -107,7 +109,7 @@ const fieldColumns = [
     cell: ({ row, table }) => {
       const { draft, setDraft } = table.options.meta as FieldGridMeta;
       const entry = row.original;
-      const rowDraft = draft[entry.sportEventParticipantId];
+      const rowDraft = draft[entry.id];
       const active = rowDraft?.isActive ?? entry.isActive;
       const reason: GolfFieldInactiveReason =
         rowDraft?.inactiveReason ?? entry.inactiveReason ?? 'WITHDRAWN';
@@ -116,9 +118,9 @@ const fieldColumns = [
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
               checked={active}
-              data-testid={`root-admin-golf-field-active-${entry.sportEventParticipantId}`}
+              data-testid={`root-admin-golf-field-active-${entry.id}`}
               onChange={(event) =>
-                patchRowDraft(setDraft, entry.sportEventParticipantId, {
+                patchRowDraft(setDraft, entry.id, {
                   isActive: event.target.checked,
                 })
               }
@@ -127,10 +129,10 @@ const fieldColumns = [
           </label>
           {active ? null : (
             <Select
-              aria-label={`Withdrawal reason for ${entry.participantName}`}
-              data-testid={`root-admin-golf-field-reason-${entry.sportEventParticipantId}`}
+              aria-label={`Withdrawal reason for ${entry.participant.name}`}
+              data-testid={`root-admin-golf-field-reason-${entry.id}`}
               onChange={(event) =>
-                patchRowDraft(setDraft, entry.sportEventParticipantId, {
+                patchRowDraft(setDraft, entry.id, {
                   inactiveReason: event.target.value as GolfFieldInactiveReason,
                 })
               }
@@ -138,7 +140,7 @@ const fieldColumns = [
             >
               {GOLF_FIELD_INACTIVE_REASONS.map((value) => (
                 <option key={value} value={value}>
-                  {value}
+                  {formatParticipantStatusLabel(value, 'GOLF')}
                 </option>
               ))}
             </Select>
@@ -157,8 +159,8 @@ const fieldColumns = [
 
 /**
  * plans/124 §6.3 — the Field editor grid: per-row draft editing of active state
- * (+ withdrawal reason), world rank, odds, seed, and price, saved in one
- * `adminUpdateGolfFieldEntries` call. Draft holds only edited cells and is
+ * (+ withdrawal reason), ranking, odds, seed, and price, saved in one
+ * `updateEventParticipants` call. Draft holds only edited cells and is
  * cleared on `eventId` change in the render phase (form-state-hazard rule). The
  * patch/validation logic is pure in `golf-field-patch.ts`.
  */
@@ -188,14 +190,14 @@ export function GolfFieldGridCard({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (patches: GolfFieldPatch[]) => {
-      const response = await adminUpdateGolfFieldEntries({
+      const response = await updateEventParticipants({
         path: { eventId },
-        body: { entries: patches },
+        body: { participants: patches },
       });
-      if (!response.data?.entries) {
+      if (!response.data?.participants) {
         throwApiError(response.error, 'Field save response is missing data.');
       }
-      return response.data.entries;
+      return response.data.participants;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.field(eventId),
@@ -257,9 +259,9 @@ export function GolfFieldGridCard({
               ? 'Loading field…'
               : 'No golfers in the field yet. Seed from the league roster or add participants.'
           }
-          getRowId={(entry) => entry.sportEventParticipantId}
+          getRowId={(entry) => entry.id}
           meta={meta}
-          rowTestId={(entry) => `root-admin-golf-field-row-${entry.sportEventParticipantId}`}
+          rowTestId={(entry) => `root-admin-golf-field-row-${entry.id}`}
           tableTestId="root-admin-golf-field-table"
         />
       </div>

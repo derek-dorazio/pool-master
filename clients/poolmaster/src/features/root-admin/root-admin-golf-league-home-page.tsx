@@ -1,19 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfLeagueRoster, adminListGolfLeagues } from '@/lib/api';
+import { listParticipantLeagueAffiliations } from '@/lib/api';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfLeagueRosterResponses, AdminListGolfLeaguesResponses } from '@/lib/api';
+import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GolfLeagueDetailsCard } from './golf-league-details-card';
 import { GolfLeagueRosterGridCard } from './golf-league-roster-grid-card';
 import { GolfLeagueRosterUploadCard } from './golf-league-roster-upload-card';
-
-type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];
-export type GolfLeagueRosterEntry =
-  AdminGetGolfLeagueRosterResponses[200]['entries'][number];
+import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
  * plans/124 §6.3 — /manage/golf/leagues/:leagueId "Tour Home". Owns the tour +
@@ -26,26 +23,16 @@ export function RootAdminGolfLeagueHomePage() {
 
   useManageBreadcrumbOverride('leagues', 'Tours');
 
-  const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tours,
-    queryFn: async (): Promise<GolfLeague[]> => {
-      const response = await adminListGolfLeagues();
-      if (!response.data?.leagues) {
-        throwApiError(response.error, 'Golf tour list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-    retry: false,
-  });
+  const leaguesQuery = useGolfSportLeaguesQuery();
 
   const rosterQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
-    queryFn: async (): Promise<GolfLeagueRosterEntry[]> => {
-      const response = await adminGetGolfLeagueRoster({ path: { leagueId } });
-      if (!response.data?.entries) {
+    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
+      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: leagueId } });
+      if (!response.data?.affiliations) {
         throwApiError(response.error, 'Golf tour roster response is missing data.');
       }
-      return response.data.entries;
+      return response.data.affiliations;
     },
     enabled: leagueId !== '',
     retry: false,

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -46,9 +47,11 @@ function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
 function ParticipantsTable({
   entryId,
   participants,
+  sport,
 }: {
   entryId: string;
   participants: ContestEntryParticipant[];
+  sport: string | null | undefined;
 }) {
   const sorted = sortDetailedParticipants(participants);
 
@@ -79,12 +82,14 @@ function ParticipantsTable({
                 <div className="truncate font-medium text-foreground">{participant.participantName}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
                   {participant.participantStatus
-                    ? `Status: ${participant.participantStatus}`
+                    ? `Status: ${formatParticipantStatusLabel(participant.participantStatus, sport)}`
                     : participant.teamAffiliation ?? participant.position ?? 'Contest participant'}
                 </div>
               </div>
               <span className="text-muted-foreground">
-                {participant.participantStatus ?? 'Active'}
+                {participant.participantStatus
+                  ? formatParticipantStatusLabel(participant.participantStatus, sport)
+                  : 'Active'}
               </span>
               <span className="text-muted-foreground">
                 {participant.teamAffiliation ?? participant.position ?? '—'}
@@ -526,7 +531,7 @@ export function ContestDetailPage() {
                   ) : null}
 
                   {showPicks && entry.participants ? (
-                    <ParticipantsTable entryId={entry.id} participants={entry.participants} />
+                    <ParticipantsTable entryId={entry.id} participants={entry.participants} sport={contest.sport} />
                   ) : null}
 
                   {showHiddenPlaceholder ? (

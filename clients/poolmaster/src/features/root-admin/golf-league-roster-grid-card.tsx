@@ -1,7 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { adminAddGolfLeagueRosterEntry, adminListGolfPlayers, adminRemoveGolfLeagueRosterEntry, adminUpdateGolfLeagueRoster } from '@/lib/api';
+import {
+  createParticipantLeagueAffiliation,
+  deleteParticipantLeagueAffiliation,
+  updateParticipantLeagueAffiliationRankings,
+} from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
@@ -15,17 +18,15 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfPlayersResponses } from '@/lib/api';
-import type { GolfLeagueRosterEntry } from './root-admin-golf-league-home-page';
+import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
+import { useGolfPlayersQuery } from './use-golf-catalog';
 
-type GolfPlayer = AdminListGolfPlayersResponses[200]['players'][number];
-
-const columnHelper = createColumnHelper<GolfLeagueRosterEntry>();
+const columnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>();
 
 type RosterGridMeta = {
   draft: Record<string, string>;
   setDraft: Dispatch<SetStateAction<Record<string, string>>>;
-  onRemove: (entry: GolfLeagueRosterEntry) => void;
+  onRemove: (entry: ParticipantLeagueAffiliationDto) => void;
 };
 
 function isValidRank(raw: string): boolean {
@@ -33,14 +34,16 @@ function isValidRank(raw: string): boolean {
 }
 
 const rosterColumns = [
-  columnHelper.accessor('name', {
+  columnHelper.accessor((entry) => entry.participant.name, {
+    id: 'name',
     header: 'Golfer',
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
   }),
   columnHelper.accessor('ranking', {
-    header: 'World rank',
+    // The ranking the tour keeps for the golfer (#236), not a world ranking.
+    header: 'Ranking',
     cell: ({ row, table }) => {
       const entry = row.original;
       const { draft, setDraft } = table.options.meta as RosterGridMeta;
@@ -54,7 +57,7 @@ const rosterColumns = [
           <Input
             aria-describedby={errorId}
             aria-invalid={invalid || undefined}
-            aria-label={`World rank for ${entry.name}`}
+            aria-label={`Ranking for ${entry.participant.name}`}
             data-testid={`root-admin-golf-league-roster-rank-${entry.participantId}`}
             inputMode="numeric"
             onChange={(event) =>
@@ -75,7 +78,8 @@ const rosterColumns = [
     },
     enableColumnFilter: false,
   }),
-  columnHelper.accessor('status', {
+  columnHelper.accessor((entry) => entry.participant.status, {
+    id: 'status',
     header: 'Status',
     cell: ({ getValue }) => (
       <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'inactive'}>
@@ -105,7 +109,7 @@ const rosterColumns = [
 
 /**
  * plans/124 §6.3 Tour Home — the roster grid the admin maintains week to week.
- * Per-row world-ranking edits collect into a local draft (holding only the
+ * Per-row ranking edits collect into a local draft (holding only the
  * edited cells, never seeded from the query — `rules/react-ui-rules.md` "Server
  * Data Form-State Hazard") and save in one call; an "Add golfer" picker and a
  * per-row remove round out roster membership.
@@ -116,7 +120,7 @@ export function GolfLeagueRosterGridCard({
   rosterError,
   rosterLoading,
 }: {
-  entries: GolfLeagueRosterEntry[];
+  entries: ParticipantLeagueAffiliationDto[];
   leagueId: string;
   rosterError: string | null;
   rosterLoading: boolean;
@@ -130,7 +134,7 @@ export function GolfLeagueRosterGridCard({
   const [addOpen, setAddOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [addSelectedId, setAddSelectedId] = useState<string | null>(null);
-  const [removeTarget, setRemoveTarget] = useState<GolfLeagueRosterEntry | null>(
+  const [removeTarget, setRemoveTarget] = useState<ParticipantLeagueAffiliationDto | null>(
     null,
   );
 
@@ -139,31 +143,24 @@ export function GolfLeagueRosterGridCard({
     setDraft({});
   }
 
-  const playersQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.players,
-    queryFn: async (): Promise<GolfPlayer[]> => {
-      const response = await adminListGolfPlayers();
-      if (!response.data?.players) {
-        throwApiError(response.error, 'Golf player list response is missing data.');
-      }
-      return response.data.players;
-    },
+  const playersQuery = useGolfPlayersQuery({
+    queryKey: QueryKeys.rootAdmin.golf.playerList('ACTIVE'),
+    status: 'ACTIVE',
     enabled: addOpen,
-    retry: false,
   });
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (
       rows: Array<{ participantId: string; ranking: number }>,
     ) => {
-      const response = await adminUpdateGolfLeagueRoster({
-        path: { leagueId },
-        body: { entries: rows },
+      const response = await updateParticipantLeagueAffiliationRankings({
+        path: { sportLeagueId: leagueId },
+        body: { rankings: rows },
       });
-      if (!response.data?.entries) {
+      if (!response.data?.affiliations) {
         throwApiError(response.error, 'Roster save response is missing data.');
       }
-      return response.data.entries;
+      return response.data.affiliations;
     },
     invalidates: [QueryKeys.rootAdmin.golf.leagueRoster(leagueId)],
     onSuccess: () => setDraft({}),
@@ -177,16 +174,16 @@ export function GolfLeagueRosterGridCard({
 
   const addMutation = useInvalidatingMutation({
     mutationFn: async (participantId: string) => {
-      const response = await adminAddGolfLeagueRosterEntry({
-        path: { leagueId },
+      const response = await createParticipantLeagueAffiliation({
+        path: { sportLeagueId: leagueId },
         body: { participantId },
       });
-      if (!response.data?.entry) {
+      if (!response.data?.affiliation) {
         throwApiError(response.error, 'Add golfer response is missing data.');
       }
-      return response.data.entry;
+      return response.data.affiliation;
     },
-    // tours: adminListGolfLeagues.rosterSize is the live affiliation count, so a
+    // tours: each sport league's affiliationCount is the live count, so a
     // membership change updates that list too (disjoint prefix from leagueRoster).
     invalidates: [
       QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
@@ -207,8 +204,8 @@ export function GolfLeagueRosterGridCard({
 
   const removeMutation = useInvalidatingMutation({
     mutationFn: async (participantId: string) => {
-      const response = await adminRemoveGolfLeagueRosterEntry({
-        path: { leagueId, participantId },
+      const response = await deleteParticipantLeagueAffiliation({
+        path: { sportLeagueId: leagueId, participantId },
       });
       if (response.error) {
         throwApiError(response.error);
@@ -393,7 +390,7 @@ export function GolfLeagueRosterGridCard({
         confirmTestId="root-admin-golf-league-roster-remove-confirm"
         description={
           removeTarget
-            ? `Remove ${removeTarget.name} from this tour's roster. This does not retire the golfer — that is done from Player Home.`
+            ? `Remove ${removeTarget.participant.name} from this tour's roster. This does not retire the golfer — that is done from Player Home.`
             : ''
         }
         errorMessage={

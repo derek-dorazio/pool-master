@@ -58,7 +58,7 @@ describe('SportLeagueService — sport leagues', () => {
       seasons: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
 
-    const result = await service.listSportLeagues(Sport.GOLF, { isActive: true });
+    const result = await service.listSportLeagues({ sport: Sport.GOLF, isActive: true });
 
     expect(result.map((row) => [row.name, row.affiliationCount, row.seasonCount])).toEqual([
       ['PGA Tour', 144, 3],
@@ -69,7 +69,7 @@ describe('SportLeagueService — sport leagues', () => {
   it('fails with 404 SPORT_NOT_FOUND when the sport has no Sport row yet', async () => {
     const { service } = buildService({ sports: { findByName: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.listSportLeagues(Sport.GOLF)).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });
+    await expect(service.listSportLeagues({ sport: Sport.GOLF })).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });
   });
 
   it('creates a sport league — adding the Champions Tour is one call, not a migration', async () => {
@@ -97,7 +97,7 @@ describe('SportLeagueService — affiliations', () => {
       affiliations: { find: jest.fn().mockResolvedValue({ participantId: 'p-rory' }) },
     });
     await expect(again.addAffiliation('sl-pga', 'p-rory'))
-      .rejects.toMatchObject({ code: 'LEAGUE_ROSTER_ENTRY_ALREADY_EXISTS', statusCode: 409 });
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_AFFILIATION_ALREADY_EXISTS', statusCode: 409 });
   });
 });
 
@@ -152,7 +152,7 @@ describe('SportLeagueService — affiliation upload', () => {
     const { service, deps } = buildService();
 
     await expect(service.applyAffiliationUpload('sl-pga', [{ participantId: 'missing' }]))
-      .rejects.toMatchObject({ code: 'LEAGUE_ROSTER_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_AFFILIATION_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
     expect(deps.affiliations.upsertRankings).not.toHaveBeenCalled();
   });
 

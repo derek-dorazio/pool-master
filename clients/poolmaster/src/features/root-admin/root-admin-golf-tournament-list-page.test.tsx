@@ -4,41 +4,18 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentListPage } from './root-admin-golf-tournament-list-page';
+import { sportEventFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/tournaments list (pool-master-3dg).
 
-const { adminListGolfTournamentsMock } = vi.hoisted(() => ({
-  adminListGolfTournamentsMock: vi.fn(),
+const { listEventsMock } = vi.hoisted(() => ({
+  listEventsMock: vi.fn(),
 }));
 
-bindApiMocks({ adminListGolfTournaments: adminListGolfTournamentsMock });
+bindApiMocks({ listEvents: listEventsMock });
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'tour-1',
-    name: 'Rolling Weekend Invitational',
-    venue: 'Mock Golf Club',
-    location: 'Augusta, GA',
-    startDate: '2026-05-07T12:00:00.000Z',
-    endDate: '2026-05-10T22:00:00.000Z',
-    status: 'SCHEDULED',
-    rounds: 4,
-    releaseAt: '2026-04-23T12:00:00.000Z',
-    fieldLocksAt: '2026-05-06T16:00:00.000Z',
-    fieldLocked: false,
-    seasonId: 'season-1',
-    leagueEventId: '',
-    source: 'MANUAL',
-    syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
-    autoLifecycleEnabled: true,
-    fieldCount: 0,
-    tierCount: 6,
-    contestCount: 0,
-    createdAt: '2026-04-01T10:00:00.000Z',
-    updatedAt: '2026-04-01T11:00:00.000Z',
-    ...overrides,
-  };
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({ id: 'tour-1', ...overrides });
 }
 
 function renderPage() {
@@ -56,20 +33,20 @@ function renderPage() {
 
 describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
   afterEach(() => {
-    adminListGolfTournamentsMock.mockReset();
+    listEventsMock.mockReset();
   });
 
   it('pool-master-3dg renders tournaments with a sync badge, derived readiness, and a create link', async () => {
-    adminListGolfTournamentsMock.mockResolvedValue({
+    listEventsMock.mockResolvedValue({
       data: {
-        tournaments: [
+        events: [
           tournament(),
           tournament({
             id: 'tour-2',
             name: 'Provincial Open',
             syncScope: 'SCORES_ONLY',
             status: 'IN_PROGRESS',
-            fieldCount: 120,
+            loadedParticipantCount: 120,
           }),
         ],
       },
@@ -78,6 +55,10 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
     renderPage();
 
     expect(await screen.findByText('Rolling Weekend Invitational')).toBeInTheDocument();
+    // #236: the golf list is the shared event list, scoped to golf.
+    expect(listEventsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { sport: 'GOLF' } }),
+    );
     expect(screen.getByText('Manual')).toBeInTheDocument();
     expect(screen.getByText('Scores synced')).toBeInTheDocument();
     // tour-1 has an empty field -> derived readiness "Setup" with a reason.
@@ -96,7 +77,7 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
   });
 
   it('pool-master-3dg surfaces the load error state', async () => {
-    adminListGolfTournamentsMock.mockResolvedValue({
+    listEventsMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Golf tournament index is offline' },
       response: { status: 500 },
     });
@@ -112,7 +93,7 @@ describe('pool-master-3dg RootAdminGolfTournamentListPage', () => {
   });
 
   it('pool-master-3dg shows the empty state when no tournaments exist', async () => {
-    adminListGolfTournamentsMock.mockResolvedValue({ data: { tournaments: [] } });
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
 
     renderPage();
 

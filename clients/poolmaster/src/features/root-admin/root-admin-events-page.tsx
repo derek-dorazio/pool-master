@@ -1,8 +1,15 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
-import { adminListEventParticipants, listEvents, type AdminListEventParticipantsResponses, type SportEventDto } from '@/lib/api';
+import { PARTICIPANT_SCORING_DEFINITIONS, formatParticipantStatusLabel } from '@poolmaster/shared/domain';
+import {
+  listEventParticipants,
+  listEventTiers,
+  listEvents,
+  type SportEventDto,
+  type SportEventParticipantDto,
+  type SportEventTierDto,
+} from '@/lib/api';
 import {
   Button,
   DataGrid,
@@ -19,14 +26,18 @@ import {
 } from './golf-admin-utils';
 
 type AdminEvent = SportEventDto;
-type AdminEventParticipant =
-  AdminListEventParticipantsResponses[200]['participants'][number];
 
 const eventColumnHelper = createColumnHelper<AdminEvent>();
-const participantColumnHelper = createColumnHelper<AdminEventParticipant>();
+const participantColumnHelper = createColumnHelper<SportEventParticipantDto>();
 
-function formatOptionalText(value: string | number | undefined) {
-  return value === undefined || value === '' ? 'Unknown' : String(value);
+function formatOptionalText(value: string | number | null | undefined) {
+  return value === undefined || value === null || value === '' ? 'Unknown' : String(value);
+}
+
+/** The standing's status once scoring has started, else whether the golfer is still in the field. */
+function participantStatus(participant: SportEventParticipantDto): string {
+  return participant.standing?.status
+    ?? (participant.isActive ? 'ACTIVE' : participant.inactiveReason ?? 'INACTIVE');
 }
 
 // Shared SCREAMING_SNAKE -> Title Case formatter, lifted to golf-admin-utils so
@@ -71,28 +82,39 @@ export function RootAdminEventsPage() {
     retry: false,
   });
 
+  // #235/#236 — the event's field is the shared listEventParticipants read; the admin
+  // projection of it is gone. Tier labels come from the event's tiers.
   const participantsQuery = useQuery({
     enabled: selectedEventId !== null,
     queryKey: QueryKeys.rootAdmin.eventParticipants(selectedEventId),
-    queryFn: async (): Promise<AdminListEventParticipantsResponses[200]> => {
+    queryFn: async (): Promise<{ participants: SportEventParticipantDto[]; tiers: SportEventTierDto[] }> => {
       if (!selectedEventId) {
         throw new Error('Select an event before loading participants.');
       }
 
-      const response = await adminListEventParticipants({
-        path: {
-          eventId: selectedEventId,
-        },
-      });
+      const [participantsResponse, tiersResponse] = await Promise.all([
+        listEventParticipants({ path: { eventId: selectedEventId } }),
+        listEventTiers({ path: { eventId: selectedEventId } }),
+      ]);
 
-      if (!response.data) {
-        throwApiError(response.error, 'Event participant response is missing data.');
+      if (!participantsResponse.data?.participants) {
+        throwApiError(participantsResponse.error, 'Event participant response is missing data.');
+      }
+      if (!tiersResponse.data?.tiers) {
+        throwApiError(tiersResponse.error, 'Event tier response is missing data.');
       }
 
-      return response.data;
+      return { participants: participantsResponse.data.participants, tiers: tiersResponse.data.tiers };
     },
     retry: false,
   });
+
+  const selectedSport = eventsQuery.data?.find((event) => event.id === selectedEventId)?.sport;
+
+  const tierLabelById = useMemo(
+    () => new Map((participantsQuery.data?.tiers ?? []).map((tier) => [tier.id, tier.label])),
+    [participantsQuery.data?.tiers],
+  );
 
   const eventColumns = useMemo(
     () => [
@@ -182,58 +204,64 @@ export function RootAdminEventsPage() {
 
   const participantColumns = useMemo(
     () => [
-      participantColumnHelper.accessor('participantName', {
+      participantColumnHelper.accessor((participant) => participant.participant.name, {
         id: 'participant',
         header: 'Participant',
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-foreground">
-              {row.original.participantName}
+              {row.original.participant.name}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {formatOptionalText(row.original.shortName)}
+              {formatOptionalText(row.original.participant.shortName)}
             </div>
           </div>
         ),
       }),
-      participantColumnHelper.accessor('status', {
+      participantColumnHelper.accessor(participantStatus, {
+        id: 'status',
         header: 'Status',
         cell: ({ getValue }) => (
           <StatusBadge tone={getValue() === 'ACTIVE' ? 'active' : 'neutral'}>
-            {formatOptionalText(getValue())}
+            {formatParticipantStatusLabel(getValue(), selectedSport)}
           </StatusBadge>
         ),
       }),
       participantColumnHelper.accessor('ranking', {
-        header: 'World rank',
+        header: 'Ranking',
         cell: ({ getValue }) => formatOptionalText(getValue()),
       }),
       participantColumnHelper.accessor('oddsToWin', {
         header: 'Odds',
         cell: ({ getValue }) => formatOptionalText(getValue()),
       }),
-      participantColumnHelper.accessor('valuationTier', {
-        header: 'Tier',
-        cell: ({ row }) => (
-          <div>
-            <div className="font-medium text-foreground">
-              {formatOptionalText(row.original.valuationTier)}
+      participantColumnHelper.accessor(
+        (participant) => tierLabelById.get(participant.valuation?.sportEventTierId ?? '') ?? null,
+        {
+          id: 'tier',
+          header: 'Tier',
+          cell: ({ getValue, row }) => (
+            <div>
+              <div className="font-medium text-foreground">
+                {formatOptionalText(getValue())}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Price {formatOptionalText(row.original.valuation?.price)}
+              </div>
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              Price {formatOptionalText(row.original.valuationPrice)}
-            </div>
-          </div>
-        ),
-      }),
-      participantColumnHelper.accessor('scoreToPar', {
+          ),
+        },
+      ),
+      participantColumnHelper.accessor((participant) => participant.standing?.golf?.eventScoreToPar, {
+        id: 'score',
         header: 'Score',
-        cell: ({ row }) => (
+        cell: ({ getValue, row }) => (
           <div>
             <div className="font-medium text-foreground">
-              {formatScoreToPar(row.original.scoreToPar)}
+              {formatScoreToPar(getValue())}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {row.original.roundCount} rounds, strokes {formatOptionalText(row.original.totalStrokes)}
+              {row.original.rounds.length} rounds, strokes {formatOptionalText(row.original.standing?.golf?.eventStrokes)}
             </div>
           </div>
         ),
@@ -243,14 +271,13 @@ export function RootAdminEventsPage() {
         cell: ({ getValue }) => formatDateTimeDisplay(getValue()),
       }),
     ],
-    [],
+    [selectedSport, tierLabelById],
   );
 
-  const participantModalTitle = participantsQuery.data?.event.name
-    ?? eventsQuery.data?.find((event) => event.id === selectedEventId)?.name
-    ?? 'Event participants';
-  const participantModalDescription = participantsQuery.data
-    ? `${participantsQuery.data.event.providerId} current database state`
+  const selectedEvent = eventsQuery.data?.find((event) => event.id === selectedEventId);
+  const participantModalTitle = selectedEvent?.name ?? 'Event participants';
+  const participantModalDescription = selectedEvent
+    ? `${selectedEvent.providerId} current database state`
     : 'Current persisted participant field for this event.';
 
   return (

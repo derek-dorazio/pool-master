@@ -18,15 +18,22 @@ export {
   PrismaContestEntryAggregationRuleRepository,
   PrismaContestPrizeDefinitionRepository,
   PrismaParticipantContestScoringRuleRepository,
-  PrismaSportEventParticipantRepository,
 } from './prisma-contest-management-repositories';
 export {
+  PrismaLeagueEventRepository,
   PrismaParticipantLeagueAffiliationRepository,
   PrismaSeasonRepository,
+  PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantRoundRepository,
   PrismaSportEventParticipantStandingRepository,
+  PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
+  PrismaSportEventTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from './prisma-sport-catalog-repositories';
+export {
+  PrismaSportEventParticipantGolfRoundRepository,
+  PrismaSportEventParticipantGolfStandingRepository,
+} from './prisma-golf-repositories';

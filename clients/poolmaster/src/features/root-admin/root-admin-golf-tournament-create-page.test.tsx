@@ -4,13 +4,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentCreatePage } from './root-admin-golf-tournament-create-page';
+import { seasonFixture, sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new (pool-master-3dg).
 
 const {
-  adminCreateGolfTournamentFromProviderEventMock,
-  adminCreateGolfTournamentMock,
-  adminListGolfSeasonsMock,
+  createEventFromProviderEventMock,
+  createEventMock,
+  listSeasonsMock,
+  listSportLeaguesMock,
   adminListProviderCatalogEventsMock,
   adminListProvidersMock,
   mockLogger,
@@ -25,9 +27,10 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminCreateGolfTournamentFromProviderEventMock: vi.fn(),
-    adminCreateGolfTournamentMock: vi.fn(),
-    adminListGolfSeasonsMock: vi.fn(),
+    createEventFromProviderEventMock: vi.fn(),
+    createEventMock: vi.fn(),
+    listSeasonsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
     adminListProviderCatalogEventsMock: vi.fn(),
     adminListProvidersMock: vi.fn(),
     mockLogger: logger,
@@ -35,9 +38,10 @@ const {
 });
 
 bindApiMocks({
-  adminCreateGolfTournament: adminCreateGolfTournamentMock,
-  adminCreateGolfTournamentFromProviderEvent: adminCreateGolfTournamentFromProviderEventMock,
-  adminListGolfSeasons: adminListGolfSeasonsMock,
+  createEvent: createEventMock,
+  createEventFromProviderEvent: createEventFromProviderEventMock,
+  listSeasons: listSeasonsMock,
+  listSportLeagues: listSportLeaguesMock,
   adminListProviderCatalogEvents: adminListProviderCatalogEventsMock,
   adminListProviders: adminListProvidersMock,
 });
@@ -48,23 +52,20 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function season(overrides: Record<string, unknown> = {}) {
-  return {
+function season(overrides: Parameters<typeof seasonFixture>[0] = {}) {
+  return seasonFixture({
     id: 'season-1',
     sportLeagueId: 'league-1',
-    name: 'PGA Tour 2026',
-    year: 2026,
-    startDate: '2026-01-01T00:00:00.000Z',
-    endDate: '2026-12-31T00:00:00.000Z',
-    isActive: true,
+    sportEventCount: 3,
     createdAt: '2025-11-01T00:00:00.000Z',
     updatedAt: '2025-11-01T00:00:00.000Z',
-    tournamentCount: 3,
     ...overrides,
-  };
+  });
 }
 
 function renderPage(entry = '/manage/golf/tournaments/new?seasonId=season-1') {
+  // #236: every golf season is read by listing the golf sport leagues, then each one's seasons.
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: 'league-1' })] } });
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -88,15 +89,15 @@ function renderPage(entry = '/manage/golf/tournaments/new?seasonId=season-1') {
 
 describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
   afterEach(() => {
-    adminCreateGolfTournamentMock.mockReset();
-    adminCreateGolfTournamentFromProviderEventMock.mockReset();
-    adminListGolfSeasonsMock.mockReset();
+    createEventMock.mockReset();
+    createEventFromProviderEventMock.mockReset();
+    listSeasonsMock.mockReset();
     adminListProviderCatalogEventsMock.mockReset();
     adminListProvidersMock.mockReset();
   });
 
   it('pool-master-3dg blocks creation with a link to Seasons when no golf season exists', async () => {
-    adminListGolfSeasonsMock.mockResolvedValue({ data: { seasons: [] } });
+    listSeasonsMock.mockResolvedValue({ data: { seasons: [] } });
 
     renderPage('/manage/golf/tournaments/new');
 
@@ -109,9 +110,9 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
   });
 
   it('pool-master-3dg submits a manual tournament with the season prefilled from the URL and navigates Home', async () => {
-    adminListGolfSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
-    adminCreateGolfTournamentMock.mockResolvedValue({
-      data: { tournament: { id: 'new-tour' } },
+    listSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
+    createEventMock.mockResolvedValue({
+      data: { event: sportEventFixture({ id: 'new-tour' }) },
     });
 
     renderPage();
@@ -131,9 +132,9 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     fireEvent.click(screen.getByTestId('root-admin-golf-tournament-create-submit'));
 
     await waitFor(() =>
-      expect(adminCreateGolfTournamentMock).toHaveBeenCalledTimes(1),
+      expect(createEventMock).toHaveBeenCalledTimes(1),
     );
-    const body = (adminCreateGolfTournamentMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
+    const body = (createEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body.name).toBe('Spring Classic');
     expect(body.seasonId).toBe('season-1');
     expect(body.startDate).toContain('2026-03-12T');
@@ -142,7 +143,7 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
   });
 
   it('pool-master-3dg browses provider events, selects one, and creates a linked tournament', async () => {
-    adminListGolfSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
+    listSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
     adminListProvidersMock.mockResolvedValue({
       data: { items: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
     });
@@ -159,8 +160,8 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
         ],
       },
     });
-    adminCreateGolfTournamentFromProviderEventMock.mockResolvedValue({
-      data: { tournament: { id: 'linked-tour' } },
+    createEventFromProviderEventMock.mockResolvedValue({
+      data: { event: sportEventFixture({ id: 'linked-tour' }) },
     });
 
     renderPage();
@@ -178,9 +179,9 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminCreateGolfTournamentFromProviderEventMock).toHaveBeenCalledTimes(1),
+      expect(createEventFromProviderEventMock).toHaveBeenCalledTimes(1),
     );
-    const body = (adminCreateGolfTournamentFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
+    const body = (createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body).toMatchObject({
       seasonId: 'season-1',
       providerId: 'mock-contest-feed',

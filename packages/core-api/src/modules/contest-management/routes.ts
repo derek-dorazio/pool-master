@@ -24,14 +24,14 @@ import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
 import { ContestManagementService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
-import { GolfTierService } from '../golf/golf-tier-service';
+import { createSportEventTierService } from '../events/wiring';
 
 export function contestManagementModule(
   fastify: FastifyInstance,
 ): void {
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const golfTierService = new GolfTierService(prisma, fastify.log);
+  const sportEventTierService = createSportEventTierService(prisma, fastify.log);
   const contestManagementService = new ContestManagementService(
     new PrismaContestCoreRepository(prisma),
     new PrismaContestConfigTemplateRepository(prisma),
@@ -40,7 +40,7 @@ export function contestManagementModule(
     new PrismaContestEntryAggregationRuleRepository(prisma),
     new PrismaContestPrizeDefinitionRepository(prisma),
     new PrismaSportEventParticipantRepository(prisma),
-    golfTierService,
+    sportEventTierService,
     fastify.log,
     {
       findById: async (sportEventId) => {

@@ -5,10 +5,8 @@
  * failure mode for every caller.
  */
 
-import type { PrismaClient } from '@prisma/client';
 import type { SportRepository } from '@poolmaster/shared/db';
 import type { Sport, SportConfig } from '@poolmaster/shared/domain';
-import { PrismaSportRepository } from '../../adapters';
 import { SportCatalogError } from './errors';
 
 export async function requireSport(sports: SportRepository, sport: Sport): Promise<SportConfig> {
@@ -17,12 +15,4 @@ export async function requireSport(sports: SportRepository, sport: Sport): Promi
     throw new SportCatalogError(`No Sport row exists for ${sport}.`, 'SPORT_NOT_FOUND', 404);
   }
   return sportRow;
-}
-
-/**
- * The same lookup for the golf services still built on a PrismaClient. They move
- * onto injected ports in #236, and this wrapper goes with them.
- */
-export function requireSportRow(prisma: PrismaClient, sport: Sport): Promise<SportConfig> {
-  return requireSport(new PrismaSportRepository(prisma), sport);
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { GripVertical } from 'lucide-react';
-import { adminReplaceGolfTournamentTiers } from '@/lib/api';
+import { replaceEventTiers } from '@/lib/api';
 import { reorderById } from './golf-tier-board-utils';
 import {
   Alert,
@@ -16,18 +16,17 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfTournamentTiersResponses, AdminReplaceGolfTournamentTiersData } from '@/lib/api';
+import type { ReplaceSportEventTiersRequest, SportEventTierDto } from '@/lib/api';
 
-type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
 type TierDraft = {
   id: string;
   tierKey: string;
   label: string;
   defaultPickCount: number;
 };
-type TierBody = AdminReplaceGolfTournamentTiersData['body']['tiers'][number];
+type TierBody = ReplaceSportEventTiersRequest['tiers'][number];
 
-function toDraft(tiers: readonly TierDto[]): TierDraft[] {
+function toDraft(tiers: readonly SportEventTierDto[]): TierDraft[] {
   return [...tiers]
     .sort((a, b) => a.tierNumber - b.tierNumber)
     .map((tier) => ({
@@ -63,7 +62,7 @@ export function GolfTierDefinitionsPanel({
   assignmentCountByTierKey: Record<string, number>;
   eventId: string;
   readOnly: boolean;
-  tiers: TierDto[];
+  tiers: SportEventTierDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-tiers-page',
@@ -85,8 +84,8 @@ export function GolfTierDefinitionsPanel({
   const dirty = JSON.stringify(draft) !== JSON.stringify(serverDraft);
 
   const saveMutation = useInvalidatingMutation({
-    mutationFn: async (body: AdminReplaceGolfTournamentTiersData['body']) => {
-      const response = await adminReplaceGolfTournamentTiers({
+    mutationFn: async (body: ReplaceSportEventTiersRequest) => {
+      const response = await replaceEventTiers({
         path: { eventId },
         body,
       });
@@ -95,8 +94,10 @@ export function GolfTierDefinitionsPanel({
       }
       return response.data;
     },
+    // Removing a tier can move its golfers (reassignOrphansTo), which the field carries.
     invalidates: [
       QueryKeys.rootAdmin.golf.tiers(eventId),
+      QueryKeys.rootAdmin.golf.field(eventId),
       QueryKeys.rootAdmin.golf.tournament(eventId),
       QueryKeys.rootAdmin.golf.tournaments,
     ],

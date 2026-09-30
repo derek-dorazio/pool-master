@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfSeason, adminGetGolfTournament, adminGetGolfTournamentRounds } from '@/lib/api';
+import { getEvent, getSeason, listEventRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -12,17 +12,14 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfTournamentRoundsResponses } from '@/lib/api';
+import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import {
   isAdminManagedGolfTournament,
-  type AdminGolfTournamentDetail,
 } from './golf-admin-utils';
 import { GolfTournamentScoreSourceCard } from './golf-tournament-score-source-card';
 import { GolfTournamentSummaryCard } from './golf-tournament-summary-card';
 import { GolfTournamentWorkflowCard } from './golf-tournament-workflow-card';
-
-type GolfRound = AdminGetGolfTournamentRoundsResponses[200]['rounds'][number];
 
 /**
  * plans/124 §6.3 — Tournament Home, the canonical page. Owns the tournament /
@@ -34,12 +31,12 @@ export function RootAdminGolfTournamentHomePage() {
 
   const tournamentQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.tournament(eventId),
-    queryFn: async (): Promise<AdminGolfTournamentDetail> => {
-      const response = await adminGetGolfTournament({ path: { eventId } });
-      if (!response.data?.tournament) {
+    queryFn: async (): Promise<SportEventDto> => {
+      const response = await getEvent({ path: { eventId } });
+      if (!response.data?.event) {
         throwApiError(response.error, 'Golf tournament response is missing data.');
       }
-      return response.data.tournament;
+      return response.data.event;
     },
     enabled: eventId !== '',
     retry: false,
@@ -47,8 +44,8 @@ export function RootAdminGolfTournamentHomePage() {
 
   const roundsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.rounds(eventId),
-    queryFn: async (): Promise<GolfRound[]> => {
-      const response = await adminGetGolfTournamentRounds({ path: { eventId } });
+    queryFn: async (): Promise<SportEventRoundDto[]> => {
+      const response = await listEventRounds({ path: { eventId } });
       if (!response.data?.rounds) {
         throwApiError(response.error, 'Golf tournament rounds response is missing data.');
       }
@@ -63,7 +60,7 @@ export function RootAdminGolfTournamentHomePage() {
   const seasonQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.season(tournament?.seasonId ?? null),
     queryFn: async () => {
-      const response = await adminGetGolfSeason({
+      const response = await getSeason({
         path: { seasonId: tournament?.seasonId ?? '' },
       });
       if (!response.data?.season) {
@@ -107,7 +104,7 @@ export function RootAdminGolfTournamentHomePage() {
             </Alert>
           ) : null}
 
-          {tournament.syncScope !== SportEventSyncScope.NONE && tournament.fieldCount === 0 ? (
+          {tournament.syncScope !== SportEventSyncScope.NONE && tournament.loadedParticipantCount === 0 ? (
             <Callout tone="info">
               <p className="font-medium">The participant field is not loaded yet</p>
               <p className="mt-1 text-sm">
@@ -157,7 +154,7 @@ export function RootAdminGolfTournamentHomePage() {
                   Open Field
                 </LinkButton>
               }
-              description={`${tournament.fieldCount} golfers in the field`}
+              description={`${tournament.loadedParticipantCount} golfers in the field`}
               title="Field"
             />
             <ListCard

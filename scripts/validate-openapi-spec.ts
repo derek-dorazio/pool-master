@@ -45,6 +45,11 @@ const PRIORITY_ROUTE_PREFIXES = [
   '/api/v1/social/',
   '/api/v1/invitations/',
   '/api/v1/devices/',
+  // #236 — the golf operations moved here from /api/v1/admin/, which is on this list.
+  '/api/v1/events/',
+  '/api/v1/sports/',
+  '/api/v1/sport-leagues/',
+  '/api/v1/seasons/',
 ];
 
 const HTTP_METHODS = ['get', 'post', 'put', 'delete', 'patch'] as const;

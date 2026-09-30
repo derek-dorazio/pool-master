@@ -1,7 +1,5 @@
 import { FormField, Select } from '@/features/shared/ui';
-import type { AdminListGolfSeasonsResponses } from '@/lib/api';
-
-type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
+import type { SeasonDto } from '@/lib/api';
 
 /**
  * plans/124 §6.3 — the required Season picker shared by both tournament-creation
@@ -14,7 +12,7 @@ export function GolfTournamentSeasonSelect({
   value,
 }: {
   onChange: (seasonId: string) => void;
-  seasons: readonly GolfSeason[];
+  seasons: readonly SeasonDto[];
   value: string;
 }) {
   return (

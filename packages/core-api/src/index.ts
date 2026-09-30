@@ -22,6 +22,9 @@ import { teamInvitationsModule } from './modules/team-invitations/routes';
 import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
+import { sportsModule } from './modules/sports/routes';
+import { sportLeaguesModule } from './modules/sport-leagues/routes';
+import { seasonsModule } from './modules/seasons/routes';
 import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
 import { adminModule } from './modules/admin/routes';
@@ -216,7 +219,15 @@ export function buildApp() {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
-  app.register(eventsModule, { prefix: '/api/v1/events' });
+  app.register(eventsModule, {
+    prefix: '/api/v1/events',
+    eventLifecycleService,
+    providerService,
+    providerRegistry: registry,
+  });
+  app.register(sportsModule, { prefix: '/api/v1/sports' });
+  app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
+  app.register(seasonsModule, { prefix: '/api/v1/seasons' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
   app.register(adminModule, {
     prefix: '/api/v1/admin',
@@ -224,7 +235,6 @@ export function buildApp() {
     providerService,
     pollConfigService,
     ingestionConfigService,
-    eventLifecycleService,
   });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 

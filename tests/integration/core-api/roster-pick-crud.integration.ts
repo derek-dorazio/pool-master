@@ -56,6 +56,7 @@ describe('RosterPick CRUD integration', () => {
       data: {
         name: `Roster Pick CRUD Sport ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 

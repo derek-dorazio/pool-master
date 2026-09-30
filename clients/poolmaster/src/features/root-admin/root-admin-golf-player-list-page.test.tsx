@@ -5,10 +5,11 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfPlayerListPage } from './root-admin-golf-player-list-page';
+import { GOLF_SPORT_FIXTURE, participantFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/players list (pool-master-rfy).
 
-const { adminListGolfPlayersMock, adminCreateGolfPlayerMock, mockLogger } = vi.hoisted(
+const { listParticipantsMock, listSportsMock, createParticipantMock, mockLogger } = vi.hoisted(
   () => {
     const logger = {
       debug: vi.fn(),
@@ -20,16 +21,18 @@ const { adminListGolfPlayersMock, adminCreateGolfPlayerMock, mockLogger } = vi.h
     };
     logger.child.mockReturnValue(logger);
     return {
-      adminListGolfPlayersMock: vi.fn(),
-      adminCreateGolfPlayerMock: vi.fn(),
+      listParticipantsMock: vi.fn(),
+      listSportsMock: vi.fn(),
+      createParticipantMock: vi.fn(),
       mockLogger: logger,
     };
   },
 );
 
 bindApiMocks({
-  adminListGolfPlayers: adminListGolfPlayersMock,
-  adminCreateGolfPlayer: adminCreateGolfPlayerMock,
+  listParticipants: listParticipantsMock,
+  listSports: listSportsMock,
+  createParticipant: createParticipantMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -38,26 +41,20 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function player(overrides: Record<string, unknown> = {}) {
-  return {
+function player(overrides: Parameters<typeof participantFixture>[0] = {}) {
+  return participantFixture({
     id: 'p-rory',
     name: 'Rory McIlroy',
-    firstName: 'Rory',
-    lastName: 'McIlroy',
     shortName: 'R. McIlroy',
     nationality: 'NIR',
-    position: '',
-    teamAffiliation: '',
     externalId: 'rory-1',
-    status: 'ACTIVE',
-    providerMappingCount: 2,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  };
+  });
 }
 
 function renderPage() {
+  // #236: golfers are the golf sport's participants, scoped by its id.
+  listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -76,12 +73,12 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-rfy renders players with status + mapping count and a row link to Player Home', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({
+  it('pool-master-rfy renders players with status and a row link to Player Home', async () => {
+    listParticipantsMock.mockResolvedValue({
       data: {
-        players: [
+        participants: [
           player(),
-          player({ id: 'p-jon', name: 'Jon Rahm', providerMappingCount: 0 }),
+          player({ id: 'p-jon', name: 'Jon Rahm' }),
         ],
       },
     });
@@ -89,16 +86,17 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
 
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByText('Jon Rahm')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // #236: the mapping count column is gone; Player Home reads the mappings themselves.
+    expect(screen.queryByText('Provider mappings')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-player-row-p-rory')).toBeInTheDocument();
     // Default status filter is ACTIVE.
-    expect(adminListGolfPlayersMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { status: 'ACTIVE' } }),
+    expect(listParticipantsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { sportId: 'sport-golf', status: 'ACTIVE' } }),
     );
   });
 
   it('pool-master-rfy re-queries when the status filter changes, so non-active golfers are reachable', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({ data: { players: [] } });
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
     await screen.findByText('No active golf players.');
 
@@ -108,15 +106,15 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     );
 
     await waitFor(() =>
-      expect(adminListGolfPlayersMock).toHaveBeenCalledWith(
-        expect.objectContaining({ query: { status: 'RETIRED' } }),
+      expect(listParticipantsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ query: { sportId: 'sport-golf', status: 'RETIRED' } }),
       ),
     );
     expect(await screen.findByText('No retired golf players.')).toBeInTheDocument();
   });
 
   it('pool-master-rfy shows empty and error states', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({ data: { players: [] } });
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
     expect(
       await screen.findByText('No active golf players.'),
@@ -124,7 +122,7 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   });
 
   it('pool-master-rfy surfaces the load error', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({
+    listParticipantsMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Player index offline' },
       response: { status: 500 },
     });
@@ -133,9 +131,9 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
   });
 
   it('pool-master-rfy adds a player through the modal', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({ data: { players: [] } });
-    adminCreateGolfPlayerMock.mockResolvedValue({
-      data: { player: player({ id: 'new', name: 'Ludvig Åberg' }) },
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+    createParticipantMock.mockResolvedValue({
+      data: { participant: player({ id: 'new', name: 'Ludvig Åberg' }) },
     });
     renderPage();
     await screen.findByText('No active golf players.');
@@ -148,14 +146,14 @@ describe('pool-master-rfy RootAdminGolfPlayerListPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new-save'));
 
     await waitFor(() =>
-      expect(adminCreateGolfPlayerMock).toHaveBeenCalledWith(
-        expect.objectContaining({ body: { name: 'Ludvig Åberg' } }),
+      expect(createParticipantMock).toHaveBeenCalledWith(
+        expect.objectContaining({ body: { sportId: 'sport-golf', participantType: 'INDIVIDUAL', name: 'Ludvig Åberg' } }),
       ),
     );
   });
 
   it('pool-master-rfy blocks submit until a name is entered', async () => {
-    adminListGolfPlayersMock.mockResolvedValue({ data: { players: [] } });
+    listParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
     await screen.findByText('No active golf players.');
     await userEvent.click(screen.getByTestId('root-admin-golf-player-list-new'));

@@ -18,7 +18,7 @@ const GOLF_SECTIONS = [
     key: 'tours',
     title: 'Tours',
     description:
-      'PGA Tour, LIV Golf, and every other tour: the player pool and current world ranking each tournament seeds from.',
+      'PGA Tour, LIV Golf, and every other tour: the player pool and current ranking each tournament seeds from.',
     to: '/manage/golf/leagues',
   },
   {

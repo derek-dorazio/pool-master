@@ -261,6 +261,7 @@ export interface ParticipantSearchFilters {
 
 export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
+  findByIds(ids: readonly string[]): Promise<Participant[]>;
   findBySport(sportId: string): Promise<Participant[]>;
   findByExternalId(providerId: string, externalId: string): Promise<Participant | null>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
@@ -275,6 +276,9 @@ export interface ParticipantRepository {
 export interface ParticipantProviderMappingRepository {
   findByProvider(providerId: string, externalId: string): Promise<ParticipantProviderMapping | null>;
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
+  findByParticipants(participantIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
+  /** Every mapping a provider has for these of its identifiers. */
+  findByProviderExternalIds(providerId: string, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   create(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
 }
 

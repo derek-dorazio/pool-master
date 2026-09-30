@@ -1,10 +1,11 @@
-import type { AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentTiersResponses, AdminReplaceGolfTierAssignmentsData } from '@/lib/api';
+import type {
+  ReplaceSportEventTierAssignmentsRequest,
+  SportEventParticipantDto,
+  SportEventTierDto,
+} from '@/lib/api';
 
-type TierDto = AdminGetGolfTournamentTiersResponses[200]['tiers'][number];
-type FieldEntry =
-  AdminGetGolfTournamentFieldResponses[200]['entries'][number];
 export type TierAssignmentPayload =
-  AdminReplaceGolfTierAssignmentsData['body']['assignments'][number];
+  ReplaceSportEventTierAssignmentsRequest['assignments'][number];
 
 export const UNASSIGNED_KEY = '__unassigned';
 
@@ -12,7 +13,7 @@ export type TierCard = {
   sportEventParticipantId: string;
   participantId: string;
   name: string;
-  /** Null when the golfer has no world ranking on record. */
+  /** Null when the golfer has no ranking on record. */
   ranking: number | null;
   /** Null when no odds have been ingested for the golfer. */
   oddsToWin: number | null;
@@ -29,52 +30,49 @@ export type TierColumn = {
   cards: TierCard[];
 };
 
+function cardFor(entry: SportEventParticipantDto): TierCard {
+  return {
+    sportEventParticipantId: entry.id,
+    participantId: entry.participantId,
+    name: entry.participant.name,
+    ranking: entry.ranking,
+    oddsToWin: entry.oddsToWin,
+    price: entry.valuation?.price ?? null,
+  };
+}
+
 /**
  * plans/124 §6.3 — build the tier board from the tier definitions (ordered by
- * tierNumber) plus the field (for names / odds / rank), with an Unassigned
- * column for any field golfer not in a tier's `assignments`.
+ * tierNumber) plus the field. #236: a golfer's tier and its place in it are on the
+ * golfer's valuation (`sportEventTierId`, `tierOrderIndex`); a golfer with no tier,
+ * or a tier that is not among the definitions, lands in the Unassigned column.
  */
 export function buildTierBoard(
-  tiers: readonly TierDto[],
-  field: readonly FieldEntry[],
+  tiers: readonly SportEventTierDto[],
+  field: readonly SportEventParticipantDto[],
 ): TierColumn[] {
-  const byParticipant = new Map(
-    field.map((entry) => [entry.sportEventParticipantId, entry]),
-  );
-  const assigned = new Set<string>();
-
-  const cardFor = (sepId: string, price: number | null): TierCard | null => {
-    const entry = byParticipant.get(sepId);
-    if (!entry) {
-      return null;
+  const tierIds = new Set(tiers.map((tier) => tier.id));
+  const byTier = new Map<string, SportEventParticipantDto[]>();
+  const unassigned: SportEventParticipantDto[] = [];
+  for (const entry of field) {
+    const tierId = entry.valuation?.sportEventTierId ?? null;
+    if (tierId !== null && tierIds.has(tierId)) {
+      byTier.set(tierId, [...(byTier.get(tierId) ?? []), entry]);
+    } else {
+      unassigned.push(entry);
     }
-    return {
-      sportEventParticipantId: sepId,
-      participantId: entry.participantId,
-      name: entry.participantName,
-      ranking: entry.ranking,
-      oddsToWin: entry.oddsToWin,
-      price,
-    };
-  };
+  }
 
   const tierColumns: TierColumn[] = [...tiers]
     .sort((a, b) => a.tierNumber - b.tierNumber)
     .map((tier) => {
-      const cards = [...tier.assignments]
-        .sort((a, b) => (a.tierOrderIndex ?? 0) - (b.tierOrderIndex ?? 0))
-        .map((assignment) => {
-          assigned.add(assignment.sportEventParticipantId);
-          return cardFor(assignment.sportEventParticipantId, assignment.price);
-        })
-        .filter((card): card is TierCard => card !== null);
+      const cards = [...(byTier.get(tier.id) ?? [])]
+        .sort(
+          (a, b) => (a.valuation?.tierOrderIndex ?? 0) - (b.valuation?.tierOrderIndex ?? 0),
+        )
+        .map(cardFor);
       return { key: tier.tierKey, label: tier.label, tierKey: tier.tierKey, cards };
     });
-
-  const unassignedCards = field
-    .filter((entry) => !assigned.has(entry.sportEventParticipantId))
-    .map((entry) => cardFor(entry.sportEventParticipantId, entry.price))
-    .filter((card): card is TierCard => card !== null);
 
   return [
     ...tierColumns,
@@ -82,7 +80,7 @@ export function buildTierBoard(
       key: UNASSIGNED_KEY,
       label: 'Unassigned',
       tierKey: null,
-      cards: unassignedCards,
+      cards: unassigned.map(cardFor),
     },
   ];
 }
@@ -185,7 +183,7 @@ export function reorderColumn(
   });
 }
 
-/** The full desired-state payload for `adminReplaceGolfTierAssignments` (assigned golfers only). */
+/** The full desired-state payload for `replaceEventTierAssignments` (assigned golfers only). */
 export function toAssignmentsPayload(
   columns: readonly TierColumn[],
 ): TierAssignmentPayload[] {

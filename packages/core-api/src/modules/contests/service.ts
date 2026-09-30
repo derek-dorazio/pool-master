@@ -54,7 +54,7 @@ import {
   type ContestEntryCompletedTierSelection,
   type MailDeliveryProvider,
 } from '../email';
-import { GolfTierService } from '../golf/golf-tier-service';
+import { createSportEventTierService } from '../events/wiring';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -870,7 +870,7 @@ export class ContestService {
   }
 
   /**
-   * Resolves each pick's tier label through golf-tier-service (plans/124
+   * Resolves each pick's tier label through SportEventTierService (plans/124
    * §4.6b) rather than the dropped legacy SportEventParticipant.valuations
    * table — the one remaining fallback path for entries whose contest has
    * no typed tierConfig (only the legacy contests/routes.ts create path
@@ -881,8 +881,7 @@ export class ContestService {
   ): Promise<ContestEntryCompletedTierSelection[]> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
     if (entry.contest.sportEventId) {
-      const golfTierService = new GolfTierService(this.requirePrisma(), this.logger as FastifyBaseLogger);
-      const valuations = await golfTierService.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
+      const valuations = await createSportEventTierService(this.requirePrisma(), this.logger as FastifyBaseLogger).getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
       for (const valuation of valuations) {
         if (valuation.tierLabel !== null) {
           tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);

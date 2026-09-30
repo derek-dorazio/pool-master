@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { throwApiError } from '@/lib/errors';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { adminBulkAddGolfFieldEntries, adminGetGolfLeagueRoster, adminListGolfLeagues, adminListGolfPlayers } from '@/lib/api';
+import { addEventParticipants, listParticipantLeagueAffiliations } from '@/lib/api';
 import {
   Alert,
   Button,
@@ -17,21 +17,21 @@ import {
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminBulkAddGolfFieldEntriesResponses, AdminGetGolfLeagueRosterResponses, AdminListGolfLeaguesResponses } from '@/lib/api';
+import type { AddSportEventParticipantsResponse, ParticipantLeagueAffiliationDto } from '@/lib/api';
+import { useGolfPlayersQuery, useGolfSportLeaguesQuery } from './use-golf-catalog';
 
-type RosterEntry = AdminGetGolfLeagueRosterResponses[200]['entries'][number];
-type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];
-type BulkAddResult = AdminBulkAddGolfFieldEntriesResponses[200];
+type BulkAddResult = AddSportEventParticipantsResponse;
 
-const rosterColumnHelper = createColumnHelper<RosterEntry>();
+const rosterColumnHelper = createColumnHelper<ParticipantLeagueAffiliationDto>();
 const rosterBrowseColumns = [
-  rosterColumnHelper.accessor('name', {
+  rosterColumnHelper.accessor((entry) => entry.participant.name, {
+    id: 'name',
     header: 'Player',
     cell: ({ getValue }) => (
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
   }),
-  rosterColumnHelper.accessor('ranking', { header: 'World rank' }),
+  rosterColumnHelper.accessor('ranking', { header: 'Ranking' }),
 ];
 
 /**
@@ -39,7 +39,7 @@ const rosterBrowseColumns = [
  * current roster in a multi-select grid (excluding golfers already in this
  * field), plus a free-text search across every `Participant` for the rarer
  * off-roster golfer. Both feed one selection set and one
- * `adminBulkAddGolfFieldEntries` submit.
+ * `addEventParticipants` submit.
  */
 export function GolfFieldAddParticipantsModal({
   eventId,
@@ -58,48 +58,32 @@ export function GolfFieldAddParticipantsModal({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<BulkAddResult | null>(null);
 
-  const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tours,
-    queryFn: async (): Promise<GolfLeague[]> => {
-      const response = await adminListGolfLeagues();
-      if (!response.data?.leagues) {
-        throwApiError(response.error, 'Golf tour list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-    retry: false,
-  });
+  const leaguesQuery = useGolfSportLeaguesQuery();
 
   const rosterQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.leagueRoster(leagueId),
-    queryFn: async (): Promise<RosterEntry[]> => {
-      const response = await adminGetGolfLeagueRoster({ path: { leagueId } });
-      if (!response.data?.entries) {
+    queryFn: async (): Promise<ParticipantLeagueAffiliationDto[]> => {
+      const response = await listParticipantLeagueAffiliations({ path: { sportLeagueId: leagueId } });
+      if (!response.data?.affiliations) {
         throwApiError(response.error, 'Golf tour roster response is missing data.');
       }
-      return response.data.entries;
+      return response.data.affiliations;
     },
     enabled: leagueId !== '',
     retry: false,
   });
 
   const searchTerm = search.trim();
-  const searchQuery = useQuery({
+  const searchQuery = useGolfPlayersQuery({
     queryKey: QueryKeys.rootAdmin.golf.playerSearch(searchTerm),
-    queryFn: async () => {
-      const response = await adminListGolfPlayers({ query: { search: searchTerm } });
-      if (!response.data?.players) {
-        throwApiError(response.error, 'Golf player search response is missing data.');
-      }
-      return response.data.players;
-    },
+    status: 'ACTIVE',
+    q: searchTerm,
     enabled: searchTerm.length >= 2,
-    retry: false,
   });
 
   const addMutation = useInvalidatingMutation({
     mutationFn: async (participantIds: string[]): Promise<BulkAddResult> => {
-      const response = await adminBulkAddGolfFieldEntries({
+      const response = await addEventParticipants({
         path: { eventId },
         body: { participantIds },
       });
@@ -258,7 +242,7 @@ export function GolfFieldAddParticipantsModal({
                   : 'Every golfer on that league’s roster is already in this field.'
               }
               getRowId={(entry) => entry.participantId}
-              getRowLabel={(entry) => entry.name}
+              getRowLabel={(entry) => entry.participant.name}
               onToggle={toggle}
               onToggleAll={toggleAll}
               rowTestId={(entry) => `root-admin-golf-field-add-roster-row-${entry.participantId}`}

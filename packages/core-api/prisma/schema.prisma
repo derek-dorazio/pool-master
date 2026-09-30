@@ -557,7 +557,12 @@ model Sport {
   name             String                 @unique
   participantType  PrismaParticipantType  @map("participant_type")
   category         PrismaSportCategory    @default(GOLF)
-  tournamentFormat PrismaTournamentFormat @default(STROKE_PLAY_TOURNAMENT) @map("tournament_format")
+  /// No default (#236): the table that discriminates between sports must not
+  /// make a row a stroke-play golf sport by omission. Creators take it from
+  /// DEFAULT_TOURNAMENT_FORMAT_BY_SPORT. `category` still defaults to GOLF —
+  /// the enum has no value for NHL, MLB, UFC or horse racing and nothing reads
+  /// the column, so it is raised on #236 rather than guessed here.
+  tournamentFormat PrismaTournamentFormat @map("tournament_format")
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz
 

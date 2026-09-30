@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { adminCreateGolfSeason, adminListGolfLeagues, adminListGolfSeasons } from '@/lib/api';
+import { createSeason } from '@/lib/api';
 import {
   Button,
   DataGridPage,
@@ -19,13 +18,11 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfLeaguesResponses, AdminListGolfSeasonsResponses } from '@/lib/api';
+import type { SeasonDto } from '@/lib/api';
 import { localDateTimeInputToIso } from './golf-admin-utils';
+import { useGolfSeasonsQuery, useGolfSportLeaguesQuery } from './use-golf-catalog';
 
-type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];
-type GolfSeason = AdminListGolfSeasonsResponses[200]['seasons'][number];
-
-type SeasonRow = GolfSeason & { tourName: string; isCurrent: boolean };
+type SeasonRow = SeasonDto & { tourName: string };
 
 const columnHelper = createColumnHelper<SeasonRow>();
 
@@ -40,11 +37,10 @@ const newSeasonSchema = z.object({
 type NewSeasonValues = z.infer<typeof newSeasonSchema>;
 
 /**
- * plans/124 §6.3 — /manage/golf/seasons "Season list". DataGridPage over
- * adminListGolfSeasons with a Tour Select filter driven by `?sportLeagueId=`
- * (arriving from Tour Home), a "New season" FormModal, and rows linking to
- * Season Home. "Current" is derived by cross-referencing each tour's
- * currentSeasonId, since the list response itself does not carry `isCurrent`.
+ * plans/124 §6.3 — /manage/golf/seasons "Season list". DataGridPage over the
+ * golf sport leagues' seasons (#236: listSeasons is per sport league) with a Tour
+ * Select filter driven by `?sportLeagueId=` (arriving from Tour Home), a "New
+ * season" FormModal, and rows linking to Season Home.
  */
 export function RootAdminGolfSeasonListPage() {
   const logger = getLogger().child({
@@ -54,43 +50,16 @@ export function RootAdminGolfSeasonListPage() {
   const tourFilter = searchParams.get('sportLeagueId') ?? '';
   const [createOpen, setCreateOpen] = useState(false);
 
-  const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tours,
-    queryFn: async (): Promise<GolfLeague[]> => {
-      const response = await adminListGolfLeagues();
-      if (!response.data?.leagues) {
-        throwApiError(response.error, 'Golf tour list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-    retry: false,
-  });
-
-  const seasonsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.seasons(tourFilter || undefined),
-    queryFn: async (): Promise<GolfSeason[]> => {
-      const response = await adminListGolfSeasons({
-        query: tourFilter ? { sportLeagueId: tourFilter } : {},
-      });
-      if (!response.data?.seasons) {
-        throwApiError(response.error, 'Golf season list response is missing data.');
-      }
-      return response.data.seasons;
-    },
-    retry: false,
-  });
+  const leaguesQuery = useGolfSportLeaguesQuery();
+  const seasonsQuery = useGolfSeasonsQuery(tourFilter || undefined);
 
   const leagues = useMemo(() => leaguesQuery.data ?? [], [leaguesQuery.data]);
 
   const rows = useMemo<SeasonRow[]>(() => {
     const nameById = new Map(leagues.map((league) => [league.id, league.name]));
-    const currentSeasonIds = new Set(
-      leagues.map((league) => league.currentSeasonId).filter(Boolean),
-    );
     return (seasonsQuery.data ?? []).map((season) => ({
       ...season,
       tourName: nameById.get(season.sportLeagueId) ?? season.sportLeagueId,
-      isCurrent: currentSeasonIds.has(season.id),
     }));
   }, [leagues, seasonsQuery.data]);
 
@@ -108,9 +77,9 @@ export function RootAdminGolfSeasonListPage() {
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: NewSeasonValues) => {
-      const response = await adminCreateGolfSeason({
+      const response = await createSeason({
+        path: { sportLeagueId: values.sportLeagueId },
         body: {
-          sportLeagueId: values.sportLeagueId,
           name: values.name,
           year: values.year,
           startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
@@ -165,7 +134,7 @@ export function RootAdminGolfSeasonListPage() {
           ),
         enableColumnFilter: false,
       }),
-      columnHelper.accessor('tournamentCount', { header: 'Tournaments' }),
+      columnHelper.accessor('sportEventCount', { header: 'Tournaments' }),
     ],
     [],
   );

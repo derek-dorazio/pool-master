@@ -33,6 +33,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       create: {
         name: Sport.GOLF,
         participantType: 'INDIVIDUAL',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
     });

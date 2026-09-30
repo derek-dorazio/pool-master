@@ -5,15 +5,16 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfSeasonHomePage } from './root-admin-golf-season-home-page';
+import { seasonFixture, sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/seasons/:seasonId Season Home (pool-master-qqs).
 
 const {
-  adminGetGolfSeasonMock,
-  adminListGolfLeaguesMock,
-  adminListGolfTournamentsMock,
-  adminSetCurrentGolfSeasonMock,
-  adminUpdateGolfSeasonMock,
+  getSeasonMock,
+  listSportLeaguesMock,
+  listEventsMock,
+  setCurrentSeasonMock,
+  updateSeasonMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -26,21 +27,21 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminGetGolfSeasonMock: vi.fn(),
-    adminListGolfLeaguesMock: vi.fn(),
-    adminListGolfTournamentsMock: vi.fn(),
-    adminSetCurrentGolfSeasonMock: vi.fn(),
-    adminUpdateGolfSeasonMock: vi.fn(),
+    getSeasonMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
+    listEventsMock: vi.fn(),
+    setCurrentSeasonMock: vi.fn(),
+    updateSeasonMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminGetGolfSeason: adminGetGolfSeasonMock,
-  adminListGolfLeagues: adminListGolfLeaguesMock,
-  adminListGolfTournaments: adminListGolfTournamentsMock,
-  adminSetCurrentGolfSeason: adminSetCurrentGolfSeasonMock,
-  adminUpdateGolfSeason: adminUpdateGolfSeasonMock,
+  getSeason: getSeasonMock,
+  listSportLeagues: listSportLeaguesMock,
+  listEvents: listEventsMock,
+  setCurrentSeason: setCurrentSeasonMock,
+  updateSeason: updateSeasonMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -49,25 +50,21 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function season(overrides: Record<string, unknown> = {}) {
-  return {
+function season(overrides: Parameters<typeof seasonFixture>[0] = {}) {
+  return seasonFixture({
     id: 'season-2026',
     sportLeagueId: 'pga',
-    name: 'PGA Tour 2026',
-    year: 2026,
     startDate: '2026-01-04T00:00:00.000Z',
     endDate: '2026-11-30T00:00:00.000Z',
-    isActive: true,
+    sportEventCount: 1,
     createdAt: '2025-06-01T00:00:00.000Z',
     updatedAt: '2025-06-01T00:00:00.000Z',
-    tournamentCount: 1,
-    isCurrent: false,
     ...overrides,
-  };
+  });
 }
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({
     id: 'evt-1',
     name: 'The Open',
     venue: 'Royal Liverpool',
@@ -81,47 +78,32 @@ function tournament(overrides: Record<string, unknown> = {}) {
     fieldLocked: false,
     seasonId: 'season-2026',
     leagueEventId: '',
-    source: 'MANUAL',
     syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
     autoLifecycleEnabled: true,
-    fieldCount: 156,
+    loadedParticipantCount: 156,
     tierCount: 6,
     contestCount: 2,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  };
+  });
 }
 
-function seed(overrides: { season?: Record<string, unknown> } = {}) {
-  adminGetGolfSeasonMock.mockResolvedValue({
+function seed(overrides: { season?: Parameters<typeof seasonFixture>[0] } = {}) {
+  getSeasonMock.mockResolvedValue({
     data: { season: season(overrides.season) },
   });
-  adminListGolfLeaguesMock.mockResolvedValue({
+  listSportLeaguesMock.mockResolvedValue({
     data: {
-      leagues: [
-        {
-          id: 'pga',
-          sportId: 'sport-golf',
-          name: 'PGA Tour',
-          matchKeyword: 'PGA',
-          currentSeasonId: 'season-2025',
-          isActive: true,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-          rosterSize: 144,
-          seasonCount: 2,
-        },
+      sportLeagues: [
+        sportLeagueFixture({ id: 'pga', currentSeasonId: 'season-2025', affiliationCount: 144, seasonCount: 2 }),
       ],
     },
   });
-  adminListGolfTournamentsMock.mockResolvedValue({
+  // #236: the event list is filtered by season on the server.
+  listEventsMock.mockResolvedValue({
     data: {
-      tournaments: [
-        tournament(),
-        tournament({ id: 'evt-other', name: 'Other Season Event', seasonId: 'season-2027' }),
-      ],
+      events: [tournament()],
     },
   });
 }
@@ -158,7 +140,9 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
     expect(screen.getByText('PGA Tour')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-season-home-set-current')).toBeInTheDocument();
     expect(screen.getByText('The Open')).toBeInTheDocument();
-    expect(screen.queryByText('Other Season Event')).not.toBeInTheDocument();
+    expect(listEventsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { seasonId: 'season-2026' } }),
+    );
     expect(screen.getByTestId('root-admin-golf-season-home-new-tournament')).toHaveAttribute(
       'href',
       '/manage/golf/tournaments/new?seasonId=season-2026',
@@ -175,10 +159,10 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('pool-master-qqs confirms and calls adminSetCurrentGolfSeason', async () => {
+  it('pool-master-qqs confirms and calls setCurrentSeason', async () => {
     seed();
-    adminSetCurrentGolfSeasonMock.mockResolvedValue({
-      data: { sportLeagueId: 'pga', currentSeasonId: 'season-2026' },
+    setCurrentSeasonMock.mockResolvedValue({
+      data: { sportLeague: sportLeagueFixture({ id: 'pga', currentSeasonId: 'season-2026' }) },
     });
     renderPage();
 
@@ -188,7 +172,7 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
     );
 
     await waitFor(() =>
-      expect(adminSetCurrentGolfSeasonMock).toHaveBeenCalledWith(
+      expect(setCurrentSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({ path: { seasonId: 'season-2026' } }),
       ),
     );
@@ -196,7 +180,7 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
 
   it('pool-master-qqs edits the season name through the edit modal', async () => {
     seed();
-    adminUpdateGolfSeasonMock.mockResolvedValue({
+    updateSeasonMock.mockResolvedValue({
       data: { season: season({ name: 'PGA Tour 2026 (revised)' }) },
     });
     renderPage();
@@ -210,7 +194,7 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-season-home-edit-save'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfSeasonMock).toHaveBeenCalledWith(
+      expect(updateSeasonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { seasonId: 'season-2026' },
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
@@ -221,12 +205,12 @@ describe('pool-master-qqs RootAdminGolfSeasonHomePage', () => {
   });
 
   it('pool-master-qqs surfaces the season load error state', async () => {
-    adminGetGolfSeasonMock.mockResolvedValue({
+    getSeasonMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such season' },
       response: { status: 404 },
     });
-    adminListGolfLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
-    adminListGolfTournamentsMock.mockResolvedValue({ data: { tournaments: [] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [] } });
+    listEventsMock.mockResolvedValue({ data: { events: [] } });
     renderPage();
 
     expect(await screen.findByText('No such season')).toBeInTheDocument();

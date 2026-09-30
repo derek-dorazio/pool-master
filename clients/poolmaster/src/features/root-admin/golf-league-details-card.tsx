@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { adminUpdateGolfLeague } from '@/lib/api';
+import { updateSportLeague } from '@/lib/api';
 import {
   Button,
   DefinitionList,
@@ -17,9 +17,8 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminListGolfLeaguesResponses, AdminUpdateGolfLeagueData } from '@/lib/api';
+import type { SportLeagueDto, UpdateSportLeagueRequest } from '@/lib/api';
 
-type GolfLeague = AdminListGolfLeaguesResponses[200]['leagues'][number];
 
 const editSchema = z.object({
   name: z.string().trim().min(1, 'Tour name is required'),
@@ -30,13 +29,13 @@ type EditValues = z.infer<typeof editSchema>;
 
 async function updateLeague(
   leagueId: string,
-  body: AdminUpdateGolfLeagueData['body'],
+  body: UpdateSportLeagueRequest,
 ) {
-  const response = await adminUpdateGolfLeague({ path: { leagueId }, body });
-  if (!response.data?.league) {
+  const response = await updateSportLeague({ path: { sportLeagueId: leagueId }, body });
+  if (!response.data?.sportLeague) {
     throwApiError(response.error, 'Golf tour update response is missing data.');
   }
-  return response.data.league;
+  return response.data.sportLeague;
 }
 
 /**
@@ -44,7 +43,7 @@ async function updateLeague(
  * match-keyword edit modal, the active toggle, and the count link into this
  * tour's Season list.
  */
-export function GolfLeagueDetailsCard({ league }: { league: GolfLeague }) {
+export function GolfLeagueDetailsCard({ league }: { league: SportLeagueDto }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-league-home-page',
   });
@@ -128,7 +127,7 @@ export function GolfLeagueDetailsCard({ league }: { league: GolfLeague }) {
             label: 'Match keyword',
             value: league.matchKeyword || 'Not set',
           },
-          { id: 'roster', label: 'Roster size', value: league.rosterSize },
+          { id: 'roster', label: 'Roster size', value: league.affiliationCount },
           {
             id: 'seasons',
             label: 'Seasons',

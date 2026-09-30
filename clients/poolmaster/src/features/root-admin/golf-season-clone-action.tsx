@@ -1,23 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminCloneGolfSeason } from '@/lib/api';
+import { cloneSeason } from '@/lib/api';
 import { Button, ConfirmationModal } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfSeasonResponses } from '@/lib/api';
+import type { SeasonDto } from '@/lib/api';
 
-type GolfSeason = AdminGetGolfSeasonResponses[200]['season'];
 
 /**
  * plans/124 §6.3 / §4.2a — "Clone to next year": copies this season's tournament
  * calendar forward one year (fresh empty shells, dates shifted — never last
  * year's field / tiers / scores / provider link). The count comes straight from
- * the already-loaded `adminGetGolfSeason`, so no preview call is needed. On
+ * the already-loaded `getSeason`, so no preview call is needed. On
  * success, navigates to the new season's Home.
  */
-export function GolfSeasonCloneAction({ season }: { season: GolfSeason }) {
+export function GolfSeasonCloneAction({ season }: { season: SeasonDto }) {
   const logger = getLogger().child({ feature: 'golf-season-clone-action' });
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -25,7 +24,7 @@ export function GolfSeasonCloneAction({ season }: { season: GolfSeason }) {
 
   const cloneMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminCloneGolfSeason({
+      const response = await cloneSeason({
         path: { seasonId: season.id },
         // targetYear omitted -> backend defaults to the source season's year + 1.
         body: {},
@@ -76,8 +75,8 @@ export function GolfSeasonCloneAction({ season }: { season: GolfSeason }) {
       <ConfirmationModal
         confirmLabel="Clone season"
         confirmTestId="root-admin-golf-season-home-clone-confirm"
-        description={`${season.tournamentCount} tournament${
-          season.tournamentCount === 1 ? '' : 's'
+        description={`${season.sportEventCount} tournament${
+          season.sportEventCount === 1 ? '' : 's'
         } will be copied to a new ${targetYear} season, dates shifted one year forward. The field, tiers, prices, scores, and provider link of each tournament are not copied, and this does not change the current season.`}
         errorMessage={
           cloneMutation.isError

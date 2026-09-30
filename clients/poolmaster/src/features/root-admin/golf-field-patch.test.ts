@@ -7,25 +7,21 @@ import {
   golfFieldInvalidCount,
   type GolfFieldEntry,
 } from './golf-field-patch';
+import { fieldEntryFixture, valuationFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — pure patch/validation logic for the Field editor.
 
+// #236: a field row is the shared SportEventParticipant; its price is on the valuation.
 function entry(overrides: Partial<GolfFieldEntry> = {}): GolfFieldEntry {
-  return {
-    sportEventParticipantId: 'sep-1',
+  return fieldEntryFixture({
+    id: 'sep-1',
     participantId: 'p-1',
-    participantName: 'Rory McIlroy',
-    shortName: 'R. McIlroy',
-    nationality: 'NIR',
-    isActive: true,
-    inactiveReason: null as unknown as GolfFieldEntry['inactiveReason'],
     ranking: 2,
     oddsToWin: 8.5,
     seedNumber: 2,
-    price: 9500,
-    isLeagueRosterMember: true,
+    valuation: valuationFixture({ price: 9500 }),
     ...overrides,
-  };
+  });
 }
 
 describe('pool-master-za4 golf-field-patch: golfFieldCellValue', () => {
@@ -37,14 +33,14 @@ describe('pool-master-za4 golf-field-patch: golfFieldCellValue', () => {
   it('pool-master-za4 coalesces a null/undefined server value to an empty string (not "null")', () => {
     expect(
       golfFieldCellValue(
-        entry({ price: null as unknown as number }),
+        entry({ valuation: null }),
         undefined,
         'price',
       ),
     ).toBe('');
     expect(
       golfFieldCellValue(
-        entry({ seedNumber: undefined as unknown as number }),
+        entry({ seedNumber: null }),
         undefined,
         'seedNumber',
       ),
@@ -121,7 +117,7 @@ describe('pool-master-za4 golf-field-patch: buildGolfFieldPatch', () => {
   });
 
   it('pool-master-za4 buildGolfFieldPatches only includes rows that actually changed', () => {
-    const entries = [entry(), entry({ sportEventParticipantId: 'sep-2', participantId: 'p-2' })];
+    const entries = [entry(), entry({ id: 'sep-2', participantId: 'p-2' })];
     const patches = buildGolfFieldPatches(entries, {
       'sep-2': { oddsToWin: '10' },
       'sep-1': { ranking: '2' },

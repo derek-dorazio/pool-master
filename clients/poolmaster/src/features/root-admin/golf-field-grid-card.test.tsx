@@ -6,10 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { GolfFieldGridCard } from './golf-field-grid-card';
 import type { GolfFieldEntry } from './golf-field-patch';
+import { fieldEntryFixture, valuationFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 / §8 — Field editor grid: form-state-hazard + null-value rendering.
 
-const { adminUpdateGolfFieldEntriesMock, mockLogger } = vi.hoisted(() => {
+const { updateEventParticipantsMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -19,10 +20,10 @@ const { adminUpdateGolfFieldEntriesMock, mockLogger } = vi.hoisted(() => {
     child: vi.fn(),
   };
   logger.child.mockReturnValue(logger);
-  return { adminUpdateGolfFieldEntriesMock: vi.fn(), mockLogger: logger };
+  return { updateEventParticipantsMock: vi.fn(), mockLogger: logger };
 });
 
-bindApiMocks({ adminUpdateGolfFieldEntries: adminUpdateGolfFieldEntriesMock });
+bindApiMocks({ updateEventParticipants: updateEventParticipantsMock });
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -31,21 +32,15 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function entry(overrides: Partial<GolfFieldEntry> = {}): GolfFieldEntry {
-  return {
-    sportEventParticipantId: 'sep-1',
+  return fieldEntryFixture({
+    id: 'sep-1',
     participantId: 'p-1',
-    participantName: 'Rory McIlroy',
-    shortName: 'R. McIlroy',
-    nationality: 'NIR',
-    isActive: true,
-    inactiveReason: null as unknown as GolfFieldEntry['inactiveReason'],
     ranking: 2,
     oddsToWin: 8.5,
     seedNumber: 2,
-    price: 9500,
-    isLeagueRosterMember: true,
+    valuation: valuationFixture({ price: 9500 }),
     ...overrides,
-  };
+  });
 }
 
 function renderCard(props: Partial<Parameters<typeof GolfFieldGridCard>[0]> = {}) {
@@ -75,7 +70,7 @@ describe('pool-master-za4 GolfFieldGridCard', () => {
   });
 
   it('pool-master-za4 renders an empty (not "null") input for a golfer with no derived price', () => {
-    renderCard({ entries: [entry({ price: null as unknown as number })] });
+    renderCard({ entries: [entry({ valuation: null })] });
     const priceInput = screen.getByTestId('root-admin-golf-field-price-sep-1');
     expect(priceInput).toHaveValue('');
     expect(priceInput).not.toHaveAttribute('aria-invalid');

@@ -5,19 +5,27 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentFieldPage } from './root-admin-golf-tournament-field-page';
+import {
+  affiliationFixture,
+  fieldEntryFixture,
+  participantFixture,
+  sportEventFixture,
+  sportLeagueFixture,
+  valuationFixture,
+} from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/tournaments/:eventId/field Field editor (pool-master-za4).
 
 const {
-  adminGetGolfTournamentMock,
-  adminGetGolfTournamentFieldMock,
-  adminUpdateGolfFieldEntriesMock,
-  adminSeedGolfTournamentFieldMock,
-  adminRefreshGolfTournamentFieldMock,
-  adminBulkAddGolfFieldEntriesMock,
-  adminListGolfLeaguesMock,
-  adminGetGolfLeagueRosterMock,
-  adminListGolfPlayersMock,
+  getEventMock,
+  listEventParticipantsMock,
+  updateEventParticipantsMock,
+  seedEventParticipantsMock,
+  refreshEventParticipantsMock,
+  addEventParticipantsMock,
+  listSportLeaguesMock,
+  listParticipantLeagueAffiliationsMock,
+  listParticipantsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -30,29 +38,29 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminGetGolfTournamentMock: vi.fn(),
-    adminGetGolfTournamentFieldMock: vi.fn(),
-    adminUpdateGolfFieldEntriesMock: vi.fn(),
-    adminSeedGolfTournamentFieldMock: vi.fn(),
-    adminRefreshGolfTournamentFieldMock: vi.fn(),
-    adminBulkAddGolfFieldEntriesMock: vi.fn(),
-    adminListGolfLeaguesMock: vi.fn(),
-    adminGetGolfLeagueRosterMock: vi.fn(),
-    adminListGolfPlayersMock: vi.fn(),
+    getEventMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
+    updateEventParticipantsMock: vi.fn(),
+    seedEventParticipantsMock: vi.fn(),
+    refreshEventParticipantsMock: vi.fn(),
+    addEventParticipantsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
+    listParticipantLeagueAffiliationsMock: vi.fn(),
+    listParticipantsMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminGetGolfTournament: adminGetGolfTournamentMock,
-  adminGetGolfTournamentField: adminGetGolfTournamentFieldMock,
-  adminUpdateGolfFieldEntries: adminUpdateGolfFieldEntriesMock,
-  adminSeedGolfTournamentField: adminSeedGolfTournamentFieldMock,
-  adminRefreshGolfTournamentField: adminRefreshGolfTournamentFieldMock,
-  adminBulkAddGolfFieldEntries: adminBulkAddGolfFieldEntriesMock,
-  adminListGolfLeagues: adminListGolfLeaguesMock,
-  adminGetGolfLeagueRoster: adminGetGolfLeagueRosterMock,
-  adminListGolfPlayers: adminListGolfPlayersMock,
+  getEvent: getEventMock,
+  listEventParticipants: listEventParticipantsMock,
+  updateEventParticipants: updateEventParticipantsMock,
+  seedEventParticipants: seedEventParticipantsMock,
+  refreshEventParticipants: refreshEventParticipantsMock,
+  addEventParticipants: addEventParticipantsMock,
+  listSportLeagues: listSportLeaguesMock,
+  listParticipantLeagueAffiliations: listParticipantLeagueAffiliationsMock,
+  listParticipants: listParticipantsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -61,8 +69,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({
     id: 'evt-1',
     name: 'The Open',
     venue: 'Royal Liverpool',
@@ -76,52 +84,57 @@ function tournament(overrides: Record<string, unknown> = {}) {
     fieldLocked: false,
     seasonId: 'season-2026',
     leagueEventId: '',
-    source: 'MANUAL',
     syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
     autoLifecycleEnabled: true,
-    par: 71,
-    fieldCount: 2,
+    loadedParticipantCount: 2,
     tierCount: 6,
     contestCount: 0,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    workflow: { currentStatus: 'SCHEDULED', allowedTransitions: [] },
+    allowedTransitions: [],
     ...overrides,
-  };
+  });
 }
 
-function fieldEntry(overrides: Record<string, unknown> = {}) {
-  return {
-    sportEventParticipantId: 'sep-rory',
-    participantId: 'p-rory',
-    participantName: 'Rory McIlroy',
-    shortName: 'R. McIlroy',
-    nationality: 'NIR',
-    isActive: true,
-    inactiveReason: null,
-    ranking: 2,
+// #236: a field row is the shared SportEventParticipant embedding its participant.
+function fieldEntry({
+  id = 'sep-rory',
+  participantId = 'p-rory',
+  name = 'Rory McIlroy',
+  ranking = 2,
+  affiliatedWithSportLeague = true,
+}: {
+  id?: string;
+  participantId?: string;
+  name?: string;
+  ranking?: number;
+  affiliatedWithSportLeague?: boolean;
+} = {}) {
+  return fieldEntryFixture({
+    id,
+    participantId,
+    participant: participantFixture({ id: participantId, name }),
+    ranking,
     oddsToWin: 8.5,
     seedNumber: 2,
-    price: 9500,
-    isLeagueRosterMember: true,
-    ...overrides,
-  };
+    valuation: valuationFixture({ price: 9500 }),
+    affiliatedWithSportLeague,
+  });
 }
 
-function seed(overrides: { tournament?: Record<string, unknown>; entries?: unknown[] } = {}) {
-  adminGetGolfTournamentMock.mockResolvedValue({
-    data: { tournament: tournament(overrides.tournament) },
+function seed(overrides: { tournament?: Parameters<typeof tournament>[0]; entries?: unknown[] } = {}) {
+  getEventMock.mockResolvedValue({
+    data: { event: tournament(overrides.tournament) },
   });
-  adminGetGolfTournamentFieldMock.mockResolvedValue({
+  listEventParticipantsMock.mockResolvedValue({
     data: {
-      entries: overrides.entries ?? [
+      participants: overrides.entries ?? [
         fieldEntry(),
         fieldEntry({
-          sportEventParticipantId: 'sep-guest',
+          id: 'sep-guest',
           participantId: 'p-guest',
-          participantName: 'Sponsor Exemption',
-          isLeagueRosterMember: false,
+          name: 'Sponsor Exemption',
+          affiliatedWithSportLeague: false,
           ranking: 400,
         }),
       ],
@@ -186,20 +199,20 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
   });
 
   it('pool-master-za4 surfaces the tournament load error', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({
+    getEventMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such tournament' },
       response: { status: 404 },
     });
-    adminGetGolfTournamentFieldMock.mockResolvedValue({ data: { entries: [] } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     expect(await screen.findByText('No such tournament')).toBeInTheDocument();
   });
 
-  it('pool-master-za4 collects a world-rank edit and an activate toggle into one save call', async () => {
+  it('pool-master-za4 collects a ranking edit and an activate toggle into one save call', async () => {
     seed();
-    adminUpdateGolfFieldEntriesMock.mockResolvedValue({
-      data: { entries: [fieldEntry({ ranking: 1 })] },
+    updateEventParticipantsMock.mockResolvedValue({
+      data: { participants: [fieldEntry({ ranking: 1 })] },
     });
     renderPage();
 
@@ -221,12 +234,12 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-field-save'));
 
     await waitFor(() =>
-      expect(adminUpdateGolfFieldEntriesMock).toHaveBeenCalledWith(
+      expect(updateEventParticipantsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-            entries: expect.arrayContaining([
+            participants: expect.arrayContaining([
               { sportEventParticipantId: 'sep-rory', ranking: 1 },
               {
                 sportEventParticipantId: 'sep-guest',
@@ -256,7 +269,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
 
   it('pool-master-za4 seeds the field from the league roster behind a confirmation', async () => {
     seed();
-    adminSeedGolfTournamentFieldMock.mockResolvedValue({
+    seedEventParticipantsMock.mockResolvedValue({
       data: { added: 140, skipped: 2, total: 142, seedNumbersDerived: 140, oddsDerived: 140 },
     });
     renderPage();
@@ -265,7 +278,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-field-seed-confirm'));
 
     await waitFor(() =>
-      expect(adminSeedGolfTournamentFieldMock).toHaveBeenCalledWith(
+      expect(seedEventParticipantsMock).toHaveBeenCalledWith(
         expect.objectContaining({ path: { eventId: 'evt-1' } }),
       ),
     );
@@ -276,47 +289,28 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
 
   it('pool-master-za4 adds participants from a browsed league roster', async () => {
     seed();
-    adminListGolfLeaguesMock.mockResolvedValue({
-      data: {
-        leagues: [
-          {
-            id: 'liv',
-            sportId: 's',
-            name: 'LIV Golf',
-            matchKeyword: 'LIV',
-            currentSeasonId: '',
-            isActive: true,
-            createdAt: '2026-01-01T00:00:00.000Z',
-            updatedAt: '2026-01-01T00:00:00.000Z',
-            rosterSize: 2,
-            seasonCount: 1,
-          },
-        ],
-      },
+    listSportLeaguesMock.mockResolvedValue({
+      data: { sportLeagues: [sportLeagueFixture({ id: 'liv', name: 'LIV Golf', matchKeyword: 'LIV' })] },
     });
-    adminGetGolfLeagueRosterMock.mockResolvedValue({
+    listParticipantLeagueAffiliationsMock.mockResolvedValue({
       data: {
-        entries: [
-          {
+        affiliations: [
+          affiliationFixture({
+            sportLeagueId: 'liv',
             participantId: 'p-jon',
-            name: 'Jon Rahm',
-            shortName: 'J. Rahm',
-            nationality: 'ESP',
-            status: 'ACTIVE',
             ranking: 3,
-          },
-          {
+            participant: participantFixture({ id: 'p-jon', name: 'Jon Rahm' }),
+          }),
+          affiliationFixture({
+            sportLeagueId: 'liv',
             participantId: 'p-rory',
-            name: 'Rory McIlroy',
-            shortName: 'R. McIlroy',
-            nationality: 'NIR',
-            status: 'ACTIVE',
             ranking: 2,
-          },
+            participant: participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
+          }),
         ],
       },
     });
-    adminBulkAddGolfFieldEntriesMock.mockResolvedValue({
+    addEventParticipantsMock.mockResolvedValue({
       data: { added: 1, skipped: 0, total: 1 },
     });
     renderPage();
@@ -339,7 +333,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-field-add-submit'));
 
     await waitFor(() =>
-      expect(adminBulkAddGolfFieldEntriesMock).toHaveBeenCalledWith(
+      expect(addEventParticipantsMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
           body: { participantIds: ['p-jon'] },

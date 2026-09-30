@@ -75,10 +75,11 @@ describe('loadDraftContext', () => {
   });
 
   // pool-master-piv — proves loadDraftContext resolves tier/price through
-  // golf-tier-service.getEffectiveTiersForSportEvent (plans/124 §4.6b)
+  // SportEventTierService.getEffectiveTiersForSportEvent (plans/124 §4.6b)
   // rather than the dropped legacy SportEventParticipant.valuations table.
-  it('pool-master-piv resolves selectionParticipants[].tier/price/orderIndex and context.tiers from golf-tier-service', async () => {
+  it('pool-master-piv resolves selectionParticipants[].tier/price/orderIndex and context.tiers from SportEventTierService', async () => {
     const prisma = createMockPrisma({
+      // The event's tiers and valuations, as the tier service's ports read them.
       sportEventTier: {
         findMany: jest.fn().mockResolvedValue([
           {
@@ -88,25 +89,19 @@ describe('loadDraftContext', () => {
             label: 'Tier 1',
             tierNumber: 1,
             defaultPickCount: 2,
-            valuations: [
-              {
-                sportEventParticipantId: 'sep-1',
-                tierOrderIndex: 1,
-                price: 25,
-                sportEventParticipant: { participantId: 'participant-1' },
-              },
-            ],
           },
         ]),
       },
       sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
+            id: 'valuation-1',
             sportEventParticipantId: 'sep-1',
+            sportEventTierId: 'tier-1',
             tierOrderIndex: 1,
+            tierAssignedSource: 'MANUAL',
             price: 25,
-            sportEventParticipant: { participantId: 'participant-1' },
-            sportEventTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+            priceAssignedSource: 'MANUAL',
           },
         ]),
       },
@@ -142,7 +137,7 @@ describe('loadDraftContext', () => {
   // pool-master-753 — a price-only valuation (budget-format contest, no
   // tier assignment) is invisible to any lookup built by walking
   // sportEventTier's nested valuations; loadDraftContext must resolve
-  // price from golf-tier-service.getEffectiveValuationsForSportEvent
+  // price from SportEventTierService.getEffectiveValuationsForSportEvent
   // directly instead.
   it('pool-master-753 resolves price for a golfer with a valuation but no tier assignment', async () => {
     const prisma = createMockPrisma({

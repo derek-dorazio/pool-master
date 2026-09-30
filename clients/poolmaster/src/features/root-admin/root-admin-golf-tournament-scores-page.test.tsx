@@ -5,16 +5,21 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentScoresPage } from './root-admin-golf-tournament-scores-page';
+import {
+  fieldEntryFixture,
+  participantFixture,
+  sportEventFixture,
+  sportEventRoundFixture,
+} from './golf-test-fixtures';
 
 // plans/124 §6.3 — /manage/golf/tournaments/:eventId/scores Round scores (pool-master-r11).
 
 const {
-  adminGetGolfTournamentMock,
-  adminGetGolfTournamentRoundsMock,
-  adminGetGolfTournamentFieldMock,
-  adminGetGolfRoundScoresMock,
-  adminPreviewGolfRoundScoresMock,
-  adminApplyGolfRoundScoresMock,
+  getEventMock,
+  listEventRoundsMock,
+  listEventParticipantsMock,
+  previewEventGolfRoundScoresMock,
+  applyEventGolfRoundScoresMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -27,23 +32,21 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    adminGetGolfTournamentMock: vi.fn(),
-    adminGetGolfTournamentRoundsMock: vi.fn(),
-    adminGetGolfTournamentFieldMock: vi.fn(),
-    adminGetGolfRoundScoresMock: vi.fn(),
-    adminPreviewGolfRoundScoresMock: vi.fn(),
-    adminApplyGolfRoundScoresMock: vi.fn(),
+    getEventMock: vi.fn(),
+    listEventRoundsMock: vi.fn(),
+    listEventParticipantsMock: vi.fn(),
+    previewEventGolfRoundScoresMock: vi.fn(),
+    applyEventGolfRoundScoresMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
 bindApiMocks({
-  adminGetGolfTournament: adminGetGolfTournamentMock,
-  adminGetGolfTournamentRounds: adminGetGolfTournamentRoundsMock,
-  adminGetGolfTournamentField: adminGetGolfTournamentFieldMock,
-  adminGetGolfRoundScores: adminGetGolfRoundScoresMock,
-  adminPreviewGolfRoundScores: adminPreviewGolfRoundScoresMock,
-  adminApplyGolfRoundScores: adminApplyGolfRoundScoresMock,
+  getEvent: getEventMock,
+  listEventRounds: listEventRoundsMock,
+  listEventParticipants: listEventParticipantsMock,
+  previewEventGolfRoundScores: previewEventGolfRoundScoresMock,
+  applyEventGolfRoundScores: applyEventGolfRoundScoresMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -52,8 +55,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function tournament(overrides: Record<string, unknown> = {}) {
-  return {
+function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
+  return sportEventFixture({
     id: 'evt-1',
     name: 'The Open',
     venue: 'Royal Liverpool',
@@ -67,77 +70,58 @@ function tournament(overrides: Record<string, unknown> = {}) {
     fieldLocked: true,
     seasonId: 'season-2026',
     leagueEventId: '',
-    source: 'MANUAL',
     syncScope: 'NONE',
-    scoreSource: { providerId: '', externalId: '' },
     autoLifecycleEnabled: true,
-    par: 71,
-    fieldCount: 2,
+    loadedParticipantCount: 2,
     tierCount: 6,
     contestCount: 1,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    workflow: { currentStatus: 'IN_PROGRESS', allowedTransitions: [] },
+    allowedTransitions: [],
     ...overrides,
-  };
+  });
 }
 
-function scoreRow(sep: string, name: string, strokes = 70) {
+// #236: a golfer's per-round golf results ride on the field row; the page picks the
+// chosen round's out of it.
+function roundResult(roundNumber: number, strokes: number) {
   return {
-    sportEventParticipantId: sep,
-    participantId: `p-${sep}`,
-    participantName: name,
-    strokes,
-    scoreToPar: strokes - 71,
-    thru: 18,
+    id: `result-${roundNumber}`,
+    sportEventRoundId: `round-${roundNumber}`,
+    roundNumber,
     status: 'COMPLETED',
     completedAt: '2026-07-16T18:00:00.000Z',
-    standing: {
-      eventScoreToPar: strokes - 71,
-      eventStrokes: strokes,
-      currentRound: 1,
-      currentRoundThru: 18,
-      status: 'COMPLETED',
-    },
+    golf: { strokes, scoreToPar: strokes - 71, thru: 18 },
   };
 }
 
-function seed(overrides: { tournament?: Record<string, unknown> } = {}) {
-  adminGetGolfTournamentMock.mockResolvedValue({
-    data: { tournament: tournament(overrides.tournament) },
+function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {}) {
+  getEventMock.mockResolvedValue({
+    data: { event: tournament(overrides.tournament) },
   });
-  adminGetGolfTournamentRoundsMock.mockResolvedValue({
+  listEventRoundsMock.mockResolvedValue({
     data: {
-      rounds: [
-        { roundNumber: 1, scheduledDate: '2026-07-16T08:00:00.000Z', scheduledEndAt: '' },
-        { roundNumber: 2, scheduledDate: '2026-07-17T08:00:00.000Z', scheduledEndAt: '' },
-        { roundNumber: 3, scheduledDate: '2026-07-18T08:00:00.000Z', scheduledEndAt: '' },
-        { roundNumber: 4, scheduledDate: '2026-07-19T08:00:00.000Z', scheduledEndAt: '' },
-      ],
+      rounds: [1, 2, 3, 4].map((roundNumber) =>
+        sportEventRoundFixture({
+          sportEventId: 'evt-1',
+          roundNumber,
+          scheduledDate: `2026-07-${15 + roundNumber}T08:00:00.000Z`,
+        }),
+      ),
     },
   });
-  adminGetGolfTournamentFieldMock.mockResolvedValue({
+  listEventParticipantsMock.mockResolvedValue({
     data: {
-      entries: [
-        {
-          sportEventParticipantId: 'sep-1',
+      participants: [
+        fieldEntryFixture({
+          id: 'sep-1',
           participantId: 'p-1',
-          participantName: 'Rory McIlroy',
-          shortName: 'R. McIlroy',
-          nationality: 'NIR',
-          isActive: true,
-          inactiveReason: null,
+          participant: participantFixture({ id: 'p-1', name: 'Rory McIlroy', externalId: 'rory-1' }),
           ranking: 2,
-          oddsToWin: 8,
-          seedNumber: 2,
-          price: 9000,
-          isLeagueRosterMember: true,
-        },
+          rounds: [roundResult(1, 70), roundResult(2, 70), roundResult(3, 72)],
+        }),
       ],
     },
-  });
-  adminGetGolfRoundScoresMock.mockResolvedValue({
-    data: { rows: [scoreRow('sep-1', 'Rory McIlroy')] },
   });
 }
 
@@ -187,23 +171,23 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
     expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
   });
 
-  it('pool-master-r11 refetches scores for the selected round', async () => {
+  it('pool-master-r11 shows the selected round\'s scores, read from the field', async () => {
     seed();
     renderPage();
 
-    await screen.findByRole('radio', { name: /Round 1/ });
+    expect(await screen.findByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('70');
     await userEvent.click(screen.getByRole('radio', { name: /Round 3/ }));
 
     await waitFor(() =>
-      expect(adminGetGolfRoundScoresMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { eventId: 'evt-1', round: '3' } }),
-      ),
+      expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('72'),
     );
+    // No per-round read: one field read serves every round.
+    expect(listEventParticipantsMock).toHaveBeenCalledTimes(1);
   });
 
   it('pool-master-r11 previews then applies a bulk score upload for the selected round', async () => {
     seed();
-    adminPreviewGolfRoundScoresMock.mockResolvedValue({
+    previewEventGolfRoundScoresMock.mockResolvedValue({
       data: {
         rows: [
           {
@@ -219,7 +203,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
         rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
       },
     });
-    adminApplyGolfRoundScoresMock.mockResolvedValue({ data: {} });
+    applyEventGolfRoundScoresMock.mockResolvedValue({ data: {} });
     renderPage();
 
     const textarea = await screen.findByTestId('root-admin-golf-scores-upload-textarea');
@@ -239,9 +223,9 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-apply'));
 
     await waitFor(() =>
-      expect(adminApplyGolfRoundScoresMock).toHaveBeenCalledWith(
+      expect(applyEventGolfRoundScoresMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { eventId: 'evt-1', round: '1' },
+          path: { eventId: 'evt-1', roundNumber: '1' },
           body: {
             rows: [
               { playerName: 'Rory McIlroy', strokes: 68, scoreToPar: -3, thru: 18, status: 'COMPLETED' },
@@ -254,7 +238,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
 
   it('pool-master-r11 blocks Apply while a previewed row is unresolved', async () => {
     seed();
-    adminPreviewGolfRoundScoresMock.mockResolvedValue({
+    previewEventGolfRoundScoresMock.mockResolvedValue({
       data: {
         rows: [
           {
@@ -286,7 +270,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
 
   it('pool-master-r11 clears a pending preview and any typed correction when the round changes (key remount)', async () => {
     seed();
-    adminPreviewGolfRoundScoresMock.mockResolvedValue({
+    previewEventGolfRoundScoresMock.mockResolvedValue({
       data: {
         rows: [
           {
@@ -333,7 +317,7 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
 
   it('pool-master-r11 surfaces a round-schedule load error without blocking the tools', async () => {
     seed();
-    adminGetGolfTournamentRoundsMock.mockResolvedValue({
+    listEventRoundsMock.mockResolvedValue({
       error: { code: 'INTERNAL', message: 'Round schedule offline' },
       response: { status: 500 },
     });
@@ -362,13 +346,12 @@ describe('pool-master-r11 RootAdminGolfTournamentScoresPage', () => {
   });
 
   it('pool-master-r11 surfaces the tournament load error', async () => {
-    adminGetGolfTournamentMock.mockResolvedValue({
+    getEventMock.mockResolvedValue({
       error: { code: 'NOT_FOUND', message: 'No such tournament' },
       response: { status: 404 },
     });
-    adminGetGolfTournamentRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    adminGetGolfTournamentFieldMock.mockResolvedValue({ data: { entries: [] } });
-    adminGetGolfRoundScoresMock.mockResolvedValue({ data: { rows: [] } });
+    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     expect(await screen.findByText('No such tournament')).toBeInTheDocument();

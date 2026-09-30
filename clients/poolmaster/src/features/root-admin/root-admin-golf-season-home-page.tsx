@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { adminGetGolfSeason, adminListGolfLeagues, adminListGolfTournaments, adminSetCurrentGolfSeason } from '@/lib/api';
+import { getSeason, listEvents, setCurrentSeason } from '@/lib/api';
 import {
   AsyncPage,
   Button,
@@ -16,15 +16,12 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { AdminGetGolfSeasonResponses, AdminListGolfTournamentsResponses } from '@/lib/api';
+import type { SeasonDto, SportEventDto } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GolfSeasonCloneAction } from './golf-season-clone-action';
 import { GolfSeasonEditModal } from './golf-season-edit-modal';
 import { GolfSeasonTournamentCalendar } from './golf-season-tournament-calendar';
-
-type GolfSeason = AdminGetGolfSeasonResponses[200]['season'];
-type GolfTournament =
-  AdminListGolfTournamentsResponses[200]['tournaments'][number];
+import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
  * plans/124 §6.3 — /manage/golf/seasons/:seasonId "Season Home": the
@@ -43,8 +40,8 @@ export function RootAdminGolfSeasonHomePage() {
 
   const seasonQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.golf.season(seasonId || null),
-    queryFn: async (): Promise<GolfSeason> => {
-      const response = await adminGetGolfSeason({ path: { seasonId } });
+    queryFn: async (): Promise<SeasonDto> => {
+      const response = await getSeason({ path: { seasonId } });
       if (!response.data?.season) {
         throwApiError(response.error, 'Golf season response is missing data.');
       }
@@ -56,27 +53,18 @@ export function RootAdminGolfSeasonHomePage() {
 
   const season = seasonQuery.data;
 
-  const leaguesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tours,
-    queryFn: async () => {
-      const response = await adminListGolfLeagues();
-      if (!response.data?.leagues) {
-        throwApiError(response.error, 'Golf tour list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-    retry: false,
-  });
+  const leaguesQuery = useGolfSportLeaguesQuery();
 
   const tournamentsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.tournaments,
-    queryFn: async (): Promise<GolfTournament[]> => {
-      const response = await adminListGolfTournaments();
-      if (!response.data?.tournaments) {
+    queryKey: QueryKeys.rootAdmin.golf.seasonTournaments(seasonId),
+    queryFn: async (): Promise<SportEventDto[]> => {
+      const response = await listEvents({ query: { seasonId } });
+      if (!response.data?.events) {
         throwApiError(response.error, 'Golf tournament list response is missing data.');
       }
-      return response.data.tournaments;
+      return response.data.events;
     },
+    enabled: seasonId !== '',
     retry: false,
   });
 
@@ -93,19 +81,18 @@ export function RootAdminGolfSeasonHomePage() {
 
   const seasonTournaments = useMemo(
     () =>
-      (tournamentsQuery.data ?? [])
-        .filter((tournament) => tournament.seasonId === seasonId)
+      [...(tournamentsQuery.data ?? [])]
         .sort((left, right) => Date.parse(left.startDate) - Date.parse(right.startDate)),
-    [seasonId, tournamentsQuery.data],
+    [tournamentsQuery.data],
   );
 
   const setCurrentMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminSetCurrentGolfSeason({ path: { seasonId } });
-      if (!response.data?.currentSeasonId) {
+      const response = await setCurrentSeason({ path: { seasonId } });
+      if (!response.data?.sportLeague) {
         throwApiError(response.error, 'Set-current response is missing data.');
       }
-      return response.data;
+      return response.data.sportLeague;
     },
     invalidates: [
       QueryKeys.rootAdmin.golf.season(seasonId || null),
@@ -192,7 +179,7 @@ export function RootAdminGolfSeasonHomePage() {
                 {
                   id: 'tournaments',
                   label: 'Tournaments',
-                  value: season.tournamentCount,
+                  value: season.sportEventCount,
                 },
               ]}
             />

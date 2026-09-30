@@ -257,7 +257,7 @@ export type LegacyParticipantStatus = 'ACTIVE' | 'INACTIVE' | ParticipantInactiv
  * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
  * (`'ACTIVE'` / `'INACTIVE'` / a `ParticipantInactiveReason`) some response
  * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
- * `AdminEventParticipantDto`, the draft-room selection-participant status).
+ * the draft-room selection-participant status).
  * New endpoints should read `isActive`/`inactiveReason` directly instead of this
  * string — see plans/124 §4.1. Single source of truth so every call site derives
  * the same value the same way rather than re-implementing the ternary.
@@ -270,6 +270,21 @@ export function deriveLegacyParticipantStatus(
     return 'ACTIVE';
   }
   return inactiveReason ?? 'INACTIVE';
+}
+
+/**
+ * The label a participant status reads as on screen (#236). Cross-sport values render in
+ * title case, except that golf calls ELIMINATED "Cut" — the value stays sport-agnostic,
+ * the audience's word is applied here, once, for every surface that shows it.
+ */
+export function formatParticipantStatusLabel(status: string, sport?: string | null): string {
+  if (status === ParticipantInactiveReason.ELIMINATED && sport === 'GOLF') {
+    return 'Cut';
+  }
+  return status
+    .split('_')
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ');
 }
 
 // --- Contest Lifecycle ---
@@ -350,11 +365,12 @@ export const GolfContestConfigMode = {
 export type GolfContestConfigMode =
   (typeof GolfContestConfigMode)[keyof typeof GolfContestConfigMode];
 
-export const GolfTierSource = {
+/** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
+export const TierSource = {
   ODDS: 'ODDS',
-  WORLD_RANK: 'WORLD_RANK',
+  RANKING: 'RANKING',
 } as const;
-export type GolfTierSource = (typeof GolfTierSource)[keyof typeof GolfTierSource];
+export type TierSource = (typeof TierSource)[keyof typeof TierSource];
 
 /** How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. */
 export const ValuationSource = {
