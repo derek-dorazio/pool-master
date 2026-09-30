@@ -5,16 +5,18 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { Sport, TournamentFormat } from '@poolmaster/shared/domain';
+import type { SportEventRepository, SportRepository } from '@poolmaster/shared/db';
 import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
-  PrismaContestCoreRepository,
+  PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventRepository,
+  PrismaSportRepository,
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
-import { ContestManagementService } from './service';
+import { ContestManagementService, type ContestCreateSportEventReader } from './service';
 
 export function createContestManagementService(
   prisma: PrismaClient,
@@ -22,47 +24,45 @@ export function createContestManagementService(
 ): ContestManagementService {
   const sportEventTierService = createSportEventTierService(prisma, logger);
   return new ContestManagementService(
-    new PrismaContestCoreRepository(prisma),
+    new PrismaContestRepository(prisma),
     new PrismaContestConfigTemplateRepository(prisma),
     new PrismaContestConfigurationRepository(prisma),
     new PrismaParticipantContestScoringRuleRepository(prisma),
     sportEventTierService,
     logger,
-    {
-      findById: async (sportEventId) => {
-        const row = await prisma.sportEvent.findUnique({
-          where: { id: sportEventId },
-          include: {
-            _count: {
-              select: {
-                sportEventParticipants: true,
-              },
-            },
-          },
-        });
-
-        if (!row) {
-          return null;
-        }
-        const sport = row.sport as Sport;
-        const sportRow = await prisma.sport.findUnique({
-          where: { name: row.sport },
-          select: { tournamentFormat: true },
-        });
-
-        return {
-          id: row.id,
-          releaseAt: row.releaseAt,
-          fieldLocksAt: row.fieldLocksAt,
-          fieldLocked: row.fieldLocked,
-          sport,
-          tournamentFormat:
-            (sportRow?.tournamentFormat as TournamentFormat | undefined)
-            ?? getDefaultTournamentFormatForSport(sport),
-          participantCount: row.participantCount,
-          loadedParticipantCount: row._count.sportEventParticipants,
-        };
-      },
-    },
+    createContestSportEventReader(new PrismaSportEventRepository(prisma), new PrismaSportRepository(prisma)),
   );
+}
+
+/**
+ * What contest creation needs to know about the event: its release and field-lock timing, its
+ * sport's tournament format, and how much of its field has loaded. Composed from the slice-2
+ * ports (#247) — it was a raw Prisma read inlined here.
+ */
+export function createContestSportEventReader(
+  sportEvents: SportEventRepository,
+  sports: SportRepository,
+): ContestCreateSportEventReader {
+  return {
+    findById: async (sportEventId) => {
+      const event = await sportEvents.findById(sportEventId);
+      if (!event) {
+        return null;
+      }
+      const [sport, loaded] = await Promise.all([
+        sports.findByName(event.sport),
+        sportEvents.countParticipants([sportEventId]),
+      ]);
+      return {
+        id: event.id,
+        releaseAt: event.releaseAt,
+        fieldLocksAt: event.fieldLocksAt,
+        fieldLocked: event.fieldLocked,
+        sport: event.sport,
+        tournamentFormat: sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
+        participantCount: event.participantCount ?? null,
+        loadedParticipantCount: loaded.get(sportEventId) ?? 0,
+      };
+    },
+  };
 }

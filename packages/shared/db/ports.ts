@@ -284,18 +284,57 @@ export interface ParticipantProviderMappingRepository {
 
 // --- Contest ---
 
+/**
+ * The one port for `Contest` (#247 merged the contest-management copy into it). `create` is
+ * called by the one creation path, `ContestManagementService.createContest` (#245).
+ */
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
+  findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
+  create(contest: ContestCreate): Promise<Contest>;
   update(id: string, updates: Partial<Contest>): Promise<Contest>;
+  /**
+   * Moves a contest to `to` (with its start or end time), but only while it is in one of the
+   * `from` statuses. Returns whether this call made the change: a guarded single write, so two
+   * runs of the same event transition (a provider re-sending it) cannot both apply it.
+   */
+  transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean>;
+  /** Deletes a contest with its entries, picks, draft state, configuration and rules. */
   delete(id: string): Promise<void>;
 }
 
+export interface ContestStatusFilter {
+  statuses?: readonly Contest['status'][];
+  excludeStatuses?: readonly Contest['status'][];
+}
+
+export interface ContestStatusTransition {
+  from: readonly Contest['status'][];
+  to: Contest['status'];
+  startsAt?: Date;
+  endsAt?: Date;
+}
+
+export type ContestCreate = Pick<
+  Contest,
+  'leagueId' | 'sportEventId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'scoringEngine'
+>;
+
 // --- Entries & Picks ---
+
+/** An entry with its squad's name: every contest read shows whose entry it is. */
+export interface ContestEntryWithSquad extends ContestEntry {
+  squadName: string;
+}
 
 export interface ContestEntryRepository {
   findById(id: string): Promise<ContestEntry | null>;
+  findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null>;
   findByContest(contestId: string): Promise<ContestEntry[]>;
+  /** In entry-number order, then creation order; `activeOnly` leaves out INACTIVE entries. */
+  findByContestWithSquad(contestId: string, options?: { activeOnly?: boolean }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;

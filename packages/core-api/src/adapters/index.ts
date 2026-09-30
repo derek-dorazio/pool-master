@@ -10,11 +10,13 @@ export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaActionItemRepository } from './prisma-action-item-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
+export { PrismaContestEntryPickRepository } from './prisma-contest-entry-pick-repository';
+export { PrismaContestEntryStandingRepository } from './prisma-contest-entry-standing-repository';
+export { PrismaContestTimingPolicyRepository } from './prisma-contest-timing-policy-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
 export {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
-  PrismaContestCoreRepository,
   PrismaContestPrizeDefinitionRepository,
   PrismaParticipantContestScoringRuleRepository,
 } from './prisma-contest-management-repositories';

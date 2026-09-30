@@ -30,21 +30,6 @@ export interface GolfContestConfigurationRow {
   }>;
 }
 
-/** Selects exactly the `GolfContestConfigurationRow` fields off a contest configuration. */
-export const GOLF_CONTEST_CONFIGURATION_SELECT = {
-  configJson: true,
-  rosterSize: true,
-  pickCount: true,
-  rounds: true,
-  participantScoringRules: {
-    select: {
-      participantScoringDefinitionId: true,
-      sortOrder: true,
-      active: true,
-    },
-  },
-} as const;
-
 export interface GolfLeaderboardEntryInput {
   id: string;
   entryNumber: number;

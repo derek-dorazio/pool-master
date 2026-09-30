@@ -1,9 +1,14 @@
 /**
- * Prisma adapter for ContestRepository port.
+ * Prisma adapter for the one ContestRepository port.
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ContestRepository } from '@poolmaster/shared/db';
+import type {
+  ContestCreate,
+  ContestRepository,
+  ContestStatusFilter,
+  ContestStatusTransition,
+} from '@poolmaster/shared/db';
 import type { Contest } from '@poolmaster/shared/domain';
 
 export class PrismaContestRepository implements ContestRepository {
@@ -30,6 +35,58 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findBySportEvent(
+    sportEventId: string,
+    filter?: ContestStatusFilter,
+  ): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        sportEventId,
+        ...((filter?.statuses || filter?.excludeStatuses?.length) && {
+          status: {
+            ...(filter.statuses && { in: [...filter.statuses] }),
+            ...(filter.excludeStatuses?.length && { notIn: [...filter.excludeStatuses] }),
+          },
+        }),
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
+    });
+    return rows.map(mapToContest);
+  }
+
+  async create(contest: ContestCreate): Promise<Contest> {
+    const row = await this.prisma.contest.create({
+      data: {
+        leagueId: contest.leagueId,
+        sportEventId: contest.sportEventId,
+        name: contest.name,
+        status: contest.status,
+        contestFormat: contest.contestFormat,
+        selectionType: contest.selectionType,
+        scoringEngine: contest.scoringEngine,
+      },
+      include: {
+        sportEvent: { select: { sport: true } },
+      },
+    });
+    return mapToContest(row);
+  }
+
+  async transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean> {
+    const result = await this.prisma.contest.updateMany({
+      where: { id, status: { in: [...transition.from] } },
+      data: {
+        status: transition.to,
+        ...(transition.startsAt && { startsAt: transition.startsAt }),
+        ...(transition.endsAt && { endsAt: transition.endsAt }),
+      },
+    });
+    return result.count > 0;
+  }
+
   async update(id: string, updates: Partial<Contest>): Promise<Contest> {
     const row = await this.prisma.contest.update({
       where: { id },
@@ -48,11 +105,17 @@ export class PrismaContestRepository implements ContestRepository {
 
   async delete(id: string): Promise<void> {
     // Delete child records in dependency order before removing the contest
+    // The configuration's scoring rules and prize definitions reference it without a cascade,
+    // so they go first. Before #247 they were not deleted at all: harmless while no DRAFT contest
+    // had a rule, a foreign-key failure once #246 gave every golf configuration one. Entry
+    // standings cascade from the contest.
     await this.prisma.$transaction([
       this.prisma.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } }),
       this.prisma.draftPickHistory.deleteMany({ where: { session: { contestId: id } } }),
       this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
       this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
+      this.prisma.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } }),
+      this.prisma.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } }),
       this.prisma.contestConfiguration.deleteMany({ where: { contestId: id } }),
       this.prisma.contest.delete({ where: { id } }),
     ]);

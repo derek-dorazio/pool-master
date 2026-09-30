@@ -2008,6 +2008,111 @@ example; `Participant.role` is a String, so the rule now correctly stays silent 
 fixtures use `joinPolicy`. Left on purpose: `countingPickCount` on the published leaderboard
 DTO and its in-memory row — #248 moves that family cross-sport and names it once.
 
+## Slice 3 ports and services — outcome, 2026-09-30
+
+#247. Every entity in the contest cluster has a port; `contests/service.ts`, contest
+management, settlement and the event lifecycle's contest side run on them; the pick insert path
+is still singular. **#198's first implementation slice is unblocked** — its `SelectionEngine`
+can be built on these ports.
+
+**3.2 — ports.** The ticket's list was written before the cluster was read closely: four of its
+entities already had ports (`ContestConfiguration`, `ContestConfigTemplate`,
+`ParticipantContestScoringRule`, `ContestPrizeDefinition`). What was missing:
+
+- **`ContestEntryPickRepository`** — read-only (below).
+- **`ContestEntryStandingRepository`** — the frozen standing, core row and golf extension
+  written and read together; settlement is its one writer.
+- **`ContestTimingPolicyRepository`** — the event-timing resolver read the table raw from three
+  places (event wiring, ingestion, the event service's timing hook); all three take the port.
+
+And one was there twice. `ContestCoreRepository` (contest management's) and `ContestRepository`
+(contests') were two ports for one table, with two domain shapes (`ContestCoreSummary`,
+`Contest`). Merged into `ContestRepository`, which gained `findBySportEvent`, `create` (called
+only by #245's one creation path) and a guarded `transitionStatus`; `ContestCoreSummary` is gone.
+`ContestEntryRepository` gained the two reads every contest screen makes — entries with their
+squad's name, by id and by contest.
+
+**The open question — does `ContestEntryPick` get its own port? Yes, read-only.** Recorded here
+as the ticket asked:
+
+- The invariant is about **inserts**: `ContestEntryPickService.createPick` copies the contest's
+  format onto the pick inside its transaction, and the per-format partial unique indexes depend
+  on it (plans/117 §7.1). A port with `create` would be a second way in that every adapter and
+  fake had to implement faithfully, and nothing would stop a caller from using it.
+- The cluster's **reads** of picks were seven raw reads in the contest service and settlement —
+  three direct, four nested inside an entry query. Those are what needed a port.
+- So the port has `findByEntries`, `findByEntriesWithParticipant` and `countByEntries`, and no
+  write at all — documented on the interface, and asserted by an integration test that looks
+  for `create`, `createMany`, `upsert`, `update` and `delete` on the adapter and finds none.
+- **Rejected:** a `create` that delegates to the service. It keeps one implementation, but the
+  port then advertises a write whose correctness depends on which adapter is wired — and the
+  fakes, which are what most tests run against, would have to reimplement the transaction or
+  lie about it. **Also rejected:** no port. That leaves the reads raw, which is the residue the
+  slice exists to remove.
+
+**3.3 — services.**
+
+- **`ContestService` takes a deps object.** It had ten positional parameters with trailing
+  optionals and a raw `PrismaClient`; the slice-1 sweep recorded that shape as what blocked its
+  user read from moving onto `UserRepository`. Both are fixed: the constructor is
+  `ContestServiceDeps`, built by `createContestService` in `contests/wiring.ts`, and the user
+  read goes through the port. Twelve raw calls are gone.
+- **Contest management** was already on ports, but on the duplicate `ContestCoreRepository`; its
+  wiring read the sport event and sport raw to check a new contest's event. That reader is now
+  composed from `SportEventRepository` and `SportRepository`.
+- **Settlement and the golf leaderboard share one set of reads** (`golf-leaderboard-reads.ts`,
+  renamed from `golf-leaderboard-participants.ts`): the field through
+  `SportEventParticipantService.listEventParticipants`, the configuration and its scoring rules,
+  and the active entries with their picks. The live leaderboard and the settled result cannot
+  read differently. `GOLF_CONTEST_CONFIGURATION_SELECT` went with the raw reads.
+
+**Two latent defects, found by moving onto ports, both fixed and tested.**
+
+1. **The league's contest list reported `entryCount: 0` for every contest.** The league-scoped
+   route built its `ContestService` without the entry repository, and `countEntriesByContest`
+   returned zeros when it was missing. With a deps object the entries port is required, so the
+   omission is now a type error. The contests FAPI test asserts 1 after entering and 0 after
+   leaving.
+2. **Deleting a `DRAFT` contest failed once its configuration had a scoring rule.** The delete
+   removed the configuration but not its scoring rules or prize definitions, which reference it
+   without a cascade. Harmless until #246's backfill gave every golf configuration a rule. The
+   delete now removes both first; the integration test fails with the foreign-key error against
+   the old delete.
+
+**Invariants preserved.** The single insert path: `createPick` is untouched and the pick port has
+no write. Replace-on-full and toggle-off: `drafts/routes.ts` is untouched, and
+`drafts.functional.ts` (including `pool-master-mab`, which exercises both) passes.
+
+**3.6 — the sweep.** Every raw Prisma call on a cluster table outside the adapters was listed.
+
+- **Converted:** the event lifecycle's contest side. `EventLifecycleService` took a
+  `PrismaClient` whose own doc comment said contests would move onto a port in slice 3. Its
+  activation of an event's `OPEN`/`LOCKED` contests is now `findBySportEvent` plus
+  `transitionStatus` — the same guarded write settlement uses to complete a contest — and the
+  contest-started email reads the league, memberships, entries, squad members and users through
+  their ports. Built by `createEventLifecycleService`. New integration coverage drives it end to
+  end: the contest goes `ACTIVE`, a `DRAFT` one does not, the commissioner and the active squad
+  member are emailed and the inactive one is not, and a re-sent transition emails nobody.
+- **Left, with reasons:**
+  - **`drafts/routes.ts`** — nine raw pick, entry, configuration and contest calls, including
+    the two pick deletes that implement replace-on-full and toggle-off. The selection rules live
+    in the route handler itself, with no service under them; giving them one is #198's
+    `SelectionEngine`, which this slice exists to unblock. Converting the reads here would build
+    the route's shape into ports that #198 then reshapes.
+  - **`leagues/service.ts` and `squads/service.ts`** — league and squad deletion remove their
+    contests' entries, picks and configuration children inside the league's or squad's own
+    transaction. The ports have no unit of work to join; that is a mechanism the codebase does
+    not have yet, not one being bypassed. `leagues/service.ts` also groups contest counts by
+    league for the league list.
+  - **`admin/health-service.ts` and `admin/provider-service.ts`** — `contest.count` for platform
+    metrics, the same exception slice 1 made for user counts.
+  - **`contest-entry-picks/service.ts`** — the single insert path itself, transactional by design.
+  - **The contest override operations' ignored `reason`**, recorded by the audit deletion as
+    contest-cluster residue — a request-contract change, so #248's contract pass takes it.
+- **Found, not ours:** `listContests` (league-scoped) has no league check, the same gap #193
+  records for `deleteContest` and three other by-id routes; #193's table does not list it. Held
+  for #193's discussion, as that ticket asks.
+
 ## Slice 4 stage 1 — outcome, 2026-09-30
 
 #205 had never had its stage 1 done. Doing it changed the slice from an epic stage into a

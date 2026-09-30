@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ContestEntryRepository } from '@poolmaster/shared/db';
+import type { ContestEntryRepository, ContestEntryWithSquad } from '@poolmaster/shared/db';
 import type { ContestEntry } from '@poolmaster/shared/domain';
 
 export class PrismaContestEntryRepository implements ContestEntryRepository {
@@ -12,6 +12,26 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
   async findById(id: string): Promise<ContestEntry | null> {
     const row = await this.prisma.contestEntry.findUnique({ where: { id } });
     return row ? mapToEntry(row) : null;
+  }
+
+  async findByIdWithSquad(id: string): Promise<ContestEntryWithSquad | null> {
+    const row = await this.prisma.contestEntry.findUnique({
+      where: { id },
+      include: { squad: { select: { name: true } } },
+    });
+    return row ? { ...mapToEntry(row), squadName: row.squad.name } : null;
+  }
+
+  async findByContestWithSquad(
+    contestId: string,
+    options?: { activeOnly?: boolean },
+  ): Promise<ContestEntryWithSquad[]> {
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId, ...(options?.activeOnly && { status: 'ACTIVE' }) },
+      include: { squad: { select: { name: true } } },
+      orderBy: [{ entryNumber: 'asc' }, { createdAt: 'asc' }],
+    });
+    return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
   }
 
   async findByContest(contestId: string): Promise<ContestEntry[]> {

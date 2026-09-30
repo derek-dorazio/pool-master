@@ -14,6 +14,7 @@ import type {
   SportEventDetail,
   ProviderParticipant,
 } from '../core/provider-interface';
+import { PrismaContestTimingPolicyRepository } from '../../../adapters';
 import type { IngestionJobRecord } from '../core/ingestion-scheduler';
 import { resolveRankingType } from '../core/ranking-types';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
@@ -215,7 +216,7 @@ export class IngestionPersistence {
     sport: Sport,
     metadata: Record<string, unknown>,
   ) {
-    return resolveTimingPolicyForSport(this.prisma, sport, metadata);
+    return resolveTimingPolicyForSport(new PrismaContestTimingPolicyRepository(this.prisma), sport, metadata);
   }
 
   /**

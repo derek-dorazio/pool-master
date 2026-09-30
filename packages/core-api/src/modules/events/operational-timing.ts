@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import type { ContestTimingPolicyRepository } from '@poolmaster/shared/db';
 import type { ContestTimingPolicy, Sport, SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
 
 type SelectableTimingPolicy = Pick<ContestTimingPolicy, 'eventType' | 'isDefault' | 'releaseRule' | 'fieldLockRule'>;
@@ -106,15 +106,11 @@ export function evaluateEventOperationalState(input: {
  * drifting queries.
  */
 export async function resolveTimingPolicyForSport(
-  prisma: PrismaClient,
+  policies: ContestTimingPolicyRepository,
   sport: Sport,
   metadata: Record<string, unknown>,
 ): Promise<SelectableTimingPolicy | null> {
-  const policies = await prisma.contestTimingPolicy.findMany({
-    where: { sport, active: true },
-    orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-  });
-  return selectTimingPolicy(policies, metadata);
+  return selectTimingPolicy(await policies.findActiveBySport(sport), metadata);
 }
 
 export function selectTimingPolicy(

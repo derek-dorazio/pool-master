@@ -1,23 +1,13 @@
 import type {
   ContestConfigTemplate,
-  ContestCoreSummary,
   ContestConfiguration,
+  ContestEntryPick,
   ContestPrizeDefinition,
+  ContestTimingPolicy,
   ParticipantContestScoringRule,
+  ParticipantInactiveReason,
+  Sport,
 } from '../domain';
-
-export interface ContestCoreRepository {
-  findById(id: string): Promise<ContestCoreSummary | null>;
-  findByLeague(leagueId: string): Promise<ContestCoreSummary[]>;
-  create(
-    contest: Omit<ContestCoreSummary, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestCoreSummary>;
-  update(
-    id: string,
-    updates: Partial<ContestCoreSummary>,
-  ): Promise<ContestCoreSummary>;
-  delete(id: string): Promise<void>;
-}
 
 export interface ContestConfigurationRepository {
   findById(id: string): Promise<ContestConfiguration | null>;
@@ -77,4 +67,61 @@ export interface ContestPrizeDefinitionRepository {
     updates: Partial<ContestPrizeDefinition>,
   ): Promise<ContestPrizeDefinition>;
   delete(id: string): Promise<void>;
+}
+
+/** The participant a pick points at, as a contest entry shows it. */
+export interface ContestEntryPickParticipant {
+  participantId: string;
+  participantName: string;
+  isActive: boolean;
+  inactiveReason: ParticipantInactiveReason | null;
+  role: string | null;
+  teamAffiliation: string | null;
+}
+
+export interface ContestEntryPickWithParticipant extends ContestEntryPick {
+  participant: ContestEntryPickParticipant;
+}
+
+/**
+ * Reads of `ContestEntryPick`. **Read-only by design (#247).** A pick has one insert path,
+ * `ContestEntryPickService.createPick`: it reads the parent contest's `contestFormat` inside
+ * the insert's transaction and writes it onto the pick, which the per-format partial unique
+ * indexes depend on (plans/117 §7.1, "no insert path bypasses this"). A `create` here would be
+ * a second way in that every adapter and fake would have to implement; leaving it off the port
+ * means none can. Every order is pick time, then id.
+ */
+export interface ContestEntryPickRepository {
+  findByEntries(entryIds: readonly string[]): Promise<ContestEntryPick[]>;
+  findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]>;
+  /** Picks per entry; an entry with none is absent from the map. */
+  countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
+}
+
+/** A settled entry standing: the core row and its golf extension, when it has one. */
+export interface ContestEntryStandingResult {
+  id: string;
+  contestId: string;
+  contestEntryId: string;
+  position: number | null;
+  displayPosition: string | null;
+  countingPickLimit: number;
+  scoredPickCount: number;
+  asOf: Date | null;
+  settledAt: Date;
+  golf: { totalScoreToPar: number | null } | null;
+}
+
+export type ContestEntryStandingWrite = Omit<ContestEntryStandingResult, 'id'>;
+
+/** The frozen contest-entry standing (#246): written by settlement, read by a settled contest. */
+export interface ContestEntryStandingRepository {
+  findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
+  /** One per entry: creates or overwrites the entry's standing, core and golf extension together. */
+  upsert(write: ContestEntryStandingWrite): Promise<void>;
+}
+
+export interface ContestTimingPolicyRepository {
+  /** A sport's active policies, the default first, then oldest first. */
+  findActiveBySport(sport: Sport): Promise<ContestTimingPolicy[]>;
 }

@@ -2,76 +2,15 @@ import type { PrismaClient } from '@prisma/client';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
-  ContestCoreRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type {
   ContestConfigTemplate,
   ContestConfiguration,
-  ContestCoreSummary,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
 } from '@poolmaster/shared/domain';
-
-export class PrismaContestCoreRepository implements ContestCoreRepository {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<ContestCoreSummary | null> {
-    const row = await this.prisma.contest.findUnique({ where: { id } });
-    return row ? mapContest(row) : null;
-  }
-
-  async findByLeague(leagueId: string): Promise<ContestCoreSummary[]> {
-    const rows = await this.prisma.contest.findMany({
-      where: { leagueId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return rows.map(mapContest);
-  }
-
-  async create(
-    contest: Omit<ContestCoreSummary, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestCoreSummary> {
-    const row = await this.prisma.contest.create({
-      data: {
-        leagueId: contest.leagueId,
-        sportEventId: contest.sportEventId,
-        name: contest.name,
-        status: contest.status,
-        contestFormat: contest.contestFormat,
-        selectionType: contest.selectionType,
-        scoringEngine: contest.scoringEngine,
-      },
-    });
-    return mapContest(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<ContestCoreSummary>,
-  ): Promise<ContestCoreSummary> {
-    const row = await this.prisma.contest.update({
-      where: { id },
-      data: {
-        ...(updates.leagueId !== undefined && { leagueId: updates.leagueId }),
-        ...(updates.sportEventId !== undefined && {
-          sportEventId: updates.sportEventId,
-        }),
-        ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.status !== undefined && { status: updates.status }),
-        ...(updates.contestFormat !== undefined && {
-          contestFormat: updates.contestFormat,
-        }),
-      },
-    });
-    return mapContest(row);
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.prisma.contest.delete({ where: { id } });
-  }
-}
 
 export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
@@ -368,32 +307,6 @@ export class PrismaContestPrizeDefinitionRepository
   async delete(id: string): Promise<void> {
     await this.prisma.contestPrizeDefinition.delete({ where: { id } });
   }
-}
-
-function mapContest(row: {
-  id: string;
-  leagueId: string;
-  sportEventId: string | null;
-  name: string;
-  status: string;
-  contestFormat: string;
-  selectionType: string;
-  scoringEngine: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): ContestCoreSummary {
-  return {
-    id: row.id,
-    leagueId: row.leagueId,
-    sportEventId: row.sportEventId ?? '',
-    name: row.name,
-    status: row.status as ContestCoreSummary['status'],
-    contestFormat: row.contestFormat as ContestCoreSummary['contestFormat'],
-    selectionType: row.selectionType as ContestCoreSummary['selectionType'],
-    scoringEngine: row.scoringEngine as ContestCoreSummary['scoringEngine'],
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
 }
 
 function mapContestConfiguration(row: {

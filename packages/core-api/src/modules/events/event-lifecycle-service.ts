@@ -13,12 +13,24 @@
  * (422 SPORT_EVENT_INVALID_TRANSITION) on an undeclared jump.
  */
 
-import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { SportEventRepository } from '@poolmaster/shared/db';
-import type { SportEvent } from '@poolmaster/shared/domain';
-import { ContestStatus, SportEventStatus, isDeclaredSportEventTransition } from '@poolmaster/shared/domain';
-import type { LeagueRole } from '@poolmaster/shared/domain';
+import type {
+  ContestEntryRepository,
+  ContestRepository,
+  LeagueMembershipRepository,
+  LeagueRepository,
+  SportEventRepository,
+  SquadMembershipRepository,
+  UserRepository,
+} from '@poolmaster/shared/db';
+import type { Contest, League, SportEvent, User } from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  LeagueRole,
+  LeagueMembershipStatus,
+  SportEventStatus,
+  isDeclaredSportEventTransition,
+} from '@poolmaster/shared/domain';
 import {
   renderSystemEmailTemplate,
   type ContestStartedEntrySummary,
@@ -61,50 +73,33 @@ export class EventLifecycleError extends Error {
   }
 }
 
-interface ContestStartedEmailUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  isActive: boolean;
+/**
+ * The contest side of an event transition (#247): which contests start, and who is told. Before
+ * #247 this was a raw PrismaClient; contests are slice 3's cluster and now have ports.
+ */
+export interface EventLifecycleContestDeps {
+  contests: ContestRepository;
+  entries: ContestEntryRepository;
+  leagues: LeagueRepository;
+  memberships: LeagueMembershipRepository;
+  squadMemberships: SquadMembershipRepository;
+  users: UserRepository;
 }
 
-interface ContestStartedCandidate {
-  id: string;
-  leagueId: string;
-  name: string;
-  league: {
-    name: string;
-    leagueCode: string;
-    memberships: Array<{
-      role: LeagueRole;
-      user: ContestStartedEmailUser;
-    }>;
-  };
-  sportEvent: {
-    name: string;
-    startDate: Date;
-  } | null;
-  entries: Array<{
-    id: string;
-    name: string;
-    squad: {
-      name: string;
-      memberships: Array<{
-        user: ContestStartedEmailUser;
-      }>;
-    };
-  }>;
+/** A contest being started, with everything its summary email reads. */
+interface ContestStartedSummary {
+  contest: Contest;
+  league: League;
+  entries: Array<{ name: string; squadName: string }>;
+  recipients: User[];
 }
+
+/** A contest starts from OPEN or LOCKED; any other status is left where it is. */
+const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN, ContestStatus.LOCKED];
 
 export class EventLifecycleService {
-  /**
-   * `prisma` is for the contest side effects only; contests are slice 3's (#204), and move
-   * onto a port there. The event itself is read and written through `sportEvents`.
-   */
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly contestDeps: EventLifecycleContestDeps,
     private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
@@ -172,87 +167,16 @@ export class EventLifecycleService {
   private async activateContestsForStartedEvent(
     sportEvent: SportEvent,
   ): Promise<void> {
-    const candidates = await this.prisma.contest.findMany({
-      where: {
-        sportEventId: sportEvent.id,
-        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
-      },
-      select: {
-        id: true,
-        leagueId: true,
-        name: true,
-        league: {
-          select: {
-            name: true,
-            leagueCode: true,
-            memberships: {
-              where: { status: 'ACTIVE', role: 'COMMISSIONER' },
-              select: {
-                role: true,
-                user: {
-                  select: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    lastName: true,
-                    username: true,
-                    isActive: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        sportEvent: {
-          select: {
-            name: true,
-            startDate: true,
-          },
-        },
-        entries: {
-          where: { status: 'ACTIVE' },
-          orderBy: [{ entryNumber: 'asc' }, { name: 'asc' }],
-          select: {
-            id: true,
-            name: true,
-            squad: {
-              select: {
-                name: true,
-                memberships: {
-                  where: { status: 'ACTIVE' },
-                  select: {
-                    user: {
-                      select: {
-                        id: true,
-                        email: true,
-                        firstName: true,
-                        lastName: true,
-                        username: true,
-                        isActive: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    }) as ContestStartedCandidate[];
+    const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
 
     for (const contest of candidates) {
-      const update = await this.prisma.contest.updateMany({
-        where: {
-          id: contest.id,
-          status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
-        },
-        data: {
-          status: ContestStatus.ACTIVE,
-          startsAt: sportEvent.startDate,
-        },
+      const started = await this.contestDeps.contests.transitionStatus(contest.id, {
+        from: STARTABLE,
+        to: ContestStatus.ACTIVE,
+        startsAt: sportEvent.startDate,
       });
 
-      if (update.count === 0) {
+      if (!started) {
         this.logger?.debug({
           contestId: contest.id,
           sportEventId: sportEvent.id,
@@ -272,8 +196,44 @@ export class EventLifecycleService {
     }
   }
 
+  /**
+   * The contest's league, its active entries (entry number, then name) and the people told:
+   * the league's active commissioners, then each entry's active squad members, active users
+   * only, each once. Null when the league is gone.
+   */
+  private async loadContestStartedSummary(contest: Contest): Promise<ContestStartedSummary | null> {
+    const { entries, leagues, memberships, squadMemberships, users } = this.contestDeps;
+    const [league, leagueMemberships, contestEntries] = await Promise.all([
+      leagues.findById(contest.leagueId),
+      memberships.findByLeague(contest.leagueId),
+      entries.findByContestWithSquad(contest.id, { activeOnly: true }),
+    ]);
+    if (!league) {
+      return null;
+    }
+    const orderedEntries = [...contestEntries].sort((a, b) =>
+      a.entryNumber - b.entryNumber || a.name.localeCompare(b.name));
+
+    const commissionerIds = leagueMemberships
+      .filter((membership) => membership.status === LeagueMembershipStatus.ACTIVE && membership.role === LeagueRole.COMMISSIONER)
+      .map((membership) => membership.userId);
+    const squadMemberIds = (await Promise.all(
+      orderedEntries.map((entry) => squadMemberships.findBySquad(entry.squadId)),
+    )).flat().map((membership) => membership.userId);
+    const recipientIds = [...new Set([...commissionerIds, ...squadMemberIds])];
+    const recipients = (await Promise.all(recipientIds.map((id) => users.findById(id))))
+      .filter((user): user is User => user !== null && user.isActive);
+
+    return {
+      contest,
+      league,
+      entries: orderedEntries.map((entry) => ({ name: entry.name, squadName: entry.squadName })),
+      recipients,
+    };
+  }
+
   private async deliverContestStartedSummaryEmails(
-    contest: ContestStartedCandidate,
+    contest: Contest,
     sportEvent: SportEvent,
   ): Promise<void> {
     if (!this.mailDelivery) {
@@ -284,25 +244,34 @@ export class EventLifecycleService {
       return;
     }
 
-    const recipients = collectContestStartedRecipients(contest);
-    const entries = buildContestStartedEntrySummary(contest);
-    const eventName = contest.sportEvent?.name ?? sportEvent.name;
-    const startedAt = contest.sportEvent?.startDate ?? sportEvent.startDate;
+    const summary = await this.loadContestStartedSummary(contest);
+    if (!summary) {
+      this.logger?.warn({
+        contestId: contest.id,
+        leagueId: contest.leagueId,
+      }, 'Skipped contest started summary email because the league was not found');
+      return;
+    }
+    const entries: ContestStartedEntrySummary[] = summary.entries.map((entry) => ({
+      entryName: entry.name,
+      teamName: entry.squadName,
+    }));
+    // The contest belongs to this event, so its name and start are the event's own.
     const contestUrl = buildContestUrl(
       this.appBaseUrl,
-      contest.league.leagueCode,
+      summary.league.leagueCode,
       contest.id,
     );
 
-    for (const user of recipients) {
+    for (const user of summary.recipients) {
       const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
         userName: formatUserName(user),
-        leagueName: contest.league.name,
+        leagueName: summary.league.name,
         contestName: contest.name,
-        eventName,
+        eventName: sportEvent.name,
         contestUrl,
-        startedAt,
-        entryCount: contest.entries.length,
+        startedAt: sportEvent.startDate,
+        entryCount: entries.length,
         entries,
       });
 
@@ -337,37 +306,7 @@ export class EventLifecycleService {
   }
 }
 
-function collectContestStartedRecipients(
-  contest: ContestStartedCandidate,
-): ContestStartedEmailUser[] {
-  const recipients = new Map<string, ContestStartedEmailUser>();
-  const addUser = (user: ContestStartedEmailUser) => {
-    if (!user.isActive) return;
-    recipients.set(user.id, user);
-  };
-
-  for (const membership of contest.league.memberships) {
-    addUser(membership.user);
-  }
-  for (const entry of contest.entries) {
-    for (const membership of entry.squad.memberships) {
-      addUser(membership.user);
-    }
-  }
-
-  return Array.from(recipients.values());
-}
-
-function buildContestStartedEntrySummary(
-  contest: ContestStartedCandidate,
-): ContestStartedEntrySummary[] {
-  return contest.entries.map((entry) => ({
-    entryName: entry.name,
-    teamName: entry.squad.name,
-  }));
-}
-
-function formatUserName(user: ContestStartedEmailUser): string {
+function formatUserName(user: User): string {
   const fullName = [user.firstName, user.lastName]
     .map((part) => part.trim())
     .filter(Boolean)

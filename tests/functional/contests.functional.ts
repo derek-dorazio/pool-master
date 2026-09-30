@@ -648,6 +648,14 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(entriesResponse.data?.myEntryId).toBe(enterResponse.data?.entry.id);
     expect(entriesResponse.data?.entries).toHaveLength(1);
 
+    // The league's contest list counts the entry. Before #247 this route's service had no entry
+    // reads wired, so every contest listed `entryCount: 0`.
+    const listedWithEntry = await listContests({
+      client: commissioner.client,
+      path: { id: league.id },
+    });
+    expect(listedWithEntry.data?.contests.find((contest) => contest.id === contestId)?.entryCount).toBe(1);
+
     const leaveResponse = await leaveContest({
       client: commissioner.client,
       path: {
@@ -681,6 +689,12 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(afterLeaveEntries.data?.isJoined).toBe(false);
     expect(afterLeaveEntries.data?.entries).toHaveLength(0);
     expect(afterLeaveEntries.data?.myEntryId).toBeNull();
+
+    const listedAfterLeave = await listContests({
+      client: commissioner.client,
+      path: { id: league.id },
+    });
+    expect(listedAfterLeave.data?.contests.find((contest) => contest.id === contestId)?.entryCount).toBe(0);
 
     const reenterResponse = await enterContest({
       client: commissioner.client,
