@@ -254,7 +254,7 @@ export interface ParticipantSearchFilters {
   sport?: Sport;
   sportId?: string;
   status?: ParticipantStatus[];
-  position?: string[];
+  role?: string[];
   teamAffiliation?: string[];
   nationality?: string[];
 }

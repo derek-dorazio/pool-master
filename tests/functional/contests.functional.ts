@@ -190,7 +190,7 @@ async function seedImportedGolfEvent(options: {
         name: `Managed Contest Golfer ${index + 1}-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: index % 2 === 0 ? 'USA' : 'EUR',
       },
     });
@@ -912,7 +912,7 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Entry Detail Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: 'USA',
       },
     });
@@ -1136,7 +1136,7 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Functional Contest Player ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: null,
       },
     });
@@ -1331,7 +1331,7 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: 'USA',
       },
     });
@@ -1511,7 +1511,7 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `List Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: 'USA',
       },
     });

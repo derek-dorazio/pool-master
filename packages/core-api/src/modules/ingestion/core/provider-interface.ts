@@ -140,7 +140,8 @@ export interface ProviderParticipant {
   firstName?: string;
   lastName?: string;
   nationality?: string;
-  position?: string;
+  /** Playing role ("GOLFER"), not a rank. */
+  role?: string;
   teamAffiliation?: string;
   photoUrl?: string;
   active: boolean;

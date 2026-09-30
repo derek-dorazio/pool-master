@@ -562,6 +562,7 @@ The per-round join and the running standing. **The score lives in the sport exte
 |---|---|---|
 | Read for an event | `authenticated` | Through `listEventParticipants`. Standing `position` is the cross-sport rank key and is direction-free: **1 is best in every sport.** A reader ranks on it and joins the extension only to display a score |
 | Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write. Golf corrections: `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event |
+| Rank | *(every score write)* | `position` and `displayPosition` are computed from the extension's score after each write — the feed or a correction — across the whole event, so no reader re-derives them (#246). Ties share a position and display as "T3"; a withdrawn or eliminated golfer is unranked. The provider supplies no live rank to copy |
 
 ### SportEventParticipantValuation
 
@@ -577,7 +578,7 @@ The tier assignment and price for a participant at an event. 1:1 with
 
 | Operation | Role | Notes |
 |---|---|---|
-| List / search | `authenticated` | Filtered by sport, status and more, unpaged (§16) |
+| List / search | `authenticated` | Filtered by sport, status, `role` and more, unpaged (§16). `role` is the playing role ("GOLFER"); it was `position` until #246, which left `position` meaning rank alone |
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
 
@@ -612,6 +613,19 @@ and an optional event type.
 | Operation | Role | Notes |
 |---|---|---|
 | Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released and its field loaded (422 `SPORT_EVENT_*`). Answers 201 with the canonical contest read |
+| Update configuration | `commissioner` | `updateManagedContestConfiguration`. Refused with 409 `CONTEST_CONFIGURATION_SETTLED` while the contest is `COMPLETED` (#246): the settled result is frozen against the configuration it settled under. Reopening the contest (commissioner-gated, reason recorded) is the path back |
+| Read the golf leaderboard | `member` | `getGolfContestLeaderboard`. Live contests compute from event scores; a `COMPLETED` contest answers from its `ContestEntryStanding` rows (#246), so a score correction after settlement does not rewrite a finished result. A configuration with no scoring rule is 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — there is no golf fallback |
+
+### ContestEntryStanding
+
+An entry's result, frozen when its contest settles — cross-sport core plus a sport extension
+(`ContestEntryGolfStanding`, holding `totalScoreToPar`), the same split as the event standing.
+`countingPickLimit` records the rule's N it settled under.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Write | *(settlement)* | Written once per entry when the linked event completes; settlement is its single writer. A contest already `COMPLETED` is skipped, so re-settling cannot rewrite it; reopening moves it back to `ACTIVE`, and the next settlement recomputes |
+| Read | `member` | Through the golf leaderboard of a `COMPLETED` contest |
 
 ---
 

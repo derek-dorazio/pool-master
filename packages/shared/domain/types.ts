@@ -162,7 +162,8 @@ export interface Participant extends DomainEntity {
   lastName?: string;
   shortName?: string;
   nationality?: string;
-  position?: string;
+  /** Playing role ("GOLFER", "QB"), not a rank — `position` means rank on the standing tables. */
+  role?: string;
   teamAffiliation?: string;
   status: ParticipantStatus;
   injuryStatus: InjuryStatus;

@@ -7,11 +7,13 @@ export {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
+  rankSortedScores,
 } from './contest-scoring';
 export type {
   ParticipantScoringDefinition,
   ParticipantScoringDefinitionId,
   ScoreDirection,
+  ScoreRank,
 } from './contest-scoring';
 export type {
   ContestConfigTemplate,

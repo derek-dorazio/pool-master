@@ -1534,11 +1534,12 @@
               "null"
             ]
           },
-          "position": {
+          "role": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "The participant's playing role, when known."
           },
           "teamAffiliation": {
             "type": [
@@ -1638,11 +1639,12 @@
                     "null"
                   ]
                 },
-                "position": {
+                "role": {
                   "type": [
                     "string",
                     "null"
-                  ]
+                  ],
+                  "description": "The participant's playing role, when known."
                 },
                 "teamAffiliation": {
                   "type": [
@@ -5804,11 +5806,12 @@
                         "null"
                       ]
                     },
-                    "position": {
+                    "role": {
                       "type": [
                         "string",
                         "null"
-                      ]
+                      ],
+                      "description": "The participant's playing role, when known."
                     },
                     "teamAffiliation": {
                       "type": [
@@ -5971,11 +5974,12 @@
                           "null"
                         ]
                       },
-                      "position": {
+                      "role": {
                         "type": [
                           "string",
                           "null"
-                        ]
+                        ],
+                        "description": "The participant's playing role, when known."
                       },
                       "teamAffiliation": {
                         "type": [
@@ -11154,12 +11158,12 @@
             "type": "string",
             "description": "Participant nationality or country code when known."
           },
-          "position": {
+          "role": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Position, role, or event classification when known."
+            "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
           },
           "teamAffiliation": {
             "type": [
@@ -11278,9 +11282,9 @@
             "type": "string",
             "description": "Comma-separated participant statuses to include."
           },
-          "position": {
+          "role": {
             "type": "string",
-            "description": "Comma-separated positions to include."
+            "description": "Comma-separated playing roles to include."
           },
           "team": {
             "type": "string",
@@ -11342,12 +11346,12 @@
                   "type": "string",
                   "description": "Participant nationality or country code when known."
                 },
-                "position": {
+                "role": {
                   "type": [
                     "string",
                     "null"
                   ],
-                  "description": "Position, role, or event classification when known."
+                  "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
                 },
                 "teamAffiliation": {
                   "type": [
@@ -11506,12 +11510,12 @@
                 "type": "string",
                 "description": "Participant nationality or country code when known."
               },
-              "position": {
+              "role": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "Position, role, or event classification when known."
+                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
               },
               "teamAffiliation": {
                 "type": [
@@ -14406,12 +14410,12 @@
                 "type": "string",
                 "description": "Participant nationality or country code when known."
               },
-              "position": {
+              "role": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "Position, role, or event classification when known."
+                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
               },
               "teamAffiliation": {
                 "type": [
@@ -14876,12 +14880,12 @@
                       "type": "string",
                       "description": "Participant nationality or country code when known."
                     },
-                    "position": {
+                    "role": {
                       "type": [
                         "string",
                         "null"
                       ],
-                      "description": "Position, role, or event classification when known."
+                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
                     },
                     "teamAffiliation": {
                       "type": [
@@ -15492,12 +15496,12 @@
                     "type": "string",
                     "description": "Participant nationality or country code when known."
                   },
-                  "position": {
+                  "role": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "Position, role, or event classification when known."
+                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
                   },
                   "teamAffiliation": {
                     "type": [
@@ -16450,12 +16454,12 @@
                 "type": "string",
                 "description": "Participant nationality or country code when known."
               },
-              "position": {
+              "role": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "Position, role, or event classification when known."
+                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
               },
               "teamAffiliation": {
                 "type": [
@@ -16653,12 +16657,12 @@
                       "type": "string",
                       "description": "Participant nationality or country code when known."
                     },
-                    "position": {
+                    "role": {
                       "type": [
                         "string",
                         "null"
                       ],
-                      "description": "Position, role, or event classification when known."
+                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
                     },
                     "teamAffiliation": {
                       "type": [
@@ -16863,12 +16867,12 @@
                     "type": "string",
                     "description": "Participant nationality or country code when known."
                   },
-                  "position": {
+                  "role": {
                     "type": [
                       "string",
                       "null"
                     ],
-                    "description": "Position, role, or event classification when known."
+                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects."
                   },
                   "teamAffiliation": {
                     "type": [
@@ -26560,7 +26564,7 @@
         "tags": [
           "Contest Management"
         ],
-        "description": "Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload.",
+        "description": "Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.",
         "requestBody": {
           "required": true,
           "content": {
@@ -26985,6 +26989,45 @@
                   ],
                   "additionalProperties": false,
                   "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration."
                 }
               }
             }
@@ -27703,7 +27746,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.",
+        "description": "Returns the member-facing Golf leaderboard for a contest. While the contest is live, entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers. Once the contest is COMPLETED, each entry's total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the picks and the event field still show current scores.",
         "parameters": [
           {
             "schema": {
@@ -27726,7 +27769,7 @@
             }
           },
           "400": {
-            "description": "Standard API error envelope.",
+            "description": "CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27759,7 +27802,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Standard API error envelope."
+                  "description": "CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know)."
                 }
               }
             }
@@ -35079,9 +35122,9 @@
               "type": "string"
             },
             "in": "query",
-            "name": "position",
+            "name": "role",
             "required": false,
-            "description": "Comma-separated positions to include."
+            "description": "Comma-separated playing roles to include."
           },
           {
             "schema": {
@@ -35169,7 +35212,7 @@
                     "type": "string",
                     "maxLength": 10
                   },
-                  "position": {
+                  "role": {
                     "type": "string",
                     "maxLength": 50
                   },
@@ -35343,7 +35386,7 @@
                     "type": "string",
                     "maxLength": 10
                   },
-                  "position": {
+                  "role": {
                     "type": "string",
                     "maxLength": 50
                   },
@@ -41851,7 +41894,7 @@
                               "null"
                             ]
                           },
-                          "position": {
+                          "role": {
                             "type": "string"
                           },
                           "team": {
@@ -41955,7 +41998,7 @@
                                 "participantName": {
                                   "type": "string"
                                 },
-                                "position": {
+                                "role": {
                                   "type": [
                                     "string",
                                     "null"
@@ -42611,7 +42654,7 @@
                               "null"
                             ]
                           },
-                          "position": {
+                          "role": {
                             "type": "string"
                           },
                           "team": {
@@ -42715,7 +42758,7 @@
                                 "participantName": {
                                   "type": "string"
                                 },
-                                "position": {
+                                "role": {
                                   "type": [
                                     "string",
                                     "null"

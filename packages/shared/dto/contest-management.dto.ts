@@ -81,6 +81,12 @@ export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
 
+/**
+ * Error code for a configuration edit on a COMPLETED contest (#246): its result is frozen
+ * against the configuration it settled under. Reopening the contest is the path back.
+ */
+export const CONTEST_CONFIGURATION_SETTLED = 'CONTEST_CONFIGURATION_SETTLED';
+
 export const UpdateContestConfigurationRequestSchema =
   ContestConfigurationRequestSchema;
 export type UpdateContestConfigurationRequest = z.infer<

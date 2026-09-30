@@ -1,5 +1,5 @@
 /**
- * Fallback participant photos — sport/position-specific silhouettes
+ * Fallback participant photos — sport/role-specific silhouettes
  * used when a participant has no photo_url from the data provider.
  */
 
@@ -60,14 +60,14 @@ const GENERIC_FALLBACK = '/assets/participants/generic-silhouette.webp';
 
 /**
  * Returns the appropriate fallback photo URL for a participant.
- * Checks sport + position first, then sport default, then generic.
+ * Checks sport + role first, then sport default, then generic.
  */
-export function getFallbackPhoto(sport: Sport, position?: string): string {
+export function getFallbackPhoto(sport: Sport, role?: string): string {
   const sportPhotos = FALLBACK_PHOTOS[sport];
   if (!sportPhotos) return GENERIC_FALLBACK;
 
-  if (position && sportPhotos[position]) {
-    return sportPhotos[position];
+  if (role && sportPhotos[role]) {
+    return sportPhotos[role];
   }
 
   return sportPhotos['default'] ?? GENERIC_FALLBACK;
@@ -80,7 +80,7 @@ export function getFallbackPhoto(sport: Sport, position?: string): string {
 export function resolvePhotoUrl(
   photoUrl: string | undefined,
   sport: Sport,
-  position?: string,
+  role?: string,
 ): string {
-  return photoUrl ?? getFallbackPhoto(sport, position);
+  return photoUrl ?? getFallbackPhoto(sport, role);
 }

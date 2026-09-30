@@ -27,6 +27,7 @@ export type {
 export type {
   GolfRoundWrite,
   GolfStandingWrite,
+  StandingRankWrite,
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';

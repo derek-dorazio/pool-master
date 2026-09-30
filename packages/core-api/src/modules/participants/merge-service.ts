@@ -74,7 +74,7 @@ export class ParticipantMergeService {
     if (!canonical.lastName && duplicate.lastName) updates.lastName = duplicate.lastName;
     if (!canonical.shortName && duplicate.shortName) updates.shortName = duplicate.shortName;
     if (!canonical.nationality && duplicate.nationality) updates.nationality = duplicate.nationality;
-    if (!canonical.position && duplicate.position) updates.position = duplicate.position;
+    if (!canonical.role && duplicate.role) updates.role = duplicate.role;
     if (!canonical.teamAffiliation && duplicate.teamAffiliation) {
       updates.teamAffiliation = duplicate.teamAffiliation;
     }

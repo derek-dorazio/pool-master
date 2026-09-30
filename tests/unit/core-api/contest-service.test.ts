@@ -747,6 +747,10 @@ describe('ContestService', () => {
           rosterSize: 3,
           pickCount: 3,
           rounds: 4,
+          // Every configuration carries its scoring rule (#246); there is no golf fallback.
+          participantScoringRules: [
+            { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true },
+          ],
         },
       });
       const participantFindMany = jest.fn().mockResolvedValue([

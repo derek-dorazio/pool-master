@@ -27,7 +27,14 @@ import type {
   SportEventRepository,
   SportEventRoundRepository,
 } from '@poolmaster/shared/db';
-import { ParticipantStandingStatus, type GolfRoundResult, type GolfStandingResult } from '@poolmaster/shared/domain';
+import {
+  compareScores,
+  PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantStandingStatus,
+  rankSortedScores,
+  type GolfRoundResult,
+  type GolfStandingResult,
+} from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
 import { matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../sport-catalog/participant-row-resolver';
@@ -224,6 +231,7 @@ export class GolfScoreService {
     });
 
     const standingDiagnostics = await this.refreshGolfStandings(
+      sportEventId,
       [...new Set(persistable.map((entry) => entry.sportEventParticipantId))],
       new Date(),
     );
@@ -238,10 +246,51 @@ export class GolfScoreService {
 
   /**
    * Recomputes each golfer's standing from all their scored rounds: the core standing
-   * carries the current round, status and asOf; the golf extension the totals.
+   * carries the current round, status and asOf; the golf extension the totals. Then re-ranks
+   * the whole event, since one golfer's new score can move everyone's position.
    */
-  private async refreshGolfStandings(sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
+  private async refreshGolfStandings(
+    sportEventId: string,
+    sportEventParticipantIds: readonly string[],
+    asOf: Date,
+  ): Promise<SyncWriteDiagnostics> {
     if (sportEventParticipantIds.length === 0) return emptySyncWriteDiagnostics();
+    const diagnostics = await this.writeGolfStandings(sportEventParticipantIds, asOf);
+    await this.rankEventStandings(sportEventId);
+    return diagnostics;
+  }
+
+  /**
+   * Writes the event-side rank (#246): `position` and `displayPosition` on every golfer's core
+   * standing, computed here once per score write so no reader re-derives it. The provider does
+   * not supply a live rank — `finishPosition` is a past event's finish, used only for form —
+   * so it is ranked from `eventScoreToPar`, lower is better, ties shown as "T3". A withdrawn or
+   * eliminated (cut) golfer is unranked. Only rows whose rank changed are written.
+   */
+  private async rankEventStandings(sportEventId: string): Promise<void> {
+    const standings = await this.deps.golfStandings.findBySportEvent(sportEventId);
+    const { direction } = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
+    const rankedScore = (result: GolfStandingResult): number | null => (
+      result.standing.status === ParticipantStandingStatus.WITHDRAWN
+      || result.standing.status === ParticipantStandingStatus.ELIMINATED
+        ? null
+        : result.golf.eventScoreToPar
+    );
+    const sorted = [...standings].sort((left, right) =>
+      compareScores(direction, rankedScore(left), rankedScore(right))
+      || left.standing.sportEventParticipantId.localeCompare(right.standing.sportEventParticipantId),
+    );
+    const ranks = rankSortedScores(sorted.map(rankedScore));
+    const changed = sorted.flatMap((result, index) => {
+      const rank = ranks[index];
+      return result.standing.position === rank.position && result.standing.displayPosition === rank.displayPosition
+        ? []
+        : [{ standingId: result.standing.id, ...rank }];
+    });
+    await this.deps.golfStandings.updateRanks(changed);
+  }
+
+  private async writeGolfStandings(sportEventParticipantIds: readonly string[], asOf: Date): Promise<SyncWriteDiagnostics> {
 
     const [rounds, existing] = await Promise.all([
       this.deps.golfRounds.findBySportEventParticipants(sportEventParticipantIds),
@@ -359,7 +408,7 @@ export class GolfScoreService {
       }));
     if (writes.length > 0) {
       await this.deps.golfRounds.upsertMany(writes);
-      await this.refreshGolfStandings(writes.map((write) => write.sportEventParticipantId), new Date());
+      await this.refreshGolfStandings(sportEventId, writes.map((write) => write.sportEventParticipantId), new Date());
     }
 
     const event = await this.deps.sportEvents.findById(sportEventId);
@@ -402,7 +451,7 @@ export class GolfScoreService {
       scoreToPar: patch.scoreToPar ?? existing?.golf.scoreToPar ?? 0,
       thru: patch.thru !== undefined ? patch.thru : existing?.golf.thru ?? null,
     });
-    await this.refreshGolfStandings([sportEventParticipantId], new Date());
+    await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
   }
 }
 

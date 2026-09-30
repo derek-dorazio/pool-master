@@ -555,6 +555,13 @@ export class InMemorySportEvents {
         Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
         return { standing, golf };
       },
+      updateRanks: async (ranks) => {
+        for (const rank of ranks) {
+          const standing = this.standingRows.find((row) => row.id === rank.standingId);
+          if (!standing) throw new Error('unknown standing');
+          Object.assign(standing, { position: rank.position, displayPosition: rank.displayPosition });
+        }
+      },
     };
   }
 }

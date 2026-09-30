@@ -25,7 +25,7 @@ function setup() {
     golfStandings: store.golfStandingRepo(),
     bus: bus as never,
   });
-  return { store, service, event, anaEntry, benEntry, bus };
+  return { store, service, event, anaEntry, benEntry, bus, sport };
 }
 
 const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
@@ -100,5 +100,54 @@ describe('GolfScoreService — single-cell correction', () => {
 
     await expect(service.updateRoundScore(event.id, 1, 'missing', { strokes: 70 }))
       .rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+// #246 — event-side position: the provider supplies no live rank, so every score write
+// re-ranks the whole event from eventScoreToPar, once, instead of each reader deriving it.
+describe('GolfScoreService — event-side position', () => {
+  const positions = async (store: InMemorySportEvents, eventId: string) =>
+    Object.fromEntries((await store.golfStandingRepo().findBySportEvent(eventId)).map((result) => [
+      result.standing.sportEventParticipantId,
+      [result.standing.position, result.standing.displayPosition],
+    ]));
+
+  it('ranks the field lower-is-better with ties shown as "T", and re-ranks everyone when one golfer is corrected', async () => {
+    const { store, service, event, anaEntry, benEntry, sport } = setup();
+    const cara = store.addParticipant(sport.id, 'Cara Diaz');
+    const caraEntry = store.addToField(event.id, cara.id);
+
+    await service.applyRoundScores(event.id, 1, [
+      { playerName: 'Ana Park', ...row({ scoreToPar: -2 }) },
+      { playerName: 'Ben Cole', ...row({ scoreToPar: -2 }) },
+      { playerName: 'Cara Diaz', ...row({ scoreToPar: 1 }) },
+    ]);
+    await expect(positions(store, event.id)).resolves.toEqual({
+      [anaEntry.id]: [1, 'T1'],
+      [benEntry.id]: [1, 'T1'],
+      [caraEntry.id]: [3, '3'],
+    });
+
+    // One golfer's correction moves the others: only Cara's score changes, every rank moves.
+    await service.updateRoundScore(event.id, 1, caraEntry.id, { scoreToPar: -5 });
+    await expect(positions(store, event.id)).resolves.toEqual({
+      [caraEntry.id]: [1, '1'],
+      [anaEntry.id]: [2, 'T2'],
+      [benEntry.id]: [2, 'T2'],
+    });
+  });
+
+  it('leaves a golfer who missed the cut unranked, and ranks the rest without them', async () => {
+    const { store, service, event, anaEntry, benEntry } = setup();
+
+    await service.applyRoundScores(event.id, 1, [
+      { playerName: 'Ana Park', ...row({ scoreToPar: 3 }) },
+      { playerName: 'Ben Cole', ...row({ scoreToPar: -4, status: 'MISSED_CUT' }) },
+    ]);
+
+    await expect(positions(store, event.id)).resolves.toEqual({
+      [anaEntry.id]: [1, '1'],
+      [benEntry.id]: [null, null],
+    });
   });
 });

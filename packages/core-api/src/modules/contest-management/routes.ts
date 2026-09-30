@@ -43,7 +43,7 @@ export function contestManagementModule(
       tags: ['Contest Management'],
       summary: 'Update commissioner contest configuration',
       description:
-        'Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload.',
+        'Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.',
       operationId: 'updateManagedContestConfiguration',
       body: zodToJsonSchema(ContestConfigurationRequestSchema),
       response: {
@@ -52,6 +52,10 @@ export function contestManagementModule(
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.',
+        },
         422: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

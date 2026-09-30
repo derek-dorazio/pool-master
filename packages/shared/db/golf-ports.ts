@@ -46,4 +46,16 @@ export interface SportEventParticipantGolfStandingRepository {
   findBySportEvent(sportEventId: string): Promise<GolfStandingResult[]>;
   findBySportEventParticipants(sportEventParticipantIds: readonly string[]): Promise<GolfStandingResult[]>;
   upsert(write: GolfStandingWrite): Promise<GolfStandingResult>;
+  /**
+   * Writes the event-side rank onto core standing rows (`position`, `displayPosition`). The
+   * ranks are computed from every golfer's score at once, so this is a separate write from
+   * `upsert`, which touches one golfer.
+   */
+  updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void>;
+}
+
+export interface StandingRankWrite {
+  standingId: string;
+  position: number | null;
+  displayPosition: string | null;
 }

@@ -162,9 +162,16 @@ async function cleanupMockProviderImportData(): Promise<void> {
   importedParticipantExternalIds = [];
 }
 
+// Sync runs complete asynchronously. The wait is a deadline, not an attempt count: 80 × 25 ms
+// polls (about 2 s, plus query time) was enough locally, where the slowest run takes ~1 s under
+// coverage, but not on a loaded CI runner — the field sync timed out there on #259 with no code
+// change on that path. A stuck run still fails here, well inside Jest's 30 s test timeout.
+const SYNC_RUN_WAIT_MS = 10_000;
+
 async function waitForProviderSyncRuns(ids: string[]) {
   const idOrder = new Map(ids.map((id, index) => [id, index]));
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+  const deadline = Date.now() + SYNC_RUN_WAIT_MS;
+  while (Date.now() < deadline) {
     const rows = await getPrisma().providerSyncRun.findMany({
       where: { id: { in: ids } },
     });
@@ -185,7 +192,8 @@ async function waitForProviderSyncRuns(ids: string[]) {
 }
 
 async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expectedRunCount: number) {
-  for (let attempt = 0; attempt < 120; attempt += 1) {
+  const deadline = Date.now() + SYNC_RUN_WAIT_MS;
+  while (Date.now() < deadline) {
     const rows = await getPrisma().providerSyncRun.findMany({
       where: { providerId: providerIdToFind },
     });
@@ -372,6 +380,10 @@ async function createGolfLiveContestConfiguration(contestId: string) {
       },
       rosterSize: 3,
       pickCount: 3,
+      // Every configuration carries its scoring rule (#246); there is no golf fallback.
+      participantScoringRules: {
+        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+      },
     },
   });
 }
@@ -995,7 +1007,7 @@ describe('mock contest feed provider event-first verification', () => {
       (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
     )?.participant.totalScoreToPar;
     expect(golfer01AfterR2).not.toBeNull();
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
     await expect(prisma.contest.findMany({
@@ -1037,7 +1049,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     await waitForProviderSyncRuns(finalLive.syncRuns.map((run) => run.id));
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
 
@@ -1069,7 +1081,7 @@ describe('mock contest feed provider event-first verification', () => {
     })).resolves.toEqual([
       expect.objectContaining({ status: 'COMPLETED' }),
     ]);
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: {
         contestEntryId: {
           in: [
@@ -1101,7 +1113,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     await waitForProviderSyncRuns(rerunCompletedDetail.syncRuns.map((run) => run.id));
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: {
         contestEntryId: {
           in: [

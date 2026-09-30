@@ -23,6 +23,7 @@ import {
   EmptyState,
   ErrorState,
   FormField,
+  formatDateTimeDisplay,
   Input,
   LinkButton,
   LoadingState,
@@ -83,7 +84,7 @@ function ParticipantsTable({
                 <div className="mt-1 text-xs text-muted-foreground">
                   {participant.participantStatus
                     ? `Status: ${formatParticipantStatusLabel(participant.participantStatus, sport)}`
-                    : participant.teamAffiliation ?? participant.position ?? 'Contest participant'}
+                    : participant.teamAffiliation ?? participant.role ?? 'Contest participant'}
                 </div>
               </div>
               <span className="text-muted-foreground">
@@ -92,7 +93,7 @@ function ParticipantsTable({
                   : 'Active'}
               </span>
               <span className="text-muted-foreground">
-                {participant.teamAffiliation ?? participant.position ?? '—'}
+                {participant.teamAffiliation ?? participant.role ?? '—'}
               </span>
             </div>
           );
@@ -270,6 +271,9 @@ export function ContestDetailPage() {
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
   const isOpen = contest.status === 'OPEN';
+  // #246: a settled contest's standings are frozen at settlement, but pick scores stay live, so
+  // a late score correction can make the two disagree. Say so rather than let it read as a bug.
+  const isSettled = contest.status === 'COMPLETED';
   const canCreateEntry = isOpen && Boolean(myTeamId);
 
   const backToLeaguePath = hintedLeagueCode
@@ -356,6 +360,11 @@ export function ContestDetailPage() {
                 ? 'Picks are visible. Expand a row to see each entry’s lineup and live scoring.'
                 : 'Picks are hidden until the contest moves past OPEN. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
             </p>
+            {isSettled ? (
+              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-settled-note">
+                {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Standings are frozen at settlement; pick scores show current event data and can differ after a late score correction.`}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">

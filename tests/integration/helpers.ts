@@ -379,7 +379,8 @@ async function cleanupContestArtifacts(
       },
     },
   });
-  await database.contestEntryGolfStanding.deleteMany({
+  // The golf extension cascades from the core standing.
+  await database.contestEntryStanding.deleteMany({
     where: {
       contestId: {
         in: contestIds,

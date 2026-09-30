@@ -37,6 +37,7 @@ import {
 import {
   buildGolfLeaderboardEntry,
   GOLF_CONTEST_CONFIGURATION_SELECT,
+  applySettledContestStandings,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
   resolveGolfLeaderboardScoringDefinition,
@@ -324,7 +325,7 @@ export class ContestService {
             pick.sportEventParticipant.isActive,
             pick.sportEventParticipant.inactiveReason,
           ),
-          position: pick.sportEventParticipant.participant.position ?? null,
+          role: pick.sportEventParticipant.participant.role ?? null,
           teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
           pickedAt: pick.pickedAt,
         }))
@@ -384,13 +385,19 @@ export class ContestService {
         'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
-    const scoringDefinition = resolveGolfLeaderboardScoringDefinition(contest.configuration);
-    if (!scoringDefinition) {
-      throw new ContestOperationError(
-        'Golf leaderboard requires a participant scoring rule with a known scoring definition.',
-        'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
-      );
+    const scoring = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+    if (!scoring.ok) {
+      throw scoring.reason === 'RULE_MISSING'
+        ? new ContestOperationError(
+          'Golf leaderboard requires the contest configuration to carry a participant scoring rule.',
+          'CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING',
+        )
+        : new ContestOperationError(
+          'Golf leaderboard requires a participant scoring rule with a known scoring definition.',
+          'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
+        );
     }
+    const scoringDefinition = scoring.definition;
     const [participants, entries] = await Promise.all([
       loadGolfLeaderboardParticipants(this.requirePrisma(), sportEvent.id),
       this.loadGolfLeaderboardEntries(contestId),
@@ -408,6 +415,43 @@ export class ContestService {
       if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
       return latest;
     }, null);
+
+    // A settled contest answers from its frozen standings (#246); a live one computes.
+    if (context.contest.status === ContestStatus.COMPLETED) {
+      const standings = await prisma.contestEntryStanding.findMany({
+        where: { contestId },
+        select: {
+          contestEntryId: true,
+          position: true,
+          displayPosition: true,
+          countingPickLimit: true,
+          scoredPickCount: true,
+          asOf: true,
+          golf: { select: { totalScoreToPar: true } },
+        },
+      });
+      if (standings.length > 0) {
+        return {
+          contestId,
+          sportEventId: sportEvent.id,
+          countingRule: { type: 'BEST_N_GOLFERS', count: standings[0].countingPickLimit },
+          participants,
+          entries: applySettledContestStandings(
+            rankedEntries,
+            standings.map((standing) => ({
+              contestEntryId: standing.contestEntryId,
+              position: standing.position,
+              displayPosition: standing.displayPosition,
+              countingPickLimit: standing.countingPickLimit,
+              scoredPickCount: standing.scoredPickCount,
+              totalScoreToPar: standing.golf?.totalScoreToPar ?? null,
+            })),
+          ),
+          asOf: standings[0].asOf ?? latestAsOf,
+        };
+      }
+      this.logger.warn({ contestId }, 'completed contest has no settled standings; leaderboard computed live');
+    }
 
     return {
       contestId,
@@ -955,7 +999,7 @@ export class ContestService {
           pick.sportEventParticipant.isActive,
           pick.sportEventParticipant.inactiveReason,
         ),
-        position: pick.sportEventParticipant.participant.position ?? null,
+        role: pick.sportEventParticipant.participant.role ?? null,
         teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
         pickedAt: pick.pickedAt,
       });

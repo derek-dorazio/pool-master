@@ -66,7 +66,7 @@ describe('RosterPick CRUD integration', () => {
         name: `Tiger Roster Pick CRUD ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: null,
       },
     });

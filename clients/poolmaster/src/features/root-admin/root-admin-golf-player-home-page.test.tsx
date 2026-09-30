@@ -50,7 +50,7 @@ function player(overrides: Parameters<typeof participantFixture>[0] = {}) {
     lastName: 'McIlroy',
     shortName: 'R. McIlroy',
     nationality: 'NIR',
-    position: '',
+    role: '',
     teamAffiliation: '',
     externalId: 'rory-1',
     ...overrides,

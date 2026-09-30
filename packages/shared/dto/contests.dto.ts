@@ -226,7 +226,7 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
   participantId: z.string(),
   participantName: z.string(),
   participantStatus: z.string().nullable().optional(),
-  position: z.string().nullable().optional(),
+  role: z.string().nullable().optional().describe('The participant\'s playing role, when known.'),
   teamAffiliation: z.string().nullable().optional(),
   pickedAt: z.string().datetime().describe('When the participant was added to the contest entry.'),
 }).describe('Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint.');

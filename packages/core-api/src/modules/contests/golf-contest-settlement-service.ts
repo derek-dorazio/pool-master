@@ -71,9 +71,13 @@ export class GolfContestSettlementService {
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
     );
     const asOf = resolveContestStandingAsOf(participants, completedAt);
+    // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
+    // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
+    // it. Reopening a contest (OverrideService.reopenContest) moves it back to ACTIVE, which is
+    // the deliberate way to have it settled again.
     const contests = await this.prisma.contest.findMany({
       where: {
-        status: { not: ContestStatus.CANCELLED },
+        status: { notIn: [ContestStatus.CANCELLED, ContestStatus.COMPLETED] },
         sportEventId,
       },
       include: {
@@ -121,18 +125,21 @@ export class GolfContestSettlementService {
         }, 'Skipped Golf contest settlement because contest has no counting rule');
         continue;
       }
-      const scoringDefinition = resolveGolfLeaderboardScoringDefinition(contest.configuration);
-      if (!scoringDefinition) {
+      const scoring = resolveGolfLeaderboardScoringDefinition(contest.configuration);
+      if (!scoring.ok) {
         // Skip rather than guess a direction. Settling with the wrong direction pays the
         // wrong entries, and a payout is hard to undo; a skipped settlement is logged at
-        // error and can be run again once the rule names a known definition. The
-        // leaderboard read refuses the same case with 400 instead, because nothing is paid.
+        // error and can be run again once the configuration carries a rule naming a known
+        // definition. The leaderboard read refuses the same cases with 400, because nothing
+        // is paid.
         this.logger.error({
           contestId: contest.id,
           sportEventId,
-        }, 'Skipped Golf contest settlement because its participant scoring rule names an unknown scoring definition');
+          reason: scoring.reason,
+        }, 'Skipped Golf contest settlement because its participant scoring rule is missing or names an unknown scoring definition');
         continue;
       }
+      const scoringDefinition = scoring.definition;
       const rankedEntries = rankGolfLeaderboardEntries(
         contest.entries.map((entry) =>
           buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
@@ -142,31 +149,21 @@ export class GolfContestSettlementService {
       contestsSettled++;
 
       for (const entry of rankedEntries) {
-        await this.prisma.contestEntryGolfStanding.upsert({
+        // The single writer of ContestEntryStanding (and so of its denormalized contestId).
+        const standing = {
+          contestId: contest.id,
+          position: entry.position,
+          displayPosition: entry.displayPosition,
+          countingPickLimit: entry.countingPickCount,
+          scoredPickCount: entry.scoredPickCount,
+          asOf,
+          settledAt: completedAt,
+        };
+        const golf = { totalScoreToPar: entry.totalScoreToPar };
+        await this.prisma.contestEntryStanding.upsert({
           where: { contestEntryId: entry.entryId },
-          create: {
-            contestId: contest.id,
-            contestEntryId: entry.entryId,
-            totalScoreToPar: entry.totalScoreToPar,
-            position: entry.position,
-            displayPosition: entry.displayPosition,
-            countingPickCount: entry.countingPickCount,
-            scoredPickCount: entry.scoredPickCount,
-            status: 'FINAL',
-            asOf,
-            settledAt: completedAt,
-          },
-          update: {
-            contestId: contest.id,
-            totalScoreToPar: entry.totalScoreToPar,
-            position: entry.position,
-            displayPosition: entry.displayPosition,
-            countingPickCount: entry.countingPickCount,
-            scoredPickCount: entry.scoredPickCount,
-            status: 'FINAL',
-            asOf,
-            settledAt: completedAt,
-          },
+          create: { contestEntryId: entry.entryId, ...standing, golf: { create: golf } },
+          update: { ...standing, golf: { upsert: { create: golf, update: golf } } },
         });
         standingsUpserted++;
       }

@@ -4,7 +4,11 @@ import {
   Sport,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
-import { CONTEST_CONFIGURATION_REQUIRED, type CreateContestRequest } from '@poolmaster/shared/dto';
+import {
+  CONTEST_CONFIGURATION_REQUIRED,
+  CONTEST_CONFIGURATION_SETTLED,
+  type CreateContestRequest,
+} from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -526,6 +530,35 @@ describe('ContestManagementService', () => {
       message: 'Managed contest creation currently supports golf events only.',
     });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #246 — a settled contest's configuration is frozen with its result; reopening is the path back.
+  it('refuses a configuration edit while the contest is COMPLETED, and allows it once reopened', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader(),
+    );
+    const contest = await contestCoreRepo.findById('contest-1');
+    const edit = { rosterSize: 6, countedScores: 5 };
+
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status: ContestStatus.COMPLETED });
+    await expect(service.updateContestConfiguration('contest-1', edit)).rejects.toMatchObject({
+      code: CONTEST_CONFIGURATION_SETTLED,
+      statusCode: 409,
+    });
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+
+    // OverrideService.reopenContest moves COMPLETED → ACTIVE; the edit then goes through.
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status: ContestStatus.ACTIVE });
+    await service.updateContestConfiguration('contest-1', edit);
+    expect(contestConfigurationRepo.update).toHaveBeenCalledTimes(1);
   });
 
   it('updates the persisted typed contest configuration shape', async () => {

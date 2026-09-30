@@ -7,6 +7,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   GolfRoundWrite,
   GolfStandingWrite,
+  StandingRankWrite,
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
 } from '@poolmaster/shared/db';
@@ -124,6 +125,14 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
     });
     const [result] = toGolfStandingResult(row);
     return result;
+  }
+
+  async updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void> {
+    if (ranks.length === 0) return;
+    await this.prisma.$transaction(ranks.map((rank) => this.prisma.sportEventParticipantStanding.update({
+      where: { id: rank.standingId },
+      data: { position: rank.position, displayPosition: rank.displayPosition },
+    })));
   }
 }
 
