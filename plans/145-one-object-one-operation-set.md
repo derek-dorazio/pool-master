@@ -1326,13 +1326,18 @@ pattern. Sport particulars stay in the extension and never migrate into the core
 for this slice must check that in both directions, since Q0 found one that already did.
 
 ### Slice 3 — Contests and entries
+Tracked by **#244** (dead weight), **#245** (one creation path), **#246** (the standing split),
+**#247** (ports and services) and **#248** (contract and naming) after the stage-2 split; #204
+carried stages 1 and 2 and is closed. Outcome and decisions: "Slice 3 stage 2 — outcome" below.
+
 `Contest`, `ContestEntry`, `ContestEntryPick`, `ContestConfiguration`,
 `ContestConfigTemplate`, `ContestPrizeDefinition`, `ContestTimingPolicy`,
-`ContestEntryAggregationRule`, `ParticipantContestScoringRule`, `ContestEntryGolfStanding`
+`ParticipantContestScoringRule`, `ContestEntryStanding` and its golf extension.
+`ContestEntryAggregationRule` was in this cluster and is deleted by #244.
 
 `Contest` and `ContestEntry` have ports; nothing else in the cluster does. Overlaps #198 —
-that epic's `SelectionEngine` sits on this cluster's DAO, so #198's first slice follows this
-one.
+that epic's `SelectionEngine` sits on this cluster's DAO, so **#198's first implementation
+slice follows #247**, not the whole of slice 3.
 
 ### Slice 4 — Platform and operations
 Providers, sync runs, ingestion jobs, health, metrics, audit, operational config.
@@ -1677,6 +1682,102 @@ still holds Prisma for its contest side effects, which are #204's.
 Raw Prisma on slice-2 models that remains is assigned: the contest code that reads the field
 (`contests/*`, `drafts`, `contest-management`) to #204, and provider plumbing
 (`admin/provider-service.ts`, `ingestion/*`, `events/event-score-source-service.ts`) to #205.
+
+## Slice 3 stage 2 — outcome, 2026-09-30
+
+#204 carried stages 1 and 2 for the contest cluster and is closed. Execution is five tickets:
+**#244** (dead weight), **#245** (one creation path), **#246** (split the entry standing, make the
+freeze real), **#247** (DAO ports and services), **#248** (leaderboard contract and naming pass).
+**#249** is a product question filed out of the cluster, not a slice.
+
+### What stage 1 found
+
+The contest cluster had the same three shapes slice 2 found one level down, and one new one.
+
+**Write-only state.** `ContestEntryGolfStanding` and `ContestEntryAggregationRule` are both
+written and never read. Every contest gets an aggregation row reading `SUM_ALL_ENTRIES` while
+the calculator sums regardless; after #234 emptied its `config`, that constant is all the table
+holds. The standing is the more interesting case — see the freeze, below.
+
+**Enums dead because their fields are strings.** `PricingMethod` (5 values) and
+`TierAssignmentMethod` (8) type nothing: the columns they describe are `z.string()` /
+`VarChar(50)`. Their only consumer is a test asserting they exist. `GolfContestConfigMode`
+is worse than dead — one value, `GOLF_TIERED`, duplicating a `SelectionType` that already
+carries `TIERED` and `BUDGET_PICK`.
+
+**A golf-shaped default silently substituted for the real answer**, three times.
+`mapSelectionType` discards its argument and returns `TIERED`, so the managed creation path
+overrode a caller asking for budget. `createContest` writes no `ParticipantContestScoringRule`,
+so #239's resolver falls back to `GOLF_RELATIVE_TO_PAR_TOTAL` on every contest. And
+`scoringMode: z.literal('GOLF_TO_PAR')` welds "golf is to-par and lower is better" into the
+API shape — the third copy of that fact after the two #234 removed.
+
+**New here: a duplication that was never a second path.** `createManagedContest` and
+`createContest` differ by `templateId`. The managed request is a union of two variants sharing
+a base and differing only in whether a template was the starting point — and the template
+variant's own description says *"Optional full configuration payload used after selecting
+advanced mode."* One operation with an optional first step, expressed as two operations.
+
+### The ten decisions
+
+| # | Question | Decision |
+|---|---|---|
+| Q1 | Does `ContestEntryGolfStanding` keep `totalScoreToPar`? | Yes, but the table splits: `ContestEntryStanding` (core) + `ContestEntryGolfStanding` (golf extension holding only `totalScoreToPar`). `status` is removed — settlement writes the literal `'FINAL'` in both branches and nothing reads it. `countingPickCount` is renamed `countingPickLimit`: it holds the rule's N, not a count, and it is kept because configuration stays editable after settlement, so without the captured N a frozen result is unexplainable. `scoredPickCount` and the denormalized `contestId` stay, the latter documented |
+| Q2 | Are there three `position` fields? | No — one each on three objects, and only one is wrong. `Participant.position` means playing role and becomes `role`. `position`-as-rank on both standing tables is the deliberate usage slice 2's decision 4 established and it stays. Ranking entries is not golf-specific, so the pool-rank DTO goes cross-sport with the rest of the `GolfLeaderboard` family (~25 symbols, #248) |
+| Q3 | `PricingMethod`, `TierAssignmentMethod`, `tierAssignmentMethod`, `pricingMethod` | All four go. Provenance is already recorded better per-participant by `SportEventParticipantValuation.priceAssignedSource` / `tierAssignedSource` — right grain, enum-enforced, and on the global side of A11. The two enums' value sets move to `plans/128` as narrative first, because `CONFERENCE`/`DIVISION`/`POT`/`BOUT_POSITION` are real cross-sport strategies worth not losing |
+| Q4 | Is `GolfContestConfigMode` what distinguishes tier/budget/category selection? | No — `SelectionType` is, and always was. The enum and `ContestConfiguration.configMode` both go; `ContestConfigTemplate.configMode` is renamed `selectionType` inside its unique key (#248). Full category support is #99's, and the system gets fully functional on tiered first |
+| Q5 | `scoringMode` | Delete it. A `z.literal` cannot describe a second sport without a breaking change, and `PARTICIPANT_SCORING_DEFINITIONS` now holds direction, unit and format keyed by an id the client reads off the configuration |
+| Q6a | Is the configuration edit guarded once a contest settles? | No, and it must be. `updateManagedContestConfiguration` guards only existence, so a commissioner can change `countedScores` on a `COMPLETED` contest. Refuse while settled; `OverrideService.reopenContest` is already the deliberate path back, commissioner-gated and reason-recorded, so no new mechanism |
+| Q6b | Are template-based and from-scratch creation two paths? | One path with an optional first step. `createContest` gains optional `templateId` and optional `configuration`; `createManagedContest` and the union go. The two template *reads* collapse independently — `adminListContestConfigTemplates` is the same read as the commissioner's, with "Managed" encoding which screen called it rather than a difference in the object |
+| Q7 | `GolfLeaderboardStatus`, `displayType`, `displayValue` | All three go now. `GolfLeaderboardStatus` is a lowercase shadow of the values #240's migration converted — the schema moved and the published enum did not; it is a visible contract change and must be called out, not slipped in with the renames. The display fields carry one real rule, *strokes once a round is complete, to-par while it is in progress*, which is not in the registry today and must be relocated with both branches tested |
+| Q8 | The unused `SportEventParticipantRepository` | Delete it from the contest-management constructor and stop constructing it |
+| Q9 | `templateId` and `configuration` both absent | **Error**, and the UI must not allow submission in that state. There is no platform default — a contest without a configuration is not a contest. The UI guard is the experience; the server error is the contract. Both, deliberately |
+
+**`ContestConfigTemplate` is classified global under A11** — reads `authenticated`, writes
+`rootAdmin`. It passes all three conditions. #242 left it unclassified pending this slice;
+#245 updates both A11's "not yet classified" paragraph and the operations table row.
+
+### Why these five slices, in this order
+
+The split is by dependency, not by size. Each slice makes the next one smaller.
+
+| Slice | Why it sits here |
+|---|---|
+| **#244** dead weight | Every item is a deletion of something nothing reads. No behaviour change, no consumed contract, no dependency on the other four. Doing it first means each later slice touches fewer files |
+| **#245** one creation path | Removes a whole module's route surface *before* #248's naming pass would have to rename it, and deletes `mapSelectionType` — which is why #244 deliberately leaves that mapper alone rather than patching it |
+| **#246** the standing split | The slice with the migration. The split and the read-wiring ship together because splitting a table nobody reads would just produce two tables nobody reads |
+| **#247** ports and services | Ports must be built against the final schema and the final operation set. Building them before #244's deletions, #245's collapse and #246's split would mean building them twice |
+| **#248** contract and naming | Contract-only, and last because every shape it renames is settled by the four before it — and because it is the slice that touches the published spec, the SDK and the frontend |
+
+**#198's gate is #247, not all of slice 3.** Its `SelectionEngine` sits on this cluster's DAO,
+so its first implementation slice can start when #247 merges; #248 is a naming and frontend
+pass #198 does not wait on. #247 also owns the one question deliberately left open —
+**whether `ContestEntryPick` gets its own port or stays behind `ContestEntryPickService`** —
+because `ContestEntryPickService.createPick` is documented as the single enforced insert path
+(`plans/117` §7.1) and a port is a candidate second way in. That is an implementation
+judgement best made with the cluster's code open, and #247 must record the answer rather than
+leave it implicit.
+
+### The freeze, which is the point of #246
+
+`ContestEntryGolfStanding`'s doc comment already states the design: a frozen contest aggregate
+written when the event completes, while live reads compute from the participant standings. The
+freeze is written and never read, so **a late provider score correction silently rewrites a
+finished result** — money or bragging rights having already changed hands against the old
+answer. That is why #246 wires the settled read rather than only splitting the table, and why
+the configuration guard ships in the same slice: both are the freeze being real.
+
+### Found on the way, not part of any slice
+
+- **`formatRelativeToPar` has three copies that disagree on level par** — the calculator
+  renders `"0"`, the frontend copy renders `"E"`. A live user-visible inconsistency, and the
+  registry's `format` is where it resolves.
+- **#249 — two pools running contests on the same event share one set of prices and tiers.**
+  `SportEventParticipantValuation` is keyed to `sportEventParticipantId` alone, so every pool
+  sees the same price for the same competitor. Filed rather than answered: it is product
+  intent, and it is event-side, so it belongs to the sport-event cluster. If per-pool pricing
+  is wanted the **keying** changes, not the columns, which moves the table across the A11
+  boundary — a different table, not a new column. None of #244–#248 depends on it.
 
 ## Sources / Prior Decisions
 
