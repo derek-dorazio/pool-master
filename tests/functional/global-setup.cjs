@@ -34,7 +34,8 @@ const tsConfigPath = path.join(rootDir, 'tests', 'tsconfig.json');
 // starts it and a concurrent run waiting on that one's daemon, so the waiter never gives up
 // before the starter does. A startup budget, not a performance assertion: the server boots
 // under V8 coverage (always on here), which measured ~30 s against ~10 s without (#267), and
-// the old 30 s budget left no headroom. Only the failure message comes later when it is large.
+// the old 30 s budget left no headroom. A large budget costs only later detection of a server
+// that never starts.
 const SERVER_STARTUP_BUDGET_MS = 120_000;
 
 function wait(ms) {
