@@ -651,27 +651,18 @@ bound, the answer is a tighter filter or a retention policy, not a page paramete
   a place to hide a page either: `UserRepository.findAll` takes filters and returns
   `User[]`.
 
-### Still to be removed
+### Removed — nothing pages any more
 
-`adminListUsers` was converted with this rule (#202). Two operations still page, both
-belonging to slice 4, which removes them. Slice 2's three went in #235 — `listEvents` and
-`listParticipants` lost their paging, and `adminListEvents` was removed — and the two audit
-reads, `adminListAuditLog` and `adminExportAuditLog`, went with the audit feature in #255:
+`adminListUsers` was converted with this rule (#202). Slice 2's three went in #235 —
+`listEvents` and `listParticipants` lost their paging, and `adminListEvents` was removed —
+and the two audit reads, `adminListAuditLog` and `adminExportAuditLog`, went with the audit
+feature in #255. Slice 4 finished it (#205): `adminSearchErrors` went with the unbuilt
+error-log surface, and with it `PaginatedSchema`, which only its response used; `ParticipantRepository.search`
+takes filters and returns `Participant[]`.
 
-| Operation | Paging | Slice |
-|---|---|---|
-| `adminListProviderSyncRuns` | `limit` | 4 |
-| `adminSearchErrors` | `page`, `pageSize` | 4 |
-
-`PaginatedSchema` in `dto/common.dto.ts` survives only because `adminSearchErrors`'
-response is built from it; `adminListProviderSyncRuns` takes `limit` but returns its own
-`{ items }` envelope. It goes when `adminSearchErrors` stops paging; do not add a new
-caller.
-
-`ParticipantRepository.search` still takes `limit`/`offset` and returns
-`{ participants, total }` — slice 2 removes it.
-
-**Error logs and sync-run history are the one place to think before deleting the
-parameter.** They are append-only and unbounded by nature, so slice 4's answer may be a
-retention window or a date-range filter rather than simply returning everything. That is a
-filter, not a page.
+**Append-only history is bounded by a window, not a page.** The sync-run history grows
+without bound, so `listProviderSyncRuns` (formerly `adminListProviderSyncRuns`, which took
+`limit`) takes a submission-time window instead: `from` and `to`, defaulting to the last six
+hours, backed by an index on `created_at`. That is a filter, not a page — the caller asks for
+a time range and gets everything in it. Reach for the same shape for any future log-like
+read.

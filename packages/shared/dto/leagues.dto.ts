@@ -259,19 +259,6 @@ export const InvitationPreviewResponseSchema = z.object({
 }).describe('Invitation preview payload used by `/invite/<inviteCode>` flows.');
 export type InvitationPreviewResponse = z.infer<typeof InvitationPreviewResponseSchema>;
 
-export const LeagueActionItemDtoSchema = z.object({
-  id: z.string(),
-  leagueId: z.string(),
-  contestId: z.string().nullable().optional(),
-  title: z.string(),
-  description: z.string(),
-  actionUrl: z.string().nullable().optional(),
-  resolved: z.boolean(),
-  createdAt: DateTimeSchema.describe('When the action item was created.'),
-  updatedAt: DateTimeSchema.describe('When the action item was last updated.'),
-}).describe('Commissioner dashboard action item.');
-export type LeagueActionItemDto = z.infer<typeof LeagueActionItemDtoSchema>;
-
 export const MemberActivityEventDtoSchema = z.object({
   userId: z.string().describe('User involved in the activity event.'),
   firstName: z.string().optional().describe('First name shown for the member activity event when available.'),
@@ -390,7 +377,6 @@ export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkRespon
  */
 export const LeagueDashboardResponseSchema = z.object({
   league: LeagueDtoSchema.describe('League payload driving the dashboard header.'),
-  actionItems: z.array(LeagueActionItemDtoSchema).describe('Outstanding commissioner action items.'),
   contests: z.array(ContestSummaryDtoSchema).describe('Contest summaries included in the dashboard payload.'),
   memberCount: z.number().int().describe('Current league member count.'),
   pendingInvites: z.number().int().describe('Current number of pending invitations.'),
@@ -398,10 +384,6 @@ export const LeagueDashboardResponseSchema = z.object({
   upcomingEvents: z.array(UpcomingEventDtoSchema).describe('Upcoming league events that should be surfaced on the dashboard.'),
 }).describe('Commissioner dashboard response.');
 export type LeagueDashboardResponse = z.infer<typeof LeagueDashboardResponseSchema>;
-
-// #202 — `ResolveActionItemResponseSchema` is gone with the resolve route. `LeagueActionItemDto`
-// stays because `LeagueDashboardResponse` still declares an `actionItems` array — which is
-// permanently empty until action items are designed, and is recorded on the dashboard follow-up.
 
 export const LeagueBulkOperationResponseSchema = JsonObjectSchema;
 
@@ -424,7 +406,6 @@ registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
 registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
-registerSchema('LeagueActionItemDto', LeagueActionItemDtoSchema);
 registerSchema('MemberActivityEventDto', MemberActivityEventDtoSchema);
 registerSchema('UpcomingEventDto', UpcomingEventDtoSchema);
 registerSchema('LeagueResponse', LeagueResponseSchema);

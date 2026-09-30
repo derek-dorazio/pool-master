@@ -6,19 +6,19 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportOverridesPage } from './root-admin-sport-overrides-page';
 
 const {
-  adminGetIngestionScheduleMock,
-  adminResetSportIngestionOverrideMock,
-  adminSetSportIngestionOverrideMock,
+  getIngestionScheduleMock,
+  resetSportIngestionOverrideMock,
+  setSportIngestionOverrideMock,
 } = vi.hoisted(() => ({
-  adminGetIngestionScheduleMock: vi.fn(),
-  adminResetSportIngestionOverrideMock: vi.fn(),
-  adminSetSportIngestionOverrideMock: vi.fn(),
+  getIngestionScheduleMock: vi.fn(),
+  resetSportIngestionOverrideMock: vi.fn(),
+  setSportIngestionOverrideMock: vi.fn(),
 }));
 
 bindApiMocks({
-  adminGetIngestionSchedule: adminGetIngestionScheduleMock,
-  adminResetSportIngestionOverride: adminResetSportIngestionOverrideMock,
-  adminSetSportIngestionOverride: adminSetSportIngestionOverrideMock,
+  getIngestionSchedule: getIngestionScheduleMock,
+  resetSportIngestionOverride: resetSportIngestionOverrideMock,
+  setSportIngestionOverride: setSportIngestionOverrideMock,
 });
 
 function renderPage() {
@@ -41,9 +41,9 @@ function renderPage() {
 
 describe('RootAdminSportOverridesPage', () => {
   beforeEach(() => {
-    adminGetIngestionScheduleMock.mockReset();
-    adminResetSportIngestionOverrideMock.mockReset();
-    adminSetSportIngestionOverrideMock.mockReset();
+    getIngestionScheduleMock.mockReset();
+    resetSportIngestionOverrideMock.mockReset();
+    setSportIngestionOverrideMock.mockReset();
 
     const response = {
       data: {
@@ -61,13 +61,13 @@ describe('RootAdminSportOverridesPage', () => {
       },
     };
 
-    adminGetIngestionScheduleMock.mockResolvedValue(response);
-    adminResetSportIngestionOverrideMock.mockResolvedValue(response);
-    adminSetSportIngestionOverrideMock.mockResolvedValue(response);
+    getIngestionScheduleMock.mockResolvedValue(response);
+    resetSportIngestionOverrideMock.mockResolvedValue(response);
+    setSportIngestionOverrideMock.mockResolvedValue(response);
   });
 
   it('pool-master-7wj.7 shows loading state while sport override configuration loads', async () => {
-    adminGetIngestionScheduleMock.mockReturnValue(new Promise(() => undefined));
+    getIngestionScheduleMock.mockReturnValue(new Promise(() => undefined));
 
     renderPage();
 
@@ -77,7 +77,7 @@ describe('RootAdminSportOverridesPage', () => {
   });
 
   it('pool-master-7wj.7 shows error state when sport override configuration fails', async () => {
-    adminGetIngestionScheduleMock.mockRejectedValue(new Error('Schedule unavailable'));
+    getIngestionScheduleMock.mockRejectedValue(new Error('Schedule unavailable'));
 
     renderPage();
 
@@ -96,7 +96,7 @@ describe('RootAdminSportOverridesPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-sport-overrides-save'));
 
     await waitFor(() =>
-      expect(adminSetSportIngestionOverrideMock).toHaveBeenCalledWith({
+      expect(setSportIngestionOverrideMock).toHaveBeenCalledWith({
         path: { sport: 'GOLF' },
         body: {
           healthCheck: { enabled: true },

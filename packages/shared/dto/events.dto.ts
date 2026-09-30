@@ -113,7 +113,7 @@ export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSche
 export const CreateSportEventFromProviderEventRequestSchema = z.object({
   seasonId: z.string().uuid(),
   providerId: z.string().min(1),
-  externalId: z.string().min(1).describe('From a provider catalog browse (adminListProviderCatalogEvents).'),
+  externalId: z.string().min(1).describe('From a provider catalog browse (listProviderCatalogEvents).'),
   rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
 }).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.');
 export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;
@@ -327,7 +327,7 @@ export const SportEventParticipantResponseSchema = z.object({
 export type SportEventParticipantResponse = z.infer<typeof SportEventParticipantResponseSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
-// The three enums are also consumed by admin.dto.ts; naming them gives the frontend
+// EventStatusDto is also the status of ingestion.dto.ts's ProviderEventDto; naming them gives the frontend
 // importable unions instead of re-spelled literals.
 registerSchema('EventStatusDto', EventStatusDtoSchema);
 registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);

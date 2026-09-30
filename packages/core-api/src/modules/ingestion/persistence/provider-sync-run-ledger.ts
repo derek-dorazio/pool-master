@@ -1,37 +1,9 @@
 import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { Sport } from '@poolmaster/shared/domain';
+import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncRun, Sport } from '@poolmaster/shared/domain';
 import type { IngestionFeedType, SportSyncRequest, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
-
-export interface ProviderSyncRunRecord {
-  id: string;
-  providerId: string;
-  sport: Sport;
-  eventId: string | null;
-  status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-  payload: Record<string, unknown>;
-}
-
-interface ProviderSyncRunClient {
-  providerSyncRun: {
-    create(args: Prisma.ProviderSyncRunCreateArgs): PromiseLike<{
-      id: string;
-      providerId: string;
-      sport: string;
-      eventId: string | null;
-      status: string;
-      startedAt: Date | null;
-      completedAt: Date | null;
-      createdAt: Date;
-      payloadJson: Prisma.JsonValue;
-    }>;
-    update(args: Prisma.ProviderSyncRunUpdateArgs): PromiseLike<unknown>;
-  };
-}
 
 type SyncOutcomePayload = Prisma.InputJsonObject & {
   severity: 'SUCCESS' | 'WARNING' | 'ERROR';
@@ -42,7 +14,7 @@ type SyncOutcomePayload = Prisma.InputJsonObject & {
 
 export class ProviderSyncRunLedger {
   constructor(
-    private readonly prisma: ProviderSyncRunClient,
+    private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -51,7 +23,7 @@ export class ProviderSyncRunLedger {
     providerId: string;
     submittedAt: Date;
     runType: string;
-  }): Promise<ProviderSyncRunRecord[]> {
+  }): Promise<ProviderSyncRun[]> {
     const { sport, eventId, feeds } = getNormalizedTarget(input.normalizedRequest);
     const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
     const runs = await Promise.all(
@@ -77,20 +49,16 @@ export class ProviderSyncRunLedger {
           }),
           detail: buildSubmittedSyncRunDetail(feed, sport, eventId),
         };
-        const row = await this.prisma.providerSyncRun.create({
-          data: {
-            providerId: input.providerId,
-            sport,
-            eventId,
-            status: 'SUBMITTED',
-            startedAt: null,
-            completedAt: null,
-            payloadJson,
-            createdAt: input.submittedAt,
-          },
+        return this.syncRuns.create({
+          providerId: input.providerId,
+          sport,
+          eventId,
+          status: 'SUBMITTED',
+          startedAt: null,
+          completedAt: null,
+          payload: payloadJson,
+          createdAt: input.submittedAt,
         });
-
-        return mapProviderSyncRunRow(row);
       }),
     );
 
@@ -98,7 +66,7 @@ export class ProviderSyncRunLedger {
   }
 
   async executeFeedRun(
-    syncRun: ProviderSyncRunRecord,
+    syncRun: ProviderSyncRun,
     run: () => Promise<IngestionJobRecord | IngestionJobRecord[]>,
   ): Promise<IngestionJobRecord> {
     const startedAt = new Date();
@@ -139,7 +107,7 @@ export class ProviderSyncRunLedger {
         throw new Error('Sync execution completed without an ingestion job result.');
       }
       const completedAt = new Date();
-      const status: ProviderSyncRunRecord['status'] = job.status === 'FAILED' ? 'FAILED' : 'COMPLETED';
+      const status: ProviderSyncRun['status'] = job.status === 'FAILED' ? 'FAILED' : 'COMPLETED';
       const detail = buildSyncRunDetail(job, syncRun.eventId);
       const payload = {
         ...startedPayload,
@@ -200,7 +168,7 @@ export class ProviderSyncRunLedger {
   }
 
   async failSubmittedRun(
-    syncRun: ProviderSyncRunRecord,
+    syncRun: ProviderSyncRun,
     error: unknown,
     startedAt: Date | null = new Date(),
     payload: Record<string, unknown> = syncRun.payload,
@@ -248,53 +216,14 @@ export class ProviderSyncRunLedger {
   private async updateSyncRun(
     syncRunId: string,
     update: {
-      status: ProviderSyncRunRecord['status'];
+      status: ProviderSyncRun['status'];
       startedAt?: Date | null;
       completedAt?: Date | null;
       payload: Record<string, unknown>;
     },
   ): Promise<void> {
-    await this.prisma.providerSyncRun.update({
-      where: { id: syncRunId },
-      data: {
-        status: update.status,
-        startedAt: update.startedAt,
-        completedAt: update.completedAt,
-        payloadJson: update.payload as Prisma.InputJsonValue,
-      },
-    });
+    await this.syncRuns.update(syncRunId, update);
   }
-}
-
-export function normalizeSyncRunPayload(payload: Prisma.JsonValue): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return {};
-  }
-  return payload as Record<string, unknown>;
-}
-
-export function mapProviderSyncRunRow(row: {
-  id: string;
-  providerId: string;
-  sport: string;
-  eventId: string | null;
-  status: string;
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-  payloadJson: Prisma.JsonValue;
-}): ProviderSyncRunRecord {
-  return {
-    id: row.id,
-    providerId: row.providerId,
-    sport: row.sport as Sport,
-    eventId: row.eventId,
-    status: row.status as ProviderSyncRunRecord['status'],
-    startedAt: row.startedAt,
-    completedAt: row.completedAt,
-    createdAt: row.createdAt,
-    payload: normalizeSyncRunPayload(row.payloadJson),
-  };
 }
 
 function getNormalizedTarget(normalized: NormalizedSyncRequest): {
@@ -372,7 +301,7 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
 }
 
 function buildSyncOutcome(input: {
-  status: ProviderSyncRunRecord['status'];
+  status: ProviderSyncRun['status'];
   summary: string;
   warnings?: IngestionJobRecord['warnings'];
   errors?: number;

@@ -6,19 +6,19 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminPollIntervalsPage } from './root-admin-poll-intervals-page';
 
 const {
-  adminGetPollIntervalsMock,
-  adminResetPollIntervalsMock,
-  adminUpdatePollIntervalsMock,
+  getPollIntervalsMock,
+  resetPollIntervalsMock,
+  updatePollIntervalsMock,
 } = vi.hoisted(() => ({
-  adminGetPollIntervalsMock: vi.fn(),
-  adminResetPollIntervalsMock: vi.fn(),
-  adminUpdatePollIntervalsMock: vi.fn(),
+  getPollIntervalsMock: vi.fn(),
+  resetPollIntervalsMock: vi.fn(),
+  updatePollIntervalsMock: vi.fn(),
 }));
 
 bindApiMocks({
-  adminGetPollIntervals: adminGetPollIntervalsMock,
-  adminResetPollIntervals: adminResetPollIntervalsMock,
-  adminUpdatePollIntervals: adminUpdatePollIntervalsMock,
+  getPollIntervals: getPollIntervalsMock,
+  resetPollIntervals: resetPollIntervalsMock,
+  updatePollIntervals: updatePollIntervalsMock,
 });
 
 function renderPage() {
@@ -41,9 +41,9 @@ function renderPage() {
 
 describe('RootAdminPollIntervalsPage', () => {
   beforeEach(() => {
-    adminGetPollIntervalsMock.mockReset();
-    adminResetPollIntervalsMock.mockReset();
-    adminUpdatePollIntervalsMock.mockReset();
+    getPollIntervalsMock.mockReset();
+    resetPollIntervalsMock.mockReset();
+    updatePollIntervalsMock.mockReset();
 
     const response = {
       data: {
@@ -55,9 +55,9 @@ describe('RootAdminPollIntervalsPage', () => {
       },
     };
 
-    adminGetPollIntervalsMock.mockResolvedValue(response);
-    adminUpdatePollIntervalsMock.mockResolvedValue(response);
-    adminResetPollIntervalsMock.mockResolvedValue(response);
+    getPollIntervalsMock.mockResolvedValue(response);
+    updatePollIntervalsMock.mockResolvedValue(response);
+    resetPollIntervalsMock.mockResolvedValue(response);
   });
 
   it('renders and saves the poll interval configuration', async () => {
@@ -70,7 +70,7 @@ describe('RootAdminPollIntervalsPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-poll-page-save'));
 
     await waitFor(() =>
-      expect(adminUpdatePollIntervalsMock).toHaveBeenCalledWith({
+      expect(updatePollIntervalsMock).toHaveBeenCalledWith({
         body: {
           standings: 15000,
           draft: 10000,

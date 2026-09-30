@@ -6,8 +6,8 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminRunSportSyncPage } from './root-admin-run-sport-sync-page';
 
 const {
-  adminListProvidersMock,
-  adminPrepareSportSyncMock,
+  listProvidersMock,
+  submitSportSyncMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -21,15 +21,15 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminListProvidersMock: vi.fn(),
-    adminPrepareSportSyncMock: vi.fn(),
+    listProvidersMock: vi.fn(),
+    submitSportSyncMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminListProviders: adminListProvidersMock,
-  adminPrepareSportSync: adminPrepareSportSyncMock,
+  listProviders: listProvidersMock,
+  submitSportSync: submitSportSyncMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -58,12 +58,12 @@ function renderPage() {
 
 describe('RootAdminRunSportSyncPage', () => {
   beforeEach(() => {
-    adminListProvidersMock.mockReset();
-    adminPrepareSportSyncMock.mockReset();
+    listProvidersMock.mockReset();
+    submitSportSyncMock.mockReset();
 
-    adminListProvidersMock.mockResolvedValue({
+    listProvidersMock.mockResolvedValue({
       data: {
-        items: [
+        providers: [
           {
             providerId: 'mock-contest-feed',
             providerName: 'Mock contest feed',
@@ -73,7 +73,7 @@ describe('RootAdminRunSportSyncPage', () => {
         ],
       },
     });
-    adminPrepareSportSyncMock.mockResolvedValue({
+    submitSportSyncMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
         requestedFeeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
@@ -83,7 +83,7 @@ describe('RootAdminRunSportSyncPage', () => {
   });
 
   it('pool-master-7wj.7 replaces the sport sync form while provider sports load', async () => {
-    adminListProvidersMock.mockReturnValue(new Promise(() => undefined));
+    listProvidersMock.mockReturnValue(new Promise(() => undefined));
 
     renderPage();
 
@@ -103,7 +103,7 @@ describe('RootAdminRunSportSyncPage', () => {
     fireEvent.click(await screen.findByTestId('root-admin-sport-sync-now'));
 
     await waitFor(() => {
-      expect(adminPrepareSportSyncMock).toHaveBeenCalledWith({
+      expect(submitSportSyncMock).toHaveBeenCalledWith({
         path: { sport: 'GOLF' },
         body: {
           feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],

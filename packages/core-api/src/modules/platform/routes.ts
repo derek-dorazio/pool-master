@@ -1,8 +1,9 @@
 /**
- * Platform configuration admin routes — poll intervals and ingestion schedules.
+ * Platform module — the runtime-tunable platform settings: client poll intervals and the
+ * ingestion schedule. Mounted at /api/v1/platform.
  *
- * All routes are registered under the /config prefix within the admin module.
- * Permission: platform.config
+ * Every operation is root-admin (#205): `admin` is the permission, `platform` is what these
+ * operations administer.
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -15,37 +16,39 @@ import '@poolmaster/shared/dto/config.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
-import { extractRootAdminContext } from './request-admin-context';
+import { requireRootAdmin } from '../../core/root-admin-guard';
 
 // ---------------------------------------------------------------------------
 // Route registration
 // ---------------------------------------------------------------------------
 
-export function registerPlatformConfigRoutes(
-  fastify: FastifyInstance,
-  services: {
-    pollConfig: PollConfigService;
-    ingestionConfig: IngestionConfigService;
-  },
-): void {
-  void fastify.register(schemaComponentsPlugin);
+export interface PlatformModuleOptions {
+  pollConfigService: PollConfigService;
+  ingestionConfigService: IngestionConfigService;
+}
 
-  const { pollConfig, ingestionConfig } = services;
+export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOptions): void {
+  void fastify.register(schemaComponentsPlugin);
+  fastify.addHook('onRequest', requireRootAdmin);
+
+  const pollConfig = opts.pollConfigService;
+  const ingestionConfig = opts.ingestionConfigService;
 
   // -------------------------------------------------------------------------
   // Poll Interval Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/poll-intervals', {
+  fastify.get('/poll-intervals', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Get poll interval configuration',
       description:
-        'Returns the root-admin poll interval configuration that governs recommended client refresh timing.',
-      operationId: 'adminGetPollIntervals',
+        'Returns the platform poll interval configuration that governs recommended client refresh timing.',
+      operationId: 'getPollIntervals',
       response: {
         200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: async () => {
@@ -53,16 +56,17 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.put('/config/poll-intervals', {
+  fastify.put('/poll-intervals', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Update poll interval configuration',
       description:
-        'Updates the root-admin poll interval configuration used by client polling guidance.',
-      operationId: 'adminUpdatePollIntervals',
+        'Updates the platform poll interval configuration used by client polling guidance.',
+      operationId: 'updatePollIntervals',
       response: {
         200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: schemaRef('PollIntervalConfigPatch'),
     },
@@ -77,25 +81,26 @@ export function registerPlatformConfigRoutes(
         };
       }>,
     ) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       return pollConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
 
-  fastify.post('/config/poll-intervals/reset', {
+  fastify.post('/poll-intervals/reset', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Reset poll intervals to defaults',
       description:
         'Resets poll interval configuration back to the platform defaults.',
-      operationId: 'adminResetPollIntervals',
+      operationId: 'resetPollIntervals',
       response: {
         200: schemaRef('PollIntervalConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: async (request: FastifyRequest) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       return pollConfig.resetDefaults(rootAdminUserId);
     },
   });
@@ -104,16 +109,17 @@ export function registerPlatformConfigRoutes(
   // Ingestion Schedule Configuration
   // -------------------------------------------------------------------------
 
-  fastify.get('/config/ingestion-schedule', {
+  fastify.get('/ingestion-schedule', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Get ingestion schedule configuration',
       description:
         'Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.',
-      operationId: 'adminGetIngestionSchedule',
+      operationId: 'getIngestionSchedule',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: async () => {
@@ -121,16 +127,17 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.put('/config/ingestion-schedule', {
+  fastify.put('/ingestion-schedule', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Update ingestion schedule configuration',
       description:
         'Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.',
-      operationId: 'adminUpdateIngestionSchedule',
+      operationId: 'updateIngestionSchedule',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: schemaRef('IngestionScheduleConfigOverride'),
     },
@@ -139,21 +146,22 @@ export function registerPlatformConfigRoutes(
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       return ingestionConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
 
-  fastify.put('/config/ingestion-schedule/:sport', {
+  fastify.put('/ingestion-schedule/:sport', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Set per-sport ingestion schedule override',
       description:
         'Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.',
-      operationId: 'adminSetSportIngestionOverride',
+      operationId: 'setSportIngestionOverride',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
       body: schemaRef('IngestionScheduleConfigOverride'),
     },
@@ -163,7 +171,7 @@ export function registerPlatformConfigRoutes(
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       const { sport } = request.params;
       return ingestionConfig.setPerSportOverride(
         sport,
@@ -173,16 +181,17 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/ingestion-schedule/:sport/reset', {
+  fastify.post('/ingestion-schedule/:sport/reset', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Clear per-sport ingestion schedule override',
       description:
         'Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.',
-      operationId: 'adminResetSportIngestionOverride',
+      operationId: 'resetSportIngestionOverride',
       response: {
         200: schemaRef('IngestionScheduleConfig'),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: async (
@@ -190,7 +199,7 @@ export function registerPlatformConfigRoutes(
         Params: { sport: string };
       }>,
     ) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       const { sport } = request.params;
       return ingestionConfig.clearPerSportOverride(
         sport,
@@ -199,17 +208,21 @@ export function registerPlatformConfigRoutes(
     },
   });
 
-  fastify.post('/config/ingestion-schedule/reset', {
+  fastify.post('/ingestion-schedule/reset', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Platform'],
       summary: 'Reset ingestion schedule to defaults',
       description:
         'Resets ingestion scheduling back to the platform defaults.',
-      operationId: 'adminResetIngestionSchedule',
-      response: { 200: schemaRef('IngestionScheduleConfig') },
+      operationId: 'resetIngestionSchedule',
+      response: {
+        200: schemaRef('IngestionScheduleConfig'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
     handler: async (request: FastifyRequest) => {
-      const { rootAdminUserId } = extractRootAdminContext(request);
+      const rootAdminUserId = request.authUser!.userId;
       return ingestionConfig.resetDefaults(rootAdminUserId);
     },
   });

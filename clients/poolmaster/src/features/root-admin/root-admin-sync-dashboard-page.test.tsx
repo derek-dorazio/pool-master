@@ -7,8 +7,8 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSyncDashboardPage } from './root-admin-sync-dashboard-page';
 
 const {
-  adminListProviderSyncRunsMock,
-  adminListProvidersMock,
+  listProviderSyncRunsMock,
+  listProvidersMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -22,15 +22,15 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminListProviderSyncRunsMock: vi.fn(),
-    adminListProvidersMock: vi.fn(),
+    listProviderSyncRunsMock: vi.fn(),
+    listProvidersMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminListProviderSyncRuns: adminListProviderSyncRunsMock,
-  adminListProviders: adminListProvidersMock,
+  listProviderSyncRuns: listProviderSyncRunsMock,
+  listProviders: listProvidersMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -59,12 +59,12 @@ function renderDashboard() {
 
 describe('RootAdminSyncDashboardPage', () => {
   beforeEach(() => {
-    adminListProvidersMock.mockReset();
-    adminListProviderSyncRunsMock.mockReset();
+    listProvidersMock.mockReset();
+    listProviderSyncRunsMock.mockReset();
 
-    adminListProvidersMock.mockResolvedValue({
+    listProvidersMock.mockResolvedValue({
       data: {
-        items: [
+        providers: [
           {
             providerId: 'mock-contest-feed',
             providerName: 'Mock contest feed',
@@ -74,9 +74,9 @@ describe('RootAdminSyncDashboardPage', () => {
         ],
       },
     });
-    adminListProviderSyncRunsMock.mockResolvedValue({
+    listProviderSyncRunsMock.mockResolvedValue({
       data: {
-        items: [
+        syncRuns: [
           {
             id: 'sync-run-1',
             providerId: 'mock-contest-feed',
@@ -126,17 +126,14 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.getByTestId('root-admin-open-run-event-sync-page'),
     ).toHaveAttribute('href', '/manage/sync/run-event-sync');
     expect(screen.getByText('Completed successfully')).toBeInTheDocument();
-    expect(adminListProviderSyncRunsMock).toHaveBeenLastCalledWith({
-      query: {
-        limit: 25,
-      },
-    });
+    // #205 — no row limit: the server's default time window bounds the list.
+    expect(listProviderSyncRunsMock).toHaveBeenLastCalledWith({});
   });
 
   it('pool-master-dxd.36 filters sync history client-side through grid column filters', async () => {
-    adminListProviderSyncRunsMock.mockResolvedValue({
+    listProviderSyncRunsMock.mockResolvedValue({
       data: {
-        items: [
+        syncRuns: [
           {
             id: 'sync-run-1',
             providerId: 'mock-contest-feed',
@@ -180,14 +177,14 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(screen.queryByTestId('root-admin-sync-run-sync-run-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sync-run-sync-run-2')).toBeInTheDocument();
-    expect(adminListProviderSyncRunsMock).toHaveBeenCalledTimes(1);
+    expect(listProviderSyncRunsMock).toHaveBeenCalledTimes(1);
   });
 
   it('pool-master-ueu.2 shows warning diagnostics and raw provider payload drill-down', async () => {
     const user = userEvent.setup();
-    adminListProviderSyncRunsMock.mockResolvedValue({
+    listProviderSyncRunsMock.mockResolvedValue({
       data: {
-        items: [
+        syncRuns: [
           {
             id: 'sync-run-warning',
             providerId: 'mock-contest-feed',
@@ -267,9 +264,9 @@ describe('RootAdminSyncDashboardPage', () => {
 
   it('pool-master-rop.68.1.4 keeps raw provider payload secondary when no normalized rows were captured', async () => {
     const user = userEvent.setup();
-    adminListProviderSyncRunsMock.mockResolvedValue({
+    listProviderSyncRunsMock.mockResolvedValue({
       data: {
-        items: [
+        syncRuns: [
           {
             id: 'sync-run-provider-shape',
             providerId: 'future-feed',
@@ -329,9 +326,9 @@ describe('RootAdminSyncDashboardPage', () => {
 
   it('pool-master-rop.68.1.4 renders normalized write rows and opens before-after JSON details', async () => {
     const user = userEvent.setup();
-    adminListProviderSyncRunsMock.mockResolvedValue({
+    listProviderSyncRunsMock.mockResolvedValue({
       data: {
-        items: [
+        syncRuns: [
           {
             id: 'sync-run-detail',
             providerId: 'mock-contest-feed',

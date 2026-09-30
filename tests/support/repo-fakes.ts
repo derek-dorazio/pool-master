@@ -49,7 +49,6 @@
  * under test belongs in the test.
  */
 import type {
-  ActionItemRepository,
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestEntryPickRepository,
@@ -275,6 +274,8 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     countTiers: noCounts(),
     countContests: noCounts(),
     countBySeasons: noCounts(),
+    summarizeByProviders: noCounts(),
+    countFieldRecords: noCounts(),
     findAutoLifecycleCandidates: many(),
     ...overrides,
   };
@@ -307,6 +308,7 @@ export function fakeParticipantProviderMappingRepo(
     findByParticipants: many(),
     findByProviderExternalIds: many(),
     create: echoCreate('participant-provider-mapping'),
+    bind: echoCreate('participant-provider-mapping'),
     ...overrides,
   };
 }
@@ -350,22 +352,6 @@ export function fakeDraftSessionRepo(
     update: echoUpdate(),
     getPickHistories: many(),
     addPickHistory: echoCreate('draft-pick-history'),
-    ...overrides,
-  };
-}
-
-export function fakeActionItemRepo(
-  overrides: Partial<ActionItemRepository> = {},
-): ActionItemRepository {
-  return {
-    findByLeague: many(),
-    findUnresolved: many(),
-    create: echoCreate('action-item'),
-    resolve: jest.fn().mockImplementation(async (id: string) => ({
-      id,
-      resolvedAt: new Date('2026-01-01T00:00:00.000Z'),
-    })),
-    delete: nothing(),
     ...overrides,
   };
 }

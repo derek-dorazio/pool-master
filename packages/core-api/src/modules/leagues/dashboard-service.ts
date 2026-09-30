@@ -1,12 +1,11 @@
 /**
  * DashboardService — aggregates data for the commissioner dashboard.
  *
- * Composes league, contest, member, invitation, and action item data
+ * Composes league, contest, member and invitation data
  * into a single dashboard response.
  */
 
 import type {
-  ActionItemRepository,
   ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -26,7 +25,6 @@ export class DashboardService {
     private readonly membershipRepo: LeagueMembershipRepository,
     private readonly contestRepo: ContestRepository,
     private readonly invitationRepo: LeagueInvitationRepository,
-    private readonly actionItemRepo: ActionItemRepository,
   ) {}
 
   /** Builds the full commissioner dashboard for a league. */
@@ -35,18 +33,16 @@ export class DashboardService {
     if (!league) {
       return null;
     }
-    const [members, contests, invitations, actionItems] = await Promise.all([
+    const [members, contests, invitations] = await Promise.all([
       this.membershipRepo.findByLeague(leagueId),
       this.contestRepo.findByLeague(leagueId),
       this.invitationRepo.findByLeague(leagueId),
-      this.actionItemRepo.findUnresolved(leagueId),
     ]);
     const pendingInvites = invitations.filter((i) => i.status === InvitationStatus.PENDING).length;
     const recentMemberActivity = buildRecentActivity(members);
     const upcomingEvents = buildUpcomingEvents(contests);
     return {
       league,
-      actionItems,
       contests,
       memberCount: members.length,
       pendingInvites,
@@ -54,17 +50,6 @@ export class DashboardService {
       upcomingEvents,
     };
   }
-
-  /** Creates a new action item for a league. */
-  /*
-   * #202 — `createActionItem` and `resolveActionItem` are gone.
-   *
-   * Nothing in the codebase ever created a `CommissionerActionItem` outside a unit test, so the
-   * resolve route could never have anything to resolve, and the create half had no caller
-   * either. `getDashboard` still reads unresolved action items, which means that field is
-   * permanently empty until action items are actually designed — recorded on the dashboard
-   * follow-up rather than papered over here.
-   */
 }
 
 /** Builds recent member activity from membership join dates. */

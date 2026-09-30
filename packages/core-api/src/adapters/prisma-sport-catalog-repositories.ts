@@ -18,6 +18,7 @@ import type {
   SeasonRepository,
   SeasonUpdate,
   SportEventCreate,
+  SportEventFieldRecordCounts,
   SportEventFilters,
   SportEventParticipantCreate,
   SportEventParticipantFieldUpdate,
@@ -26,6 +27,7 @@ import type {
   SportEventParticipantRoundRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantStandingRepository,
+  SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
@@ -363,6 +365,50 @@ export class PrismaSportEventRepository implements SportEventRepository {
       _count: { _all: true },
     });
     return countMap(seasonIds, groups.flatMap((group) => (group.seasonId ? [[group.seasonId, group._count._all] as [string, number]] : [])));
+  }
+
+  async summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>> {
+    const [active, latest] = await Promise.all([
+      this.prisma.sportEvent.groupBy({
+        by: ['providerId'],
+        where: { providerId: { in: [...providerIds] }, status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] } },
+        _count: { _all: true },
+      }),
+      this.prisma.sportEvent.groupBy({
+        by: ['providerId'],
+        where: { providerId: { in: [...providerIds] } },
+        _max: { updatedAt: true },
+      }),
+    ]);
+    const activeCounts = new Map(active.map((group) => [group.providerId, group._count._all]));
+    const lastChanged = new Map(latest.map((group) => [group.providerId, group._max.updatedAt]));
+    return new Map(providerIds.map((id) => [id, {
+      activeEventCount: activeCounts.get(id) ?? 0,
+      lastChangedAt: lastChanged.get(id) ?? null,
+    }]));
+  }
+
+  async countFieldRecords(sportEventIds: readonly string[]): Promise<Map<string, SportEventFieldRecordCounts>> {
+    const participants = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      select: {
+        sportEventId: true,
+        valuation: { select: { id: true } },
+        _count: { select: { picks: true, rounds: true } },
+      },
+    });
+    const counts = new Map<string, SportEventFieldRecordCounts>(
+      sportEventIds.map((id) => [id, { valuations: 0, rounds: 0, picks: 0 }]),
+    );
+    for (const participant of participants) {
+      const eventCounts = counts.get(participant.sportEventId);
+      if (!eventCounts) continue;
+      // valuation is 1:1 with the participant, so this counts participants that have one.
+      if (participant.valuation) eventCounts.valuations += 1;
+      eventCounts.rounds += participant._count.rounds;
+      eventCounts.picks += participant._count.picks;
+    }
+    return counts;
   }
 
   async findAutoLifecycleCandidates(): Promise<SportEvent[]> {

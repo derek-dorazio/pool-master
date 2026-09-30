@@ -15,7 +15,6 @@ import type {
   ProviderParticipant,
 } from '../core/provider-interface';
 import { PrismaContestTimingPolicyRepository } from '../../../adapters';
-import type { IngestionJobRecord } from '../core/ingestion-scheduler';
 import { resolveRankingType } from '../core/ranking-types';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
@@ -170,46 +169,6 @@ export class IngestionPersistence {
       value: count,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
     };
-  }
-
-
-  async persistIngestionJob(job: IngestionJobRecord): Promise<void> {
-    this.logger?.debug({
-      jobType: job.jobType,
-      providerId: job.providerId,
-      sport: job.sport,
-      eventExternalId: job.eventExternalId ?? null,
-      status: job.status,
-      recordsProcessed: job.recordsProcessed,
-      errors: job.errors,
-      startedAt: job.startedAt?.toISOString() ?? null,
-      completedAt: job.completedAt?.toISOString() ?? null,
-    }, 'Persisting ingestion job completion');
-
-    await this.prisma.ingestionJob.create({
-      data: {
-        jobType: job.jobType,
-        providerId: job.providerId,
-        sport: job.sport,
-        eventExternalId: job.eventExternalId ?? null,
-        status: job.status,
-        startedAt: job.startedAt ?? null,
-        completedAt: job.completedAt ?? null,
-        recordsProcessed: job.recordsProcessed,
-        errors: job.errors,
-        errorLog: toPrismaJson(job.errorLog),
-      },
-    });
-
-    this.logger?.info({
-      jobType: job.jobType,
-      providerId: job.providerId,
-      sport: job.sport,
-      eventExternalId: job.eventExternalId ?? null,
-      status: job.status,
-      recordsProcessed: job.recordsProcessed,
-      errors: job.errors,
-    }, 'Persisted ingestion job completion');
   }
 
   private async resolveTimingPolicy(

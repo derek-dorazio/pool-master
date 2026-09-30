@@ -13,7 +13,7 @@
  */
 
 import fp from 'fastify-plugin';
-import { getPollIntervalConfig } from '../modules/admin/poll-config-service';
+import { getPollIntervalConfig } from '../modules/platform/poll-config-service';
 
 export const POLL_INTERVALS: Record<string, number> = {
   '/api/v1/contests/*/standings': 10000,

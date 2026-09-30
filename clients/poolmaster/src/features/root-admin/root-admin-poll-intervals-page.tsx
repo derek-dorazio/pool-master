@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminGetPollIntervals, adminResetPollIntervals, adminUpdatePollIntervals } from '@/lib/api';
+import { getPollIntervals, resetPollIntervals, updatePollIntervals } from '@/lib/api';
 import {
   AdminConfigPage,
   Button,
@@ -35,7 +35,7 @@ export function RootAdminPollIntervalsPage() {
   const pollConfigQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.pollConfig,
     queryFn: async (): Promise<PollIntervalConfig> => {
-      const response = await adminGetPollIntervals();
+      const response = await getPollIntervals();
       if (!response.data) {
         throwApiError(response.error, 'Poll interval response is missing data.');
       }
@@ -58,7 +58,7 @@ export function RootAdminPollIntervalsPage() {
 
   const pollConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: PollIntervalConfig) => {
-      const response = await adminUpdatePollIntervals({
+      const response = await updatePollIntervals({
         body: nextDraft,
       });
 
@@ -76,7 +76,7 @@ export function RootAdminPollIntervalsPage() {
 
   const resetPollConfigMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await adminResetPollIntervals();
+      const response = await resetPollIntervals();
       if (!response.data) {
         throwApiError(response.error, 'Poll interval reset response is missing data.');
       }

@@ -275,7 +275,7 @@ export function localDateTimeInputToIso(
 
 // --- Provider resolution (plans/124 §4.4) ---
 //
-// adminListProviderCatalogEvents needs a providerId. There is no dedicated
+// listProviderCatalogEvents needs a providerId. There is no dedicated
 // "which provider serves this sport" endpoint in this slice, so the golf
 // provider is resolved from the provider-health list the sync lane already
 // exposes: the first provider whose sportsCovered includes GOLF.

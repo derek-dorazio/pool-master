@@ -1,7 +1,8 @@
-import type { AdminListProviderSyncRunsResponses, AdminListProvidersResponses, ProviderManualSyncSubmissionResponse } from '@/lib/api';
+import type { ProviderManualSyncSubmissionResponse, ProviderSummaryDto, ProviderSyncRunDto } from '@/lib/api';
 
-export type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
-export type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
+// #205 — the canonical named components, not indexes into the response map.
+export type ProviderSyncRun = ProviderSyncRunDto;
+export type ProviderSummary = ProviderSummaryDto;
 export type SportSyncSubmission = ProviderManualSyncSubmissionResponse;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 

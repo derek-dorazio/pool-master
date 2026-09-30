@@ -1,8 +1,8 @@
 /**
- * Unit tests for the sync-lane adminListProviderCatalogEvents handler added
- * in pool-master-753 (plans/124 §3.4/§4.4/§5.1).
+ * Unit tests for the listProviderCatalogEvents handler (pool-master-753, plans/124
+ * §3.4/§4.4/§5.1; moved to the ingestion module and given the provider-event shape by #205).
  */
-import { createProviderHandlers } from '../../../packages/core-api/src/modules/admin/provider-handler';
+import { createIngestionHandlers } from '../../../packages/core-api/src/modules/ingestion/handler';
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 
 function buildReply() {
@@ -15,10 +15,15 @@ function buildReply() {
 function buildCatalogEventRow(overrides: Record<string, unknown> = {}) {
   return {
     externalId: 'ext-1',
+    providerId: 'mock-golf',
+    sport: 'GOLF',
     name: 'The Masters',
+    venue: 'Augusta National',
     startDate: new Date('2027-04-08T00:00:00.000Z'),
     endDate: new Date('2027-04-11T00:00:00.000Z'),
     status: 'SCHEDULED',
+    fieldLocked: false,
+    metadata: {},
     ...overrides,
   };
 }
@@ -28,13 +33,13 @@ function buildHandlers(eventScoreSourceOverrides: Record<string, unknown> = {}) 
     listCandidateEvents: jest.fn().mockResolvedValue([buildCatalogEventRow()]),
     ...eventScoreSourceOverrides,
   };
-  const providerService = {} as any;
-  const handlers = createProviderHandlers(providerService, eventScoreSourceService as any);
+  const ingestionService = {} as any;
+  const handlers = createIngestionHandlers(ingestionService, eventScoreSourceService as any);
   return { handlers, eventScoreSourceService };
 }
 
-describe('pool-master-753 — adminListProviderCatalogEvents handler', () => {
-  it('parses the query, delegates to EventScoreSourceService, and returns the canonical DTO shape', async () => {
+describe('pool-master-753 — listProviderCatalogEvents handler', () => {
+  it('parses the query, delegates to EventScoreSourceService, and returns each event as a provider event', async () => {
     const { handlers, eventScoreSourceService } = buildHandlers();
     const reply = buildReply();
 
@@ -58,10 +63,18 @@ describe('pool-master-753 — adminListProviderCatalogEvents handler', () => {
     expect(reply.send).toHaveBeenCalledWith({
       events: [{
         externalId: 'ext-1',
+        providerId: 'mock-golf',
+        sport: 'GOLF',
         name: 'The Masters',
+        venue: 'Augusta National',
+        location: null,
         startDate: '2027-04-08T00:00:00.000Z',
         endDate: '2027-04-11T00:00:00.000Z',
         status: 'SCHEDULED',
+        rounds: null,
+        participantCount: null,
+        fieldLocked: false,
+        metadata: {},
       }],
     });
   });

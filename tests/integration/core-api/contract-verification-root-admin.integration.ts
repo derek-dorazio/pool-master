@@ -2,19 +2,19 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
   UserResetPasswordResponseSchema,
-  AdminProviderEventCleanupResponseSchema,
+  ProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
-  AdminListProviderCatalogEventsResponseSchema,
+  ProviderCatalogEventListResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
   PollIntervalConfigSchema,
-  ProviderHealthCheckDtoSchema,
-  ProviderIngestionJobDtoSchema,
   ProviderListResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
   ProviderSyncRunListResponseSchema,
+  ParticipantProviderMappingResponseSchema,
+  UnmappedProviderParticipantListResponseSchema,
   SuccessSchema,
   UserResponseSchema,
   UserListResponseSchema,
@@ -32,9 +32,16 @@ import {
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
-import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
+import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
+import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
+import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
+import {
+  PrismaParticipantProviderMappingRepository,
+  PrismaProviderSyncRunRepository,
+  PrismaSportEventRepository,
+} from '../../../packages/core-api/src/adapters';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import {
@@ -197,12 +204,6 @@ class OperationalContractProvider implements SportDataProvider {
   }
 }
 
-class EmptyCoverageProvider extends OperationalContractProvider {
-  providerId = 'empty-coverage-provider';
-  providerName = 'Empty Coverage Provider';
-  sportsCovered: Sport[] = [];
-}
-
 class EmptyDiagnosticsProvider extends OperationalContractProvider implements ProviderPayloadDiagnostics {
   providerId = 'empty-diagnostics-provider';
   providerName = 'Empty Diagnostics Provider';
@@ -232,87 +233,41 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
 }
 
 /**
- * `exposeRegistry` also hands the admin module the provider registry, so the
- * golf score-source lane's EventScoreSourceService can resolve the registered
- * provider for adminListProviderCatalogEvents (pool-master-cs8). Off by default
- * — the operational-sync cases only exercise providerService.
+ * An app carrying the ingestion module (and the participants module, whose provider-mapping
+ * bind names a registered provider) over a registry holding one contract provider, so the
+ * operations run against a provider the test controls. The auth guard is registered as the
+ * application registers it: the sync handlers read the signed-in root admin from it.
  */
-async function buildOperationalAdminApp(
-  { exposeRegistry = false }: { exposeRegistry?: boolean } = {},
-): Promise<FastifyInstance> {
+async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
-  registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
+  registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
     onEvents: async () => undefined,
     onEventDetail: async () => undefined,
     onRankings: async () => undefined,
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
-    onJobComplete: async () => undefined,
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
   });
-  const providerService = new ProviderService(getPrisma(), registry, scheduler);
+  const prisma = getPrisma();
+  const ingestionService = new IngestionService({
+    registry,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
+    syncRuns: new PrismaProviderSyncRunRepository(prisma),
+    scheduler,
+  });
 
-  app.decorate('prisma', getPrisma());
+  app.decorate('prisma', prisma);
   app.setErrorHandler(globalErrorHandler);
-  await app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerService,
-    ...(exposeRegistry ? { providerRegistry: registry } : {}),
+  await app.register(authGuard);
+  await app.register(ingestionModule, {
+    prefix: '/api/v1/ingestion',
+    ingestionService,
+    providerRegistry: registry,
   });
-  await app.ready();
-
-  return app;
-}
-
-async function buildEmptyCoverageAdminApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: false });
-  const registry = new ProviderRegistry();
-  registry.register('GOLF', new EmptyCoverageProvider(), 'PRIMARY');
-  const scheduler = new IngestionScheduler(registry, {
-    onEvents: async () => undefined,
-    onEventDetail: async () => undefined,
-    onRankings: async () => undefined,
-    onLiveScores: async () => emptyLiveScorePersistenceResult(),
-    onJobComplete: async () => undefined,
-  }, undefined, {
-    now: () => new Date('2026-04-05T12:00:00.000Z'),
-  });
-  const providerService = new ProviderService(getPrisma(), registry, scheduler);
-
-  app.decorate('prisma', getPrisma());
-  app.setErrorHandler(globalErrorHandler);
-  await app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerService,
-  });
-  await app.ready();
-
-  return app;
-}
-
-async function buildEmptyDiagnosticsAdminApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: false });
-  const registry = new ProviderRegistry();
-  registry.register('GOLF', new EmptyDiagnosticsProvider(), 'PRIMARY');
-  const scheduler = new IngestionScheduler(registry, {
-    onEvents: async () => undefined,
-    onEventDetail: async () => undefined,
-    onRankings: async () => undefined,
-    onLiveScores: async () => emptyLiveScorePersistenceResult(),
-    onJobComplete: async () => undefined,
-  }, undefined, {
-    now: () => new Date('2026-04-05T12:00:00.000Z'),
-  });
-  const providerService = new ProviderService(getPrisma(), registry, scheduler);
-
-  app.decorate('prisma', getPrisma());
-  app.setErrorHandler(globalErrorHandler);
-  await app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerService,
-  });
+  await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   await app.ready();
 
   return app;
@@ -477,14 +432,24 @@ describe('Contract verification (root admin)', () => {
 
     const syncRunsRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/providers/sync-runs?providerId=integration-test&sport=GOLF&limit=10',
+      url: '/api/v1/ingestion/sync-runs?providerId=integration-test&sport=GOLF',
       headers: rootAdmin.headers,
     });
     expect(syncRunsRes.statusCode).toBe(200);
     expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
-    expect(syncRunsRes.json().items).toHaveLength(2);
-    expect(syncRunsRes.json().items[0].providerId).toBe('integration-test');
-    expect(syncRunsRes.json().items[0].payload.runType).toBeDefined();
+    // #205 — both rows were submitted just now, inside the default 6-hour window.
+    expect(syncRunsRes.json().syncRuns).toHaveLength(2);
+    expect(syncRunsRes.json().syncRuns[0].providerId).toBe('integration-test');
+    expect(syncRunsRes.json().syncRuns[0].payload.runType).toBeDefined();
+
+    // A window that ends before they were submitted excludes them.
+    const earlierRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/ingestion/sync-runs?providerId=integration-test&sport=GOLF&from=2020-01-01T00:00:00.000Z&to=2020-01-02T00:00:00.000Z',
+      headers: rootAdmin.headers,
+    });
+    expect(earlierRes.statusCode).toBe(200);
+    expect(earlierRes.json().syncRuns).toEqual([]);
   });
 
   it('root-admin platform-config and contest-template routes match their DTOs on happy paths', async () => {
@@ -495,7 +460,7 @@ describe('Contract verification (root admin)', () => {
 
     const pollReadRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/config/poll-intervals',
+      url: '/api/v1/platform/poll-intervals',
       headers: rootAdmin.headers,
     });
     expect(pollReadRes.statusCode).toBe(200);
@@ -503,7 +468,7 @@ describe('Contract verification (root admin)', () => {
 
     const pollUpdateRes = await getApp().inject({
       method: 'PUT',
-      url: '/api/v1/admin/config/poll-intervals',
+      url: '/api/v1/platform/poll-intervals',
       headers: rootAdmin.headers,
       payload: {
         standings: 15000,
@@ -515,7 +480,7 @@ describe('Contract verification (root admin)', () => {
 
     const ingestionReadRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/admin/config/ingestion-schedule',
+      url: '/api/v1/platform/ingestion-schedule',
       headers: rootAdmin.headers,
     });
     expect(ingestionReadRes.statusCode).toBe(200);
@@ -524,7 +489,7 @@ describe('Contract verification (root admin)', () => {
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
-      url: '/api/v1/admin/config/ingestion-schedule',
+      url: '/api/v1/platform/ingestion-schedule',
       headers: rootAdmin.headers,
       payload: {
         scheduledSports: ['GOLF', 'TENNIS'],
@@ -728,46 +693,41 @@ describe('Contract verification (root admin)', () => {
       },
     });
 
-    const app = await buildOperationalAdminApp();
+    const app = await buildIngestionApp(new OperationalContractProvider());
 
     try {
       const providersRes = await app.inject({
         method: 'GET',
-        url: '/api/v1/admin/providers/health',
+        url: '/api/v1/ingestion/providers',
         headers: rootAdmin.headers,
       });
       expect(providersRes.statusCode).toBe(200);
       expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
-      expect(providersRes.json().items[0].providerId).toBe('contract-provider');
+      expect(providersRes.json().providers[0]).toMatchObject({
+        providerId: 'contract-provider',
+        status: 'HEALTHY',
+        activeEventCount: 1,
+      });
 
       const syncRunsRes = await app.inject({
         method: 'GET',
-        url: '/api/v1/admin/providers/sync-runs?providerId=contract-provider&sport=GOLF&status=COMPLETED&limit=10',
+        url: '/api/v1/ingestion/sync-runs?providerId=contract-provider&sport=GOLF&status=COMPLETED',
         headers: rootAdmin.headers,
       });
       expect(syncRunsRes.statusCode).toBe(200);
       expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
-      expect(syncRunsRes.json().items.length).toBeGreaterThanOrEqual(1);
+      expect(syncRunsRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(
-        syncRunsRes.json().items.some(
+        syncRunsRes.json().syncRuns.some(
           (item: { eventId: string | null; payload: { detail?: string } }) =>
             item.eventId === 'event-1'
             && item.payload.detail === 'Imported event and participant field.',
         ),
       ).toBe(true);
 
-      const healthRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/contract-provider/health-check',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-      });
-      expect(healthRes.statusCode).toBe(200);
-      expect(ProviderHealthCheckDtoSchema.safeParse(healthRes.json()).success).toBe(true);
-      expect(healthRes.json().providerId).toBe('contract-provider');
-
       const prepareSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/admin/providers/sync/GOLF',
+        url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
           feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
@@ -782,24 +742,14 @@ describe('Contract verification (root admin)', () => {
 
       const cleanupDryRunRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/admin/providers/stale-events/cleanup',
+        url: '/api/v1/ingestion/stale-events/cleanup',
         headers: rootAdmin.headers,
         payload: { mode: 'DRY_RUN' },
       });
       expect(cleanupDryRunRes.statusCode).toBe(200);
-      expect(AdminProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
+      expect(ProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
       expect(cleanupDryRunRes.json().mode).toBe('DRY_RUN');
       expect(cleanupDryRunRes.json().executed).toBe(false);
-
-      const reIngestRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/contract-provider/re-ingest/event-1',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-      });
-      expect(reIngestRes.statusCode).toBe(201);
-      expect(ProviderIngestionJobDtoSchema.safeParse(reIngestRes.json()).success).toBe(true);
-      expect(reIngestRes.json().providerId).toBe('contract-provider');
-      expect(reIngestRes.json().eventId).toBe('event-1');
     } finally {
       await app.close();
     }
@@ -813,12 +763,12 @@ describe('Contract verification (root admin)', () => {
     await getPrisma().providerSyncRun.deleteMany({
       where: { providerId: 'empty-diagnostics-provider' },
     });
-    const app = await buildEmptyDiagnosticsAdminApp();
+    const app = await buildIngestionApp(new EmptyDiagnosticsProvider());
 
     try {
       const prepareSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/admin/providers/sync/GOLF',
+        url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
           feeds: ['EVENTSCHEDULE'],
@@ -914,39 +864,21 @@ describe('Contract verification (root admin)', () => {
     expect(ErrorEnvelopeSchema.safeParse(missingDeleteUserRes.json()).success).toBe(true);
     expect(missingDeleteUserRes.json().error.code).toBe('USER_NOT_FOUND');
 
-    const providerRes = await getApp().inject({
-      method: 'GET',
-      url: '/api/v1/admin/providers/missing-provider',
-      headers: rootAdmin.headers,
-    });
-    expect(providerRes.statusCode).toBe(404);
-    expect(ErrorEnvelopeSchema.safeParse(providerRes.json()).success).toBe(true);
-    expect(providerRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
-
-    const app = await buildOperationalAdminApp();
+    const app = await buildIngestionApp(new OperationalContractProvider());
 
     try {
-      const healthCheckRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/missing-provider/health-check',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      const missingProviderCatalogRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/ingestion/providers/missing-provider/catalog-events?sport=GOLF',
+        headers: rootAdmin.headers,
       });
-      expect(healthCheckRes.statusCode).toBe(404);
-      expect(ErrorEnvelopeSchema.safeParse(healthCheckRes.json()).success).toBe(true);
-      expect(healthCheckRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
-
-      const reIngestMissingProviderRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/missing-provider/re-ingest/event-1',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-      });
-      expect(reIngestMissingProviderRes.statusCode).toBe(404);
-      expect(ErrorEnvelopeSchema.safeParse(reIngestMissingProviderRes.json()).success).toBe(true);
-      expect(reIngestMissingProviderRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+      expect(missingProviderCatalogRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(missingProviderCatalogRes.json()).success).toBe(true);
+      expect(missingProviderCatalogRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
 
       const missingSportProviderRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/admin/providers/sync/UFC',
+        url: '/api/v1/ingestion/sports/UFC/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
           feeds: ['EVENTSCHEDULE'],
@@ -955,27 +887,6 @@ describe('Contract verification (root admin)', () => {
       expect(missingSportProviderRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
       expect(missingSportProviderRes.json().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
-
-      await getPrisma().ingestionJob.deleteMany({
-        where: {
-          providerId: 'contract-provider',
-          eventExternalId: 'missing-event',
-        },
-      });
-      const reIngestMissingEventRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/contract-provider/re-ingest/missing-event',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-      });
-      expect(reIngestMissingEventRes.statusCode).toBe(404);
-      expect(ErrorEnvelopeSchema.safeParse(reIngestMissingEventRes.json()).success).toBe(true);
-      expect(reIngestMissingEventRes.json().error.code).toBe('PROVIDER_EVENT_NOT_FOUND');
-      expect(await getPrisma().ingestionJob.count({
-        where: {
-          providerId: 'contract-provider',
-          eventExternalId: 'missing-event',
-        },
-      })).toBe(0);
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
@@ -1002,25 +913,93 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('root-admin provider re-ingest exposes typed provider coverage errors', async () => {
+  it('#205: a competitor the provider could not match is listed, and binding them to a participant clears them', async () => {
     const rootAdmin = await createTestUser({
-      displayName: 'Root Admin Provider Coverage User',
+      displayName: 'Root Admin Unmapped Competitor User',
       isRootAdmin: true,
     });
-    const app = await buildEmptyCoverageAdminApp();
+    const prisma = getPrisma();
+    const sport = await prisma.sport.upsert({
+      where: { name: 'GOLF' },
+      create: {
+        name: 'GOLF',
+        participantType: 'INDIVIDUAL',
+        category: 'GOLF',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
+      },
+      update: {},
+    });
+    await prisma.participantProviderMapping.deleteMany({
+      where: { providerId: 'contract-provider', externalId: 'golfer-1' },
+    });
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Avery Hart ${Date.now()}`,
+        participantType: 'INDIVIDUAL',
+        status: 'ACTIVE',
+        injuryStatus: { status: 'HEALTHY' },
+        externalIds: {},
+      },
+    });
+    const app = await buildIngestionApp(new OperationalContractProvider());
 
     try {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/admin/providers/empty-coverage-provider/re-ingest/event-1',
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      const beforeRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/ingestion/unmapped-participants',
+        headers: rootAdmin.headers,
+      });
+      expect(beforeRes.statusCode).toBe(200);
+      expect(UnmappedProviderParticipantListResponseSchema.safeParse(beforeRes.json()).success).toBe(true);
+      expect(beforeRes.json().participants).toContainEqual({
+        providerId: 'contract-provider',
+        providerName: 'Contract Provider',
+        externalId: 'golfer-1',
+        externalName: 'Avery Hart',
+        sport: 'GOLF',
       });
 
-      expect(response.statusCode).toBe(422);
-      expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
-      expect(response.json().error.code).toBe('PROVIDER_SPORT_COVERAGE_REQUIRED');
+      const bindRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/participants/${participant.id}/provider-mappings`,
+        headers: rootAdmin.headers,
+        payload: { providerId: 'contract-provider', externalId: 'golfer-1' },
+      });
+      expect(bindRes.statusCode).toBe(200);
+      expect(ParticipantProviderMappingResponseSchema.safeParse(bindRes.json()).success).toBe(true);
+      expect(bindRes.json().providerMapping).toMatchObject({
+        participantId: participant.id,
+        providerId: 'contract-provider',
+        externalId: 'golfer-1',
+        confidence: 'MANUAL',
+      });
+
+      const afterRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/ingestion/unmapped-participants',
+        headers: rootAdmin.headers,
+      });
+      expect(afterRes.statusCode).toBe(200);
+      expect(
+        afterRes.json().participants.some(
+          (row: { providerId: string; externalId: string }) =>
+            row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
+        ),
+      ).toBe(false);
+
+      const unknownProviderRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/participants/${participant.id}/provider-mappings`,
+        headers: rootAdmin.headers,
+        payload: { providerId: 'missing-provider', externalId: 'golfer-1' },
+      });
+      expect(unknownProviderRes.statusCode).toBe(404);
+      expect(unknownProviderRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
     } finally {
       await app.close();
+      await prisma.participantProviderMapping.deleteMany({ where: { participantId: participant.id } });
+      await prisma.participant.delete({ where: { id: participant.id } });
     }
   });
 
@@ -1324,12 +1303,12 @@ describe('Contract verification (root admin)', () => {
   it('pool-master-cs8: provider-catalog browse and event score-source link/unlink match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case for the three provider-linked
     // operations the epic's flagship FAPI scenario left uncovered:
-    // adminListProviderCatalogEvents, linkEventScoreSource,
+    // listProviderCatalogEvents, linkEventScoreSource,
     // unlinkEventScoreSource. Drives one coherent flow through a
     // dedicated admin app with a registered provider and safeParses every
     // response against its published schema. Golf admin rows are not covered by
     // cleanupTestData(), so this test tears down child-first in a finally block.
-    const app = await buildOperationalAdminApp({ exposeRegistry: true });
+    const app = await buildIngestionApp(new OperationalContractProvider());
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Golf Score Source Contract User',
       isRootAdmin: true,
@@ -1354,17 +1333,21 @@ describe('Contract verification (root admin)', () => {
     };
 
     try {
-      // --- adminListProviderCatalogEvents (200) --------------------------
+      // --- listProviderCatalogEvents (200) --------------------------------
       const catalogRes = await app.inject({
         method: 'GET',
-        url: '/api/v1/admin/providers/contract-provider/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
+        url: '/api/v1/ingestion/providers/contract-provider/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
         headers: rootAdmin.headers,
       });
       expect(catalogRes.statusCode).toBe(200);
-      expect(AdminListProviderCatalogEventsResponseSchema.safeParse(catalogRes.json()).success).toBe(true);
-      expect(
-        catalogRes.json().events.some((e: { externalId: string }) => e.externalId === 'event-1'),
-      ).toBe(true);
+      expect(ProviderCatalogEventListResponseSchema.safeParse(catalogRes.json()).success).toBe(true);
+      // #205 — each result is a provider event, provider and sport included.
+      expect(catalogRes.json().events).toContainEqual(expect.objectContaining({
+        externalId: 'event-1',
+        providerId: 'contract-provider',
+        sport: 'GOLF',
+        venue: 'Contract National',
+      }));
 
       // --- sport league -> season -> admin-authored event (syncScope NONE) ----
       const leagueRes = await getApp().inject({

@@ -2104,8 +2104,6 @@ no write. Replace-on-full and toggle-off: `drafts/routes.ts` is untouched, and
     transaction. The ports have no unit of work to join; that is a mechanism the codebase does
     not have yet, not one being bypassed. `leagues/service.ts` also groups contest counts by
     league for the league list.
-  - **`admin/health-service.ts` and `admin/provider-service.ts`** — `contest.count` for platform
-    metrics, the same exception slice 1 made for user counts.
   - **`contest-entry-picks/service.ts`** — the single insert path itself, transactional by design.
   - **The contest override operations' ignored `reason`**, recorded by the audit deletion as
     contest-cluster residue — a request-contract change, so #248's contract pass takes it.
@@ -2297,6 +2295,185 @@ steps (its one forward-looking line was corrected). Also removed: `'audit.view'`
 **Consequences for #205.** Its stage-2 question 1 is answered by removal, so its naming split
 drops from `platform` / `ingestion` / `audit` to `platform` / `ingestion`; #205 is being
 amended separately.
+
+## Slice 4 — outcome, 2026-09-30
+
+#205, one pull request, as stage 1 predicted. The last slice of #201. Everything stage 1 marked
+for deletion is gone; `ProviderSyncRun` and `PlatformRuntimeConfig` stayed and got ports; the
+two things that cleared the bar stayed and one of them got its screen.
+
+### What the diff does
+
+**Schema — one-way.** One migration drops `plan_tiers`, `migration_runs`,
+`commissioner_action_items`, `ingestion_jobs` and `provider_health_log`, with the
+`MigrationStartedBy` relation on `User` and the action-item relation on `League`. A second adds
+`provider_sync_runs(created_at DESC)`. Dry-run: a database built at `main`, one row seeded in
+each of the five tables plus a user, a league, a sync run and a runtime-config row, then this
+branch's migrations applied. The five tables are gone; the user, league, sync run (its
+`jobPayload` intact) and runtime config are unchanged; the index exists; and
+`prisma migrate diff` shows the same eleven pre-existing drifts as a database built at `main`
+and nothing else. The dropped rows are not recoverable. The databases that hold any are QA and
+local (plans/129); none of the five tables had a production writer except `ingestion_jobs`,
+whose rows duplicate the sync-run ledger (below).
+
+**`ProviderHealthLog` went too — the repo owner's call during the work.** Stage 1 and the ticket
+kept it as a table needing a port. On `main` it had one writer and two readers — the writer
+inside `triggerHealthCheck`, the readers in `getProviderDetail` and the provider-summary
+lookup — and all three are operations this slice deletes. So the table died with its
+operations: after them nothing writes or reads it, and the provider list already makes a live
+check per request. The ticket kept the table while deleting everything that touched it; a port
+over it would have been a port over nothing. (Corrected after #264 merged: the first version
+of this note said it never had a writer.)
+
+**Deleted operations: 14, not 15.** The ticket's list counts to 14 — alerting (4), error log
+(2), business and infrastructure metrics, service health, the manual health check, provider
+detail, provider config write, the ingestion dashboard, and the re-ingest. With them:
+`HealthService`, `ProviderService` (split, below), the action-item port and adapter, the
+dashboard's `actionItems`, `admin.dto.ts`, `PaginatedSchema`, `core/admin-permissions.ts` (zero
+callers, #255's leftover) and `request-admin-context.ts`.
+
+**The rename — `admin` is the permission, not a place.** The runtime settings moved to a
+`platform` module (`/api/v1/platform`, 8 operations); providers, syncs, sync history,
+unmapped competitors, the stale-event cleanup and the catalog browse to `ingestion`
+(`/api/v1/ingestion`, 7). Every operationId lost its `admin` prefix and takes the verb that says
+what it does (`adminPrepareSportSync` → `submitSportSync`). Both modules put `requireRootAdmin`
+on one `onRequest` hook for every route; neither uses the `admin-auth` plugin.
+
+**The competitor bind is an operation on the mapping, not on ingestion.**
+`adminMapParticipant` (`POST /admin/providers/map-participant`, both ids in the body) became
+`bindParticipantProviderMapping` (`POST /participants/:id/provider-mappings`), beside
+slice 2's read of the same mappings. Its behaviour is the old operation's: an upsert on
+`(providerId, externalId)`, so an identity bound to the wrong participant moves, and a 404 on a
+provider that is not registered. It now also re-stamps `mappedAt` when it moves one. The
+participants module takes the provider registry for that check.
+
+**Ports.** `ProviderSyncRunRepository` (create, update, a windowed `findAll`),
+`PlatformRuntimeConfigRepository`, and on existing ports `ParticipantProviderMappingRepository.bind`,
+`SportEventRepository.summarizeByProviders` and `countFieldRecords`. `IngestionService` —
+what survived of `ProviderService`'s 37 raw Prisma calls — takes an options object, not a
+positional list (the LAYERS lesson). The sync-run ledger takes the port. Two raw reads remain in
+the cluster, both slice 2's: `EventScoreSourceService`'s `sportLeague` lookup and the scheduled
+event reader.
+
+**Sync-run history takes a window, not a page.** `listProviderSyncRuns` lost `limit` and takes
+`from`/`to` on submission time, defaulting to the last **6 hours** — stated in the operation
+description. Six hours is a judgement, sized from the default schedule: live scores every 5 min
+and results every 30 min per in-progress event, fields every 6 h, schedule and rankings daily.
+That is roughly 90 runs per live event in the window, a handful outside one — a list the
+dashboard renders whole. Tightening live scores to the 30 s the schema allows would make it
+~720 per event; still one read, but the number to revisit if that override becomes common.
+The dashboard asks for the default window; it has no picker.
+
+**The catalog browse returns the provider event.** `listProviderCatalogEvents` returned a
+five-field subset; it now returns `ProviderEventDto`, the full provider event with its provider
+and sport. The service stopped reshaping and the mapper owns the wire shape.
+
+**Envelopes are entity-named** (§16): `{ providers }`, `{ syncRuns }`, `{ participants }`,
+`{ events }`. The ticket said the sync-run envelope "needs no change"; it was `{ items }`.
+
+**The stale-event cleanup's `golfRoundCount` is `roundCount`.** It already counted
+`SportEventParticipantRound` rows — the per-round rows every sport has — under a golf name. The
+rename makes the field say what it counts. It is a wire change on a root-admin-only response
+whose one reader, the sync dashboard, moved with it.
+
+**The one build.** `/manage/sync/unmapped-participants`: the competitors each provider reports
+that no participant is mapped to, and a picker scoped to the competitor's sport and seeded with
+the provider's spelling, binding through `bindParticipantProviderMapping`. Linked from the sync
+dashboard, with a breadcrumb label in the manage navigation.
+
+### `IngestionJob` — verified on the writer, not the data
+
+The ticket asked for QA rows. The QA database is not reachable from a session, so this was
+settled from the only writer instead, which is stronger than a sample: a sample shows rows
+are populated, the writer shows they must be. On `main`, `ingestion_jobs` had two writers:
+
+1. `onJobComplete` → `persistIngestionJob`, called for every scheduler job. In production the
+   scheduler is built with the ledger (`index.ts`), so every such job runs inside
+   `ProviderSyncRunLedger.executeFeedRun`, and its completion update sets `jobPayload`
+   **unconditionally** from the same in-memory job — there is no branch that completes a run
+   without it. The one path without it is a run whose execution throws before returning a
+   job, and that path never reached `persistIngestionJob` either.
+2. `reIngestEvent`, which wrote `MANUAL_REINGEST` rows outside the ledger — and is deleted here.
+
+So the table was not dead — the ticket's "no writer" framing was wrong for this one — but every
+row it would still receive is already a sync run's `jobPayload`. `onJobComplete` and
+`persistIngestionJob` went with it.
+
+### Tests
+
+Tests follow the code (§1D). The provider-service suite became `ingestion-service.test.ts` and
+`platform-config-services.test.ts`; the authz suite, catalog handler and mapper tests moved to
+the ingestion names. The ledger and orchestration-equivalence tests run against the port rather
+than a Prisma delegate mock. New: the bind's service and handler (4 unit cases), an integration
+case that lists an unmapped competitor, binds it, and sees it leave the list (it exercises the
+adapter's upsert), a windowed sync-run read, and the webapp screen's three cases. Deleted with
+their operations: health, metrics, error and alert cases, the re-ingest coverage case, the
+provider-detail 404, the action-item integration insert and the `ingestion_jobs` persistence
+case. The startup-shallow test now hydrates the field through the event field sync, the
+surviving path.
+
+### Left, with reasons
+
+- **`adminUpdateContestConfigTemplate` stays at `/api/v1/admin`**, and with it the `admin`
+  module, the `admin-auth` plugin and `rootAdminContext`. It is the contest cluster's operation
+  (another session is working there), and moving it was not in this ticket's scope. This is a
+  gap against #205's done-when ("no route is named `admin` as though it were a domain"): one
+  route is.
+- **#192 is complete for this cluster, not the whole API.** Every platform and ingestion
+  operation references named components. Still inline: the contest-template write and read,
+  `getManagedContest`, `updateManagedContestConfiguration`, `submitContestSelection`,
+  `getDraftState` (contest cluster) and the participant create/update bodies (slice 2).
+- **Two raw Prisma reads in ingestion**, named above; slice 2's objects.
+- **`repair-substrate-foundation-migration.mjs` and its DEVELOPER-SETUP section name
+  `plan_tiers`.** They repair a database stuck on the migration that created it, which runs
+  before this one drops it; migration history does not change.
+- **`plans/124`, `/125`, `/143` and earlier sections of this plan** name deleted operations as
+  the record of what was decided then.
+- **`tsc --noUnusedParameters --noUnusedLocals`**: the same four findings on `main` and this
+  branch (contest service, league bulk service, league handler, member service); none added.
+
+### Corrections to the ticket
+
+- 14 operations deleted, not 15.
+- `ProviderHealthLog` was kept for a port, but its one writer and both readers were operations
+  this slice deletes; it was dropped with them.
+- `IngestionJob` had a live writer; it was redundant, not dead.
+- "`ProviderSyncRun` is already indexed so a `createdAt` predicate rides an existing index in
+  every filter combination" — not for the unfiltered call, which is the dashboard's default.
+  Each existing index leads with provider, sport or status. Hence the `created_at` index.
+- "Its 5-field subset of `EventSummaryDto`" — there is no `EventSummaryDto` any more (slice 2);
+  the object the browse returns is a provider event, so that is its DTO.
+- The sync-run envelope was `{ items }`, not already fine.
+
+## The epic's ending — what the four slices changed
+
+#201 started from one observation about `User`: the member, the owner and the admin were three
+DTOs and three operation sets over one row. Four slices later the rule it produced holds across
+the model: **one domain object, one DTO, one set of operations; scope and role are parameters
+of the operation or relationships of the caller, not copies of the object.**
+
+- **Slice 1** made `User` one object — the admin and self-service halves of disable, enable,
+  delete, read and session revocation collapsed into one operation each, root-admin authority
+  became the token claim (A10), and viewer context left the rows (A8).
+- **Slice 2** made the sport catalog one core — golf taken out of the event and participant
+  core, the catalog given ports, one `SportEventDto` — and settled that the catalog is global
+  (A11): read by everyone signed in, written by a root admin.
+- **Slice 3** gave a contest one creation path and one template read, removed the
+  contest cluster's dead enums, columns and rules, froze a settled result, and (#247) put the
+  whole cluster on ports — with the pick port read-only, so a pick still has one insert path.
+- **Slice 4** found that the platform half was mostly scaffolding — billing, alerting, an error
+  store, metrics, a to-do list, a job table — built ahead of a need that never came, deleted it,
+  and moved what was real to the modules of what it administers.
+
+Across all four the same finding recurred at different scales: **published shape with nothing
+behind it.** Admin twins of member operations, DTO variants of one object, tables with no
+writer, stubs returning hardcoded empties. The epic's durable output is less the deletions than
+the rules that make them visible next time — §16 (no paging; entity-named envelopes), A8, A10,
+A11, the named-component contract (#192), and "tests follow code" — each enforced by a check
+where it could be.
+
+What is not finished is named above: one `admin` route and the remaining inline shapes, both in
+the contest cluster's hands.
 
 ## Sources / Prior Decisions
 

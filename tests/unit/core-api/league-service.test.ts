@@ -114,7 +114,6 @@ function createMockLifecyclePrisma() {
     contestPrizeDefinition: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     contestConfiguration: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     contest: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    commissionerActionItem: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     squadMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },

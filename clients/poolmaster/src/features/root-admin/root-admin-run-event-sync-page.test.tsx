@@ -6,8 +6,8 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminRunEventSyncPage } from './root-admin-run-event-sync-page';
 
 const {
-  adminListProvidersMock,
-  adminSyncProviderEventDataMock,
+  listProvidersMock,
+  submitEventSyncMock,
   listEventsMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -22,16 +22,16 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
-    adminListProvidersMock: vi.fn(),
-    adminSyncProviderEventDataMock: vi.fn(),
+    listProvidersMock: vi.fn(),
+    submitEventSyncMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
-  adminListProviders: adminListProvidersMock,
-  adminSyncProviderEventData: adminSyncProviderEventDataMock,
+  listProviders: listProvidersMock,
+  submitEventSync: submitEventSyncMock,
   listEvents: listEventsMock,
 });
 
@@ -61,13 +61,13 @@ function renderPage() {
 
 describe('RootAdminRunEventSyncPage', () => {
   beforeEach(() => {
-    adminListProvidersMock.mockReset();
-    adminSyncProviderEventDataMock.mockReset();
+    listProvidersMock.mockReset();
+    submitEventSyncMock.mockReset();
     listEventsMock.mockReset();
 
-    adminListProvidersMock.mockResolvedValue({
+    listProvidersMock.mockResolvedValue({
       data: {
-        items: [
+        providers: [
           {
             providerId: 'mock-contest-feed',
             providerName: 'Mock contest feed',
@@ -77,7 +77,7 @@ describe('RootAdminRunEventSyncPage', () => {
         ],
       },
     });
-    adminSyncProviderEventDataMock.mockResolvedValue({
+    submitEventSyncMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
         eventId: 'golf-masters-2026',
@@ -137,7 +137,7 @@ describe('RootAdminRunEventSyncPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
 
     await waitFor(() => {
-      expect(adminSyncProviderEventDataMock).toHaveBeenCalledWith({
+      expect(submitEventSyncMock).toHaveBeenCalledWith({
         path: {
           sport: 'GOLF',
           eventId: 'golf-masters-2026',
@@ -179,7 +179,7 @@ describe('RootAdminRunEventSyncPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
 
     await waitFor(() => {
-      expect(adminSyncProviderEventDataMock).toHaveBeenCalledWith({
+      expect(submitEventSyncMock).toHaveBeenCalledWith({
         path: {
           sport: 'GOLF',
           eventId: 'golf-masters-2026',

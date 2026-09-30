@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviders, adminPrepareSportSync } from '@/lib/api';
+import { listProviders, submitSportSync } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,
@@ -38,11 +38,11 @@ export function RootAdminRunSportSyncPage() {
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
-      const response = await adminListProviders();
-      if (!response.data?.items) {
+      const response = await listProviders();
+      if (!response.data?.providers) {
         throwApiError(response.error, 'Provider list response is missing data.');
       }
-      return response.data.items;
+      return response.data.providers;
     },
     retry: false,
   });
@@ -67,7 +67,7 @@ export function RootAdminRunSportSyncPage() {
       presetId: SportSyncPresetId;
     }): Promise<SportSyncSubmission> => {
       const preset = getSportSyncPreset(input.presetId);
-      const response = await adminPrepareSportSync({
+      const response = await submitSportSync({
         path: { sport: input.sport },
         body: {
           feeds: [...preset.feeds],

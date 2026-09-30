@@ -57,6 +57,22 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
     });
     return mapToMapping(row);
   }
+
+  async bind(
+    mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ParticipantProviderMapping> {
+    const binding = {
+      participantId: mapping.participantId,
+      confidence: mapping.confidence,
+      mappedAt: mapping.mappedAt,
+    };
+    const row = await this.prisma.participantProviderMapping.upsert({
+      where: { providerId_externalId: { providerId: mapping.providerId, externalId: mapping.externalId } },
+      create: { ...binding, providerId: mapping.providerId, externalId: mapping.externalId },
+      update: binding,
+    });
+    return mapToMapping(row);
+  }
 }
 
 function mapToMapping(row: {

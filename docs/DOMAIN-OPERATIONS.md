@@ -584,10 +584,13 @@ The tier assignment and price for a participant at an event. 1:1 with
 
 ### ParticipantProviderMapping, ParticipantRankingSnapshot
 
-Provider plumbing. Written by sync; read and repaired by `rootAdmin`. Slice 4 owns the
-operations. #236 adds one read, `listParticipantProviderMappings` (`authenticated`, like
-every catalog read), for the player page — the mapping count the golf player list carried is
-gone.
+Provider plumbing. Written by sync; read and repaired by `rootAdmin`. #236 adds one read,
+`listParticipantProviderMappings` (`authenticated`, like every catalog read), for the player
+page — the mapping count the golf player list carried is gone. #205 adds the repair:
+`bindParticipantProviderMapping` (`rootAdmin`, `POST /participants/:id/provider-mappings`) binds
+a provider's identifier to the participant with `MANUAL` confidence, moving it if another
+participant held it; 404 `PROVIDER_NOT_FOUND` for a provider that is not registered. It
+replaced `adminMapParticipant`, which took both ids in the body under `/admin/providers`.
 
 ## Slice 3 — Contests and entries
 
@@ -638,6 +641,49 @@ indexes hold (plans/117 §7.1). Its port, `ContestEntryPickRepository`, is read-
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
+
+## Slice 4 — Platform and operations
+
+Cluster: `ProviderSyncRun`, `PlatformRuntimeConfig`, and the provider registry they serve.
+Tracked by #205 under #201; decisions: the slice 4 outcomes in plans/145.
+
+**Every operation here is `rootAdmin`, reads included.** Neither object passes A11: a sync run
+can exist because a root admin submitted it (condition 3), and a runtime-config row names the
+user who last wrote it (condition 1). Nor is either tenant data — nothing here belongs to a
+league. They are operational state, so both halves stay behind the claim. Each module takes
+`requireRootAdmin` as one `onRequest` hook for all its routes.
+
+**`admin` is the permission, not a place** (#205). The operations live with what they
+administer: runtime settings under `/api/v1/platform`, providers and syncs under
+`/api/v1/ingestion`. The one operation still under `/api/v1/admin` is the contest-template write
+(`adminUpdateContestConfigTemplate`, slice 3's to move).
+
+### PlatformRuntimeConfig — `platform`
+
+Two runtime-tunable documents: the client poll intervals and the ingestion schedule.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Read, update, reset poll intervals | `rootAdmin` | `getPollIntervals`, `updatePollIntervals` (a partial patch), `resetPollIntervals` |
+| Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
+| Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |
+
+### Providers and ProviderSyncRun — `ingestion`
+
+| Operation | Role | Notes |
+|---|---|---|
+| List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
+| List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
+| Submit a sport sync, an event sync | `rootAdmin` | `submitSportSync`, `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
+| List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
+| Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
+| Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto` |
+
+Deleted in #205, all unbuilt or unused: the health and error-log surface (service health,
+infrastructure and business metrics, error search and detail, alert rules and their mute),
+the ingestion dashboard, the provider detail and provider config write, the manual health
+check, the one-off re-ingest (the event sync is the path), and the tables `plan_tiers`,
+`migration_runs`, `commissioner_action_items`, `ingestion_jobs` and `provider_health_log`.
 
 ---
 

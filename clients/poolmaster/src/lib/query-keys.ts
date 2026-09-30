@@ -197,6 +197,9 @@ export const QueryKeys = {
     pollConfig: ['poolmaster', 'root-admin', 'poll-config'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
+    unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
+    participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'participant-candidates', sportId, search] as const,
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },
 } as const;

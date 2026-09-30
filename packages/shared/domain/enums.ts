@@ -218,6 +218,16 @@ export const SportEventSyncScope = {
 } as const;
 export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
 
+/** Where one provider sync run is in its lifecycle. */
+export const ProviderSyncRunStatus = {
+  SUBMITTED: 'SUBMITTED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type ProviderSyncRunStatus = (typeof ProviderSyncRunStatus)[keyof typeof ProviderSyncRunStatus];
+
 /**
  * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
  * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
