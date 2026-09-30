@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestConfigTemplateRepository } from '@poolmaster/shared/db';
 import type {
-  AdminUpdateContestConfigTemplateRequest,
+  UpdateContestConfigTemplateRequest,
   ContestConfigTemplateDto,
   ListContestConfigTemplatesQuery,
 } from '@poolmaster/shared/dto';
@@ -61,7 +61,7 @@ export class ContestConfigTemplateService {
 
   async updateTemplate(
     templateId: string,
-    input: AdminUpdateContestConfigTemplateRequest,
+    input: UpdateContestConfigTemplateRequest,
   ): Promise<ContestConfigTemplateDto> {
     this.logger.debug({
       templateId,

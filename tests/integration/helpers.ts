@@ -40,7 +40,6 @@ import { eventsModule } from '../../packages/core-api/src/modules/events/routes'
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
 import { seasonsModule } from '../../packages/core-api/src/modules/seasons/routes';
-import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
 import { PollConfigService } from '../../packages/core-api/src/modules/platform/poll-config-service';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -158,7 +157,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
-  testApp.register(adminModule, { prefix: '/api/v1/admin' });
 
   await testApp.ready();
   return testApp;

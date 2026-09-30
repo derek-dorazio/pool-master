@@ -474,7 +474,7 @@ async function syncDerivedScoring(
  * cutRule/playoffHandling/displayScoring/tiebreaker dropped (plans/124
  * §4.6a) — each was locked to exactly one possible value and had zero real
  * reads downstream (verified: nothing in golf-contest-settlement-service.ts
- * or golf-leaderboard-calculator.ts reads this config blob). The
+ * or contest-leaderboard-calculator.ts reads this config blob). The
  * participantScoringRule row is still created — syncDerivedScoring's
  * caller relies on the row existing — it just carries no config now.
  */

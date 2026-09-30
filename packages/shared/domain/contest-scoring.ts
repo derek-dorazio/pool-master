@@ -26,7 +26,27 @@ export interface ParticipantScoringDefinition {
   unit: 'STROKES_TO_PAR';
   /** How one raw value renders. The only formatter for this measure, on every surface. */
   format: (value: number) => string;
+  /**
+   * How one participant's round renders under this measure — the per-round column of a
+   * leaderboard. Here rather than in each client because the server no longer preformats it
+   * (#248 deleted `displayType`/`displayValue`): a client reads the definition id off the
+   * leaderboard response and renders every round through this one function.
+   */
+  formatRound: (round: ParticipantRoundScore) => string;
 }
+
+/** One participant's scored round, as a formatter needs it. `status` is the round row's own. */
+export interface ParticipantRoundScore {
+  status: string;
+  strokes: number;
+  scoreToPar: number;
+}
+
+/** A round row's terminal-and-counted states: every hole played. */
+const COMPLETED_ROUND_STATUSES: ReadonlySet<string> = new Set(['COMPLETED', 'COMPLETE']);
+
+const formatStrokesToPar = (value: number): string =>
+  value === 0 ? 'E' : value > 0 ? `+${value}` : String(value);
 
 export const PARTICIPANT_SCORING_DEFINITIONS: Record<
   ParticipantScoringDefinitionId,
@@ -35,7 +55,12 @@ export const PARTICIPANT_SCORING_DEFINITIONS: Record<
   GOLF_RELATIVE_TO_PAR_TOTAL: {
     direction: 'LOWER_IS_BETTER',
     unit: 'STROKES_TO_PAR',
-    format: (value) => (value === 0 ? 'E' : value > 0 ? `+${value}` : String(value)),
+    format: formatStrokesToPar,
+    // Strokes once a round is complete, to par while it is still being played (or ended short:
+    // a withdrawal or a missed cut shows where the golfer stood against par).
+    formatRound: (round) => (COMPLETED_ROUND_STATUSES.has(round.status)
+      ? String(round.strokes)
+      : formatStrokesToPar(round.scoreToPar)),
   },
 };
 

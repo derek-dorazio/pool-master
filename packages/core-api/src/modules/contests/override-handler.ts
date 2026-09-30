@@ -28,14 +28,12 @@ export function createOverrideHandlers(overrideService: OverrideService) {
   async function reopenContest(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: { reason: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
       const contest = await overrideService.reopenContest(
         request.params.contestId,
-        request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
@@ -46,14 +44,12 @@ export function createOverrideHandlers(overrideService: OverrideService) {
   async function closeContest(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: { reason: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
       const contest = await overrideService.closeContest(
         request.params.contestId,
-        request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
@@ -64,7 +60,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
   async function extendDeadline(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: { newEnd: string; reason: string };
+      Body: { newEnd: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -72,7 +68,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
       const contest = await overrideService.extendDeadline(
         request.params.contestId,
         new Date(request.body.newEnd),
-        request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
@@ -83,7 +78,7 @@ export function createOverrideHandlers(overrideService: OverrideService) {
   async function updateLockTime(
     request: FastifyRequest<{
       Params: { contestId: string };
-      Body: { newLock: string; reason: string };
+      Body: { newLock: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -91,7 +86,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
       const contest = await overrideService.updateLockTime(
         request.params.contestId,
         new Date(request.body.newLock),
-        request.body.reason,
       );
       return reply.send(toContestResponse(contest, null));
     } catch (err) {

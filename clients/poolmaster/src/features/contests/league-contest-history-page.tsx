@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
-import { listContests, type ContestSummaryDto } from '@/lib/api';
+import { listContests, type ContestDto } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeagueContestsPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import {
@@ -52,7 +52,7 @@ export function LeagueContestHistoryPage() {
   const leagueId = league?.id ?? '';
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestSummaryDto[]> => {
+    queryFn: async (): Promise<ContestDto[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {

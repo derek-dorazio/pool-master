@@ -22,10 +22,10 @@ export function contestManagementModule(
   fastify.get('/contests/:contestId', {
     schema: {
       tags: ['Contest Management'],
-      summary: 'Get commissioner contest-management detail',
+      summary: 'Get a contest\'s configuration',
       description:
-        'Returns the commissioner-focused management detail for a contest, including the configuration needed by administration editors.',
-      operationId: 'getManagedContest',
+        'Returns a contest with its configuration and the tiers it inherits from its event: what the configuration editor reads. Commissioner only. Named for the object it returns, not the role that reads it (#248; was getManagedContest).',
+      operationId: 'getContestConfiguration',
       response: {
         200: zodToJsonSchema(ContestManagementResponseSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
@@ -41,10 +41,10 @@ export function contestManagementModule(
   fastify.put('/contests/:contestId/configuration', {
     schema: {
       tags: ['Contest Management'],
-      summary: 'Update commissioner contest configuration',
+      summary: 'Update a contest\'s configuration',
       description:
-        'Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.',
-      operationId: 'updateManagedContestConfiguration',
+        'Updates an existing contest\'s configuration and returns it as getContestConfiguration does. Commissioner only. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.',
+      operationId: 'updateContestConfiguration',
       body: zodToJsonSchema(ContestConfigurationRequestSchema),
       response: {
         200: zodToJsonSchema(ContestManagementResponseSchema),

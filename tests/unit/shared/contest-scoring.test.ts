@@ -11,6 +11,27 @@ describe('participant scoring definitions', () => {
     expect(definition.direction).toBe('LOWER_IS_BETTER');
     expect([-3, 0, 4].map(definition.format)).toEqual(['-3', 'E', '+4']);
   });
+
+  // #248 — the rule `displayType`/`displayValue` used to carry, now the registry's.
+  describe('formatRound (golf)', () => {
+    const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
+
+    it('renders a completed round as its strokes', () => {
+      expect(formatRound({ status: 'COMPLETED', strokes: 69, scoreToPar: -3 })).toBe('69');
+      expect(formatRound({ status: 'COMPLETE', strokes: 72, scoreToPar: 0 })).toBe('72');
+    });
+
+    it('renders a round still in progress against par, with level par as "E"', () => {
+      expect(formatRound({ status: 'IN_PROGRESS', strokes: 47, scoreToPar: -2 })).toBe('-2');
+      expect(formatRound({ status: 'IN_PROGRESS', strokes: 36, scoreToPar: 0 })).toBe('E');
+      expect(formatRound({ status: 'IN_PROGRESS', strokes: 40, scoreToPar: 3 })).toBe('+3');
+    });
+
+    it('renders a round that ended short of completion against par', () => {
+      expect(formatRound({ status: 'MISSED_CUT', strokes: 78, scoreToPar: 6 })).toBe('+6');
+      expect(formatRound({ status: 'DNF', strokes: 40, scoreToPar: 1 })).toBe('+1');
+    });
+  });
 });
 
 describe('compareScores', () => {

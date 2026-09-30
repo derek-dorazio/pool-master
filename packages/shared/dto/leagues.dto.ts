@@ -12,7 +12,7 @@ import {
   LeagueRole,
 } from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
-import { ContestSummaryDtoSchema } from './contests.dto';
+import { ContestDtoSchema } from './contests.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
 
@@ -372,12 +372,12 @@ export type GenerateInviteLinkResponse = z.infer<typeof GenerateInviteLinkRespon
 
 /**
  * Commissioner dashboard response. The `league` and `contests` fields are typed against the
- * canonical `LeagueDtoSchema` and `ContestSummaryDtoSchema` rather than `JsonObjectSchema`
+ * canonical `LeagueDtoSchema` and `ContestDtoSchema` rather than `JsonObjectSchema`
  * placeholders. It is league-scoped, so it carries no viewer context (A8).
  */
 export const LeagueDashboardResponseSchema = z.object({
   league: LeagueDtoSchema.describe('League payload driving the dashboard header.'),
-  contests: z.array(ContestSummaryDtoSchema).describe('Contest summaries included in the dashboard payload.'),
+  contests: z.array(ContestDtoSchema).describe('The league\'s contests.'),
   memberCount: z.number().int().describe('Current league member count.'),
   pendingInvites: z.number().int().describe('Current number of pending invitations.'),
   recentMemberActivity: z.array(MemberActivityEventDtoSchema).describe('Recent member activity for the league.'),

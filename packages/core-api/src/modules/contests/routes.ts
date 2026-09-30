@@ -169,10 +169,10 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Get Golf contest leaderboard',
       description:
-        'Returns the member-facing Golf leaderboard for a contest. While the contest is live, entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers. Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the picks and the event field still show current scores.',
+        'Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event\'s standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event\'s own field rows). Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Golf only today: another sport answers 400 _SPORT_UNSUPPORTED.',
       operationId: 'getGolfContestLeaderboard',
       response: {
-        200: schemaRef('GolfLeaderboardResponse'),
+        200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...zodToJsonSchema(ErrorEnvelopeSchema),
           description: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN, _EVENT_REQUIRED, _SPORT_UNSUPPORTED, _COUNTING_RULE_MISSING, _SCORING_RULE_MISSING (the configuration carries no participant scoring rule) or _SCORING_DEFINITION_UNKNOWN (its rule names a definition the registry does not know).',
@@ -291,7 +291,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Reopens a previously closed contest so commissioner workflows can resume or correct the contest lifecycle.',
       operationId: 'reopenContest',
-      body: schemaRef('ReopenContestRequest'),
       response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,
@@ -304,7 +303,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       description:
         'Closes the contest ahead of its normal lifecycle when commissioner or admin action requires an early stop.',
       operationId: 'closeContest',
-      body: schemaRef('CloseContestRequest'),
       response: { 200: schemaRef('ContestResponse') },
     },
     preHandler: requireContestCommissioner,

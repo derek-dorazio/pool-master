@@ -609,18 +609,20 @@ and an optional event type.
 | Operation | Role | Notes |
 |---|---|---|
 | List | `authenticated` | `listContestConfigTemplates` (#245). Every filter optional — `sport`, `contestFormat`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type. One read for the create flow and the root-admin screens |
-| Update | `rootAdmin` | `adminUpdateContestConfigTemplate`. Seeded rows only; there is no create or delete |
+| Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
 
 ### Contest
 
 | Operation | Role | Notes |
 |---|---|---|
 | Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released and its field loaded (422 `SPORT_EVENT_*`). Answers 201 with the canonical contest read |
-| Update configuration | `commissioner` | `updateManagedContestConfiguration`. Refused with 409 `CONTEST_CONFIGURATION_SETTLED` while the contest is `COMPLETED` (#246): the settled result is frozen against the configuration it settled under. Reopening the contest (commissioner-gated, reason recorded) is the path back |
+| Read configuration | `commissioner` | `getContestConfiguration` (was `getManagedContest` until #248): the contest with its configuration and the tiers it inherits from its event, what the configuration editor reads |
+| Update configuration | `commissioner` | `updateContestConfiguration` (was `updateManagedContestConfiguration` until #248). Refused with 409 `CONTEST_CONFIGURATION_SETTLED` while the contest is `COMPLETED` (#246): the settled result is frozen against the configuration it settled under. Reopening the contest (commissioner-gated) is the path back |
+| Reopen, close, extend the deadline, move the lock | `commissioner` | `reopenContest`, `closeContest`, `extendContestDeadline`, `updateContestLockTime`. None takes a `reason`: each accepted one and discarded it, and #248 took it off the contract once the audit log it was documented as feeding was gone (#255) |
 | List for a league | `authenticated` today | `listContests`. **No league check** — any signed-in user can list any league's contests; contest authorization is #193, which does not yet list this route. Each row carries `entryCount`; until #247 the league-scoped list reported 0 for every contest, because its service was built without the entry reads |
 | Delete | `authenticated` today | `deleteContest`, `DRAFT` only. **No league check** (#193, held for discussion: any signed-in user can delete any `DRAFT` contest). Takes the entries, picks, draft state, configuration and the configuration's scoring rules and prize definitions with it; before #247 a configuration with a scoring rule made the delete fail |
 | Start | *(event lifecycle)* | When its event moves to `IN_PROGRESS`, every `OPEN` or `LOCKED` contest on it becomes `ACTIVE` in one guarded write, and its commissioners and entrants are emailed once; a re-sent transition finds nothing left to start |
-| Read the golf leaderboard | `member` | `getGolfContestLeaderboard`. Live contests compute from event scores; a `COMPLETED` contest answers from its `ContestEntryStanding` rows (#246), so a score correction after settlement does not rewrite a finished result. A configuration with no scoring rule is 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — there is no golf fallback |
+| Read the golf leaderboard | `member` | `getGolfContestLeaderboard`, answering the cross-sport `ContestLeaderboardResponse` (#248): entry standings (`ContestEntryStandingDto`, with the golf total on its golf extension), the event's field as its own `SportEventParticipantDto` rows, and `scoringDefinitionId` — the definition it was ranked by, which a client renders scores and rounds through. Golf only today. Live contests compute from event scores; a `COMPLETED` contest answers from its `ContestEntryStanding` rows (#246), so a score correction after settlement does not rewrite a finished result. A configuration with no scoring rule is 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — there is no golf fallback |
 
 ### ContestEntryStanding
 
@@ -655,8 +657,9 @@ league. They are operational state, so both halves stay behind the claim. Each m
 
 **`admin` is the permission, not a place** (#205). The operations live with what they
 administer: runtime settings under `/api/v1/platform`, providers and syncs under
-`/api/v1/ingestion`. The one operation still under `/api/v1/admin` is the contest-template write
-(`adminUpdateContestConfigTemplate`, slice 3's to move).
+`/api/v1/ingestion`. Nothing is left under `/api/v1/admin`: the contest-template write, the last
+operation there, moved to `/api/v1/contest-config-templates` in #248, and the `admin-auth` plugin
+went with it.
 
 ### PlatformRuntimeConfig — `platform`
 

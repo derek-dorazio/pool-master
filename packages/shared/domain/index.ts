@@ -11,6 +11,7 @@ export {
 } from './contest-scoring';
 export type {
   ParticipantScoringDefinition,
+  ParticipantRoundScore,
   ParticipantScoringDefinitionId,
   ScoreDirection,
   ScoreRank,

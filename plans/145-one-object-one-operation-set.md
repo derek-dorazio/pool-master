@@ -2111,6 +2111,108 @@ no write. Replace-on-full and toggle-off: `drafts/routes.ts` is untouched, and
   records for `deleteContest` and three other by-id routes; #193's table does not list it. Held
   for #193's discussion, as that ticket asks.
 
+## Slice 3 contract and naming — outcome, 2026-09-30
+
+#248, the last of slice 3. The leaderboard contract is cross-sport, its three golf-welded
+fields are gone with the one rule they carried moved to the registry, the summary/detail pairs
+are one DTO each, and the last route under `/api/v1/admin` has moved. No migration.
+
+**Scope 1 — the leaderboard family, and a rename row that turned out to be a deletion.** The
+ticket renamed `GolfLeaderboardParticipantDto` to `SportEventParticipantStandingDto` plus a golf
+extension. That name was already taken — slice 2's standing-row DTO — and the collision was the
+finding: `GolfLeaderboardParticipantDto` was a flattened re-declaration of slice 2's canonical
+`SportEventParticipantDto` and both its extensions, under different field names. **Repo owner's
+ruling: reuse it.** `ContestLeaderboardResponse.participants` is `SportEventParticipantDto[]`,
+mapped by the events mapper from the same views the leaderboard already read, so
+`GolfLeaderboardParticipantDto`, `GolfLeaderboardRoundColumnsDto` and `GolfLeaderboardRoundCellDto`
+were deleted, and `GolfScorecardDto`/`GolfRoundScoreDto` were never created — a fixed r1–r4
+object is screen geometry, and rounds arrive as the field row's own `rounds[]`. Every field of
+the old DTO was checked against the canonical one before building on it: each maps (`id`,
+`participant.name`, `standing.golf.eventScoreToPar`/`eventStrokes`/`currentRoundThru`,
+`standing.status`/`position`/`displayPosition`/`asOf`/`currentRound`, `rounds[].golf`), and the
+two the server used to derive — `thru` only while in progress, a lowercased status — are
+derivable from what is published. **Rejected:** a distinct `ContestLeaderboardParticipantDto`,
+which keeps the ticket's scorecard names but is a second DTO for the same row. Reusing the
+field-row DTO publishes `affiliatedWithSportLeague` (marked admin-oriented) to leaderboard
+readers; `listEventParticipants` already returns that exact object to every signed-in user, so
+nothing new is exposed.
+
+The rest renamed off `Golf`: `ContestLeaderboardResponse`, `ContestEntryStandingDto` with
+`ContestEntryGolfStandingDto` (the entry total, as on `ContestEntryStanding` in persistence),
+`ContestCountingRuleDto`, `ScoredContestEntryPickDto`; internally `ContestCountingRule`,
+`ContestScoringConfigurationRow`, `ContestLeaderboardEntryInput`, `ContestEntryStandingRow`,
+`ScoredContestEntryPickRow`, `ContestLeaderboardModel`, `resolveContestCountingRule`,
+**`resolveContestScoringDefinition`**, `buildContestEntryStanding`, `rankContestEntryStandings`,
+and the modules `contest-leaderboard-calculator.ts` / `contest-leaderboard-reads.ts`. The
+calculator ranks a cross-sport `score`; the one place the golf value is read is
+`toParticipantScores` (`standing.golf.eventScoreToPar`, the score under the one definition).
+`countingPickCount` became `countingPickLimit`, the name the standing already had.
+
+**A scored pick no longer embeds its participant.** Each pick carried a full copy of the golfer
+it pointed at, beside the `participants` list published "for UI joins". With the participant now
+the canonical field row, that copy would have been the whole row once per pick. A pick is a
+pointer; the client joins on `sportEventParticipantId`.
+
+**Scope 2 — the three deletions, and what replaced the first.**
+
+- **`scoringMode: z.literal('GOLF_TO_PAR')` → `scoringDefinitionId`.** The ticket assumed a client
+  could read the definition id off the contest configuration; no DTO published it, so deleting the
+  literal alone would have left a client unable to render a score. **Repo owner's ruling:** the
+  resolved id, and only the id, on the leaderboard response beside `countingRule` — both say how
+  this response was computed, the same principle as #246's frozen standing. Not direction (the
+  server has ranked; positions are direction-free) and not unit: those are the registry's, and
+  sending them would be the duplication this scope deletes. Not on the configuration either:
+  nothing reads it there. It reuses `ParticipantScoringDefinitionIdSchema`, registered as the
+  named component `ParticipantScoringDefinitionId`. A contract **addition**.
+- **`GolfLeaderboardStatus` deleted.** The status a client reads is the standing's own
+  `ParticipantStandingStatus` (`ACTIVE`/`IN_PROGRESS`/`COMPLETE`/`WITHDRAWN`/`ELIMINATED`), not the
+  lowercase shadow enum. A visible contract change.
+- **`displayType`, `displayValue` and `GolfLeaderboardRoundDisplayType` deleted, the rule moved
+  first.** "Strokes once a round is complete, to par while it is in progress" is now
+  `formatRound` on the registry's definition — the registry because the id above is how a client
+  reaches the right entry, and because `format` already lives there. Pinned three ways:
+  `tests/unit/shared/contest-scoring.test.ts` (completed → strokes; in progress → to par with level
+  par `E`; a missed cut or DNF → to par), the contest-service unit test (the leaderboard's own field
+  rendered through the definition it names reads `69` and `-2`, what `displayValue` used to say),
+  and the leaderboard integration test (the same through the published response).
+
+**`formatRelativeToPar`'s three disagreeing copies were already one.** #239 moved every copy onto
+the registry's `format`, which renders level par `E`; the calculator called it, and
+`root-admin-events-page.test.tsx` and `contest-entry-page.test.tsx` pin `E`. Nothing was left to
+converge; `formatRound` reuses the same function for its to-par branch.
+
+**Scope 3.** `ContestDto` replaces `ContestSummaryDto`/`ContestDetailDto` — every read now carries
+`lockAt` and `isExclusive`, which every caller already had — and `ContestEntryDto` absorbs
+`ContestEntryDetailDto`, with `participants` present only when the viewer may see the picks.
+
+**Scope 5.** `ranking` (the field row's rank coming into the event) and `standing.position` (its
+place within it) now each say what they are and name the other.
+
+**Scope 6.** Twelve webapp files moved onto the regenerated names; there were no hand projections
+of these DTOs to remove, and no webapp surface reads the leaderboard.
+
+**Scope 7 — nothing is left under `/api/v1/admin`.** The template write moved into
+`contest-config-templates/routes.ts` as `updateContestConfigTemplate` behind `requireRootAdmin`;
+`modules/admin/`, `plugins/admin-auth.ts`, the `rootAdminContext` request decoration and the
+registration went with it, and so did the logger's fallback to that context (its one test with
+it). Still root-admin only (an integration test now asserts the 403). Its request and response
+DTOs lost their `Admin` prefix. The 401 codes change with the guard, from
+`ROOT_ADMIN_SESSION_REQUIRED`/`_INVALID` to the guard's `AUTH_SESSION_REQUIRED`/
+`AUTH_ACCESS_TOKEN_INVALID`, as every other root-admin write already answers.
+
+**Also, deferred here by earlier slices.** `getManagedContest` and
+`updateManagedContestConfiguration` are `getContestConfiguration` and `updateContestConfiguration`
+— named for the object, not for the commissioner who calls them (the api-routes manifest follows,
+no entry added). The four override operations lost the `reason` they discarded; reopen and close
+now take no body.
+
+**Left on purpose.** The endpoint stays `getGolfContestLeaderboard` at `/golf/leaderboard`, with
+its `CONTEST_GOLF_LEADERBOARD_*` codes, and settlement stays `GolfContestSettlementService`: both
+refuse every sport but golf today, so the names are true, and a second sport renames them with the
+behaviour that makes them false. The counting rule's `type: 'BEST_N_GOLFERS'` value and the
+`/contest-management` path segment are contract values the ticket did not list; changing them is
+a further visible change for no reader.
+
 ## Slice 4 stage 1 — outcome, 2026-09-30
 
 #205 had never had its stage 1 done. Doing it changed the slice from an epic stage into a
@@ -2460,7 +2562,8 @@ of the operation or relationships of the caller, not copies of the object.**
   (A11): read by everyone signed in, written by a root admin.
 - **Slice 3** gave a contest one creation path and one template read, removed the
   contest cluster's dead enums, columns and rules, froze a settled result, and (#247) put the
-  whole cluster on ports — with the pick port read-only, so a pick still has one insert path.
+  whole cluster on ports — with the pick port read-only, so a pick still has one insert path —
+  and (#248) published its leaderboard cross-sport, over the event's own field rows.
 - **Slice 4** found that the platform half was mostly scaffolding — billing, alerting, an error
   store, metrics, a to-do list, a job table — built ahead of a need that never came, deleted it,
   and moved what was real to the modules of what it administers.
@@ -2472,8 +2575,8 @@ the rules that make them visible next time — §16 (no paging; entity-named env
 A11, the named-component contract (#192), and "tests follow code" — each enforced by a check
 where it could be.
 
-What is not finished is named above: one `admin` route and the remaining inline shapes, both in
-the contest cluster's hands.
+What is not finished is named above: the remaining inline shapes, in the contest cluster's hands.
+The last `admin` route moved in #248, so nothing is registered under `/api/v1/admin`.
 
 ## Sources / Prior Decisions
 

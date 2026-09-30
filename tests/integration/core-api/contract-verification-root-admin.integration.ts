@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import {
   UserResetPasswordResponseSchema,
   ProviderEventCleanupResponseSchema,
-  AdminContestConfigTemplateResponseSchema,
+  ContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
   ProviderCatalogEventListResponseSchema,
@@ -517,17 +517,28 @@ describe('Contract verification (root admin)', () => {
       throw new Error('Expected at least one contest template');
     }
 
+    // #248 — the write left /api/v1/admin and the admin-auth plugin, and stays root-admin only.
+    const member = await createTestUser({ displayName: 'Template Write Non Admin' });
+    const forbiddenRes = await getApp().inject({
+      method: 'PUT',
+      url: `/api/v1/contest-config-templates/${templateId}`,
+      headers: member.headers,
+      payload: { description: 'Must not land.' },
+    });
+    expect(forbiddenRes.statusCode).toBe(403);
+    expect(forbiddenRes.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+
     try {
       const templateUpdateRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/admin/contest-config-templates/${templateId}`,
+        url: `/api/v1/contest-config-templates/${templateId}`,
         headers: rootAdmin.headers,
         payload: {
           description: 'Updated through contract verification.',
         },
       });
       expect(templateUpdateRes.statusCode).toBe(200);
-      expect(AdminContestConfigTemplateResponseSchema.safeParse(templateUpdateRes.json()).success).toBe(true);
+      expect(ContestConfigTemplateResponseSchema.safeParse(templateUpdateRes.json()).success).toBe(true);
       expect(templateUpdateRes.json().template.description).toBe('Updated through contract verification.');
     } finally {
       await getPrisma().contestConfigTemplate.update({

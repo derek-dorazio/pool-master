@@ -58,8 +58,8 @@ describe('pool-master-rop.76.1 — JWT_SECRET single bootstrap source', () => {
 
   describe('no production code path retains the dev fallback literal', () => {
     const ORIGIN_MAIN_LITERAL = 'poolmaster-dev-secret-change-in-production';
+    // `plugins/admin-auth.ts` was the third reader until #248 deleted it with the last /admin route.
     const FILES = [
-      'plugins/admin-auth.ts',
       'plugins/auth-guard.ts',
       'modules/auth/auth-service.ts',
     ];
@@ -74,7 +74,7 @@ describe('pool-master-rop.76.1 — JWT_SECRET single bootstrap source', () => {
       expect(src).not.toMatch(/process\.env\.JWT_SECRET\s*\?\?/);
     });
 
-    it('routes all three call sites through readJwtSecret()', () => {
+    it('routes every call site through readJwtSecret()', () => {
       for (const relPath of FILES) {
         const src = readFileSync(resolve(CORE_API_SRC, relPath), 'utf8');
         expect(src).toMatch(/readJwtSecret\(\)/);

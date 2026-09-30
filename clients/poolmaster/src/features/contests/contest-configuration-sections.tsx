@@ -1,6 +1,6 @@
 import type {
   SportEventDto,
-  GetManagedContestResponses,
+  GetContestConfigurationResponses,
   ListContestConfigTemplatesResponses,
 } from "@/lib/api";
 import {
@@ -17,7 +17,7 @@ import {
 type ContestConfigTemplate =
   ListContestConfigTemplatesResponses[200]["templates"][number];
 type InheritedTier =
-  GetManagedContestResponses[200]["contest"]["effectiveTiers"][number];
+  GetContestConfigurationResponses[200]["contest"]["effectiveTiers"][number];
 
 type ContestTemplatePickerProps = {
   isEditMode: boolean;

@@ -14,7 +14,7 @@ import {
   resetSportIngestionOverride,
   getUser,
   listUsers,
-  adminUpdateContestConfigTemplate,
+  updateContestConfigTemplate,
   updateIngestionSchedule,
   updatePollIntervals,
   deleteLeague,
@@ -506,7 +506,7 @@ describe('SDK Functional: Root Admin', () => {
       },
     });
     expect(plainListResponse.data?.templates.map((entry) => entry.id)).toContain(template.id);
-    const plainUpdateResponse = await adminUpdateContestConfigTemplate({
+    const plainUpdateResponse = await updateContestConfigTemplate({
       client: plainUser.client,
       path: {
         templateId: template.id,
@@ -518,7 +518,7 @@ describe('SDK Functional: Root Admin', () => {
     expect(plainUpdateResponse.response.status).toBe(403);
 
     try {
-      const updateResponse = await adminUpdateContestConfigTemplate({
+      const updateResponse = await updateContestConfigTemplate({
         client: user.client,
         path: {
           templateId: template.id,

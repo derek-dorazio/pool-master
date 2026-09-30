@@ -19,13 +19,13 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
       });
       const service = new OverrideService(contestRepo);
-      await service.reopenContest('contest-1', 'Scoring error found');
+      await service.reopenContest('contest-1');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.ACTIVE });
     });
 
     it('throws when contest is not completed', async () => {
       const service = new OverrideService(createMockContestRepo());
-      await expect(service.reopenContest('contest-1', 'reason')).rejects.toThrow('completed');
+      await expect(service.reopenContest('contest-1')).rejects.toThrow('completed');
     });
   });
 
@@ -33,7 +33,7 @@ describe('OverrideService', () => {
     it('force-closes an active contest', async () => {
       const contestRepo = createMockContestRepo();
       const service = new OverrideService(contestRepo);
-      await service.closeContest('contest-1', 'Season over');
+      await service.closeContest('contest-1');
       expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { status: ContestStatus.COMPLETED });
     });
 
@@ -42,7 +42,7 @@ describe('OverrideService', () => {
         findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.COMPLETED })),
       });
       const service = new OverrideService(contestRepo);
-      await expect(service.closeContest('contest-1', 'reason')).rejects.toThrow('already closed');
+      await expect(service.closeContest('contest-1')).rejects.toThrow('already closed');
     });
   });
 

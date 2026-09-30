@@ -1,4 +1,4 @@
-import type { ContestSummaryDto } from '@/lib/api';
+import type { ContestDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { ListCard } from '@/features/shared/ui';
 
@@ -8,7 +8,7 @@ export function ContestListCard({
   leagueCode,
   testId,
 }: {
-  contest: ContestSummaryDto;
+  contest: ContestDto;
   leagueCode: string;
   testId: string;
 }) {

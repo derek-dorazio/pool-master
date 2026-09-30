@@ -17,7 +17,7 @@ import {
   toContestEntryResponse,
   toMyContestEntryResponse,
   toContestResponse,
-  toGolfLeaderboardResponse,
+  toContestLeaderboardResponse,
 } from '../../mappers/contests.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
@@ -181,7 +181,7 @@ export function createContestHandlers(contestService: ContestService) {
         entryCount: leaderboard.entries.length,
         participantCount: leaderboard.participants.length,
       }, 'contest golf leaderboard route completed');
-      return reply.send(toGolfLeaderboardResponse(leaderboard));
+      return reply.send(toContestLeaderboardResponse(leaderboard));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'contest golf leaderboard route missing contest');

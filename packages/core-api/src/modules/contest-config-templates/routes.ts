@@ -1,16 +1,21 @@
 /**
- * The ContestConfigTemplate read (#245). Templates are global under A11 — platform-seeded, no
- * owner, identical for every viewer — so any signed-in user reads them, through this one
- * operation; the commissioner's create flow and the root-admin screens both call it. The write
- * stays root-admin only and lives with the other root-admin writes (`adminUpdateContestConfigTemplate`).
+ * ContestConfigTemplate's operations. Templates are global under A11 — platform-seeded, no owner,
+ * identical for every viewer — so any signed-in user reads them, through the one list (#245) that
+ * the commissioner's create flow and the root-admin screens both call; the write is root-admin
+ * only, guarded like every other global-object write. The write lived at
+ * /api/v1/admin/contest-config-templates as `adminUpdateContestConfigTemplate` until #248, the
+ * last route under /admin: the permission, not the place, is what makes it an admin operation.
  */
 import type { FastifyInstance } from 'fastify';
 import {
   ContestConfigTemplateListResponseSchema,
+  ContestConfigTemplateResponseSchema,
   ErrorEnvelopeSchema,
   ListContestConfigTemplatesQuerySchema,
+  UpdateContestConfigTemplateRequestSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaContestConfigTemplateRepository } from '../../adapters';
 import { createContestConfigTemplateHandlers } from './handler';
@@ -37,5 +42,25 @@ export function contestConfigTemplatesModule(fastify: FastifyInstance): void {
       },
     },
     handler: handlers.listTemplates,
+  });
+
+  fastify.put('/:templateId', {
+    schema: {
+      tags: ['Contest Config Templates'],
+      summary: 'Update a contest configuration template',
+      description:
+        'Updates a seeded template that future contests are created from. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise); contests already created from it keep their own configuration.',
+      operationId: 'updateContestConfigTemplate',
+      body: zodToJsonSchema(UpdateContestConfigTemplateRequestSchema),
+      response: {
+        200: zodToJsonSchema(ContestConfigTemplateResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    onRequest: requireRootAdmin,
+    handler: handlers.updateTemplate,
   });
 }

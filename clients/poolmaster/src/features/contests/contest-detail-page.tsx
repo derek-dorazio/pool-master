@@ -3,7 +3,7 @@ import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { enterContest, getContest, listContestEntries, updateContestEntry, type ContestDetailDto, type ContestEntryDetailDto, type ContestEntryListResponse } from '@/lib/api';
+import { enterContest, getContest, listContestEntries, updateContestEntry, type ContestDto, type ContestEntryDto, type ContestEntryListResponse } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
@@ -34,7 +34,7 @@ import { shouldPollContestEntries } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ContestEntryParticipant = NonNullable<ContestEntryDetailDto['participants']>[number];
+type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[number];
 
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
   // pool-master-eux.5 removed the legacy score blob that previously implied
@@ -121,7 +121,7 @@ export function ContestDetailPage() {
 
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDetailDto> => {
+    queryFn: async (): Promise<ContestDto> => {
       const response = await getContest({ path: { contestId } });
 
       if (!response.data?.contest) {
@@ -284,7 +284,7 @@ export function ContestDetailPage() {
       ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
       : null;
 
-  function startRenameEntry(entry: ContestEntryDetailDto) {
+  function startRenameEntry(entry: ContestEntryDto) {
     setRenameEntryId(entry.id);
     setRenameDraft(entry.name);
     renameEntryMutation.reset();

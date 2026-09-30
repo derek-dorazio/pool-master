@@ -9,12 +9,12 @@ const {
   createContestMock,
   deleteContestMock,
   getLeagueByCodeMock,
-  getManagedContestMock,
+  getContestConfigurationMock,
   listContestConfigTemplatesMock,
   listEventsMock,
   mockLogger,
   updateContestMock,
-  updateManagedContestConfigurationMock,
+  updateContestConfigurationMock,
 } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
@@ -31,12 +31,12 @@ const {
     createContestMock: vi.fn(),
     deleteContestMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
-    getManagedContestMock: vi.fn(),
+    getContestConfigurationMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
     updateContestMock: vi.fn(),
-    updateManagedContestConfigurationMock: vi.fn(),
+    updateContestConfigurationMock: vi.fn(),
   };
 });
 
@@ -44,11 +44,11 @@ bindApiMocks({
   createContest: createContestMock,
   deleteContest: deleteContestMock,
   getLeagueByCode: getLeagueByCodeMock,
-  getManagedContest: getManagedContestMock,
+  getContestConfiguration: getContestConfigurationMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEvents: listEventsMock,
   updateContest: updateContestMock,
-  updateManagedContestConfiguration: updateManagedContestConfigurationMock,
+  updateContestConfiguration: updateContestConfigurationMock,
 });
 
 vi.mock('@/features/auth/auth-provider', () => ({
@@ -214,11 +214,11 @@ describe('CreateContestPage', () => {
     createContestMock.mockReset();
     deleteContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
-    getManagedContestMock.mockReset();
+    getContestConfigurationMock.mockReset();
     listContestConfigTemplatesMock.mockReset();
     listEventsMock.mockReset();
     updateContestMock.mockReset();
-    updateManagedContestConfigurationMock.mockReset();
+    updateContestConfigurationMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -439,7 +439,7 @@ describe('CreateContestPage', () => {
 
   it('deletes a draft contest from the manage page', async () => {
     primeCommonMocks();
-    getManagedContestMock.mockResolvedValue({
+    getContestConfigurationMock.mockResolvedValue({
       data: {
         contest: {
           id: 'contest-78',
@@ -508,7 +508,7 @@ describe('CreateContestPage', () => {
 
   it('hydrates and saves the commissioner managed golf contest payload', async () => {
     primeCommonMocks();
-    getManagedContestMock.mockResolvedValue({
+    getContestConfigurationMock.mockResolvedValue({
       data: {
         contest: {
           id: 'contest-77',
@@ -542,7 +542,7 @@ describe('CreateContestPage', () => {
       },
     });
     updateContestMock.mockResolvedValue({ data: { contest: { id: 'contest-77' } } });
-    updateManagedContestConfigurationMock.mockResolvedValue({
+    updateContestConfigurationMock.mockResolvedValue({
       data: {
         contest: {
           id: 'contest-77',
@@ -583,7 +583,7 @@ describe('CreateContestPage', () => {
     );
 
     await waitFor(() =>
-      expect(updateManagedContestConfigurationMock).toHaveBeenCalledWith({
+      expect(updateContestConfigurationMock).toHaveBeenCalledWith({
         path: { id: 'league-1', contestId: 'contest-77' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
@@ -615,7 +615,7 @@ describe('CreateContestPage', () => {
   // error state rather than a half-rendered manage form.
   it('shows the error state when the managed contest fails to load', async () => {
     primeCommonMocks();
-    getManagedContestMock.mockResolvedValue({
+    getContestConfigurationMock.mockResolvedValue({
       error: { message: 'Managed contest lookup failed.' },
     });
 

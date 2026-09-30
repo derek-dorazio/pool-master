@@ -15,6 +15,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   ContestStatus,
+  PARTICIPANT_SCORING_DEFINITIONS,
   SelectionType,
   ScoringEngine,
   ContestFormat,
@@ -868,8 +869,9 @@ describe('ContestService', () => {
 
       const result = await service.getGolfLeaderboard('contest-1', 'user-1');
 
+      expect(result.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
       expect(result.countingRule).toEqual({ type: 'BEST_N_GOLFERS', count: 2 });
-      expect(result.entries.map((entry) => [entry.entryId, entry.totalScoreToPar, entry.position])).toEqual([
+      expect(result.entries.map((entry) => [entry.entryId, entry.score, entry.position])).toEqual([
         ['entry-2', -9, 1],
         ['entry-1', -7, 2],
       ]);
@@ -882,18 +884,14 @@ describe('ContestService', () => {
         { pickId: 'pick-5', isCounting: true, isDropped: false },
         { pickId: 'pick-6', isCounting: false, isDropped: true },
       ]);
-      const rory = result.participants.find((participant) => participant.sportEventParticipantId === 'sep-1');
-      expect(rory?.totalScoreToPar).toBe(-5);
-      expect(rory?.thru).toBe(9);
-      expect(rory?.rounds.r1).toEqual(expect.objectContaining({
-        displayType: 'STROKES',
-        displayValue: '69',
-      }));
-      expect(rory?.rounds.r2).toEqual(expect.objectContaining({
-        displayType: 'TO_PAR',
-        displayValue: '-2',
-        thru: 9,
-      }));
+      // The field is the event's own rows, passed through; the server no longer preformats
+      // rounds (#248). Rendered through the definition the leaderboard names, they read as the
+      // deleted displayValue did: strokes once complete, to par while in progress.
+      expect(result.participants).toBe(await listEventParticipants.mock.results[0].value);
+      const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
+      const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId];
+      expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...golf! })))
+        .toEqual(['69', '-2']);
       // Entry order is the port's contract (entryNumber, then createdAt); only active entries count.
       expect(entryRepo.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { activeOnly: true });
       expect(listEventParticipants).toHaveBeenCalledWith('event-1');

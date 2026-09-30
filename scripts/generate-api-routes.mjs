@@ -112,8 +112,8 @@ const MANIFEST = {
     myEntry: 'getMyContestEntry',
   },
   contestManagement: {
-    detail: 'getManagedContest',
-    configuration: 'updateManagedContestConfiguration',
+    detail: 'getContestConfiguration',
+    configuration: 'updateContestConfiguration',
   },
   drafts: {
     $comment: 'Drafts',

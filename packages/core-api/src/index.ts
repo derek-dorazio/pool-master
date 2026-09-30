@@ -28,7 +28,6 @@ import { sportLeaguesModule } from './modules/sport-leagues/routes';
 import { seasonsModule } from './modules/seasons/routes';
 import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
-import { adminModule } from './modules/admin/routes';
 import { platformModule } from './modules/platform/routes';
 import { IngestionConfigService } from './modules/platform/ingestion-config-service';
 import { PollConfigService } from './modules/platform/poll-config-service';
@@ -217,7 +216,6 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
-  app.register(adminModule, { prefix: '/api/v1/admin' });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
   // =========================================================================
