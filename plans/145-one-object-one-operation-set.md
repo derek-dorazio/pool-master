@@ -1725,7 +1725,7 @@ advanced mode."* One operation with an optional first step, expressed as two ope
 | Q1 | Does `ContestEntryGolfStanding` keep `totalScoreToPar`? | Yes, but the table splits: `ContestEntryStanding` (core) + `ContestEntryGolfStanding` (golf extension holding only `totalScoreToPar`). `status` is removed — settlement writes the literal `'FINAL'` in both branches and nothing reads it. `countingPickCount` is renamed `countingPickLimit`: it holds the rule's N, not a count, and it is kept because configuration stays editable after settlement, so without the captured N a frozen result is unexplainable. `scoredPickCount` and the denormalized `contestId` stay, the latter documented |
 | Q2 | Are there three `position` fields? | No — one each on three objects, and only one is wrong. `Participant.position` means playing role and becomes `role`. `position`-as-rank on both standing tables is the deliberate usage slice 2's decision 4 established and it stays. Ranking entries is not golf-specific, so the pool-rank DTO goes cross-sport with the rest of the `GolfLeaderboard` family (~25 symbols, #248) |
 | Q3 | `PricingMethod`, `TierAssignmentMethod`, `tierAssignmentMethod`, `pricingMethod` | All four go. Provenance is already recorded better per-participant by `SportEventParticipantValuation.priceAssignedSource` / `tierAssignedSource` — right grain, enum-enforced, and on the global side of A11. The two enums' value sets move to `plans/128` as narrative first, because `CONFERENCE`/`DIVISION`/`POT`/`BOUT_POSITION` are real cross-sport strategies worth not losing |
-| Q4 | Is `GolfContestConfigMode` what distinguishes tier/budget/category selection? | No — `SelectionType` is, and always was. The enum and `ContestConfiguration.configMode` both go; `ContestConfigTemplate.configMode` is renamed `selectionType` inside its unique key (#248). Full category support is #99's, and the system gets fully functional on tiered first |
+| Q4 | Is `GolfContestConfigMode` what distinguishes tier/budget/category selection? | No — `SelectionType` is, and always was. The enum, `ContestConfiguration.configMode` and `ContestConfigTemplate.configMode` all go, the last renamed `selectionType` inside its unique key. **All of it in #244** (corrected 2026-09-30, below). Full category support is #99's, and the system gets fully functional on tiered first |
 | Q5 | `scoringMode` | Delete it. A `z.literal` cannot describe a second sport without a breaking change, and `PARTICIPANT_SCORING_DEFINITIONS` now holds direction, unit and format keyed by an id the client reads off the configuration |
 | Q6a | Is the configuration edit guarded once a contest settles? | No, and it must be. `updateManagedContestConfiguration` guards only existence, so a commissioner can change `countedScores` on a `COMPLETED` contest. Refuse while settled; `OverrideService.reopenContest` is already the deliberate path back, commissioner-gated and reason-recorded, so no new mechanism |
 | Q6b | Are template-based and from-scratch creation two paths? | One path with an optional first step. `createContest` gains optional `templateId` and optional `configuration`; `createManagedContest` and the union go. The two template *reads* collapse independently — `adminListContestConfigTemplates` is the same read as the commissioner's, with "Managed" encoding which screen called it rather than a difference in the object |
@@ -1743,11 +1743,11 @@ The split is by dependency, not by size. Each slice makes the next one smaller.
 
 | Slice | Why it sits here |
 |---|---|
-| **#244** dead weight | Every item is a deletion of something nothing reads. No behaviour change, no consumed contract, no dependency on the other four. Doing it first means each later slice touches fewer files |
+| **#244** dead weight | Almost every item is a deletion of something nothing reads, and nothing here depends on the other four, so each later slice touches fewer files. The exception is `GolfContestConfigMode`, which carries a published contract — see the correction below |
 | **#245** one creation path | Removes a whole module's route surface *before* #248's naming pass would have to rename it, and deletes `mapSelectionType` — which is why #244 deliberately leaves that mapper alone rather than patching it |
 | **#246** the standing split | The slice with the migration. The split and the read-wiring ship together because splitting a table nobody reads would just produce two tables nobody reads |
 | **#247** ports and services | Ports must be built against the final schema and the final operation set. Building them before #244's deletions, #245's collapse and #246's split would mean building them twice |
-| **#248** contract and naming | Contract-only, and last because every shape it renames is settled by the four before it — and because it is the slice that touches the published spec, the SDK and the frontend |
+| **#248** contract and naming | Contract-only, with no migration once the template column rename moved to #244. Last because every shape it renames is settled by the four before it, and because it is the slice that touches the published spec, the SDK and the frontend |
 
 **#198's gate is #247, not all of slice 3.** Its `SelectionEngine` sits on this cluster's DAO,
 so its first implementation slice can start when #247 merges; #248 is a naming and frontend
@@ -1757,6 +1757,37 @@ because `ContestEntryPickService.createPick` is documented as the single enforce
 (`plans/117` §7.1) and a port is a candidate second way in. That is an implementation
 judgement best made with the cluster's code open, and #247 must record the answer rather than
 leave it implicit.
+
+### Correction, 2026-09-30 — `GolfContestConfigMode` was not dead
+
+The implementing session hit this on #244 and was right to stop. The Q4 record above called
+`GolfContestConfigMode` dead because it **duplicates** `SelectionType`. Duplication is not
+deadness, and the consumers were never checked. On `28328eb` they are:
+
+| Where | What |
+|---|---|
+| `packages/shared/dto/contest-management.dto.ts:80` | `z.discriminatedUnion('mode', […])` — `mode` is the discriminant |
+| `…dto.ts:66`, `:138` | `z.literal(GolfContestConfigMode.GOLF_TIERED)` on the config member; `z.enum([…])` on the template DTO |
+| `packages/shared/generated/*` | `configMode: 'GOLF_TIERED'` in the published SDK, three places in each of two generated files |
+| `clients/poolmaster/.../create-contest-page.tsx:618` | the webapp **sends** it; `:355`, `:372`, `:414` read it |
+| `src/mappers/contests.mapper.ts:209` | `configMode ?? configJson.mode` — persisted in JSON and read back |
+| `contest_config_templates.config_mode` | `VARCHAR(50) NOT NULL`, inside the table's unique index, seeded `'GOLF_TIERED'` |
+
+**The decision is unaffected; its cost was understated.** `SelectionType` is still the axis, and
+`ContestConfiguration` still carries both `selectionType` (`schema.prisma:771`) and `configMode`
+(`:772`), so the second copy still goes. What changes is that removing it is a **contract change
+with a live client**, not a cleanup — the request schema is rekeyed on `selectionType`, the
+persisted `configJson.mode` is converted, the SDK regenerates and the webapp follows.
+
+**Placement, repo owner's call: all of it in #244**, including the
+`ContestConfigTemplate.configMode` → `selectionType` rename that #248's scope 4 had held as "a
+naming change". It cannot be separated from the enum removal — one column, one discriminant, one
+persisted key, one client. #248 is left with no migration at all.
+
+**The general lesson, since this is the second time it has bitten this epic:** "duplicates
+something else" and "nothing reads it" are different findings with different blast radii, and
+only the second one makes a deletion cheap. The stage-1 sweep should count consumers before
+calling anything dead — a `grep` for the symbol, not an argument about the model.
 
 ### The freeze, which is the point of #246
 
