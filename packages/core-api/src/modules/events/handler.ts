@@ -148,7 +148,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, pro
       await eventLifecycle.applySportEventStatusTransition({
         sportEventId: request.params.eventId,
         toStatus: request.body.toStatus,
-        actor: { type: 'ROOT_ADMIN', userId: request.authUser?.userId ?? '', email: request.authUser?.email ?? '' },
+        actor: { type: 'ROOT_ADMIN' },
       });
       return eventResponse(request.params.eventId);
     },

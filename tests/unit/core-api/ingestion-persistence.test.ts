@@ -606,7 +606,7 @@ describe('IngestionPersistence', () => {
   // pool-master-g1z — proves persistEventsWithDiagnostics delegates the
   // status write and its side effects to EventLifecycleService rather than
   // performing them inline; the transition logic itself (transition-map
-  // validity, side effects, audit) is covered directly in
+  // validity, side effects) is covered directly in
   // tests/unit/core-api/event-lifecycle-service.test.ts.
   it('pool-master-g1z calls eventLifecycleService.applySportEventStatusTransition for each persisted event', async () => {
     const prisma = {

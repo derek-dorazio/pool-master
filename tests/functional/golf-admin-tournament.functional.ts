@@ -140,7 +140,6 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.userIds.size) {
-    await db.adminAuditEntry.deleteMany({ where: { actorId: { in: [...created.userIds] } } });
     await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
     await db.user.deleteMany({ where: { id: { in: [...created.userIds] } } });
   }

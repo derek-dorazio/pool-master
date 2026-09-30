@@ -6,7 +6,6 @@ import type {
   ContestConfigTemplateDto,
 } from '@poolmaster/shared/dto';
 import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
-import { logAdminAction } from './admin-audit-service';
 import { mapContestConfigTemplateDto } from '../../mappers/contest-management.mapper';
 
 function createNoopLogger(): Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'> {
@@ -57,8 +56,6 @@ export class ContestTemplateAdminService {
   async updateTemplate(
     templateId: string,
     input: AdminUpdateContestConfigTemplateRequest,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<ContestConfigTemplateDto> {
     this.logger.debug({
       templateId,
@@ -98,17 +95,6 @@ export class ContestTemplateAdminService {
     }
 
     const updated = await this.repository.update(templateId, updates);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'UPDATE_CONTEST_CONFIG_TEMPLATE',
-      resourceType: 'CONTEST_CONFIG_TEMPLATE',
-      resourceId: templateId,
-      description: `Updated contest config template ${existing.templateKey}`,
-      beforeState: mapContestConfigTemplateDto(existing),
-      afterState: mapContestConfigTemplateDto(updated),
-    });
 
     this.logger.info({
       templateId,

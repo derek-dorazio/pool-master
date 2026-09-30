@@ -124,7 +124,6 @@ describe('SDK Functional: Account Lifecycle', () => {
     const inactivateResponse = await disableUser({
       client: cookieClient,
       path: { userId: 'me' },
-      body: {},
     });
 
     expect(inactivateResponse.data?.user.id).toBe(user.userId);
@@ -225,7 +224,6 @@ describe('SDK Functional: Account Lifecycle', () => {
     const inactivateResponse = await disableUser({
       client: cookieClient,
       path: { userId: 'me' },
-      body: {},
     });
 
     expect(inactivateResponse.data?.user.isActive).toBe(false);

@@ -14,7 +14,7 @@
  * on — which is how the two halves came to disagree about their guards in the first place.
  *
  * `prisma` is a constructor parameter for the three things that are not single-aggregate
- * operations — `$transaction`, the eight-table delete cascade, the refresh-token revoke, all
+ * operations — `$transaction`, the six-table delete cascade, the refresh-token revoke, all
  * in `user-lifecycle.ts` — plus the one column `UserRepository` deliberately never serves,
  * `passwordHash`.
  */
@@ -32,7 +32,6 @@ import {
   isLastRootAdmin,
   revokeUserSessions,
 } from './user-lifecycle';
-import { logAdminAction } from '../admin/admin-audit-service';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -40,8 +39,6 @@ const BCRYPT_ROUNDS = 12;
 export interface UserWriteActor {
   userId: string;
   isRootAdmin: boolean;
-  /** Recorded on the admin audit entry when this actor exercises root-admin authority. */
-  email: string;
 }
 
 export interface UserProfileUpdate {
@@ -109,10 +106,6 @@ export class UserService {
       firstName: updates.firstName.trim(),
       lastName: updates.lastName.trim(),
     });
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.update_profile',
-      description: `Updated profile for user ${user.id}`,
-    });
     this.logger?.info({
       action: 'userService.updateProfile.success',
       data: { userId: updated.id, actorUserId: actor.userId },
@@ -130,10 +123,6 @@ export class UserService {
     await this.assertIdentifierAvailable(normalized, user.id, 'ACCOUNT_USERNAME_TAKEN');
 
     const updated = await this.users.update(user.id, { username: normalized });
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.update_username',
-      description: `Updated username for user ${user.id}`,
-    });
     this.logger?.info({
       action: 'userService.updateUsername.success',
       data: { userId: updated.id, actorUserId: actor.userId },
@@ -242,7 +231,6 @@ export class UserService {
   async resetPassword(
     actor: UserWriteActor,
     targetUserId: string,
-    reason?: string,
   ): Promise<{ temporaryPassword: string }> {
     this.requireRootAdmin(actor, 'reset another user password');
     const user = await this.requireUser(targetUserId);
@@ -255,17 +243,6 @@ export class UserService {
       await revokeUserSessions(tx, user.id);
     });
 
-    // #202 — audited AFTER the transaction commits, not inside the callback. logAdminAction
-    // writes through its own client and takes no transaction, so a call inside the callback
-    // was never enrolled in it: the entry committed immediately and would have survived a
-    // rollback, recording an action that did not happen.
-    //
-    // The EVENT is audited, not the credential state either side of it.
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.reset_password',
-      description: `Reset password for user ${user.id}`,
-      reason,
-    });
     this.logger?.info({
       action: 'userService.resetPassword.success',
       data: { userId: user.id },
@@ -282,13 +259,12 @@ export class UserService {
    * last-root-admin guard.
    *
    * Idempotent: already inactive means the desired state holds, so this succeeds without
-   * re-revoking sessions or writing a second audit entry for a change that did not happen.
+   * re-revoking sessions for a change that did not happen.
    * Returning early also means the guard below cannot reject a no-op.
    */
   async disableUser(
     actor: UserWriteActor,
     targetUserId: string,
-    reason?: string,
   ): Promise<User> {
     const user = await this.requireWritableUser(actor, targetUserId);
 
@@ -320,12 +296,6 @@ export class UserService {
       await revokeUserSessions(tx, user.id);
     });
 
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.disable',
-      description: `Disabled user ${user.id}`,
-      afterState: { isActive: false },
-      reason,
-    });
     this.logger?.info({
       action: 'userService.disable.success',
       data: { userId: user.id, actorUserId: actor.userId },
@@ -346,11 +316,6 @@ export class UserService {
     }
 
     const updated = await this.users.update(user.id, { isActive: true });
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.enable',
-      description: `Re-enabled user ${user.id}`,
-      afterState: { isActive: true },
-    });
     this.logger?.info({
       action: 'userService.enable.success',
       data: { userId: user.id, actorUserId: actor.userId },
@@ -366,10 +331,6 @@ export class UserService {
     const user = await this.requireWritableUser(actor, targetUserId);
     const revokedCount = await revokeUserSessions(this.prisma, user.id);
 
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.force_logout',
-      description: `Revoked all sessions for user ${user.id}`,
-    });
     this.logger?.info({
       action: 'userService.revokeSessions.success',
       data: { userId: user.id, revokedCount },
@@ -385,7 +346,6 @@ export class UserService {
     actor: UserWriteActor,
     targetUserId: string,
     confirmationEmail: string,
-    reason?: string,
   ): Promise<void> {
     const user = await this.requireWritableUser(actor, targetUserId);
 
@@ -439,13 +399,6 @@ export class UserService {
 
     await this.prisma.$transaction((tx) => deleteUserCascade(tx, user.id));
 
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.delete',
-      description: `Deleted inactive user ${user.id}`,
-      beforeState: { isActive: false, isRootAdmin: user.isRootAdmin === true },
-      afterState: { deleted: true },
-      reason,
-    });
     this.logger?.info({
       action: 'userService.delete.success',
       data: { userId: user.id, actorUserId: actor.userId },
@@ -462,7 +415,6 @@ export class UserService {
     actor: UserWriteActor,
     targetUserId: string,
     nextValue: boolean,
-    reason?: string,
   ): Promise<void> {
     this.requireRootAdmin(actor, 'change a root-admin role');
     const user = await this.requireUser(targetUserId);
@@ -496,15 +448,6 @@ export class UserService {
       }
     });
 
-    await this.auditRootAdminAction(actor, user, {
-      action: 'user.set_root_admin',
-      description: nextValue
-        ? `Granted root-admin role to user ${user.id}`
-        : `Revoked root-admin role from user ${user.id}`,
-      beforeState: { isRootAdmin: currentValue },
-      afterState: { isRootAdmin: nextValue },
-      reason,
-    });
     this.logger?.info({
       action: 'userService.setRootAdmin.success',
       data: { userId: user.id, nextValue },
@@ -617,39 +560,6 @@ export class UserService {
     return credentials;
   }
 
-  /**
-   * Writes the platform audit entry when — and only when — a root admin exercised their
-   * authority. Self-service by an ordinary user is not an admin action, and the two halves of
-   * each operation differed on exactly this: the admin route audited, the account route did
-   * not. Rather than pick one silently, the rule is stated: the audit records an exercise of
-   * root-admin authority.
-   */
-  private async auditRootAdminAction(
-    actor: UserWriteActor,
-    subject: User,
-    entry: {
-      action: string;
-      description: string;
-      beforeState?: Record<string, unknown>;
-      afterState?: Record<string, unknown>;
-      reason?: string;
-    },
-  ): Promise<void> {
-    if (!actor.isRootAdmin) {
-      return;
-    }
-    await logAdminAction({
-      actorUserId: actor.userId,
-      actorEmail: actor.email,
-      action: entry.action,
-      resourceType: 'USER',
-      resourceId: subject.id,
-      description: entry.description,
-      ...(entry.beforeState ? { beforeState: entry.beforeState } : {}),
-      ...(entry.afterState ? { afterState: entry.afterState } : {}),
-      ...(entry.reason?.trim() ? { reason: entry.reason.trim() } : {}),
-    });
-  }
 }
 
 function normalizeOptional(value: string | null): string | null {

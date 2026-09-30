@@ -15,8 +15,6 @@ import '@poolmaster/shared/dto/leagues.dto';
 import '@poolmaster/shared/dto/users.dto';
 // The provider sync submission, shared with the events module's field refresh (#236).
 import '@poolmaster/shared/dto/admin.dto';
-import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
-import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -27,7 +25,6 @@ import { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { ContestTemplateAdminService } from './contest-template-service';
 import { createContestTemplateAdminHandlers } from './contest-template-handler';
-import { auditRoutes } from './audit-routes';
 import { EventScoreSourceService } from '../events/event-score-source-service';
 import {
   AdminProviderEventCleanupRequestSchema,
@@ -105,13 +102,6 @@ export async function adminModule(
   // --- Shared Prisma client for all admin services ---
   const prisma = getAppPrisma(fastify);
 
-  // Initialise the audit service's Prisma reference so that the module-level
-  // logAdminAction() helper can persist audit entries to the database.
-  setAuditPrisma(prisma);
-  setAuditLogger(fastify.log);
-  setAuditQueryPrisma(prisma);
-  setAuditQueryLogger(fastify.log);
-
   // --- Services ---
   // #202 — the league repositories, the `LeagueService` and the user repository that used to
   // be built here went with the three deleted league routes. This module no longer touches
@@ -153,7 +143,7 @@ export async function adminModule(
    *
    * The league routes already served root admins — `requireCommissioner` grants them — so the
    * duplicates added exactly one thing: the platform audit entry. That moved into the league
-   * service, keyed on the actor, the same way `UserService` audits.
+   * service, and #255 then deleted the audit feature outright.
    */
 
   // --- Sports Data Provider Routes ---
@@ -508,7 +498,6 @@ export async function adminModule(
   // --- Platform Configuration Routes ---
   // Permission: platform.config
 
-  await fastify.register(auditRoutes);
   // #236 — the 45 `/sports/golf/*` operations are gone: each moved onto the object it acts
   // on (plans/145, "Slice 2 golf — the operation map") under /sport-leagues, /seasons,
   // /events and /participants.

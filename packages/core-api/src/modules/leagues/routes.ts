@@ -217,7 +217,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Inactivate a league',
       description:
-        'Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log; a commissioner administering their own league is not an exercise of root-admin authority and writes no entry. This replaced `inactivateLeague` + `adminInactivateLeague`.',
+        'Marks a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. This replaced `inactivateLeague` + `adminInactivateLeague`.',
       operationId: 'inactivateLeague',
       response: {
         200: schemaRef('LeagueResponse'),
@@ -251,7 +251,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
       tags: ['Leagues'],
       summary: 'Delete an inactive league permanently',
       description:
-        'Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. A root admin\'s use is recorded in the platform audit log, with the league\'s member and active-contest counts captured before the delete; a commissioner administering their own league writes no entry. This replaced `deleteLeague` + `adminDeleteLeague`.',
+        'Permanently deletes an inactive league after the caller types the exact `leagueCode` confirmation. This removes league-owned data and relationships while preserving user accounts.\n\nOne operation for both callers: a commissioner of the league, or a root admin exercising platform authority. This replaced `deleteLeague` + `adminDeleteLeague`.',
       operationId: 'deleteLeague',
       body: schemaRef('DeleteLeagueRequest'),
       response: {
@@ -417,12 +417,11 @@ export function leaguesModule(fastify: FastifyInstance): void {
    *
    * - Nothing in the codebase ever created a `CommissionerActionItem`, so the resolve route
    *   could never have anything to resolve.
-   * - Nothing ever wrote to `CommissionerAuditLog` — `AuditService.logAction` had zero callers
-   *   — so both audit reads always returned an empty array. `getLeagueAuditLog` also took
+   * - Nothing ever wrote to the commissioner audit table — its one writer had zero callers —
+   *   so both audit reads always returned an empty array. `getLeagueAuditLog` also took
    *   `limit`/`offset`, which §16 forbids.
    *
-   * The audit tables are slice 4's to design (#205 merges the two of them), so deleting the
-   * reads now leaves that decision open rather than pre-empting it with an unwritten shape.
+   * #255 then deleted the audit feature outright — both tables, every writer and every read.
    */
 
   /*

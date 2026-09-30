@@ -148,33 +148,21 @@ export const UserPasswordChangeRequestSchema = z.object({
 }).describe('Password-change payload. Self only, because it requires the current password (A6).');
 export type UserPasswordChangeRequest = z.infer<typeof UserPasswordChangeRequestSchema>;
 
-export const UserResetPasswordRequestSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
-}).describe('Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition.');
-export type UserResetPasswordRequest = z.infer<typeof UserResetPasswordRequestSchema>;
-
 export const UserResetPasswordResponseSchema = z.object({
   temporaryPassword: z.string().min(8).describe('Temporary password to relay to the user. Existing sessions are revoked and the user should change this after signing in.'),
 }).describe('Password-reset response.');
 export type UserResetPasswordResponse = z.infer<typeof UserResetPasswordResponseSchema>;
-
-export const UserDisableRequestSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log when an admin disables somebody else.'),
-}).describe('Disable payload. The reason is optional because self-inactivation has nobody to explain itself to.');
-export type UserDisableRequest = z.infer<typeof UserDisableRequestSchema>;
 
 export const UserDeleteRequestSchema = z.object({
   email: z
     .string()
     .email()
     .describe('Exact email confirmation required before permanently deleting the inactive account.'),
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
 }).describe('Permanent-delete confirmation payload.');
 export type UserDeleteRequest = z.infer<typeof UserDeleteRequestSchema>;
 
 export const SetUserRootAdminRequestSchema = z.object({
   isRootAdmin: z.boolean().describe('Whether the target user should hold the platform-level root-admin role after the change.'),
-  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
 }).describe('Root-admin role-change payload.');
 export type SetUserRootAdminRequest = z.infer<typeof SetUserRootAdminRequestSchema>;
 
@@ -196,9 +184,7 @@ registerSchema('UserProfileUpdateRequest', UserProfileUpdateRequestSchema);
 registerSchema('UserUsernameUpdateRequest', UserUsernameUpdateRequestSchema);
 registerSchema('UserPreferencesUpdateRequest', UserPreferencesUpdateRequestSchema);
 registerSchema('UserPasswordChangeRequest', UserPasswordChangeRequestSchema);
-registerSchema('UserResetPasswordRequest', UserResetPasswordRequestSchema);
 registerSchema('UserResetPasswordResponse', UserResetPasswordResponseSchema);
-registerSchema('UserDisableRequest', UserDisableRequestSchema);
 registerSchema('UserDeleteRequest', UserDeleteRequestSchema);
 registerSchema('SetUserRootAdminRequest', SetUserRootAdminRequestSchema);
 registerSchema('RevokeUserSessionsResponse', RevokeUserSessionsResponseSchema);

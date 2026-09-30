@@ -23,7 +23,6 @@ import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolma
 import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
-export const SCHEDULED_LIFECYCLE_REASON = 'SCHEDULED_LIFECYCLE';
 
 export class EventLifecycleScheduler {
   private timer?: ReturnType<typeof setInterval>;
@@ -79,7 +78,7 @@ export class EventLifecycleScheduler {
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.IN_PROGRESS,
-          actor: { type: 'SYSTEM', reason: SCHEDULED_LIFECYCLE_REASON },
+          actor: { type: 'SYSTEM' },
         });
       }
       return;
@@ -94,7 +93,7 @@ export class EventLifecycleScheduler {
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.COMPLETED,
-          actor: { type: 'SYSTEM', reason: SCHEDULED_LIFECYCLE_REASON },
+          actor: { type: 'SYSTEM' },
         });
       }
     }

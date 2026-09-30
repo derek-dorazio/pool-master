@@ -1,20 +1,9 @@
-import {
-  exportAuditLogCsv,
-  getAuditEntryById,
-  queryAuditLog,
-  setAuditQueryLogger,
-  setAuditQueryPrisma,
-} from '../../../packages/core-api/src/modules/admin/audit-query-service';
 import { HealthService } from '../../../packages/core-api/src/modules/admin/health-service';
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/admin/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/admin/poll-config-service';
 import { ProviderService, SportEventSyncScopeError } from '../../../packages/core-api/src/modules/admin/provider-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { Sport } from '../../../packages/shared/domain';
-
-jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
-  logAdminAction: jest.fn().mockResolvedValue(undefined),
-}));
 
 function createLogger() {
   return {
@@ -33,80 +22,6 @@ async function flushMicrotasks(times = 5): Promise<void> {
 }
 
 describe('admin support services', () => {
-  describe('audit query service', () => {
-    beforeEach(() => {
-      setAuditQueryLogger(createLogger() as any);
-    });
-
-    it('queries audit entries with pagination and actor-name mapping', async () => {
-      const prisma = {
-        adminAuditEntry: {
-          findMany: jest.fn().mockResolvedValue([
-            {
-              id: 'entry-1',
-              actorEmail: 'admin@example.com',
-              action: 'user.disable',
-              resourceType: 'USER',
-              resourceId: 'user-1',
-              description: 'Disabled user user-1',
-              reason: null,
-              ipAddress: '127.0.0.1',
-              createdAt: new Date('2026-04-21T00:00:00.000Z'),
-              beforeState: null,
-              afterState: { isActive: false },
-              actor: { firstName: 'Admin', lastName: 'User' },
-            },
-          ]),
-          count: jest.fn().mockResolvedValue(1),
-          findUnique: jest.fn(),
-        },
-      } as any;
-      setAuditQueryPrisma(prisma);
-
-      await expect(queryAuditLog({ search: 'user', page: 2, pageSize: 10 })).resolves.toEqual({
-        items: [
-          expect.objectContaining({
-            id: 'entry-1',
-            actorName: 'Admin User',
-            hasStateChanges: true,
-          }),
-        ],
-        total: 1,
-        page: 2,
-        pageSize: 10,
-      });
-    });
-
-    it('returns null for missing audit entries and exports csv for matching entries', async () => {
-      const prisma = {
-        adminAuditEntry: {
-          findMany: jest.fn().mockResolvedValue([
-            {
-              id: 'entry-1',
-              actorEmail: 'admin@example.com',
-              action: 'user.enable',
-              resourceType: 'USER',
-              resourceId: 'user-1',
-              description: 'Enabled user user-1',
-              reason: 'support case',
-              ipAddress: null,
-              createdAt: new Date('2026-04-21T00:00:00.000Z'),
-              beforeState: null,
-              afterState: null,
-              actor: null,
-            },
-          ]),
-          count: jest.fn().mockResolvedValue(1),
-          findUnique: jest.fn().mockResolvedValueOnce(null),
-        },
-      } as any;
-      setAuditQueryPrisma(prisma);
-
-      await expect(getAuditEntryById('missing-entry')).resolves.toBeNull();
-      await expect(exportAuditLogCsv({ action: 'user.enable' })).resolves.toContain('"user.enable"');
-    });
-  });
-
   describe('HealthService', () => {
     it('reports degraded postgres health when the probe fails', async () => {
       const prisma = {
@@ -158,10 +73,10 @@ describe('admin support services', () => {
     it('updates and resets poll config', async () => {
       const service = new PollConfigService(createLogger() as any);
 
-      await expect(service.updateConfig({ draft: 15000 }, 'admin-1', 'admin@example.com')).resolves.toEqual(
+      await expect(service.updateConfig({ draft: 15000 }, 'admin-1')).resolves.toEqual(
         expect.objectContaining({ draft: 15000 }),
       );
-      await expect(service.resetDefaults('admin-1', 'admin@example.com')).resolves.toEqual(
+      await expect(service.resetDefaults('admin-1')).resolves.toEqual(
         expect.objectContaining({ draft: 10000 }),
       );
     });
@@ -173,13 +88,13 @@ describe('admin support services', () => {
         service.updateConfig({
           scheduledSports: ['GOLF', 'TENNIS'],
           eventLiveScores: { intervalSeconds: 45 },
-        }, 'admin-1', 'admin@example.com'),
+        }, 'admin-1'),
       ).resolves.toEqual(expect.objectContaining({
         scheduledSports: ['GOLF', 'TENNIS'],
         eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
       }));
       await expect(
-        service.setPerSportOverride('GOLF', { participantRankings: { intervalMinutes: 360 } }, 'admin-1', 'admin@example.com'),
+        service.setPerSportOverride('GOLF', { participantRankings: { intervalMinutes: 360 } }, 'admin-1'),
       ).resolves.toEqual(expect.objectContaining({
         perSportOverrides: expect.objectContaining({
           GOLF: expect.objectContaining({
@@ -192,7 +107,7 @@ describe('admin support services', () => {
           participantRankings: expect.objectContaining({ intervalMinutes: 360 }),
         }),
       );
-      await expect(service.resetDefaults('admin-1', 'admin@example.com')).resolves.toEqual(
+      await expect(service.resetDefaults('admin-1')).resolves.toEqual(
         expect.objectContaining({
           scheduledSports: ['GOLF'],
           eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),

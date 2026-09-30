@@ -4,7 +4,6 @@ import type {
   AdminUpdateContestConfigTemplateRequest,
 } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { extractRootAdminContext } from './request-admin-context';
 import {
   ContestConfigTemplateNotFoundError,
   type ContestTemplateAdminService,
@@ -35,14 +34,10 @@ export function createContestTemplateAdminHandlers(
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-
     try {
       const template = await service.updateTemplate(
         request.params.templateId,
         request.body,
-        rootAdminUserId,
-        rootAdminEmail,
       );
       return reply.send({ template });
     } catch (error) {

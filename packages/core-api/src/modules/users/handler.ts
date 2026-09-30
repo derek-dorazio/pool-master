@@ -54,7 +54,6 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
     return {
       userId: authUser.userId,
       isRootAdmin: authUser.isRootAdmin === true,
-      email: authUser.email,
     };
   }
 
@@ -181,14 +180,13 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
   }
 
   async function resetPassword(
-    request: FastifyRequest<{ Params: { userId: string }; Body?: { reason?: string } }>,
+    request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply,
   ) {
     return run(request, reply, 'user.resetPassword', async (actor) => {
       const result = await userService.resetPassword(
         actor,
         subjectOf(actor, request.params.userId),
-        request.body?.reason,
       );
       return reply.send(result);
     });
@@ -197,12 +195,12 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
   // --- Lifecycle --------------------------------------------------------------
 
   async function disableUser(
-    request: FastifyRequest<{ Params: { userId: string }; Body?: { reason?: string } }>,
+    request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply,
   ) {
     return run(request, reply, 'user.disable', async (actor) => {
       const subjectId = subjectOf(actor, request.params.userId);
-      const user = await userService.disableUser(actor, subjectId, request.body?.reason);
+      const user = await userService.disableUser(actor, subjectId);
       // Disabling yourself revokes your own sessions, so the browser's cookies are cleared
       // rather than left pointing at tokens that no longer work.
       if (subjectId === actor.userId) {
@@ -246,13 +244,13 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
   async function deleteUser(
     request: FastifyRequest<{
       Params: { userId: string };
-      Body: { email: string; reason?: string };
+      Body: { email: string };
     }>,
     reply: FastifyReply,
   ) {
     return run(request, reply, 'user.delete', async (actor) => {
       const subjectId = subjectOf(actor, request.params.userId);
-      await userService.deleteUser(actor, subjectId, request.body.email, request.body.reason);
+      await userService.deleteUser(actor, subjectId, request.body.email);
       if (subjectId === actor.userId) {
         reply.header('Set-Cookie', createClearedSessionCookieHeaders());
       }
@@ -263,7 +261,7 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
   async function setRootAdmin(
     request: FastifyRequest<{
       Params: { userId: string };
-      Body: { isRootAdmin: boolean; reason?: string };
+      Body: { isRootAdmin: boolean };
     }>,
     reply: FastifyReply,
   ) {
@@ -272,7 +270,6 @@ export function createUserHandlers(userService: UserService, authService: AuthSe
         actor,
         subjectOf(actor, request.params.userId),
         request.body.isRootAdmin,
-        request.body.reason,
       );
       return reply.send({ success: true });
     });

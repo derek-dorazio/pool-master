@@ -164,7 +164,7 @@ describe('SDK Functional: Root Admin', () => {
     });
   });
 
-  it('allows a root admin to promote and demote another user with audit coverage', async () => {
+  it('allows a root admin to promote and demote another user, and demotion revokes their sessions', async () => {
     const rootAdmin = await buildRegisteredUser({
       displayName: 'Root Admin Role Manager',
     });
@@ -181,7 +181,6 @@ describe('SDK Functional: Root Admin', () => {
       },
       body: {
         isRootAdmin: true,
-        reason: 'Add backup operator',
       },
     });
 
@@ -201,7 +200,6 @@ describe('SDK Functional: Root Admin', () => {
       },
       body: {
         isRootAdmin: false,
-        reason: 'Remove temporary access',
       },
     });
 
@@ -220,33 +218,6 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(refreshTokens.length).toBeGreaterThan(0);
     expect(refreshTokens.every((token) => token.revokedAt instanceof Date)).toBe(true);
-
-    const auditEntries = await getFunctionalPrisma().adminAuditEntry.findMany({
-      where: {
-        actorId: rootAdmin.userId,
-        action: 'user.set_root_admin',
-        resourceId: targetUser.userId,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-      select: {
-        reason: true,
-        beforeState: true,
-        afterState: true,
-      },
-    });
-    expect(auditEntries).toHaveLength(2);
-    expect(auditEntries[0]).toMatchObject({
-      reason: 'Add backup operator',
-      beforeState: { isRootAdmin: false },
-      afterState: { isRootAdmin: true },
-    });
-    expect(auditEntries[1]).toMatchObject({
-      reason: 'Remove temporary access',
-      beforeState: { isRootAdmin: true },
-      afterState: { isRootAdmin: false },
-    });
   });
 
   it('allows a root admin to reset another user password and delete an inactive account', async () => {
@@ -265,9 +236,6 @@ describe('SDK Functional: Root Admin', () => {
       path: {
         userId: targetUser.userId,
       },
-      body: {
-        reason: 'Support reset',
-      },
     });
 
     expect(typeof resetResponse.data?.temporaryPassword).toBe('string');
@@ -285,9 +253,6 @@ describe('SDK Functional: Root Admin', () => {
       client: rootAdmin.client,
       path: {
         userId: targetUser.userId,
-      },
-      body: {
-        reason: 'Cleanup path',
       },
     });
     // #202 step 3.4 — 200 with the user, not 204. The admin half used to return no content
@@ -316,7 +281,6 @@ describe('SDK Functional: Root Admin', () => {
       },
       body: {
         email: targetUser.email,
-        reason: 'Cleanup path',
       },
     });
 
@@ -483,7 +447,7 @@ describe('SDK Functional: Root Admin', () => {
 
     // #202 — one league list, one inactivate, one delete. These were `adminListLeagues`,
     // `adminInactivateLeague` and `adminDeleteLeague`; the league routes always served root
-    // admins, so the duplicates added only the audit entry, which moved into the service.
+    // admins, so the duplicates added only an audit entry, and #255 deleted the audit feature.
     const listResponse = await listLeagues({
       client: rootAdmin.client,
       query: {

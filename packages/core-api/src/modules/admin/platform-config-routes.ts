@@ -77,8 +77,8 @@ export function registerPlatformConfigRoutes(
         };
       }>,
     ) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-      return pollConfig.updateConfig(request.body, rootAdminUserId, rootAdminEmail);
+      const { rootAdminUserId } = extractRootAdminContext(request);
+      return pollConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
 
@@ -95,8 +95,8 @@ export function registerPlatformConfigRoutes(
       },
     },
     handler: async (request: FastifyRequest) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-      return pollConfig.resetDefaults(rootAdminUserId, rootAdminEmail);
+      const { rootAdminUserId } = extractRootAdminContext(request);
+      return pollConfig.resetDefaults(rootAdminUserId);
     },
   });
 
@@ -139,8 +139,8 @@ export function registerPlatformConfigRoutes(
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-      return ingestionConfig.updateConfig(request.body, rootAdminUserId, rootAdminEmail);
+      const { rootAdminUserId } = extractRootAdminContext(request);
+      return ingestionConfig.updateConfig(request.body, rootAdminUserId);
     },
   });
 
@@ -163,13 +163,12 @@ export function registerPlatformConfigRoutes(
         Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+      const { rootAdminUserId } = extractRootAdminContext(request);
       const { sport } = request.params;
       return ingestionConfig.setPerSportOverride(
         sport,
         request.body,
         rootAdminUserId,
-        rootAdminEmail,
       );
     },
   });
@@ -191,12 +190,11 @@ export function registerPlatformConfigRoutes(
         Params: { sport: string };
       }>,
     ) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+      const { rootAdminUserId } = extractRootAdminContext(request);
       const { sport } = request.params;
       return ingestionConfig.clearPerSportOverride(
         sport,
         rootAdminUserId,
-        rootAdminEmail,
       );
     },
   });
@@ -211,8 +209,8 @@ export function registerPlatformConfigRoutes(
       response: { 200: schemaRef('IngestionScheduleConfig') },
     },
     handler: async (request: FastifyRequest) => {
-      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
-      return ingestionConfig.resetDefaults(rootAdminUserId, rootAdminEmail);
+      const { rootAdminUserId } = extractRootAdminContext(request);
+      return ingestionConfig.resetDefaults(rootAdminUserId);
     },
   });
 }
