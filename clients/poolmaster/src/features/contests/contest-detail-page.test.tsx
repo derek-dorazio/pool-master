@@ -436,6 +436,23 @@ describe('ContestDetailPage (Contest Board)', () => {
     );
   });
 
+  // #246 — a settled contest's standings are frozen, pick scores stay live; the page says so.
+  it('explains the frozen result on a COMPLETED contest and not on a live one', async () => {
+    primeMocks({ contestStatus: 'COMPLETED', entries: [] });
+
+    const { unmount } = renderContestBoard();
+
+    expect(await screen.findByTestId('contest-settled-note')).toHaveTextContent(
+      'Standings are frozen at settlement; pick scores show current event data',
+    );
+    unmount();
+
+    primeMocks({ contestStatus: 'ACTIVE', entries: [] });
+    renderContestBoard();
+    await screen.findByTestId('contest-board-total-count');
+    expect(screen.queryByTestId('contest-settled-note')).not.toBeInTheDocument();
+  });
+
   it('hides the create-entry button when the contest is not OPEN', async () => {
     primeMocks({
       contestStatus: 'LOCKED',

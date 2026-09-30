@@ -1988,7 +1988,10 @@ on the tables this touches.
 - **The freeze covers the entry's result, not the scorecard.** The standing stores entry-level
   numbers only, so per-pick rows and the event field still show current scores. After a
   correction, a settled contest can show a pick's counting flag that disagrees with its frozen
-  total. Freezing picks would need a per-pick table; not in this ticket.
+  total. Freezing picks would need a per-pick table; not in this ticket. **The repo owner ruled
+  in review: ship the entry-level freeze, and say so on the page** — a settled contest's
+  leaderboard carries "standings are frozen at settlement; pick scores show current event data".
+  A per-pick freeze stays a follow-up if anyone finds the difference confusing.
 - **Ranking runs in the golf score service, not the publisher.** The publisher hands golf
   persistence to that service, and admin corrections write through it too, so ranking there
   covers both; ranking in the publisher would miss corrections.
