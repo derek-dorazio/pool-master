@@ -41,7 +41,8 @@ const PRIORITY_ROUTE_PREFIXES = [
   '/api/v1/templates/',
   '/api/v1/scoring/',
   '/api/v1/config/',
-  '/api/v1/admin/',
+  // #248 — the last /api/v1/admin/ route moved here; nothing is left under /admin to check.
+  '/api/v1/contest-config-templates/',
   '/api/v1/social/',
   '/api/v1/invitations/',
   '/api/v1/devices/',
