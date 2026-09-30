@@ -460,10 +460,10 @@ Cluster: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 Core tracked by #235, golf extensions and the admin operations by #236. Decisions: the
 stage-2 comment on #203.
 
-**The catalog is shared reference data, not league data.** No row here belongs to a league,
-so A2–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one exception
-is a read that exposes operational detail — it still returns the canonical object, with the
-admin-only fields annotated in the DTO rather than stripped (rule 4, §13).
+**Every object in this cluster is global (A11).** No row here belongs to a user, league or
+squad, so A1–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one
+exception is a read that exposes operational detail — it still returns the canonical object,
+with the admin-only fields annotated in the DTO rather than stripped (rule 4, §13).
 
 **Sport is established once, then inherited** (stage 2, decision 5). Selecting a
 `SportLeague` fixes the sport; an event, a season, a roster or a participant is reached
