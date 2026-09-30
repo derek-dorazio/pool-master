@@ -4,8 +4,10 @@
 -- and cuts the column segment; the fourth was hand-shortened. The target names are copied from
 -- `prisma migrate diff` against a database migrated from main, not derived by hand.
 --
--- RENAME, not drop-and-create: these back live unique constraints, and a drop-and-create would
--- leave a window with no enforcement. A rename is a catalog update; the index is not rebuilt.
+-- RENAME, not drop-and-create, for all four: a rename is a catalog update — no rebuild, no data
+-- moved — and is reversed by renaming back. Two of the four (the `_key` ones) are unique indexes
+-- enforcing `@@unique`; for those it is also the only approach with no window without
+-- enforcement. The other two are plain indexes.
 
 -- RenameIndex
 ALTER INDEX "participant_league_affiliations_participant_id_sport_leag_key" RENAME TO "participant_league_affiliations_participant_id_sport_league_key";
