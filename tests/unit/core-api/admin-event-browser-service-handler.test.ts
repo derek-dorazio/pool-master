@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import { createEventBrowserAdminHandlers } from '../../../packages/core-api/src/modules/admin/event-browser-handler';
 import { AdminEventBrowserService } from '../../../packages/core-api/src/modules/admin/event-browser-service';
+import { fakeSportEventRepo } from '../../support/repo-fakes';
 
 describe('pool-master-33l.12: root-admin current-state event browser', () => {
   const eventId = randomUUID();
@@ -24,41 +25,23 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
       fieldLocksAt: new Date('2026-05-06T16:00:00.000Z'),
       fieldLocked: false,
       participantCount: 144,
+      metadata: {},
+      syncScope: 'FULL',
+      autoLifecycleEnabled: true,
       createdAt: new Date('2026-05-01T10:00:00.000Z'),
       updatedAt: new Date('2026-05-01T11:00:00.000Z'),
-      _count: {
-        sportEventParticipants: 72,
-      },
     };
   }
 
-  it('lists current persisted events with provider/source and readiness context', async () => {
-    const findMany = jest.fn().mockResolvedValue([createEventRow()]);
-    const service = new AdminEventBrowserService({
-      sportEvent: { findMany },
-    } as never);
-
-    const events = await service.listEvents({ sport: 'GOLF', limit: 50 });
-
-    expect(findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { sport: 'GOLF' },
-        take: 50,
-      }),
-    );
-    expect(events).toEqual([
-      expect.objectContaining({
-        id: eventId,
-        externalId: 'golf-relative-weekend-20260507',
-        providerId: 'mock-contest-feed',
-        loadedParticipantCount: 72,
-        readinessStatus: expect.any(String),
-      }),
-    ]);
-  });
+  /** The event port as the browser reads it: the event, and a loaded field of 72. */
+  function sportEvents() {
+    return fakeSportEventRepo({
+      findById: jest.fn().mockResolvedValue(createEventRow()),
+      countParticipants: jest.fn().mockResolvedValue(new Map([[eventId, 72]])),
+    });
+  }
 
   it('lists current persisted event participants with rankings, odds, valuations, and golf rounds', async () => {
-    const findUnique = jest.fn().mockResolvedValue(createEventRow());
     const findMany = jest.fn().mockResolvedValue([
       {
         id: sportEventParticipantId,
@@ -66,7 +49,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         participantId,
         isActive: true,
         inactiveReason: null,
-        worldRanking: 3,
+        ranking: 3,
         oddsToWin: { toNumber: () => 12.5 },
         seedNumber: null,
         updatedAt: new Date('2026-05-01T12:00:00.000Z'),
@@ -75,56 +58,47 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
           shortName: 'A. Driver',
           nationality: 'US',
         },
-        golfRounds: [
+        rounds: [
           {
-            strokes: 70,
-            scoreToPar: -2,
-            thru: 18,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-07T21:00:00.000Z'),
             sportEventRound: { roundNumber: 1 },
+            golf: { strokes: 70, scoreToPar: -2, thru: 18 },
           },
           {
-            strokes: 71,
-            scoreToPar: -1,
-            thru: 9,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-08T21:00:00.000Z'),
             sportEventRound: { roundNumber: 2 },
+            golf: { strokes: 71, scoreToPar: -1, thru: 9 },
           },
         ],
-        golfStanding: {
-          eventScoreToPar: -3,
-          eventStrokes: 141,
+        standing: {
           currentRound: 2,
-          currentRoundThru: 9,
           status: 'IN_PROGRESS',
           position: 4,
           displayPosition: 'T4',
           asOf: new Date('2026-05-08T18:00:00.000Z'),
+          golf: { eventScoreToPar: -3, eventStrokes: 141, currentRoundThru: 9 },
         },
       },
     ]);
-    const sportEventParticipantGolfValuationFindMany = jest.fn().mockResolvedValue([
+    const sportEventParticipantValuationFindMany = jest.fn().mockResolvedValue([
       {
         sportEventParticipantId,
         tierOrderIndex: 1,
         price: 19,
         sportEventParticipant: { participantId },
-        sportEventGolfTier: { id: 'tier-a', tierKey: 'A', label: 'A', tierNumber: 1 },
+        sportEventTier: { id: 'tier-a', tierKey: 'A', label: 'A', tierNumber: 1 },
       },
     ]);
     const service = new AdminEventBrowserService({
-      sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventParticipantGolfValuation: { findMany: sportEventParticipantGolfValuationFindMany },
-    } as never);
+      sportEventParticipantValuation: { findMany: sportEventParticipantValuationFindMany },
+    } as never, sportEvents());
 
     const response = await service.listEventParticipants(eventId);
 
-    expect(findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: eventId } }),
-    );
+    expect(response?.event).toMatchObject({ id: eventId, loadedParticipantCount: 72 });
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { sportEventId: eventId } }),
     );
@@ -133,7 +107,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         id: sportEventParticipantId,
         participantName: 'Avery Driver',
         status: 'ACTIVE',
-        worldRanking: 3,
+        ranking: 3,
         oddsToWin: 12.5,
         valuationPrice: 19,
         roundCount: 2,
@@ -154,7 +128,6 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
   });
 
   it('pool-master-uvc: derives the legacy status string from isActive/inactiveReason for a withdrawn golfer', async () => {
-    const findUnique = jest.fn().mockResolvedValue(createEventRow());
     const findMany = jest.fn().mockResolvedValue([
       {
         id: sportEventParticipantId,
@@ -162,7 +135,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         participantId,
         isActive: false,
         inactiveReason: 'WITHDRAWN',
-        worldRanking: null,
+        ranking: null,
         oddsToWin: null,
         seedNumber: null,
         updatedAt: new Date('2026-05-01T12:00:00.000Z'),
@@ -172,8 +145,8 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
           nationality: null,
         },
         valuations: [],
-        golfRounds: [],
-        golfStanding: null,
+        rounds: [],
+        standing: null,
       },
       {
         id: randomUUID(),
@@ -181,7 +154,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         participantId: randomUUID(),
         isActive: false,
         inactiveReason: null,
-        worldRanking: null,
+        ranking: null,
         oddsToWin: null,
         seedNumber: null,
         updatedAt: new Date('2026-05-01T12:00:00.000Z'),
@@ -190,35 +163,28 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
           shortName: null,
           nationality: null,
         },
-        golfRounds: [],
-        golfStanding: null,
+        rounds: [],
+        standing: null,
       },
     ]);
     const service = new AdminEventBrowserService({
-      sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
-    } as never);
-
+      sportEventParticipantValuation: { findMany: jest.fn().mockResolvedValue([]) },
+    } as never, sportEvents());
     const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
-
     const response = await service.listEventParticipants(eventId);
-
     // Proves this mapper delegates to the shared derivation (pool-master-uvc) rather
     // than a second, silently-diverging copy of the same ternary — the derivation's
     // own branches are covered directly in tests/unit/shared/domain-models.test.ts.
     expect(deriveSpy).toHaveBeenCalledWith(false, 'WITHDRAWN');
     expect(deriveSpy).toHaveBeenCalledWith(false, null);
     deriveSpy.mockRestore();
-
     expect(response?.participants).toEqual([
       expect.objectContaining({ participantName: 'Withdrawn Golfer', status: 'WITHDRAWN' }),
       expect.objectContaining({ participantName: 'No-Reason Inactive Golfer', status: 'INACTIVE' }),
     ]);
   });
-
   it('pool-master-eux.2 falls back to round aggregation when no golf standing exists yet', async () => {
-    const findUnique = jest.fn().mockResolvedValue(createEventRow());
     const findMany = jest.fn().mockResolvedValue([
       {
         id: sportEventParticipantId,
@@ -226,7 +192,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         participantId,
         isActive: true,
         inactiveReason: null,
-        worldRanking: null,
+        ranking: null,
         oddsToWin: null,
         seedNumber: null,
         updatedAt: new Date('2026-05-01T12:00:00.000Z'),
@@ -236,32 +202,27 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
           nationality: null,
         },
         valuations: [],
-        golfRounds: [
+        rounds: [
           {
-            strokes: 69,
-            scoreToPar: -3,
-            thru: 18,
             status: 'COMPLETED',
             completedAt: new Date('2026-05-07T21:00:00.000Z'),
             sportEventRound: { roundNumber: 1 },
+            golf: { strokes: 69, scoreToPar: -3, thru: 18 },
           },
           {
-            strokes: 73,
-            scoreToPar: 1,
-            thru: 18,
             status: 'COMPLETED',
             completedAt: new Date('2026-05-08T21:00:00.000Z'),
             sportEventRound: { roundNumber: 2 },
+            golf: { strokes: 73, scoreToPar: 1, thru: 18 },
           },
         ],
-        golfStanding: null,
+        standing: null,
       },
     ]);
     const service = new AdminEventBrowserService({
-      sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
-    } as never);
+      sportEventParticipantValuation: { findMany: jest.fn().mockResolvedValue([]) },
+    } as never, sportEvents());
 
     const response = await service.listEventParticipants(eventId);
 

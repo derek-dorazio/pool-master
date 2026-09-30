@@ -254,34 +254,41 @@ async function createGolfLeaderboardParticipant(input: {
       isActive: true,
     },
   });
-  await prisma.sportEventParticipantGolfRound.createMany({
-    data: [
-      {
-        sportEventParticipantId: sportEventParticipant.id,
-        sportEventRoundId: input.round1Id,
-        strokes: input.strokes - 47,
-        scoreToPar: input.scoreToPar + 2,
-        status: 'COMPLETED',
-      },
-      {
-        sportEventParticipantId: sportEventParticipant.id,
-        sportEventRoundId: input.round2Id,
-        strokes: 47,
-        scoreToPar: -2,
-        thru: input.status === 'IN_PROGRESS' ? input.thru ?? null : null,
-        status: input.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'COMPLETED',
-      },
-    ],
-  });
-  await prisma.sportEventParticipantGolfStanding.create({
+  await prisma.sportEventParticipantRound.create({
     data: {
       sportEventParticipantId: sportEventParticipant.id,
-      eventScoreToPar: input.scoreToPar,
-      eventStrokes: input.strokes,
+      sportEventRoundId: input.round1Id,
+      status: 'COMPLETED',
+      golf: { create: { strokes: input.strokes - 47, scoreToPar: input.scoreToPar + 2 } },
+    },
+  });
+  await prisma.sportEventParticipantRound.create({
+    data: {
+      sportEventParticipantId: sportEventParticipant.id,
+      sportEventRoundId: input.round2Id,
+      status: input.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'COMPLETED',
+      golf: {
+        create: {
+          strokes: 47,
+          scoreToPar: -2,
+          thru: input.status === 'IN_PROGRESS' ? input.thru ?? null : null,
+        },
+      },
+    },
+  });
+  await prisma.sportEventParticipantStanding.create({
+    data: {
+      sportEventParticipantId: sportEventParticipant.id,
       currentRound: 2,
-      currentRoundThru: input.status === 'IN_PROGRESS' ? input.thru ?? null : 18,
       status: input.status,
       asOf: new Date('2026-05-31T18:00:00.000Z'),
+      golf: {
+        create: {
+          eventScoreToPar: input.scoreToPar,
+          eventStrokes: input.strokes,
+          currentRoundThru: input.status === 'IN_PROGRESS' ? input.thru ?? null : 18,
+        },
+      },
     },
   });
   return sportEventParticipant;

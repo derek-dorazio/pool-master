@@ -74,7 +74,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   const participantIds = providerMappings.map((mapping) => mapping.participantId);
 
-  await prisma.sportEventParticipantGolfValuation.deleteMany({
+  await prisma.sportEventParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: {
@@ -85,6 +85,17 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   await prisma.sportEventParticipantGolfRound.deleteMany({
     where: {
+      participantRound: {
+        sportEventParticipant: {
+          sportEvent: {
+            providerId,
+          },
+        },
+      },
+    },
+  });
+  await prisma.sportEventParticipantRound.deleteMany({
+    where: {
       sportEventParticipant: {
         sportEvent: {
           providerId,
@@ -93,6 +104,17 @@ async function cleanupMockProviderImportData(): Promise<void> {
     },
   });
   await prisma.sportEventParticipantGolfStanding.deleteMany({
+    where: {
+      standing: {
+        sportEventParticipant: {
+          sportEvent: {
+            providerId,
+          },
+        },
+      },
+    },
+  });
+  await prisma.sportEventParticipantStanding.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: {
@@ -630,7 +652,7 @@ describe('mock contest feed provider event-first verification', () => {
         },
       },
     });
-    expect(scottieEventParticipant.worldRanking).toBe(1);
+    expect(scottieEventParticipant.ranking).toBe(1);
     expect(scottieEventParticipant.seedNumber).toBe(1);
     expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
   });
@@ -779,14 +801,14 @@ describe('mock contest feed provider event-first verification', () => {
       eventExternalId,
       participantExternalId: 'golfer-01',
     });
-    expect(scottieEventParticipant.worldRanking).toBe(1);
+    expect(scottieEventParticipant.ranking).toBe(1);
     expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
     const scheduledScottieEventParticipant = await findEventParticipantByExternalIds({
       providerId,
       eventExternalId: 'golf-genesis-scottish-open-2026',
       participantExternalId: 'golfer-01',
     });
-    expect(scheduledScottieEventParticipant.worldRanking).toBe(1);
+    expect(scheduledScottieEventParticipant.ranking).toBe(1);
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
     const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));

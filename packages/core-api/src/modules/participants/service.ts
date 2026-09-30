@@ -49,15 +49,11 @@ export interface UpdateParticipantInput {
 export interface SearchParticipantsInput {
   query?: string;
   filters: ParticipantSearchFilters;
-  limit?: number;
-  offset?: number;
 }
 
 // --- Default values ---
 
 const DEFAULT_INJURY_STATUS: InjuryStatus = { status: InjuryStatusCode.HEALTHY };
-const DEFAULT_SEARCH_LIMIT = 50;
-const MAX_SEARCH_LIMIT = 200;
 
 // --- Service ---
 
@@ -76,55 +72,14 @@ export class ParticipantService {
     return this.participantRepo.findBySport(sportId);
   }
 
-  async search(input: SearchParticipantsInput): Promise<{ participants: Participant[]; total: number }> {
-    const limit = Math.min(input.limit ?? DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT);
-    const offset = input.offset ?? 0;
-
-    this.logger?.debug(
-      {
-        action: 'participants.search.start',
-        data: {
-          query: input.query ?? '',
-          filters: input.filters,
-          requestedLimit: input.limit ?? null,
-          resolvedLimit: limit,
-          offset,
-        },
-      },
-      'Searching participants',
+  /** The whole result for the query and filters — narrowed, never paged (§16). */
+  async search(input: SearchParticipantsInput): Promise<Participant[]> {
+    const participants = await this.participantRepo.search(input.query ?? '', input.filters);
+    this.logger?.info(
+      { action: 'participants.search.success', data: { query: input.query ?? '', filters: input.filters, count: participants.length } },
+      'Searched participants',
     );
-
-    try {
-      const result = await this.participantRepo.search(input.query ?? '', input.filters, limit, offset);
-      this.logger?.info(
-        {
-          action: 'participants.search.success',
-          data: {
-            total: result.total,
-            returnedCount: result.participants.length,
-            resolvedLimit: limit,
-            offset,
-          },
-        },
-        'Searched participants',
-      );
-      return result;
-    } catch (error) {
-      this.logger?.error(
-        {
-          action: 'participants.search.failed',
-          err: error,
-          data: {
-            query: input.query ?? '',
-            filters: input.filters,
-            requestedLimit: input.limit ?? null,
-            offset,
-          },
-        },
-        'Participant search failed',
-      );
-      throw error;
-    }
+    return participants;
   }
 
   async create(input: CreateParticipantInput): Promise<Participant> {

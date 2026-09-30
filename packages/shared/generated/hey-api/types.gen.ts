@@ -1146,11 +1146,11 @@ export type GolfLeaderboardParticipantDto = {
     /**
      * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
      */
-    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+    inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
     /**
-     * Latest copied global world ranking on this event participant.
+     * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
      */
-    worldRanking: number | null;
+    ranking: number | null;
     /**
      * Event-scoped odds-to-win for this golfer.
      */
@@ -1389,11 +1389,11 @@ export type GolfLeaderboardEntryPickDto = {
         /**
          * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
          */
-        inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
-         * Latest copied global world ranking on this event participant.
+         * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
          */
-        worldRanking: number | null;
+        ranking: number | null;
         /**
          * Event-scoped odds-to-win for this golfer.
          */
@@ -1681,11 +1681,11 @@ export type GolfLeaderboardEntryDto = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             /**
-             * Latest copied global world ranking on this event participant.
+             * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
              */
-            worldRanking: number | null;
+            ranking: number | null;
             /**
              * Event-scoped odds-to-win for this golfer.
              */
@@ -1937,11 +1937,11 @@ export type GolfLeaderboardResponse = {
         /**
          * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
          */
-        inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+        inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
         /**
-         * Latest copied global world ranking on this event participant.
+         * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
          */
-        worldRanking: number | null;
+        ranking: number | null;
         /**
          * Event-scoped odds-to-win for this golfer.
          */
@@ -2227,11 +2227,11 @@ export type GolfLeaderboardResponse = {
                 /**
                  * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                  */
-                inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
+                inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
                 /**
-                 * Latest copied global world ranking on this event participant.
+                 * Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked.
                  */
-                worldRanking: number | null;
+                ranking: number | null;
                 /**
                  * Event-scoped odds-to-win for this golfer.
                  */
@@ -5342,11 +5342,41 @@ export type ParticipantDto = {
 };
 
 /**
+ * Filters for the participant catalog.
+ */
+export type ParticipantListQuery = {
+    /**
+     * Case-insensitive text matched against name, first, last and short name, and team.
+     */
+    q?: string;
+    /**
+     * Only participants of this sport.
+     */
+    sportId?: string;
+    /**
+     * Comma-separated participant statuses to include.
+     */
+    status?: string;
+    /**
+     * Comma-separated positions to include.
+     */
+    position?: string;
+    /**
+     * Comma-separated team affiliations to include.
+     */
+    team?: string;
+    /**
+     * Comma-separated nationalities to include.
+     */
+    nationality?: string;
+};
+
+/**
  * Participant-list response.
  */
 export type ParticipantListResponse = {
     /**
-     * Participant page or slice returned by the API.
+     * Every participant matching the filters, ordered by name.
      */
     participants: Array<{
         /**
@@ -5445,10 +5475,6 @@ export type ParticipantListResponse = {
          */
         updatedAt: string;
     }>;
-    /**
-     * Total participants matching the current filters.
-     */
-    total: number;
 };
 
 /**
@@ -5564,159 +5590,245 @@ export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTES
 export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED';
 
 /**
- * Event list item returned from event-discovery endpoints.
+ * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
-export type EventSummaryDto = {
+export type SportEventDto = {
     /**
      * Sport-event identifier.
      */
     id: string;
     /**
-     * Provider event identifier used by event-level sync operations.
+     * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
      */
     externalId: string;
     /**
-     * Sport associated with the event.
+     * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
+     */
+    providerId: string;
+    /**
+     * Sport the event belongs to.
      */
     sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
     /**
-     * Primary event name shown in contest and event selectors.
+     * Event name shown in contest and event selectors.
      */
     name: string;
     /**
-     * Venue name for the event, when known.
+     * Venue name when known; null otherwise.
      */
-    venue?: string | null;
+    venue: string | null;
     /**
-     * Human-readable event location, when known.
+     * Human-readable location when known; null otherwise.
      */
-    location?: string | null;
+    location: string | null;
     /**
-     * Provider-normalized event status.
+     * Event lifecycle status.
      */
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
-     * Scheduled or actual event start time.
+     * Scheduled or actual start time.
      */
     startDate: string;
     /**
-     * Scheduled or actual event end time, when known.
+     * Scheduled or actual end time when known; null otherwise.
      */
-    endDate?: string | null;
+    endDate: string | null;
     /**
-     * PoolMaster operational datetime when the event becomes available for contest setup.
+     * Number of rounds when the format has them; null otherwise.
+     */
+    rounds: number | null;
+    /**
+     * Field size the provider reports, when it reports one; null otherwise.
+     */
+    participantCount: number | null;
+    /**
+     * Number of event participants currently persisted for the event.
+     */
+    loadedParticipantCount: number;
+    /**
+     * When the event becomes available for contest setup.
      */
     releaseAt: string;
     /**
-     * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+     * After this time, field changes are no longer honored for new contest setup.
      */
     fieldLocksAt: string;
     /**
-     * Participant count when the provider exposes field size.
-     */
-    participantCount?: number | null;
-    /**
-     * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+     * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
      */
     fieldLocked: boolean;
     /**
-     * Current readiness state for contest setup and event-driven contest operations.
+     * Contest-setup readiness right now.
      */
     readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
     /**
-     * Structured reasons explaining why the event is or is not contest-eligible right now.
+     * Why the event is or is not contest-eligible right now.
      */
     readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
     /**
-     * Whether the event is currently eligible for contest creation/configuration flows.
+     * Whether a contest can be created or configured for the event right now.
      */
     contestEligible: boolean;
-};
-
-export type EventListQuery = {
     /**
-     * Optional sport filter.
+     * Season the event belongs to; null for a provider-synced event with no season.
      */
-    sport?: string;
+    seasonId: string | null;
     /**
-     * Optional provider-normalized event status filter.
+     * Recurring tournament this is one year's instance of; null for a one-off event.
      */
-    status?: string;
+    leagueEventId: string | null;
     /**
-     * Optional page-size style limit.
+     * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
-    limit?: number;
+    syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+    /**
+     * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
+     */
+    autoLifecycleEnabled: boolean;
+    /**
+     * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
+     */
+    metadata: {
+        [key: string]: unknown;
+    };
+    /**
+     * When the event row was created.
+     */
+    createdAt: string;
+    /**
+     * When the event row was last updated.
+     */
+    updatedAt: string;
 };
 
 /**
- * Event list response for the requested sport or filter set.
+ * Filters for the sport-event list.
  */
-export type EventListResponse = {
+export type SportEventListQuery = {
+    /**
+     * Only events of this sport.
+     */
+    sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+    /**
+     * Only events in this lifecycle status.
+     */
+    status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+};
+
+/**
+ * Sport events matching the filters.
+ */
+export type SportEventListResponse = {
+    /**
+     * Matching events, earliest start first.
+     */
     events: Array<{
         /**
          * Sport-event identifier.
          */
         id: string;
         /**
-         * Provider event identifier used by event-level sync operations.
+         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
          */
         externalId: string;
         /**
-         * Sport associated with the event.
+         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
+         */
+        providerId: string;
+        /**
+         * Sport the event belongs to.
          */
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         /**
-         * Primary event name shown in contest and event selectors.
+         * Event name shown in contest and event selectors.
          */
         name: string;
         /**
-         * Venue name for the event, when known.
+         * Venue name when known; null otherwise.
          */
-        venue?: string | null;
+        venue: string | null;
         /**
-         * Human-readable event location, when known.
+         * Human-readable location when known; null otherwise.
          */
-        location?: string | null;
+        location: string | null;
         /**
-         * Provider-normalized event status.
+         * Event lifecycle status.
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
-         * Scheduled or actual event start time.
+         * Scheduled or actual start time.
          */
         startDate: string;
         /**
-         * Scheduled or actual event end time, when known.
+         * Scheduled or actual end time when known; null otherwise.
          */
-        endDate?: string | null;
+        endDate: string | null;
         /**
-         * PoolMaster operational datetime when the event becomes available for contest setup.
+         * Number of rounds when the format has them; null otherwise.
+         */
+        rounds: number | null;
+        /**
+         * Field size the provider reports, when it reports one; null otherwise.
+         */
+        participantCount: number | null;
+        /**
+         * Number of event participants currently persisted for the event.
+         */
+        loadedParticipantCount: number;
+        /**
+         * When the event becomes available for contest setup.
          */
         releaseAt: string;
         /**
-         * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+         * After this time, field changes are no longer honored for new contest setup.
          */
         fieldLocksAt: string;
         /**
-         * Participant count when the provider exposes field size.
-         */
-        participantCount?: number | null;
-        /**
-         * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
+         * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
          */
         fieldLocked: boolean;
         /**
-         * Current readiness state for contest setup and event-driven contest operations.
+         * Contest-setup readiness right now.
          */
         readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
         /**
-         * Structured reasons explaining why the event is or is not contest-eligible right now.
+         * Why the event is or is not contest-eligible right now.
          */
         readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
         /**
-         * Whether the event is currently eligible for contest creation/configuration flows.
+         * Whether a contest can be created or configured for the event right now.
          */
         contestEligible: boolean;
+        /**
+         * Season the event belongs to; null for a provider-synced event with no season.
+         */
+        seasonId: string | null;
+        /**
+         * Recurring tournament this is one year's instance of; null for a one-off event.
+         */
+        leagueEventId: string | null;
+        /**
+         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+         */
+        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        /**
+         * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
+         */
+        autoLifecycleEnabled: boolean;
+        /**
+         * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
+         */
+        metadata: {
+            [key: string]: unknown;
+        };
+        /**
+         * When the event row was created.
+         */
+        createdAt: string;
+        /**
+         * When the event row was last updated.
+         */
+        updatedAt: string;
     }>;
 };
 
@@ -12648,26 +12760,22 @@ export type ListEventsData = {
     path?: never;
     query?: {
         /**
-         * Optional sport filter.
+         * Only events of this sport.
          */
-        sport?: string;
+        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         /**
-         * Optional provider-normalized event status filter.
+         * Only events in this lifecycle status.
          */
-        status?: string;
-        /**
-         * Optional page-size style limit.
-         */
-        limit?: number;
+        status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     };
     url: '/api/v1/events/';
 };
 
 export type ListEventsResponses = {
     /**
-     * Event list response for the requested sport or filter set.
+     * Sport events matching the filters.
      */
-    200: EventListResponse;
+    200: SportEventListResponse;
 };
 
 export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
@@ -12676,14 +12784,30 @@ export type ListParticipantsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Case-insensitive text matched against name, first, last and short name, and team.
+         */
         q?: string;
+        /**
+         * Only participants of this sport.
+         */
         sportId?: string;
+        /**
+         * Comma-separated participant statuses to include.
+         */
         status?: string;
+        /**
+         * Comma-separated positions to include.
+         */
         position?: string;
+        /**
+         * Comma-separated team affiliations to include.
+         */
         team?: string;
+        /**
+         * Comma-separated nationalities to include.
+         */
         nationality?: string;
-        limit?: string;
-        offset?: string;
     };
     url: '/api/v1/participants/';
 };
@@ -12717,6 +12841,33 @@ export type CreateParticipantData = {
     query?: never;
     url: '/api/v1/participants/';
 };
+
+export type CreateParticipantErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
 
 export type CreateParticipantResponses = {
     /**
@@ -12801,6 +12952,28 @@ export type UpdateParticipantErrors = {
     /**
      * Standard API error envelope.
      */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     404: {
         /**
          * Error payload object.
@@ -12832,148 +13005,6 @@ export type UpdateParticipantResponses = {
 };
 
 export type UpdateParticipantResponse = UpdateParticipantResponses[keyof UpdateParticipantResponses];
-
-export type AdminListEventsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Optional sport filter for root-admin event browsing.
-         */
-        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        /**
-         * Optional current event-status filter.
-         */
-        status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        /**
-         * Maximum number of current event rows to return.
-         */
-        limit?: number;
-    };
-    url: '/api/v1/admin/events';
-};
-
-export type AdminListEventsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminListEventsError = AdminListEventsErrors[keyof AdminListEventsErrors];
-
-export type AdminListEventsResponses = {
-    /**
-     * Root-admin current-state event browser response.
-     */
-    200: {
-        /**
-         * Current persisted event rows matching the root-admin browser query.
-         */
-        events: Array<{
-            /**
-             * Internal SportEvent identifier.
-             */
-            id: string;
-            /**
-             * Provider-side event identifier used by sync operations.
-             */
-            externalId: string;
-            /**
-             * Provider/source that emitted the current event row.
-             */
-            providerId: string;
-            /**
-             * Sport associated with the event.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Current event display name.
-             */
-            name: string;
-            /**
-             * Venue name when known.
-             */
-            venue?: string;
-            /**
-             * Human-readable event location when known.
-             */
-            location?: string;
-            /**
-             * Current provider-normalized event status.
-             */
-            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-            /**
-             * Current scheduled or actual event start time.
-             */
-            startDate: string;
-            /**
-             * Current scheduled or actual event end time when known.
-             */
-            endDate?: string;
-            /**
-             * PoolMaster datetime when commissioner contest setup opens.
-             */
-            releaseAt: string;
-            /**
-             * PoolMaster datetime after which field changes are locked for contest setup.
-             */
-            fieldLocksAt: string;
-            /**
-             * Whether the current event field is locked for contest setup behavior.
-             */
-            fieldLocked: boolean;
-            /**
-             * Provider-reported participant count when known.
-             */
-            participantCount?: number;
-            /**
-             * Number of SportEventParticipant rows currently persisted for this event.
-             */
-            loadedParticipantCount: number;
-            /**
-             * Current PoolMaster contest-readiness interpretation.
-             */
-            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
-            /**
-             * Structured reasons explaining current contest readiness.
-             */
-            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
-            /**
-             * Whether the event is currently eligible for contest creation/configuration flows.
-             */
-            contestEligible: boolean;
-            /**
-             * When PoolMaster first persisted the event row.
-             */
-            createdAt: string;
-            /**
-             * When PoolMaster last updated the event row.
-             */
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type AdminListEventsResponse = AdminListEventsResponses[keyof AdminListEventsResponses];
 
 export type AdminListEventParticipantsData = {
     body?: never;
@@ -13042,87 +13073,113 @@ export type AdminListEventParticipantsResponses = {
      */
     200: {
         /**
-         * Current persisted event state for the requested event.
+         * The event whose participants these are.
          */
         event: {
             /**
-             * Internal SportEvent identifier.
+             * Sport-event identifier.
              */
             id: string;
             /**
-             * Provider-side event identifier used by sync operations.
+             * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
              */
             externalId: string;
             /**
-             * Provider/source that emitted the current event row.
+             * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
              */
             providerId: string;
             /**
-             * Sport associated with the event.
+             * Sport the event belongs to.
              */
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             /**
-             * Current event display name.
+             * Event name shown in contest and event selectors.
              */
             name: string;
             /**
-             * Venue name when known.
+             * Venue name when known; null otherwise.
              */
-            venue?: string;
+            venue: string | null;
             /**
-             * Human-readable event location when known.
+             * Human-readable location when known; null otherwise.
              */
-            location?: string;
+            location: string | null;
             /**
-             * Current provider-normalized event status.
+             * Event lifecycle status.
              */
             status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
-             * Current scheduled or actual event start time.
+             * Scheduled or actual start time.
              */
             startDate: string;
             /**
-             * Current scheduled or actual event end time when known.
+             * Scheduled or actual end time when known; null otherwise.
              */
-            endDate?: string;
+            endDate: string | null;
             /**
-             * PoolMaster datetime when commissioner contest setup opens.
+             * Number of rounds when the format has them; null otherwise.
              */
-            releaseAt: string;
+            rounds: number | null;
             /**
-             * PoolMaster datetime after which field changes are locked for contest setup.
+             * Field size the provider reports, when it reports one; null otherwise.
              */
-            fieldLocksAt: string;
+            participantCount: number | null;
             /**
-             * Whether the current event field is locked for contest setup behavior.
-             */
-            fieldLocked: boolean;
-            /**
-             * Provider-reported participant count when known.
-             */
-            participantCount?: number;
-            /**
-             * Number of SportEventParticipant rows currently persisted for this event.
+             * Number of event participants currently persisted for the event.
              */
             loadedParticipantCount: number;
             /**
-             * Current PoolMaster contest-readiness interpretation.
+             * When the event becomes available for contest setup.
+             */
+            releaseAt: string;
+            /**
+             * After this time, field changes are no longer honored for new contest setup.
+             */
+            fieldLocksAt: string;
+            /**
+             * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
+             */
+            fieldLocked: boolean;
+            /**
+             * Contest-setup readiness right now.
              */
             readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
             /**
-             * Structured reasons explaining current contest readiness.
+             * Why the event is or is not contest-eligible right now.
              */
             readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
             /**
-             * Whether the event is currently eligible for contest creation/configuration flows.
+             * Whether a contest can be created or configured for the event right now.
              */
             contestEligible: boolean;
             /**
-             * When PoolMaster first persisted the event row.
+             * Season the event belongs to; null for a provider-synced event with no season.
+             */
+            seasonId: string | null;
+            /**
+             * Recurring tournament this is one year's instance of; null for a one-off event.
+             */
+            leagueEventId: string | null;
+            /**
+             * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+             */
+            syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
+             */
+            autoLifecycleEnabled: boolean;
+            /**
+             * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
+             */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /**
+             * When the event row was created.
              */
             createdAt: string;
             /**
-             * When PoolMaster last updated the event row.
+             * When the event row was last updated.
              */
             updatedAt: string;
         };
@@ -13159,9 +13216,9 @@ export type AdminListEventParticipantsResponses = {
              */
             status?: string;
             /**
-             * Current per-event world-ranking snapshot when provided.
+             * Rank that applied at this event, when one is recorded.
              */
-            worldRanking?: number;
+            ranking?: number;
             /**
              * Current per-event odds-to-win snapshot when provided.
              */
@@ -14966,7 +15023,7 @@ export type AdminCleanupStaleProviderEventsResponses = {
              */
             sportEventParticipantCount: number;
             /**
-             * Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event.
+             * Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event.
              */
             valuationCount: number;
             /**
@@ -16699,7 +16756,7 @@ export type AdminGetGolfLeagueRosterResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -16710,7 +16767,7 @@ export type AdminUpdateGolfLeagueRosterData = {
     body: {
         entries: Array<{
             participantId: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
     path: {
@@ -16761,7 +16818,7 @@ export type AdminUpdateGolfLeagueRosterResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -16845,7 +16902,7 @@ export type AdminAddGolfLeagueRosterEntryResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         };
     };
 };
@@ -16904,7 +16961,7 @@ export type AdminPreviewGolfLeagueRosterUploadData = {
             participantId?: string;
             externalId?: string;
             playerName?: string;
-            worldRanking?: number;
+            ranking?: number;
         }>;
     };
     path: {
@@ -16954,7 +17011,7 @@ export type AdminPreviewGolfLeagueRosterUploadResponses = {
                 participantId?: string;
                 externalId?: string;
                 playerName?: string;
-                worldRanking?: number;
+                ranking?: number;
             };
             resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
             participantId: string | null;
@@ -16971,7 +17028,7 @@ export type AdminApplyGolfLeagueRosterUploadData = {
             participantId?: string;
             externalId?: string;
             playerName?: string;
-            worldRanking?: number;
+            ranking?: number;
         }>;
     };
     path: {
@@ -17044,7 +17101,7 @@ export type AdminApplyGolfLeagueRosterUploadResponses = {
              * Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.
              */
             status: string;
-            worldRanking: number | null;
+            ranking: number | null;
         }>;
     };
 };
@@ -19285,12 +19342,12 @@ export type AdminGetGolfTournamentFieldResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking: number | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
             /**
-             * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
+             * SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
             price: number | null;
             /**
@@ -19308,8 +19365,8 @@ export type AdminUpdateGolfFieldEntriesData = {
         entries: Array<{
             sportEventParticipantId: string;
             isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking?: number | null;
+            inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking?: number | null;
             oddsToWin?: number | null;
             seedNumber?: number | null;
             price?: number | null;
@@ -19386,12 +19443,12 @@ export type AdminUpdateGolfFieldEntriesResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
-            worldRanking: number | null;
+            inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
+            ranking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
             /**
-             * SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
+             * SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.
              */
             price: number | null;
             /**

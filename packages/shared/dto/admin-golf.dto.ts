@@ -4,7 +4,7 @@
  * sport-catalog module scoped to Sport.GOLF.
  */
 import { z } from 'zod';
-import { GolfParticipantInactiveReason, GolfTierSource, ParticipantStatus, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { ParticipantInactiveReason, GolfTierSource, ParticipantStatus, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { GolfRoundUpdateSchema } from './live-score.dto';
 
@@ -73,7 +73,7 @@ export const AdminGolfLeagueRosterEntryDtoSchema = z.object({
   shortName: z.string().nullable(),
   nationality: z.string().nullable(),
   status: z.string().describe('Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer.'),
-  worldRanking: z.number().int().nullable(),
+  ranking: z.number().int().nullable(),
 }).describe('One golfer\'s current league affiliation.');
 export type AdminGolfLeagueRosterEntryDto = z.infer<typeof AdminGolfLeagueRosterEntryDtoSchema>;
 
@@ -90,7 +90,7 @@ export type AdminAddGolfLeagueRosterEntryRequest = z.infer<typeof AdminAddGolfLe
 export const AdminUpdateGolfLeagueRosterRequestSchema = z.object({
   entries: z.array(z.object({
     participantId: z.string(),
-    worldRanking: z.number().int().nullable(),
+    ranking: z.number().int().nullable(),
   })).min(1).max(500),
 });
 export type AdminUpdateGolfLeagueRosterRequest = z.infer<typeof AdminUpdateGolfLeagueRosterRequestSchema>;
@@ -99,7 +99,7 @@ export const AdminGolfLeagueRosterUploadRowSchema = z.object({
   participantId: z.string().uuid().optional(),
   externalId: z.string().optional(),
   playerName: z.string().optional(),
-  worldRanking: z.number().int().optional(),
+  ranking: z.number().int().optional(),
 }).describe('One golfer\'s league roster entry. Exactly one identifier (participantId, externalId, or playerName) should be supplied; participantId takes precedence, then externalId, then an exact case-insensitive playerName match.');
 export type AdminGolfLeagueRosterUploadRow = z.infer<typeof AdminGolfLeagueRosterUploadRowSchema>;
 
@@ -353,11 +353,11 @@ export const AdminGolfFieldEntryDtoSchema = z.object({
   shortName: z.string().nullable(),
   nationality: z.string().nullable(),
   isActive: z.boolean(),
-  inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  worldRanking: z.number().int().nullable(),
+  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
+  ranking: z.number().int().nullable(),
   oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
-  price: z.number().nullable().describe('SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.'),
+  price: z.number().nullable().describe('SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL.'),
   isLeagueRosterMember: z.boolean().describe('Whether this golfer is currently affiliated with the tournament\'s linked league — flags an out-of-roster invite.'),
 }).describe('One SportEventParticipant row on a golf tournament\'s field.');
 export type AdminGolfFieldEntryDto = z.infer<typeof AdminGolfFieldEntryDtoSchema>;
@@ -392,8 +392,8 @@ export const AdminUpdateGolfFieldEntriesRequestSchema = z.object({
   entries: z.array(z.object({
     sportEventParticipantId: z.string(),
     isActive: z.boolean().optional(),
-    inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().optional(),
-    worldRanking: z.number().int().nullable().optional(),
+    inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
+    ranking: z.number().int().nullable().optional(),
     oddsToWin: z.number().nullable().optional(),
     seedNumber: z.number().int().nullable().optional(),
     price: z.number().nullable().optional(),

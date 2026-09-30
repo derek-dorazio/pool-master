@@ -30,25 +30,6 @@ function buildParticipant(overrides: Record<string, unknown> = {}) {
 }
 
 describe('participant service and handler', () => {
-  it('clamps participant search limit and defaults offset', async () => {
-    const participantRepo = {
-      search: jest.fn().mockResolvedValue({ participants: [], total: 0 }),
-    };
-
-    const service = new ParticipantService(
-      participantRepo as never,
-      {} as never,
-    );
-
-    await service.search({
-      query: 'scheffler',
-      filters: {},
-      limit: 999,
-    });
-
-    expect(participantRepo.search).toHaveBeenCalledWith('scheffler', {}, 200, 0);
-  });
-
   it('creates participants with default active and healthy state', async () => {
     const participantRepo = {
       create: jest.fn().mockImplementation(async (input) => buildParticipant(input)),
@@ -90,12 +71,9 @@ describe('participant service and handler', () => {
     );
   });
 
-  it('parses participant search filters and numeric paging in the handler', async () => {
+  it('splits comma-separated participant filters into lists for the search', async () => {
     const participantService = {
-      search: jest.fn().mockResolvedValue({
-        participants: [buildParticipant()],
-        total: 1,
-      }),
+      search: jest.fn().mockResolvedValue([buildParticipant()]),
     } as unknown as ParticipantService;
 
     const handler = createParticipantHandlers(participantService);
@@ -109,8 +87,6 @@ describe('participant service and handler', () => {
           position: 'GOLFER',
           team: 'USA',
           nationality: 'US',
-          limit: '5',
-          offset: '10',
         },
         contextLogger: { debug: jest.fn(), info: jest.fn(), error: jest.fn() },
         log: { debug: jest.fn(), info: jest.fn(), error: jest.fn() },
@@ -127,10 +103,8 @@ describe('participant service and handler', () => {
         teamAffiliation: ['USA'],
         nationality: ['US'],
       },
-      limit: 5,
-      offset: 10,
     });
-    expect(response.total).toBe(1);
+    expect(response.participants).toHaveLength(1);
   });
 
   it('returns a normalized 404 envelope when participant detail is missing', async () => {

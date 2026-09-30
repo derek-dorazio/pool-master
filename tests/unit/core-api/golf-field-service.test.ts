@@ -9,7 +9,7 @@
  *   - bulkAddFieldEntries: cross-league invite path, idempotent skip of
  *     already-present participantIds, no derivation.
  *   - bulkUpdateFieldEntries: 404 FIELD_ENTRY_NOT_FOUND for an entry not on
- *     this event; writes SportEventParticipantGolfValuation.price with
+ *     this event; writes SportEventParticipantValuation.price with
  *     priceAssignedSource=MANUAL when price is present.
  *   - removeFieldEntry: 404 when missing/wrong-event, 409
  *     FIELD_ENTRY_HAS_PICKS when a ContestEntryPick references it.
@@ -31,11 +31,11 @@ function buildFieldRow(overrides: Record<string, unknown> = {}) {
     participantId: 'p-1',
     isActive: true,
     inactiveReason: null,
-    worldRanking: 5,
+    ranking: 5,
     oddsToWin: 12.5,
     seedNumber: 3,
     participant: { name: 'Rory McIlroy', shortName: 'R. McIlroy', nationality: 'NIR' },
-    golfValuation: null,
+    valuation: null,
     ...overrides,
   };
 }
@@ -62,8 +62,8 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     },
     sportLeagueService: {
-      getRoster: jest.fn().mockResolvedValue([
-        { participantId: 'p-1', name: 'Rory McIlroy', shortName: 'R. McIlroy', nationality: 'NIR', status: 'ACTIVE', worldRanking: 5 },
+      listAffiliations: jest.fn().mockResolvedValue([
+        { participantId: 'p-1', ranking: 5, participant: { name: 'Rory McIlroy', shortName: 'R. McIlroy', nationality: 'NIR', status: 'ACTIVE' } },
       ]),
     },
     random: () => 0.5,
@@ -90,7 +90,7 @@ describe('GolfFieldService.listField', () => {
 
   it('pool-master-6jk sets isLeagueRosterMember false for a golfer not on the league roster', async () => {
     const deps = buildDeps({
-      sportLeagueService: { getRoster: jest.fn().mockResolvedValue([]) },
+      sportLeagueService: { listAffiliations: jest.fn().mockResolvedValue([]) },
     });
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random);
 
@@ -133,10 +133,10 @@ describe('GolfFieldService.seedFieldFromLeagueRoster', () => {
   it('pool-master-6jk filters the roster to ACTIVE participants, skips existing field members, and derives seed/odds only for the added ones', async () => {
     const deps = buildDeps({
       sportLeagueService: {
-        getRoster: jest.fn().mockResolvedValue([
-          { participantId: 'p-existing', name: 'Existing Golfer', shortName: null, nationality: null, status: 'ACTIVE', worldRanking: 1 },
-          { participantId: 'p-new', name: 'New Golfer', shortName: null, nationality: null, status: 'ACTIVE', worldRanking: 2 },
-          { participantId: 'p-inactive', name: 'Inactive Golfer', shortName: null, nationality: null, status: 'INACTIVE', worldRanking: 3 },
+        listAffiliations: jest.fn().mockResolvedValue([
+          { participantId: 'p-existing', ranking: 1, participant: { name: 'Existing Golfer', shortName: null, nationality: null, status: 'ACTIVE' } },
+          { participantId: 'p-new', ranking: 2, participant: { name: 'New Golfer', shortName: null, nationality: null, status: 'ACTIVE' } },
+          { participantId: 'p-inactive', ranking: 3, participant: { name: 'Inactive Golfer', shortName: null, nationality: null, status: 'INACTIVE' } },
         ]),
       },
       prisma: {
@@ -235,7 +235,7 @@ describe('GolfFieldService.bulkUpdateFieldEntries', () => {
       data: {
         isActive: false,
         inactiveReason: 'WITHDRAWN',
-        golfValuation: {
+        valuation: {
           upsert: {
             create: { price: 19.5, priceAssignedSource: 'MANUAL' },
             update: { price: 19.5, priceAssignedSource: 'MANUAL' },
@@ -366,7 +366,7 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       ...(overrides.providerRegistry as object ?? {}),
     };
     const sportLeagueService = {
-      getRoster: jest.fn().mockResolvedValue([]),
+      listAffiliations: jest.fn().mockResolvedValue([]),
       ...(overrides.sportLeagueService as object ?? {}),
     };
     return { prisma, provider, providerRegistry, sportLeagueService, random: () => 0.5 };
@@ -439,7 +439,7 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       },
     });
     jest.spyOn(GolfSeedingAlgorithm, 'deriveSeedNumbersAndOdds').mockReturnValue([
-      { participantId: 'existing-participant-1', worldRanking: 3, seedNumber: 7, oddsToWin: 999 },
+      { participantId: 'existing-participant-1', ranking: 3, seedNumber: 7, oddsToWin: 999 },
     ]);
     deps.prisma.participantProviderMapping.findUnique = jest.fn().mockResolvedValue({ participantId: 'existing-participant-1' });
 
@@ -447,12 +447,12 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
     await service.seedFieldFromProvider('event-1');
 
     expect(GolfSeedingAlgorithm.deriveSeedNumbersAndOdds).toHaveBeenCalledWith(
-      [{ participantId: 'existing-participant-1', worldRanking: 3 }],
+      [{ participantId: 'existing-participant-1', ranking: 3 }],
       deps.random,
     );
     expect(deps.prisma.sportEventParticipant.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({
-        worldRanking: 3,
+        ranking: 3,
         oddsToWin: 25, // provider's own odds, not the mocked-derived 999
         seedNumber: 7, // seedNumber always comes from position assignment
       }),
@@ -468,14 +468,14 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       },
     });
     jest.spyOn(GolfSeedingAlgorithm, 'deriveSeedNumbersAndOdds').mockReturnValue([
-      { participantId: 'participant-ext-1', worldRanking: 5, seedNumber: 1, oddsToWin: 12.5 },
+      { participantId: 'participant-ext-1', ranking: 5, seedNumber: 1, oddsToWin: 12.5 },
     ]);
 
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random, deps.providerRegistry as any);
     await service.seedFieldFromProvider('event-1');
 
     expect(deps.prisma.sportEventParticipant.upsert).toHaveBeenCalledWith(expect.objectContaining({
-      create: expect.objectContaining({ worldRanking: 5, oddsToWin: 12.5, seedNumber: 1 }),
+      create: expect.objectContaining({ ranking: 5, oddsToWin: 12.5, seedNumber: 1 }),
     }));
   });
 
@@ -502,11 +502,11 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
     const favoriteCall = upsertCalls.find((call: any) => call[0].where.sportEventId_participantId.participantId === 'participant-ext-favorite');
     const longshotCall = upsertCalls.find((call: any) => call[0].where.sportEventId_participantId.participantId === 'participant-ext-longshot');
 
-    expect(favoriteCall[0].create).toEqual(expect.objectContaining({ worldRanking: null, oddsToWin: 5, seedNumber: 1 }));
-    expect(longshotCall[0].create).toEqual(expect.objectContaining({ worldRanking: null, oddsToWin: 100, seedNumber: 2 }));
+    expect(favoriteCall[0].create).toEqual(expect.objectContaining({ ranking: null, oddsToWin: 5, seedNumber: 1 }));
+    expect(longshotCall[0].create).toEqual(expect.objectContaining({ ranking: null, oddsToWin: 100, seedNumber: 2 }));
   });
 
-  it('pool-master-5h3 falls back to league-affiliation worldRanking when the provider supplies neither ranking nor odds', async () => {
+  it('pool-master-5h3 falls back to league-affiliation ranking when the provider supplies neither ranking nor odds', async () => {
     const deps = buildProviderFieldDeps({
       provider: {
         getEventDetails: jest.fn().mockResolvedValue({
@@ -514,22 +514,22 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
         }),
       },
       sportLeagueService: {
-        getRoster: jest.fn().mockResolvedValue([
-          { participantId: 'participant-ext-1', worldRanking: 42 },
+        listAffiliations: jest.fn().mockResolvedValue([
+          { participantId: 'participant-ext-1', ranking: 42 },
         ]),
       },
     });
     const deriveSpy = jest.spyOn(GolfSeedingAlgorithm, 'deriveSeedNumbersAndOdds').mockReturnValue([
-      { participantId: 'participant-ext-1', worldRanking: 42, seedNumber: 1, oddsToWin: 8 },
+      { participantId: 'participant-ext-1', ranking: 42, seedNumber: 1, oddsToWin: 8 },
     ]);
 
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random, deps.providerRegistry as any);
     await service.seedFieldFromProvider('event-1');
 
-    expect(deriveSpy).toHaveBeenCalledWith([{ participantId: 'participant-ext-1', worldRanking: 42 }], deps.random);
+    expect(deriveSpy).toHaveBeenCalledWith([{ participantId: 'participant-ext-1', ranking: 42 }], deps.random);
   });
 
-  it('pool-master-5h3 joins the ranking pool with a null worldRanking when neither the provider nor league affiliation has a signal', async () => {
+  it('pool-master-5h3 joins the ranking pool with a null ranking when neither the provider nor league affiliation has a signal', async () => {
     const deps = buildProviderFieldDeps({
       provider: {
         getEventDetails: jest.fn().mockResolvedValue({
@@ -538,13 +538,13 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       },
     });
     const deriveSpy = jest.spyOn(GolfSeedingAlgorithm, 'deriveSeedNumbersAndOdds').mockReturnValue([
-      { participantId: 'participant-ext-1', worldRanking: null, seedNumber: 1, oddsToWin: 8 },
+      { participantId: 'participant-ext-1', ranking: null, seedNumber: 1, oddsToWin: 8 },
     ]);
 
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random, deps.providerRegistry as any);
     await service.seedFieldFromProvider('event-1');
 
-    expect(deriveSpy).toHaveBeenCalledWith([{ participantId: 'participant-ext-1', worldRanking: null }], deps.random);
+    expect(deriveSpy).toHaveBeenCalledWith([{ participantId: 'participant-ext-1', ranking: null }], deps.random);
   });
 
   it('pool-master-5h3 is an upsert, not create-only: running it again for an existing field participant updates rather than duplicates, and added=0', async () => {
@@ -561,7 +561,7 @@ describe('GolfFieldService.seedFieldFromProvider', () => {
       },
     });
     jest.spyOn(GolfSeedingAlgorithm, 'deriveSeedNumbersAndOdds').mockReturnValue([
-      { participantId: 'participant-ext-1', worldRanking: null, seedNumber: 1, oddsToWin: 8 },
+      { participantId: 'participant-ext-1', ranking: null, seedNumber: 1, oddsToWin: 8 },
     ]);
 
     const service = new GolfFieldService(deps.prisma as any, deps.sportLeagueService as any, deps.random, deps.providerRegistry as any);

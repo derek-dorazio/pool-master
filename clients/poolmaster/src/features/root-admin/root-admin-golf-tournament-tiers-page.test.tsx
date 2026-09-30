@@ -98,7 +98,7 @@ function fieldEntry(sep: string, name: string, price: number | null = 9000) {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null,
-    worldRanking: 3,
+    ranking: 3,
     oddsToWin: 8,
     seedNumber: 3,
     price,

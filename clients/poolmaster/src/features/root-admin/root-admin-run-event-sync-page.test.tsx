@@ -122,7 +122,6 @@ describe('RootAdminRunEventSyncPage', () => {
       expect(listEventsMock).toHaveBeenCalledWith({
         query: {
           sport: 'GOLF',
-          limit: 100,
         },
       });
     });

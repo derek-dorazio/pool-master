@@ -39,12 +39,12 @@ const rosterColumns = [
       <span className="font-medium text-foreground">{getValue()}</span>
     ),
   }),
-  columnHelper.accessor('worldRanking', {
+  columnHelper.accessor('ranking', {
     header: 'World rank',
     cell: ({ row, table }) => {
       const entry = row.original;
       const { draft, setDraft } = table.options.meta as RosterGridMeta;
-      const raw = draft[entry.participantId] ?? String(entry.worldRanking);
+      const raw = draft[entry.participantId] ?? String(entry.ranking);
       const invalid = raw.trim() !== '' && !isValidRank(raw);
       const errorId = invalid
         ? `root-admin-golf-league-roster-rank-error-${entry.participantId}`
@@ -154,7 +154,7 @@ export function GolfLeagueRosterGridCard({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (
-      rows: Array<{ participantId: string; worldRanking: number }>,
+      rows: Array<{ participantId: string; ranking: number }>,
     ) => {
       const response = await adminUpdateGolfLeagueRoster({
         path: { leagueId },
@@ -236,12 +236,12 @@ export function GolfLeagueRosterGridCard({
           return (
             raw !== undefined &&
             isValidRank(raw) &&
-            Number(raw) !== entry.worldRanking
+            Number(raw) !== entry.ranking
           );
         })
         .map((entry) => ({
           participantId: entry.participantId,
-          worldRanking: Number(draft[entry.participantId]),
+          ranking: Number(draft[entry.participantId]),
         })),
     [draft, entries],
   );

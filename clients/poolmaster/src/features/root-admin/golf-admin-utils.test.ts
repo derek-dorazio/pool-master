@@ -242,37 +242,37 @@ describe('pool-master-za4 golf-admin-utils: golfParticipantFieldActionLabel', ()
 
 // plans/124 §6.3 Tour Home / §6.4 — league-roster bulk-upload parser.
 describe('pool-master-qqs golf-admin-utils: parseGolfRosterUpload', () => {
-  it('pool-master-qqs parses CSV rows, coercing worldRanking to a number', () => {
+  it('pool-master-qqs parses CSV rows, coercing ranking to a number', () => {
     const rows = parseGolfRosterUpload(
-      'externalId,playerName,worldRanking\ndj-1,Dustin Johnson,12\n,Rory McIlroy,3',
+      'externalId,playerName,ranking\ndj-1,Dustin Johnson,12\n,Rory McIlroy,3',
       'CSV',
     );
     expect(rows).toEqual([
-      { externalId: 'dj-1', playerName: 'Dustin Johnson', worldRanking: 12 },
-      { playerName: 'Rory McIlroy', worldRanking: 3 },
+      { externalId: 'dj-1', playerName: 'Dustin Johnson', ranking: 12 },
+      { playerName: 'Rory McIlroy', ranking: 3 },
     ]);
   });
 
   it('pool-master-qqs parses a JSON array with participantId passthrough', () => {
     const rows = parseGolfRosterUpload(
-      '[{"participantId":"p-1","worldRanking":1}]',
+      '[{"participantId":"p-1","ranking":1}]',
       'JSON',
     );
-    expect(rows).toEqual([{ participantId: 'p-1', worldRanking: 1 }]);
+    expect(rows).toEqual([{ participantId: 'p-1', ranking: 1 }]);
   });
 
   it('pool-master-qqs rejects a row with no identifier', () => {
     expect(() =>
-      parseGolfRosterUpload('externalId,playerName,worldRanking\n,,5', 'CSV'),
+      parseGolfRosterUpload('externalId,playerName,ranking\n,,5', 'CSV'),
     ).toThrow(/Row 1: each row needs a participantId, externalId, or playerName/);
   });
 
-  it('pool-master-qqs rejects a non-positive or non-integer worldRanking', () => {
+  it('pool-master-qqs rejects a non-positive or non-integer ranking', () => {
     expect(() =>
-      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,-2', 'CSV'),
+      parseGolfRosterUpload('playerName,ranking\nRory McIlroy,-2', 'CSV'),
     ).toThrow(/Row 1:/);
     expect(() =>
-      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,3.5', 'CSV'),
+      parseGolfRosterUpload('playerName,ranking\nRory McIlroy,3.5', 'CSV'),
     ).toThrow(/Row 1:/);
   });
 

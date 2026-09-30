@@ -1,252 +1,153 @@
 import { Sport } from '@poolmaster/shared/domain';
+import type { Season, SportEvent, SportLeague } from '@poolmaster/shared/domain';
 import { SeasonService } from '../../../packages/core-api/src/modules/sport-catalog/season-service';
+import {
+  fakeSeasonRepo,
+  fakeSportEventRepo,
+  fakeSportLeagueRepo,
+  fakeSportRepo,
+} from '../../support/repo-fakes';
 
-function buildSeasonRow(overrides: Record<string, unknown> = {}) {
+// SeasonService's own logic against an in-memory season store: duplicate-year guard,
+// isCurrent derived from the sport league's pointer, sport-mismatch validation, and the
+// calendar clone. Repository queries themselves are asserted against Postgres in
+// sport-catalog-repositories.integration.
+
+function season(overrides: Partial<Season> = {}): Season {
   return {
-    id: 'season-1',
-    sportLeagueId: 'league-1',
-    name: 'PGA Tour 2026',
-    year: 2026,
-    startDate: new Date('2026-01-01'),
-    endDate: new Date('2026-12-31'),
+    id: 'season-2024',
+    sportLeagueId: 'sl-pga',
+    name: 'PGA Tour 2024',
+    year: 2024,
+    startDate: new Date('2024-01-01T00:00:00.000Z'),
+    endDate: new Date('2024-12-31T00:00:00.000Z'),
     isActive: true,
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
     ...overrides,
   };
 }
 
-describe('SeasonService.listSeasons', () => {
-  it('pool-master-2re scopes by sport and optional sportLeagueId/isActive filters, with tournament counts', async () => {
-    const findMany = jest.fn().mockResolvedValue([
-      { ...buildSeasonRow(), _count: { sportEvents: 42 } },
-    ]);
-    const service = new SeasonService({ season: { findMany } } as any);
+function sourceEvent(overrides: Partial<SportEvent> = {}): SportEvent {
+  return {
+    id: 'evt-open',
+    name: 'The Open',
+    venue: 'Royal Liverpool',
+    location: 'Hoylake',
+    startDate: new Date('2024-07-18T00:00:00.000Z'),
+    endDate: new Date('2024-07-21T00:00:00.000Z'),
+    rounds: 4,
+    releaseAt: new Date('2024-07-04T00:00:00.000Z'),
+    fieldLocksAt: new Date('2024-07-17T00:00:00.000Z'),
+    autoLifecycleEnabled: true,
+    seasonId: 'season-2024',
+    ...overrides,
+  } as SportEvent;
+}
 
-    const result = await service.listSeasons(Sport.GOLF, { isActive: true, sportLeagueId: 'league-1' });
+function buildService(options: {
+  seasons?: Season[];
+  sportLeague?: Partial<SportLeague> | null;
+  sportName?: Sport;
+  events?: SportEvent[];
+} = {}) {
+  const store = new Map((options.seasons ?? []).map((row) => [row.id, row]));
+  const seasons = fakeSeasonRepo({
+    findById: jest.fn().mockImplementation(async (id: string) => store.get(id) ?? null),
+    findBySportLeagueAndYear: jest.fn().mockImplementation(async (sportLeagueId: string, year: number) => (
+      [...store.values()].find((row) => row.sportLeagueId === sportLeagueId && row.year === year) ?? null
+    )),
+    create: jest.fn().mockImplementation(async (input: Omit<Season, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>) => {
+      const created = season({ ...input, id: `season-${input.year}` });
+      store.set(created.id, created);
+      return created;
+    }),
+  });
+  const sportLeague = options.sportLeague === null
+    ? null
+    : { id: 'sl-pga', sportId: 'sport-1', currentSeasonId: 'season-2024', ...options.sportLeague } as SportLeague;
+  const deps = {
+    sports: fakeSportRepo({
+      findById: jest.fn().mockResolvedValue({ id: 'sport-1', name: options.sportName ?? Sport.GOLF }),
+      findByName: jest.fn().mockResolvedValue({ id: 'sport-1', name: Sport.GOLF }),
+    }),
+    sportLeagues: fakeSportLeagueRepo({ findById: jest.fn().mockResolvedValue(sportLeague) }),
+    seasons,
+    sportEvents: fakeSportEventRepo({ findAll: jest.fn().mockResolvedValue(options.events ?? []) }),
+  };
+  return { service: new SeasonService(deps), deps, store };
+}
 
-    expect(findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          sportLeague: { sport: { name: Sport.GOLF } },
-          isActive: true,
-          sportLeagueId: 'league-1',
-        },
-      }),
-    );
-    expect(result).toEqual([expect.objectContaining({ name: 'PGA Tour 2026', tournamentCount: 42 })]);
+describe('SeasonService — seasons', () => {
+  it('lists the sport\'s seasons with their tournament counts, zero where there are none', async () => {
+    const { service, deps } = buildService();
+    deps.seasons.findAll = jest.fn().mockResolvedValue([season(), season({ id: 'season-2025', year: 2025 })]);
+    deps.sportEvents.countBySeasons = jest.fn().mockResolvedValue(new Map([['season-2024', 12]]));
+
+    const result = await service.listSeasons(Sport.GOLF);
+
+    expect(result.map((row) => [row.year, row.tournamentCount])).toEqual([[2024, 12], [2025, 0]]);
+  });
+
+  it('rejects a second season for the same sport league and year with 409 SEASON_YEAR_ALREADY_EXISTS', async () => {
+    const { service } = buildService({ seasons: [season()] });
+
+    await expect(service.createSeason({
+      sportLeagueId: 'sl-pga',
+      name: 'Again',
+      year: 2024,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+    })).rejects.toMatchObject({ code: 'SEASON_YEAR_ALREADY_EXISTS', statusCode: 409 });
+  });
+
+  it('derives isCurrent from the sport league\'s currentSeasonId, not a stored flag', async () => {
+    const current = buildService({ seasons: [season()] });
+    await expect(current.service.getSeason('season-2024')).resolves.toMatchObject({ isCurrent: true });
+
+    const other = buildService({ seasons: [season()], sportLeague: { currentSeasonId: 'season-2023' } });
+    await expect(other.service.getSeason('season-2024')).resolves.toMatchObject({ isCurrent: false });
+  });
+
+  it('returns null for a missing season, and fails setCurrentSeason with 404 SEASON_NOT_FOUND', async () => {
+    const { service } = buildService();
+
+    await expect(service.getSeason('missing')).resolves.toBeNull();
+    await expect(service.setCurrentSeason('missing')).rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('accepts a season of the expected sport, and rejects one of another sport with 422 SEASON_SPORT_MISMATCH', async () => {
+    await expect(buildService({ seasons: [season()] }).service.assertSeasonBelongsToSport('season-2024', Sport.GOLF))
+      .resolves.toMatchObject({ id: 'season-2024' });
+    await expect(buildService({ seasons: [season()], sportName: Sport.NBA }).service.assertSeasonBelongsToSport('season-2024', Sport.GOLF))
+      .rejects.toMatchObject({ code: 'SEASON_SPORT_MISMATCH', statusCode: 422 });
+    await expect(buildService().service.assertSeasonBelongsToSport('missing', Sport.GOLF))
+      .rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
   });
 });
 
-describe('SeasonService.createSeason', () => {
-  it('pool-master-2re creates a season linked to its league', async () => {
-    const create = jest.fn().mockResolvedValue(buildSeasonRow());
-    const service = new SeasonService({
-      season: { findUnique: jest.fn().mockResolvedValue(null), create },
-    } as any);
-
-    await service.createSeason({
-      sportLeagueId: 'league-1',
-      name: 'PGA Tour 2026',
-      year: 2026,
-      startDate: new Date('2026-01-01'),
-      endDate: new Date('2026-12-31'),
-    });
-
-    expect(create).toHaveBeenCalledWith({
-      data: {
-        sportLeagueId: 'league-1',
-        name: 'PGA Tour 2026',
-        year: 2026,
-        startDate: new Date('2026-01-01'),
-        endDate: new Date('2026-12-31'),
-      },
-    });
-  });
-
-  it('pool-master-2re rejects a duplicate (sportLeagueId, year) with 409 SEASON_YEAR_ALREADY_EXISTS', async () => {
-    const service = new SeasonService({
-      season: { findUnique: jest.fn().mockResolvedValue(buildSeasonRow()) },
-    } as any);
-
-    await expect(
-      service.createSeason({
-        sportLeagueId: 'league-1',
-        name: 'PGA Tour 2026 (dup)',
-        year: 2026,
-        startDate: new Date('2026-01-01'),
-        endDate: new Date('2026-12-31'),
-      }),
-    ).rejects.toMatchObject({ code: 'SEASON_YEAR_ALREADY_EXISTS', statusCode: 409 });
-  });
-});
-
-describe('SeasonService.getSeason', () => {
-  it('pool-master-2re derives isCurrent from the parent league\'s currentSeasonId, not a stored flag', async () => {
-    const findUnique = jest.fn().mockResolvedValue({
-      ...buildSeasonRow(),
-      sportLeague: { currentSeasonId: 'season-1' },
-      _count: { sportEvents: 4 },
-    });
-    const service = new SeasonService({ season: { findUnique } } as any);
-
-    const result = await service.getSeason('season-1');
-
-    expect(result).toEqual(expect.objectContaining({ isCurrent: true, tournamentCount: 4 }));
-  });
-
-  it('pool-master-2re returns isCurrent false when a different season is current', async () => {
-    const findUnique = jest.fn().mockResolvedValue({
-      ...buildSeasonRow(),
-      sportLeague: { currentSeasonId: 'some-other-season' },
-      _count: { sportEvents: 0 },
-    });
-    const service = new SeasonService({ season: { findUnique } } as any);
-
-    const result = await service.getSeason('season-1');
-
-    expect(result?.isCurrent).toBe(false);
-  });
-
-  it('pool-master-2re returns null for a missing season', async () => {
-    const service = new SeasonService({ season: { findUnique: jest.fn().mockResolvedValue(null) } } as any);
-
-    expect(await service.getSeason('missing')).toBeNull();
-  });
-});
-
-describe('SeasonService.setCurrentSeason', () => {
-  it('pool-master-2re writes currentSeasonId on the parent SportLeague in one atomic update', async () => {
-    const findUniqueOrThrow = jest.fn().mockResolvedValue(buildSeasonRow());
-    const update = jest.fn().mockResolvedValue({});
-    const service = new SeasonService({
-      season: { findUniqueOrThrow },
-      sportLeague: { update },
-    } as any);
-
-    const result = await service.setCurrentSeason('season-1');
-
-    expect(update).toHaveBeenCalledWith({
-      where: { id: 'league-1' },
-      data: { currentSeasonId: 'season-1' },
-    });
-    expect(result).toEqual({ sportLeagueId: 'league-1', currentSeasonId: 'season-1' });
-  });
-});
-
-describe('SeasonService.assertSeasonBelongsToSport', () => {
-  it('pool-master-2re resolves a matching season', async () => {
-    const findUnique = jest.fn().mockResolvedValue({
-      ...buildSeasonRow(),
-      sportLeague: { sport: { name: Sport.GOLF } },
-    });
-    const service = new SeasonService({ season: { findUnique } } as any);
-
-    const result = await service.assertSeasonBelongsToSport('season-1', Sport.GOLF);
-
-    expect(result.id).toBe('season-1');
-  });
-
-  it('pool-master-2re rejects 422 SEASON_SPORT_MISMATCH when the season belongs to a different sport', async () => {
-    const findUnique = jest.fn().mockResolvedValue({
-      ...buildSeasonRow(),
-      sportLeague: { sport: { name: Sport.NBA } },
-    });
-    const service = new SeasonService({ season: { findUnique } } as any);
-
-    await expect(service.assertSeasonBelongsToSport('season-1', Sport.GOLF)).rejects.toMatchObject({
-      code: 'SEASON_SPORT_MISMATCH',
-      statusCode: 422,
-    });
-  });
-
-  it('pool-master-2re rejects 404 SEASON_NOT_FOUND for a missing season id', async () => {
-    const service = new SeasonService({ season: { findUnique: jest.fn().mockResolvedValue(null) } } as any);
-
-    await expect(service.assertSeasonBelongsToSport('missing', Sport.GOLF)).rejects.toMatchObject({
-      code: 'SEASON_NOT_FOUND',
-      statusCode: 404,
-    });
-  });
-});
-
-describe('SeasonService.cloneSeasonTournaments (pool-master-pcd, plans/124 §4.2a)', () => {
-  function sourceEvent(overrides: Record<string, unknown> = {}) {
-    return {
-      id: 'evt-1',
-      name: 'The Open',
-      venue: 'Royal Liverpool',
-      location: 'Hoylake',
-      startDate: new Date('2024-07-18T00:00:00.000Z'),
-      endDate: new Date('2024-07-21T00:00:00.000Z'),
-      rounds: 4,
-      releaseAt: new Date('2024-07-04T00:00:00.000Z'),
-      fieldLocksAt: new Date('2024-07-17T00:00:00.000Z'),
-      autoLifecycleEnabled: true,
-      seasonId: 'season-src',
-      ...overrides,
-    };
-  }
-
-  function buildService(opts: {
-    source: Record<string, unknown> | null;
-    events: Array<Record<string, unknown>>;
-    existingTargetYear?: boolean;
-  }) {
-    const created = {
-      ...buildSeasonRow({ id: 'season-new', name: 'PGA Tour 2025', year: 2025 }),
-    };
-    const seasonFindUnique = jest
-      .fn()
-      // 1st call: cloneSeasonTournaments' own source lookup
-      .mockResolvedValueOnce(opts.source)
-      // 2nd call: createSeason's @@unique(sportLeagueId, year) pre-check
-      .mockResolvedValueOnce(opts.existingTargetYear ? buildSeasonRow({ year: 2025 }) : null)
-      // 3rd call: getSeason(newSeason.id)
-      .mockResolvedValueOnce({
-        ...created,
-        sportLeague: { currentSeasonId: 'season-src' },
-        _count: { sportEvents: opts.events.length },
-      });
-    const seasonCreate = jest.fn().mockResolvedValue(created);
-    const sportEventFindMany = jest.fn().mockResolvedValue(opts.events);
+describe('SeasonService.cloneSeasonTournaments (plans/124 §4.2a)', () => {
+  it('creates the target season one year forward (leap-year safe) and re-runs creation per source tournament', async () => {
     const createTournament = jest.fn().mockResolvedValue({ id: 'clone' });
-
-    const service = new SeasonService({
-      season: { findUnique: seasonFindUnique, create: seasonCreate },
-      sportEvent: { findMany: sportEventFindMany },
-    } as any);
-
-    return { service, seasonCreate, sportEventFindMany, createTournament };
-  }
-
-  it('pool-master-pcd creates the target season one calendar year forward (leap-year safe) and re-runs creation per source tournament', async () => {
-    const { service, seasonCreate, createTournament } = buildService({
-      source: buildSeasonRow({
-        id: 'season-src',
-        name: 'PGA Tour 2024',
-        year: 2024,
-        startDate: new Date('2024-02-29T00:00:00.000Z'),
-        endDate: new Date('2024-11-30T00:00:00.000Z'),
-      }),
-      events: [sourceEvent(), sourceEvent({ id: 'evt-2', name: 'Masters', endDate: null })],
+    const { service } = buildService({
+      seasons: [season({ startDate: new Date('2024-02-29T00:00:00.000Z'), endDate: new Date('2024-11-30T00:00:00.000Z') })],
+      events: [sourceEvent(), sourceEvent({ id: 'evt-masters', name: 'Masters', endDate: undefined })],
     });
 
-    const result = await service.cloneSeasonTournaments('season-src', undefined, createTournament);
+    const result = await service.cloneSeasonTournaments('season-2024', undefined, createTournament);
 
-    // Season row: year + 1, same month/day; Feb 29 -> Mar 1 in the non-leap year (JS rollover).
-    expect(seasonCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        sportLeagueId: 'league-1',
+    // Feb 29 lands on Mar 1 in the non-leap year (JS date rollover).
+    expect(result).toEqual({
+      season: expect.objectContaining({
+        id: 'season-2025',
         name: 'PGA Tour 2025',
         year: 2025,
         startDate: new Date('2025-03-01T00:00:00.000Z'),
         endDate: new Date('2025-11-30T00:00:00.000Z'),
+        isCurrent: false,
       }),
+      tournamentsCloned: 2,
     });
-
-    // One createTournament call per source event, dates shifted one year, targeting the new season.
-    expect(createTournament).toHaveBeenCalledTimes(2);
     expect(createTournament).toHaveBeenNthCalledWith(1, {
       name: 'The Open',
       venue: 'Royal Liverpool',
@@ -256,72 +157,42 @@ describe('SeasonService.cloneSeasonTournaments (pool-master-pcd, plans/124 §4.2
       rounds: 4,
       releaseAt: new Date('2025-07-04T00:00:00.000Z'),
       fieldLocksAt: new Date('2025-07-17T00:00:00.000Z'),
-      seasonId: 'season-new',
+      seasonId: 'season-2025',
       autoLifecycleEnabled: true,
     });
-    // A source event with no endDate stays undefined (not shifted null).
-    expect(createTournament).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ name: 'Masters', endDate: undefined, seasonId: 'season-new' }),
-    );
-
-    expect(result).toEqual({
-      season: expect.objectContaining({ id: 'season-new', year: 2025, isCurrent: false }),
-      tournamentsCloned: 2,
-    });
+    // A source tournament with no end date stays without one.
+    expect(createTournament).toHaveBeenNthCalledWith(2, expect.objectContaining({ name: 'Masters', endDate: undefined }));
   });
 
-  it('pool-master-pcd honours an explicit targetYear', async () => {
-    const { service, seasonCreate, createTournament } = buildService({
-      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
-      events: [sourceEvent()],
-    });
+  it('honours an explicit target year, renaming the season to match', async () => {
+    const createTournament = jest.fn().mockResolvedValue({ id: 'clone' });
+    const { service } = buildService({ seasons: [season()], events: [sourceEvent()] });
 
-    await service.cloneSeasonTournaments('season-src', 2028, createTournament);
+    const result = await service.cloneSeasonTournaments('season-2024', 2028, createTournament);
 
-    expect(seasonCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ name: 'PGA Tour 2028', year: 2028 }),
-    });
-    expect(createTournament).toHaveBeenCalledWith(
-      expect.objectContaining({ startDate: new Date('2028-07-18T00:00:00.000Z') }),
-    );
+    expect(result.season).toMatchObject({ name: 'PGA Tour 2028', year: 2028 });
+    expect(createTournament).toHaveBeenCalledWith(expect.objectContaining({ startDate: new Date('2028-07-18T00:00:00.000Z') }));
   });
 
-  it('pool-master-pcd does not touch currentSeasonId or copy any field/tier/score data (only createSeason + createTournament are written)', async () => {
-    const seasonUpdate = jest.fn();
-    const { service, createTournament } = buildService({
-      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
-      events: [sourceEvent()],
-    });
-    (service as any).prisma.season.update = seasonUpdate;
-    (service as any).prisma.sportLeague = { update: jest.fn() };
+  it('leaves the sport league\'s current season where it was', async () => {
+    const { service, deps } = buildService({ seasons: [season()], events: [sourceEvent()] });
 
-    await service.cloneSeasonTournaments('season-src', undefined, createTournament);
+    await service.cloneSeasonTournaments('season-2024', undefined, jest.fn().mockResolvedValue({}));
 
-    expect(seasonUpdate).not.toHaveBeenCalled();
-    expect((service as any).prisma.sportLeague.update).not.toHaveBeenCalled();
-    // No participant/tier/valuation writes exist on the mocked client — the code
-    // path only calls createSeason + createTournament, which is the point.
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
-  it('pool-master-pcd surfaces 409 SEASON_YEAR_ALREADY_EXISTS from createSeason', async () => {
-    const { service, createTournament } = buildService({
-      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
-      events: [sourceEvent()],
-      existingTargetYear: true,
-    });
+  it('stops with 409 SEASON_YEAR_ALREADY_EXISTS before creating any tournament when the target year exists', async () => {
+    const createTournament = jest.fn();
+    const { service } = buildService({ seasons: [season(), season({ id: 'season-2025', year: 2025 })], events: [sourceEvent()] });
 
-    await expect(
-      service.cloneSeasonTournaments('season-src', undefined, createTournament),
-    ).rejects.toMatchObject({ code: 'SEASON_YEAR_ALREADY_EXISTS', statusCode: 409 });
+    await expect(service.cloneSeasonTournaments('season-2024', undefined, createTournament))
+      .rejects.toMatchObject({ code: 'SEASON_YEAR_ALREADY_EXISTS', statusCode: 409 });
     expect(createTournament).not.toHaveBeenCalled();
   });
 
-  it('pool-master-pcd rejects 404 SEASON_NOT_FOUND for a missing source season', async () => {
-    const { service, createTournament } = buildService({ source: null, events: [] });
-
-    await expect(
-      service.cloneSeasonTournaments('missing', undefined, createTournament),
-    ).rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
+  it('fails with 404 SEASON_NOT_FOUND for a missing source season', async () => {
+    await expect(buildService().service.cloneSeasonTournaments('missing', undefined, jest.fn()))
+      .rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
   });
 });

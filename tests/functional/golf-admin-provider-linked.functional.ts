@@ -168,14 +168,16 @@ async function cleanup(): Promise<void> {
 
   if (sepIds.length) {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
+    await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+    await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
   }
   if (eventIds.length) {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.providerSyncRun.deleteMany({ where: { providerId: MOCK_PROVIDER_ID, eventId: MOCK_EVENT_EXTERNAL_ID } });
     await db.ingestionJob.deleteMany({ where: { providerId: MOCK_PROVIDER_ID } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
@@ -458,18 +460,19 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     });
     const sepIds = seps.map((s) => s.id);
     expect(sepIds.length).toBe(fieldSize);
-    const standings = await db.sportEventParticipantGolfStanding.findMany({
+    const standings = await db.sportEventParticipantStanding.findMany({
       where: { sportEventParticipantId: { in: sepIds } },
+      include: { golf: true },
     });
     expect(standings.length).toBe(fieldSize);
-    expect(standings.every((s) => Number.isInteger(s.eventScoreToPar) && Number.isInteger(s.eventStrokes))).toBe(true);
+    expect(standings.every((s) => Number.isInteger(s.golf?.eventScoreToPar) && Number.isInteger(s.golf?.eventStrokes))).toBe(true);
 
     const round1 = await db.sportEventRound.findFirstOrThrow({
       where: { sportEventId: eventId, roundNumber: 1 },
       select: { id: true },
     });
     const r1RoundRows = await db.sportEventParticipantGolfRound.findMany({
-      where: { sportEventParticipantId: { in: sepIds }, sportEventRoundId: round1.id },
+      where: { participantRound: { sportEventParticipantId: { in: sepIds }, sportEventRoundId: round1.id } },
     });
     expect(r1RoundRows.length).toBe(fieldSize);
 
@@ -525,12 +528,13 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(settledContest.status).toBe('COMPLETED');
 
     // --- 6. Unlink, then a further sync tick does not touch the data ---
-    const standingsBefore = await db.sportEventParticipantGolfStanding.findMany({
+    const standingsBefore = await db.sportEventParticipantStanding.findMany({
       where: { sportEventParticipantId: { in: sepIds } },
       orderBy: { sportEventParticipantId: 'asc' },
+      include: { golf: true },
     });
     const roundsBefore = await db.sportEventParticipantGolfRound.count({
-      where: { sportEventParticipantId: { in: sepIds } },
+      where: { participantRound: { sportEventParticipantId: { in: sepIds } } },
     });
 
     const unlink = await adminUnlinkGolfTournamentScoreSource({ client: admin, path: { eventId } });
@@ -552,16 +556,17 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(staleSync.response?.status).toBe(202);
     await waitForSyncRuns(staleSync.data!.syncRuns.map((r) => r.id));
 
-    const standingsAfter = await db.sportEventParticipantGolfStanding.findMany({
+    const standingsAfter = await db.sportEventParticipantStanding.findMany({
       where: { sportEventParticipantId: { in: sepIds } },
       orderBy: { sportEventParticipantId: 'asc' },
+      include: { golf: true },
     });
     const roundsAfter = await db.sportEventParticipantGolfRound.count({
-      where: { sportEventParticipantId: { in: sepIds } },
+      where: { participantRound: { sportEventParticipantId: { in: sepIds } } },
     });
     expect(roundsAfter).toBe(roundsBefore);
-    expect(standingsAfter.map((s) => [s.sportEventParticipantId, s.eventScoreToPar, s.eventStrokes])).toEqual(
-      standingsBefore.map((s) => [s.sportEventParticipantId, s.eventScoreToPar, s.eventStrokes]),
+    expect(standingsAfter.map((s) => [s.sportEventParticipantId, s.golf?.eventScoreToPar, s.golf?.eventStrokes])).toEqual(
+      standingsBefore.map((s) => [s.sportEventParticipantId, s.golf?.eventScoreToPar, s.golf?.eventStrokes]),
     );
 
     const finalDetail = await adminGetGolfTournament({ client: admin, path: { eventId } });
@@ -682,7 +687,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
 
   const field = await db.sportEventParticipant.findMany({
     where: { sportEventId },
-    orderBy: { worldRanking: 'asc' },
+    orderBy: { ranking: 'asc' },
     select: { id: true },
     take: 3,
   });

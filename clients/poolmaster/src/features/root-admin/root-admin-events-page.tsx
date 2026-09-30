@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
-import { adminListEventParticipants, adminListEvents, type AdminListEventParticipantsResponses, type AdminListEventsResponses } from '@/lib/api';
+import { adminListEventParticipants, listEvents, type AdminListEventParticipantsResponses, type SportEventDto } from '@/lib/api';
 import {
   Button,
   DataGrid,
@@ -18,7 +18,7 @@ import {
   sportEventStatusTone,
 } from './golf-admin-utils';
 
-type AdminEvent = AdminListEventsResponses[200]['events'][number];
+type AdminEvent = SportEventDto;
 type AdminEventParticipant =
   AdminListEventParticipantsResponses[200]['participants'][number];
 
@@ -58,11 +58,9 @@ export function RootAdminEventsPage() {
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.events,
     queryFn: async (): Promise<AdminEvent[]> => {
-      const response = await adminListEvents({
-        query: {
-          limit: 250,
-        },
-      });
+      // #235 — the canonical event list; the admin copy of it is gone. Nothing pages it (§16),
+      // so the browser now shows every event rather than the first 250.
+      const response = await listEvents();
 
       if (!response.data?.events) {
         throwApiError(response.error, 'Event browser response is missing data.');
@@ -206,7 +204,7 @@ export function RootAdminEventsPage() {
           </StatusBadge>
         ),
       }),
-      participantColumnHelper.accessor('worldRanking', {
+      participantColumnHelper.accessor('ranking', {
         header: 'World rank',
         cell: ({ getValue }) => formatOptionalText(getValue()),
       }),

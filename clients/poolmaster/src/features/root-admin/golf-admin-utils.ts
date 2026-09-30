@@ -212,7 +212,7 @@ export function deriveGolfAutoTransition(input: {
 // --- Readiness (plans/124 §6.3 tournament list) ---
 //
 // The shipped AdminGolfTournamentDto carries no server `readinessStatus`
-// (unlike AdminEventSummaryDto), so readiness is derived here from the counts
+// (unlike SportEventDto), so readiness is derived here from the counts
 // the DTO does carry. Kept deliberately small and branch-tested.
 
 export type GolfTournamentReadiness = {
@@ -340,7 +340,7 @@ export function golfParticipantFieldActionLabel(
 // The Tour Home roster editor and the round-scores editor share one
 // paste/upload/preview/apply flow (BulkUploadPanel). Each screen supplies its
 // own row shape + parser config; this is the roster one — `externalId` or
-// `playerName` (or an explicit `participantId`) plus `worldRanking`.
+// `playerName` (or an explicit `participantId`) plus `ranking`.
 
 export type GolfRosterUploadRow =
   AdminPreviewGolfLeagueRosterUploadData['body']['rows'][number];
@@ -348,7 +348,7 @@ export type GolfRosterUploadRow =
 export const GOLF_ROSTER_UPLOAD_HEADERS = [
   'externalId',
   'playerName',
-  'worldRanking',
+  'ranking',
 ] as const;
 
 const golfRosterUploadRowSchema = z
@@ -356,7 +356,7 @@ const golfRosterUploadRowSchema = z
     participantId: z.string().trim().min(1).optional(),
     externalId: z.string().trim().min(1).optional(),
     playerName: z.string().trim().min(1).optional(),
-    worldRanking: z.coerce.number().int().positive().optional(),
+    ranking: z.coerce.number().int().positive().optional(),
   })
   .refine(
     (row) =>
@@ -394,8 +394,8 @@ export function parseGolfRosterUpload(
     if (parsed.data.participantId) row.participantId = parsed.data.participantId;
     if (parsed.data.externalId) row.externalId = parsed.data.externalId;
     if (parsed.data.playerName) row.playerName = parsed.data.playerName;
-    if (parsed.data.worldRanking !== undefined) {
-      row.worldRanking = parsed.data.worldRanking;
+    if (parsed.data.ranking !== undefined) {
+      row.ranking = parsed.data.ranking;
     }
     return row;
   });

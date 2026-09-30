@@ -1,4 +1,4 @@
-import { GolfParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
@@ -430,16 +430,17 @@ function toDomainSport(sport: SupportedMockSport): Sport | null {
  * and unset all mean "no reason recorded" (undefined, not just falling through
  * to 'inactive'); only withdrawn/cut/eliminated carry an explicit reason.
  */
-function toGolfParticipantInactiveReason(
+function toParticipantInactiveReason(
   participantStatus: string | undefined,
-): GolfParticipantInactiveReason | undefined {
+): ParticipantInactiveReason | undefined {
   switch (participantStatus) {
     case 'withdrawn':
-      return GolfParticipantInactiveReason.WITHDRAWN;
+      return ParticipantInactiveReason.WITHDRAWN;
+    // A golfer who missed the cut is ELIMINATED in the cross-sport model; golf
+    // surfaces render it as "Cut".
     case 'cut':
-      return GolfParticipantInactiveReason.CUT;
     case 'eliminated':
-      return GolfParticipantInactiveReason.ELIMINATED;
+      return ParticipantInactiveReason.ELIMINATED;
     default:
       return undefined;
   }
@@ -473,7 +474,7 @@ function toProviderParticipant(
     active: !['withdrawn', 'inactive', 'eliminated', 'cut'].includes(
       contestant.participantStatus ?? '',
     ),
-    inactiveReason: toGolfParticipantInactiveReason(contestant.participantStatus),
+    inactiveReason: toParticipantInactiveReason(contestant.participantStatus),
     metadata: {
       seed: contestant.seed,
       participantStatus: contestant.participantStatus,

@@ -14,7 +14,7 @@ import type {
   ContestCoreSummary,
   ContestEntryAggregationRule,
   ContestPrizeDefinition,
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   ParticipantContestScoringRule,
   SportEventParticipant,
 } from '@poolmaster/shared/domain';
@@ -107,7 +107,7 @@ export class PrismaSportEventParticipantRepository
         participantId: participant.participantId,
         isActive: participant.isActive,
         inactiveReason: participant.inactiveReason,
-        worldRanking: participant.worldRanking,
+        ranking: participant.ranking,
         oddsToWin: participant.oddsToWin,
         seedNumber: participant.seedNumber,
         metadata: participant.metadata as object,
@@ -125,7 +125,7 @@ export class PrismaSportEventParticipantRepository
       data: {
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.inactiveReason !== undefined && { inactiveReason: updates.inactiveReason }),
-        ...(updates.worldRanking !== undefined && { worldRanking: updates.worldRanking }),
+        ...(updates.ranking !== undefined && { ranking: updates.ranking }),
         ...(updates.oddsToWin !== undefined && { oddsToWin: updates.oddsToWin }),
         ...(updates.seedNumber !== undefined && { seedNumber: updates.seedNumber }),
         ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
@@ -546,7 +546,7 @@ function mapSportEventParticipant(row: {
   participantId: string;
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: { toNumber(): number } | number | null;
   seedNumber: number | null;
   metadata: unknown;
@@ -562,8 +562,8 @@ function mapSportEventParticipant(row: {
     sportEventId: row.sportEventId,
     participantId: row.participantId,
     isActive: row.isActive,
-    inactiveReason: (row.inactiveReason as GolfParticipantInactiveReason) ?? undefined,
-    worldRanking: row.worldRanking ?? undefined,
+    inactiveReason: (row.inactiveReason as ParticipantInactiveReason) ?? undefined,
+    ranking: row.ranking ?? undefined,
     oddsToWin: oddsToWin ?? undefined,
     seedNumber: row.seedNumber ?? undefined,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,

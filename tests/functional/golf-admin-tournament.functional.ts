@@ -94,14 +94,16 @@ async function cleanup(): Promise<void> {
 
   if (sepIds.length) {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
+    await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+    await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
   }
   if (eventIds.length) {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   const leagueIds = [...created.sportLeagueIds];
@@ -197,7 +199,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8)
     const rosterApply = await adminApplyGolfLeagueRosterUpload({
       client: c,
       path: { leagueId },
-      body: { rows: players.map((p) => ({ externalId: p.externalId, worldRanking: p.rank })) },
+      body: { rows: players.map((p) => ({ externalId: p.externalId, ranking: p.rank })) },
     });
     expect(rosterApply.response?.status).toBe(200);
     expect(rosterApply.data!.entries.length).toBe(20);
@@ -245,7 +247,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8)
     expect(new Set(seeds).size).toBe(20); // unique seed numbers
     // Odds ordering tracks rank ordering: the rank-1 golfer has the shortest odds.
     const byRank = [...field.data!.entries].sort(
-      (a, b) => (a.worldRanking ?? 0) - (b.worldRanking ?? 0),
+      (a, b) => (a.ranking ?? 0) - (b.ranking ?? 0),
     );
     expect(byRank[0].oddsToWin!).toBeLessThanOrEqual(byRank[byRank.length - 1].oddsToWin!);
 

@@ -5,17 +5,17 @@ import { parseDelimitedRecords } from './bulk-upload-parse';
 // rule: format-level parse errors surface inline (react-ui-rules §7 honest states).
 describe('parseDelimitedRecords', () => {
   it('parses CSV into header-keyed records, skipping blank cells and lines', () => {
-    const text = 'externalId,playerName,worldRanking\ndj-1,Dustin Johnson,12\n\n,Rory McIlroy,3\n';
+    const text = 'externalId,playerName,ranking\ndj-1,Dustin Johnson,12\n\n,Rory McIlroy,3\n';
     expect(parseDelimitedRecords(text, 'CSV')).toEqual([
-      { externalId: 'dj-1', playerName: 'Dustin Johnson', worldRanking: '12' },
-      { playerName: 'Rory McIlroy', worldRanking: '3' },
+      { externalId: 'dj-1', playerName: 'Dustin Johnson', ranking: '12' },
+      { playerName: 'Rory McIlroy', ranking: '3' },
     ]);
   });
 
   it('parses a JSON array of row objects', () => {
-    const text = '[{"playerName":"Rory McIlroy","worldRanking":3}]';
+    const text = '[{"playerName":"Rory McIlroy","ranking":3}]';
     expect(parseDelimitedRecords(text, 'JSON')).toEqual([
-      { playerName: 'Rory McIlroy', worldRanking: 3 },
+      { playerName: 'Rory McIlroy', ranking: 3 },
     ]);
   });
 

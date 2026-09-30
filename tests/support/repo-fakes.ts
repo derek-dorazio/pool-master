@@ -62,10 +62,13 @@ import type {
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
+  ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   SeasonRepository,
   SportEventParticipantRepository,
+  SportEventRepository,
+  SportLeagueRepository,
   SportRepository,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
@@ -203,11 +206,24 @@ export function fakeLeagueInvitationRepo(
   };
 }
 
+const noCounts = () => jest.fn().mockResolvedValue(new Map());
+
 export function fakeSportRepo(overrides: Partial<SportRepository> = {}): SportRepository {
   return {
     findById: one(),
+    findByName: one(),
     findAll: many(),
-    create: echoCreate('sport'),
+    ...overrides,
+  };
+}
+
+export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = {}): SportLeagueRepository {
+  return {
+    findById: one(),
+    findAll: many(),
+    findBySportAndName: one(),
+    create: echoCreate('sport-league'),
+    update: echoUpdate(),
     ...overrides,
   };
 }
@@ -215,8 +231,44 @@ export function fakeSportRepo(overrides: Partial<SportRepository> = {}): SportRe
 export function fakeSeasonRepo(overrides: Partial<SeasonRepository> = {}): SeasonRepository {
   return {
     findById: one(),
-    findBySport: many(),
+    findAll: many(),
+    findBySportLeagueAndYear: one(),
     create: echoCreate('season'),
+    update: echoUpdate(),
+    countBySportLeagues: noCounts(),
+    ...overrides,
+  };
+}
+
+export function fakeParticipantLeagueAffiliationRepo(
+  overrides: Partial<ParticipantLeagueAffiliationRepository> = {},
+): ParticipantLeagueAffiliationRepository {
+  return {
+    findBySportLeague: many(),
+    find: one(),
+    // Takes two ids rather than an input object, so it cannot use echoCreate.
+    create: jest.fn().mockImplementation(async (sportLeagueId: string, participantId: string) => ({
+      id: `affiliation-${participantId}`,
+      sportLeagueId,
+      participantId,
+      ranking: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    })),
+    delete: nothing(),
+    updateRankings: nothing(),
+    upsertRankings: nothing(),
+    countBySportLeagues: noCounts(),
+    ...overrides,
+  };
+}
+
+export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}): SportEventRepository {
+  return {
+    findById: one(),
+    findAll: many(),
+    countParticipants: noCounts(),
+    countBySeasons: noCounts(),
     ...overrides,
   };
 }
@@ -228,7 +280,8 @@ export function fakeParticipantRepo(
     findById: one(),
     findBySport: many(),
     findByExternalId: one(),
-    search: jest.fn().mockResolvedValue({ participants: [], total: 0 }),
+    search: many(),
+    findMatching: many(),
     create: echoCreate('participant'),
     createMany: jest.fn().mockResolvedValue(0),
     update: echoUpdate(),

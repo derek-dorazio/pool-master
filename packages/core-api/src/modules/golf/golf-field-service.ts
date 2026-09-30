@@ -22,7 +22,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { GolfValuationSource, ParticipantType, Sport, type GolfParticipantInactiveReason } from '@poolmaster/shared/domain';
+import { ValuationSource, ParticipantType, Sport, type ParticipantInactiveReason } from '@poolmaster/shared/domain';
 import type { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { ProviderParticipant } from '../ingestion/core/provider-interface';
@@ -47,8 +47,8 @@ export interface GolfFieldRow {
   shortName: string | null;
   nationality: string | null;
   isActive: boolean;
-  inactiveReason: GolfParticipantInactiveReason | null;
-  worldRanking: number | null;
+  inactiveReason: ParticipantInactiveReason | null;
+  ranking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
   price: number | null;
@@ -72,7 +72,7 @@ export interface BulkAddFieldResult {
 const FIELD_INCLUDE = {
   include: {
     participant: { select: { name: true, shortName: true, nationality: true } },
-    golfValuation: { select: { price: true } },
+    valuation: { select: { price: true } },
   },
 } as const;
 
@@ -81,11 +81,11 @@ type PrismaFieldRow = {
   participantId: string;
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: unknown;
   seedNumber: number | null;
   participant: { name: string; shortName: string | null; nationality: string | null };
-  golfValuation: { price: unknown } | null;
+  valuation: { price: unknown } | null;
 };
 
 export class GolfFieldService {
@@ -104,7 +104,7 @@ export class GolfFieldService {
     });
     const sportLeagueId = await this.resolveSportLeagueId(sportEvent.seasonId);
     const rosterParticipantIds = sportLeagueId
-      ? new Set((await this.sportLeagueService.getRoster(sportLeagueId)).map((entry) => entry.participantId))
+      ? new Set((await this.sportLeagueService.listAffiliations(sportLeagueId)).map((entry) => entry.participantId))
       : new Set<string>();
 
     const rows = (await this.prisma.sportEventParticipant.findMany({
@@ -145,8 +145,8 @@ export class GolfFieldService {
       );
     }
 
-    const roster = await this.sportLeagueService.getRoster(sportLeagueId);
-    const activeRoster = roster.filter((entry) => entry.status === 'ACTIVE');
+    const roster = await this.sportLeagueService.listAffiliations(sportLeagueId);
+    const activeRoster = roster.filter((entry) => entry.participant.status === 'ACTIVE');
 
     const existing = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
@@ -156,7 +156,7 @@ export class GolfFieldService {
 
     const toAdd = activeRoster.filter((entry) => !existingParticipantIds.has(entry.participantId));
     const seeded = deriveSeedNumbersAndOdds(
-      toAdd.map((entry) => ({ participantId: entry.participantId, worldRanking: entry.worldRanking })),
+      toAdd.map((entry) => ({ participantId: entry.participantId, ranking: entry.ranking })),
       this.random,
     );
 
@@ -167,7 +167,7 @@ export class GolfFieldService {
             data: {
               sportEventId,
               participantId: entry.participantId,
-              worldRanking: entry.worldRanking,
+              ranking: entry.ranking,
               seedNumber: entry.seedNumber,
               oddsToWin: entry.oddsToWin,
             },
@@ -200,10 +200,10 @@ export class GolfFieldService {
    *
    *   1. Resolve or create the global Participant + ParticipantProviderMapping
    *      by exact provider identity — never fuzzy name-matching.
-   *   2. worldRanking/oddsToWin follow a priority chain (both present → use
+   *   2. ranking/oddsToWin follow a priority chain (both present → use
    *      as-is; ranking only → derive odds from ranking-based position;
    *      odds only → derive an implied position from odds ascending; neither
-   *      → fall back to this golfer's league-affiliation worldRanking, or no
+   *      → fall back to this golfer's league-affiliation ranking, or no
    *      signal at all). seedNumber always comes from position assignment,
    *      never the provider's own `seed` field, since seed position is
    *      PoolMaster's own draft concept.
@@ -230,7 +230,7 @@ export class GolfFieldService {
 
     const sportLeagueId = await this.resolveSportLeagueId(sportEvent.seasonId);
     const affiliationRankings = sportLeagueId
-      ? new Map((await this.sportLeagueService.getRoster(sportLeagueId)).map((entry) => [entry.participantId, entry.worldRanking]))
+      ? new Map((await this.sportLeagueService.listAffiliations(sportLeagueId)).map((entry) => [entry.participantId, entry.ranking]))
       : new Map<string, number | null>();
 
     const resolved = await Promise.all(
@@ -254,7 +254,7 @@ export class GolfFieldService {
     const seededByRanking = deriveSeedNumbersAndOdds(
       rankingPoolCandidates.map((c) => ({
         participantId: c.participantId,
-        worldRanking: c.ranking ?? affiliationRankings.get(c.participantId) ?? null,
+        ranking: c.ranking ?? affiliationRankings.get(c.participantId) ?? null,
       })),
       this.random,
     );
@@ -273,7 +273,7 @@ export class GolfFieldService {
       candidates.map((candidate) => {
         const rankingResult = seededByRankingById.get(candidate.participantId);
 
-        const worldRanking = rankingResult ? rankingResult.worldRanking : null;
+        const ranking = rankingResult ? rankingResult.ranking : null;
         const oddsToWin = candidate.odds !== null
           ? candidate.odds
           : rankingResult?.oddsToWin ?? null;
@@ -284,7 +284,7 @@ export class GolfFieldService {
         const data = {
           isActive: candidate.isActive,
           inactiveReason: candidate.inactiveReason,
-          worldRanking,
+          ranking,
           oddsToWin,
           seedNumber,
         };
@@ -395,8 +395,8 @@ export class GolfFieldService {
     entries: Array<{
       sportEventParticipantId: string;
       isActive?: boolean;
-      inactiveReason?: GolfParticipantInactiveReason | null;
-      worldRanking?: number | null;
+      inactiveReason?: ParticipantInactiveReason | null;
+      ranking?: number | null;
       oddsToWin?: number | null;
       seedNumber?: number | null;
       price?: number | null;
@@ -424,14 +424,14 @@ export class GolfFieldService {
           data: {
             ...(fieldUpdates.isActive !== undefined && { isActive: fieldUpdates.isActive }),
             ...(fieldUpdates.inactiveReason !== undefined && { inactiveReason: fieldUpdates.inactiveReason }),
-            ...(fieldUpdates.worldRanking !== undefined && { worldRanking: fieldUpdates.worldRanking }),
+            ...(fieldUpdates.ranking !== undefined && { ranking: fieldUpdates.ranking }),
             ...(fieldUpdates.oddsToWin !== undefined && { oddsToWin: fieldUpdates.oddsToWin }),
             ...(fieldUpdates.seedNumber !== undefined && { seedNumber: fieldUpdates.seedNumber }),
             ...(price !== undefined && {
-              golfValuation: {
+              valuation: {
                 upsert: {
-                  create: { price, priceAssignedSource: GolfValuationSource.MANUAL },
-                  update: { price, priceAssignedSource: GolfValuationSource.MANUAL },
+                  create: { price, priceAssignedSource: ValuationSource.MANUAL },
+                  update: { price, priceAssignedSource: ValuationSource.MANUAL },
                 },
               },
             }),
@@ -490,11 +490,11 @@ function toGolfFieldRow(row: PrismaFieldRow, rosterParticipantIds: Set<string>):
     shortName: row.participant.shortName,
     nationality: row.participant.nationality,
     isActive: row.isActive,
-    inactiveReason: row.inactiveReason as GolfParticipantInactiveReason | null,
-    worldRanking: row.worldRanking,
+    inactiveReason: row.inactiveReason as ParticipantInactiveReason | null,
+    ranking: row.ranking,
     oddsToWin: row.oddsToWin === null || row.oddsToWin === undefined ? null : Number(row.oddsToWin),
     seedNumber: row.seedNumber,
-    price: row.golfValuation?.price == null ? null : Number(row.golfValuation.price),
+    price: row.valuation?.price == null ? null : Number(row.valuation.price),
     isLeagueRosterMember: rosterParticipantIds.has(row.participantId),
   };
 }

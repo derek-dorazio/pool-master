@@ -74,8 +74,6 @@ export interface UpdateGolfPlayerInput {
   status?: ParticipantStatus;
 }
 
-const SEARCH_LIMIT = 200;
-
 export class GolfPlayerService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -85,10 +83,10 @@ export class GolfPlayerService {
 
   async listPlayers(options: { status?: ParticipantStatus; search?: string } = {}): Promise<GolfPlayerRow[]> {
     const sportRow = await requireSportRow(this.prisma, Sport.GOLF);
-    const { participants } = await this.participantService.search({
+    // The whole list (§16): this was silently capped at 200 rows.
+    const participants = await this.participantService.search({
       query: options.search,
       filters: { sportId: sportRow.id, status: [options.status ?? ParticipantStatus.ACTIVE] },
-      limit: SEARCH_LIMIT,
     });
     const counts = await this.mappingCounts(participants.map((participant) => participant.id));
     return participants.map((participant) => toGolfPlayerRow(participant, counts.get(participant.id) ?? 0));

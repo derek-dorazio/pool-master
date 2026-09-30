@@ -302,7 +302,7 @@ export async function loadDraftContext(prisma: PrismaClient, contestId: string):
         teamAffiliation: record.participant.teamAffiliation,
         status: legacyStatus,
         price: valuation?.price ?? undefined,
-        ranking: record.worldRanking ?? undefined,
+        ranking: record.ranking ?? undefined,
         tier: valuation?.tierLabel ?? null,
         orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,

@@ -374,7 +374,7 @@ export class IngestionPersistence {
         continue;
       }
 
-      const worldRanking = await this.findLatestRankingForEventParticipant({
+      const ranking = await this.findLatestRankingForEventParticipant({
         providerId: participant.providerId,
         participantId: mapping.participantId,
         sport: detail.sport,
@@ -395,7 +395,7 @@ export class IngestionPersistence {
       const after = normalizeSportEventParticipantInput({
         isActive: participant.active,
         inactiveReason: participant.inactiveReason ?? null,
-        worldRanking,
+        ranking,
         oddsToWin,
         seedNumber,
         metadata: participant.metadata,
@@ -413,7 +413,7 @@ export class IngestionPersistence {
           participantId: mapping.participantId,
           isActive: participant.active,
           inactiveReason: participant.inactiveReason ?? null,
-          worldRanking,
+          ranking,
           oddsToWin,
           seedNumber,
           metadata: toPrismaJson(participant.metadata),
@@ -421,7 +421,7 @@ export class IngestionPersistence {
         update: {
           isActive: participant.active,
           inactiveReason: participant.inactiveReason ?? null,
-          worldRanking,
+          ranking,
           oddsToWin,
           seedNumber,
           metadata: toPrismaJson(participant.metadata),
@@ -469,7 +469,7 @@ export class IngestionPersistence {
    *
    * Rankings are not event-scoped source facts. They are provider-scoped
    * snapshots keyed by ranking type + asOf; event participant hydration copies
-   * the latest applicable snapshot onto SportEventParticipant.worldRanking.
+   * the latest applicable snapshot onto SportEventParticipant.ranking.
    */
   async persistRankings(rankings: ProviderRanking[]): Promise<number> {
     return (await this.persistRankingsWithDiagnostics(rankings)).count;
@@ -669,7 +669,7 @@ function normalizeSportEventRow(row: {
 function normalizeSportEventParticipantInput(input: {
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
   metadata: Record<string, unknown>;
@@ -677,7 +677,7 @@ function normalizeSportEventParticipantInput(input: {
   return {
     isActive: input.isActive,
     inactiveReason: input.inactiveReason,
-    worldRanking: input.worldRanking,
+    ranking: input.ranking,
     oddsToWin: input.oddsToWin,
     seedNumber: input.seedNumber,
     metadata: jsonClone(input.metadata),
@@ -687,7 +687,7 @@ function normalizeSportEventParticipantInput(input: {
 function normalizeSportEventParticipantRow(row: {
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: Prisma.Decimal | number | null;
   seedNumber: number | null;
   metadata: Prisma.JsonValue;
@@ -695,7 +695,7 @@ function normalizeSportEventParticipantRow(row: {
   return {
     isActive: row.isActive,
     inactiveReason: row.inactiveReason,
-    worldRanking: row.worldRanking,
+    ranking: row.ranking,
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,
     metadata: jsonClone(row.metadata),

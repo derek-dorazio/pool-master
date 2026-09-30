@@ -2,11 +2,12 @@ import type {
   ContestStatus,
   ContestFormat,
   GolfContestConfigMode,
-  GolfParticipantInactiveReason,
+  ParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
   Sport,
   SportEventStatus,
+  SportEventSyncScope,
 } from './enums';
 import type {
   AggregationDefinitionId,
@@ -32,7 +33,7 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
 
 /**
  * Shrunk per plans/124 §4.6/§4.6a: tiers and price are event-owned data
- * (SportEventGolfTier/SportEventParticipantGolfValuation via
+ * (SportEventTier/SportEventParticipantValuation via
  * golf-tier-service.getEffectiveTiersForContest), never a per-contest
  * override, so tierSource/tierGeneration/tiers all drop. cutRule/
  * playoffHandling/displayScoring/tiebreaker each had exactly one possible
@@ -83,6 +84,12 @@ export interface SportEvent extends DomainEntity {
   releaseAt: Date;
   fieldLocksAt: Date;
   metadata: Record<string, unknown>;
+  seasonId?: string;
+  /** The recurring tournament this is one year's instance of. */
+  leagueEventId?: string;
+  syncScope: SportEventSyncScope;
+  /** False stops the lifecycle scheduler moving this event's status. */
+  autoLifecycleEnabled: boolean;
 }
 
 /** Seeded timing policy used to resolve event release/field-lock datetimes. */
@@ -98,9 +105,10 @@ export interface ContestTimingPolicy extends DomainEntity {
 
 /**
  * Join record linking a provider event to a normalized participant. The
- * Per-event participant state for a normalized event field. World ranking is
- * copied from the latest provider-scoped global ranking snapshot during event
- * hydration; odds and seed are event-scoped values from the event detail feed.
+ * Per-event participant state for a normalized event field. `ranking` is the
+ * rank that applied at this event — copied from the latest provider ranking
+ * snapshot during event hydration, then editable; odds and seed are
+ * event-scoped values from the event detail feed.
  */
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
@@ -108,9 +116,9 @@ export interface SportEventParticipant extends DomainEntity {
   /** Whether this golfer is currently eligible/available for this tournament. */
   isActive: boolean;
   /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
-  inactiveReason?: GolfParticipantInactiveReason;
-  /** Latest global world-ranking snapshot copied onto this event participant. */
-  worldRanking?: number;
+  inactiveReason?: ParticipantInactiveReason;
+  /** Rank that applied at this event: copied from the provider's ranking snapshot, then editable. */
+  ranking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */
   oddsToWin?: number;
   /** Event-relative seed number (e.g., NCAA tournament seed). */

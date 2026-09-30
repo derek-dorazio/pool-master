@@ -253,15 +253,15 @@ async function createSettlementParticipant(input: {
       isActive: true,
     },
   });
-  await prisma.sportEventParticipantGolfStanding.create({
+  await prisma.sportEventParticipantStanding.create({
     data: {
       sportEventParticipantId: sportEventParticipant.id,
-      eventScoreToPar: input.scoreToPar,
-      eventStrokes: input.strokes,
       currentRound: 4,
-      currentRoundThru: 18,
       status: 'COMPLETE',
       asOf: new Date('2026-05-31T22:00:00.000Z'),
+      golf: {
+        create: { eventScoreToPar: input.scoreToPar, eventStrokes: input.strokes, currentRoundThru: 18 },
+      },
     },
   });
   return sportEventParticipant;

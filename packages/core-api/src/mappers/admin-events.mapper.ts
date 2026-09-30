@@ -1,19 +1,9 @@
-import type {
-  AdminEventParticipantDto,
-  AdminEventSummaryDto,
-} from '@poolmaster/shared/dto';
-import type { PrismaGolfLiveStatus } from '@prisma/client';
-import type {
-  EventReadinessReasonDto,
-  EventReadinessStatusDto,
-  EventStatusDto,
-} from '@poolmaster/shared/dto/events.dto';
+import type { AdminEventParticipantDto } from '@poolmaster/shared/dto';
+import type { ParticipantStandingStatus } from '@prisma/client';
 import {
   deriveLegacyParticipantStatus,
-  type GolfParticipantInactiveReason,
-  type Sport,
+  type ParticipantInactiveReason,
 } from '@poolmaster/shared/domain';
-import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
 interface DecimalLike {
   toNumber(): number;
@@ -37,7 +27,7 @@ function toNumberOrNull(value: DecimalLike | number | null | undefined): number 
 }
 
 function mapGolfStandingStatusToDto(
-  status: PrismaGolfLiveStatus,
+  status: ParticipantStandingStatus,
 ): 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut' {
   switch (status) {
     case 'IN_PROGRESS':
@@ -46,33 +36,12 @@ function mapGolfStandingStatusToDto(
       return 'complete';
     case 'WITHDRAWN':
       return 'withdrawn';
-    case 'MISSED_CUT':
+    // The golf browser renders the cross-sport ELIMINATED as a missed cut.
+    case 'ELIMINATED':
       return 'missed-cut';
     case 'ACTIVE':
       return 'active';
   }
-}
-
-export interface AdminEventSummaryRow {
-  id: string;
-  externalId: string;
-  providerId: string;
-  sport: string;
-  name: string;
-  venue: string | null;
-  location: string | null;
-  status: string;
-  startDate: Date;
-  endDate: Date | null;
-  releaseAt: Date;
-  fieldLocksAt: Date;
-  fieldLocked: boolean;
-  participantCount: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-  _count: {
-    sportEventParticipants: number;
-  };
 }
 
 export interface AdminEventParticipantRow {
@@ -81,7 +50,7 @@ export interface AdminEventParticipantRow {
   participantId: string;
   isActive: boolean;
   inactiveReason: string | null;
-  worldRanking: number | null;
+  ranking: number | null;
   oddsToWin: DecimalLike | number | null;
   seedNumber: number | null;
   updatedAt: Date;
@@ -91,7 +60,7 @@ export interface AdminEventParticipantRow {
     nationality: string | null;
   };
   /** Resolved via golf-tier-service.getEffectiveValuationsForSportEvent (plans/124 §4.6b) — undefined when the golfer has no tier/price assigned yet. */
-  golfValuation?: {
+  valuation?: {
     price: number | null;
     tierLabel: string | null;
     tierOrderIndex: number | null;
@@ -109,46 +78,11 @@ export interface AdminEventParticipantRow {
     eventStrokes: number;
     currentRound: number | null;
     currentRoundThru: number | null;
-    status: PrismaGolfLiveStatus;
+    status: ParticipantStandingStatus;
     position: number | null;
     displayPosition: string | null;
     asOf: Date | null;
   } | null;
-}
-
-export function mapAdminEventSummaryToDto(
-  row: AdminEventSummaryRow,
-): AdminEventSummaryDto {
-  const loadedParticipantCount = row._count.sportEventParticipants;
-  const operationalState = evaluateEventOperationalState({
-    participantCount: loadedParticipantCount,
-    releaseAt: row.releaseAt,
-    fieldLocksAt: row.fieldLocksAt,
-    providerFieldLocked: row.fieldLocked,
-  });
-
-  return {
-    id: row.id,
-    externalId: row.externalId,
-    providerId: row.providerId,
-    sport: row.sport as Sport,
-    name: row.name,
-    ...(row.venue !== null ? { venue: row.venue } : {}),
-    ...(row.location !== null ? { location: row.location } : {}),
-    status: row.status as EventStatusDto,
-    startDate: row.startDate.toISOString(),
-    ...(row.endDate ? { endDate: row.endDate.toISOString() } : {}),
-    releaseAt: row.releaseAt.toISOString(),
-    fieldLocksAt: row.fieldLocksAt.toISOString(),
-    fieldLocked: operationalState.fieldLocked,
-    ...(row.participantCount !== null ? { participantCount: row.participantCount } : {}),
-    loadedParticipantCount,
-    readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
-    readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
-    contestEligible: operationalState.contestEligible,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  };
 }
 
 export function mapAdminEventParticipantToDto(
@@ -173,18 +107,18 @@ export function mapAdminEventParticipantToDto(
     participantName: row.participant.name,
     ...(row.participant.shortName !== null ? { shortName: row.participant.shortName } : {}),
     ...(row.participant.nationality !== null ? { nationality: row.participant.nationality } : {}),
-    status: deriveLegacyParticipantStatus(row.isActive, row.inactiveReason as GolfParticipantInactiveReason | null),
-    ...(row.worldRanking !== null ? { worldRanking: row.worldRanking } : {}),
+    status: deriveLegacyParticipantStatus(row.isActive, row.inactiveReason as ParticipantInactiveReason | null),
+    ...(row.ranking !== null ? { ranking: row.ranking } : {}),
     ...(oddsToWin !== null ? { oddsToWin } : {}),
     ...(row.seedNumber !== null ? { seedNumber: row.seedNumber } : {}),
-    ...(row.golfValuation?.price !== null && row.golfValuation?.price !== undefined
-      ? { valuationPrice: row.golfValuation.price }
+    ...(row.valuation?.price !== null && row.valuation?.price !== undefined
+      ? { valuationPrice: row.valuation.price }
       : {}),
-    ...(row.golfValuation?.tierLabel !== undefined && row.golfValuation?.tierLabel !== null
-      ? { valuationTier: row.golfValuation.tierLabel }
+    ...(row.valuation?.tierLabel !== undefined && row.valuation?.tierLabel !== null
+      ? { valuationTier: row.valuation.tierLabel }
       : {}),
-    ...(row.golfValuation?.tierOrderIndex !== null && row.golfValuation?.tierOrderIndex !== undefined
-      ? { valuationOrderIndex: row.golfValuation.tierOrderIndex }
+    ...(row.valuation?.tierOrderIndex !== null && row.valuation?.tierOrderIndex !== undefined
+      ? { valuationOrderIndex: row.valuation.tierOrderIndex }
       : {}),
     roundCount: row.golfRounds.length,
     ...(totalStrokes !== null ? { totalStrokes } : {}),

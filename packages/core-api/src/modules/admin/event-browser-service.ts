@@ -1,14 +1,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import type { SportEventStatus } from '@poolmaster/shared/domain';
-import type {
-  AdminEventListQuery,
-  AdminEventParticipantListResponse,
-  AdminEventSummaryDto,
-} from '@poolmaster/shared/dto';
+import type { SportEventRepository } from '@poolmaster/shared/db';
+import type { AdminEventParticipantListResponse } from '@poolmaster/shared/dto';
 import {
   mapAdminEventParticipantToDto,
-  mapAdminEventSummaryToDto,
+  mapSportEventToDto,
 } from '../../mappers';
 import { GolfTierService } from '../golf/golf-tier-service';
 
@@ -17,54 +13,10 @@ export class AdminEventBrowserService {
 
   constructor(
     private readonly prisma: PrismaClient,
+    private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {
     this.golfTierService = new GolfTierService(prisma, logger);
-  }
-
-  async listEvents(query: AdminEventListQuery): Promise<AdminEventSummaryDto[]> {
-    const limit = query.limit ?? 100;
-
-    this.logger?.debug({
-      action: 'adminEventBrowser.listEvents.start',
-      data: {
-        sport: query.sport ?? null,
-        status: query.status ?? null,
-        limit,
-      },
-    }, 'Listing current-state events for root-admin browser');
-
-    const rows = await this.prisma.sportEvent.findMany({
-      where: {
-        ...(query.sport ? { sport: query.sport } : {}),
-        ...(query.status ? { status: query.status as SportEventStatus } : {}),
-      },
-      orderBy: [
-        { startDate: 'asc' },
-        { name: 'asc' },
-      ],
-      take: limit,
-      include: {
-        _count: {
-          select: {
-            sportEventParticipants: true,
-          },
-        },
-      },
-    });
-
-    const events = rows.map(mapAdminEventSummaryToDto);
-
-    this.logger?.info({
-      action: 'adminEventBrowser.listEvents.success',
-      data: {
-        returnedCount: events.length,
-        sport: query.sport ?? null,
-        status: query.status ?? null,
-      },
-    }, 'Listed current-state events for root-admin browser');
-
-    return events;
   }
 
   async listEventParticipants(
@@ -75,17 +27,7 @@ export class AdminEventBrowserService {
       data: { eventId },
     }, 'Listing current-state event participants for root-admin browser');
 
-    const event = await this.prisma.sportEvent.findUnique({
-      where: { id: eventId },
-      include: {
-        _count: {
-          select: {
-            sportEventParticipants: true,
-          },
-        },
-      },
-    });
-
+    const event = await this.sportEvents.findById(eventId);
     if (!event) {
       this.logger?.warn({
         action: 'adminEventBrowser.listEventParticipants.notFound',
@@ -97,7 +39,7 @@ export class AdminEventBrowserService {
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId: eventId },
       orderBy: [
-        { worldRanking: { sort: 'asc', nulls: 'last' } },
+        { ranking: { sort: 'asc', nulls: 'last' } },
         { seedNumber: { sort: 'asc', nulls: 'last' } },
         { participant: { name: 'asc' } },
       ],
@@ -109,29 +51,25 @@ export class AdminEventBrowserService {
             nationality: true,
           },
         },
-        golfRounds: {
+        rounds: {
           orderBy: { sportEventRound: { roundNumber: 'asc' } },
           select: {
-            strokes: true,
-            scoreToPar: true,
-            thru: true,
             status: true,
             completedAt: true,
             sportEventRound: {
               select: { roundNumber: true },
             },
+            golf: { select: { strokes: true, scoreToPar: true, thru: true } },
           },
         },
-        golfStanding: {
+        standing: {
           select: {
-            eventScoreToPar: true,
-            eventStrokes: true,
             currentRound: true,
-            currentRoundThru: true,
             status: true,
             position: true,
             displayPosition: true,
             asOf: true,
+            golf: { select: { eventScoreToPar: true, eventStrokes: true, currentRoundThru: true } },
           },
         },
       },
@@ -143,14 +81,19 @@ export class AdminEventBrowserService {
     );
 
     const response = {
-      event: mapAdminEventSummaryToDto(event),
+      event: mapSportEventToDto(event, (await this.sportEvents.countParticipants([event.id])).get(event.id) ?? 0),
       participants: rows.map((row) => {
         const valuation = valuationBySportEventParticipantId.get(row.id);
+        const { rounds, standing, ...participant } = row;
         return mapAdminEventParticipantToDto({
-          ...row,
+          ...participant,
+          golfRounds: rounds.flatMap(({ golf, ...round }) => (golf ? [{ ...round, ...golf }] : [])),
+          golfStanding: standing?.golf
+            ? { ...standing, ...standing.golf }
+            : null,
           ...(valuation
             ? {
-                golfValuation: {
+                valuation: {
                   price: valuation.price,
                   tierLabel: valuation.tierLabel,
                   tierOrderIndex: valuation.tierOrderIndex,

@@ -1235,11 +1235,11 @@ export class ProviderService {
         },
         sportEventParticipants: {
           select: {
-            golfValuation: { select: { id: true } },
+            valuation: { select: { id: true } },
             _count: {
               select: {
                 picks: true,
-                golfRounds: true,
+                rounds: true,
               },
             },
           },
@@ -1260,14 +1260,13 @@ export class ProviderService {
       }
 
       const sportEventParticipantCount = event.sportEventParticipants.length;
-      // golfValuation is 1:1 now (SportEventParticipantGolfValuation, plans/124
-      // §4.5/§4.6b replaces the legacy 1:many SportEventParticipantValuation) —
-      // count of participants that have one, not a row count.
+      // valuation is 1:1 (SportEventParticipantValuation, plans/124
+      // §4.5/§4.6b) — count of participants that have one, not a row count.
       const valuationCount = event.sportEventParticipants.filter(
-        (participant) => participant.golfValuation !== null,
+        (participant) => participant.valuation !== null,
       ).length;
       const golfRoundCount = event.sportEventParticipants.reduce(
-        (sum, participant) => sum + participant._count.golfRounds,
+        (sum, participant) => sum + participant._count.rounds,
         0,
       );
       const pickCount = event.sportEventParticipants.reduce(
@@ -1325,16 +1324,17 @@ export class ProviderService {
 
     const deletedIds = new Set<string>();
     await this.prisma.$transaction(async (tx) => {
+      // Sport extensions first, then the core rows they extend.
+      const eventParticipantScope = { sportEventParticipant: { sportEventId: { in: eventIds } } };
       await tx.sportEventParticipantGolfRound.deleteMany({
-        where: {
-          sportEventParticipant: {
-            sportEventId: {
-              in: eventIds,
-            },
-          },
-        },
+        where: { participantRound: eventParticipantScope },
       });
+      await tx.sportEventParticipantRound.deleteMany({ where: eventParticipantScope });
       await tx.sportEventParticipantGolfStanding.deleteMany({
+        where: { standing: eventParticipantScope },
+      });
+      await tx.sportEventParticipantStanding.deleteMany({ where: eventParticipantScope });
+      await tx.sportEventParticipantValuation.deleteMany({
         where: {
           sportEventParticipant: {
             sportEventId: {
@@ -1343,20 +1343,11 @@ export class ProviderService {
           },
         },
       });
-      await tx.sportEventParticipantGolfValuation.deleteMany({
-        where: {
-          sportEventParticipant: {
-            sportEventId: {
-              in: eventIds,
-            },
-          },
-        },
-      });
-      // SportEventGolfTier and SportEventRound are event-level (plans/124
+      // SportEventTier and SportEventRound are event-level (plans/124
       // §4.5/§4.10), not participant-level — both FK to SportEvent with
       // ON DELETE RESTRICT, so they must be cleared before the SportEvent
       // rows below, same as the participant-level child tables above.
-      await tx.sportEventGolfTier.deleteMany({
+      await tx.sportEventTier.deleteMany({
         where: { sportEventId: { in: eventIds } },
       });
       await tx.sportEventRound.deleteMany({

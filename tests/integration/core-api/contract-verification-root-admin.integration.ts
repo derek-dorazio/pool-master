@@ -1274,12 +1274,14 @@ describe('Contract verification (root admin)', () => {
         const sepIds = seps.map((s) => s.id);
         if (sepIds.length) {
           await prisma.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
+          await prisma.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+          await prisma.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
         }
-        await prisma.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
@@ -1443,7 +1445,7 @@ describe('Contract verification (root admin)', () => {
       const prisma = getPrisma();
       if (created.eventIds.length) {
         await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
-        await prisma.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
       if (created.sportLeagueId) {

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { GolfParticipantInactiveReason, Sport } from '../../../packages/shared/domain';
+import { ParticipantInactiveReason, Sport } from '../../../packages/shared/domain';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 
 const scenarioResponse = {
@@ -414,15 +414,16 @@ describe('MockContestFeedAdapter', () => {
     expect(byExternalId.get('p-inactive')).toMatchObject({ active: false, inactiveReason: undefined });
     expect(byExternalId.get('p-withdrawn')).toMatchObject({
       active: false,
-      inactiveReason: GolfParticipantInactiveReason.WITHDRAWN,
+      inactiveReason: ParticipantInactiveReason.WITHDRAWN,
     });
+    // A missed cut is ELIMINATED in the cross-sport model.
     expect(byExternalId.get('p-cut')).toMatchObject({
       active: false,
-      inactiveReason: GolfParticipantInactiveReason.CUT,
+      inactiveReason: ParticipantInactiveReason.ELIMINATED,
     });
     expect(byExternalId.get('p-eliminated')).toMatchObject({
       active: false,
-      inactiveReason: GolfParticipantInactiveReason.ELIMINATED,
+      inactiveReason: ParticipantInactiveReason.ELIMINATED,
     });
     expect(byExternalId.get('p-unset')).toMatchObject({ active: true, inactiveReason: undefined });
   });

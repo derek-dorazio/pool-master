@@ -125,9 +125,19 @@ export const DraftSearchResponseSchema = z.object({
 
 // --- Responses ---
 
+/** Filters narrow the list; nothing pages it (§16). Multi-valued filters are comma-separated. */
+export const ParticipantListQuerySchema = z.object({
+  q: z.string().optional().describe('Case-insensitive text matched against name, first, last and short name, and team.'),
+  sportId: z.string().optional().describe('Only participants of this sport.'),
+  status: z.string().optional().describe('Comma-separated participant statuses to include.'),
+  position: z.string().optional().describe('Comma-separated positions to include.'),
+  team: z.string().optional().describe('Comma-separated team affiliations to include.'),
+  nationality: z.string().optional().describe('Comma-separated nationalities to include.'),
+}).describe('Filters for the participant catalog.');
+export type ParticipantListQuery = z.infer<typeof ParticipantListQuerySchema>;
+
 export const ParticipantListResponseSchema = z.object({
-  participants: z.array(ParticipantDtoSchema).describe('Participant page or slice returned by the API.'),
-  total: z.number().describe('Total participants matching the current filters.'),
+  participants: z.array(ParticipantDtoSchema).describe('Every participant matching the filters, ordered by name.'),
 }).describe('Participant-list response.');
 export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSchema>;
 
@@ -137,5 +147,6 @@ export const ParticipantResponseSchema = z.object({
 
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('ParticipantDto', ParticipantDtoSchema);
+registerSchema('ParticipantListQuery', ParticipantListQuerySchema);
 registerSchema('ParticipantListResponse', ParticipantListResponseSchema);
 registerSchema('ParticipantResponse', ParticipantResponseSchema);

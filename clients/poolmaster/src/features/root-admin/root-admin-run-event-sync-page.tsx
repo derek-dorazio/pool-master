@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adminListProviders, adminSyncProviderEventData, listEvents, type EventSummaryDto } from '@/lib/api';
+import { adminListProviders, adminSyncProviderEventData, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   Alert,
@@ -38,7 +38,7 @@ const MOCK_EVENT_STATE_OPTIONS: Array<{ value: MockEventState | ''; label: strin
 function getValidEventStatusesForPreset(
   presetId: EventSyncPresetId,
   hasMockEventStateOverride: boolean,
-): EventSummaryDto['status'][] {
+): SportEventDto['status'][] {
   if (hasMockEventStateOverride) {
     return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
   }
@@ -60,7 +60,7 @@ function formatEventStartDate(startDate: string) {
   }).format(new Date(startDate));
 }
 
-function formatEventOptionLabel(event: EventSummaryDto) {
+function formatEventOptionLabel(event: SportEventDto) {
   const participantText = typeof event.participantCount === 'number'
     ? `${event.participantCount} participants`
     : 'participants unknown';
@@ -128,11 +128,10 @@ export function RootAdminRunEventSyncPage() {
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
-    queryFn: async (): Promise<EventSummaryDto[]> => {
+    queryFn: async (): Promise<SportEventDto[]> => {
       const response = await listEvents({
         query: {
           sport: eventSyncSport,
-          limit: 100,
         },
       });
 

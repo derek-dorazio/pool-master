@@ -15,11 +15,11 @@ function fixedSequence(values: number[]): () => number {
 }
 
 describe('deriveSeedNumbersAndOdds', () => {
-  it('pool-master-2re assigns seedNumber 1..N by ascending worldRanking', () => {
+  it('pool-master-2re assigns seedNumber 1..N by ascending ranking', () => {
     const roster = [
-      { participantId: 'p-3', worldRanking: 30 },
-      { participantId: 'p-1', worldRanking: 1 },
-      { participantId: 'p-2', worldRanking: 15 },
+      { participantId: 'p-3', ranking: 30 },
+      { participantId: 'p-1', ranking: 1 },
+      { participantId: 'p-2', ranking: 15 },
     ];
 
     const result = deriveSeedNumbersAndOdds(roster, fixedSequence([0.5]));
@@ -31,10 +31,10 @@ describe('deriveSeedNumbersAndOdds', () => {
     ]);
   });
 
-  it('pool-master-2re sorts null worldRanking last', () => {
+  it('pool-master-2re sorts null ranking last', () => {
     const roster = [
-      { participantId: 'p-null', worldRanking: null },
-      { participantId: 'p-1', worldRanking: 5 },
+      { participantId: 'p-null', ranking: null },
+      { participantId: 'p-1', ranking: 5 },
     ];
 
     const result = deriveSeedNumbersAndOdds(roster, fixedSequence([0.5]));
@@ -44,9 +44,9 @@ describe('deriveSeedNumbersAndOdds', () => {
 
   it('pool-master-2re uses the injected random to break ties deterministically, never repeating a seed', () => {
     const roster = [
-      { participantId: 'p-a', worldRanking: 10 },
-      { participantId: 'p-b', worldRanking: 10 },
-      { participantId: 'p-c', worldRanking: 10 },
+      { participantId: 'p-a', ranking: 10 },
+      { participantId: 'p-b', ranking: 10 },
+      { participantId: 'p-c', ranking: 10 },
     ];
 
     // Fisher-Yates with a fixed 0.5 draw each step is deterministic and repeatable.
@@ -61,9 +61,9 @@ describe('deriveSeedNumbersAndOdds', () => {
     // With jitter neutralized (random() = 0.5 -> jitter = 1), weight(i) = 1/position(i)
     // is strictly decreasing, so oddsToWin (1/probability) is strictly increasing.
     const roster = [
-      { participantId: 'p-1', worldRanking: 1 },
-      { participantId: 'p-2', worldRanking: 2 },
-      { participantId: 'p-3', worldRanking: 3 },
+      { participantId: 'p-1', ranking: 1 },
+      { participantId: 'p-2', ranking: 2 },
+      { participantId: 'p-3', ranking: 3 },
     ];
 
     const result = deriveSeedNumbersAndOdds(roster, fixedSequence([0.5]));

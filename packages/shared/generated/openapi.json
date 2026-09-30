@@ -2267,18 +2267,17 @@
             ],
             "enum": [
               "WITHDRAWN",
-              "CUT",
               "ELIMINATED",
               null
             ],
             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
           },
-          "worldRanking": {
+          "ranking": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Latest copied global world ranking on this event participant."
+            "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
           },
           "oddsToWin": {
             "type": [
@@ -2680,7 +2679,7 @@
           "shortName",
           "isActive",
           "inactiveReason",
-          "worldRanking",
+          "ranking",
           "oddsToWin",
           "seedNumber",
           "totalScoreToPar",
@@ -2767,18 +2766,17 @@
                 ],
                 "enum": [
                   "WITHDRAWN",
-                  "CUT",
                   "ELIMINATED",
                   null
                 ],
                 "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
               },
-              "worldRanking": {
+              "ranking": {
                 "type": [
                   "integer",
                   "null"
                 ],
-                "description": "Latest copied global world ranking on this event participant."
+                "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
               },
               "oddsToWin": {
                 "type": [
@@ -3180,7 +3178,7 @@
               "shortName",
               "isActive",
               "inactiveReason",
-              "worldRanking",
+              "ranking",
               "oddsToWin",
               "seedNumber",
               "totalScoreToPar",
@@ -3346,18 +3344,17 @@
                       ],
                       "enum": [
                         "WITHDRAWN",
-                        "CUT",
                         "ELIMINATED",
                         null
                       ],
                       "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                     },
-                    "worldRanking": {
+                    "ranking": {
                       "type": [
                         "integer",
                         "null"
                       ],
-                      "description": "Latest copied global world ranking on this event participant."
+                      "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                     },
                     "oddsToWin": {
                       "type": [
@@ -3759,7 +3756,7 @@
                     "shortName",
                     "isActive",
                     "inactiveReason",
-                    "worldRanking",
+                    "ranking",
                     "oddsToWin",
                     "seedNumber",
                     "totalScoreToPar",
@@ -3908,18 +3905,17 @@
                   ],
                   "enum": [
                     "WITHDRAWN",
-                    "CUT",
                     "ELIMINATED",
                     null
                   ],
                   "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                 },
-                "worldRanking": {
+                "ranking": {
                   "type": [
                     "integer",
                     "null"
                   ],
-                  "description": "Latest copied global world ranking on this event participant."
+                  "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                 },
                 "oddsToWin": {
                   "type": [
@@ -4321,7 +4317,7 @@
                 "shortName",
                 "isActive",
                 "inactiveReason",
-                "worldRanking",
+                "ranking",
                 "oddsToWin",
                 "seedNumber",
                 "totalScoreToPar",
@@ -4477,18 +4473,17 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
                             ],
-                            "description": "Latest copied global world ranking on this event participant."
+                            "description": "Rank that applied at this event: seeded from the provider's ranking, then editable by an admin. Null when unranked."
                           },
                           "oddsToWin": {
                             "type": [
@@ -4890,7 +4885,7 @@
                           "shortName",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "totalScoreToPar",
@@ -11516,6 +11511,37 @@
         "additionalProperties": false,
         "description": "Participant summary returned by participant-search and detail APIs."
       },
+      "ParticipantListQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Case-insensitive text matched against name, first, last and short name, and team."
+          },
+          "sportId": {
+            "type": "string",
+            "description": "Only participants of this sport."
+          },
+          "status": {
+            "type": "string",
+            "description": "Comma-separated participant statuses to include."
+          },
+          "position": {
+            "type": "string",
+            "description": "Comma-separated positions to include."
+          },
+          "team": {
+            "type": "string",
+            "description": "Comma-separated team affiliations to include."
+          },
+          "nationality": {
+            "type": "string",
+            "description": "Comma-separated nationalities to include."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Filters for the participant catalog."
+      },
       "ParticipantListResponse": {
         "type": "object",
         "properties": {
@@ -11673,16 +11699,11 @@
               "additionalProperties": false,
               "description": "Participant summary returned by participant-search and detail APIs."
             },
-            "description": "Participant page or slice returned by the API."
-          },
-          "total": {
-            "type": "number",
-            "description": "Total participants matching the current filters."
+            "description": "Every participant matching the filters, ordered by name."
           }
         },
         "required": [
-          "participants",
-          "total"
+          "participants"
         ],
         "additionalProperties": false,
         "description": "Participant-list response."
@@ -11876,16 +11897,21 @@
           "FIELD_LOCKED"
         ]
       },
-      "EventSummaryDto": {
+      "SportEventDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
+            "format": "uuid",
             "description": "Sport-event identifier."
           },
           "externalId": {
             "type": "string",
-            "description": "Provider event identifier used by event-level sync operations."
+            "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
           },
           "sport": {
             "type": "string",
@@ -11905,25 +11931,25 @@
               "MLB",
               "UFC"
             ],
-            "description": "Sport associated with the event."
+            "description": "Sport the event belongs to."
           },
           "name": {
             "type": "string",
-            "description": "Primary event name shown in contest and event selectors."
+            "description": "Event name shown in contest and event selectors."
           },
           "venue": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Venue name for the event, when known."
+            "description": "Venue name when known; null otherwise."
           },
           "location": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Human-readable event location, when known."
+            "description": "Human-readable location when known; null otherwise."
           },
           "status": {
             "type": "string",
@@ -11934,12 +11960,12 @@
               "CANCELLED",
               "POSTPONED"
             ],
-            "description": "Provider-normalized event status."
+            "description": "Event lifecycle status."
           },
           "startDate": {
             "type": "string",
             "format": "date-time",
-            "description": "Scheduled or actual event start time."
+            "description": "Scheduled or actual start time."
           },
           "endDate": {
             "type": [
@@ -11947,28 +11973,39 @@
               "null"
             ],
             "format": "date-time",
-            "description": "Scheduled or actual event end time, when known."
+            "description": "Scheduled or actual end time when known; null otherwise."
           },
-          "releaseAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "PoolMaster operational datetime when the event becomes available for contest setup."
-          },
-          "fieldLocksAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
+          "rounds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Number of rounds when the format has them; null otherwise."
           },
           "participantCount": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "Participant count when the provider exposes field size."
+            "description": "Field size the provider reports, when it reports one; null otherwise."
+          },
+          "loadedParticipantCount": {
+            "type": "integer",
+            "description": "Number of event participants currently persisted for the event."
+          },
+          "releaseAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event becomes available for contest setup."
+          },
+          "fieldLocksAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "After this time, field changes are no longer honored for new contest setup."
           },
           "fieldLocked": {
             "type": "boolean",
-            "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
+            "description": "Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed."
           },
           "readinessStatus": {
             "type": "string",
@@ -11978,7 +12015,7 @@
               "CONTEST_ELIGIBLE",
               "FIELD_LOCKED"
             ],
-            "description": "Current readiness state for contest setup and event-driven contest operations."
+            "description": "Contest-setup readiness right now."
           },
           "readinessReasons": {
             "type": "array",
@@ -11990,51 +12027,127 @@
                 "FIELD_LOCKED"
               ]
             },
-            "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
+            "description": "Why the event is or is not contest-eligible right now."
           },
           "contestEligible": {
             "type": "boolean",
-            "description": "Whether the event is currently eligible for contest creation/configuration flows."
+            "description": "Whether a contest can be created or configured for the event right now."
+          },
+          "seasonId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Season the event belongs to; null for a provider-synced event with no season."
+          },
+          "leagueEventId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+          },
+          "syncScope": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "SCORES_ONLY",
+              "FULL"
+            ],
+            "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
+          },
+          "autoLifecycleEnabled": {
+            "type": "boolean",
+            "description": "Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event row was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event row was last updated."
           }
         },
         "required": [
           "id",
           "externalId",
+          "providerId",
           "sport",
           "name",
+          "venue",
+          "location",
           "status",
           "startDate",
+          "endDate",
+          "rounds",
+          "participantCount",
+          "loadedParticipantCount",
           "releaseAt",
           "fieldLocksAt",
           "fieldLocked",
           "readinessStatus",
           "readinessReasons",
-          "contestEligible"
+          "contestEligible",
+          "seasonId",
+          "leagueEventId",
+          "syncScope",
+          "autoLifecycleEnabled",
+          "metadata",
+          "createdAt",
+          "updatedAt"
         ],
         "additionalProperties": false,
-        "description": "Event list item returned from event-discovery endpoints."
+        "description": "A real-world event a contest can be run on — a golf tournament, a race, a match."
       },
-      "EventListQuery": {
+      "SportEventListQuery": {
         "type": "object",
         "properties": {
           "sport": {
             "type": "string",
-            "description": "Optional sport filter."
+            "enum": [
+              "GOLF",
+              "NFL",
+              "NBA",
+              "F1",
+              "NASCAR",
+              "NCAA_BASKETBALL",
+              "NCAA_HOCKEY",
+              "NCAA_FOOTBALL",
+              "TENNIS",
+              "HORSE_RACING",
+              "SOCCER",
+              "NHL",
+              "MLB",
+              "UFC"
+            ],
+            "description": "Only events of this sport."
           },
           "status": {
             "type": "string",
-            "description": "Optional provider-normalized event status filter."
-          },
-          "limit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100,
-            "description": "Optional page-size style limit."
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "POSTPONED"
+            ],
+            "description": "Only events in this lifecycle status."
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Filters for the sport-event list."
       },
-      "EventListResponse": {
+      "SportEventListResponse": {
         "type": "object",
         "properties": {
           "events": {
@@ -12044,11 +12157,16 @@
               "properties": {
                 "id": {
                   "type": "string",
+                  "format": "uuid",
                   "description": "Sport-event identifier."
                 },
                 "externalId": {
                   "type": "string",
-                  "description": "Provider event identifier used by event-level sync operations."
+                  "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerId": {
+                  "type": "string",
+                  "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
                 },
                 "sport": {
                   "type": "string",
@@ -12068,25 +12186,25 @@
                     "MLB",
                     "UFC"
                   ],
-                  "description": "Sport associated with the event."
+                  "description": "Sport the event belongs to."
                 },
                 "name": {
                   "type": "string",
-                  "description": "Primary event name shown in contest and event selectors."
+                  "description": "Event name shown in contest and event selectors."
                 },
                 "venue": {
                   "type": [
                     "string",
                     "null"
                   ],
-                  "description": "Venue name for the event, when known."
+                  "description": "Venue name when known; null otherwise."
                 },
                 "location": {
                   "type": [
                     "string",
                     "null"
                   ],
-                  "description": "Human-readable event location, when known."
+                  "description": "Human-readable location when known; null otherwise."
                 },
                 "status": {
                   "type": "string",
@@ -12097,12 +12215,12 @@
                     "CANCELLED",
                     "POSTPONED"
                   ],
-                  "description": "Provider-normalized event status."
+                  "description": "Event lifecycle status."
                 },
                 "startDate": {
                   "type": "string",
                   "format": "date-time",
-                  "description": "Scheduled or actual event start time."
+                  "description": "Scheduled or actual start time."
                 },
                 "endDate": {
                   "type": [
@@ -12110,28 +12228,39 @@
                     "null"
                   ],
                   "format": "date-time",
-                  "description": "Scheduled or actual event end time, when known."
+                  "description": "Scheduled or actual end time when known; null otherwise."
                 },
-                "releaseAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "PoolMaster operational datetime when the event becomes available for contest setup."
-                },
-                "fieldLocksAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
+                "rounds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Number of rounds when the format has them; null otherwise."
                 },
                 "participantCount": {
                   "type": [
                     "integer",
                     "null"
                   ],
-                  "description": "Participant count when the provider exposes field size."
+                  "description": "Field size the provider reports, when it reports one; null otherwise."
+                },
+                "loadedParticipantCount": {
+                  "type": "integer",
+                  "description": "Number of event participants currently persisted for the event."
+                },
+                "releaseAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event becomes available for contest setup."
+                },
+                "fieldLocksAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "After this time, field changes are no longer honored for new contest setup."
                 },
                 "fieldLocked": {
                   "type": "boolean",
-                  "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
+                  "description": "Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed."
                 },
                 "readinessStatus": {
                   "type": "string",
@@ -12141,7 +12270,7 @@
                     "CONTEST_ELIGIBLE",
                     "FIELD_LOCKED"
                   ],
-                  "description": "Current readiness state for contest setup and event-driven contest operations."
+                  "description": "Contest-setup readiness right now."
                 },
                 "readinessReasons": {
                   "type": "array",
@@ -12153,37 +12282,96 @@
                       "FIELD_LOCKED"
                     ]
                   },
-                  "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
+                  "description": "Why the event is or is not contest-eligible right now."
                 },
                 "contestEligible": {
                   "type": "boolean",
-                  "description": "Whether the event is currently eligible for contest creation/configuration flows."
+                  "description": "Whether a contest can be created or configured for the event right now."
+                },
+                "seasonId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "Season the event belongs to; null for a provider-synced event with no season."
+                },
+                "leagueEventId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                },
+                "syncScope": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "SCORES_ONLY",
+                    "FULL"
+                  ],
+                  "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
+                },
+                "autoLifecycleEnabled": {
+                  "type": "boolean",
+                  "description": "Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event row was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event row was last updated."
                 }
               },
               "required": [
                 "id",
                 "externalId",
+                "providerId",
                 "sport",
                 "name",
+                "venue",
+                "location",
                 "status",
                 "startDate",
+                "endDate",
+                "rounds",
+                "participantCount",
+                "loadedParticipantCount",
                 "releaseAt",
                 "fieldLocksAt",
                 "fieldLocked",
                 "readinessStatus",
                 "readinessReasons",
-                "contestEligible"
+                "contestEligible",
+                "seasonId",
+                "leagueEventId",
+                "syncScope",
+                "autoLifecycleEnabled",
+                "metadata",
+                "createdAt",
+                "updatedAt"
               ],
               "additionalProperties": false,
-              "description": "Event list item returned from event-discovery endpoints."
-            }
+              "description": "A real-world event a contest can be run on — a golf tournament, a race, a match."
+            },
+            "description": "Matching events, earliest start first."
           }
         },
         "required": [
           "events"
         ],
         "additionalProperties": false,
-        "description": "Event list response for the requested sport or filter set."
+        "description": "Sport events matching the filters."
       },
       "AuditEntryDto": {
         "type": "object",
@@ -24474,49 +24662,61 @@
     "/api/v1/events/": {
       "get": {
         "operationId": "listEvents",
-        "summary": "List ingested sport events",
+        "summary": "List sport events",
         "tags": [
           "Events"
         ],
-        "description": "Returns ingested sport events so admin, scoring, and contest setup surfaces can browse the current event catalog.",
+        "description": "The sport-event catalog, narrowed by sport and status and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size and contest-setup readiness.",
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
             },
             "in": "query",
             "name": "sport",
             "required": false,
-            "description": "Optional sport filter."
+            "description": "Only events of this sport."
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "IN_PROGRESS",
+                "COMPLETED",
+                "CANCELLED",
+                "POSTPONED"
+              ]
             },
             "in": "query",
             "name": "status",
             "required": false,
-            "description": "Optional provider-normalized event status filter."
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "description": "Optional page-size style limit."
+            "description": "Only events in this lifecycle status."
           }
         ],
         "responses": {
           "200": {
-            "description": "Event list response for the requested sport or filter set.",
+            "description": "Sport events matching the filters.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EventListResponse"
+                  "$ref": "#/components/schemas/SportEventListResponse"
                 }
               }
             }
@@ -24527,11 +24727,11 @@
     "/api/v1/participants/": {
       "get": {
         "operationId": "listParticipants",
-        "summary": "Search and list participants",
+        "summary": "List participants",
         "tags": [
           "Participants"
         ],
-        "description": "Searches and lists participants so contest configuration, scoring, and ingestion-mapping flows can browse the participant catalog.",
+        "description": "The participant catalog, narrowed by text and filters and never paged. Any signed-in user may read it: contest setup and ingestion mapping browse it, and a root admin maintains it.",
         "parameters": [
           {
             "schema": {
@@ -24539,7 +24739,8 @@
             },
             "in": "query",
             "name": "q",
-            "required": false
+            "required": false,
+            "description": "Case-insensitive text matched against name, first, last and short name, and team."
           },
           {
             "schema": {
@@ -24547,7 +24748,8 @@
             },
             "in": "query",
             "name": "sportId",
-            "required": false
+            "required": false,
+            "description": "Only participants of this sport."
           },
           {
             "schema": {
@@ -24555,7 +24757,8 @@
             },
             "in": "query",
             "name": "status",
-            "required": false
+            "required": false,
+            "description": "Comma-separated participant statuses to include."
           },
           {
             "schema": {
@@ -24563,7 +24766,8 @@
             },
             "in": "query",
             "name": "position",
-            "required": false
+            "required": false,
+            "description": "Comma-separated positions to include."
           },
           {
             "schema": {
@@ -24571,7 +24775,8 @@
             },
             "in": "query",
             "name": "team",
-            "required": false
+            "required": false,
+            "description": "Comma-separated team affiliations to include."
           },
           {
             "schema": {
@@ -24579,23 +24784,8 @@
             },
             "in": "query",
             "name": "nationality",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "offset",
-            "required": false
+            "required": false,
+            "description": "Comma-separated nationalities to include."
           }
         ],
         "responses": {
@@ -24613,11 +24803,11 @@
       },
       "post": {
         "operationId": "createParticipant",
-        "summary": "Create a new participant",
+        "summary": "Create a participant",
         "tags": [
           "Participants"
         ],
-        "description": "Creates a participant record in the shared participant catalog.",
+        "description": "Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
         "requestBody": {
           "required": true,
           "content": {
@@ -24688,6 +24878,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ParticipantResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -24771,7 +25000,7 @@
         "tags": [
           "Participants"
         ],
-        "description": "Updates mutable participant fields such as display metadata and identifiers.",
+        "description": "Updates mutable participant fields such as display metadata and identifiers. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).",
         "requestBody": {
           "required": true,
           "content": {
@@ -24852,7 +25081,7 @@
               }
             }
           },
-          "404": {
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -24890,244 +25119,8 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/events": {
-      "get": {
-        "operationId": "adminListEvents",
-        "summary": "List current persisted events",
-        "tags": [
-          "Admin"
-        ],
-        "description": "Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "NFL",
-                "NBA",
-                "F1",
-                "NASCAR",
-                "NCAA_BASKETBALL",
-                "NCAA_HOCKEY",
-                "NCAA_FOOTBALL",
-                "TENNIS",
-                "HORSE_RACING",
-                "SOCCER",
-                "NHL",
-                "MLB",
-                "UFC"
-              ]
-            },
-            "in": "query",
-            "name": "sport",
-            "required": false,
-            "description": "Optional sport filter for root-admin event browsing."
           },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SCHEDULED",
-                "IN_PROGRESS",
-                "COMPLETED",
-                "CANCELLED",
-                "POSTPONED"
-              ]
-            },
-            "in": "query",
-            "name": "status",
-            "required": false,
-            "description": "Optional current event-status filter."
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 250
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "description": "Maximum number of current event rows to return."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Root-admin current-state event browser response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "Internal SportEvent identifier."
-                          },
-                          "externalId": {
-                            "type": "string",
-                            "description": "Provider-side event identifier used by sync operations."
-                          },
-                          "providerId": {
-                            "type": "string",
-                            "description": "Provider/source that emitted the current event row."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport associated with the event."
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Current event display name."
-                          },
-                          "venue": {
-                            "type": "string",
-                            "description": "Venue name when known."
-                          },
-                          "location": {
-                            "type": "string",
-                            "description": "Human-readable event location when known."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "SCHEDULED",
-                              "IN_PROGRESS",
-                              "COMPLETED",
-                              "CANCELLED",
-                              "POSTPONED"
-                            ],
-                            "description": "Current provider-normalized event status."
-                          },
-                          "startDate": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Current scheduled or actual event start time."
-                          },
-                          "endDate": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Current scheduled or actual event end time when known."
-                          },
-                          "releaseAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "PoolMaster datetime when commissioner contest setup opens."
-                          },
-                          "fieldLocksAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "PoolMaster datetime after which field changes are locked for contest setup."
-                          },
-                          "fieldLocked": {
-                            "type": "boolean",
-                            "description": "Whether the current event field is locked for contest setup behavior."
-                          },
-                          "participantCount": {
-                            "type": "integer",
-                            "description": "Provider-reported participant count when known."
-                          },
-                          "loadedParticipantCount": {
-                            "type": "integer",
-                            "description": "Number of SportEventParticipant rows currently persisted for this event."
-                          },
-                          "readinessStatus": {
-                            "type": "string",
-                            "enum": [
-                              "NOT_RELEASED",
-                              "PENDING_FIELD",
-                              "CONTEST_ELIGIBLE",
-                              "FIELD_LOCKED"
-                            ],
-                            "description": "Current PoolMaster contest-readiness interpretation."
-                          },
-                          "readinessReasons": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "enum": [
-                                "EVENT_NOT_RELEASED",
-                                "FIELD_NOT_LOADED",
-                                "FIELD_LOCKED"
-                              ]
-                            },
-                            "description": "Structured reasons explaining current contest readiness."
-                          },
-                          "contestEligible": {
-                            "type": "boolean",
-                            "description": "Whether the event is currently eligible for contest creation/configuration flows."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When PoolMaster first persisted the event row."
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When PoolMaster last updated the event row."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "externalId",
-                          "providerId",
-                          "sport",
-                          "name",
-                          "status",
-                          "startDate",
-                          "releaseAt",
-                          "fieldLocksAt",
-                          "fieldLocked",
-                          "loadedParticipantCount",
-                          "readinessStatus",
-                          "readinessReasons",
-                          "contestEligible",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Root-admin current-state event row. This is not sync-run history; it reflects the latest persisted SportEvent state."
-                      },
-                      "description": "Current persisted event rows matching the root-admin browser query."
-                    }
-                  },
-                  "required": [
-                    "events"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Root-admin current-state event browser response."
-                }
-              }
-            }
-          },
-          "401": {
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -25203,15 +25196,15 @@
                         "id": {
                           "type": "string",
                           "format": "uuid",
-                          "description": "Internal SportEvent identifier."
+                          "description": "Sport-event identifier."
                         },
                         "externalId": {
                           "type": "string",
-                          "description": "Provider-side event identifier used by sync operations."
+                          "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
                         },
                         "providerId": {
                           "type": "string",
-                          "description": "Provider/source that emitted the current event row."
+                          "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
                         },
                         "sport": {
                           "type": "string",
@@ -25231,19 +25224,25 @@
                             "MLB",
                             "UFC"
                           ],
-                          "description": "Sport associated with the event."
+                          "description": "Sport the event belongs to."
                         },
                         "name": {
                           "type": "string",
-                          "description": "Current event display name."
+                          "description": "Event name shown in contest and event selectors."
                         },
                         "venue": {
-                          "type": "string",
-                          "description": "Venue name when known."
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Venue name when known; null otherwise."
                         },
                         "location": {
-                          "type": "string",
-                          "description": "Human-readable event location when known."
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "Human-readable location when known; null otherwise."
                         },
                         "status": {
                           "type": "string",
@@ -25254,39 +25253,52 @@
                             "CANCELLED",
                             "POSTPONED"
                           ],
-                          "description": "Current provider-normalized event status."
+                          "description": "Event lifecycle status."
                         },
                         "startDate": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "Current scheduled or actual event start time."
+                          "description": "Scheduled or actual start time."
                         },
                         "endDate": {
-                          "type": "string",
+                          "type": [
+                            "string",
+                            "null"
+                          ],
                           "format": "date-time",
-                          "description": "Current scheduled or actual event end time when known."
+                          "description": "Scheduled or actual end time when known; null otherwise."
+                        },
+                        "rounds": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Number of rounds when the format has them; null otherwise."
+                        },
+                        "participantCount": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Field size the provider reports, when it reports one; null otherwise."
+                        },
+                        "loadedParticipantCount": {
+                          "type": "integer",
+                          "description": "Number of event participants currently persisted for the event."
                         },
                         "releaseAt": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "PoolMaster datetime when commissioner contest setup opens."
+                          "description": "When the event becomes available for contest setup."
                         },
                         "fieldLocksAt": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "PoolMaster datetime after which field changes are locked for contest setup."
+                          "description": "After this time, field changes are no longer honored for new contest setup."
                         },
                         "fieldLocked": {
                           "type": "boolean",
-                          "description": "Whether the current event field is locked for contest setup behavior."
-                        },
-                        "participantCount": {
-                          "type": "integer",
-                          "description": "Provider-reported participant count when known."
-                        },
-                        "loadedParticipantCount": {
-                          "type": "integer",
-                          "description": "Number of SportEventParticipant rows currently persisted for this event."
+                          "description": "Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed."
                         },
                         "readinessStatus": {
                           "type": "string",
@@ -25296,7 +25308,7 @@
                             "CONTEST_ELIGIBLE",
                             "FIELD_LOCKED"
                           ],
-                          "description": "Current PoolMaster contest-readiness interpretation."
+                          "description": "Contest-setup readiness right now."
                         },
                         "readinessReasons": {
                           "type": "array",
@@ -25308,21 +25320,55 @@
                               "FIELD_LOCKED"
                             ]
                           },
-                          "description": "Structured reasons explaining current contest readiness."
+                          "description": "Why the event is or is not contest-eligible right now."
                         },
                         "contestEligible": {
                           "type": "boolean",
-                          "description": "Whether the event is currently eligible for contest creation/configuration flows."
+                          "description": "Whether a contest can be created or configured for the event right now."
+                        },
+                        "seasonId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uuid",
+                          "description": "Season the event belongs to; null for a provider-synced event with no season."
+                        },
+                        "leagueEventId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uuid",
+                          "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                        },
+                        "syncScope": {
+                          "type": "string",
+                          "enum": [
+                            "NONE",
+                            "SCORES_ONLY",
+                            "FULL"
+                          ],
+                          "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
+                        },
+                        "autoLifecycleEnabled": {
+                          "type": "boolean",
+                          "description": "Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)"
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
                         },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "When PoolMaster first persisted the event row."
+                          "description": "When the event row was created."
                         },
                         "updatedAt": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "When PoolMaster last updated the event row."
+                          "description": "When the event row was last updated."
                         }
                       },
                       "required": [
@@ -25331,20 +25377,30 @@
                         "providerId",
                         "sport",
                         "name",
+                        "venue",
+                        "location",
                         "status",
                         "startDate",
+                        "endDate",
+                        "rounds",
+                        "participantCount",
+                        "loadedParticipantCount",
                         "releaseAt",
                         "fieldLocksAt",
                         "fieldLocked",
-                        "loadedParticipantCount",
                         "readinessStatus",
                         "readinessReasons",
                         "contestEligible",
+                        "seasonId",
+                        "leagueEventId",
+                        "syncScope",
+                        "autoLifecycleEnabled",
+                        "metadata",
                         "createdAt",
                         "updatedAt"
                       ],
                       "additionalProperties": false,
-                      "description": "Current persisted event state for the requested event."
+                      "description": "The event whose participants these are."
                     },
                     "participants": {
                       "type": "array",
@@ -25382,9 +25438,9 @@
                             "type": "string",
                             "description": "Provider-emitted per-event participant status."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": "integer",
-                            "description": "Current per-event world-ranking snapshot when provided."
+                            "description": "Rank that applied at this event, when one is recorded."
                           },
                           "oddsToWin": {
                             "type": "number",
@@ -29201,7 +29257,7 @@
                           "valuationCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event."
+                            "description": "Number of participants with a SportEventParticipantValuation (tier/price) row attached through this event."
                           },
                           "golfRoundCount": {
                             "type": "integer",
@@ -33244,7 +33300,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -33257,7 +33313,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -33382,7 +33438,7 @@
                           "type": "string",
                           "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -33395,7 +33451,7 @@
                         "shortName",
                         "nationality",
                         "status",
-                        "worldRanking"
+                        "ranking"
                       ],
                       "additionalProperties": false,
                       "description": "One golfer's current league affiliation."
@@ -33495,7 +33551,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.",
+        "description": "Bulk row patch (ranking) — same shape as the tournament field bulk-patch.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33511,7 +33567,7 @@
                         "participantId": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -33520,7 +33576,7 @@
                       },
                       "required": [
                         "participantId",
-                        "worldRanking"
+                        "ranking"
                       ],
                       "additionalProperties": false
                     },
@@ -33581,7 +33637,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -33594,7 +33650,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -33753,7 +33809,7 @@
                         "playerName": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": "integer"
                         }
                       },
@@ -33808,7 +33864,7 @@
                               "playerName": {
                                 "type": "string"
                               },
-                              "worldRanking": {
+                              "ranking": {
                                 "type": "integer"
                               }
                             },
@@ -33926,7 +33982,7 @@
                         "playerName": {
                           "type": "string"
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": "integer"
                         }
                       },
@@ -33990,7 +34046,7 @@
                             "type": "string",
                             "description": "Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer."
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -34003,7 +34059,7 @@
                           "shortName",
                           "nationality",
                           "status",
-                          "worldRanking"
+                          "ranking"
                         ],
                         "additionalProperties": false,
                         "description": "One golfer's current league affiliation."
@@ -38792,13 +38848,12 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -38821,7 +38876,7 @@
                               "number",
                               "null"
                             ],
-                            "description": "SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
+                            "description": "SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
                           },
                           "isLeagueRosterMember": {
                             "type": "boolean",
@@ -38836,7 +38891,7 @@
                           "nationality",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "price",
@@ -38902,7 +38957,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.",
+        "description": "One request per Save on the field grid. price writes SportEventParticipantValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.",
         "requestBody": {
           "required": true,
           "content": {
@@ -38928,12 +38983,11 @@
                           ],
                           "enum": [
                             "WITHDRAWN",
-                            "CUT",
                             "ELIMINATED",
                             null
                           ]
                         },
-                        "worldRanking": {
+                        "ranking": {
                           "type": [
                             "integer",
                             "null"
@@ -39028,13 +39082,12 @@
                             ],
                             "enum": [
                               "WITHDRAWN",
-                              "CUT",
                               "ELIMINATED",
                               null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
-                          "worldRanking": {
+                          "ranking": {
                             "type": [
                               "integer",
                               "null"
@@ -39057,7 +39110,7 @@
                               "number",
                               "null"
                             ],
-                            "description": "SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
+                            "description": "SportEventParticipantValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL."
                           },
                           "isLeagueRosterMember": {
                             "type": "boolean",
@@ -39072,7 +39125,7 @@
                           "nationality",
                           "isActive",
                           "inactiveReason",
-                          "worldRanking",
+                          "ranking",
                           "oddsToWin",
                           "seedNumber",
                           "price",
@@ -39981,7 +40034,7 @@
         "tags": [
           "Admin Golf"
         ],
-        "description": "Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.",
+        "description": "Partitions the active field across however many SportEventTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.",
         "requestBody": {
           "required": true,
           "content": {

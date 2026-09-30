@@ -267,7 +267,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(await prisma.sportEventParticipant.count({ where: { sportEventId: staleGolfEvent.id } })).toBe(0);
     expect(await prisma.sportEventParticipantGolfRound.count()).toBe(0);
     expect(await prisma.sportEventParticipantGolfStanding.count()).toBe(0);
-    expect(await prisma.sportEventParticipantGolfValuation.count()).toBe(0);
+    expect(await prisma.sportEventParticipantValuation.count()).toBe(0);
     expect(await prisma.participantProviderMapping.count()).toBe(3);
     expect(await prisma.participant.count()).toBe(3);
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: directContest.id } })).resolves.toBeDefined();
@@ -363,7 +363,7 @@ async function attachCleanupEventParticipant(input: {
     },
   });
   if (input.includeChildren) {
-    const tier = await getPrisma().sportEventGolfTier.create({
+    const tier = await getPrisma().sportEventTier.create({
       data: {
         sportEventId: input.eventId,
         tierKey: `cleanup-tier-${eventParticipant.id}`,
@@ -372,10 +372,10 @@ async function attachCleanupEventParticipant(input: {
         defaultPickCount: 1,
       },
     });
-    await getPrisma().sportEventParticipantGolfValuation.create({
+    await getPrisma().sportEventParticipantValuation.create({
       data: {
         sportEventParticipantId: eventParticipant.id,
-        sportEventGolfTierId: tier.id,
+        sportEventTierId: tier.id,
         price: 10,
         tierOrderIndex: 1,
       },
@@ -387,23 +387,20 @@ async function attachCleanupEventParticipant(input: {
         scheduledDate: new Date('2026-01-01T00:00:00.000Z'),
       },
     });
-    await getPrisma().sportEventParticipantGolfRound.create({
+    await getPrisma().sportEventParticipantRound.create({
       data: {
         sportEventParticipantId: eventParticipant.id,
         sportEventRoundId: round.id,
-        strokes: 70,
-        scoreToPar: -2,
         status: 'COMPLETED',
+        golf: { create: { strokes: 70, scoreToPar: -2 } },
       },
     });
-    await getPrisma().sportEventParticipantGolfStanding.create({
+    await getPrisma().sportEventParticipantStanding.create({
       data: {
         sportEventParticipantId: eventParticipant.id,
-        eventScoreToPar: -2,
-        eventStrokes: 70,
         currentRound: 1,
-        currentRoundThru: 18,
         status: 'COMPLETE',
+        golf: { create: { eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 } },
       },
     });
   }

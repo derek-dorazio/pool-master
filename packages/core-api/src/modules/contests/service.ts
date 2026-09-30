@@ -40,17 +40,15 @@ import {
   toContestEntryDetailDto,
   type ContestEntryParticipantRow,
   type GolfLeaderboardModel,
-  type GolfLeaderboardParticipantRow,
 } from '../../mappers/contests.mapper';
 import {
   buildGolfLeaderboardEntry,
-  buildGolfRoundColumns,
   GOLF_CONTEST_CONFIGURATION_SELECT,
-  mapGolfLeaderboardStatus,
   rankGolfLeaderboardEntries,
   resolveGolfLeaderboardCountingRule,
   resolveGolfLeaderboardScoringDefinition,
 } from './golf-leaderboard-calculator';
+import { loadGolfLeaderboardParticipants } from './golf-leaderboard-participants';
 import {
   renderSystemEmailTemplate,
   type ContestEntryCompletedTierSelection,
@@ -529,7 +527,7 @@ export class ContestService {
       );
     }
     const [participants, entries] = await Promise.all([
-      this.loadGolfLeaderboardParticipants(sportEvent.id),
+      loadGolfLeaderboardParticipants(this.requirePrisma(), sportEvent.id),
       this.loadGolfLeaderboardEntries(contestId),
     ]);
     const participantById = new Map(
@@ -1102,87 +1100,6 @@ export class ContestService {
     return grouped;
   }
 
-  private async loadGolfLeaderboardParticipants(
-    sportEventId: string,
-  ): Promise<GolfLeaderboardParticipantRow[]> {
-    const rows = await this.requirePrisma().sportEventParticipant.findMany({
-      where: { sportEventId },
-      select: {
-        id: true,
-        participantId: true,
-        isActive: true,
-        inactiveReason: true,
-        worldRanking: true,
-        oddsToWin: true,
-        seedNumber: true,
-        participant: {
-          select: {
-            id: true,
-            name: true,
-            shortName: true,
-          },
-        },
-        golfStanding: {
-          select: {
-            eventScoreToPar: true,
-            eventStrokes: true,
-            currentRound: true,
-            currentRoundThru: true,
-            status: true,
-            position: true,
-            displayPosition: true,
-            asOf: true,
-          },
-        },
-        golfRounds: {
-          select: {
-            strokes: true,
-            scoreToPar: true,
-            thru: true,
-            status: true,
-            sportEventRound: { select: { roundNumber: true } },
-          },
-          orderBy: { sportEventRound: { roundNumber: 'asc' } },
-        },
-      },
-      orderBy: [
-        { seedNumber: 'asc' },
-        { createdAt: 'asc' },
-      ],
-    });
-
-    return rows.map((row) => {
-      const standing = row.golfStanding;
-      const normalizedStatus = standing
-        ? mapGolfLeaderboardStatus(String(standing.status))
-        : 'active';
-      return {
-        sportEventParticipantId: row.id,
-        participantId: row.participantId,
-        name: row.participant.name,
-        shortName: row.participant.shortName ?? null,
-        isActive: row.isActive,
-        inactiveReason: row.inactiveReason,
-        worldRanking: row.worldRanking ?? null,
-        oddsToWin: decimalToNumber(row.oddsToWin),
-        seedNumber: row.seedNumber ?? null,
-        totalScoreToPar: standing?.eventScoreToPar ?? null,
-        totalStrokes: standing?.eventStrokes ?? null,
-        thru: normalizedStatus === 'in-progress'
-          ? standing?.currentRoundThru ?? null
-          : null,
-        currentRound: standing?.currentRound ?? null,
-        status: normalizedStatus,
-        position: standing?.position ?? null,
-        displayPosition: standing?.displayPosition ?? null,
-        asOf: standing?.asOf ?? null,
-        rounds: buildGolfRoundColumns(
-          row.golfRounds.map((round) => ({ ...round, round: round.sportEventRound.roundNumber })),
-        ),
-      };
-    });
-  }
-
   private async loadGolfLeaderboardEntries(contestId: string): Promise<Array<{
     id: string;
     entryNumber: number;
@@ -1528,8 +1445,3 @@ export function contestPicksRevealed(status: ContestStatus): boolean {
   return !isContestJoinable(status);
 }
 
-function decimalToNumber(value: { toNumber: () => number } | number | null): number | null {
-  if (value === null) return null;
-  if (typeof value === 'number') return value;
-  return value.toNumber();
-}

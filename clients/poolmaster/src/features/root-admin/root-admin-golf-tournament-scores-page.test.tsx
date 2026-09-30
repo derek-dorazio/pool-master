@@ -127,7 +127,7 @@ function seed(overrides: { tournament?: Record<string, unknown> } = {}) {
           nationality: 'NIR',
           isActive: true,
           inactiveReason: null,
-          worldRanking: 2,
+          ranking: 2,
           oddsToWin: 8,
           seedNumber: 2,
           price: 9000,

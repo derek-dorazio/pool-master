@@ -35,7 +35,7 @@ function fieldEntry(overrides: Partial<Field> = {}): Field {
     nationality: 'NIR',
     isActive: true,
     inactiveReason: null as unknown as Field['inactiveReason'],
-    worldRanking: 2,
+    ranking: 2,
     oddsToWin: 8,
     seedNumber: 2,
     price: 9000,

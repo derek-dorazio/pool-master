@@ -230,7 +230,7 @@ function buildGolfLeaderboardParticipantRow(input: {
     id: input.id,
     participantId: `participant-${input.id}`,
     status: 'active',
-    worldRanking: null,
+    ranking: null,
     oddsToWin: null,
     seedNumber: null,
     participant: {
@@ -238,22 +238,22 @@ function buildGolfLeaderboardParticipantRow(input: {
       name: input.participantName,
       shortName: null,
     },
-    golfStanding: {
-      eventScoreToPar: input.eventScoreToPar,
-      eventStrokes: input.eventStrokes,
+    standing: {
       currentRound: input.currentRound ?? 2,
-      currentRoundThru: input.currentRoundThru ?? 18,
       status: input.status,
       position: null,
       displayPosition: null,
       asOf: new Date('2026-05-31T18:00:00.000Z'),
+      golf: {
+        eventScoreToPar: input.eventScoreToPar,
+        eventStrokes: input.eventStrokes,
+        currentRoundThru: input.currentRoundThru ?? 18,
+      },
     },
-    golfRounds: (input.rounds ?? []).map((round) => ({
-      strokes: round.strokes,
-      scoreToPar: round.scoreToPar,
-      thru: round.thru,
+    rounds: (input.rounds ?? []).map((round) => ({
       status: round.status,
       sportEventRound: { roundNumber: round.round },
+      golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
     })),
   };
 }
@@ -1679,21 +1679,21 @@ describe('ContestService', () => {
           groupBy: jest.fn().mockResolvedValue([]),
           findMany: jest.fn().mockResolvedValue([]),
         },
-        sportEventParticipantGolfValuation: {
+        sportEventParticipantValuation: {
           findMany: jest.fn().mockResolvedValue([
             {
               sportEventParticipantId: 'sport-event-participant-1',
               tierOrderIndex: 1,
               price: null,
               sportEventParticipant: { participantId: 'participant-1' },
-              sportEventGolfTier: { id: 'tier-a', tierKey: 'A', label: 'Tier A', tierNumber: 1 },
+              sportEventTier: { id: 'tier-a', tierKey: 'A', label: 'Tier A', tierNumber: 1 },
             },
             {
               sportEventParticipantId: 'sport-event-participant-2',
               tierOrderIndex: 1,
               price: null,
               sportEventParticipant: { participantId: 'participant-2' },
-              sportEventGolfTier: { id: 'tier-b', tierKey: 'B', label: 'Tier B', tierNumber: 2 },
+              sportEventTier: { id: 'tier-b', tierKey: 'B', label: 'Tier B', tierNumber: 2 },
             },
           ]),
         },
@@ -2089,7 +2089,7 @@ describe('ContestService', () => {
           sportEventParticipant: {
             participantId: 'participant-1',
             isActive: false,
-            inactiveReason: 'CUT',
+            inactiveReason: 'ELIMINATED',
             participant: { name: 'Cut Golfer', position: null, teamAffiliation: null },
           },
         },
@@ -2114,10 +2114,10 @@ describe('ContestService', () => {
 
       const { entries } = await service.listEntries('contest-1', 'user-1');
 
-      expect(deriveSpy).toHaveBeenCalledWith(false, 'CUT');
+      expect(deriveSpy).toHaveBeenCalledWith(false, 'ELIMINATED');
       deriveSpy.mockRestore();
       expect(entries[0].participants).toEqual([
-        expect.objectContaining({ participantName: 'Cut Golfer', participantStatus: 'CUT' }),
+        expect.objectContaining({ participantName: 'Cut Golfer', participantStatus: 'ELIMINATED' }),
       ]);
     });
   });

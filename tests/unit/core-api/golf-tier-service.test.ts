@@ -1,4 +1,4 @@
-import { GolfTierSource, GolfValuationSource } from '@poolmaster/shared/domain';
+import { GolfTierSource, ValuationSource } from '@poolmaster/shared/domain';
 import {
   DEFAULT_TIER_COUNT,
   GolfTierService,
@@ -22,7 +22,7 @@ describe('GolfTierService.ensureDefaultGolfTiers', () => {
     const create = jest.fn()
       .mockImplementation(({ data }) => Promise.resolve(buildTierRow({ tierNumber: data.tierNumber })));
     const prisma = {
-      sportEventGolfTier: {
+      sportEventTier: {
         findMany: jest.fn().mockResolvedValue([]),
         create,
       },
@@ -50,7 +50,7 @@ describe('GolfTierService.ensureDefaultGolfTiers', () => {
     const existing = [buildTierRow({ tierNumber: 1 }), buildTierRow({ tierNumber: 2 })];
     const create = jest.fn();
     const prisma = {
-      sportEventGolfTier: {
+      sportEventTier: {
         findMany: jest.fn().mockResolvedValue(existing),
         create,
       },
@@ -71,7 +71,7 @@ describe('GolfTierService.getEffectiveTiersForContest', () => {
       contest: {
         findUniqueOrThrow: jest.fn().mockResolvedValue({ sportEventId: 'event-1' }),
       },
-      sportEventGolfTier: {
+      sportEventTier: {
         findMany: jest.fn().mockResolvedValue([
           {
             ...buildTierRow({ tierNumber: 1 }),
@@ -95,7 +95,7 @@ describe('GolfTierService.getEffectiveTiersForContest', () => {
       where: { id: 'contest-1' },
       select: { sportEventId: true },
     });
-    expect(prisma.sportEventGolfTier.findMany).toHaveBeenCalledWith(
+    expect(prisma.sportEventTier.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { sportEventId: 'event-1' } }),
     );
     expect(result).toEqual([
@@ -113,19 +113,19 @@ describe('GolfTierService.getEffectiveTiersForContest', () => {
       contest: {
         findUniqueOrThrow: jest.fn().mockResolvedValue({ sportEventId: null }),
       },
-      sportEventGolfTier: { findMany: jest.fn() },
+      sportEventTier: { findMany: jest.fn() },
     };
     const service = new GolfTierService(prisma as any);
 
     const result = await service.getEffectiveTiersForContest('contest-1');
 
     expect(result).toEqual([]);
-    expect(prisma.sportEventGolfTier.findMany).not.toHaveBeenCalled();
+    expect(prisma.sportEventTier.findMany).not.toHaveBeenCalled();
   });
 });
 
 describe('GolfTierService.autoAssignGolfTiers', () => {
-  function buildField(count: number, statsFn: (i: number) => { oddsToWin: number | null; worldRanking: number | null; isActive?: boolean }) {
+  function buildField(count: number, statsFn: (i: number) => { oddsToWin: number | null; ranking: number | null; isActive?: boolean }) {
     return Array.from({ length: count }, (_, i) => ({
       id: `sep-${i + 1}`,
       participantId: `participant-${i + 1}`,
@@ -141,12 +141,12 @@ describe('GolfTierService.autoAssignGolfTiers', () => {
       buildTierRow({ tierNumber: 2 }),
       buildTierRow({ tierNumber: 3 }),
     ];
-    const field = buildField(25, (i) => ({ oddsToWin: i + 1, worldRanking: null }));
+    const field = buildField(25, (i) => ({ oddsToWin: i + 1, ranking: null }));
     const upsert = jest.fn().mockResolvedValue(undefined);
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue(tiers) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue(tiers) },
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue(field) },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     };
     const service = new GolfTierService(prisma as any);
@@ -156,36 +156,36 @@ describe('GolfTierService.autoAssignGolfTiers', () => {
 
     expect(prisma.sportEventParticipant.findMany).toHaveBeenCalledWith({
       where: { sportEventId: 'event-1', isActive: true },
-      select: { id: true, participantId: true, oddsToWin: true, worldRanking: true },
+      select: { id: true, participantId: true, oddsToWin: true, ranking: true },
     });
     expect(upsert).toHaveBeenCalledTimes(25);
     // Lowest odds (best) sorts first -> participant-1 (odds 1) is order 1, tier 1
     expect(upsert.mock.calls[0][0]).toMatchObject({
       where: { sportEventParticipantId: 'sep-1' },
-      create: { sportEventGolfTierId: tiers[0].id, tierOrderIndex: 1, tierAssignedSource: GolfValuationSource.AUTO_ODDS },
+      create: { sportEventTierId: tiers[0].id, tierOrderIndex: 1, tierAssignedSource: ValuationSource.AUTO_ODDS },
     });
     // 21st golfer (0-indexed 20) is the first of the last tier (indexes 20-24 -> tier index 2)
     expect(upsert.mock.calls[20][0]).toMatchObject({
-      create: { sportEventGolfTierId: tiers[2].id, tierOrderIndex: 21 },
+      create: { sportEventTierId: tiers[2].id, tierOrderIndex: 21 },
     });
     // Last golfer also lands in the absorbing last tier, proving it isn't capped at tierSize
     expect(upsert.mock.calls[24][0]).toMatchObject({
-      create: { sportEventGolfTierId: tiers[2].id, tierOrderIndex: 25 },
+      create: { sportEventTierId: tiers[2].id, tierOrderIndex: 25 },
     });
   });
 
   it('pool-master-p15 sorts by WORLD_RANK ascending, falling back to ODDS on a tie', async () => {
     const tiers = [buildTierRow({ tierNumber: 1 })];
     const field = [
-      { id: 'sep-a', participantId: 'p-a', isActive: true, oddsToWin: 5, worldRanking: 10 },
-      { id: 'sep-b', participantId: 'p-b', isActive: true, oddsToWin: 2, worldRanking: 10 },
-      { id: 'sep-c', participantId: 'p-c', isActive: true, oddsToWin: 1, worldRanking: 3 },
+      { id: 'sep-a', participantId: 'p-a', isActive: true, oddsToWin: 5, ranking: 10 },
+      { id: 'sep-b', participantId: 'p-b', isActive: true, oddsToWin: 2, ranking: 10 },
+      { id: 'sep-c', participantId: 'p-c', isActive: true, oddsToWin: 1, ranking: 3 },
     ];
     const upsert = jest.fn().mockResolvedValue(undefined);
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue(tiers) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue(tiers) },
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue(field) },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     };
     const service = new GolfTierService(prisma as any);
@@ -197,18 +197,18 @@ describe('GolfTierService.autoAssignGolfTiers', () => {
     const order = upsert.mock.calls.map(([arg]) => arg.where.sportEventParticipantId);
     expect(order).toEqual(['sep-c', 'sep-b', 'sep-a']);
     expect(upsert.mock.calls[0][0]).toMatchObject({
-      create: { tierAssignedSource: GolfValuationSource.AUTO_WORLD_RANK },
+      create: { tierAssignedSource: ValuationSource.AUTO_RANKING },
     });
   });
 
   it('pool-master-p15 excludes inactive participants from the field entirely', async () => {
     const tiers = [buildTierRow({ tierNumber: 1 })];
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue(tiers) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue(tiers) },
       sportEventParticipant: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'sep-1', participantId: 'p-1', oddsToWin: 1, worldRanking: null }]),
+        findMany: jest.fn().mockResolvedValue([{ id: 'sep-1', participantId: 'p-1', oddsToWin: 1, ranking: null }]),
       },
-      sportEventParticipantGolfValuation: { upsert: jest.fn() },
+      sportEventParticipantValuation: { upsert: jest.fn() },
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     };
     const service = new GolfTierService(prisma as any);
@@ -224,7 +224,7 @@ describe('GolfTierService.autoAssignGolfTiers', () => {
   it('pool-master-p15 returns an empty list and does not query the field when the event has no tiers yet', async () => {
     const findMany = jest.fn();
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue([]) },
       sportEventParticipant: { findMany },
     };
     const service = new GolfTierService(prisma as any, { warn: jest.fn() } as any);
@@ -240,21 +240,21 @@ describe('GolfTierService.getEffectiveValuationsForContest / getEffectiveValuati
   it('pool-master-piv reads valuations directly, carrying tier + price together for a tiered golfer', async () => {
     const prisma = {
       contest: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportEventId: 'event-1' }) },
-      sportEventParticipantGolfValuation: {
+      sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
             sportEventParticipantId: 'sep-1',
             tierOrderIndex: 1,
             price: 25,
             sportEventParticipant: { participantId: 'p-1' },
-            sportEventGolfTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+            sportEventTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
           },
           {
             sportEventParticipantId: 'sep-2',
             tierOrderIndex: 1,
             price: null,
             sportEventParticipant: { participantId: 'p-2' },
-            sportEventGolfTier: { id: 'tier-2', tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
+            sportEventTier: { id: 'tier-2', tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
           },
         ]),
       },
@@ -271,14 +271,14 @@ describe('GolfTierService.getEffectiveValuationsForContest / getEffectiveValuati
 
   it('pool-master-753 includes a price-only valuation with no tier assignment (budget-format contest)', async () => {
     const prisma = {
-      sportEventParticipantGolfValuation: {
+      sportEventParticipantValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
             sportEventParticipantId: 'sep-3',
             tierOrderIndex: null,
             price: 3200,
             sportEventParticipant: { participantId: 'p-3' },
-            sportEventGolfTier: null,
+            sportEventTier: null,
           },
         ]),
       },
@@ -301,14 +301,14 @@ describe('GolfTierService.replaceGolfTournamentTiers', () => {
     const updateManyValuations = jest.fn().mockResolvedValue(undefined);
     const findUniqueOrThrow = jest.fn().mockResolvedValue({ id: 'tier-target' });
     const prisma = {
-      sportEventGolfTier: {
+      sportEventTier: {
         findMany: jest.fn().mockResolvedValue(existing),
         update,
         upsert,
         deleteMany,
         findUniqueOrThrow,
       },
-      sportEventParticipantGolfValuation: { updateMany: updateManyValuations },
+      sportEventParticipantValuation: { updateMany: updateManyValuations },
       $transaction: jest.fn().mockImplementation((fn) => fn(prisma)),
     };
     return { prisma, update, upsert, deleteMany, updateManyValuations, findUniqueOrThrow };
@@ -377,8 +377,8 @@ describe('GolfTierService.replaceGolfTournamentTiers', () => {
       where: { sportEventId_tierKey: { sportEventId: 'event-1', tierKey: 'tier-2' } },
     });
     expect(updateManyValuations).toHaveBeenCalledWith({
-      where: { sportEventGolfTierId: { in: ['tier-old'] } },
-      data: { sportEventGolfTierId: 'tier-target', tierOrderIndex: null },
+      where: { sportEventTierId: { in: ['tier-old'] } },
+      data: { sportEventTierId: 'tier-target', tierOrderIndex: null },
     });
     expect(deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['tier-old'] } } });
   });
@@ -409,9 +409,9 @@ describe('GolfTierService.replaceGolfTierAssignments', () => {
   it('pool-master-piv rejects an unknown tier key without writing anything', async () => {
     const upsert = jest.fn();
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue([{ id: 'sep-1' }]) },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn(),
     };
     const service = new GolfTierService(prisma as any);
@@ -427,9 +427,9 @@ describe('GolfTierService.replaceGolfTierAssignments', () => {
 
   it('pool-master-piv rejects a sportEventParticipantId that does not belong to this sport event', async () => {
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
-      sportEventParticipantGolfValuation: { upsert: jest.fn() },
+      sportEventParticipantValuation: { upsert: jest.fn() },
       $transaction: jest.fn(),
     };
     const service = new GolfTierService(prisma as any);
@@ -446,9 +446,9 @@ describe('GolfTierService.replaceGolfTierAssignments', () => {
   it('pool-master-piv applies the full desired state in one transaction with tierAssignedSource=MANUAL', async () => {
     const upsert = jest.fn().mockResolvedValue(undefined);
     const prisma = {
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
+      sportEventTier: { findMany: jest.fn().mockResolvedValue([{ id: 'tier-1', tierKey: 'tier-1' }]) },
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue([{ id: 'sep-1' }]) },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     };
     const service = new GolfTierService(prisma as any);
@@ -461,8 +461,8 @@ describe('GolfTierService.replaceGolfTierAssignments', () => {
 
     expect(upsert).toHaveBeenCalledWith({
       where: { sportEventParticipantId: 'sep-1' },
-      create: { sportEventParticipantId: 'sep-1', sportEventGolfTierId: 'tier-1', tierOrderIndex: 3, tierAssignedSource: GolfValuationSource.MANUAL },
-      update: { sportEventGolfTierId: 'tier-1', tierOrderIndex: 3, tierAssignedSource: GolfValuationSource.MANUAL },
+      create: { sportEventParticipantId: 'sep-1', sportEventTierId: 'tier-1', tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
+      update: { sportEventTierId: 'tier-1', tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
     });
   });
 });
@@ -477,7 +477,7 @@ describe('GolfTierService.autoAssignGolfPrices', () => {
           { id: 'sep-2', seedNumber: 2 },
         ]),
       },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
     };
     const service = new GolfTierService(prisma as any);
@@ -498,7 +498,7 @@ describe('GolfTierService.autoAssignGolfPrices', () => {
     expect(upsert).toHaveBeenCalledTimes(2);
     expect(upsert.mock.calls[0][0]).toMatchObject({
       where: { sportEventParticipantId: 'sep-1' },
-      create: expect.objectContaining({ priceAssignedSource: GolfValuationSource.AUTO_ODDS }),
+      create: expect.objectContaining({ priceAssignedSource: ValuationSource.AUTO_ODDS }),
     });
   });
 
@@ -506,7 +506,7 @@ describe('GolfTierService.autoAssignGolfPrices', () => {
     const upsert = jest.fn();
     const prisma = {
       sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
-      sportEventParticipantGolfValuation: { upsert },
+      sportEventParticipantValuation: { upsert },
       $transaction: jest.fn(),
     };
     const service = new GolfTierService(prisma as any, { warn: jest.fn() } as any);

@@ -86,7 +86,7 @@ function rosterEntry(overrides: Record<string, unknown> = {}) {
     shortName: 'R. McIlroy',
     nationality: 'NIR',
     status: 'ACTIVE',
-    worldRanking: 2,
+    ranking: 2,
     ...overrides,
   };
 }
@@ -97,7 +97,7 @@ function seed() {
     data: {
       entries: [
         rosterEntry(),
-        rosterEntry({ participantId: 'p-scottie', name: 'Scottie Scheffler', worldRanking: 1 }),
+        rosterEntry({ participantId: 'p-scottie', name: 'Scottie Scheffler', ranking: 1 }),
       ],
     },
   });
@@ -164,7 +164,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
   it('pool-master-qqs collects an inline world-ranking edit into a dirty bar and saves the changed row only', async () => {
     seed();
     adminUpdateGolfLeagueRosterMock.mockResolvedValue({
-      data: { entries: [rosterEntry({ worldRanking: 5 })] },
+      data: { entries: [rosterEntry({ ranking: 5 })] },
     });
     renderPage();
 
@@ -182,7 +182,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
       expect(adminUpdateGolfLeagueRosterMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { leagueId: 'pga' },
-          body: { entries: [{ participantId: 'p-rory', worldRanking: 5 }] },
+          body: { entries: [{ participantId: 'p-rory', ranking: 5 }] },
         }),
       ),
     );
@@ -288,7 +288,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
       data: {
         rows: [
           {
-            row: { playerName: 'Rory McIlroy', worldRanking: 2 },
+            row: { playerName: 'Rory McIlroy', ranking: 2 },
             resolution: 'MATCHED',
             participantId: 'p-rory',
             participantName: 'Rory McIlroy',
@@ -304,7 +304,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     const textarea = await screen.findByTestId('root-admin-golf-league-roster-upload-textarea');
     await userEvent.type(
       textarea,
-      'externalId,playerName,worldRanking\n,Rory McIlroy,2',
+      'externalId,playerName,ranking\n,Rory McIlroy,2',
     );
     await userEvent.click(screen.getByTestId('root-admin-golf-league-roster-upload-preview'));
 
@@ -320,7 +320,7 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
       expect(adminApplyGolfLeagueRosterUploadMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { leagueId: 'pga' },
-          body: { rows: [{ playerName: 'Rory McIlroy', worldRanking: 2 }] },
+          body: { rows: [{ playerName: 'Rory McIlroy', ranking: 2 }] },
         }),
       ),
     );

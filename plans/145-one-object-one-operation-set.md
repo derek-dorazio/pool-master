@@ -1528,6 +1528,68 @@ in a file where both appear.
 All schema work in either half is gated on **#191** (`migrate-qa` broken), addressed by
 PR #232. Nothing in step 3.1 can start until that lands.
 
+## Slice 2 core — outcome, 2026-09-29
+
+#235, executed bottom-up on one branch. #234 (score direction) went first on its own branch,
+because it owns `golf-leaderboard-calculator.ts` and the core half had to leave that file's
+ranking logic alone.
+
+**3.1 — schema.** One hand-written migration carries every stage-2 schema decision. It runs
+as one transaction, so a failure anywhere leaves the database untouched (measured by
+appending a division by zero to a copy: P3018, `CUT` rows intact). `CUT` becomes `ELIMINATED`
+inside the `ALTER TYPE ... USING CASE` that swaps the enum, so no row can be written with the
+old value between the type change and the backfill — there is no separate backfill.
+`world_ranking` → `ranking` and the two tier/valuation table renames are renames, not copies.
+Standing and round split into a base row plus the golf extension, with the base rows created
+**under the extension's existing ids**, so every foreign key and every log line that named a
+golf round or standing still names the same thing. The golf live-status string
+`'missed-cut'` maps to `ELIMINATED` on the base standing.
+
+**3.2 — DAO.** Ports and Prisma adapters for `Sport`, `SportLeague`, `Season`,
+`ParticipantLeagueAffiliation`, `SportEvent`, `SportEventRound`,
+`SportEventParticipantRound` and `SportEventParticipantStanding`, each with a DAO test
+against Postgres. Two ports in `ports.ts` had no adapter at all — `SportRepository` and
+`SeasonRepository` — and the domain `Season` type had drifted from the table; both were
+replaced rather than wired up.
+
+**3.3 — services.** `SportLeagueService` and `SeasonService` run on ports. The two copies of
+the golf-leaderboard participant loader (contest read and settlement) had drifted; they are
+one function now.
+
+**3.4 — DTOs and routes.** One `SportEventDto` for every caller. `EventSummaryDto` and
+`AdminEventSummaryDto` each derived the same readiness in their own mapper; `adminListEvents`
+was `listEvents` plus four fields, so it is **removed, not re-pointed**, and the root-admin
+event browser reads `listEvents`. Both lists lost their paging (§16). Participant create and
+update were open to any signed-in user; they now require the root-admin claim (A10).
+
+**3.5 — export** regenerated; **3.6 — frontend**: the event browser, contest creation and
+the event-sync page moved to `listEvents` / `SportEventDto`.
+
+### What the sweep found and did not convert
+
+- **Golf services still on raw Prisma** (`golf/*`, including the second participant resolver
+  in `golf-score-service.ts`): #236, which owns the golf ports.
+- **`events/event-score-source-service.ts`** writes provider linkage on `SportEvent` with raw
+  Prisma. Provider plumbing: slice 4.
+- **"World rank" labels on golf surfaces**, and `GolfTierSource.WORLD_RANK`: for golf the rank
+  *is* the world ranking, so the label is truthful to the audience, in the same way
+  `ELIMINATED` renders as "Cut". #236 decides them with the rest of the golf display
+  mapping. `PricingMethod.WORLD_RANKING` and `TierAssignmentMethod.WORLD_RANKING` are
+  contest-configuration values and belong to #204.
+- **`'CUT'` in the mock provider feed** is the provider's vocabulary, not ours; the adapter
+  maps it to `ELIMINATED` at the boundary.
+
+### Found on the way, for slice 3 (#204)
+
+- **Standing `position` is never written by production code** — not on the golf standing
+  before this slice, and not on the base standing it moved to. The column moved; the gap did
+  not. Two readers select it — the golf-leaderboard participant loader and the admin event
+  browser — and always get null; contest entries are ranked by the calculator from scores, so
+  nothing breaks. But the `position` contract only holds once whatever writes standings
+  computes it, and #204 should not build a reader on the column before then.
+- `ContestService.createContest` writes no scoring-rule rows, and there are two
+  `createContest` implementations.
+
 ## Sources / Prior Decisions
 
 - #201 — this epic. #192 — the publishing mechanism, which must follow this work for

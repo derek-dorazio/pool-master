@@ -106,7 +106,7 @@ export function GolfLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
               : null
           }
           applyLabel="Apply rankings"
-          formatNote="Columns: externalId or playerName (one is required), plus worldRanking."
+          formatNote="Columns: externalId or playerName (one is required), plus ranking."
           isApplyPending={applyMutation.isPending}
           isPreviewPending={previewMutation.isPending}
           parse={parseGolfRosterUpload}

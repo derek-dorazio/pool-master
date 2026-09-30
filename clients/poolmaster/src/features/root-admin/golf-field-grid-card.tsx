@@ -37,7 +37,7 @@ type FieldGridMeta = {
 };
 
 const NUMERIC_COLUMN_LABEL: Record<GolfFieldNumericKey, string> = {
-  worldRanking: 'World rank',
+  ranking: 'World rank',
   oddsToWin: 'Odds',
   seedNumber: 'Seed',
   price: 'Price',
@@ -149,7 +149,7 @@ const fieldColumns = [
     enableColumnFilter: false,
     enableSorting: false,
   }),
-  numericCell('worldRanking'),
+  numericCell('ranking'),
   numericCell('oddsToWin'),
   numericCell('seedNumber'),
   numericCell('price'),

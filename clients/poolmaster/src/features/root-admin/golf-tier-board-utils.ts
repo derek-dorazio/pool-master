@@ -13,7 +13,7 @@ export type TierCard = {
   participantId: string;
   name: string;
   /** Null when the golfer has no world ranking on record. */
-  worldRanking: number | null;
+  ranking: number | null;
   /** Null when no odds have been ingested for the golfer. */
   oddsToWin: number | null;
   /** Null until a price is assigned (auto-assign prices, or a manual edit). */
@@ -52,7 +52,7 @@ export function buildTierBoard(
       sportEventParticipantId: sepId,
       participantId: entry.participantId,
       name: entry.participantName,
-      worldRanking: entry.worldRanking,
+      ranking: entry.ranking,
       oddsToWin: entry.oddsToWin,
       price,
     };

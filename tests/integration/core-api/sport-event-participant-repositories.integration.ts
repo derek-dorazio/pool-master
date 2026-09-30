@@ -13,6 +13,13 @@ afterAll(async () => {
   const prisma = getPrisma();
   await prisma.sportEventParticipantGolfStanding.deleteMany({
     where: {
+      standing: {
+        sportEventParticipant: { sportEvent: { externalId: 'integration-event-participants' } },
+      },
+    },
+  });
+  await prisma.sportEventParticipantStanding.deleteMany({
+    where: {
       sportEventParticipant: { sportEvent: { externalId: 'integration-event-participants' } },
     },
   });
@@ -69,7 +76,7 @@ describe('Sport event participant repositories', () => {
       sportEventId: event.id,
       participantId: participant.id,
       isActive: true,
-      worldRanking: 11,
+      ranking: 11,
       oddsToWin: 24.5,
       seedNumber: 3,
       metadata: { teeTime: '08:30' },
@@ -77,7 +84,7 @@ describe('Sport event participant repositories', () => {
 
     expect(sportEventParticipant.sportEventId).toBe(event.id);
     expect(sportEventParticipant.participantId).toBe(participant.id);
-    expect(sportEventParticipant.worldRanking).toBe(11);
+    expect(sportEventParticipant.ranking).toBe(11);
     expect(sportEventParticipant.oddsToWin).toBe(24.5);
     expect(sportEventParticipant.seedNumber).toBe(3);
 
@@ -86,7 +93,7 @@ describe('Sport event participant repositories', () => {
       {
         isActive: false,
         inactiveReason: 'WITHDRAWN',
-        worldRanking: 8,
+        ranking: 8,
         oddsToWin: 20,
         metadata: { teeTime: '08:30', started: true },
       },
@@ -94,13 +101,13 @@ describe('Sport event participant repositories', () => {
 
     expect(updatedParticipant.isActive).toBe(false);
     expect(updatedParticipant.inactiveReason).toBe('WITHDRAWN');
-    expect(updatedParticipant.worldRanking).toBe(8);
+    expect(updatedParticipant.ranking).toBe(8);
     expect(updatedParticipant.oddsToWin).toBe(20);
 
     const participantsForEvent = await participantRepo.findBySportEvent(event.id);
 
     expect(participantsForEvent).toHaveLength(1);
-    expect(participantsForEvent[0].worldRanking).toBe(8);
+    expect(participantsForEvent[0].ranking).toBe(8);
     expect(participantsForEvent[0].oddsToWin).toBe(20);
   });
 });

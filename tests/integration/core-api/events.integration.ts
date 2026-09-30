@@ -91,7 +91,7 @@ describe('events routes', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&status=SCHEDULED&limit=10',
+        url: '/api/v1/events/?sport=UFC&status=SCHEDULED',
         headers: viewer.headers,
       });
 
@@ -110,6 +110,13 @@ describe('events routes', () => {
       });
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          standing: {
+            sportEventParticipant: { sportEventId: eligibleEventId },
+          },
+        },
+      });
+      await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: eligibleEventId },
         },
@@ -199,7 +206,7 @@ describe('events routes', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=UFC&limit=100',
+        url: '/api/v1/events/?sport=UFC',
         headers: viewer.headers,
       });
 
@@ -218,6 +225,13 @@ describe('events routes', () => {
       });
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          standing: {
+            sportEventParticipant: { sportEventId: lockedEventId },
+          },
+        },
+      });
+      await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: lockedEventId },
         },
