@@ -21,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # #266 — the migration timestamp check compares against HEAD^1 (the base tip for a
+          # PR's merge ref, the previous main for a push), so the job needs one parent.
+          fetch-depth: 2
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
