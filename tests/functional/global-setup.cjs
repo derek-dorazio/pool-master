@@ -30,6 +30,14 @@ const functionalServerV8CoverageDir =
 const serverEntry = path.join(rootDir, 'tests', 'functional', 'server.ts');
 const tsConfigPath = path.join(rootDir, 'tests', 'tsconfig.json');
 
+// How long setup waits for the functional server to become reachable — both the run that
+// starts it and a concurrent run waiting on that one's daemon, so the waiter never gives up
+// before the starter does. A startup budget, not a performance assertion: the server boots
+// under V8 coverage (always on here), which measured ~30 s against ~10 s without (#267), and
+// the old 30 s budget left no headroom. A large budget costs only later detection of a server
+// that never starts.
+const SERVER_STARTUP_BUDGET_MS = 120_000;
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -45,7 +53,7 @@ async function isServerReachable(baseUrl) {
   }
 }
 
-async function waitForStateFile(filePath, child, timeoutMs = 30_000) {
+async function waitForStateFile(filePath, child, timeoutMs = SERVER_STARTUP_BUDGET_MS) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
@@ -71,7 +79,7 @@ async function waitForStateFile(filePath, child, timeoutMs = 30_000) {
     await wait(250);
   }
 
-  throw new Error('Timed out waiting for the functional test server to start.');
+  throw new Error(`Timed out waiting for the functional test server to start (budget ${timeoutMs / 1000} s).`);
 }
 
 function readState(filePath) {
@@ -113,7 +121,7 @@ function removeRunStateDirs() {
   }
 }
 
-async function waitForDaemonState(timeoutMs = 30_000) {
+async function waitForDaemonState(timeoutMs = SERVER_STARTUP_BUDGET_MS) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < timeoutMs) {
@@ -128,7 +136,7 @@ async function waitForDaemonState(timeoutMs = 30_000) {
     await wait(250);
   }
 
-  throw new Error('Timed out waiting for the shared functional test server daemon.');
+  throw new Error(`Timed out waiting for the shared functional test server daemon (budget ${timeoutMs / 1000} s).`);
 }
 
 function writeRunState(serverState, runId) {
