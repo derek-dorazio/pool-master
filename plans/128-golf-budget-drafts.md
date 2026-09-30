@@ -23,9 +23,10 @@
 
 ## 1. Context
 
-`SelectionType.BUDGET_PICK` already exists (`enums.ts:136`) and `ContestConfiguration.budget`/
-`.pricingMethod` already exist as real columns — unlike category picks, this isn't a stub with
-zero plumbing. But investigating `drafts/routes.ts` end to end (during `plans/124`'s review)
+`SelectionType.BUDGET_PICK` already exists (`enums.ts:136`) and `ContestConfiguration.budget`
+already exists as a real column — unlike category picks, this isn't a stub with zero plumbing.
+(**Corrected 2026-09-30:** this sentence also claimed `.pricingMethod`. That column is dropped
+by `plans/145`'s slice 3a (#244) as write-and-echo state no client reads — see §4a.) But investigating `drafts/routes.ts` end to end (during `plans/124`'s review)
 found that **budget drafting does not actually enforce a budget today**: `BUDGET_PICK` is
 dispatched to the identical `buildRosterSelectionResponse`/pick-validation code as `TIERED`,
 with no spend calculation anywhere. Pick validation
@@ -60,9 +61,12 @@ today for this to gate.
 
 - **`SelectionType.BUDGET_PICK`** already exists — no new contest-level enum value needed,
   unlike `plans/127`'s `CATEGORY_PICK`.
-- **`ContestConfiguration.budget: Int?` / `.pricingMethod: String?`** already exist as real
-  columns (`schema.prisma:707-708`) and are already read (though only passed through as flat
-  display fields) by `drafts/routes.ts:415-416`.
+- **`ContestConfiguration.budget: Int?`** already exists as a real column and is already read
+  (though only passed through as a flat display field) by `drafts/routes.ts`. **Corrected
+  2026-09-30:** this bullet also claimed `.pricingMethod`, and claimed both were "already
+  read". `pricingMethod` was written and echoed, never read by any client, and #244 drops the
+  column along with the dead `PricingMethod` enum. Nothing in this plan needs it — see §4a for
+  why, and for the value set kept as narrative. `budget` is untouched by that slice.
 - **Per-golfer price already lives on the event, not the contest** — `plans/124` §4.5's
   `SportEventParticipantGolfValuation.price`, populated by `adminAutoAssignGolfPrices` (§4.7a):
   best-`seedNumber` golfer near `maxPrice`, worst near `minPrice`, interpolated by relative
@@ -159,14 +163,24 @@ for the orphaned pick-engine classes themselves).
 Deferred here from `plans/124`, per the user's direction:
 
 ```ts
-interface GolfBudgetContestConfig {
-  mode: 'GOLF_BUDGET'; // new GolfContestConfigMode value, confirmed — plans/124 §4.9
+interface BudgetContestConfig {
+  selectionType: 'BUDGET_PICK'; // SelectionType.BUDGET_PICK — already exists, enums.ts:136
   budget: number;        // 1000 for both seed presets
-  pricingMethod: string; // display-format string, already exists on ContestConfiguration
   rosterSize: number;    // 6 for both seed presets
   countedScores: number; // 6 (All Count) or 4 (Top 4) — the two seed presets, §1
 }
 ```
+
+**Corrected 2026-09-30.** This shape previously read `mode: 'GOLF_BUDGET'; // new
+GolfContestConfigMode value, confirmed`. Two things about it were wrong once `plans/145`'s
+slice-3 stage 2 settled:
+
+- **`GolfContestConfigMode` is deleted by #244** — it held one value, `GOLF_TIERED`, a
+  golf-prefixed duplicate of `SelectionType`, which already carries both `TIERED` and
+  `BUDGET_PICK`. There was never a `GOLF_BUDGET` value to add, and no new enum value is needed
+  here at all. `ContestConfiguration.configMode` goes with it as a redundant second copy of
+  `selectionType`; `ContestConfigTemplate.configMode` is renamed `selectionType` by #248.
+- **`pricingMethod` is dropped**, so it is no longer a field of this shape. See §4a.
 
 **Price-range guidance for the seed preset, not enforced logic**: `adminAutoAssignGolfPrices`'s
 `minPrice`/`maxPrice` (`plans/124` §4.7a) must be set by the admin such that a $1000 budget and
@@ -179,6 +193,53 @@ mathematically infeasible.
 
 ---
 
+## 4a. Tier and pricing strategies — the sketch preserved from deleted enums
+
+`plans/145`'s slice 3a (#244) deletes two enums that typed nothing. Both columns they described
+were `z.string()` / `VarChar(50)`, so neither enum ever constrained a value, and the only
+consumer of either was a test asserting it existed. The code goes; the design thinking in the
+value sets is worth keeping, so it is recorded here — narrative, not a contract.
+
+**Why they went rather than got wired up.** Valuation provenance is already recorded at the
+right grain on the event side: `SportEventParticipantValuation.priceAssignedSource` and
+`.tierAssignedSource` are per-competitor and genuinely enum-enforced. A contest-level
+`pricingMethod` cannot express a field that is part-auto and part-manual, which is the normal
+case once an admin adjusts a few prices; the per-participant columns can. The contest-level
+column was also write-and-echo — never read by any client.
+
+**What is live today.** `TierSource` (`ODDS`, `RANKING`) is the live subset — the two orderings
+`SportEventTierService.autoAssignTiers` actually implements, mapping to
+`ValuationSource.AUTO_ODDS` / `AUTO_RANKING`. Anything below that is not in `TierSource` is
+design space, not behaviour.
+
+### `PricingMethod` — how a competitor's price gets set (5 values)
+
+| Value | Intent |
+|---|---|
+| `ODDS` | Price from the book's odds. Live as `TierSource.ODDS` on the tier side |
+| `SEED` | Price from a bracket/draw seed. Natural for tournaments with a seeded field |
+| `WORLD_RANKING` | Price from the sport's ranking. Live as `TierSource.RANKING` |
+| `SEASON_STATS` | Price from season performance rather than a market or a ranking |
+| `COMMISSIONER` | Priced by hand. Now expressible per-competitor via `priceAssignedSource` |
+
+### `TierAssignmentMethod` — how a field gets grouped into tiers (8 values)
+
+| Value | Intent |
+|---|---|
+| `SEED` · `WORLD_RANKING` · `ODDS` | Order the field by a strength measure, then fill tiers. The last two are live as `TierSource` |
+| `CONFERENCE` · `DIVISION` | Group by league structure rather than strength. The obvious NCAA / pro-league shape |
+| `POT` | Group by a draw pot — the World Cup / Champions League mechanic |
+| `BOUT_POSITION` | Group by card position — combat sports, where the card's order *is* the hierarchy |
+| `COMMISSIONER` | Grouped by hand. Now expressible per-competitor via `tierAssignedSource` |
+
+**The four worth keeping in mind** are `CONFERENCE`, `DIVISION`, `POT` and `BOUT_POSITION`.
+They are the only ones that are not "order by a strength measure" — they group by structure, and
+a grouping strategy is what category picks need (`plans/127`, #99). When a second sport's admin
+plan wants one of them, the shape to extend is the event-side `TierSource` plus
+`tierAssignedSource` pair, not a resurrected contest-level enum.
+
+---
+
 ## 5. Slice sequence
 
 Cross-epic note: every slice here is blocked on `plans/124`'s epic slice 9
@@ -187,12 +248,12 @@ epic.
 
 | # | Slice | Depends on |
 |---|---|---|
-| 1 | `ContestConfigTemplate` seed migration: `GolfContestConfigMode.GOLF_BUDGET` + the two presets, All Count and Top 4, $1000/roster-6 (§4) | `plans/124` slice 9 |
+| 1 | `ContestConfigTemplate` seed migration: `selectionType: 'BUDGET_PICK'` + the two presets, All Count and Top 4, $1000/roster-6 (§4) | `plans/124` slice 9 |
 | 2 | `totalSpent`/`isOverBudget` computed field in `buildRosterSelectionResponse` for `BUDGET_PICK` (§3.2); delete the dead `BudgetPickEngine` class and its orphaned unit test, reimplement the sum inline (§3.3, confirmed) | 1 |
 | 3 | New `POST /contests/:contestId/entries/:entryId/submit` (`submitContestEntry`) route: recomputes `isOverBudget` server-side, rejects with `422 CONTEST_ENTRY_OVER_BUDGET` (§3.3) | 2 |
 | 4 | Frontend: extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate to admit `BUDGET_PICK` (§3.3) — coordinate with `plans/127`'s epic if both are open at once, see this plan's header | 3 |
 | 5 | Frontend: budget draft-room UI — running-total/over-budget indicator in the pick UI, wire `submitEntry()` to the new endpoint, surface its `422` as a clear error (§3.3) | 4 |
-| 6 | Commissioner contest-config: read-only budget/roster-size display for a `GOLF_BUDGET` contest (mirrors `plans/124`'s tier display and `plans/127`'s category display) | 1 |
+| 6 | Commissioner contest-config: read-only budget/roster-size display for a `BUDGET_PICK` contest (mirrors `plans/124`'s tier display and `plans/127`'s category display) | 1 |
 | 7 | FAPI scenario: budget contest end to end — create a tournament (via `plans/124`), create a budget contest, pick over budget and confirm submission is rejected, correct back under budget and confirm it succeeds, confirm the leaderboard renders with no code changes (format-agnostic, per `plans/126`) | 3, 5, 6 |
 
 ---
@@ -220,7 +281,13 @@ branches direct unit coverage, and keep FAPI coverage in sync with any changed A
 
 1. ~~Does budget drafting need a `GolfContestConfigMode.GOLF_BUDGET` value at all, or is it
    already fully identified by `SelectionType.BUDGET_PICK` at the contest level, independent of
-   sport?~~ **Confirmed: ship it golf-scoped, `GOLF_BUDGET` included.** Budget drafting isn't
+   sport?~~ **Superseded 2026-09-30: it is identified by `SelectionType.BUDGET_PICK` alone.**
+   `plans/145`'s slice 3a (#244) deletes `GolfContestConfigMode` — it held one value and
+   duplicated `SelectionType` (§4a). The answer below stands on its substance: **ship the
+   feature golf-scoped**, because there is no second sport's requirements to generalize
+   against. What changes is only that "golf-scoped" needs no golf-prefixed enum value to say
+   so — the golf scoping lives in the golf rule code and the seeded template, not in a
+   duplicate discriminator. Budget drafting isn't
    conceptually golf-specific, and neither, really, are tiers or categories — but there's no
    second sport's real requirements to generalize against yet, and speculatively designing a
    cross-sport shape now would repeat the exact build-ahead-of-need mistake this whole review
@@ -246,3 +313,9 @@ branches direct unit coverage, and keep FAPI coverage in sync with any changed A
   `drafts/routes.ts` rewiring this plan's spend-check is added on top of, not instead of.
 - `plans/126-leaderboard.md` — confirms no leaderboard changes needed for this mode either.
 - `plans/127-golf-category-drafts.md` — the sibling deferred plan; independent of this one.
+  Its header points here for §4a's tier-strategy sketch.
+- `plans/145-one-object-one-operation-set.md` — "Slice 3 stage 2 — outcome, 2026-09-30" is the
+  source of the three corrections above and of §4a. Slice 3a (#244) drops
+  `ContestConfiguration.pricingMethod`/`configMode` and the `PricingMethod`,
+  `TierAssignmentMethod` and `GolfContestConfigMode` enums; `ContestConfiguration.budget` is
+  untouched by any slice-3 ticket.

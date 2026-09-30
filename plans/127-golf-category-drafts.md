@@ -18,6 +18,17 @@
 > too. In short: update every existing test the slice touches, give new code/branches
 > direct unit coverage, and update any existing FAPI scenario whose shape this slice
 > changes, in the same slice.
+>
+> **`GolfContestConfigMode` is gone.** `plans/145`'s slice 3a (#244) deletes that enum —
+> `SelectionType` is and always was the axis that distinguishes tiered from budget from
+> category selection. This plan's `CATEGORY_PICK` addition to `SelectionType` (§2) is
+> unaffected and remains the right move; ignore any reference below to a
+> `GolfContestConfigMode` value.
+>
+> **Tier-strategy design sketch lives in `plans/128` §4a.** #244 also deletes the dead
+> `TierAssignmentMethod` enum, whose eight values included `CONFERENCE`, `DIVISION`, `POT` and
+> `BOUT_POSITION` — the cross-sport grouping strategies closest to what category picks need.
+> The value set is preserved as narrative in `plans/128` §4a rather than lost with the code.
 
 ---
 
@@ -271,7 +282,7 @@ earlier draft of this plan assumed — there's no per-year copy step, only:
   standing, rather than requiring the admin to re-type a name that PoolMaster already knows.
   Manual entry remains available for backfilling years PoolMaster never scored itself.
 - **Commissioner contest-config** (`create-contest-page.tsx`, once category mode exists for
-  real): a `GOLF_CATEGORY_PICKS`-mode contest reads its category list and counting rule
+  real): a `CATEGORY_PICK` contest reads its category list and counting rule
   read-only from the linked template (§6), the same read-only-from-event/template pattern
   `plans/124` §4.6/§6.3 already established for tiers.
 
@@ -286,7 +297,7 @@ category's membership gets computed:
 
 ```ts
 interface GolfCategoryContestConfig {
-  mode: 'GOLF_CATEGORY_PICKS';
+  selectionType: 'CATEGORY_PICK'; // SelectionType.CATEGORY_PICK, added by slice 1 (§3)
   categories: Array<{ categoryKey: GolfCategoryKey; label: string; pickCount: 1 }>;
   countedScores: number; // 5 (all count) or 4 (top 4 of 5) for the two seed presets
 }
@@ -318,11 +329,11 @@ Tournament Home) landing first.
 | 1 | `Participant.yearJoinedTour` column + `LeagueEventPreviousWinner` table + migration; `CATEGORY_PICK` added to `SelectionType` (§3) | `plans/124` slice 9 |
 | 2 | `modules/golf/golf-category-rules.ts` — the six pure rule functions, including the `SENIOR_TOUR_LEAGUE_NAME` league-name lookup (§3); unit tests | 1 |
 | 3 | `drafts/routes.ts`: `deriveCategoryConfig` + `CATEGORY_PICK` dispatch branch + the new cross-category pick-uniqueness validation rule (§4) | 2 |
-| 4 | `ContestConfigTemplate` seed migration: `GolfContestConfigMode.GOLF_CATEGORY_PICKS` + the two presets, All Count and Top 4 (§6) | 3 |
+| 4 | `ContestConfigTemplate` seed migration: `selectionType: 'CATEGORY_PICK'` + the two presets, All Count and Top 4 (§6) | 3 |
 | 5 | Frontend: extend `contest-entry-page.tsx`'s `selectionType !== 'TIERED'` gate to admit `CATEGORY_PICK` (§4) — coordinate with `plans/128`'s epic if both are open at once, see this plan's header | 3 |
 | 6 | Frontend: `LeagueEventPreviousWinner` bulk-upload panel (paste/upload, "Clear existing history first" checkbox, upsert otherwise, §5), reusing `plans/124`'s shared `BulkUploadPanel` | 1, `plans/124`'s `BulkUploadPanel` slice |
 | 7 | Frontend: "Record champion" action on Tournament Home, appending the position-1 finisher once a tournament completes (§5) | 1, `plans/124`'s Tournament Home slice |
-| 8 | Commissioner contest-config: read-only category list + counting-rule display for a `GOLF_CATEGORY_PICKS` contest (§5) | 4 |
+| 8 | Commissioner contest-config: read-only category list + counting-rule display for a `CATEGORY_PICK` contest (§5) | 4 |
 | 9 | FAPI scenario: category-pick contest end to end — create a tournament (via `plans/124`), create a category contest, submit entries obeying the no-golfer-in-two-categories rule, confirm the leaderboard renders with no code changes (format-agnostic, per `plans/126`) | 4, 5, 6, 7, 8 |
 
 ---

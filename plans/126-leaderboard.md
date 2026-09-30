@@ -11,6 +11,24 @@
 > too. In short: update every existing test the slice touches, give new code/branches
 > direct unit coverage, and update any existing FAPI scenario whose shape this slice
 > changes, in the same slice.
+>
+> **Naming warning: #248 renames the whole `GolfLeaderboard*` family and deletes four
+> contract members.** Every `GolfLeaderboard`-prefixed symbol named below — 21 references in
+> this plan, ~25 symbols in the code — is renamed by `plans/145`'s slice 3e (#248), because
+> ranking contest entries is not golf-specific. `GolfLeaderboardResponse` becomes
+> `ContestLeaderboardResponse`, `GolfLeaderboardEntryDto` splits into `ContestEntryStandingDto`
+> plus a golf extension, `GolfLeaderboardParticipantDto` into
+> `SportEventParticipantStandingDto` plus a golf extension, and the genuinely golf-shaped
+> `GolfLeaderboardRoundCellDto` / `GolfLeaderboardRoundColumnsDto` become `GolfRoundScoreDto` /
+> `GolfScorecardDto`. See #248 for the full mapping.
+>
+> **Deleted outright by #248:** `scoringMode` (a `z.literal('GOLF_TO_PAR')` welding the golf
+> assumption into the API shape — the registry from #234 now carries direction, unit and
+> format), `GolfLeaderboardStatus` (a lowercase shadow of the values #240's migration
+> converted; use `ParticipantStandingStatus`), and `displayType` / `displayValue` with
+> `GolfLeaderboardRoundDisplayType`. The display fields carry one real rule — *strokes once a
+> round is complete, to-par while it is in progress* — which #248 must relocate rather than
+> drop. **Read any leaderboard shape below as the pre-#248 name.**
 
 ---
 
