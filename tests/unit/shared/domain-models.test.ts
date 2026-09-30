@@ -7,8 +7,6 @@ import {
   ScoringEngine,
   SurvivorStyle,
   DraftMode,
-  PricingMethod,
-  TierAssignmentMethod,
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
   ParticipantInactiveReason,
   deriveLegacyParticipantStatus,
@@ -132,27 +130,6 @@ describe('DraftMode enum', () => {
   it('has live and async', () => {
     expect(DraftMode.LIVE).toBe('LIVE');
     expect(DraftMode.ASYNC).toBe('ASYNC');
-  });
-});
-
-describe('PricingMethod enum', () => {
-  it('has all pricing methods for budget/tiered contests', () => {
-    expect(PricingMethod.ODDS).toBe('ODDS');
-    expect(PricingMethod.SEED).toBe('SEED');
-    expect(PricingMethod.WORLD_RANKING).toBe('WORLD_RANKING');
-    expect(PricingMethod.SEASON_STATS).toBe('SEASON_STATS');
-    expect(PricingMethod.COMMISSIONER).toBe('COMMISSIONER');
-  });
-});
-
-describe('TierAssignmentMethod enum', () => {
-  it('has all tier assignment methods', () => {
-    expect(TierAssignmentMethod.SEED).toBe('SEED');
-    expect(TierAssignmentMethod.WORLD_RANKING).toBe('WORLD_RANKING');
-    expect(TierAssignmentMethod.ODDS).toBe('ODDS');
-    expect(TierAssignmentMethod.COMMISSIONER).toBe('COMMISSIONER');
-    expect(TierAssignmentMethod.CONFERENCE).toBe('CONFERENCE');
-    expect(TierAssignmentMethod.BOUT_POSITION).toBe('BOUT_POSITION');
   });
 });
 

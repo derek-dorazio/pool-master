@@ -71,7 +71,7 @@ export function RootAdminContentConfigurationListPage() {
         },
       ),
       columnHelper.accessor('configMode', {
-        header: 'Mode',
+        header: 'Selection',
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),

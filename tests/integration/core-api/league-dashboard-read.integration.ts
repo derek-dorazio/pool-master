@@ -103,7 +103,6 @@ describe('League Dashboard Read Integration', () => {
         endsAt: '2099-05-06T18:00:00.000Z',
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
             {
               tierId: 'tier-1',

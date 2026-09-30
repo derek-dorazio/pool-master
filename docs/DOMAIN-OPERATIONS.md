@@ -312,7 +312,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 | | Objects |
 |---|---|
 | **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows |
-| **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring and aggregation rules, prizes — and both audit logs |
+| **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes — and both audit logs |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
 tournament), `ContestEntryPick` is tenant-scoped (a squad chose that golfer). The pick fails

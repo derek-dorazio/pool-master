@@ -3,12 +3,13 @@ import {
   ContestStatus,
   ContestFormat,
   GolfCategoryKey,
-  GolfContestConfigMode,
   GolfCutRuleType,
+  SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
 
 const sportValues = Object.values(Sport) as [Sport, ...Sport[]];
+const selectionTypeValues = Object.values(SelectionType) as [SelectionType, ...SelectionType[]];
 const contestFormatValues = Object.values(ContestFormat) as [
   ContestFormat,
   ...ContestFormat[],
@@ -63,7 +64,6 @@ export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSch
  * zero real reads downstream, dropped as dead configuration.
  */
 export const GolfTieredContestConfigurationSchema = z.object({
-  mode: z.literal(GolfContestConfigMode.GOLF_TIERED),
   locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
   maxEntriesPerSquad: nullablePositiveIntSchema,
   rosterSize: z.number().int().min(1).describe('How many golfers each Team entry must pick.'),
@@ -73,13 +73,10 @@ export type GolfTieredContestConfigurationRequest = z.infer<
   typeof GolfTieredContestConfigurationSchema
 >;
 
-// GOLF_CATEGORY_PICKS was a fully-typed stub with no backend implementation and
-// was removed (plans/124 §4.11). Only the tiered mode remains, so the request
-// payload is a single-member discriminated union keyed on `mode` — a shape that
-// stays additively extensible when plans/127 rebuilds category picks for real.
-export const ContestConfigurationRequestSchema = z.discriminatedUnion('mode', [
-  GolfTieredContestConfigurationSchema,
-]).describe('Approved commissioner-managed contest configuration payload for golf-first contest creation.');
+// How an entry picks is the contest's `selectionType`, not a second discriminant in this
+// payload (plans/145 slice 3, Q4). A selection type with a different configuration shape
+// gets its own schema when it is built (category picks: plans/127, #99).
+export const ContestConfigurationRequestSchema = GolfTieredContestConfigurationSchema.describe('Approved commissioner-managed contest configuration payload for golf-first contest creation.');
 export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
@@ -125,9 +122,7 @@ export const GolfTieredContestConfigurationDtoSchema =
     contestId: z.string().describe('Contest that owns the configuration.'),
   });
 
-export const ContestConfigurationDtoSchema = z.discriminatedUnion('mode', [
-  GolfTieredContestConfigurationDtoSchema,
-]).describe('Persisted commissioner-managed golf contest configuration.');
+export const ContestConfigurationDtoSchema = GolfTieredContestConfigurationDtoSchema.describe('Persisted commissioner-managed golf contest configuration.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
 export const ContestConfigTemplateDtoSchema = z.object({
@@ -135,9 +130,7 @@ export const ContestConfigTemplateDtoSchema = z.object({
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
   eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
-  configMode: z.enum([
-    GolfContestConfigMode.GOLF_TIERED,
-  ]).describe('Configuration mode seeded by the template.'),
+  configMode: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
   name: z.string().describe('Commissioner-facing template label.'),
   description: z.string().describe('Commissioner-facing template description.'),

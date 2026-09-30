@@ -2,7 +2,6 @@ import type {
   ContestConfigTemplate,
   ContestCoreSummary,
   ContestConfiguration,
-  ContestEntryAggregationRule,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
 } from '../domain';
@@ -64,20 +63,6 @@ export interface ParticipantContestScoringRuleRepository {
     updates: Partial<ParticipantContestScoringRule>,
   ): Promise<ParticipantContestScoringRule>;
   delete(id: string): Promise<void>;
-}
-
-export interface ContestEntryAggregationRuleRepository {
-  findById(id: string): Promise<ContestEntryAggregationRule | null>;
-  findByContestConfiguration(
-    contestConfigurationId: string,
-  ): Promise<ContestEntryAggregationRule | null>;
-  create(
-    rule: Omit<ContestEntryAggregationRule, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestEntryAggregationRule>;
-  update(
-    id: string,
-    updates: Partial<ContestEntryAggregationRule>,
-  ): Promise<ContestEntryAggregationRule>;
 }
 
 export interface ContestPrizeDefinitionRepository {

@@ -22,7 +22,6 @@ import {
   ScoringEngine,
   SelectionType,
   Sport,
-  TierAssignmentMethod,
 } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
@@ -165,7 +164,7 @@ async function seedImportedGolfEvent(options: {
   });
   createdSportEventIds.push(sportEvent.id);
 
-  // Tiers are event-owned now (plans/124 §4.5/§4.6) — a GOLF_TIERED contest's
+  // Tiers are event-owned now (plans/124 §4.5/§4.6) — a tiered contest's
   // draft/pick flow requires every selectable golfer to have a real tier
   // assignment (TIER_MISSING otherwise), so this fixture needs one covering
   // the whole field, not just the SportEventParticipant rows.
@@ -281,8 +280,11 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.OPEN);
     expect(createResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
-    expect(createResponse.data?.contest.configuration.mode).toBe(
-      defaultTemplate?.configuration.mode,
+    expect(createResponse.data?.contest.configuration.rosterSize).toBe(
+      defaultTemplate?.configuration.rosterSize,
+    );
+    expect(createResponse.data?.contest.configuration.countedScores).toBe(
+      defaultTemplate?.configuration.countedScores,
     );
 
     const contestId = createResponse.data?.contest.id as string;
@@ -370,7 +372,6 @@ describe('SDK Functional: Contests and Entries', () => {
         contestFormat: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
         configurationOverrides: {
-          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T11:55:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 1,
@@ -488,13 +489,6 @@ describe('SDK Functional: Contests and Entries', () => {
       status: 422,
       code: 'CONTEST_CONFIGURATION_INVALID',
     });
-
-    // The former second sub-case ("advanced override must match the template's
-    // configuration mode") sent a GOLF_CATEGORY_PICKS override against a
-    // GOLF_TIERED template. GOLF_TIERED is now the only managed configuration
-    // mode (plans/124 §4.11 removed the GOLF_CATEGORY_PICKS stub), so a
-    // mode-mismatched override is no longer an expressible payload and the
-    // sub-case was removed with the mode it depended on.
   });
 
   it('creates, lists, reads, updates, and deletes a contest through the generated SDK', async () => {
@@ -907,7 +901,6 @@ describe('SDK Functional: Contests and Entries', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
             {
               tierId: 'tier-1',
@@ -1129,7 +1122,6 @@ describe('SDK Functional: Contests and Entries', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
             {
               tierId: 'tier-1',
@@ -1155,7 +1147,6 @@ describe('SDK Functional: Contests and Entries', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
             {
               tierId: 'tier-1',
@@ -1363,7 +1354,6 @@ describe('SDK Functional: Contests and Entries', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
             {
               tierId: 'tier-1',
@@ -1551,7 +1541,6 @@ describe('SDK Functional: Contests and Entries', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: TierAssignmentMethod.ODDS,
           tierConfig: [
             {
               tierId: 'tier-1',

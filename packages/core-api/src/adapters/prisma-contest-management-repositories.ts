@@ -3,7 +3,6 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
-  ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
@@ -11,7 +10,6 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   ContestCoreSummary,
-  ContestEntryAggregationRule,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
 } from '@poolmaster/shared/domain';
@@ -103,14 +101,12 @@ export class PrismaContestConfigurationRepository
         templateId: configuration.templateId,
         templateVersion: configuration.templateVersion,
         selectionType: configuration.selectionType,
-        configMode: configuration.configMode,
         configJson: configuration.configJson as object | undefined,
         rounds: configuration.rounds,
         timePerPickSeconds: configuration.timePerPickSeconds,
         autoPickPolicy: configuration.autoPickPolicy,
         tierConfig: configuration.tierConfig as object[] | undefined,
         budget: configuration.budget,
-        pricingMethod: configuration.pricingMethod,
         pickCount: configuration.pickCount,
         isExclusive: configuration.isExclusive ?? false,
         picksPerPeriod: configuration.picksPerPeriod,
@@ -142,9 +138,6 @@ export class PrismaContestConfigurationRepository
         ...(updates.selectionType !== undefined && {
           selectionType: updates.selectionType,
         }),
-        ...(updates.configMode !== undefined && {
-          configMode: updates.configMode,
-        }),
         ...(updates.configJson !== undefined && {
           configJson: updates.configJson as object,
         }),
@@ -159,9 +152,6 @@ export class PrismaContestConfigurationRepository
           tierConfig: updates.tierConfig as object[],
         }),
         ...(updates.budget !== undefined && { budget: updates.budget }),
-        ...(updates.pricingMethod !== undefined && {
-          pricingMethod: updates.pricingMethod,
-        }),
         ...(updates.pickCount !== undefined && { pickCount: updates.pickCount }),
         ...(updates.isExclusive !== undefined && {
           isExclusive: updates.isExclusive,
@@ -330,59 +320,6 @@ export class PrismaParticipantContestScoringRuleRepository
   }
 }
 
-export class PrismaContestEntryAggregationRuleRepository
-  implements ContestEntryAggregationRuleRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<ContestEntryAggregationRule | null> {
-    const row = await this.prisma.contestEntryAggregationRule.findUnique({
-      where: { id },
-    });
-    return row ? mapAggregationRule(row) : null;
-  }
-
-  async findByContestConfiguration(
-    contestConfigurationId: string,
-  ): Promise<ContestEntryAggregationRule | null> {
-    const row = await this.prisma.contestEntryAggregationRule.findUnique({
-      where: { contestConfigurationId },
-    });
-    return row ? mapAggregationRule(row) : null;
-  }
-
-  async create(
-    rule: Omit<ContestEntryAggregationRule, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestEntryAggregationRule> {
-    const row = await this.prisma.contestEntryAggregationRule.create({
-      data: {
-        contestConfigurationId: rule.contestConfigurationId,
-        aggregationDefinitionId: rule.aggregationDefinitionId,
-        config: rule.config as object,
-        active: rule.active,
-      },
-    });
-    return mapAggregationRule(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<ContestEntryAggregationRule>,
-  ): Promise<ContestEntryAggregationRule> {
-    const row = await this.prisma.contestEntryAggregationRule.update({
-      where: { id },
-      data: {
-        ...(updates.aggregationDefinitionId !== undefined && {
-          aggregationDefinitionId: updates.aggregationDefinitionId,
-        }),
-        ...(updates.config !== undefined && { config: updates.config as object }),
-        ...(updates.active !== undefined && { active: updates.active }),
-      },
-    });
-    return mapAggregationRule(row);
-  }
-}
-
 export class PrismaContestPrizeDefinitionRepository
   implements ContestPrizeDefinitionRepository
 {
@@ -485,14 +422,12 @@ function mapContestConfiguration(row: {
   templateId: string | null;
   templateVersion: number | null;
   selectionType: string;
-  configMode: string | null;
   configJson: unknown;
   rounds: number | null;
   timePerPickSeconds: number | null;
   autoPickPolicy: string | null;
   tierConfig: unknown;
   budget: number | null;
-  pricingMethod: string | null;
   pickCount: number | null;
   isExclusive: boolean;
   picksPerPeriod: number | null;
@@ -512,14 +447,12 @@ function mapContestConfiguration(row: {
     templateId: row.templateId ?? undefined,
     templateVersion: row.templateVersion ?? undefined,
     selectionType: row.selectionType as ContestConfiguration['selectionType'],
-    configMode: row.configMode as ContestConfiguration['configMode'],
     configJson: row.configJson as ContestConfiguration['configJson'],
     rounds: row.rounds ?? undefined,
     timePerPickSeconds: row.timePerPickSeconds ?? undefined,
     autoPickPolicy: row.autoPickPolicy ?? undefined,
     tierConfig: (row.tierConfig as ContestConfiguration['tierConfig']) ?? undefined,
     budget: row.budget ?? undefined,
-    pricingMethod: row.pricingMethod ?? undefined,
     pickCount: row.pickCount ?? undefined,
     isExclusive: row.isExclusive,
     picksPerPeriod: row.picksPerPeriod ?? undefined,
@@ -587,27 +520,6 @@ function mapParticipantScoringRule(row: {
     participantScoringDefinitionId:
       row.participantScoringDefinitionId as ParticipantContestScoringRule['participantScoringDefinitionId'],
     sortOrder: row.sortOrder,
-    config: (row.config ?? {}) as Record<string, unknown>,
-    active: row.active,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapAggregationRule(row: {
-  id: string;
-  contestConfigurationId: string;
-  aggregationDefinitionId: string;
-  config: unknown;
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}): ContestEntryAggregationRule {
-  return {
-    id: row.id,
-    contestConfigurationId: row.contestConfigurationId,
-    aggregationDefinitionId:
-      row.aggregationDefinitionId as ContestEntryAggregationRule['aggregationDefinitionId'],
     config: (row.config ?? {}) as Record<string, unknown>,
     active: row.active,
     createdAt: row.createdAt,

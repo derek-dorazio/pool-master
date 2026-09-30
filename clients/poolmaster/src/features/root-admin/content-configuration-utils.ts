@@ -20,9 +20,8 @@ export function toPositiveNumber(value: string) {
 /**
  * Tiers/price are event-owned data now, resolved via
  * SportEventTierService.getEffectiveTiersForSportEvent — never a per-contest or
- * per-template override (plans/124 §4.6/§4.6a). A GOLF_TIERED template only
- * ever says "how many picks, how many count," not the tier structure
- * itself.
+ * per-template override (plans/124 §4.6/§4.6a). A template only ever says
+ * "how many picks, how many count," not the tier structure itself.
  */
 export function updateTieredTemplateConfiguration(
   template: ContestConfigTemplate,
@@ -31,10 +30,6 @@ export function updateTieredTemplateConfiguration(
     countedScores?: number;
   },
 ): ContestConfigTemplate {
-  if (template.configuration.mode !== 'GOLF_TIERED') {
-    return template;
-  }
-
   return {
     ...template,
     configuration: {

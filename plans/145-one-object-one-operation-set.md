@@ -1779,6 +1779,56 @@ the configuration guard ships in the same slice: both are the freeze being real.
   is wanted the **keying** changes, not the columns, which moves the table across the A11
   boundary — a different table, not a new column. None of #244–#248 depends on it.
 
+## Slice 3 dead weight — outcome, 2026-09-30
+
+#244. Everything the ticket listed is gone, and one item turned out not to be dead weight.
+
+**`GolfContestConfigMode` was not unread.** It was the value set of two published fields, not
+an enum nothing referenced: `mode: 'GOLF_TIERED'`, the discriminant of a one-member
+discriminated union in the managed configuration request and response (also persisted inside
+every managed contest's `configJson`, and sent by the webapp), and
+`ContestConfigTemplate.configMode`, whose seeded rows held `'GOLF_TIERED'`. Deleting the enum
+therefore meant a contract change, which the ticket's "no contract anyone consumes" premise
+did not allow for. Taken to the repo owner, who chose to do all of it here rather than split
+it across #245 and #248:
+
+- `mode` is gone from the configuration request, the response, `ContestDetailDto`'s
+  configuration and every stored `configJson` (contests and templates). The union it keyed
+  is now a plain object schema — `selectionType` on the contest says how an entry picks, and
+  a second selection type with a different configuration shape gets its own schema when it
+  is built (category picks, #99).
+- `ContestConfigTemplate.configMode` now holds `SelectionType` values: the two seeded rows
+  moved `GOLF_TIERED` → `TIERED`. **#248 is left with only the column rename**; the data move
+  its ticket describes is done.
+- Removing `mode` removed the two `configuration.mode !== GOLF_TIERED` clauses in the tier
+  guards, which no longer compile. Only those clauses went; `mapSelectionType` itself is
+  untouched, as the sequencing requires, and #245 still deletes it.
+
+**3.1 — schema.** Three migrations: drop `contest_configurations.pricing_method`; drop
+`contest_configurations.config_mode`, strip `mode` from both tables' `config_json` and move the
+template rows to `TIERED`; drop `contest_entry_aggregation_rules`. Verified against a database
+built at `main` and seeded with managed, template-seeded and legacy configurations plus
+aggregation rows: only the `mode` key leaves each document, every other key and value is
+unchanged, the legacy row keeps its `budget`, scoring rules are untouched, and
+`prisma migrate diff` shows the same five pre-existing drifts as `main` and none on a contest
+table.
+
+**3.2–3.4 — ports, services, DTOs.** `ContestEntryAggregationRuleRepository`, its adapter and
+fake, `AggregationDefinitionIdSchema`, and the three enums are deleted. `pricingMethod` and the
+phantom `tierAssignmentMethod` are gone from the create/update validators (both copies) and
+the draft-state response. Contest management no longer takes the aggregation, prize-definition
+or event-participant repositories — the last two were injected and never used.
+`getMaxEntriesPerSquad` asked "is this a managed configuration" of `configMode`; it asks
+`configJson` now, which both managed writers set together with it and which
+`toContestConfigurationDetailDto` already used for the same question.
+
+**3.6 — the sweep** also removed `ContestConfigTemplateUpdateError` (its only throw was the
+`mode` check), an orphaned `fakeSportEventParticipantRepo`, a Prisma mock of the dropped
+table, two stale comments, and "aggregation rules" from A11's tenant-scoped row in
+`docs/DOMAIN-OPERATIONS.md`. Left on purpose: the comment inside `mapSelectionType` (#245
+deletes the function), and `tech-specs/features/contest-event-feed-integration/`, which is a
+design input, not a live description.
+
 ## Sources / Prior Decisions
 
 - #201 — this epic. #192 — the publishing mechanism, which must follow this work for

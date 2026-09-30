@@ -27,8 +27,8 @@
  * **Each default is chosen from the method's declared RETURN TYPE, not its name.** Three of
  * these were wrong in the first draft because they were guessed from the name:
  * `LeagueInvitationRepository.findByEmail`, `ParticipantProviderMappingRepository
- * .findByProvider` and `ContestEntryAggregationRuleRepository.findByContestConfiguration`
- * all return a single row despite reading like collections. The first of those made every
+ * .findByProvider` and a `findByContestConfiguration` on a since-deleted port all return a
+ * single row despite reading like collections. The first of those made every
  * email look like an existing invitation and turned bulk member import into a silent
  * no-op — a test caught it; the other two had no test and were found by checking every
  * default against its port signature.
@@ -53,7 +53,6 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
-  ContestEntryAggregationRuleRepository,
   ContestEntryRepository,
   ContestPrizeDefinitionRepository,
   ContestRepository,
@@ -66,7 +65,6 @@ import type {
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   SeasonRepository,
-  SportEventParticipantRepository,
   SportEventRepository,
   SportLeagueRepository,
   SportRepository,
@@ -379,23 +377,6 @@ export function fakeContestCoreRepo(
   };
 }
 
-export function fakeSportEventParticipantRepo(
-  overrides: Partial<SportEventParticipantRepository> = {},
-): SportEventParticipantRepository {
-  return {
-    findById: one(),
-    findBySportEvent: many(),
-    create: echoCreate('sport-event-participant'),
-    update: echoUpdate(),
-    createMany: nothing(),
-    upsertMany: nothing(),
-    updateMany: nothing(),
-    delete: nothing(),
-    countPicks: jest.fn().mockResolvedValue(0),
-    ...overrides,
-  };
-}
-
 export function fakeContestConfigurationRepo(
   overrides: Partial<ContestConfigurationRepository> = {},
 ): ContestConfigurationRepository {
@@ -429,19 +410,6 @@ export function fakeParticipantContestScoringRuleRepo(
     create: echoCreate('participant-contest-scoring-rule'),
     update: echoUpdate(),
     delete: nothing(),
-    ...overrides,
-  };
-}
-
-export function fakeContestEntryAggregationRuleRepo(
-  overrides: Partial<ContestEntryAggregationRuleRepository> = {},
-): ContestEntryAggregationRuleRepository {
-  return {
-    findById: one(),
-    // Single row here, unlike the same-named method on the scoring-rule and prize ports.
-    findByContestConfiguration: one(),
-    create: echoCreate('contest-entry-aggregation-rule'),
-    update: echoUpdate(),
     ...overrides,
   };
 }

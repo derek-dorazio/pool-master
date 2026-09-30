@@ -266,7 +266,6 @@ async function seedBudgetPickFixture() {
       contestConfiguration: {
         rosterSize: 1,
         budget: 8000,
-        pricingMethod: 'WORLD_RANKING',
         isExclusive: true,
       },
     },
@@ -421,7 +420,6 @@ async function seedTieredDraftFixture(options: {
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
         rounds: 1,
-        tierAssignmentMethod: 'AUTO_ODDS',
         tierConfig: [
           {
             tierId: 'tier-1',
@@ -652,7 +650,6 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     expect(stateResponse.data?.myEntryId).toBe(fixture.commissionerEntryId);
     expect(stateResponse.data?.contestConfiguration?.rosterSize).toBe(1);
     expect(stateResponse.data?.contestConfiguration?.budget).toBe(8000);
-    expect(stateResponse.data?.contestConfiguration?.pricingMethod).toBe('WORLD_RANKING');
     expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
     expect(stateResponse.data?.availableParticipantIds).toEqual(
       expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),

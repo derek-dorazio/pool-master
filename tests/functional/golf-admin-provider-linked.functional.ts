@@ -160,7 +160,6 @@ async function cleanup(): Promise<void> {
     await db.contestEntry.deleteMany({ where: { contestId: { in: cids } } });
     await db.draftSession.deleteMany({ where: { contestId: { in: cids } } });
     await db.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
-    await db.contestEntryAggregationRule.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
     await db.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
     await db.contestConfiguration.deleteMany({ where: { contestId: { in: cids } } });
     await db.contest.deleteMany({ where: { id: { in: cids } } });

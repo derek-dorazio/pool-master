@@ -2,7 +2,6 @@ export type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
-  ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
 } from './contest-management-ports';

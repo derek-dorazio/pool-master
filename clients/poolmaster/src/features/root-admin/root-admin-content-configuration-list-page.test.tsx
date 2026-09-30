@@ -44,7 +44,7 @@ function seedTemplates() {
           sport: 'GOLF',
           eventType: null,
           contestType: 'ROSTER',
-          configMode: 'GOLF_TIERED',
+          configMode: 'TIERED',
           templateKey: 'golf-tiered-pick-6',
           name: 'Select one from each tier, 4 count',
           description:
@@ -54,7 +54,6 @@ function seedTemplates() {
           active: true,
           schemaVersion: 1,
           configuration: {
-            mode: 'GOLF_TIERED',
             rosterSize: 6,
             countedScores: 4,
           },

@@ -15,7 +15,6 @@ export {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestCoreRepository,
-  PrismaContestEntryAggregationRuleRepository,
   PrismaContestPrizeDefinitionRepository,
   PrismaParticipantContestScoringRuleRepository,
 } from './prisma-contest-management-repositories';

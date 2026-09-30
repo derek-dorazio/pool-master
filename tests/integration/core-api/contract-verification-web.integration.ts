@@ -674,7 +674,6 @@ describe('Contract verification (web)', () => {
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
           rounds: 1,
-          tierAssignmentMethod: 'AUTO_ODDS',
           tierConfig: [
             {
               tierId: 'tier-1',

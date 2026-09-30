@@ -172,7 +172,7 @@ function primeCommonMocks() {
           id: '11111111-1111-4111-8111-111111111111',
           sport: 'GOLF',
           contestFormat: 'ROSTER',
-          configMode: 'GOLF_TIERED',
+          configMode: 'TIERED',
           templateKey: 'golf-tiered-pick-6',
           name: 'Select one from each tier, 4 count',
           description: 'Default golf tiered template',
@@ -181,7 +181,6 @@ function primeCommonMocks() {
           active: true,
           schemaVersion: 1,
           configuration: {
-            mode: 'GOLF_TIERED',
             maxEntriesPerSquad: 1,
             rosterSize: 6,
             countedScores: 4,
@@ -191,7 +190,7 @@ function primeCommonMocks() {
           id: '33333333-3333-4333-8333-333333333333',
           sport: 'GOLF',
           contestFormat: 'ROSTER',
-          configMode: 'GOLF_TIERED',
+          configMode: 'TIERED',
           templateKey: 'golf-tiered-pick-12',
           name: 'Select two from each tier, 8 count',
           description: 'Pick two golfers from each seeded tier.',
@@ -200,7 +199,6 @@ function primeCommonMocks() {
           active: true,
           schemaVersion: 1,
           configuration: {
-            mode: 'GOLF_TIERED',
             maxEntriesPerSquad: 1,
             rosterSize: 12,
             countedScores: 8,
@@ -262,7 +260,6 @@ describe('CreateContestPage', () => {
           templateId: '11111111-1111-4111-8111-111111111111',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
           configurationOverrides: expect.objectContaining({
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
             rosterSize: 6,
             countedScores: 4,
@@ -376,7 +373,6 @@ describe('CreateContestPage', () => {
           configuration: {
             id: 'config-78',
             contestId: 'contest-78',
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
             maxEntriesPerSquad: 1,
             rosterSize: 6,
@@ -446,7 +442,6 @@ describe('CreateContestPage', () => {
           configuration: {
             id: 'config-77',
             contestId: 'contest-77',
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
             maxEntriesPerSquad: 2,
             rosterSize: 6,
@@ -513,7 +508,6 @@ describe('CreateContestPage', () => {
         path: { id: 'league-1', contestId: 'contest-77' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
-          mode: 'GOLF_TIERED',
           rosterSize: 6,
           countedScores: 3,
         }),

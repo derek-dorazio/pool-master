@@ -254,36 +254,34 @@ export function RootAdminContentConfigurationDetailPage() {
                 </label>
               </div>
 
-              {draft.configuration.mode === 'GOLF_TIERED' ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <FormField label="Roster size">
-                    <Input
-                      data-testid="root-admin-content-config-roster-size"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTieredTemplateConfiguration(current, {
-                          rosterSize: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.rosterSize}
-                    />
-                  </FormField>
-                  <FormField label="Counted scores">
-                    <Input
-                      data-testid="root-admin-content-config-counted-scores"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTieredTemplateConfiguration(current, {
-                          countedScores: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.countedScores}
-                    />
-                  </FormField>
-                  <p className="md:col-span-2 text-sm text-muted-foreground">
-                    Tier structure and golfer assignments are set per tournament, not per template —
-                    see the tournament&apos;s Tiers page.
-                  </p>
-                </div>
-              ) : null}
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <FormField label="Roster size">
+                  <Input
+                    data-testid="root-admin-content-config-roster-size"
+                    onChange={(event) => updateDraft((current) =>
+                      updateTieredTemplateConfiguration(current, {
+                        rosterSize: toPositiveNumber(event.target.value),
+                      }))}
+                    type="number"
+                    value={draft.configuration.rosterSize}
+                  />
+                </FormField>
+                <FormField label="Counted scores">
+                  <Input
+                    data-testid="root-admin-content-config-counted-scores"
+                    onChange={(event) => updateDraft((current) =>
+                      updateTieredTemplateConfiguration(current, {
+                        countedScores: toPositiveNumber(event.target.value),
+                      }))}
+                    type="number"
+                    value={draft.configuration.countedScores}
+                  />
+                </FormField>
+                <p className="md:col-span-2 text-sm text-muted-foreground">
+                  Tier structure and golfer assignments are set per tournament, not per template —
+                  see the tournament&apos;s Tiers page.
+                </p>
+              </div>
           </FormEditorSection>
         </>
       )}
