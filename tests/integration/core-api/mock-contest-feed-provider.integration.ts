@@ -21,6 +21,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
+import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -861,6 +862,7 @@ describe('mock contest feed provider event-first verification', () => {
     const settlement = new GolfContestSettlementService(prisma, undefined, bus);
     const eventLifecycleService = new EventLifecycleService(
       prisma,
+      new PrismaSportEventRepository(prisma),
       undefined,
       undefined,
       'http://localhost:5173',

@@ -1310,8 +1310,9 @@ and 2 and is closed. Outcome and decisions: "Slice 2 stage 2 — outcome" below.
 Core: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `Participant`, `ParticipantProviderMapping`,
 `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`
-Golf instances: `SportEventGolfTier`, `SportEventParticipantGolfRound`,
-`SportEventParticipantGolfStanding`, `SportEventParticipantGolfValuation`
+Golf instances: `SportEventParticipantGolfRound`, `SportEventParticipantGolfStanding`. Stage 2
+found that the other two "golf" tables had no golf columns; #235 renamed them `SportEventTier`
+and `SportEventParticipantValuation`, and they belong to the core.
 
 **The largest gap.** `SportEvent`, `SportEventParticipant`, `SportEventRound` and every golf
 table have no repository port, which is why all 40 golf admin operations and the whole
@@ -1319,8 +1320,8 @@ table have no repository port, which is why all 40 golf admin operations and the
 
 **The schema already models the specialization correctly.** `SportEvent.sport` is the
 discriminator — a golf event *is* a `SportEvent` with `sport = 'GOLF'` — and the golf tables
-are extension rows keyed to the core (`SportEventParticipantGolfValuation` is `@unique` on
-`sportEventParticipantId`, a true 1:1). **Core row plus optional sport extension is the
+are extension rows keyed to the core (`SportEventParticipantGolfStanding` is `@unique` on its
+base standing, a true 1:1). **Core row plus optional sport extension is the
 pattern. Sport particulars stay in the extension and never migrate into the core** — stage 1
 for this slice must check that in both directions, since Q0 found one that already did.
 
@@ -1654,14 +1655,28 @@ through `listParticipantProviderMappings` instead, and the golf player list's
 - **`seedFieldFromProvider` and `createWithProviderMapping` had no caller.** Removed.
 - **The root-admin guard at `onRequest` never saw the user.** The global auth guard is a
   `preHandler`, so a route-level `onRequest` ran before `authUser` existed and refused every
-  root admin. The integration harness did not show it; the FAPI suite did. The guard now
+  root admin. Both the FAPI suite and integration's contract-verification `z3l` and `cs8`
+  cases fail on that version; FAPI showed it first only because it ran first. The guard now
   verifies the token itself through helpers shared with the auth guard, and a unit test pins
   the order.
 - **`ELIMINATED` had no "Cut" mapping anywhere** despite the domain comment saying golf
   surfaces render it so. `formatParticipantStatusLabel` in the shared domain is the one place.
 
 **Left for #204 / #205:** see the naming report on #236. Contest management still takes a
-`SportEventParticipantRepository` it does not use; the contest picker still says "World rank".
+`SportEventParticipantRepository` it does not use. (The contest picker's "World rank" became
+"Ranking" in #241.)
+
+### Slice 2 close-out, 2026-09-30
+
+The last slice-2 writes off the ports were the event lifecycle: `EventLifecycleService` read and
+wrote the event's status with raw Prisma, and `EventLifecycleScheduler` queried its candidates
+the same way. Both now go through `SportEventRepository` (`findById`, `update`, and a new
+`findAutoLifecycleCandidates`) and `SportEventRoundRepository.findBySportEvents`. The service
+still holds Prisma for its contest side effects, which are #204's.
+
+Raw Prisma on slice-2 models that remains is assigned: the contest code that reads the field
+(`contests/*`, `drafts`, `contest-management`) to #204, and provider plumbing
+(`admin/provider-service.ts`, `ingestion/*`, `events/event-score-source-service.ts`) to #205.
 
 ## Sources / Prior Decisions
 

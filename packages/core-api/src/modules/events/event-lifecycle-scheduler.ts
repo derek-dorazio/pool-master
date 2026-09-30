@@ -17,27 +17,20 @@
  * job is exactly the two status writes below, nothing else.
  */
 
-import { PrismaSportEventSyncScope, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { SportEventStatus } from '@poolmaster/shared/domain';
+import type { SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
+import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from './event-lifecycle-service';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 export const SCHEDULED_LIFECYCLE_REASON = 'SCHEDULED_LIFECYCLE';
 
-interface SweepCandidate {
-  id: string;
-  status: string;
-  startDate: Date;
-  endDate: Date | null;
-  roundSchedule: Array<{ scheduledDate: Date; scheduledEndAt: Date | null }>;
-}
-
 export class EventLifecycleScheduler {
   private timer?: ReturnType<typeof setInterval>;
 
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>,
+    private readonly rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>,
     private readonly eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition'>,
     private readonly logger?: FastifyBaseLogger,
     private readonly now: () => Date = () => new Date(),
@@ -64,26 +57,12 @@ export class EventLifecycleScheduler {
   /** One sweep pass. Exposed directly so tests and manual triggers don't need to wait on the timer. */
   async runSweep(): Promise<void> {
     const now = this.now();
-    const candidates = (await this.prisma.sportEvent.findMany({
-      where: {
-        autoLifecycleEnabled: true,
-        syncScope: { not: PrismaSportEventSyncScope.FULL },
-        status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
-      },
-      select: {
-        id: true,
-        status: true,
-        startDate: true,
-        endDate: true,
-        roundSchedule: {
-          select: { scheduledDate: true, scheduledEndAt: true },
-        },
-      },
-    })) as SweepCandidate[];
+    const candidates = await this.sportEvents.findAutoLifecycleCandidates();
+    const roundsByEvent = await this.rounds.findBySportEvents(candidates.map((candidate) => candidate.id));
 
     for (const candidate of candidates) {
       try {
-        await this.applyDueTransition(candidate, now);
+        await this.applyDueTransition(candidate, roundsByEvent.get(candidate.id) ?? [], now);
       } catch (error) {
         this.logger?.error({
           sportEventId: candidate.id,
@@ -93,9 +72,9 @@ export class EventLifecycleScheduler {
     }
   }
 
-  private async applyDueTransition(candidate: SweepCandidate, now: Date): Promise<void> {
+  private async applyDueTransition(candidate: SportEvent, roundSchedule: SportEventRound[], now: Date): Promise<void> {
     if (candidate.status === SportEventStatus.SCHEDULED) {
-      const dueAt = minDate(candidate.roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
+      const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
       if (now >= dueAt) {
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
@@ -107,10 +86,10 @@ export class EventLifecycleScheduler {
     }
 
     if (candidate.status === SportEventStatus.IN_PROGRESS) {
-      const roundEnds = candidate.roundSchedule
+      const roundEnds = roundSchedule
         .map((round) => round.scheduledEndAt)
         .filter((date): date is Date => date !== null);
-      const dueAt = maxDate(roundEnds) ?? candidate.endDate ?? undefined;
+      const dueAt = maxDate(roundEnds) ?? candidate.endDate;
       if (dueAt && now >= dueAt) {
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,

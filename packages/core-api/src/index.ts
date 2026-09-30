@@ -32,6 +32,7 @@ import { IngestionConfigService } from './modules/admin/ingestion-config-service
 import { PollConfigService } from './modules/admin/poll-config-service';
 import { PrismaPlatformRuntimeConfigRepository } from './modules/admin/platform-runtime-config-repository';
 import { ProviderService } from './modules/admin/provider-service';
+import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
 import { versionModule } from './modules/version/routes';
 
@@ -75,6 +76,7 @@ export function buildApp() {
   const golfContestSettlement = new GolfContestSettlementService(prisma, app.log);
   const eventLifecycleService = new EventLifecycleService(
     prisma,
+    new PrismaSportEventRepository(prisma),
     app.log,
     mailDelivery,
     appBaseUrl,
@@ -86,7 +88,8 @@ export function buildApp() {
     eventLifecycleService,
   );
   const eventLifecycleScheduler = new EventLifecycleScheduler(
-    prisma,
+    new PrismaSportEventRepository(prisma),
+    new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
     app.log,
   );

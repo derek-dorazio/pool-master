@@ -275,6 +275,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     countTiers: noCounts(),
     countContests: noCounts(),
     countBySeasons: noCounts(),
+    findAutoLifecycleCandidates: many(),
     ...overrides,
   };
 }

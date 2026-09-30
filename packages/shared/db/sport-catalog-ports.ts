@@ -129,6 +129,11 @@ export interface SportEventRepository {
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per season, for each id asked about (0 where none). */
   countBySeasons(seasonIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * The events the lifecycle scheduler may move on: auto lifecycle on, not provider-owned
+   * (`syncScope` other than `FULL`), and `SCHEDULED` or `IN_PROGRESS`. Unordered.
+   */
+  findAutoLifecycleCandidates(): Promise<SportEvent[]>;
 }
 
 export interface LeagueEventRepository {
@@ -145,6 +150,8 @@ export interface SportEventRoundSchedule {
 export interface SportEventRoundRepository {
   /** Ordered by round number. */
   findBySportEvent(sportEventId: string): Promise<SportEventRound[]>;
+  /** Each asked-about event's rounds, ordered by round number (an empty list where none). */
+  findBySportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventRound[]>>;
   /** Creates the given rounds, all or none. */
   createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
   /** Reschedules existing rounds, all or none. `scheduledEndAt` left undefined is kept. */

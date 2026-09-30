@@ -299,6 +299,11 @@ export class InMemorySportEvents {
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
       countBySeasons: async (ids) => count(ids, (id) => this.events.filter((row) => row.seasonId === id).length),
+      findAutoLifecycleCandidates: async () => this.events.filter((row) => (
+        row.autoLifecycleEnabled
+        && row.syncScope !== 'FULL'
+        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
+      )),
     };
   }
 
@@ -307,6 +312,12 @@ export class InMemorySportEvents {
       findBySportEvent: async (sportEventId) => this.roundRows
         .filter((row) => row.sportEventId === sportEventId)
         .sort((left, right) => left.roundNumber - right.roundNumber),
+      findBySportEvents: async (sportEventIds) => new Map(sportEventIds.map((sportEventId) => [
+        sportEventId,
+        this.roundRows
+          .filter((row) => row.sportEventId === sportEventId)
+          .sort((left, right) => left.roundNumber - right.roundNumber),
+      ])),
       createMany: async (sportEventId, rounds) => {
         for (const round of rounds) {
           this.roundRows.push(stamp({ id: this.id('round'), sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null }));

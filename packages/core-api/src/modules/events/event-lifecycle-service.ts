@@ -18,6 +18,8 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import type { SportEventRepository } from '@poolmaster/shared/db';
+import type { SportEvent } from '@poolmaster/shared/domain';
 import { ContestStatus, SportEventStatus, isDeclaredSportEventTransition, SYSTEM_USER_ID, SYSTEM_USER_EMAIL } from '@poolmaster/shared/domain';
 import type { LeagueRole } from '@poolmaster/shared/domain';
 import {
@@ -45,18 +47,8 @@ export interface SportEventStatusTransitionInput {
   actor: SportEventStatusTransitionActor;
 }
 
-interface TransitionedSportEvent {
-  id: string;
-  providerId: string;
-  externalId: string;
-  name: string;
-  startDate: Date;
-  endDate: Date | null;
-  status: SportEventStatus;
-}
-
 export interface SportEventStatusTransitionResult {
-  sportEvent: TransitionedSportEvent;
+  sportEvent: SportEvent;
   fromStatus: SportEventStatus;
   toStatus: SportEventStatus;
 }
@@ -110,8 +102,13 @@ interface ContestStartedCandidate {
 }
 
 export class EventLifecycleService {
+  /**
+   * `prisma` is for the contest side effects only; contests are slice 3's (#204), and move
+   * onto a port there. The event itself is read and written through `sportEvents`.
+   */
   constructor(
     private readonly prisma: PrismaClient,
+    private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
@@ -121,10 +118,11 @@ export class EventLifecycleService {
   async applySportEventStatusTransition(
     input: SportEventStatusTransitionInput,
   ): Promise<SportEventStatusTransitionResult> {
-    const before = await this.prisma.sportEvent.findUniqueOrThrow({
-      where: { id: input.sportEventId },
-    });
-    const fromStatus = before.status as SportEventStatus;
+    const before = await this.sportEvents.findById(input.sportEventId);
+    if (!before) {
+      throw new EventLifecycleError(`Sport event ${input.sportEventId} not found`, 'SPORT_EVENT_NOT_FOUND', 404);
+    }
+    const fromStatus = before.status;
     const isStrict = input.actor.type !== 'PROVIDER';
 
     if (fromStatus !== input.toStatus && !isDeclaredSportEventTransition(fromStatus, input.toStatus)) {
@@ -141,14 +139,11 @@ export class EventLifecycleService {
       }, 'Provider-driven sport event transition is not in the declared transition map; applying it anyway');
     }
 
-    const updated = await this.prisma.sportEvent.update({
-      where: { id: input.sportEventId },
-      data: {
-        status: input.toStatus,
-        ...(input.toStatus === SportEventStatus.COMPLETED && !before.endDate
-          ? { endDate: new Date() }
-          : {}),
-      },
+    const updated = await this.sportEvents.update(input.sportEventId, {
+      status: input.toStatus,
+      ...(input.toStatus === SportEventStatus.COMPLETED && !before.endDate
+        ? { endDate: new Date() }
+        : {}),
     });
 
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
@@ -162,14 +157,14 @@ export class EventLifecycleService {
     }
 
     return {
-      sportEvent: updated as TransitionedSportEvent,
+      sportEvent: updated,
       fromStatus,
       toStatus: input.toStatus,
     };
   }
 
   private async writeTransitionAuditEntry(
-    sportEvent: TransitionedSportEvent,
+    sportEvent: SportEvent,
     fromStatus: SportEventStatus,
     toStatus: SportEventStatus,
     actor: { type: 'ROOT_ADMIN'; userId: string; email: string } | { type: 'SYSTEM'; reason: string },
@@ -193,7 +188,7 @@ export class EventLifecycleService {
   }
 
   private async settleContestsForCompletedEvent(
-    sportEvent: TransitionedSportEvent,
+    sportEvent: SportEvent,
   ): Promise<void> {
     if (!this.golfContestSettlement) {
       return;
@@ -205,7 +200,7 @@ export class EventLifecycleService {
   }
 
   private async activateContestsForStartedEvent(
-    sportEvent: TransitionedSportEvent,
+    sportEvent: SportEvent,
   ): Promise<void> {
     const candidates = await this.prisma.contest.findMany({
       where: {
@@ -309,7 +304,7 @@ export class EventLifecycleService {
 
   private async deliverContestStartedSummaryEmails(
     contest: ContestStartedCandidate,
-    sportEvent: TransitionedSportEvent,
+    sportEvent: SportEvent,
   ): Promise<void> {
     if (!this.mailDelivery) {
       this.logger?.debug({

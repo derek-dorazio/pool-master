@@ -160,6 +160,26 @@ describe('SportEventRepository — writes', () => {
     expect(await events.countContests([withTiers.id, bare.id])).toEqual(new Map([[withTiers.id, 1], [bare.id, 0]]));
     expect(fixture.contestId).toBeDefined();
   });
+
+  it('finds the lifecycle scheduler\'s candidates: auto lifecycle on, not provider-owned, scheduled or in progress', async () => {
+    const { events } = repos();
+    const scheduled = await createEvent('Scheduled');
+    const inProgress = await createEvent('In Progress');
+    await events.update(inProgress.id, { status: 'IN_PROGRESS' });
+    const completed = await createEvent('Completed');
+    await events.update(completed.id, { status: 'COMPLETED' });
+    const manualOverride = await createEvent('Manual Override');
+    await events.update(manualOverride.id, { autoLifecycleEnabled: false });
+    const providerOwned = await createEvent('Provider Owned');
+    await events.update(providerOwned.id, { syncScope: 'FULL' });
+    const scoresOnly = await createEvent('Scores Only');
+    await events.update(scoresOnly.id, { syncScope: 'SCORES_ONLY' });
+
+    const created = new Set([scheduled.id, inProgress.id, completed.id, manualOverride.id, providerOwned.id, scoresOnly.id]);
+    const candidates = (await events.findAutoLifecycleCandidates()).filter((event) => created.has(event.id));
+
+    expect(candidates.map((event) => event.name).sort()).toEqual(['In Progress', 'Scheduled', 'Scores Only']);
+  });
 });
 
 describe('LeagueEventRepository', () => {
@@ -202,6 +222,22 @@ describe('SportEventRoundRepository — writes', () => {
     expect(existing.scheduledDate).toEqual(new Date('2026-06-04T12:00:00.000Z'));
     expect((await rounds.findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
     expect(created.roundNumber).toBe(2);
+  });
+
+  it('reads several events\' rounds at once, in round order, with an empty list for an event without rounds', async () => {
+    const { rounds } = repos();
+    const withRounds = await createEvent('With Rounds');
+    const without = await createEvent('Without Rounds');
+    await rounds.createMany(withRounds.id, [
+      { roundNumber: 2, scheduledDate: new Date('2026-06-05T12:00:00.000Z') },
+      { roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') },
+    ]);
+
+    const byEvent = await rounds.findBySportEvents([withRounds.id, without.id]);
+
+    expect(byEvent.get(withRounds.id)?.map((round) => round.roundNumber)).toEqual([1, 2]);
+    expect(byEvent.get(without.id)).toEqual([]);
+    expect(await rounds.findBySportEvents([])).toEqual(new Map());
   });
 });
 
