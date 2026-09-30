@@ -1,14 +1,9 @@
-import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, SYSTEM_USER_ID, type SportEvent } from '@poolmaster/shared/domain';
-import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
+import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type SportEvent } from '@poolmaster/shared/domain';
 import {
   EventLifecycleError,
   EventLifecycleService,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
-
-jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
-  logAdminAction: jest.fn().mockResolvedValue(undefined),
-}));
 
 function createLogger() {
   return {
@@ -109,7 +104,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
+      actor: { type: 'ROOT_ADMIN' },
     });
 
     expect(result.fromStatus).toBe(SportEventStatus.SCHEDULED);
@@ -127,7 +122,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
         sportEventId: 'sport-event-1',
         // SCHEDULED -> COMPLETED skips IN_PROGRESS entirely; not declared.
         toStatus: SportEventStatus.COMPLETED,
-        actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
+        actor: { type: 'ROOT_ADMIN' },
       }),
     ).rejects.toMatchObject({
       name: 'EventLifecycleError',
@@ -181,7 +176,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       service.applySportEventStatusTransition({
         sportEventId: 'sport-event-1',
         toStatus: SportEventStatus.COMPLETED,
-        actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
+        actor: { type: 'ROOT_ADMIN' },
       }),
     ).resolves.toMatchObject({ fromStatus: SportEventStatus.COMPLETED, toStatus: SportEventStatus.COMPLETED });
   });
@@ -225,54 +220,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(storedEvent().endDate).toEqual(existingEndDate);
   });
 
-  it('pool-master-g1z writes an AdminAuditEntry for a ROOT_ADMIN transition', async () => {
-    (logAdminAction as jest.Mock).mockClear();
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
-
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
-    });
-
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      actorUserId: 'admin-1',
-      actorEmail: 'admin@example.com',
-      action: 'sport_event.transition',
-      resourceType: 'SPORT_EVENT',
-      resourceId: 'sport-event-1',
-      beforeState: { status: SportEventStatus.SCHEDULED },
-      afterState: { status: SportEventStatus.IN_PROGRESS },
-    }));
-  });
-
-  it('pool-master-g1z does not write an AdminAuditEntry for a PROVIDER transition', async () => {
-    (logAdminAction as jest.Mock).mockClear();
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const prisma = {
-      contest: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
-
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'PROVIDER' },
-    });
-
-    expect(logAdminAction).not.toHaveBeenCalled();
-  });
-
-  it('pool-master-k6q allows a declared transition for a SYSTEM actor and writes an AdminAuditEntry attributed to the seeded system user', async () => {
-    (logAdminAction as jest.Mock).mockClear();
+  it('allows a declared transition for a SYSTEM actor, the lifecycle scheduler', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
       contest: {
@@ -284,19 +232,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.IN_PROGRESS,
-      actor: { type: 'SYSTEM', reason: 'SCHEDULED_LIFECYCLE' },
+      actor: { type: 'SYSTEM' },
     });
 
     expect(result.toStatus).toBe(SportEventStatus.IN_PROGRESS);
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      actorUserId: SYSTEM_USER_ID,
-      actorEmail: 'system@poolmaster.internal',
-      action: 'sport_event.transition',
-      resourceType: 'SPORT_EVENT',
-      resourceId: 'sport-event-1',
-      beforeState: { status: SportEventStatus.SCHEDULED },
-      afterState: { status: SportEventStatus.IN_PROGRESS },
-    }));
+    expect(storedEvent().status).toBe(SportEventStatus.IN_PROGRESS);
   });
 
   it('pool-master-k6q rejects an undeclared transition for a SYSTEM actor with 422 SPORT_EVENT_INVALID_TRANSITION, same as ROOT_ADMIN', async () => {
@@ -308,7 +248,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       service.applySportEventStatusTransition({
         sportEventId: 'sport-event-1',
         toStatus: SportEventStatus.COMPLETED,
-        actor: { type: 'SYSTEM', reason: 'SCHEDULED_LIFECYCLE' },
+        actor: { type: 'SYSTEM' },
       }),
     ).rejects.toMatchObject({
       name: 'EventLifecycleError',

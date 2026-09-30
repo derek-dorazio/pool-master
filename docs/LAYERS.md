@@ -172,7 +172,7 @@ One folder per domain object, containing:
 takes the actor and the subject:
 
 ```ts
-async disableUser(actor: UserWriteActor, targetUserId: string, reason?: string): Promise<User>
+async disableUser(actor: UserWriteActor, targetUserId: string): Promise<User>
 ```
 
 When actor and subject are the same id it is self-service; when they differ the actor must be a
@@ -183,14 +183,14 @@ operation, in two files, which had silently drifted apart —
 
 - only the admin half carried the last-root-admin guard;
 - only the account half refused to write an inactive account;
-- only the admin half wrote an audit entry;
+- only the account half answered with the updated account — the admin half returned 204;
 - only the admin half blocked self-demotion, duplicating a count that already covered it.
 
 None of those differences were decisions. They were what happens when "who is asking" is
 encoded in *which file you are in* instead of in a parameter.
 
 **What belongs in the service:** the guards and their order, idempotence, what shares a
-transaction, what gets audited, and which typed error each failure raises.
+transaction, which side effects follow a write, and which typed error each failure raises.
 
 **What does not:** HTTP. A service never sees a `request`, never sets a cookie, never picks a
 status code. It also never reaches past its ports for a single-aggregate read — the exceptions
@@ -210,7 +210,7 @@ What a service test may assert, learned the hard way:
 | the typed error (`code`, `statusCode`) | it is the published contract |
 | the **absence** of a write | it is the only way idempotence and a short-circuiting guard are visible |
 | that two writes shared one `$transaction` | atomicity has no other observable |
-| the audit entry's content | the audit has no return value |
+| the content of a side effect handed to a port — the contest-started email's subject and body | delivery has no return value |
 | that **both callers reach the same operation** | this is what the collapse bought |
 
 What it may not: which repository method was called with what. That assertion pins the call
@@ -234,8 +234,9 @@ caller.
 **Tests:** mappers are covered through the layer that uses them — the integration contract
 tests parse real responses against the DTO schema, which is a stronger check than asserting a
 mapper's return value against a literal. Two mappers have their own unit tests
-(`leagues-audit-mapper.test.ts`, `provider-sync-mapper.test.ts`) because they do real
-transformation rather than projection.
+(`sport-events-mapper.test.ts`, `provider-sync-mapper.test.ts`) because they do real
+transformation rather than projection — the first derives an event's contest readiness from
+its release, field and lock times.
 
 A mapper's **declared return type is the check**. `mapLeagueMembershipToDto` had none for
 months, which meant `LeagueMembershipDto` was a registered OpenAPI component with nothing
@@ -343,7 +344,7 @@ these suites import from `@poolmaster/shared/generated/hey-api` rather than usin
 `plugins/` holds Fastify plugins: `auth-guard` (validates the access token and attaches
 `request.authUser`), `admin-auth` (the older root-admin gate, still guarding what remains under
 `/admin/*`), `request-logging-context`, `schema-components`, `etag-support`, `swagger`,
-`health`, `poll-config`, `admin-audit-hook`.
+`health`, `poll-config`.
 
 `core/` holds process-level helpers with no domain content: `config`, `error-handler`
 (`sendError`), `logger`, `prisma-context`, `session-cookies`, `admin-permissions`.
@@ -489,27 +490,28 @@ sequenceDiagram
   participant P as UserRepository
   participant DB as Postgres
 
-  C->>R: POST /api/v1/users/{me|id}/disable  { reason? }
+  C->>R: POST /api/v1/users/{me|id}/disable
   R->>H: handler.disableUser
-  H->>H: actor = {userId, isRootAdmin, email} from authUser<br/>subject = 'me' ? actor.userId : param
-  H->>S: disableUser(actor, subject, reason)
+  H->>H: actor = {userId, isRootAdmin} from authUser<br/>subject = 'me' ? actor.userId : param
+  H->>S: disableUser(actor, subject)
   S->>S: requireWritableUser — A6: self, or rootAdmin
   S->>P: findById(subject)
   P->>DB: select
   S->>S: already inactive? return unchanged (idempotent)
   S->>P: countRootAdmins() — reject the last one
   S->>DB: $transaction: set isActive=false AND revoke every refresh token
-  S->>S: audit ONLY if actor.isRootAdmin
+  S->>P: findById(subject) — re-read, so the response is the stored state
   S-->>H: User
   H->>H: clear session cookies if subject === actor
   H-->>C: 200 { user: UserDto }
 ```
 
 Three things in that diagram used to be spread across two files that disagreed: the guard, the
-transaction, and the audit. The flag and the session revoke share one transaction because two
+transaction, and the response. The flag and the session revoke share one transaction because two
 separate statements left a window where a user was inactive in the UI and could still refresh a
-session for the token's lifetime. The audit is keyed on the actor because the entry records an
-exercise of root-admin authority, and self-service is not that.
+session for the token's lifetime. The response is the re-read user for either caller, because
+the admin half used to answer 204 while the self-service half returned the account — one
+operation, two response shapes.
 
 ---
 
@@ -538,12 +540,6 @@ is generated from the spec and checked by `npm run api:check`; `clients/poolmast
 derives its map from the spec at test-setup time. What remains hand-written is the small manifest
 in `scripts/generate-api-routes.mjs` saying which operation each `API_ROUTES` name means — and an
 operationId the spec does not contain fails the generator rather than drifting quietly.
-
-**`logAdminAction` holds a module-level Prisma singleton** set at boot, rather than being
-injected. It also takes no transaction client, which is why every audit call in this refactor is
-written deliberately *after* its transaction commits: a call inside the callback was never
-enrolled in it, so the entry committed immediately and would have survived a rollback,
-recording an action that did not happen.
 
 **The webapp has moved (updated 2026-09-27).** This section previously said phase 1 was
 backend-only and the webapp was expected not to compile. Slice 1's frontend is now reconnected
@@ -600,9 +596,7 @@ data). Their siblings `resolveActionItem`, `getLeagueAuditLog`, `getMemberAuditL
 were deleted: the first three were APIs in front of tables nothing writes to, and the fourth had no
 caller and was descoped.
 
-**Two live reads sit in front of a table nothing writes.** `AuditService.logAction` is the only
-writer to `CommissionerAuditLog` and has zero callers, so `getContestAuditLog` — still routed at
-`GET /contests/:contestId/audit-log` — always returns an empty array. Left in place because
-contests are slice 3's cluster and #205 has to decide how many audit tables there should be.
-Likewise `getLeagueDashboard`'s `actionItems` can only be populated by writing
-`CommissionerActionItem` directly, which only an integration test does.
+**One live read sits in front of a table nothing writes.** `getLeagueDashboard`'s `actionItems`
+can only be populated by writing `CommissionerActionItem` directly, which only an integration
+test does. There were two: `getContestAuditLog` read a commissioner audit table with no writer,
+and went with the audit feature in #255.

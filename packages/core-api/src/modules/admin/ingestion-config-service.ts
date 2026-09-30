@@ -12,7 +12,6 @@ import type {
   IngestionScheduleConfigOverride,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
-import { logAdminAction } from './admin-audit-service';
 import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
 
 type FeedPolicyKey = keyof Omit<IngestionScheduleConfigBody, 'scheduledSports'>;
@@ -88,7 +87,6 @@ export class IngestionConfigService {
   async updateConfig(
     partial: IngestionScheduleConfigOverride,
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
@@ -98,23 +96,11 @@ export class IngestionConfigService {
       },
     }, 'Updating ingestion config');
 
-    const before = deepCopy(currentConfig);
     currentConfig = {
       ...mergeBasePolicies(currentConfig, partial),
       perSportOverrides: deepCopy(currentConfig).perSportOverrides,
     };
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'UPDATE_INGESTION_CONFIG',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: 'ingestion-schedule',
-      description: 'Updated ingestion schedule configuration',
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminIngestionConfig.update.success',
@@ -157,7 +143,6 @@ export class IngestionConfigService {
     sport: string,
     config: IngestionScheduleConfigOverride,
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
@@ -168,7 +153,6 @@ export class IngestionConfigService {
       },
     }, 'Setting per-sport ingestion override');
 
-    const before = deepCopy(currentConfig);
     const existingOverride = currentConfig.perSportOverrides[sport] ?? {};
     currentConfig = {
       ...currentConfig,
@@ -178,17 +162,6 @@ export class IngestionConfigService {
       },
     };
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'SET_INGESTION_SPORT_OVERRIDE',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: `ingestion-schedule:${sport}`,
-      description: `Set ingestion schedule override for sport: ${sport}`,
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminIngestionConfig.setOverride.success',
@@ -203,7 +176,6 @@ export class IngestionConfigService {
   async clearPerSportOverride(
     sport: string,
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
@@ -211,7 +183,6 @@ export class IngestionConfigService {
       data: { sport },
     }, 'Clearing per-sport ingestion override');
 
-    const before = deepCopy(currentConfig);
     const remainingOverrides = { ...currentConfig.perSportOverrides };
     delete remainingOverrides[sport];
     currentConfig = {
@@ -219,17 +190,6 @@ export class IngestionConfigService {
       perSportOverrides: remainingOverrides,
     };
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'CLEAR_INGESTION_SPORT_OVERRIDE',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: `ingestion-schedule:${sport}`,
-      description: `Cleared ingestion schedule override for sport: ${sport}`,
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminIngestionConfig.clearOverride.success',
@@ -240,27 +200,14 @@ export class IngestionConfigService {
 
   async resetDefaults(
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminIngestionConfig.reset.start',
     }, 'Resetting ingestion config');
 
-    const before = deepCopy(currentConfig);
     currentConfig = deepCopy(DEFAULT_INGESTION_CONFIG);
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'RESET_INGESTION_CONFIG',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: 'ingestion-schedule',
-      description: 'Reset ingestion schedule configuration to defaults',
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminIngestionConfig.reset.success',

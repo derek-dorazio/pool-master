@@ -254,16 +254,6 @@ export type UserPasswordChangeRequest = {
 };
 
 /**
- * Password-reset payload. Root admin only, and distinct from a change by subject rather than by precondition.
- */
-export type UserResetPasswordRequest = {
-    /**
-     * Optional human reason captured in the root-admin audit log.
-     */
-    reason?: string;
-};
-
-/**
  * Password-reset response.
  */
 export type UserResetPasswordResponse = {
@@ -274,16 +264,6 @@ export type UserResetPasswordResponse = {
 };
 
 /**
- * Disable payload. The reason is optional because self-inactivation has nobody to explain itself to.
- */
-export type UserDisableRequest = {
-    /**
-     * Optional human reason captured in the root-admin audit log when an admin disables somebody else.
-     */
-    reason?: string;
-};
-
-/**
  * Permanent-delete confirmation payload.
  */
 export type UserDeleteRequest = {
@@ -291,10 +271,6 @@ export type UserDeleteRequest = {
      * Exact email confirmation required before permanently deleting the inactive account.
      */
     email: string;
-    /**
-     * Optional human reason captured in the root-admin audit log.
-     */
-    reason?: string;
 };
 
 /**
@@ -305,10 +281,6 @@ export type SetUserRootAdminRequest = {
      * Whether the target user should hold the platform-level root-admin role after the change.
      */
     isRootAdmin: boolean;
-    /**
-     * Optional human reason captured in the root-admin audit log.
-     */
-    reason?: string;
 };
 
 /**
@@ -2972,124 +2944,6 @@ export type ContestEntryDeletionResponse = {
      * Confirms that the delete operation succeeded.
      */
     deleted: true;
-};
-
-/**
- * Commissioner audit-log entry.
- */
-export type ContestAuditLogEntryDto = {
-    /**
-     * Audit-log entry id.
-     */
-    id: string;
-    /**
-     * League this entry belongs to.
-     */
-    leagueId: string;
-    /**
-     * Contest this entry references when the action is contest-scoped.
-     */
-    contestId?: string;
-    /**
-     * User id of the commissioner / actor that performed the action.
-     */
-    actorId: string;
-    /**
-     * Action verb in dotted form (e.g., "league.member.role.changed").
-     */
-    action: string;
-    /**
-     * Audit-log entry category — broad classification of the action that produced this entry.
-     */
-    category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-    /**
-     * Human-readable description of what happened.
-     */
-    description: string;
-    /**
-     * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-     */
-    beforeState?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-     */
-    afterState?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Optional human-supplied reason / justification for the action.
-     */
-    reason?: string;
-    /**
-     * IP address from which the action originated, when available.
-     */
-    ipAddress?: string;
-    /**
-     * When the audit entry was recorded.
-     */
-    createdAt: string;
-};
-
-/**
- * Contest audit-log response.
- */
-export type ContestAuditLogResponse = {
-    entries: Array<{
-        /**
-         * Audit-log entry id.
-         */
-        id: string;
-        /**
-         * League this entry belongs to.
-         */
-        leagueId: string;
-        /**
-         * Contest this entry references when the action is contest-scoped.
-         */
-        contestId?: string;
-        /**
-         * User id of the commissioner / actor that performed the action.
-         */
-        actorId: string;
-        /**
-         * Action verb in dotted form (e.g., "league.member.role.changed").
-         */
-        action: string;
-        /**
-         * Audit-log entry category — broad classification of the action that produced this entry.
-         */
-        category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-        /**
-         * Human-readable description of what happened.
-         */
-        description: string;
-        /**
-         * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-         */
-        beforeState?: {
-            [key: string]: unknown;
-        };
-        /**
-         * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-         */
-        afterState?: {
-            [key: string]: unknown;
-        };
-        /**
-         * Optional human-supplied reason / justification for the action.
-         */
-        reason?: string;
-        /**
-         * IP address from which the action originated, when available.
-         */
-        ipAddress?: string;
-        /**
-         * When the audit entry was recorded.
-         */
-        createdAt: string;
-    }>;
 };
 
 /**
@@ -5822,67 +5676,6 @@ export type ProviderManualSyncSubmissionResponse = {
             [key: string]: unknown;
         };
     }>;
-};
-
-/**
- * Admin audit-log entry.
- */
-export type AuditEntryDto = {
-    id: string;
-    actorEmail: string;
-    actorName: string;
-    action: string;
-    resourceType: string;
-    resourceId: string;
-    description: string;
-    reason?: string;
-    ipAddress?: string;
-    createdAt: string;
-    hasStateChanges: boolean;
-};
-
-/**
- * Admin audit-log list response.
- */
-export type AuditListResponse = {
-    items: Array<{
-        id: string;
-        actorEmail: string;
-        actorName: string;
-        action: string;
-        resourceType: string;
-        resourceId: string;
-        description: string;
-        reason?: string;
-        ipAddress?: string;
-        createdAt: string;
-        hasStateChanges: boolean;
-    }>;
-    total: number;
-    page: number;
-    pageSize: number;
-};
-
-/**
- * Single admin audit-entry response.
- */
-export type AuditEntryResponse = {
-    /**
-     * Admin audit-log entry.
-     */
-    entry: {
-        id: string;
-        actorEmail: string;
-        actorName: string;
-        action: string;
-        resourceType: string;
-        resourceId: string;
-        description: string;
-        reason?: string;
-        ipAddress?: string;
-        createdAt: string;
-        hasStateChanges: boolean;
-    };
 };
 
 /**
@@ -10030,7 +9823,7 @@ export type ChangeUserPasswordResponses = {
 export type ChangeUserPasswordResponse = ChangeUserPasswordResponses[keyof ChangeUserPasswordResponses];
 
 export type ResetUserPasswordData = {
-    body: UserResetPasswordRequest;
+    body?: never;
     path: {
         userId: string;
     };
@@ -10119,7 +9912,7 @@ export type ResetUserPasswordResponses = {
 export type ResetUserPasswordResponse = ResetUserPasswordResponses[keyof ResetUserPasswordResponses];
 
 export type DisableUserData = {
-    body: UserDisableRequest;
+    body?: never;
     path: {
         userId: string;
     };
@@ -15246,24 +15039,6 @@ export type UpdateContestLockTimeResponses = {
 };
 
 export type UpdateContestLockTimeResponse = UpdateContestLockTimeResponses[keyof UpdateContestLockTimeResponses];
-
-export type GetContestAuditLogData = {
-    body?: never;
-    path: {
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/audit-log';
-};
-
-export type GetContestAuditLogResponses = {
-    /**
-     * Contest audit-log response.
-     */
-    200: ContestAuditLogResponse;
-};
-
-export type GetContestAuditLogResponse = GetContestAuditLogResponses[keyof GetContestAuditLogResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -21672,184 +21447,6 @@ export type AdminUnmuteAlertResponses = {
 };
 
 export type AdminUnmuteAlertResponse = AdminUnmuteAlertResponses[keyof AdminUnmuteAlertResponses];
-
-export type AdminExportAuditLogData = {
-    body?: never;
-    path?: never;
-    query?: {
-        actorUserId?: string;
-        action?: string;
-        resourceType?: string;
-        resourceId?: string;
-        dateFrom?: string;
-        dateTo?: string;
-        search?: string;
-        page?: string;
-        pageSize?: string;
-    };
-    url: '/api/v1/admin/audit-log/export';
-};
-
-export type AdminExportAuditLogErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminExportAuditLogError = AdminExportAuditLogErrors[keyof AdminExportAuditLogErrors];
-
-export type AdminExportAuditLogResponses = {
-    /**
-     * Minimal success response envelope.
-     */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
-    };
-};
-
-export type AdminExportAuditLogResponse = AdminExportAuditLogResponses[keyof AdminExportAuditLogResponses];
-
-export type AdminListAuditLogData = {
-    body?: never;
-    path?: never;
-    query?: {
-        actorUserId?: string;
-        action?: string;
-        resourceType?: string;
-        resourceId?: string;
-        dateFrom?: string;
-        dateTo?: string;
-        search?: string;
-        page?: string;
-        pageSize?: string;
-    };
-    url: '/api/v1/admin/audit-log';
-};
-
-export type AdminListAuditLogErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminListAuditLogError = AdminListAuditLogErrors[keyof AdminListAuditLogErrors];
-
-export type AdminListAuditLogResponses = {
-    /**
-     * Admin audit-log list response.
-     */
-    200: AuditListResponse;
-};
-
-export type AdminListAuditLogResponse = AdminListAuditLogResponses[keyof AdminListAuditLogResponses];
-
-export type AdminGetAuditEntryData = {
-    body?: never;
-    path: {
-        entryId: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/audit-log/{entryId}';
-};
-
-export type AdminGetAuditEntryErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type AdminGetAuditEntryError = AdminGetAuditEntryErrors[keyof AdminGetAuditEntryErrors];
-
-export type AdminGetAuditEntryResponses = {
-    /**
-     * Single admin audit-entry response.
-     */
-    200: AuditEntryResponse;
-};
-
-export type AdminGetAuditEntryResponse = AdminGetAuditEntryResponses[keyof AdminGetAuditEntryResponses];
 
 export type AdminGetPollIntervalsData = {
     body?: never;

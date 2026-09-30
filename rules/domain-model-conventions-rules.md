@@ -30,8 +30,7 @@ Specifically:
   the type system.
 - **The only acceptable use of opaque shapes is at integration boundaries**
   where the shape genuinely cannot be enforced — raw provider payloads
-  pre-normalization, opaque audit-log snapshots whose shape varies by source
-  entity. After normalization, the shape is typed.
+  pre-normalization. After normalization, the shape is typed.
 - **Strongly typed beats more concise.** Verbose table names, more mapper
   files, and more discriminated-union variants are acceptable costs when the
   alternative is nullable interpretation, JSON-blob fields, or
@@ -374,11 +373,12 @@ the discriminator has a specific value, the table must be split. There is no
 threshold around "how many nullable columns is too many" — the test is
 binary.
 
-A common case where a single table is correct: an `audit_log` /
-`commissioner_audit_log` table whose columns (`actor_id`, `action`,
-`before_state`, `after_state`, `created_at`) apply uniformly across every
-action type. The action-type discriminator narrows interpretation of the
-existing fields, not which fields exist.
+A common case where a single table is correct: `league_memberships`. Its
+columns (`league_id`, `user_id`, `role`, `status`, `joined_at`) apply to every
+row whether `role` is `COMMISSIONER` or `MEMBER`. The role discriminator
+narrows what the membership authorizes, not which fields exist. Splitting it
+by role would also cost a constraint — `UNIQUE (league_id, user_id)`, one
+membership per user per league, cannot be enforced across two tables.
 
 ### Make impossible states unrepresentable at the storage layer
 
@@ -653,24 +653,25 @@ bound, the answer is a tighter filter or a retention policy, not a page paramete
 
 ### Still to be removed
 
-`adminListUsers` was converted with this rule (#202). Four operations still page, all
+`adminListUsers` was converted with this rule (#202). Two operations still page, both
 belonging to slice 4, which removes them. Slice 2's three went in #235 — `listEvents` and
-`listParticipants` lost their paging, and `adminListEvents` was removed:
+`listParticipants` lost their paging, and `adminListEvents` was removed — and the two audit
+reads, `adminListAuditLog` and `adminExportAuditLog`, went with the audit feature in #255:
 
 | Operation | Paging | Slice |
 |---|---|---|
 | `adminListProviderSyncRuns` | `limit` | 4 |
 | `adminSearchErrors` | `page`, `pageSize` | 4 |
-| `adminListAuditLog` | `page`, `pageSize` | 4 |
-| `adminExportAuditLog` | `page`, `pageSize` | 4 |
 
-`PaginatedSchema` in `dto/common.dto.ts` and `AuditListResponse` survive only because the
-slice-4 surfaces above still reference them. Both go with the last of those; do not add a
-new caller.
+`PaginatedSchema` in `dto/common.dto.ts` survives only because `adminSearchErrors`'
+response is built from it; `adminListProviderSyncRuns` takes `limit` but returns its own
+`{ items }` envelope. It goes when `adminSearchErrors` stops paging; do not add a new
+caller.
 
 `ParticipantRepository.search` still takes `limit`/`offset` and returns
 `{ participants, total }` — slice 2 removes it.
 
-**Audit and error logs are the one place to think before deleting the parameter.** They are
-append-only and unbounded by nature, so slice 4's answer may be a retention window or a
-date-range filter rather than simply returning everything. That is a filter, not a page.
+**Error logs and sync-run history are the one place to think before deleting the
+parameter.** They are append-only and unbounded by nature, so slice 4's answer may be a
+retention window or a date-range filter rather than simply returning everything. That is a
+filter, not a page.

@@ -9,20 +9,15 @@
  * decides who may.
  *
  * Per plans/145 "Test layering", these assert returned values, typed errors, the ABSENCE of a
- * write (which is how idempotence and a short-circuiting guard are observable at all), the
- * atomicity of writes that must land together, and audit content. Query shapes belong to the
+ * write (which is how idempotence and a short-circuiting guard are observable at all), and the
+ * atomicity of writes that must land together. Query shapes belong to the
  * adapter and are covered against real Postgres in
  * `tests/integration/core-api/identity-repositories.integration.ts`.
  */
 import bcrypt from 'bcryptjs';
-import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { DateFormat, TimeFormat, type User } from '../../../packages/shared/domain';
-
-jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
-  logAdminAction: jest.fn().mockResolvedValue(undefined),
-}));
 
 function buildUser(overrides: Partial<User> = {}): User {
   return {
@@ -40,9 +35,9 @@ function buildUser(overrides: Partial<User> = {}): User {
 }
 
 /** The three callers every operation has to distinguish. */
-const self = { userId: 'user-1', isRootAdmin: false, email: 'user@example.com' };
-const rootAdmin = { userId: 'admin-1', isRootAdmin: true, email: 'admin@example.com' };
-const stranger = { userId: 'other-1', isRootAdmin: false, email: 'other@example.com' };
+const self = { userId: 'user-1', isRootAdmin: false };
+const rootAdmin = { userId: 'admin-1', isRootAdmin: true };
+const stranger = { userId: 'other-1', isRootAdmin: false };
 
 function createPrismaMock(passwordHash: string | null = null) {
   const tx = {
@@ -57,8 +52,6 @@ function createPrismaMock(passwordHash: string | null = null) {
     notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     consentRecord: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    commissionerAuditLog: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    adminAuditEntry: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     migrationRun: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
   };
 
@@ -305,7 +298,7 @@ describe('passwords', () => {
     const { users, prisma, tx, service } = serviceFor(buildUser());
     void users;
 
-    const result = await service.resetPassword(rootAdmin, 'user-1', 'Support recovery');
+    const result = await service.resetPassword(rootAdmin, 'user-1');
 
     expect(result.temporaryPassword).toMatch(/^Pm-/);
     // The returned credential must be the one actually stored, hashed.
@@ -313,11 +306,6 @@ describe('passwords', () => {
     await expect(bcrypt.compare(result.temporaryPassword, nextHash)).resolves.toBe(true);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.refreshToken.updateMany).toHaveBeenCalled();
-    // The EVENT is audited; the credential state either side of it is not.
-    const audited = (logAdminAction as jest.Mock).mock.calls[0][0];
-    expect(audited).toMatchObject({ action: 'user.reset_password', reason: 'Support recovery' });
-    expect(audited).not.toHaveProperty('beforeState');
-    expect(audited).not.toHaveProperty('afterState');
   });
 
   it('reserves the reset for a root admin', async () => {
@@ -352,7 +340,7 @@ describe('disable and enable — one operation, either caller', () => {
     await asSelf.service.disableUser(self, 'user-1');
 
     const asAdmin = serviceFor(buildUser());
-    await asAdmin.service.disableUser(rootAdmin, 'user-1', 'abuse');
+    await asAdmin.service.disableUser(rootAdmin, 'user-1');
 
     // Identical write, one implementation. Before #202 these were `inactivateAccount` and
     // `adminDisableUser`, and only the admin half carried the last-root-admin guard.
@@ -365,36 +353,15 @@ describe('disable and enable — one operation, either caller', () => {
     }
   });
 
-  it('audits only when a root admin exercised authority', async () => {
-    const asSelf = serviceFor(buildUser());
-    await asSelf.service.disableUser(self, 'user-1');
-    // Self-service is not an admin action, so there is no platform audit entry for it. This is
-    // the one behavioural difference the collapse had to settle, and it is settled by the
-    // ACTOR rather than by which route the request arrived on.
-    expect(logAdminAction).not.toHaveBeenCalled();
-
-    const asAdmin = serviceFor(buildUser());
-    await asAdmin.service.disableUser(rootAdmin, 'user-1', 'abuse');
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'user.disable',
-      actorUserId: 'admin-1',
-      actorEmail: 'admin@example.com',
-      resourceId: 'user-1',
-      reason: 'abuse',
-    }));
-  });
-
   it('treats disabling an already-inactive user as a no-op', async () => {
     const { prisma, users, service } = serviceFor(buildUser({ isActive: false }));
 
     await expect(service.disableUser(rootAdmin, 'user-1')).resolves.toMatchObject({
       isActive: false,
     });
-    // No write at all, through either client, and no duplicate audit entry for a change that
-    // did not happen.
+    // No write at all, through either client, for a change that did not happen.
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(users.update).not.toHaveBeenCalled();
-    expect(logAdminAction).not.toHaveBeenCalled();
   });
 
   it('refuses to disable the last remaining root admin, whoever asks', async () => {
@@ -499,19 +466,13 @@ describe('permanent delete — one operation, either caller', () => {
 describe('the root-admin role', () => {
   it('promotes without revoking sessions, and demotes with a revoke', async () => {
     const promote = serviceFor(buildUser());
-    await promote.service.setRootAdmin(rootAdmin, 'user-1', true, 'Operational coverage');
+    await promote.service.setRootAdmin(rootAdmin, 'user-1', true);
     expect(promote.tx.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: { isRootAdmin: true },
     });
     // Gaining authority does not invalidate the session that already exists.
     expect(promote.tx.refreshToken.updateMany).not.toHaveBeenCalled();
-    expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'user.set_root_admin',
-      beforeState: { isRootAdmin: false },
-      afterState: { isRootAdmin: true },
-      reason: 'Operational coverage',
-    }));
 
     const demote = serviceFor(
       buildUser({ isRootAdmin: true }),
@@ -552,7 +513,6 @@ describe('the root-admin role', () => {
 
     expect(users.countRootAdmins).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
-    expect(logAdminAction).not.toHaveBeenCalled();
   });
 
   it('is root-admin only', async () => {

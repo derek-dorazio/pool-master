@@ -42,7 +42,7 @@ Use modal templates when the modal follows one of the common workflows:
 - `IconPickerModal` is the current icon-specific picker specialization; keep
   icon catalogs domain-owned, and move only generic picker behavior into
   `PickerModal`.
-- `ReadOnlyDetailModal` for payloads, audit details, and operational metadata.
+- `ReadOnlyDetailModal` for payloads and operational metadata.
 - `WizardModal` for multi-step flows where a modal remains the right
   interaction model.
 

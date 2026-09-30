@@ -6,7 +6,6 @@
  * rates without redeployment.
  */
 
-import { logAdminAction } from './admin-audit-service';
 import type { FastifyBaseLogger } from 'fastify';
 import { PollIntervalConfigSchema } from '@poolmaster/shared/dto';
 import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
@@ -89,7 +88,6 @@ export class PollConfigService {
   async updateConfig(
     partial: Partial<PollIntervalConfig>,
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
@@ -98,20 +96,8 @@ export class PollConfigService {
         keys: Object.keys(partial),
       },
     }, 'Updating poll interval config');
-    const before = { ...currentConfig };
     currentConfig = { ...currentConfig, ...partial };
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'UPDATE_POLL_CONFIG',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: 'poll-intervals',
-      description: 'Updated poll interval configuration',
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminPollConfig.update.success',
@@ -127,26 +113,13 @@ export class PollConfigService {
    */
   async resetDefaults(
     rootAdminUserId: string,
-    rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
     await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminPollConfig.reset.start',
     }, 'Resetting poll interval config');
-    const before = { ...currentConfig };
     currentConfig = { ...DEFAULT_POLL_CONFIG };
     await this.persist(rootAdminUserId);
-
-    await logAdminAction({
-      actorUserId: rootAdminUserId,
-      actorEmail: rootAdminEmail,
-      action: 'RESET_POLL_CONFIG',
-      resourceType: 'PLATFORM_CONFIG',
-      resourceId: 'poll-intervals',
-      description: 'Reset poll interval configuration to defaults',
-      beforeState: before,
-      afterState: currentConfig,
-    });
 
     this.logger?.info({
       action: 'adminPollConfig.reset.success',

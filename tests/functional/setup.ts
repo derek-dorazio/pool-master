@@ -479,13 +479,6 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
-    await database.commissionerAuditLog.deleteMany({
-      where: {
-        leagueId: {
-          in: leagueIds,
-        },
-      },
-    });
     await database.commissionerActionItem.deleteMany({
       where: {
         leagueId: {
@@ -565,13 +558,6 @@ export async function cleanupFunctionalData(): Promise<void> {
     await database.refreshToken.deleteMany({
       where: {
         userId: {
-          in: userIds,
-        },
-      },
-    });
-    await database.adminAuditEntry.deleteMany({
-      where: {
-        actorId: {
           in: userIds,
         },
       },

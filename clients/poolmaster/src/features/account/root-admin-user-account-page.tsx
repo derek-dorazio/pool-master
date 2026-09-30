@@ -11,11 +11,9 @@ import {
   ConfirmDialog,
   DefinitionList,
   ErrorState,
-  FormField,
   Input,
   LoadingState,
   PageHeader,
-  Textarea,
   Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
@@ -139,7 +137,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   });
   const navigate = useNavigate();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
-  const [reason, setReason] = useState('');
   const [deleteEmailConfirmation, setDeleteEmailConfirmation] = useState('');
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
 
@@ -187,7 +184,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         path: { userId: targetUser.id },
         body: {
           isRootAdmin: !targetUser.isRootAdmin,
-          reason: reason.trim() || undefined,
         },
       });
 
@@ -197,7 +193,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     },
     onSuccess: () => {
       setActiveDialog(null);
-      setReason('');
     },
     invalidates: [
       QueryKeys.users.detail(userId),
@@ -209,9 +204,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     mutationFn: async () => {
       const response = await resetUserPassword({
         path: { userId },
-        body: {
-          reason: reason.trim() || undefined,
-        },
       });
 
       if (!response.data?.temporaryPassword) {
@@ -231,9 +223,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       if (targetUser.isActive) {
         await disableUser({
           path: { userId: targetUser.id },
-          body: {
-            reason: reason.trim() || 'Inactivated from canonical user page',
-          },
         });
         return;
       }
@@ -244,7 +233,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     },
     onSuccess: () => {
       setActiveDialog(null);
-      setReason('');
     },
     invalidates: [
       QueryKeys.users.detail(userId),
@@ -258,7 +246,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         path: { userId: targetUser.id },
         body: {
           email: deleteEmailConfirmation,
-          reason: reason.trim() || undefined,
         },
       });
 
@@ -268,7 +255,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     },
     onSuccess: () => {
       setActiveDialog(null);
-      setReason('');
       setDeleteEmailConfirmation('');
       navigate('/manage/users', { replace: true });
     },
@@ -277,7 +263,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   function openDialog(dialog: ActiveDialog) {
     setActiveDialog(dialog);
-    setReason('');
     setTemporaryPassword(null);
     setDeleteEmailConfirmation('');
     roleMutation.reset();
@@ -288,7 +273,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   function closeDialog() {
     setActiveDialog(null);
-    setReason('');
     setTemporaryPassword(null);
     setDeleteEmailConfirmation('');
     roleMutation.reset();
@@ -416,14 +400,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
               ? 'Removing root-admin access revokes the user’s active refresh sessions.'
               : 'Granting root-admin access allows this user to manage platform-wide administrative workflows.'}
           </p>
-          <FormField label="Reason (optional)">
-            <Textarea
-              className="min-h-28"
-              data-testid="root-admin-user-role-reason"
-              onChange={(event) => setReason(event.target.value)}
-              value={reason}
-            />
-          </FormField>
           {roleMutation.isError ? (
             <Alert tone="danger">
               {extractAdminError(roleMutation.error, 'We could not update the root-admin role.')}
@@ -462,14 +438,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         title="Reset password"
       >
         <div className="space-y-4">
-          <FormField label="Reason (optional)">
-            <Textarea
-              className="min-h-28"
-              data-testid="root-admin-user-reset-password-reason"
-              onChange={(event) => setReason(event.target.value)}
-              value={reason}
-            />
-          </FormField>
           {temporaryPassword ? (
             <Alert tone="success">
               <div className="font-semibold">Temporary password</div>
@@ -516,16 +484,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         title={isInactive ? 'Reactivate account' : 'Inactivate account'}
       >
         <div className="space-y-4">
-          {!isInactive ? (
-            <FormField label="Reason">
-              <Textarea
-                className="min-h-28"
-                data-testid="root-admin-user-lifecycle-reason"
-                onChange={(event) => setReason(event.target.value)}
-                value={reason}
-              />
-            </FormField>
-          ) : null}
           {lifecycleMutation.isError ? (
             <Alert tone="danger">
               {extractAdminError(lifecycleMutation.error, 'We could not update account lifecycle.')}
@@ -544,7 +502,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           <Button
             className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             data-testid="root-admin-user-submit-lifecycle"
-            disabled={lifecycleMutation.isPending || (!isInactive && reason.trim().length === 0)}
+            disabled={lifecycleMutation.isPending}
             onClick={() => void lifecycleMutation.mutateAsync(viewedUser).catch(() => undefined)}
             type="button"
           >
@@ -583,14 +541,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             type="email"
             value={deleteEmailConfirmation}
           />
-          <FormField label="Reason (optional)">
-            <Textarea
-              className="min-h-28"
-              data-testid="root-admin-user-delete-reason"
-              onChange={(event) => setReason(event.target.value)}
-              value={reason}
-            />
-          </FormField>
           {deleteMutation.isError ? (
             <Alert tone="danger">
               {extractAdminError(deleteMutation.error, 'We could not delete this account.')}

@@ -1,4 +1,3 @@
-import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import { LeagueService } from '../../../packages/core-api/src/modules/leagues/service';
 import type {
   LeagueMembershipRepository,
@@ -14,10 +13,6 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
-
-jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
-  logAdminAction: jest.fn().mockResolvedValue(undefined),
-}));
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({
@@ -120,7 +115,6 @@ function createMockLifecyclePrisma() {
     contestConfiguration: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     contest: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     commissionerActionItem: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    commissionerAuditLog: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     squadMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueMembership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
@@ -479,138 +473,6 @@ describe('LeagueService', () => {
         code: 'LEAGUE_ALREADY_INACTIVE',
         statusCode: 400,
       });
-    });
-  });
-
-  /**
-   * #202 — the audit rule the collapse had to settle.
-   *
-   * `adminInactivateLeague` and `adminDeleteLeague` delegated to these same service methods
-   * and added one thing: an `AdminAuditEntry`. The commissioner routes wrote none. Rather than
-   * pick a side silently, the rule is stated — the entry records an exercise of ROOT-ADMIN
-   * authority, so it is keyed on the actor, exactly as `UserService` does it.
-   */
-  describe('root-admin audit on league lifecycle writes', () => {
-    beforeEach(() => {
-      (logAdminAction as jest.Mock).mockClear();
-    });
-
-    function createService(leagueRepo: LeagueRepository) {
-      return new LeagueService(
-        leagueRepo,
-        createMockMembershipRepo(),
-        createMockSquadRepo(),
-        createMockSquadMembershipRepo(),
-        { contest: { groupBy: jest.fn().mockResolvedValue([]) } } as any,
-      );
-    }
-
-    it('audits an inactivate performed by a root admin', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(
-          buildLeague({ id: 'league-1', leagueCode: 'BIGDAWGS', name: 'Big Dawgs', isActive: true }),
-        ),
-      });
-
-      await createService(leagueRepo).inactivateLeague('league-1', {
-        userId: 'admin-1',
-        email: 'root@example.com',
-        isRootAdmin: true,
-      });
-
-      expect(logAdminAction).toHaveBeenCalledTimes(1);
-      const entry = (logAdminAction as jest.Mock).mock.calls[0][0];
-      expect(entry).toEqual(
-        expect.objectContaining({
-          actorUserId: 'admin-1',
-          actorEmail: 'root@example.com',
-          action: 'league.inactivate',
-          resourceType: 'LEAGUE',
-          resourceId: 'league-1',
-          beforeState: { isActive: true },
-          afterState: { isActive: false },
-        }),
-      );
-    });
-
-    it('writes no entry when a commissioner inactivates their own league', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', isActive: true })),
-      });
-
-      const league = await createService(leagueRepo).inactivateLeague('league-1', {
-        userId: 'user-1',
-        email: 'commissioner@example.com',
-        isRootAdmin: false,
-      });
-
-      // The write still happens — only the platform audit entry is withheld. Administering
-      // your own league is not an exercise of root-admin authority.
-      expect(league.isActive).toBe(false);
-      expect(logAdminAction).not.toHaveBeenCalled();
-    });
-
-    it('records the league\'s counts in a root-admin delete, read before the rows go', async () => {
-      const league = buildLeague({
-        id: 'league-1',
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        isActive: false,
-      });
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(league),
-      });
-      const membershipRepo = createMockMembershipRepo({
-        countActiveByLeagues: jest.fn().mockResolvedValue(new Map([['league-1', 5]])),
-      });
-      const { prisma } = createMockLifecyclePrisma();
-      const service = new LeagueService(
-        leagueRepo,
-        membershipRepo,
-        createMockSquadRepo(),
-        createMockSquadMembershipRepo(),
-        {
-          ...prisma,
-          contest: {
-            groupBy: jest.fn().mockResolvedValue([{ leagueId: 'league-1', _count: { _all: 3 } }]),
-          },
-        } as never,
-      );
-
-      await service.deleteInactiveLeague('league-1', 'BIGDAWGS', {
-        userId: 'admin-1',
-        email: 'root@example.com',
-        isRootAdmin: true,
-      });
-
-      const entry = (logAdminAction as jest.Mock).mock.calls[0][0];
-      // Counted BEFORE the delete — afterwards there is nothing left to count.
-      expect(entry.beforeState).toEqual({
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        isActive: false,
-        memberCount: 5,
-        activeContestCount: 3,
-      });
-      expect(entry.reason).toBe('Confirmed with league code BIGDAWGS');
-    });
-
-    it('does not audit a rejected operation', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1', isActive: false })),
-      });
-
-      await expect(
-        createService(leagueRepo).inactivateLeague('league-1', {
-          userId: 'admin-1',
-          email: 'root@example.com',
-          isRootAdmin: true,
-        }),
-      ).rejects.toThrow();
-
-      // The entry is written after the write succeeds, so a rejected attempt leaves no trace
-      // claiming it happened.
-      expect(logAdminAction).not.toHaveBeenCalled();
     });
   });
 

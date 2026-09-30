@@ -30,9 +30,7 @@ export type AdminPermission =
   | 'sportsdata.re_ingest'
   // Platform
   | 'platform.health'
-  | 'platform.migrations'
-  // Audit
-  | 'audit.view';
+  | 'platform.migrations';
 
 /**
  * Fastify preHandler hook factory that checks whether the root-admin user on the

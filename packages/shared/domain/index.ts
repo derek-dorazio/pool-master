@@ -2,7 +2,6 @@ export * from './enums';
 export * from './contest-validity';
 export * from './sport-event-lifecycle';
 export * from './providers';
-export * from './system';
 export * from './sport-catalog-types';
 export {
   compareScores,
@@ -31,7 +30,6 @@ export type {
   SportEventParticipant,
 } from './contest-management-types';
 export type {
-  AdminAuditEntry,
   AdminPermission,
   ActionItem,
   CommissionerDashboard,

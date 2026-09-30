@@ -1172,18 +1172,9 @@ describe('mock contest feed provider event-first verification', () => {
     expect(getRankingsSpy).toHaveBeenCalledWith(Sport.GOLF, 'OWGR');
     expect(getEventDetailsSpy).not.toHaveBeenCalled();
 
-    const rootAdmin = await createTestUser({
-      displayName: 'Mock Provider Root Admin',
-      isRootAdmin: true,
-    });
     const providerService = new ProviderService(prisma, registry);
 
-    const reIngestJob = await providerService.reIngestEvent(
-      providerId,
-      eventExternalId,
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const reIngestJob = await providerService.reIngestEvent(providerId, eventExternalId);
 
     expect(reIngestJob.status).toBe('COMPLETED');
     expect(getEventDetailsSpy).toHaveBeenCalledWith(eventExternalId);
