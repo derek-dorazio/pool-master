@@ -53,13 +53,12 @@ import type {
   SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
-  SportEventStatus,
-  SportEventSyncScope,
   SportEventTier,
   SportLeague,
   TournamentFormat,
   ValuationSource,
 } from '@poolmaster/shared/domain';
+import { SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { mapToParticipant } from './prisma-participant-repository';
 
 type Db = PrismaClient;
@@ -365,6 +364,17 @@ export class PrismaSportEventRepository implements SportEventRepository {
     });
     return countMap(seasonIds, groups.flatMap((group) => (group.seasonId ? [[group.seasonId, group._count._all] as [string, number]] : [])));
   }
+
+  async findAutoLifecycleCandidates(): Promise<SportEvent[]> {
+    const rows = await this.prisma.sportEvent.findMany({
+      where: {
+        autoLifecycleEnabled: true,
+        syncScope: { not: SportEventSyncScope.FULL },
+        status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
+      },
+    });
+    return rows.map(toSportEvent);
+  }
 }
 
 export class PrismaLeagueEventRepository implements LeagueEventRepository {
@@ -389,6 +399,17 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       orderBy: { roundNumber: 'asc' },
     });
     return rows.map(toSportEventRound);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventRound[]>> {
+    const rounds = new Map<string, SportEventRound[]>(sportEventIds.map((id) => [id, []]));
+    if (sportEventIds.length === 0) return rounds;
+    const rows = await this.prisma.sportEventRound.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      orderBy: { roundNumber: 'asc' },
+    });
+    for (const row of rows) rounds.get(row.sportEventId)?.push(toSportEventRound(row));
+    return rounds;
   }
 
   async createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {

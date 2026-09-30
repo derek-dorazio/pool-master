@@ -19,6 +19,7 @@ import { supportsMockEventStateControls } from '../ingestion/core/provider-inter
 import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 import { GolfContestSettlementService } from '../contests/golf-contest-settlement-service';
 import { EventLifecycleService } from '../events/event-lifecycle-service';
+import { PrismaSportEventRepository } from '../../adapters';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -365,6 +366,7 @@ export class ProviderService {
     this.syncRunLedger = syncRunLedger ?? new ProviderSyncRunLedger(prisma, logger);
     const eventLifecycleService = new EventLifecycleService(
       prisma,
+      new PrismaSportEventRepository(prisma),
       logger,
       mailDelivery ?? createMailDeliveryProvider(readMailDeliveryConfig(process.env), logger),
       appBaseUrl ?? readApplicationBaseUrl(process.env),

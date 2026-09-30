@@ -1,9 +1,10 @@
-import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, SYSTEM_USER_ID } from '@poolmaster/shared/domain';
+import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, SYSTEM_USER_ID, type SportEvent } from '@poolmaster/shared/domain';
 import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import {
   EventLifecycleError,
   EventLifecycleService,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
+import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
   logAdminAction: jest.fn().mockResolvedValue(undefined),
@@ -69,17 +70,19 @@ function buildStartedContestCandidate() {
   };
 }
 
-function buildSportEventRow(overrides: Record<string, unknown> = {}) {
-  return {
+/** An in-memory store holding the one event under test, and the port over it. */
+function seededEvents(overrides: Partial<SportEvent> = {}) {
+  const store = new InMemorySportEvents();
+  store.addEvent({
     id: 'sport-event-1',
     providerId: 'mock-contest-feed',
     externalId: 'provider-event-1',
     name: 'Manual Test Golf Tournament',
     startDate: new Date('2026-05-02T20:00:00.000Z'),
-    endDate: null,
     status: SportEventStatus.SCHEDULED,
     ...overrides,
-  };
+  });
+  return { sportEvents: store.sportEventRepo(), storedEvent: () => store.events[0] };
 }
 
 describe('SPORT_EVENT_STATUS_TRANSITIONS exhaustiveness', () => {
@@ -95,16 +98,13 @@ describe('SPORT_EVENT_STATUS_TRANSITIONS exhaustiveness', () => {
 
 describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z allows a declared transition for a ROOT_ADMIN actor', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -114,20 +114,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
     expect(result.fromStatus).toBe(SportEventStatus.SCHEDULED);
     expect(result.toStatus).toBe(SportEventStatus.IN_PROGRESS);
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
-      where: { id: 'sport-event-1' },
-      data: { status: SportEventStatus.IN_PROGRESS },
-    });
+    expect(storedEvent().status).toBe(SportEventStatus.IN_PROGRESS);
   });
 
   it('pool-master-g1z rejects an undeclared transition for a ROOT_ADMIN actor with 422 SPORT_EVENT_INVALID_TRANSITION', async () => {
-    const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn(),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const prisma = {};
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -141,21 +134,18 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       code: 'SPORT_EVENT_INVALID_TRANSITION',
       statusCode: 422,
     });
-    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
   it('pool-master-g1z applies an undeclared transition anyway for a PROVIDER actor, only logging it', async () => {
     const logger = createLogger();
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.COMPLETED, endDate: new Date() })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, logger as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, logger as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -171,11 +161,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
@@ -183,6 +170,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const golfContestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
     const service = new EventLifecycleService(
       prisma as any,
+      sportEvents,
       createLogger() as any,
       undefined,
       'http://localhost:5173',
@@ -199,16 +187,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-g1z sets endDate on completion only when it is not already set', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS, endDate: null })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.COMPLETED })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -216,24 +201,19 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'PROVIDER' },
     });
 
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
-      where: { id: 'sport-event-1' },
-      data: { status: SportEventStatus.COMPLETED, endDate: expect.any(Date) },
-    });
+    expect(storedEvent().status).toBe(SportEventStatus.COMPLETED);
+    expect(storedEvent().endDate).toBeInstanceOf(Date);
   });
 
   it('pool-master-g1z leaves an already-set endDate alone on completion', async () => {
     const existingEndDate = new Date('2026-05-31T22:00:00.000Z');
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: existingEndDate });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS, endDate: existingEndDate })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.COMPLETED, endDate: existingEndDate })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -241,24 +221,19 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'PROVIDER' },
     });
 
-    expect(prisma.sportEvent.update).toHaveBeenCalledWith({
-      where: { id: 'sport-event-1' },
-      data: { status: SportEventStatus.COMPLETED },
-    });
+    expect(storedEvent().status).toBe(SportEventStatus.COMPLETED);
+    expect(storedEvent().endDate).toEqual(existingEndDate);
   });
 
   it('pool-master-g1z writes an AdminAuditEntry for a ROOT_ADMIN transition', async () => {
     (logAdminAction as jest.Mock).mockClear();
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -279,16 +254,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-g1z does not write an AdminAuditEntry for a PROVIDER transition', async () => {
     (logAdminAction as jest.Mock).mockClear();
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -301,16 +273,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-k6q allows a declared transition for a SYSTEM actor and writes an AdminAuditEntry attributed to the seeded system user', async () => {
     (logAdminAction as jest.Mock).mockClear();
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -331,13 +300,9 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-k6q rejects an undeclared transition for a SYSTEM actor with 422 SPORT_EVENT_INVALID_TRANSITION, same as ROOT_ADMIN', async () => {
-    const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn(),
-      },
-    };
-    const service = new EventLifecycleService(prisma as any, createLogger() as any);
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const prisma = {};
+    const service = new EventLifecycleService(prisma as any, sportEvents, createLogger() as any);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -350,7 +315,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       code: 'SPORT_EVENT_INVALID_TRANSITION',
       statusCode: 422,
     });
-    expect(prisma.sportEvent.update).not.toHaveBeenCalled();
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
   // pool-master-eux.6 — relocated from ingestion-persistence.test.ts (that
@@ -361,18 +326,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
-    const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(
-          buildSportEventRow({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate }),
-        ),
-        update: jest.fn().mockResolvedValue(
-          buildSportEventRow({ status: SportEventStatus.COMPLETED, endDate: eventEndDate }),
-        ),
-      },
-    };
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
+    const prisma = {};
     const service = new EventLifecycleService(
       prisma as any,
+      sportEvents,
       createLogger() as any,
       undefined,
       'http://localhost:5173',
@@ -392,11 +350,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
   it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -408,6 +363,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     };
     const service = new EventLifecycleService(
       prisma as any,
+      sportEvents,
       createLogger() as any,
       mailDelivery,
       'https://app.primetimecommissioner.com',
@@ -452,11 +408,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-9ya does not resend contest-started email when the contest is already active', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
         updateMany: jest.fn().mockResolvedValue({ count: 0 }),
@@ -468,6 +421,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     };
     const service = new EventLifecycleService(
       prisma as any,
+      sportEvents,
       createLogger() as any,
       mailDelivery,
     );
@@ -483,11 +437,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-9ya keeps the transition successful when contest-started email delivery fails', async () => {
     const logger = createLogger();
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const prisma = {
-      sportEvent: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.SCHEDULED })),
-        update: jest.fn().mockResolvedValue(buildSportEventRow({ status: SportEventStatus.IN_PROGRESS })),
-      },
       contest: {
         findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -499,6 +450,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     };
     const service = new EventLifecycleService(
       prisma as any,
+      sportEvents,
       logger as any,
       mailDelivery,
     );
@@ -519,6 +471,22 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       }),
       'Failed to deliver contest started summary email',
     );
+  });
+});
+
+describe('EventLifecycleService on an unknown event', () => {
+  it('refuses with 404 SPORT_EVENT_NOT_FOUND and changes nothing', async () => {
+    const { sportEvents, storedEvent } = seededEvents();
+    const service = new EventLifecycleService({} as any, sportEvents, createLogger() as any);
+
+    await expect(
+      service.applySportEventStatusTransition({
+        sportEventId: 'no-such-event',
+        toStatus: SportEventStatus.IN_PROGRESS,
+        actor: { type: 'PROVIDER' },
+      }),
+    ).rejects.toMatchObject({ name: 'EventLifecycleError', code: 'SPORT_EVENT_NOT_FOUND', statusCode: 404 });
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 });
 

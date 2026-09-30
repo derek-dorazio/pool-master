@@ -26,6 +26,7 @@ import { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { createSportEventServices } from './wiring';
+import { PrismaSportEventRepository } from '../../adapters';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
@@ -55,7 +56,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
   const prisma = getAppPrisma(fastify);
   const handler = createEventHandlers({
     services: createSportEventServices(prisma, fastify.log.child({ module: 'events.service' })),
-    eventLifecycle: opts.eventLifecycleService ?? new EventLifecycleService(prisma, fastify.log),
+    eventLifecycle: opts.eventLifecycleService ?? new EventLifecycleService(prisma, new PrismaSportEventRepository(prisma), fastify.log),
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     providers: opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log),
   });
