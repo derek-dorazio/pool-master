@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import type { SportEventDto, GetManagedContestResponses, ListContestConfigTemplatesResponses } from '@/lib/api';
+import type { SportEventDto, GetContestConfigurationResponses, ListContestConfigTemplatesResponses } from '@/lib/api';
 import type { CreateContestRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
@@ -18,7 +18,7 @@ import {
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { createContest, deleteContest, getManagedContest, listContestConfigTemplates, listEvents, updateContest, updateManagedContestConfiguration } from '@/lib/api';
+import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -54,7 +54,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type ManagedContest = GetManagedContestResponses[200]['contest'];
+type ManagedContest = GetContestConfigurationResponses[200]['contest'];
 type ContestConfigTemplate = ListContestConfigTemplatesResponses[200]['templates'][number];
 type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
 
@@ -312,7 +312,7 @@ export function CreateContestPage() {
   const managedContestQuery = useQuery({
     queryKey: QueryKeys.managedContests.byLeagueAndContest(league?.id, contestId),
     queryFn: async (): Promise<ManagedContest> => {
-      const response = await getManagedContest({
+      const response = await getContestConfiguration({
         path: { id: league!.id, contestId: contestId! },
       });
 
@@ -667,7 +667,7 @@ export function CreateContestPage() {
         throwApiError(metadataResponse.error);
       }
 
-      const configurationResponse = await updateManagedContestConfiguration({
+      const configurationResponse = await updateContestConfiguration({
         path: { id: league.id, contestId: contestId! },
         body: configuration as never,
       });

@@ -1,24 +1,30 @@
+/**
+ * The contest leaderboard's arithmetic (#248: cross-sport names, since nothing here is golf's).
+ * An entry's standing is its best N picks' scores summed, ranked by the contest's participant
+ * scoring definition. Picks point at event field rows; a field row's score is read once, into a
+ * `ParticipantScore`, and every entry joins to it.
+ */
 import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,
   type ParticipantScoringDefinition,
+  type ParticipantScoringDefinitionId,
   type ScoreDirection,
 } from '@poolmaster/shared/domain';
 import type {
-  GolfLeaderboardEntryPickRow,
-  GolfLeaderboardEntryRow,
-  GolfLeaderboardParticipantRow,
-  GolfLeaderboardRoundCellRow,
+  ContestEntryStandingRow,
+  ScoredContestEntryPickRow,
 } from '../../mappers/contests.mapper';
 
-export interface GolfLeaderboardCountingRule {
+export interface ContestCountingRule {
   type: 'BEST_N_GOLFERS';
   count: number;
 }
 
-export interface GolfContestConfigurationRow {
+/** What the leaderboard reads off a contest's configuration: its counting inputs and its scoring rules. */
+export interface ContestScoringConfigurationRow {
   configJson: unknown;
   rosterSize: number | null;
   pickCount: number | null;
@@ -30,7 +36,8 @@ export interface GolfContestConfigurationRow {
   }>;
 }
 
-export interface GolfLeaderboardEntryInput {
+/** A contest entry with its picks, as the leaderboard ranks it. */
+export interface ContestLeaderboardEntryInput {
   id: string;
   entryNumber: number;
   name: string;
@@ -46,9 +53,17 @@ export interface GolfLeaderboardEntryInput {
   }>;
 }
 
-export function resolveGolfLeaderboardCountingRule(
-  configuration: GolfContestConfigurationRow | null,
-): GolfLeaderboardCountingRule | null {
+/** One field row's score under the contest's scoring definition, or null while unscored. */
+export interface ParticipantScore {
+  sportEventParticipantId: string;
+  name: string;
+  score: number | null;
+  asOf: Date | null;
+}
+
+export function resolveContestCountingRule(
+  configuration: ContestScoringConfigurationRow | null,
+): ContestCountingRule | null {
   const configJson = configuration?.configJson;
   const configRecord =
     configJson && typeof configJson === 'object' && !Array.isArray(configJson)
@@ -69,22 +84,22 @@ export function resolveGolfLeaderboardCountingRule(
 }
 
 /**
- * The scoring definition a golf leaderboard ranks by, read from the configuration's first
- * active participant scoring rule.
+ * The scoring definition a leaderboard ranks by, read from the configuration's first active
+ * participant scoring rule.
  *
  * There is no fallback (#246). Every configuration carries a rule — the one create writes it,
  * and the #246 migration gave one to every golf configuration that lacked it — so a missing
- * rule is a real defect, reported as `RULE_MISSING` rather than answered with a golf
+ * rule is a real defect, reported as `RULE_MISSING` rather than answered with a sport
  * assumption. A rule naming an id the registry does not know is `DEFINITION_UNKNOWN`:
  * ranking by a guessed direction would silently invert the standings.
  */
-export type GolfLeaderboardScoringResolution =
-  | { ok: true; definition: ParticipantScoringDefinition }
+export type ContestScoringResolution =
+  | { ok: true; id: ParticipantScoringDefinitionId; definition: ParticipantScoringDefinition }
   | { ok: false; reason: 'RULE_MISSING' | 'DEFINITION_UNKNOWN' };
 
-export function resolveGolfLeaderboardScoringDefinition(
-  configuration: GolfContestConfigurationRow | null,
-): GolfLeaderboardScoringResolution {
+export function resolveContestScoringDefinition(
+  configuration: ContestScoringConfigurationRow | null,
+): ContestScoringResolution {
   const rule = [...(configuration?.participantScoringRules ?? [])]
     .filter((candidate) => candidate.active)
     .sort((left, right) => left.sortOrder - right.sortOrder)[0];
@@ -93,44 +108,39 @@ export function resolveGolfLeaderboardScoringDefinition(
   }
   const id = ParticipantScoringDefinitionIdSchema.safeParse(rule.participantScoringDefinitionId);
   return id.success
-    ? { ok: true, definition: PARTICIPANT_SCORING_DEFINITIONS[id.data] }
+    ? { ok: true, id: id.data, definition: PARTICIPANT_SCORING_DEFINITIONS[id.data] }
     : { ok: false, reason: 'DEFINITION_UNKNOWN' };
 }
 
-export function buildGolfLeaderboardEntry(
-  entry: GolfLeaderboardEntryInput,
-  participantById: Map<string, GolfLeaderboardParticipantRow>,
-  countingRule: GolfLeaderboardCountingRule,
+export function buildContestEntryStanding(
+  entry: ContestLeaderboardEntryInput,
+  scoreById: Map<string, ParticipantScore>,
+  countingRule: ContestCountingRule,
   direction: ScoreDirection,
-): GolfLeaderboardEntryRow {
+): ContestEntryStandingRow {
   const scoredPicks = entry.picks
     .map((pick) => ({
       pick,
-      participant: participantById.get(pick.sportEventParticipantId) ?? null,
+      participant: scoreById.get(pick.sportEventParticipantId) ?? null,
     }))
     .filter((row): row is {
-      pick: GolfLeaderboardEntryInput['picks'][number];
-      participant: GolfLeaderboardParticipantRow;
-    } => row.participant !== null && row.participant.totalScoreToPar !== null)
+      pick: ContestLeaderboardEntryInput['picks'][number];
+      participant: ParticipantScore;
+    } => row.participant !== null && row.participant.score !== null)
     .sort((left, right) =>
-      compareScores(
-        direction,
-        left.participant.totalScoreToPar,
-        right.participant.totalScoreToPar,
-      )
+      compareScores(direction, left.participant.score, right.participant.score)
       || left.participant.name.localeCompare(right.participant.name)
       || left.pick.id.localeCompare(right.pick.id),
     );
   const countingPickIds = new Set(
     scoredPicks.slice(0, countingRule.count).map((row) => row.pick.id),
   );
-  const picks: GolfLeaderboardEntryPickRow[] = entry.picks
+  const picks: ScoredContestEntryPickRow[] = entry.picks
     .map((pick) => {
-      const participant = participantById.get(pick.sportEventParticipantId);
+      const participant = scoreById.get(pick.sportEventParticipantId);
       if (!participant) {
         return null;
       }
-      const hasScore = participant.totalScoreToPar !== null;
       const isCounting = countingPickIds.has(pick.id);
       return {
         pickId: pick.id,
@@ -139,16 +149,16 @@ export function buildGolfLeaderboardEntry(
         slot: pick.slot,
         tier: pick.tier,
         isCounting,
-        isDropped: hasScore && !isCounting,
+        isDropped: participant.score !== null && !isCounting,
         participant,
       };
     })
-    .filter((pick): pick is GolfLeaderboardEntryPickRow => pick !== null)
-    .sort((left, right) => compareGolfLeaderboardEntryPicks(direction, left, right));
+    .filter((pick): pick is ScoredContestEntryPickRow => pick !== null)
+    .sort((left, right) => compareScoredContestEntryPicks(direction, left, right));
   const countingScores: number[] = [];
   for (const pick of picks) {
-    if (pick.isCounting && pick.participant.totalScoreToPar !== null) {
-      countingScores.push(pick.participant.totalScoreToPar);
+    if (pick.isCounting && pick.participant.score !== null) {
+      countingScores.push(pick.participant.score);
     }
   }
 
@@ -159,28 +169,28 @@ export function buildGolfLeaderboardEntry(
     squadId: entry.squadId,
     squadName: entry.squad.name,
     status: entry.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-    totalScoreToPar: countingScores.length > 0
+    score: countingScores.length > 0
       ? countingScores.reduce((sum, score) => sum + score, 0)
       : null,
     position: null,
     displayPosition: null,
-    countingPickCount: countingRule.count,
+    countingPickLimit: countingRule.count,
     scoredPickCount: scoredPicks.length,
     picks,
   };
 }
 
-export function rankGolfLeaderboardEntries(
-  entries: GolfLeaderboardEntryRow[],
+export function rankContestEntryStandings(
+  entries: ContestEntryStandingRow[],
   direction: ScoreDirection,
-): GolfLeaderboardEntryRow[] {
+): ContestEntryStandingRow[] {
   const sorted = [...entries].sort((left, right) =>
-    compareScores(direction, left.totalScoreToPar, right.totalScoreToPar)
+    compareScores(direction, left.score, right.score)
     || left.entryNumber - right.entryNumber
     || left.entryName.localeCompare(right.entryName)
     || left.entryId.localeCompare(right.entryId),
   );
-  const ranks = rankSortedScores(sorted.map((entry) => entry.totalScoreToPar));
+  const ranks = rankSortedScores(sorted.map((entry) => entry.score));
   return sorted.map((entry, index) => ({ ...entry, ...ranks[index] }));
 }
 
@@ -191,7 +201,7 @@ export interface SettledContestEntryStanding {
   displayPosition: string | null;
   countingPickLimit: number;
   scoredPickCount: number;
-  totalScoreToPar: number | null;
+  score: number | null;
 }
 
 /**
@@ -203,11 +213,11 @@ export interface SettledContestEntryStanding {
  * a contest settles) keeps its live values and sorts after every settled entry.
  */
 export function applySettledContestStandings(
-  entries: GolfLeaderboardEntryRow[],
+  entries: ContestEntryStandingRow[],
   standings: readonly SettledContestEntryStanding[],
-): GolfLeaderboardEntryRow[] {
+): ContestEntryStandingRow[] {
   const byEntryId = new Map(standings.map((standing) => [standing.contestEntryId, standing]));
-  const rank = (entry: GolfLeaderboardEntryRow) => {
+  const rank = (entry: ContestEntryStandingRow) => {
     const standing = byEntryId.get(entry.entryId);
     if (!standing) return Number.MAX_SAFE_INTEGER;
     return standing.position ?? Number.MAX_SAFE_INTEGER - 1;
@@ -218,10 +228,10 @@ export function applySettledContestStandings(
       if (!standing) return entry;
       return {
         ...entry,
-        totalScoreToPar: standing.totalScoreToPar,
+        score: standing.score,
         position: standing.position,
         displayPosition: standing.displayPosition,
-        countingPickCount: standing.countingPickLimit,
+        countingPickLimit: standing.countingPickLimit,
         scoredPickCount: standing.scoredPickCount,
       };
     })
@@ -233,65 +243,17 @@ export function applySettledContestStandings(
     );
 }
 
-export function buildGolfRoundColumns(
-  rounds: Array<{
-    round: number;
-    strokes: number;
-    scoreToPar: number;
-    thru: number | null;
-    status: string;
-  }>,
-): GolfLeaderboardParticipantRow['rounds'] {
-  const columns: GolfLeaderboardParticipantRow['rounds'] = {
-    r1: null,
-    r2: null,
-    r3: null,
-    r4: null,
-  };
-  for (const round of rounds) {
-    if (round.round < 1 || round.round > 4) {
-      continue;
-    }
-    const cell = toGolfRoundCell(round);
-    columns[`r${round.round}` as keyof GolfLeaderboardParticipantRow['rounds']] = cell;
-  }
-  return columns;
-}
-
-export function mapGolfLeaderboardStatus(status: string): GolfLeaderboardParticipantRow['status'] {
-  switch (status) {
-    case 'IN_PROGRESS':
-    case 'in-progress':
-      return 'in-progress';
-    case 'COMPLETE':
-    case 'COMPLETED':
-    case 'complete':
-      return 'complete';
-    case 'WITHDRAWN':
-    case 'DNF':
-    case 'DSQ':
-    case 'withdrawn':
-      return 'withdrawn';
-    // The golf leaderboard renders the cross-sport ELIMINATED as a missed cut.
-    case 'ELIMINATED':
-    case 'MISSED_CUT':
-    case 'missed-cut':
-      return 'missed-cut';
-    case 'ACTIVE':
-    case 'PENDING':
-    case 'active':
-    default:
-      return 'active';
-  }
-}
-
-function compareGolfLeaderboardEntryPicks(
+/**
+ * Picks in display order: scored picks best first, then unscored picks by roster slot and pick
+ * time. Not a merit rule for the unscored ones — only a stable order.
+ */
+function compareScoredContestEntryPicks(
   direction: ScoreDirection,
-  left: GolfLeaderboardEntryPickRow,
-  right: GolfLeaderboardEntryPickRow,
+  left: ScoredContestEntryPickRow,
+  right: ScoredContestEntryPickRow,
 ): number {
-  const leftScore = left.participant.totalScoreToPar;
-  const rightScore = right.participant.totalScoreToPar;
+  const leftScore = left.participant.score;
+  const rightScore = right.participant.score;
   if (leftScore !== null && rightScore !== null) {
     return compareScores(direction, leftScore, rightScore)
       || left.participant.name.localeCompare(right.participant.name)
@@ -303,30 +265,6 @@ function compareGolfLeaderboardEntryPicks(
   return compareSlots(left.slot, right.slot)
     || left.pickedAt.getTime() - right.pickedAt.getTime()
     || left.pickId.localeCompare(right.pickId);
-}
-
-function toGolfRoundCell(round: {
-  round: number;
-  strokes: number;
-  scoreToPar: number;
-  thru: number | null;
-  status: string;
-}): GolfLeaderboardRoundCellRow {
-  const status = mapGolfLeaderboardStatus(round.status);
-  const isComplete = status === 'complete';
-  const displayType = isComplete ? 'STROKES' : 'TO_PAR';
-  return {
-    round: round.round as 1 | 2 | 3 | 4,
-    status,
-    strokes: round.strokes,
-    scoreToPar: round.scoreToPar,
-    thru: status === 'in-progress' ? round.thru ?? null : null,
-    displayType,
-    // A golf round's scoreToPar is strokes to par whatever the contest scores by.
-    displayValue: isComplete
-      ? String(round.strokes)
-      : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(round.scoreToPar),
-  };
 }
 
 /** Roster slots order ascending, with an unslotted pick last. Not a score: no direction. */

@@ -6,7 +6,7 @@ import { registerSchema } from './schema-registry';
 import {
   ContestStatus,
   ContestFormat,
-  ParticipantInactiveReason,
+  ParticipantScoringDefinitionIdSchema,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -17,6 +17,7 @@ import {
   GolfFixedCutRuleSchema,
   GolfTiebreakerSchema,
 } from './contest-management.dto';
+import { SportEventParticipantDtoSchema } from './events.dto';
 
 // --- Requests ---
 
@@ -94,31 +95,19 @@ export const UpdateContestEntryRequestSchema = z.object({
 }).describe('Request payload for updating a contest entry while the contest is still joinable.');
 export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequestSchema>;
 
-export const ReopenContestRequestSchema = z.object({
-  reason: z.string().describe('Reason recorded for reopening the contest.'),
-}).describe('Request payload for reopening a closed contest.');
-export type ReopenContestRequest = z.infer<typeof ReopenContestRequestSchema>;
-
-export const CloseContestRequestSchema = z.object({
-  reason: z.string().describe('Reason recorded for closing the contest.'),
-}).describe('Request payload for force-closing a contest.');
-export type CloseContestRequest = z.infer<typeof CloseContestRequestSchema>;
-
 export const ExtendContestDeadlineRequestSchema = z.object({
   newEnd: z.string().datetime().describe('Replacement contest end timestamp.'),
-  reason: z.string().describe('Reason recorded for the deadline extension.'),
 }).describe('Request payload for extending a contest end time.');
 export type ExtendContestDeadlineRequest = z.infer<typeof ExtendContestDeadlineRequestSchema>;
 
 export const UpdateContestLockTimeRequestSchema = z.object({
   newLock: z.string().datetime().describe('Replacement contest lock timestamp.'),
-  reason: z.string().describe('Reason recorded for changing the lock time.'),
 }).describe('Request payload for updating a contest lock time.');
 export type UpdateContestLockTimeRequest = z.infer<typeof UpdateContestLockTimeRequestSchema>;
 
 // --- Response Sub-schemas ---
 
-export const ContestSummaryDtoSchema = z.object({
+export const ContestDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
   status: z.enum([
@@ -151,36 +140,15 @@ export const ContestSummaryDtoSchema = z.object({
   leagueId: z.string(),
   sportEventId: z.string().nullable().optional(),
   sport: z.string().nullable().optional(),
-  entryCount: z.number().optional().describe('Number of entries currently in the contest.'),
+  entryCount: z.number().optional().describe('Number of entries currently in the contest. Present on list reads, which count them; omitted on a single-contest read.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
+  lockAt: z.string().datetime().nullable().optional().describe('When entries lock.'),
+  isExclusive: z.boolean().describe('Whether a participant may be picked by only one entry in the contest.'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
-}).describe('Contest list item used in contest indexes and league home summaries.');
-export type ContestSummaryDto = z.infer<typeof ContestSummaryDtoSchema>;
-
-export const ContestDetailDtoSchema = ContestSummaryDtoSchema.extend({
-  lockAt: z.string().datetime().nullable().optional(),
-  isExclusive: z.boolean().optional(),
-  sport: z.string().nullable().optional(),
-}).describe('Contest detail returned by contest detail endpoints.');
-export type ContestDetailDto = z.infer<typeof ContestDetailDtoSchema>;
-
-export const ContestEntryDtoSchema = z.object({
-  id: z.string(),
-  contestId: z.string(),
-  squadId: z.string(),
-  squadName: z.string(),
-  entryNumber: z.number().int().min(1),
-  name: z.string(),
-  status: z.enum(['ACTIVE', 'INACTIVE']),
-  tiebreakerValue: z.number().int().nullable().optional(),
-  isEliminated: z.boolean(),
-  picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
-  createdAt: z.string().datetime().describe('When the contest entry was created.'),
-  updatedAt: z.string().datetime().describe('When the contest entry was last updated.'),
-}).describe('Contest entry summary.');
-export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
+}).describe('A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields).');
+export type ContestDto = z.infer<typeof ContestDtoSchema>;
 
 /**
  * Canonical raw-row DTO for ContestEntryPick. The persistence shape of a single
@@ -232,120 +200,84 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
 }).describe('Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint.');
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
 
-export const ContestEntryDetailDtoSchema = ContestEntryDtoSchema.extend({
-  participants: z.array(ContestEntryParticipantDetailDtoSchema).optional().describe('Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).'),
-}).describe('Expanded contest entry detail.');
-export type ContestEntryDetailDto = z.infer<typeof ContestEntryDetailDtoSchema>;
+export const ContestEntryDtoSchema = z.object({
+  id: z.string(),
+  contestId: z.string(),
+  squadId: z.string(),
+  squadName: z.string(),
+  entryNumber: z.number().int().min(1),
+  name: z.string(),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+  tiebreakerValue: z.number().int().nullable().optional(),
+  isEliminated: z.boolean(),
+  picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
+  createdAt: z.string().datetime().describe('When the contest entry was created.'),
+  updatedAt: z.string().datetime().describe('When the contest entry was last updated.'),
+  participants: z.array(ContestEntryParticipantDetailDtoSchema).optional().describe('The entry\'s picked participants. Omitted when picks are hidden from the viewer (the contest is still DRAFT or OPEN and the viewer is not the owning squad), and on the entry writes, which return the entry without them.'),
+}).describe('A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`).');
+export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
-const GolfLeaderboardStatusSchema = z.enum([
-  'active',
-  'in-progress',
-  'complete',
-  'withdrawn',
-  'missed-cut',
-]).describe(
-  'Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.',
-);
-export type GolfLeaderboardStatus = z.infer<typeof GolfLeaderboardStatusSchema>;
 
-const GolfLeaderboardRoundDisplayTypeSchema = z.enum([
-  'EMPTY',
-  'TO_PAR',
-  'STROKES',
-]).describe(
-  'How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.',
-);
-export type GolfLeaderboardRoundDisplayType = z.infer<typeof GolfLeaderboardRoundDisplayTypeSchema>;
-
-export const GolfLeaderboardRoundCellDtoSchema = z.object({
-  round: z.number().int().min(1).max(4).describe('Golf round number represented by this leaderboard column.'),
-  status: GolfLeaderboardStatusSchema.describe('Normalized status for this round cell.'),
-  strokes: z.number().int().nullable().describe('Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.'),
-  scoreToPar: z.number().int().nullable().describe('Round score relative to par. Used as the visible round value while the round is in progress.'),
-  thru: z.number().int().min(0).max(18).nullable().describe('Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.'),
-  displayType: GolfLeaderboardRoundDisplayTypeSchema,
-  displayValue: z.string().nullable().describe('Preformatted member-facing value for this round column using Golf display rules.'),
-}).describe('Single R1/R2/R3/R4 Golf leaderboard cell for a picked golfer.');
-export type GolfLeaderboardRoundCellDto = z.infer<typeof GolfLeaderboardRoundCellDtoSchema>;
-
-export const GolfLeaderboardRoundColumnsDtoSchema = z.object({
-  r1: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 1 leaderboard column.'),
-  r2: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 2 leaderboard column.'),
-  r3: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 3 leaderboard column.'),
-  r4: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 4 leaderboard column.'),
-}).describe('Fixed four-round Golf leaderboard columns.');
-export type GolfLeaderboardRoundColumnsDto = z.infer<typeof GolfLeaderboardRoundColumnsDtoSchema>;
-
-export const GolfLeaderboardParticipantDtoSchema = z.object({
-  sportEventParticipantId: z.string().describe('SportEventParticipant row selected by contest picks.'),
-  participantId: z.string().describe('Canonical participant identifier.'),
-  name: z.string().describe('Golfer display name.'),
-  shortName: z.string().nullable().describe('Optional shorter golfer display name.'),
-  isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
-  inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
-  ranking: z.number().int().nullable().describe('Rank that applied at this event: seeded from the provider\'s ranking, then editable by an admin. Null when unranked.'),
-  oddsToWin: z.number().nullable().describe('Event-scoped odds-to-win for this golfer.'),
-  seedNumber: z.number().int().nullable().describe('Event seed/order when supplied by the provider.'),
-  totalScoreToPar: z.number().int().nullable().describe('TOT column value: current event total relative to par. Lower is better.'),
-  totalStrokes: z.number().int().nullable().describe('Current event total strokes across persisted Golf rounds.'),
-  thru: z.number().int().min(0).max(18).nullable().describe('THR column value while the golfer is currently on course; null after round completion or before play.'),
-  currentRound: z.number().int().min(1).max(4).nullable().describe('Current or latest round represented by the standing.'),
-  status: GolfLeaderboardStatusSchema,
-  position: z.number().int().nullable().describe('Event leaderboard position for this golfer when available.'),
-  displayPosition: z.string().nullable().describe('Provider/display position such as T2 when available.'),
-  asOf: z.string().datetime().nullable().describe('Provider timestamp for the current Golf standing.'),
-  rounds: GolfLeaderboardRoundColumnsDtoSchema.describe('R1 through R4 detail for expanded member leaderboard rows.'),
-}).describe(
-  'Golf event participant read model used by the contest leaderboard. This is loaded once per event and joined to entry picks in memory.',
-);
-export type GolfLeaderboardParticipantDto = z.infer<typeof GolfLeaderboardParticipantDtoSchema>;
-
-export const GolfLeaderboardEntryPickDtoSchema = z.object({
-  pickId: z.string().describe('ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model.'),
-  sportEventParticipantId: z.string().describe('Selected SportEventParticipant.'),
-  pickedAt: z.string().datetime().describe('When this golfer was selected.'),
+/**
+ * The contest leaderboard (#248). Cross-sport: an entry's standing and its picks are the same
+ * objects in every sport, and the one sport-shaped value — golf's total against par — is the
+ * entry standing's golf extension, as on `ContestEntryStanding` in persistence. The event's
+ * field is published as the event's own canonical `SportEventParticipantDto` rows, not a second
+ * leaderboard-shaped copy of them: round scores, standings and their golf extensions come from
+ * there, and a client renders them through `PARTICIPANT_SCORING_DEFINITIONS[scoringDefinitionId]`.
+ */
+export const ScoredContestEntryPickDtoSchema = z.object({
+  pickId: z.string().describe('ContestEntryPick row identifier.'),
+  sportEventParticipantId: z.string().describe('The picked field row. Its scores are the matching entry of `participants`; a pick is a pointer, not a copy.'),
+  pickedAt: z.string().datetime().describe('When this participant was picked.'),
   slot: z.number().int().nullable().describe('Optional roster slot from the pick row.'),
-  tier: z.string().nullable().describe('Optional tier/category from the pick row.'),
-  isCounting: z.boolean().describe('Whether this pick currently counts toward the entry score under the contest configuration.'),
-  isDropped: z.boolean().describe('Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots.'),
-  participant: GolfLeaderboardParticipantDtoSchema.describe('Expanded golfer event data for this pick.'),
-}).describe('Expanded Golf pick row for a contest leaderboard entry.');
-export type GolfLeaderboardEntryPickDto = z.infer<typeof GolfLeaderboardEntryPickDtoSchema>;
+  tier: z.string().nullable().describe('Optional tier from the pick row.'),
+  isCounting: z.boolean().describe('Whether this pick currently counts toward the entry\'s total under the counting rule.'),
+  isDropped: z.boolean().describe('Whether this scored pick is currently dropped because better picks fill the counting places.'),
+}).describe('One pick on a contest entry, with whether it counts.');
+export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 
-export const GolfLeaderboardEntryDtoSchema = z.object({
+export const ContestEntryGolfStandingDtoSchema = z.object({
+  totalScoreToPar: z.number().int().nullable().describe('The entry\'s total against par: the sum of its counting picks\' event totals. Null until a pick is scored.'),
+}).describe('Golf extension of a contest entry standing: the total its position was ranked from.');
+export type ContestEntryGolfStandingDto = z.infer<typeof ContestEntryGolfStandingDtoSchema>;
+
+export const ContestEntryStandingDtoSchema = z.object({
   entryId: z.string().describe('Contest entry identifier.'),
-  entryName: z.string().describe('Team entry display name.'),
-  entryNumber: z.number().int().min(1).describe('Entry number for squads allowed to submit multiple entries.'),
-  squadId: z.string().describe('Squad/team identifier.'),
-  squadName: z.string().describe('Squad/team display name.'),
+  entryName: z.string().describe('Entry display name.'),
+  entryNumber: z.number().int().min(1).describe('Entry number, for squads allowed several entries.'),
+  squadId: z.string().describe('Squad identifier.'),
+  squadName: z.string().describe('Squad display name.'),
   status: z.enum(['ACTIVE', 'INACTIVE']).describe('Contest entry lifecycle status.'),
-  totalScoreToPar: z.number().int().nullable().describe('Entry leaderboard total computed from currently counting golfer TOT values. Lower is better.'),
-  position: z.number().int().nullable().describe('Computed contest leaderboard rank for this entry.'),
-  displayPosition: z.string().nullable().describe('Computed display rank, including T-prefix for ties.'),
-  countingPickCount: z.number().int().min(0).describe('How many selected golfers count toward this entry under the contest configuration.'),
-  scoredPickCount: z.number().int().min(0).describe('How many selected golfers currently have event standings.'),
-  picks: z.array(GolfLeaderboardEntryPickDtoSchema).describe('Selected golfers with counting/dropped flags computed at read time.'),
-}).describe('Single Team row in the Golf contest leaderboard.');
-export type GolfLeaderboardEntryDto = z.infer<typeof GolfLeaderboardEntryDtoSchema>;
+  position: z.number().int().nullable().describe('The entry\'s rank in the contest, direction-free: 1 is best in every sport. Null while unscored.'),
+  displayPosition: z.string().nullable().describe('Position as shown, "T" prefixed for a tie.'),
+  countingPickLimit: z.number().int().min(0).describe('How many picks count toward the total under the counting rule: its N.'),
+  scoredPickCount: z.number().int().min(0).describe('How many picks currently have an event standing.'),
+  golf: ContestEntryGolfStandingDtoSchema.nullable().describe('Present for a golf contest; null otherwise.'),
+  picks: z.array(ScoredContestEntryPickDtoSchema).describe('The entry\'s picks, counting picks first.'),
+}).describe('One entry\'s standing in a contest leaderboard. The score lives in the sport\'s extension.');
+export type ContestEntryStandingDto = z.infer<typeof ContestEntryStandingDtoSchema>;
 
-export const GolfLeaderboardCountingRuleDtoSchema = z.object({
-  type: z.literal('BEST_N_GOLFERS').describe('Golf roster rule: sum the best N selected golfer totals for the entry.'),
-  count: z.number().int().min(1).describe('Number of selected golfers that currently count toward each entry total.'),
-}).describe('Contest scoring interpretation used by the Golf leaderboard read API.');
-export type GolfLeaderboardCountingRuleDto = z.infer<typeof GolfLeaderboardCountingRuleDtoSchema>;
+export const ContestCountingRuleDtoSchema = z.object({
+  type: z.literal('BEST_N_GOLFERS').describe('Sum the best N picks\' totals for each entry.'),
+  count: z.number().int().min(1).describe('N: how many picks count toward each entry\'s total.'),
+}).describe('How an entry\'s picks combine into its total.');
+export type ContestCountingRuleDto = z.infer<typeof ContestCountingRuleDtoSchema>;
 
-export const GolfLeaderboardResponseSchema = z.object({
+export const ContestLeaderboardResponseSchema = z.object({
   contestId: z.string().describe('Contest whose leaderboard was requested.'),
-  sportEventId: z.string().describe('Golf sport event backing this contest leaderboard.'),
-  scoringMode: z.literal('GOLF_TO_PAR').describe('Golf leaderboard totals are relative to par and lower is better.'),
-  countingRule: GolfLeaderboardCountingRuleDtoSchema,
-  participants: z.array(GolfLeaderboardParticipantDtoSchema).describe('All event participants for the contest event, loaded once for UI joins and filtering.'),
-  entries: z.array(GolfLeaderboardEntryDtoSchema).describe('Contest entries ordered by computed Golf total.'),
-  asOf: z.string().datetime().nullable().describe('Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.'),
+  sportEventId: z.string().describe('Sport event the contest runs on.'),
+  scoringDefinitionId: ParticipantScoringDefinitionIdSchema.describe(
+    'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
+  ),
+  countingRule: ContestCountingRuleDtoSchema,
+  participants: z.array(SportEventParticipantDtoSchema).describe('The event\'s field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.'),
+  entries: z.array(ContestEntryStandingDtoSchema).describe('Contest entries, best first.'),
+  asOf: z.string().datetime().nullable().describe('Latest standing timestamp the leaderboard reflects, or null when there is none.'),
 }).describe(
-  'Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound.',
+  'Member-facing contest leaderboard. Live, entry standings are computed from the event\'s standings; once the contest is COMPLETED they are the standings frozen at settlement.',
 );
-export type GolfLeaderboardResponse = z.infer<typeof GolfLeaderboardResponseSchema>;
+export type ContestLeaderboardResponse = z.infer<typeof ContestLeaderboardResponseSchema>;
 
 // --- Responses ---
 
@@ -377,7 +309,7 @@ export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationReque
 export type ContestConfigurationDetailDto = z.infer<typeof ContestConfigurationDetailDtoSchema>;
 
 export const ContestResponseSchema = z.object({
-  contest: ContestDetailDtoSchema,
+  contest: ContestDtoSchema,
   contestConfiguration: ContestConfigurationDetailDtoSchema.nullable().optional().describe(
     'Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.',
   ),
@@ -385,7 +317,7 @@ export const ContestResponseSchema = z.object({
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
 
 export const ContestListResponseSchema = z.object({
-  contests: z.array(ContestSummaryDtoSchema),
+  contests: z.array(ContestDtoSchema),
 }).describe('Contest-list response.');
 export type ContestListResponse = z.infer<typeof ContestListResponseSchema>;
 
@@ -398,7 +330,7 @@ export type ContestEntryResponse = z.infer<typeof ContestEntryResponseSchema>;
 export const ContestEntryDetailResponseSchema = z.object({
   contestId: z.string().describe('Contest that owns the entry.'),
   picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
-  entry: ContestEntryDetailDtoSchema,
+  entry: ContestEntryDtoSchema,
 }).describe('Expanded contest-entry detail response.');
 export type ContestEntryDetailResponse = z.infer<typeof ContestEntryDetailResponseSchema>;
 
@@ -409,7 +341,7 @@ export const ContestEntryListResponseSchema = z.object({
   myEntryId: z.string().nullable().describe('Primary current-user entry when the contest allows a single active entry.'),
   myEntryIds: z.array(z.string()).optional().describe('All current-user entry identifiers when multiple entries are allowed.'),
   picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
-  entries: z.array(ContestEntryDetailDtoSchema).describe('Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.'),
+  entries: z.array(ContestEntryDtoSchema).describe('Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.'),
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
 
@@ -433,23 +365,18 @@ registerSchema('ContestCrudConfigurationRequest', ContestCrudConfigurationReques
 registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
-registerSchema('ReopenContestRequest', ReopenContestRequestSchema);
-registerSchema('CloseContestRequest', CloseContestRequestSchema);
 registerSchema('ExtendContestDeadlineRequest', ExtendContestDeadlineRequestSchema);
 registerSchema('UpdateContestLockTimeRequest', UpdateContestLockTimeRequestSchema);
-registerSchema('ContestSummaryDto', ContestSummaryDtoSchema);
-registerSchema('ContestDetailDto', ContestDetailDtoSchema);
+registerSchema('ContestDto', ContestDtoSchema);
 registerSchema('ContestEntryDto', ContestEntryDtoSchema);
 registerSchema('ContestEntryPickDto', ContestEntryPickDtoSchema);
 registerSchema('ContestEntryParticipantDetailDto', ContestEntryParticipantDetailDtoSchema);
-registerSchema('ContestEntryDetailDto', ContestEntryDetailDtoSchema);
-registerSchema('GolfLeaderboardRoundCellDto', GolfLeaderboardRoundCellDtoSchema);
-registerSchema('GolfLeaderboardRoundColumnsDto', GolfLeaderboardRoundColumnsDtoSchema);
-registerSchema('GolfLeaderboardParticipantDto', GolfLeaderboardParticipantDtoSchema);
-registerSchema('GolfLeaderboardEntryPickDto', GolfLeaderboardEntryPickDtoSchema);
-registerSchema('GolfLeaderboardEntryDto', GolfLeaderboardEntryDtoSchema);
-registerSchema('GolfLeaderboardCountingRuleDto', GolfLeaderboardCountingRuleDtoSchema);
-registerSchema('GolfLeaderboardResponse', GolfLeaderboardResponseSchema);
+registerSchema('ParticipantScoringDefinitionId', ParticipantScoringDefinitionIdSchema);
+registerSchema('ScoredContestEntryPickDto', ScoredContestEntryPickDtoSchema);
+registerSchema('ContestEntryGolfStandingDto', ContestEntryGolfStandingDtoSchema);
+registerSchema('ContestEntryStandingDto', ContestEntryStandingDtoSchema);
+registerSchema('ContestCountingRuleDto', ContestCountingRuleDtoSchema);
+registerSchema('ContestLeaderboardResponse', ContestLeaderboardResponseSchema);
 registerSchema('ContestConfigurationDetailDto', ContestConfigurationDetailDtoSchema);
 registerSchema('ContestResponse', ContestResponseSchema);
 registerSchema('ContestListResponse', ContestListResponseSchema);

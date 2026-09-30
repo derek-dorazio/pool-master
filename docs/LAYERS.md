@@ -342,8 +342,7 @@ these suites import from `@poolmaster/shared/generated/hey-api` rather than usin
 ### 2.8 `plugins/` and `core/` — the cross-cutting parts
 
 `plugins/` holds Fastify plugins: `auth-guard` (validates the access token and attaches
-`request.authUser`), `admin-auth` (the older root-admin gate, still guarding the one operation
-left under `/admin/*`, the contest-template write), `request-logging-context`,
+`request.authUser`), `request-logging-context`,
 `schema-components`, `etag-support`, `swagger`, `health` (the process liveness probe), `poll-config`.
 
 `core/` holds process-level helpers with no domain content: `config`, `error-handler`
@@ -536,8 +535,8 @@ slot — and was reverted. The fix is to replace those parameter lists with opti
 **No user read stays on Prisma any more.** `admin/health-service.ts` counted users for a platform
 metric; it went with the unbuilt health surface in #205. `plugins/admin-auth.ts` used to be the
 other: it re-read the user row per request while the user routes trusted the token claim. Access
-rule A10 settled that — root-admin authority is the claim on every surface — so the plugin reads
-no row at all now and the inconsistency is gone.
+rule A10 settled that — root-admin authority is the claim on every surface — and #248 deleted the
+plugin with the last `/admin` route; root-admin writes all use `core/root-admin-guard`.
 
 **Three route maps describe the same routes, and only one is written by hand.** The Fastify
 registrations are the truth; `openapi.json` is generated from them; `packages/shared/api-routes.ts`

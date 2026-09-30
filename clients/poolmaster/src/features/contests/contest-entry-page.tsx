@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getContest, getDraftState, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDetailDto, type ContestEntryListResponse } from '@/lib/api';
+import { getContest, getDraftState, listContestEntries, submitContestSelection, updateContestEntry, type GetDraftStateResponses, type ContestDto, type ContestEntryListResponse } from '@/lib/api';
 import {
   buildLeagueContestPath,
   buildLeaguePath,
@@ -41,7 +41,7 @@ const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 // The tiebreaker is a predicted winning score relative to par.
 const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
 
-function getContestPhaseLabel(contest: ContestDetailDto) {
+function getContestPhaseLabel(contest: ContestDto) {
   switch (contest.status) {
     case 'OPEN':
       return 'Editable until contest lock';
@@ -152,7 +152,7 @@ export function ContestEntryPage() {
 
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
-    queryFn: async (): Promise<ContestDetailDto> => {
+    queryFn: async (): Promise<ContestDto> => {
       const response = await getContest({ path: { contestId } });
       if (!response.data?.contest) {
         throwApiError(response.error, 'Contest detail response is missing data.');

@@ -8,19 +8,20 @@ import type {
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { eventBus, type EventBus } from '@poolmaster/shared/events/event-bus';
 import type { ContestCompletedEvent } from '@poolmaster/shared/events/contest';
-import type { GolfLeaderboardParticipantRow } from '../../mappers/contests.mapper';
 import {
-  buildGolfLeaderboardEntry,
-  rankGolfLeaderboardEntries,
-  resolveGolfLeaderboardCountingRule,
-  resolveGolfLeaderboardScoringDefinition,
-} from './golf-leaderboard-calculator';
+  buildContestEntryStanding,
+  rankContestEntryStandings,
+  resolveContestCountingRule,
+  resolveContestScoringDefinition,
+  type ParticipantScore,
+} from './contest-leaderboard-calculator';
 import {
-  loadGolfContestConfiguration,
-  loadGolfLeaderboardEntries,
-  loadGolfLeaderboardParticipants,
-  type GolfContestReadDeps,
-} from './golf-leaderboard-reads';
+  loadContestLeaderboardEntries,
+  loadContestScoringConfiguration,
+  loadEventField,
+  toParticipantScores,
+  type ContestLeaderboardReadDeps,
+} from './contest-leaderboard-reads';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -38,6 +39,7 @@ function createNoopLogger(): LifecycleLogger {
 
 /** Every status settlement may complete a contest from: anything it is not already. */
 const NOT_COMPLETED = Object.values(ContestStatus).filter((status) => status !== ContestStatus.COMPLETED);
+
 export interface GolfContestSettlementSummary {
   sportEventId: string;
   contestsSettled: number;
@@ -45,7 +47,7 @@ export interface GolfContestSettlementSummary {
   standingsUpserted: number;
 }
 
-export interface GolfContestSettlementDeps extends GolfContestReadDeps {
+export interface GolfContestSettlementDeps extends ContestLeaderboardReadDeps {
   sportEvents: SportEventRepository;
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
@@ -77,8 +79,8 @@ export class GolfContestSettlementService {
     }
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
-    const participants = await loadGolfLeaderboardParticipants(this.deps, sportEventId);
-    const participantById = new Map(
+    const participants = toParticipantScores(await loadEventField(this.deps, sportEventId));
+    const scoreById = new Map(
       participants.map((participant) => [participant.sportEventParticipantId, participant]),
     );
     const asOf = resolveContestStandingAsOf(participants, completedAt);
@@ -94,8 +96,8 @@ export class GolfContestSettlementService {
     let contestsCompleted = 0;
     let contestsSettled = 0;
     for (const contest of contests) {
-      const configuration = await loadGolfContestConfiguration(this.deps, contest.id);
-      const countingRule = resolveGolfLeaderboardCountingRule(configuration);
+      const configuration = await loadContestScoringConfiguration(this.deps, contest.id);
+      const countingRule = resolveContestCountingRule(configuration);
       if (!countingRule) {
         this.logger.error({
           contestId: contest.id,
@@ -103,7 +105,7 @@ export class GolfContestSettlementService {
         }, 'Skipped Golf contest settlement because contest has no counting rule');
         continue;
       }
-      const scoring = resolveGolfLeaderboardScoringDefinition(configuration);
+      const scoring = resolveContestScoringDefinition(configuration);
       if (!scoring.ok) {
         // Skip rather than guess a direction. Settling with the wrong direction pays the
         // wrong entries, and a payout is hard to undo; a skipped settlement is logged at
@@ -118,10 +120,10 @@ export class GolfContestSettlementService {
         continue;
       }
       const scoringDefinition = scoring.definition;
-      const entries = await loadGolfLeaderboardEntries(this.deps, contest.id);
-      const rankedEntries = rankGolfLeaderboardEntries(
+      const entries = await loadContestLeaderboardEntries(this.deps, contest.id);
+      const rankedEntries = rankContestEntryStandings(
         entries.map((entry) =>
-          buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
+          buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
         ),
         scoringDefinition.direction,
       );
@@ -134,11 +136,11 @@ export class GolfContestSettlementService {
           contestEntryId: entry.entryId,
           position: entry.position,
           displayPosition: entry.displayPosition,
-          countingPickLimit: entry.countingPickCount,
+          countingPickLimit: entry.countingPickLimit,
           scoredPickCount: entry.scoredPickCount,
           asOf,
           settledAt: completedAt,
-          golf: { totalScoreToPar: entry.totalScoreToPar },
+          golf: { totalScoreToPar: entry.score },
         });
         standingsUpserted++;
       }
@@ -192,7 +194,7 @@ export class GolfContestSettlementService {
 }
 
 function resolveContestStandingAsOf(
-  participants: GolfLeaderboardParticipantRow[],
+  participants: ParticipantScore[],
   fallback: Date,
 ): Date {
   const latest = participants

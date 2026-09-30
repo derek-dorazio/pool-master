@@ -22,10 +22,10 @@ import {
 import type { MailDeliveryProvider } from '../email';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
 import { GolfContestSettlementService } from './golf-contest-settlement-service';
-import type { GolfContestReadDeps } from './golf-leaderboard-reads';
+import type { ContestLeaderboardReadDeps } from './contest-leaderboard-reads';
 import { ContestService } from './service';
 
-function createGolfContestReadDeps(prisma: PrismaClient, logger?: FastifyBaseLogger): GolfContestReadDeps {
+function createContestLeaderboardReadDeps(prisma: PrismaClient, logger?: FastifyBaseLogger): ContestLeaderboardReadDeps {
   return {
     eventParticipants: createSportEventParticipantService(prisma, logger),
     configurations: new PrismaContestConfigurationRepository(prisma),
@@ -41,7 +41,7 @@ export function createContestService(
   options?: { mailDelivery?: MailDeliveryProvider; appBaseUrl?: string },
 ): ContestService {
   return new ContestService({
-    ...createGolfContestReadDeps(prisma, logger),
+    ...createContestLeaderboardReadDeps(prisma, logger),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
@@ -63,7 +63,7 @@ export function createGolfContestSettlementService(
   bus?: EventBus,
 ): GolfContestSettlementService {
   return new GolfContestSettlementService({
-    ...createGolfContestReadDeps(prisma, logger),
+    ...createContestLeaderboardReadDeps(prisma, logger),
     sportEvents: new PrismaSportEventRepository(prisma),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),

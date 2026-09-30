@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
-  AdminUpdateContestConfigTemplateRequest,
+  UpdateContestConfigTemplateRequest,
   ListContestConfigTemplatesQuery,
 } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
@@ -30,7 +30,7 @@ export function createContestConfigTemplateHandlers(
   async function updateTemplate(
     request: FastifyRequest<{
       Params: { templateId: string };
-      Body: AdminUpdateContestConfigTemplateRequest;
+      Body: UpdateContestConfigTemplateRequest;
     }>,
     reply: FastifyReply,
   ): Promise<void> {

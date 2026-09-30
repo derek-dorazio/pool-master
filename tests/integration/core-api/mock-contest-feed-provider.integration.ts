@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { EventBus } from '@poolmaster/shared/events/event-bus';
-import { GolfLeaderboardResponseSchema } from '@poolmaster/shared/dto';
+import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
@@ -445,7 +445,13 @@ async function readGolfLeaderboard(contestId: string, headers: Record<string, st
     headers,
   });
   expect(response.statusCode).toBe(200);
-  return GolfLeaderboardResponseSchema.parse(response.json());
+  return ContestLeaderboardResponseSchema.parse(response.json());
+}
+
+/** A picked golfer's event total against par, read from the field the picks point into. */
+function fieldScore(leaderboard: ContestLeaderboardResponse, sportEventParticipantId: string) {
+  return leaderboard.participants.find((participant) => participant.id === sportEventParticipantId)
+    ?.standing?.golf?.eventScoreToPar ?? null;
 }
 
 beforeAll(async () => {
@@ -962,7 +968,7 @@ describe('mock contest feed provider event-first verification', () => {
       });
 
     const beforeLive = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
-    expect(beforeLive.entries.every((entry) => entry.totalScoreToPar === null)).toBe(true);
+    expect(beforeLive.entries.every((entry) => entry.golf?.totalScoreToPar === null)).toBe(true);
     expect(beforeLive.entries.every((entry) => entry.scoredPickCount === 0)).toBe(true);
 
     const r2Complete = await providerService.syncEventData(
@@ -979,14 +985,12 @@ describe('mock contest feed provider event-first verification', () => {
 
     const leaderboardAfterR2 = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
     const leaderAfterR2 = leaderboardAfterR2.entries.find((entry) => entry.entryId === directEntries.leader.id);
-    expect(leaderAfterR2?.totalScoreToPar).not.toBeNull();
+    expect(leaderAfterR2?.golf?.totalScoreToPar).not.toBeNull();
     expect(leaderAfterR2?.scoredPickCount).toBe(3);
-    expect(leaderAfterR2?.countingPickCount).toBe(2);
+    expect(leaderAfterR2?.countingPickLimit).toBe(2);
     expect(leaderAfterR2?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);
     expect(leaderAfterR2?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);
-    const golfer01AfterR2 = leaderAfterR2?.picks.find(
-      (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
-    )?.participant.totalScoreToPar;
+    const golfer01AfterR2 = fieldScore(leaderboardAfterR2, golfer01SportEventParticipantId);
     expect(golfer01AfterR2).not.toBeNull();
     await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
@@ -1012,9 +1016,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     const leaderboardAfterCorrection = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
     const leaderAfterCorrection = leaderboardAfterCorrection.entries.find((entry) => entry.entryId === directEntries.leader.id);
-    const golfer01AfterCorrection = leaderAfterCorrection?.picks.find(
-      (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
-    )?.participant.totalScoreToPar;
+    const golfer01AfterCorrection = fieldScore(leaderboardAfterCorrection, golfer01SportEventParticipantId);
     expect(golfer01AfterCorrection).toBe((golfer01AfterR2 ?? 0) - 2);
     expect(leaderAfterCorrection?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);
     expect(leaderAfterCorrection?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);

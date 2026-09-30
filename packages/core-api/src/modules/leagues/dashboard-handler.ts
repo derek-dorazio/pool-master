@@ -1,7 +1,7 @@
 /**
  * Dashboard route handlers — commissioner dashboard data.
  *
- * Emits typed `LeagueDto` and `ContestSummaryDto[]` payloads rather than raw domain objects,
+ * Emits typed `LeagueDto` and `ContestDto[]` payloads rather than raw domain objects,
  * matching `LeagueDashboardResponseSchema`. League-scoped, so no viewer context (A8).
  */
 
@@ -9,7 +9,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { DashboardService } from './dashboard-service';
 import { sendError } from '../../core/error-handler';
 import { toLeagueDto } from '../../mappers/leagues.mapper';
-import { toContestSummaryDto } from '../../mappers/contests.mapper';
+import { toContestDto } from '../../mappers/contests.mapper';
 
 export function createDashboardHandlers(dashboardService: DashboardService) {
   return {
@@ -29,7 +29,7 @@ export function createDashboardHandlers(dashboardService: DashboardService) {
         memberCount: dashboard.memberCount,
         activeContestCount: dashboard.contests.length,
       }),
-      contests: dashboard.contests.map((contest) => toContestSummaryDto({
+      contests: dashboard.contests.map((contest) => toContestDto({
         id: contest.id,
         name: contest.name,
         status: contest.status,

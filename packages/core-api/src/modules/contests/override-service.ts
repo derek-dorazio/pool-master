@@ -1,7 +1,8 @@
 /**
  * OverrideService — commissioner safety-valve tools for in-season contest management.
  *
- * Covers contest lifecycle overrides.
+ * Covers contest lifecycle overrides. None takes a reason: each accepted one and discarded it, with
+ * nowhere to record it once the audit log went (#255), so #248 took it off the contract.
  */
 
 import type { ContestRepository } from '@poolmaster/shared/db';
@@ -14,7 +15,7 @@ export class OverrideService {
   // --- Contest Lifecycle Overrides (08-023) ---
 
   /** Re-opens a completed contest. */
-  async reopenContest(contestId: string, _reason: string): Promise<Contest> {
+  async reopenContest(contestId: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
@@ -29,7 +30,7 @@ export class OverrideService {
   }
 
   /** Force-closes a contest. */
-  async closeContest(contestId: string, _reason: string): Promise<Contest> {
+  async closeContest(contestId: string): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
       throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
@@ -46,7 +47,6 @@ export class OverrideService {
   async extendDeadline(
     contestId: string,
     newEnd: Date,
-    _reason: string,
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
@@ -59,7 +59,6 @@ export class OverrideService {
   async updateLockTime(
     contestId: string,
     newLock: Date,
-    _reason: string,
   ): Promise<Contest> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {

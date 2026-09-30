@@ -7,7 +7,7 @@ import { RootAdminContentConfigurationDetailPage } from './root-admin-content-co
 
 const {
   listContestConfigTemplatesMock,
-  adminUpdateContestConfigTemplateMock,
+  updateContestConfigTemplateMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -22,14 +22,14 @@ const {
 
   return {
     listContestConfigTemplatesMock: vi.fn(),
-    adminUpdateContestConfigTemplateMock: vi.fn(),
+    updateContestConfigTemplateMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
   listContestConfigTemplates: listContestConfigTemplatesMock,
-  adminUpdateContestConfigTemplate: adminUpdateContestConfigTemplateMock,
+  updateContestConfigTemplate: updateContestConfigTemplateMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -66,7 +66,7 @@ function seedTemplates() {
       templates: [buildTemplate()],
     },
   });
-  adminUpdateContestConfigTemplateMock.mockResolvedValue({
+  updateContestConfigTemplateMock.mockResolvedValue({
     data: {
       template: buildTemplate(),
     },
@@ -97,7 +97,7 @@ function renderPage() {
 describe('RootAdminContentConfigurationDetailPage', () => {
   afterEach(() => {
     listContestConfigTemplatesMock.mockReset();
-    adminUpdateContestConfigTemplateMock.mockReset();
+    updateContestConfigTemplateMock.mockReset();
     mockLogger.info.mockReset();
   });
 
@@ -125,7 +125,7 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-content-config-save'));
 
     await waitFor(() => {
-      expect(adminUpdateContestConfigTemplateMock).toHaveBeenCalledWith({
+      expect(updateContestConfigTemplateMock).toHaveBeenCalledWith({
         path: {
           templateId: '11111111-1111-4111-8111-111111111111',
         },

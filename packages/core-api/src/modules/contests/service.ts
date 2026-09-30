@@ -33,25 +33,25 @@ import {
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/dto';
+import type { ContestEntryDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
-  toContestEntryDetailDto,
   type ContestEntryParticipantRow,
-  type GolfLeaderboardModel,
+  type ContestLeaderboardModel,
 } from '../../mappers/contests.mapper';
 import {
-  buildGolfLeaderboardEntry,
   applySettledContestStandings,
-  rankGolfLeaderboardEntries,
-  resolveGolfLeaderboardCountingRule,
-  resolveGolfLeaderboardScoringDefinition,
-} from './golf-leaderboard-calculator';
+  buildContestEntryStanding,
+  rankContestEntryStandings,
+  resolveContestCountingRule,
+  resolveContestScoringDefinition,
+} from './contest-leaderboard-calculator';
 import {
-  loadGolfContestConfiguration,
-  loadGolfLeaderboardEntries,
-  loadGolfLeaderboardParticipants,
-} from './golf-leaderboard-reads';
+  loadContestLeaderboardEntries,
+  loadContestScoringConfiguration,
+  loadEventField,
+  toParticipantScores,
+} from './contest-leaderboard-reads';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
@@ -253,7 +253,7 @@ export class ContestService {
     contestId: string,
     userId: string,
   ): Promise<{
-    entries: ContestEntryDetailDto[];
+    entries: ContestEntryDto[];
     isJoined: boolean;
     myEntryId: string | null;
     myEntryIds: string[];
@@ -300,7 +300,7 @@ export class ContestService {
     contestId: string,
     entryId: string,
     requesterUserId: string,
-  ): Promise<{ entry: ContestEntryDetailDto; picksRevealed: boolean }> {
+  ): Promise<{ entry: ContestEntryDto; picksRevealed: boolean }> {
     const context = await this.getEntryContext(contestId, requesterUserId);
     const requesterSquadId = context.squadMembership?.squadId ?? null;
     const picksRevealed = contestPicksRevealed(context.contest.status);
@@ -318,7 +318,7 @@ export class ContestService {
     const includeParticipants = picksRevealed || isOwner;
     const picks = await this.deps.picks.findByEntriesWithParticipant([row.id]);
 
-    const entry = toContestEntryDetailDto(
+    const entry = toContestEntryDto(
       {
         ...row,
         picksCount: picks.length,
@@ -335,7 +335,7 @@ export class ContestService {
   async getGolfLeaderboard(
     contestId: string,
     requesterUserId: string,
-  ): Promise<GolfLeaderboardModel> {
+  ): Promise<ContestLeaderboardModel> {
     const context = await this.getEntryContext(contestId, requesterUserId);
     if (!contestPicksRevealed(context.contest.status)) {
       throw new ContestOperationError(
@@ -365,15 +365,15 @@ export class ContestService {
       );
     }
 
-    const configuration = await loadGolfContestConfiguration(this.deps, contestId);
-    const countingRule = resolveGolfLeaderboardCountingRule(configuration);
+    const configuration = await loadContestScoringConfiguration(this.deps, contestId);
+    const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
         'Golf leaderboard requires a contest configuration with countedScores, rosterSize, or pickCount.',
         'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
       );
     }
-    const scoring = resolveGolfLeaderboardScoringDefinition(configuration);
+    const scoring = resolveContestScoringDefinition(configuration);
     if (!scoring.ok) {
       throw scoring.reason === 'RULE_MISSING'
         ? new ContestOperationError(
@@ -385,20 +385,19 @@ export class ContestService {
           'CONTEST_GOLF_LEADERBOARD_SCORING_DEFINITION_UNKNOWN',
         );
     }
-    const scoringDefinition = scoring.definition;
-    const [participants, entries] = await Promise.all([
-      loadGolfLeaderboardParticipants(this.deps, sportEvent.id),
-      loadGolfLeaderboardEntries(this.deps, contestId),
+    const { id: scoringDefinitionId, definition: scoringDefinition } = scoring;
+    const [field, entries] = await Promise.all([
+      loadEventField(this.deps, sportEvent.id),
+      loadContestLeaderboardEntries(this.deps, contestId),
     ]);
-    const participantById = new Map(
-      participants.map((participant) => [participant.sportEventParticipantId, participant]),
-    );
+    const scores = toParticipantScores(field);
+    const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
 
     const entryRows = entries.map((entry) =>
-      buildGolfLeaderboardEntry(entry, participantById, countingRule, scoringDefinition.direction),
+      buildContestEntryStanding(entry, scoreById, countingRule, scoringDefinition.direction),
     );
-    const rankedEntries = rankGolfLeaderboardEntries(entryRows, scoringDefinition.direction);
-    const latestAsOf = participants.reduce<Date | null>((latest, participant) => {
+    const rankedEntries = rankContestEntryStandings(entryRows, scoringDefinition.direction);
+    const latestAsOf = scores.reduce<Date | null>((latest, participant) => {
       if (!participant.asOf) return latest;
       if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
       return latest;
@@ -411,8 +410,10 @@ export class ContestService {
         return {
           contestId,
           sportEventId: sportEvent.id,
+          sport: sportEvent.sport,
+          scoringDefinitionId,
           countingRule: { type: 'BEST_N_GOLFERS', count: standings[0].countingPickLimit },
-          participants,
+          participants: field,
           entries: applySettledContestStandings(
             rankedEntries,
             standings.map((standing) => ({
@@ -421,7 +422,7 @@ export class ContestService {
               displayPosition: standing.displayPosition,
               countingPickLimit: standing.countingPickLimit,
               scoredPickCount: standing.scoredPickCount,
-              totalScoreToPar: standing.golf?.totalScoreToPar ?? null,
+              score: standing.golf?.totalScoreToPar ?? null,
             })),
           ),
           asOf: standings[0].asOf ?? latestAsOf,
@@ -433,8 +434,10 @@ export class ContestService {
     return {
       contestId,
       sportEventId: sportEvent.id,
+      sport: sportEvent.sport,
+      scoringDefinitionId,
       countingRule,
-      participants,
+      participants: field,
       entries: rankedEntries,
       asOf: latestAsOf,
     };
@@ -870,7 +873,7 @@ export class ContestService {
   private async loadEntryDetailDtos(
     contestId: string,
     options: { requesterSquadId: string | null; revealAll: boolean },
-  ): Promise<ContestEntryDetailDto[]> {
+  ): Promise<ContestEntryDto[]> {
     const rows = await this.deps.entries.findByContestWithSquad(contestId);
 
     const entryIds = rows.map((row) => row.id);
@@ -892,7 +895,7 @@ export class ContestService {
 
     return rows.map((row) => {
       const includeParticipants = entryIdsWithParticipants.has(row.id);
-      return toContestEntryDetailDto(
+      return toContestEntryDto(
         {
           ...row,
           picksCount: pickCountByEntry.get(row.id) ?? 0,

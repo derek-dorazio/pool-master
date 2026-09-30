@@ -65,37 +65,6 @@ describe('core-api logging foundation', () => {
         route: '/api/v1/leagues/:id/contests',
       });
     });
-
-    it('falls back to root-admin context when auth user is not present', () => {
-      const request = {
-        id: 'req-admin',
-        method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/sync',
-        ip: '10.0.0.10',
-        headers: {},
-        routeOptions: { url: '/api/v1/ingestion/sports/:sport/sync' },
-        rootAdminContext: {
-          rootAdminUser: {
-            id: 'admin-1',
-            email: 'admin@example.com',
-            name: 'Admin User',
-            isRootAdmin: true,
-          },
-        },
-      } as unknown as FastifyRequest;
-
-      expect(buildRequestLogBindings(request)).toEqual({
-        reqId: 'req-admin',
-        sessionId: null,
-        userId: 'admin-1',
-        isRootAdmin: true,
-        clientTraceId: null,
-        clientRequestId: null,
-        ip: '10.0.0.10',
-        method: 'POST',
-        route: '/api/v1/ingestion/sports/:sport/sync',
-      });
-    });
   });
 
   describe('globalErrorHandler', () => {

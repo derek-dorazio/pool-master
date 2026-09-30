@@ -2,32 +2,32 @@
  * Contest mappers — convert internal domain/Prisma objects to DTOs.
  */
 import type {
-  ContestSummaryDto,
-  ContestDetailDto,
+  ContestDto,
   ContestResponse,
   ContestConfigurationDetailDto,
   ContestListResponse,
   ContestEntryDto,
-  ContestEntryDetailDto,
   ContestEntryParticipantDetailDto,
   ContestEntryListResponse,
   ContestEntryDetailResponse,
   ContestEntryResponse,
-  GolfLeaderboardResponse,
-  GolfLeaderboardStatus,
-  GolfLeaderboardRoundDisplayType,
+  ContestLeaderboardResponse,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
-import type {
-  Contest,
-  ContestConfiguration,
-  ContestEntry,
-  ContestStatus,
-  ContestFormat,
-  ParticipantInactiveReason,
-  ScoringEngine,
-  SelectionType,
+import {
+  Sport,
+  type Contest,
+  type ContestConfiguration,
+  type ContestEntry,
+  type ContestStatus,
+  type ContestFormat,
+  type ParticipantScoringDefinitionId,
+  type ScoringEngine,
+  type SelectionType,
 } from '@poolmaster/shared/domain';
+import type { ContestCountingRule, ParticipantScore } from '../modules/contests/contest-leaderboard-calculator';
+import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
+import { mapSportEventParticipantToDto } from './sport-event-participants.mapper';
 
 interface ContestRow {
   id: string;
@@ -72,43 +72,8 @@ export interface ContestEntryParticipantRow {
   pickedAt: Date;
 }
 
-export interface GolfLeaderboardRoundCellRow {
-  round: 1 | 2 | 3 | 4;
-  status: GolfLeaderboardStatus;
-  strokes: number | null;
-  scoreToPar: number | null;
-  thru: number | null;
-  displayType: GolfLeaderboardRoundDisplayType;
-  displayValue: string | null;
-}
-
-export interface GolfLeaderboardParticipantRow {
-  sportEventParticipantId: string;
-  participantId: string;
-  name: string;
-  shortName: string | null;
-  isActive: boolean;
-  inactiveReason: ParticipantInactiveReason | null;
-  ranking: number | null;
-  oddsToWin: number | null;
-  seedNumber: number | null;
-  totalScoreToPar: number | null;
-  totalStrokes: number | null;
-  thru: number | null;
-  currentRound: number | null;
-  status: GolfLeaderboardStatus;
-  position: number | null;
-  displayPosition: string | null;
-  asOf: Date | null;
-  rounds: {
-    r1: GolfLeaderboardRoundCellRow | null;
-    r2: GolfLeaderboardRoundCellRow | null;
-    r3: GolfLeaderboardRoundCellRow | null;
-    r4: GolfLeaderboardRoundCellRow | null;
-  };
-}
-
-export interface GolfLeaderboardEntryPickRow {
+/** One pick, with whether it counts and the score it joins to. */
+export interface ScoredContestEntryPickRow {
   pickId: string;
   sportEventParticipantId: string;
   pickedAt: Date;
@@ -116,40 +81,41 @@ export interface GolfLeaderboardEntryPickRow {
   tier: string | null;
   isCounting: boolean;
   isDropped: boolean;
-  participant: GolfLeaderboardParticipantRow;
+  participant: ParticipantScore;
 }
 
-export interface GolfLeaderboardEntryRow {
+/** One entry's standing. `score` is its total under the contest's scoring definition. */
+export interface ContestEntryStandingRow {
   entryId: string;
   entryName: string;
   entryNumber: number;
   squadId: string;
   squadName: string;
   status: 'ACTIVE' | 'INACTIVE';
-  totalScoreToPar: number | null;
+  score: number | null;
   position: number | null;
   displayPosition: string | null;
-  countingPickCount: number;
+  countingPickLimit: number;
   scoredPickCount: number;
-  picks: GolfLeaderboardEntryPickRow[];
+  picks: ScoredContestEntryPickRow[];
 }
 
-export interface GolfLeaderboardModel {
+export interface ContestLeaderboardModel {
   contestId: string;
   sportEventId: string;
-  countingRule: {
-    type: 'BEST_N_GOLFERS';
-    count: number;
-  };
-  participants: GolfLeaderboardParticipantRow[];
-  entries: GolfLeaderboardEntryRow[];
+  sport: Sport;
+  scoringDefinitionId: ParticipantScoringDefinitionId;
+  countingRule: ContestCountingRule;
+  /** The event's field rows, published as the event's own canonical DTO. */
+  participants: SportEventParticipantView[];
+  entries: ContestEntryStandingRow[];
   asOf: Date | null;
 }
 
-export function toContestSummaryDto(
+export function toContestDto(
   contest: ContestRow,
   opts?: { entryCount?: number },
-): ContestSummaryDto {
+): ContestDto {
   return {
     id: contest.id,
     name: contest.name,
@@ -163,20 +129,10 @@ export function toContestSummaryDto(
     entryCount: opts?.entryCount,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
-    createdAt: contest.createdAt.toISOString(),
-    updatedAt: contest.updatedAt.toISOString(),
-  };
-}
-
-export function toContestDetailDto(
-  contest: ContestRow,
-  _contestConfiguration?: ContestConfiguration | null,
-): ContestDetailDto {
-  return {
-    ...toContestSummaryDto(contest),
     lockAt: contest.lockAt?.toISOString() ?? null,
     isExclusive: contest.isExclusive,
-    sport: contest.sport ?? null,
+    createdAt: contest.createdAt.toISOString(),
+    updatedAt: contest.updatedAt.toISOString(),
   };
 }
 
@@ -185,7 +141,7 @@ export function toContestResponse(
   contestConfiguration?: ContestConfiguration | null,
 ): ContestResponse {
   return {
-    contest: toContestDetailDto(contest, contestConfiguration),
+    contest: toContestDto(contest),
     contestConfiguration: toContestConfigurationDetailDto(contestConfiguration),
   };
 }
@@ -240,16 +196,18 @@ export function toContestListResponse(
 ): ContestListResponse {
   return {
     contests: contests.map((c) =>
-      toContestSummaryDto(c, {
+      toContestDto(c, {
         entryCount: entryCounts?.get(c.id),
       }),
     ),
   };
 }
 
+/** An entry, with its picked participants when the viewer may see them (`null` hides them). */
 export function toContestEntryDto(
   entry: ContestEntryRow,
   squad: { name: string },
+  participants: ContestEntryParticipantRow[] | null = null,
 ): ContestEntryDto {
   return {
     id: entry.id,
@@ -264,6 +222,7 @@ export function toContestEntryDto(
     picksCount: entry.picksCount,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
+    ...(participants !== null && { participants: participants.map(toContestEntryParticipantDetailDto) }),
   };
 }
 
@@ -286,24 +245,9 @@ export function toContestEntryParticipantDetailDto(
   };
 }
 
-export function toContestEntryDetailDto(
-  entry: ContestEntryRow,
-  squad: { name: string },
-  participants: ContestEntryParticipantRow[] | null,
-): ContestEntryDetailDto {
-  const summary = toContestEntryDto(entry, squad);
-  if (participants === null) {
-    return summary;
-  }
-  return {
-    ...summary,
-    participants: participants.map(toContestEntryParticipantDetailDto),
-  };
-}
-
 export function toContestEntryDetailResponse(
   contestId: string,
-  entry: ContestEntryDetailDto,
+  entry: ContestEntryDto,
   picksRevealed: boolean,
 ): ContestEntryDetailResponse {
   return { contestId, picksRevealed, entry };
@@ -311,7 +255,7 @@ export function toContestEntryDetailResponse(
 
 export function toContestEntryListResponse(input: {
   contestId: string;
-  entries: ContestEntryDetailDto[];
+  entries: ContestEntryDto[];
   isJoined: boolean;
   myEntryId: string | null;
   myEntryIds?: string[];
@@ -335,15 +279,15 @@ export function toMyContestEntryResponse(
   return { contestId, entry };
 }
 
-export function toGolfLeaderboardResponse(
-  leaderboard: GolfLeaderboardModel,
-): GolfLeaderboardResponse {
+export function toContestLeaderboardResponse(
+  leaderboard: ContestLeaderboardModel,
+): ContestLeaderboardResponse {
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,
-    scoringMode: 'GOLF_TO_PAR',
+    scoringDefinitionId: leaderboard.scoringDefinitionId,
     countingRule: leaderboard.countingRule,
-    participants: leaderboard.participants.map(toGolfLeaderboardParticipantDto),
+    participants: leaderboard.participants.map(mapSportEventParticipantToDto),
     entries: leaderboard.entries.map((entry) => ({
       entryId: entry.entryId,
       entryName: entry.entryName,
@@ -351,11 +295,11 @@ export function toGolfLeaderboardResponse(
       squadId: entry.squadId,
       squadName: entry.squadName,
       status: entry.status,
-      totalScoreToPar: entry.totalScoreToPar,
       position: entry.position,
       displayPosition: entry.displayPosition,
-      countingPickCount: entry.countingPickCount,
+      countingPickLimit: entry.countingPickLimit,
       scoredPickCount: entry.scoredPickCount,
+      golf: leaderboard.sport === Sport.GOLF ? { totalScoreToPar: entry.score } : null,
       picks: entry.picks.map((pick) => ({
         pickId: pick.pickId,
         sportEventParticipantId: pick.sportEventParticipantId,
@@ -364,32 +308,8 @@ export function toGolfLeaderboardResponse(
         tier: pick.tier,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
-        participant: toGolfLeaderboardParticipantDto(pick.participant),
       })),
     })),
     asOf: leaderboard.asOf?.toISOString() ?? null,
-  };
-}
-
-function toGolfLeaderboardParticipantDto(participant: GolfLeaderboardParticipantRow) {
-  return {
-    sportEventParticipantId: participant.sportEventParticipantId,
-    participantId: participant.participantId,
-    name: participant.name,
-    shortName: participant.shortName,
-    isActive: participant.isActive,
-    inactiveReason: participant.inactiveReason,
-    ranking: participant.ranking,
-    oddsToWin: participant.oddsToWin,
-    seedNumber: participant.seedNumber,
-    totalScoreToPar: participant.totalScoreToPar,
-    totalStrokes: participant.totalStrokes,
-    thru: participant.thru,
-    currentRound: participant.currentRound,
-    status: participant.status,
-    position: participant.position,
-    displayPosition: participant.displayPosition,
-    asOf: participant.asOf?.toISOString() ?? null,
-    rounds: participant.rounds,
   };
 }

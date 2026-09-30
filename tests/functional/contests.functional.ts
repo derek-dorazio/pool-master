@@ -4,7 +4,7 @@ import {
   enterContest,
   getContest,
   getContestEntry,
-  getManagedContest,
+  getContestConfiguration,
   getMyContestEntry,
   leaveContest,
   listContestEntries,
@@ -289,7 +289,7 @@ describe('SDK Functional: Contests and Entries', () => {
     );
 
     const contestId = createResponse.data?.contest.id as string;
-    const managedDetailResponse = await getManagedContest({
+    const configurationResponse = await getContestConfiguration({
       client: commissioner.client,
       path: {
         id: league.id,
@@ -297,15 +297,15 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    expect(managedDetailResponse.data?.contest.id).toBe(contestId);
-    expect(managedDetailResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
-    expect(managedDetailResponse.data?.contest.sportEventId).toBe(
+    expect(configurationResponse.data?.contest.id).toBe(contestId);
+    expect(configurationResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
+    expect(configurationResponse.data?.contest.sportEventId).toBe(
       importedEvent.sportEventId,
     );
     // pool-master-41t — the commissioner detail echoes the linked event's
     // effective tiers read-only (plans/124 §4.6/§5.3). seedImportedGolfEvent
     // creates a single tier covering the whole 80-golfer field.
-    const echoedTiers = managedDetailResponse.data?.contest.effectiveTiers ?? [];
+    const echoedTiers = configurationResponse.data?.contest.effectiveTiers ?? [];
     expect(echoedTiers).toHaveLength(1);
     expect(echoedTiers[0]).toMatchObject({
       tierKey: 'A',

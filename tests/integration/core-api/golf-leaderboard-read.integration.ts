@@ -7,8 +7,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { GolfLeaderboardResponseSchema } from '@poolmaster/shared/dto';
-import { Sport } from '@poolmaster/shared/domain';
+import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
+import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -204,8 +204,9 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const parsed = GolfLeaderboardResponseSchema.parse(response.json());
-    expect(parsed.entries.map((entry) => [entry.entryId, entry.totalScoreToPar, entry.position])).toEqual([
+    const parsed = ContestLeaderboardResponseSchema.parse(response.json());
+    expect(parsed.scoringDefinitionId).toBe('GOLF_RELATIVE_TO_PAR_TOTAL');
+    expect(parsed.entries.map((entry) => [entry.entryId, entry.golf?.totalScoreToPar, entry.position])).toEqual([
       [entryTwo.id, -9, 1],
       [entryOne.id, -7, 2],
     ]);
@@ -218,17 +219,20 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       { participantId: participants[1].id, isCounting: true, isDropped: false },
       { participantId: participants[2].id, isCounting: false, isDropped: true },
     ]);
-    const rory = parsed.participants.find((participant) => participant.sportEventParticipantId === participants[0].id);
-    expect(rory).toEqual(expect.objectContaining({
-      totalScoreToPar: -5,
-      thru: 9,
-      status: 'in-progress',
+    // The field is published as the event's own rows (#248): the standing and each round carry
+    // their golf extension, and the client renders a round through the named definition.
+    const rory = parsed.participants.find((participant) => participant.id === participants[0].id);
+    expect(rory?.standing).toEqual(expect.objectContaining({
+      status: 'IN_PROGRESS',
+      golf: expect.objectContaining({ eventScoreToPar: -5, currentRoundThru: 9 }),
     }));
-    expect(rory?.rounds.r2).toEqual(expect.objectContaining({
-      displayType: 'TO_PAR',
-      displayValue: '-2',
-      thru: 9,
-    }));
+    const roundTwo = rory?.rounds.find((round) => round.roundNumber === 2);
+    expect(roundTwo?.golf).toEqual(expect.objectContaining({ scoreToPar: -2, thru: 9 }));
+    expect(PARTICIPANT_SCORING_DEFINITIONS[parsed.scoringDefinitionId].formatRound({
+      status: roundTwo!.status,
+      strokes: roundTwo!.golf!.strokes,
+      scoreToPar: roundTwo!.golf!.scoreToPar,
+    })).toBe('-2');
 
     // #246 — once the contest is COMPLETED the leaderboard answers from the frozen standings,
     // not from live scores. The settled result below deliberately disagrees with the live one
@@ -256,12 +260,12 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       headers: owner.headers,
     });
     expect(settledResponse.statusCode).toBe(200);
-    const settled = GolfLeaderboardResponseSchema.parse(settledResponse.json());
-    expect(settled.entries.map((entry) => [entry.entryId, entry.totalScoreToPar, entry.position])).toEqual([
+    const settled = ContestLeaderboardResponseSchema.parse(settledResponse.json());
+    expect(settled.entries.map((entry) => [entry.entryId, entry.golf?.totalScoreToPar, entry.position])).toEqual([
       [entryOne.id, -11, 1],
       [entryTwo.id, -4, 2],
     ]);
-    expect(settled.entries[0].countingPickCount).toBe(3);
+    expect(settled.entries[0].countingPickLimit).toBe(3);
     expect(settled.countingRule.count).toBe(3);
     expect(settled.asOf).toBe(settledAt.toISOString());
 

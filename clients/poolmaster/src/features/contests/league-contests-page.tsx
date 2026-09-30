@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ContestSummaryDto } from '@/lib/api';
+import type { ContestDto } from '@/lib/api';
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { throwApiError } from "@/lib/errors";
@@ -64,7 +64,7 @@ export function LeagueContestsPage() {
   const leagueId = league?.id ?? "";
   const contestsQuery = useQuery({
     queryKey: QueryKeys.contests.list({ leagueId }),
-    queryFn: async (): Promise<ContestSummaryDto[]> => {
+    queryFn: async (): Promise<ContestDto[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
       if (!response.data?.contests) {

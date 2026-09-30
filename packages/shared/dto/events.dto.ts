@@ -238,7 +238,7 @@ export const SportEventParticipantGolfStandingDtoSchema = z.object({
 
 export const SportEventParticipantStandingDtoSchema = z.object({
   id: z.string().uuid(),
-  position: z.number().int().nullable().describe('Cross-sport rank key, direction-free: 1 is best in every sport.'),
+  position: z.number().int().nullable().describe('The participant\'s place within this event as it stands — its leaderboard position, direction-free: 1 is best in every sport. Not their rank coming in: that is the field row\'s `ranking`.'),
   displayPosition: z.string().nullable().describe('Position as shown, e.g. "T3".'),
   status: z.nativeEnum(ParticipantStandingStatus).describe('ELIMINATED covers a missed cut; golf surfaces show it as "Cut".'),
   asOf: DateTimeSchema.nullable(),
@@ -269,7 +269,7 @@ export const SportEventParticipantDtoSchema = z.object({
   participantId: z.string().uuid(),
   isActive: z.boolean().describe('Whether the participant is competing; false is withdrawn or eliminated.'),
   inactiveReason: z.nativeEnum(ParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null means no more specific reason is recorded.'),
-  ranking: z.number().int().nullable().describe('Rank that applied at this event: seeded from the provider\'s ranking, then editable.'),
+  ranking: z.number().int().nullable().describe('The participant\'s rank coming into this event — seeded from the provider\'s ranking (a world ranking, say), then editable. Not their place in the event: that is `standing.position`.'),
   oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
   participant: ParticipantDtoSchema.describe('The canonical participant.'),

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { listContestConfigTemplates, adminUpdateContestConfigTemplate, type AdminUpdateContestConfigTemplateResponses } from '@/lib/api';
+import { listContestConfigTemplates, updateContestConfigTemplate, type UpdateContestConfigTemplateResponses } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,
@@ -26,7 +26,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ContestConfigTemplateUpdateResult =
-  AdminUpdateContestConfigTemplateResponses[200]['template'];
+  UpdateContestConfigTemplateResponses[200]['template'];
 
 export function RootAdminContentConfigurationDetailPage() {
   const { templateKey = '' } = useParams<{ templateKey: string }>();
@@ -65,7 +65,7 @@ export function RootAdminContentConfigurationDetailPage() {
       templateId: string;
       nextDraft: ContestConfigTemplate;
     }): Promise<ContestConfigTemplateUpdateResult> => {
-      const response = await adminUpdateContestConfigTemplate({
+      const response = await updateContestConfigTemplate({
         path: { templateId: input.templateId },
         body: {
           name: input.nextDraft.name,
