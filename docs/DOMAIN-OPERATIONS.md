@@ -311,18 +311,20 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows |
+| **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
 tournament), `ContestEntryPick` is tenant-scoped (a squad chose that golfer). The pick fails
 condition 3.
 
-**Not yet classified: `ContestConfigTemplate`.** It passes all three conditions — platform
-seeded, no owner, not produced by user activity — which would make it global and readable by
-any signed-in user. That is probably right, since a commissioner needs the templates to
-create a contest, but it is contest-cluster work and belongs to slice 3 (#204), not to the
-decision this rule was written for. Until #204 settles it, it stays `rootAdmin`.
+**`ContestConfigTemplate` is global — classified in slice 3 (#245).** It passes all three
+conditions: platform seeded, no owner, not produced by anyone's activity. Its reads are
+`authenticated` — a commissioner needs the templates to create a contest, and a template is
+the same row for every viewer — and its one write stays `rootAdmin`. Until #245 it was held at
+`rootAdmin` pending this call, which is why the commissioner flow had its own copy of the read.
+A contest's *configuration*, copied from a template at create, is tenant-scoped like the rest
+of the contest: the template is where it came from, not what it is.
 
 ### What this rule does not do
 
@@ -586,6 +588,31 @@ operations. #236 adds one read, `listParticipantProviderMappings` (`authenticate
 every catalog read), for the player page — the mapping count the golf player list carried is
 gone.
 
+## Slice 3 — Contests and entries
+
+Cluster: `ContestConfigTemplate`, `Contest`, `ContestConfiguration`, `ContestEntry`,
+`ContestEntryPick` and the scoring and prize rules under a configuration. Tracked by #244–#248
+under #201; decisions: the stage-2 outcome in plans/145.
+
+**`ContestConfigTemplate` is global (A11); everything else here is tenant-scoped** — it
+belongs to a league through its contest.
+
+### ContestConfigTemplate
+
+A seeded starting configuration for a contest. Keyed by sport, contest format, selection type
+and an optional event type.
+
+| Operation | Role | Notes |
+|---|---|---|
+| List | `authenticated` | `listContestConfigTemplates` (#245). Every filter optional — `sport`, `contestFormat`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type. One read for the create flow and the root-admin screens |
+| Update | `rootAdmin` | `adminUpdateContestConfigTemplate`. Seeded rows only; there is no create or delete |
+
+### Contest
+
+| Operation | Role | Notes |
+|---|---|---|
+| Create | `commissioner` | `createContest` (#245) — the one way a contest is made. Takes `name`, `sportEventId`, `contestFormat` (`ROSTER`), `selectionType` (`TIERED` until another selection type has a typed configuration, #93/#99), and a `templateId`, a `configuration`, or both. With both, the template is recorded as provenance and the configuration replaces the template's whole — no merge. Neither: 400 `CONTEST_CONFIGURATION_REQUIRED`. A template that is missing, inactive, or of another format or selection type: 422 `CONTEST_CONFIGURATION_INVALID`. The event must be released and its field loaded (422 `SPORT_EVENT_*`). Answers 201 with the canonical contest read |
+
 ---
 
 ## What this document settles
@@ -605,6 +632,8 @@ split and what it became.
 | Inactivate a league | `inactivateLeague` + `adminInactivateLeague` | `POST /leagues/:id/inactivate` |
 | Delete a league | `deleteLeague` + `adminDeleteLeague` | `DELETE /leagues/:id` |
 | List squads | `listLeagueSquads` + `adminListTeams` | `GET /leagues/:id/squads` (the admin half deleted, no caller) |
+| List contest templates | `listManagedContestTemplates` + `adminListContestConfigTemplates` | `GET /contest-config-templates` (#245) |
+| Create a contest | `createContest` + `createManagedContest` | `POST /leagues/:id/contests` (#245) |
 
 Scope is a **parameter of the operation** — exactly as the DAO already expresses it, where
 `LeagueRepository.findAll()` is the unscoped read and `findByUser` the scoped one.

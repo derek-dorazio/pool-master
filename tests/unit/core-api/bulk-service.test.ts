@@ -17,9 +17,6 @@ import {
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
     findById: jest.fn().mockResolvedValue(buildContest()),
-    create: jest.fn().mockImplementation(async (input) => ({
-      ...input, id: 'new-contest', createdAt: new Date(), updatedAt: new Date(),
-    })),
     update: jest.fn().mockResolvedValue(buildContest()),
     ...overrides,
   });

@@ -1,13 +1,12 @@
 import {
   acceptInvitation,
-  createContest,
   enterContest,
   generateInviteLink,
   getDraftState,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
+import { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -167,28 +166,15 @@ async function seedUnsupportedSelectionTypeFixture() {
     throw new Error('Builder: acceptInvitation failed for draft functional fixture');
   }
 
-  const contestResponse = await createContest({
-    client: commissioner.client,
-    path: {
-      id: league.id,
-    },
-    body: {
-      name: 'Draft Functional Contest',
-      contestFormat: ContestFormat.ROSTER,
-      selectionType: SelectionType.SNAKE_DRAFT,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
-      contestConfiguration: {
-        rounds: 2,
-        timePerPickSeconds: 60,
-      },
+  const { contestId } = await seedContestFixture(league.id, {
+    name: 'Draft Functional Contest',
+    selectionType: SelectionType.SNAKE_DRAFT,
+    scoringEngine: ScoringEngine.STROKE_PLAY,
+    configuration: {
+      rounds: 2,
+      timePerPickSeconds: 60,
     },
   });
-
-  if (!contestResponse.data) {
-    throw new Error('Builder: createContest failed for draft functional fixture');
-  }
-
-  const contestId = contestResponse.data.contest.id;
 
   const commissionerEntry = await enterContest({
     client: commissioner.client,
@@ -253,29 +239,16 @@ async function seedBudgetPickFixture() {
     throw new Error('Builder: acceptInvitation failed for budget fixture');
   }
 
-  const contestResponse = await createContest({
-    client: commissioner.client,
-    path: {
-      id: league.id,
-    },
-    body: {
-      name: 'Budget Functional Contest',
-      contestFormat: ContestFormat.ROSTER,
-      selectionType: SelectionType.BUDGET_PICK,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
-      contestConfiguration: {
-        rosterSize: 1,
-        budget: 8000,
-        isExclusive: true,
-      },
+  const { contestId } = await seedContestFixture(league.id, {
+    name: 'Budget Functional Contest',
+    selectionType: SelectionType.BUDGET_PICK,
+    scoringEngine: ScoringEngine.STROKE_PLAY,
+    configuration: {
+      rosterSize: 1,
+      budget: 8000,
+      isExclusive: true,
     },
   });
-
-  if (!contestResponse.data) {
-    throw new Error('Builder: createContest failed for budget fixture');
-  }
-
-  const contestId = contestResponse.data.contest.id;
 
   const commissionerEntry = await enterContest({
     client: commissioner.client,
@@ -408,36 +381,23 @@ async function seedTieredDraftFixture(options: {
     leagueName: 'Tiered Draft Functional League',
   });
 
-  const contestResponse = await createContest({
-    client: commissioner.client,
-    path: {
-      id: league.id,
-    },
-    body: {
-      name: 'Tiered Draft Functional Contest',
-      contestFormat: ContestFormat.ROSTER,
-      selectionType: SelectionType.TIERED,
-      scoringEngine: ScoringEngine.STROKE_PLAY,
-      contestConfiguration: {
-        rounds: 1,
-        tierConfig: [
-          {
-            tierId: 'tier-1',
-            tierName: 'Tier 1',
-            tierNumber: 1,
-            picksFromTier,
-            participantIds: [],
-          },
-        ],
-      },
+  const { contestId } = await seedContestFixture(league.id, {
+    name: 'Tiered Draft Functional Contest',
+    selectionType: SelectionType.TIERED,
+    scoringEngine: ScoringEngine.STROKE_PLAY,
+    configuration: {
+      rounds: 1,
+      tierConfig: [
+        {
+          tierId: 'tier-1',
+          tierName: 'Tier 1',
+          tierNumber: 1,
+          picksFromTier,
+          participantIds: [],
+        },
+      ],
     },
   });
-
-  if (!contestResponse.data) {
-    throw new Error('Builder: createContest failed for tiered draft fixture');
-  }
-
-  const contestId = contestResponse.data.contest.id;
 
   const entryResponse = await enterContest({
     client: commissioner.client,

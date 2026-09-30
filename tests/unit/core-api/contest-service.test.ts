@@ -9,7 +9,6 @@ import type {
   ContestRepository,
   ContestEntryRepository,
   LeagueMembershipRepository,
-  LeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -23,25 +22,18 @@ import {
   TeamIconKey,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
-import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
+import { buildContest, buildMembership, buildUser } from '../../factories';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryRepo,
   fakeContestRepo,
   fakeLeagueMembershipRepo,
-  fakeLeagueRepo,
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
-      ...input,
-      id: 'new-contest-id',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
     update: jest.fn().mockImplementation(async (id, updates) => ({
       ...buildContest({ id }),
       ...updates,
@@ -95,15 +87,6 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
       updatedAt: new Date('2026-01-01'),
       ...updates,
     })),
-    ...overrides,
-  });
-}
-
-function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
-  return fakeLeagueRepo({
-    findById: jest.fn().mockResolvedValue(buildLeague({ id: 'league-1' })),
-    create: jest.fn().mockResolvedValue(buildLeague()),
-    update: jest.fn().mockResolvedValue(buildLeague()),
     ...overrides,
   });
 }
@@ -269,169 +252,6 @@ function buildGolfLeaderboardPick(id: string, sportEventParticipantId: string) {
 }
 
 describe('ContestService', () => {
-  describe('createContest', () => {
-    it('creates a contest and selection config', async () => {
-      const contestRepo = createMockContestRepo();
-      const contestConfigurationRepo = createMockContestConfigurationRepo();
-      const service = new ContestService(
-        contestRepo,
-        contestConfigurationRepo,
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      const result = await service.createContest({
-        leagueId: 'league-1',
-        createdBy: 'user-1',
-        sportEventId: 'event-1',
-        name: 'Masters Pool',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.SNAKE_DRAFT,
-        contestConfiguration: { rounds: 5, timePerPickSeconds: 60 },
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-      });
-      expect(contestRepo.create).toHaveBeenCalledTimes(1);
-      expect(contestRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sportEventId: 'event-1',
-        }),
-      );
-      expect(contestConfigurationRepo.create).toHaveBeenCalledTimes(1);
-      expect(result.contest.id).toBe('new-contest-id');
-      expect(result.contestConfiguration.id).toBe('new-config-id');
-    });
-
-    it('creates contest with status DRAFT', async () => {
-      const contestRepo = createMockContestRepo();
-      const service = new ContestService(
-        contestRepo,
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-      );
-      await service.createContest({
-        leagueId: 'league-1',
-        createdBy: 'user-1',
-        name: 'Test',
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.SNAKE_DRAFT,
-        contestConfiguration: {},
-        scoringEngine: ScoringEngine.CUMULATIVE,
-      });
-      const createArg = (contestRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.status).toBe(ContestStatus.DRAFT);
-    });
-
-    it('throws when league not found', async () => {
-      const leagueRepo = createMockLeagueRepo({
-        findById: jest.fn().mockResolvedValue(null),
-      });
-      const service = new ContestService(
-        createMockContestRepo(),
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        leagueRepo,
-      );
-      await expect(
-        service.createContest({
-          leagueId: 'missing',
-          createdBy: 'user-1',
-          name: 'Test',
-          contestFormat: ContestFormat.ROSTER,
-          selectionType: SelectionType.SNAKE_DRAFT,
-          contestConfiguration: {},
-          scoringEngine: ScoringEngine.CUMULATIVE,
-        }),
-      ).rejects.toThrow(ContestOperationError);
-    });
-
-    it('pool-master-rop.78.14 rejects invalid contest format for the selected sport event', async () => {
-      const contestRepo = createMockContestRepo();
-      const prisma = createMockPrisma({
-        sportEvent: {
-          findUnique: jest.fn().mockResolvedValue({
-            sport: Sport.GOLF,
-          }),
-        },
-        sport: {
-          findUnique: jest.fn().mockResolvedValue({
-            tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
-          }),
-        },
-      });
-      const service = new ContestService(
-        contestRepo,
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-        undefined,
-        undefined,
-        undefined,
-        prisma as any,
-      );
-
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          sportEventId: 'event-1',
-          name: 'Invalid Bracket',
-          contestFormat: ContestFormat.BRACKET,
-          selectionType: SelectionType.TIERED,
-          contestConfiguration: {},
-          scoringEngine: ScoringEngine.STROKE_PLAY,
-        }),
-      ).rejects.toMatchObject({
-        code: 'CONTEST_FORMAT_NOT_ALLOWED',
-        message: 'Selected sporting event does not support that contest format.',
-      });
-      expect(contestRepo.create).not.toHaveBeenCalled();
-    });
-
-    it('pool-master-rop.78.14 rejects valid future formats until creation support exists', async () => {
-      const contestRepo = createMockContestRepo();
-      const prisma = createMockPrisma({
-        sportEvent: {
-          findUnique: jest.fn().mockResolvedValue({
-            sport: Sport.NCAA_BASKETBALL,
-          }),
-        },
-        sport: {
-          findUnique: jest.fn().mockResolvedValue({
-            tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
-          }),
-        },
-      });
-      const service = new ContestService(
-        contestRepo,
-        createMockContestConfigurationRepo(),
-        createMockMembershipRepo(),
-        createMockLeagueRepo(),
-        undefined,
-        undefined,
-        undefined,
-        prisma as any,
-      );
-
-      await expect(
-        service.createContest({
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          sportEventId: 'event-1',
-          name: 'Bracket Pool',
-          contestFormat: ContestFormat.BRACKET,
-          selectionType: SelectionType.TIERED,
-          contestConfiguration: {},
-          scoringEngine: ScoringEngine.BRACKET,
-        }),
-      ).rejects.toMatchObject({
-        code: 'CONTEST_FORMAT_NOT_SUPPORTED',
-        message: 'This contest format is not available for contest creation yet.',
-      });
-      expect(contestRepo.create).not.toHaveBeenCalled();
-    });
-
-  });
-
   describe('updateContest', () => {
     it('updates a DRAFT contest', async () => {
       const contest = buildContest({ id: 'c-1', status: ContestStatus.DRAFT });
@@ -442,7 +262,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       await service.updateContest('c-1', { name: 'Updated Name' });
       expect(contestRepo.update).toHaveBeenCalledWith('c-1', { name: 'Updated Name' });
@@ -457,7 +276,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       await expect(
         service.updateContest('c-1', { name: 'Updated' }),
@@ -469,7 +287,6 @@ describe('ContestService', () => {
         createMockContestRepo(),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       await expect(
         service.updateContest('missing', { name: 'X' }),
@@ -487,7 +304,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       await service.deleteContest('c-1');
       expect(contestRepo.delete).toHaveBeenCalledWith('c-1');
@@ -502,7 +318,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       await expect(service.deleteContest('c-1')).rejects.toThrow(
         'DRAFT status',
@@ -520,7 +335,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       const result = await service.listByLeague('league-1');
       expect(result).toHaveLength(2);
@@ -546,7 +360,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
         undefined,
         undefined,
         entryRepo,
@@ -576,7 +389,6 @@ describe('ContestService', () => {
         contestRepo,
         configRepo,
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       const result = await service.getContest('c-1');
       expect(result).not.toBeNull();
@@ -589,7 +401,6 @@ describe('ContestService', () => {
         createMockContestRepo(),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
       );
       const result = await service.getContest('missing');
       expect(result).toBeNull();
@@ -626,7 +437,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         squadMembershipRepo,
         entryRepo,
@@ -657,7 +467,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue(null),
@@ -714,7 +523,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         squadMembershipRepo,
         entryRepo,
@@ -763,7 +571,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         squadMembershipRepo,
         entryRepo,
@@ -858,7 +665,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         squadMembershipRepo,
         entryRepo,
@@ -889,7 +695,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1019,7 +824,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
         createMockEntryRepo(),
@@ -1095,7 +899,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1201,7 +1004,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1268,7 +1070,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1307,7 +1108,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1393,7 +1193,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1542,7 +1341,6 @@ describe('ContestService', () => {
         createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1714,7 +1512,6 @@ describe('ContestService', () => {
         createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1806,7 +1603,6 @@ describe('ContestService', () => {
         createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -1933,7 +1729,6 @@ describe('ContestService', () => {
         createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         createMockContestConfigurationRepo(),
         createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo({
           findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -2035,7 +1830,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         membershipRepo,
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         squadMembershipRepo,
         createMockEntryRepo(),
@@ -2098,7 +1892,6 @@ describe('ContestService', () => {
         contestRepo,
         createMockContestConfigurationRepo(),
         createMockMembershipRepo(),
-        createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
         createMockEntryRepo(),

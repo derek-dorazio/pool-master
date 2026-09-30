@@ -14,7 +14,7 @@ import {
   UserResponseSchema,
   AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
-  ContestManagementResponseSchema,
+  ContestResponseSchema,
   DraftStateResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
@@ -448,7 +448,7 @@ describe('Contract verification (web)', () => {
     expect(SquadResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
   });
 
-  it('contest management routes match their template-first response DTOs', async () => {
+  it('contest-config-template list and contest create routes match their response DTOs', async () => {
     const eventTiming = buildContestEligibleEventTiming();
     const owner = await createTestUser({ displayName: 'Contract Contest Owner' });
 
@@ -528,7 +528,7 @@ describe('Contract verification (web)', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestFormat=ROSTER`,
+      url: '/api/v1/contest-config-templates/?sport=GOLF&contestFormat=ROSTER&active=true',
       headers: owner.headers,
     });
 
@@ -544,18 +544,19 @@ describe('Contract verification (web)', () => {
 
     const res = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.contestManagement(leagueId),
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: owner.headers,
       payload: {
         name: 'Contract Managed Contest',
         sportEventId: sportEvent.id,
         contestFormat: ContestFormat.ROSTER,
+        selectionType: 'TIERED',
         templateId: defaultTemplate.id,
       },
     });
 
     expect(res.statusCode).toBe(201);
-    const parsed = ContestManagementResponseSchema.safeParse(res.json());
+    const parsed = ContestResponseSchema.safeParse(res.json());
     expect(parsed.success).toBe(true);
   });
 
@@ -662,31 +663,26 @@ describe('Contract verification (web)', () => {
     });
     const leagueId = leagueRes.json().league.id as string;
 
-    const contestRes = await getApp().inject({
-      method: 'POST',
-      url: API_ROUTES.leagues.contests(leagueId),
-      headers: owner.headers,
-      payload: {
+    // #245 retired the event-less legacy create this contract once went through; the draft-state
+    // contract does not depend on how the contest was made, so the row is a fixture.
+    const contest = await getPrisma().contest.create({
+      data: {
+        leagueId,
         name: 'Contract Draft Contest',
-        sport: 'GOLF',
+        status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
       },
     });
-    const contestId = contestRes.json().contest.id as string;
+    await getPrisma().contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: SelectionType.TIERED,
+        maxEntriesPerSquad: 1,
+      },
+    });
+    const contestId = contest.id;
 
     await getApp().inject({
       method: 'POST',

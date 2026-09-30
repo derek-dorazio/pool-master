@@ -11,6 +11,7 @@ import {
   SelectionType,
 } from '@poolmaster/shared/domain';
 import {
+  ContestConfigurationRequestSchema,
   GolfCategoryDefinitionSchema,
   GolfContestTierSchema,
   GolfFixedCutRuleSchema,
@@ -49,33 +50,31 @@ export const ContestCrudConfigurationRequestSchema = z.object({
   captainMultiplier: z.number().optional(),
 }).describe('Contest-configuration payload used by contest create and update endpoints.');
 
+/** 400 error code when a create request names neither a template nor a configuration. */
+export const CONTEST_CONFIGURATION_REQUIRED = 'CONTEST_CONFIGURATION_REQUIRED';
+
+/**
+ * One creation path with an optional first step (plans/145 slice 3, Q6b/Q9). A template seeds the
+ * configuration and `configuration`, when also supplied, replaces it; a request with neither is
+ * refused, because there is no platform default. OpenAPI cannot say "at least one of these two"
+ * structurally, so the published shape has both optional and the rule lives in the refine below,
+ * reported as CONTEST_CONFIGURATION_REQUIRED.
+ */
 export const CreateContestRequestSchema = z.object({
-  name: z.string().min(1).max(100),
-  eventId: z.string().optional(),
+  name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
+  sportEventId: z.string().uuid().describe('Sport event the contest is run on.'),
   contestFormat: z.literal(ContestFormat.ROSTER).describe(
     'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
   ),
-  selectionType: z.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
-  ]),
-  contestConfiguration: ContestCrudConfigurationRequestSchema.optional(),
-  scoringEngine: z.enum([
-    ScoringEngine.ADVANCEMENT,
-    ScoringEngine.STAT_ACCUMULATION,
-    ScoringEngine.STROKE_PLAY,
-    ScoringEngine.POSITION,
-    ScoringEngine.BRACKET,
-    ScoringEngine.FIGHT_RESULT,
-    ScoringEngine.CUMULATIVE,
-  ]),
-  startsAt: z.string().datetime().optional(),
-  endsAt: z.string().datetime().optional(),
-  lockAt: z.string().datetime().optional(),
-  isExclusive: z.boolean().optional(),
-  scoringStopsOnElimination: z.boolean().optional().describe('Whether eliminated entries stop accumulating score events.'),
-}).describe('Request payload for creating a contest.');
+  selectionType: z.literal(SelectionType.TIERED).describe(
+    'How an entry picks. Tiered only until another selection type has a typed configuration (budget #93, category #99); it must match the template\'s selection type when a template is named.',
+  ),
+  templateId: z.string().uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),
+  configuration: ContestConfigurationRequestSchema.optional().describe('The contest configuration. With a template, replaces the template\'s configuration; without one, is the configuration.'),
+}).refine(
+  (request) => request.templateId !== undefined || request.configuration !== undefined,
+  { message: 'Name a template, supply a configuration, or both.', params: { code: CONTEST_CONFIGURATION_REQUIRED } },
+).describe('Request payload for creating a contest.');
 export type CreateContestRequest = z.infer<typeof CreateContestRequestSchema>;
 
 export const UpdateContestRequestSchema = z.object({

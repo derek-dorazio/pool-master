@@ -313,7 +313,6 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
-    create: echoCreate('contest'),
     update: echoUpdate(),
     delete: nothing(),
     ...overrides,
@@ -395,7 +394,6 @@ export function fakeContestConfigTemplateRepo(
   return {
     findById: one(),
     list: many(),
-    listBySportAndContestFormat: many(),
     update: echoUpdate(),
     ...overrides,
   };

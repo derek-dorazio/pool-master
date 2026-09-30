@@ -95,12 +95,13 @@ describe('RosterPick CRUD integration', () => {
 
     const contestRes = await getApp().inject({
       method: 'POST',
-      url: API_ROUTES.leagues.contestManagement(leagueId),
+      url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Roster Pick CRUD Contest',
         sportEventId: sportEvent.id,
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           locksAt: entryLocksAt,
           maxEntriesPerSquad: 1,

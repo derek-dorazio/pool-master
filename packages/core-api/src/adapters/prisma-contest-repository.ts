@@ -30,26 +30,6 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async create(contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>): Promise<Contest> {
-    const row = await this.prisma.contest.create({
-      data: {
-        leagueId: contest.leagueId,
-        sportEventId: contest.sportEventId || undefined,
-        name: contest.name,
-        status: contest.status,
-        contestFormat: contest.contestFormat,
-        selectionType: contest.selectionType,
-        scoringEngine: contest.scoringEngine,
-        isExclusive: contest.isExclusive,
-        scoringStopsOnElimination: contest.scoringStopsOnElimination,
-        startsAt: contest.startsAt,
-        endsAt: contest.endsAt,
-        lockAt: contest.lockAt,
-      },
-    });
-    return mapToContest(row);
-  }
-
   async update(id: string, updates: Partial<Contest>): Promise<Contest> {
     const row = await this.prisma.contest.update({
       where: { id },

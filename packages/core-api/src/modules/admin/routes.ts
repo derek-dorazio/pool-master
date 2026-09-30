@@ -23,16 +23,14 @@ import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
 import { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
-import { ContestTemplateAdminService } from './contest-template-service';
-import { createContestTemplateAdminHandlers } from './contest-template-handler';
+import { ContestConfigTemplateService } from '../contest-config-templates/service';
+import { createContestConfigTemplateHandlers } from '../contest-config-templates/handler';
 import { EventScoreSourceService } from '../events/event-score-source-service';
 import {
   AdminProviderEventCleanupRequestSchema,
   AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
-  AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
-  ContestConfigTemplateListResponseSchema,
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
@@ -111,7 +109,7 @@ export async function adminModule(
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = opts.pollConfigService ?? new PollConfigService(runtimeConfigRepository, fastify.log);
   const ingestionConfigService = opts.ingestionConfigService ?? new IngestionConfigService(runtimeConfigRepository, fastify.log);
-  const contestTemplateAdminService = new ContestTemplateAdminService(
+  const contestConfigTemplateService = new ContestConfigTemplateService(
     new PrismaContestConfigTemplateRepository(prisma),
     fastify.log,
   );
@@ -119,7 +117,7 @@ export async function adminModule(
   // --- Handlers ---
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService, eventScoreSourceService);
-  const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
+  const contestTemplates = createContestConfigTemplateHandlers(contestConfigTemplateService);
 
   // --- User Management Routes ---
 
@@ -208,20 +206,8 @@ export async function adminModule(
     handler: provider.syncEventData,
   });
 
-  fastify.get('/contest-config-templates', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'List persisted contest configuration templates',
-      description: 'Returns the persisted commissioner contest configuration templates that root-admins can manage from the /manage page.',
-      operationId: 'adminListContestConfigTemplates',
-      querystring: zodToJsonSchema(AdminListContestConfigTemplatesQuerySchema),
-      response: withAdminErrorResponses({
-        200: zodToJsonSchema(ContestConfigTemplateListResponseSchema),
-      }),
-    },
-    handler: contestTemplates.listTemplates,
-  });
-
+  // #245 — the template read is `listContestConfigTemplates` at /api/v1/contest-config-templates:
+  // one read for the commissioner and the root admin, `authenticated` under A11. The write stays here.
   fastify.put('/contest-config-templates/:templateId', {
     schema: {
       tags: ['Admin'],

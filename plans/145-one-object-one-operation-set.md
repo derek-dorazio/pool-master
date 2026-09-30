@@ -1862,6 +1862,80 @@ table, two stale comments, and "aggregation rules" from A11's tenant-scoped row 
 deletes the function), and `tech-specs/features/contest-event-feed-integration/`, which is a
 design input, not a live description.
 
+## Slice 3 one creation path — outcome, 2026-09-30
+
+#245. One create operation, one template read, the union gone, and the empty case refused by
+both the client and the server with a documented code.
+
+**The create contract.** `createContest` (`POST /leagues/:id/contests`) is the one way a contest is
+made; `createManagedContest`, its two-variant union and the legacy event-less body are deleted.
+The request is `name`, `sportEventId`, `contestFormat`, `selectionType`, and optional `templateId`
+and `configuration`. The pairing rule is a `.refine()` carrying
+`CONTEST_CONFIGURATION_REQUIRED`, documented on the 400 response because JSON Schema drops a
+refine; the handler `safeParse`s the body so the code reaches the envelope, and the service
+repeats the rule so it holds without the route in front. No `oneOf` — the published body is the
+optional pair, and the SDK type is clean. The response is the canonical `ContestResponse`, as
+every other contest route answers.
+
+**Two judgement calls, both from the "one typed config" choice the repo owner made.**
+
+- **`selectionType` is `z.literal(TIERED)`, not the `SelectionType` enum.** The configuration
+  is the tiered shape and nothing else has a typed configuration yet; accepting `BUDGET_PICK`
+  with a tiered configuration would bring back `mapSelectionType`'s defect in another form — a
+  request that names one selection type and gets another's rules. The literal widens when #93
+  (budget) or #99 (category) builds its configuration. A template of another selection type is
+  refused (422 `CONTEST_CONFIGURATION_INVALID`) rather than silently winning.
+- **A supplied configuration replaces the template's whole; it is not merged.** The typed
+  configuration requires `rosterSize` and `countedScores`, so a partial "override" is not
+  expressible without a second, all-optional schema; and a merge makes the stored configuration
+  depend on template state the commissioner never saw. The template is recorded as provenance
+  (`templateId`, `templateVersion`). The webapp already sends the full form configuration, so
+  no client loses anything. **Confirmed by the repo owner, 2026-09-30:** replacement, not a
+  field-level merge.
+
+**`mapSelectionType` is gone** with the managed create, and with it the update path's rewrite of
+`selectionType` on every save — it is fixed at create now.
+
+**The template read.** `listContestConfigTemplates` (`GET /contest-config-templates`,
+`authenticated`) replaces `listManagedContestTemplates` and `adminListContestConfigTemplates`;
+every filter (`sport`, `contestFormat`, `eventType`, `active`) is optional. The two reads
+disagreed on one thing: the commissioner's matched a named event type *or* any-event-type
+templates, the admin's matched exactly. The merged read keeps the commissioner's semantics
+for an `eventType` filter; no seeded template has an event type and nothing writes one, so no
+caller sees a different list. `adminUpdateContestConfigTemplate` is unchanged and still
+`rootAdmin`; its default-template scoping was taken from the old exact-match read and stays
+exact. The service moved out of `admin/` into `modules/contest-config-templates/`. A root-admin
+edit now invalidates the commissioner's cached list too, since both screens share one query key.
+
+**A11.** `ContestConfigTemplate` is classified global in `docs/DOMAIN-OPERATIONS.md` — the
+classification table, the paragraph that held it unclassified, a new slice-3 operations
+section, and two rows in the collapsed-operations table.
+
+**Client.** The create page reads the one template list and sends `CreateContestRequest`. Submit
+stays disabled with no template selected and an incomplete configuration (roster size and
+counted scores positive whole numbers, counted ≤ roster); a selected template never disables it.
+Both branches are tested, as is a create with no template on offer.
+
+**Tests.** The legacy event-less create was the fixture for thirteen functional and two
+integration tests whose subject was entries, visibility, dashboards or draft state — and for the
+budget and snake draft contests nothing can create any more. Those now seed the same rows the
+deleted create wrote (`seedContestFixture` in `tests/functional/builders.ts`; inline in the
+integration tests). The tests whose subject *was* creation go through `createContest`: template
+only, template plus configuration (asserting replacement), configuration only, neither
+(`CONTEST_CONFIGURATION_REQUIRED` at DTO, service, route and SDK), a non-tiered selection type,
+a template of the wrong selection type, and the template read for an outsider (200) and an
+anonymous caller (401) plus a plain user's write (403).
+
+**3.6 — the sweep** also removed `ContestRepository.create` (the second create path's port
+method, now uncalled) with its adapter method and five fakes, `ContestService`'s `leagueRepo`
+(read only by the deleted create), `listBySportAndContestFormat` from the template port, the two
+manifest entries for the deleted routes, and the contest-management routes' direct Prisma
+wiring (now `contest-management/wiring.ts`) — `rules:check` reports three fewer advisories than
+`main` and none new. Left on purpose: `getManagedContest` and
+`updateManagedContestConfiguration`, which are the commissioner detail and the configuration
+edit rather than a second copy of anything in this slice (#248 owns their naming), and `tech-specs/features/contest-event-feed-integration/`, which is design input, as
+#244 recorded.
+
 ## Slice 4 stage 1 — outcome, 2026-09-30
 
 #205 had never had its stage 1 done. Doing it changed the slice from an epic stage into a

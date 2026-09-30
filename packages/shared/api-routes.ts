@@ -70,7 +70,6 @@ export const API_ROUTES = {
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests/`,
     squads: (id: string) => `/api/v1/leagues/${id}/squads/`,
-    contestManagement: (id: string) => `/api/v1/leagues/${id}/contest-management/contests`,
   },
 
   squads: {
@@ -110,7 +109,6 @@ export const API_ROUTES = {
   },
 
   contestManagement: {
-    templates: (id: string) => `/api/v1/leagues/${id}/contest-management/templates`,
     detail: (id: string, contestId: string) =>
       `/api/v1/leagues/${id}/contest-management/contests/${contestId}`,
     configuration: (id: string, contestId: string) =>

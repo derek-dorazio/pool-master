@@ -33,16 +33,15 @@ export interface ContestConfigurationRepository {
 
 export interface ContestConfigTemplateRepository {
   findById(id: string): Promise<ContestConfigTemplate | null>;
+  /**
+   * Ordered by sport, format, sort order, name. `eventType` narrows to that type's templates
+   * plus the ones for any event type; every filter is optional.
+   */
   list(input?: {
     sport?: ContestConfigTemplate['sport'];
     contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
     active?: boolean;
-  }): Promise<ContestConfigTemplate[]>;
-  listBySportAndContestFormat(input: {
-    sport: ContestConfigTemplate['sport'];
-    contestFormat: ContestConfigTemplate['contestFormat'];
-    eventType?: string | null;
   }): Promise<ContestConfigTemplate[]>;
   update(
     id: string,

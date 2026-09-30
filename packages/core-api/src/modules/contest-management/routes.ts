@@ -1,118 +1,23 @@
 import type { FastifyInstance } from 'fastify';
-import type { Sport, TournamentFormat } from '@poolmaster/shared/domain';
-import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import {
-  ContestConfigTemplateListResponseSchema,
   ContestConfigurationRequestSchema,
   ContestManagementResponseSchema,
-  CreateContestManagementRequestSchema,
   ErrorEnvelopeSchema,
-  ListContestConfigTemplatesQuerySchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
-import {
-  PrismaContestConfigTemplateRepository,
-  PrismaContestConfigurationRepository,
-  PrismaContestCoreRepository,
-  PrismaLeagueMembershipRepository,
-  PrismaParticipantContestScoringRuleRepository,
-} from '../../adapters';
+import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
-import { ContestManagementService } from './service';
+import { createContestManagementService } from './wiring';
 import { getAppPrisma } from '../../core/prisma-context';
-import { createSportEventTierService } from '../events/wiring';
 
 export function contestManagementModule(
   fastify: FastifyInstance,
 ): void {
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const sportEventTierService = createSportEventTierService(prisma, fastify.log);
-  const contestManagementService = new ContestManagementService(
-    new PrismaContestCoreRepository(prisma),
-    new PrismaContestConfigTemplateRepository(prisma),
-    new PrismaContestConfigurationRepository(prisma),
-    new PrismaParticipantContestScoringRuleRepository(prisma),
-    sportEventTierService,
-    fastify.log,
-    {
-      findById: async (sportEventId) => {
-        const row = await prisma.sportEvent.findUnique({
-          where: { id: sportEventId },
-          include: {
-            _count: {
-              select: {
-                sportEventParticipants: true,
-              },
-            },
-          },
-        });
-
-        if (!row) {
-          return null;
-        }
-        const sport = row.sport as Sport;
-        const sportRow = await prisma.sport.findUnique({
-          where: { name: row.sport },
-          select: { tournamentFormat: true },
-        });
-
-        return {
-          id: row.id,
-          releaseAt: row.releaseAt,
-          fieldLocksAt: row.fieldLocksAt,
-          fieldLocked: row.fieldLocked,
-          sport,
-          tournamentFormat:
-            (sportRow?.tournamentFormat as TournamentFormat | undefined)
-            ?? getDefaultTournamentFormatForSport(sport),
-          participantCount: row.participantCount,
-          loadedParticipantCount: row._count.sportEventParticipants,
-        };
-      },
-    },
-  );
+  const contestManagementService = createContestManagementService(prisma, fastify.log);
   const handlers = createContestManagementHandlers(contestManagementService);
-
-  fastify.get('/templates', {
-    schema: {
-      tags: ['Contest Management'],
-      summary: 'List seeded contest templates for commissioner create flow',
-      description:
-        'Returns the seeded contest configuration templates available for a sport and contest type so commissioner create flows can default to smart presets before advanced editing.',
-      operationId: 'listManagedContestTemplates',
-      querystring: zodToJsonSchema(ListContestConfigTemplatesQuerySchema),
-      response: {
-        200: zodToJsonSchema(ContestConfigTemplateListResponseSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: handlers.listTemplates,
-  });
-
-  fastify.post('/contests', {
-    schema: {
-      tags: ['Contest Management'],
-      summary: 'Create a commissioner-managed contest with configuration',
-      description:
-        'Creates a contest together with its commissioner-managed configuration so league administration surfaces can launch a fully configured contest in one flow.',
-      operationId: 'createManagedContest',
-      body: zodToJsonSchema(CreateContestManagementRequestSchema),
-      response: {
-        201: zodToJsonSchema(ContestManagementResponseSchema),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
-        401: zodToJsonSchema(ErrorEnvelopeSchema),
-        403: zodToJsonSchema(ErrorEnvelopeSchema),
-        422: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    preHandler: requireCommissioner(membershipRepo),
-    handler: handlers.createContest,
-  });
 
   fastify.get('/contests/:contestId', {
     schema: {

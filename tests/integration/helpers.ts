@@ -32,6 +32,7 @@ import { teamInvitationsModule } from '../../packages/core-api/src/modules/team-
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
+import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
@@ -126,6 +127,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
+  testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   testApp.register(seasonsModule, { prefix: '/api/v1/seasons' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });

@@ -10,9 +10,9 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ContestFormat,
-  ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import { randomUUID } from 'node:crypto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -39,18 +39,20 @@ describe('Contest Validation Integration', () => {
     leagueId = leagueRes.json().league.id;
   });
 
-  it('rejects tiered contest creation when tier configuration is missing and does not persist a contest', async () => {
+  // #245 — the one create validates its configuration against the typed tiered shape; an
+  // incomplete configuration is refused at the contract and nothing is persisted.
+  it('rejects a tiered create whose configuration is incomplete and does not persist a contest', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
       headers: ownerHeaders,
       payload: {
         name: 'Broken Tiered Contest',
+        sportEventId: randomUUID(),
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
-        contestConfiguration: {
-          rounds: 6,
+        configuration: {
+          countedScores: 4,
         },
       },
     });
@@ -58,8 +60,7 @@ describe('Contest Validation Integration', () => {
     expect(createRes.statusCode).toBe(400);
     const body = createRes.json();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
-    expect(body.error.code).toBe('CONTEST_TIER_CONFIGURATION_REQUIRED');
-    expect(body.error.message).toBe('Tiered contests require tier configuration');
+    expect(JSON.stringify(body)).toContain('rosterSize');
 
     const listRes = await getApp().inject({
       method: 'GET',
@@ -86,9 +87,10 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: `Deferred ${selectionType}`,
+        sportEventId: randomUUID(),
         contestFormat: ContestFormat.ROSTER,
         selectionType,
-        scoringEngine: ScoringEngine.STROKE_PLAY,
+        configuration: { rosterSize: 6, countedScores: 4 },
       },
     });
 
