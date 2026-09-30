@@ -179,7 +179,7 @@ slice-3 stage 2 settled:
   golf-prefixed duplicate of `SelectionType`, which already carries both `TIERED` and
   `BUDGET_PICK`. There was never a `GOLF_BUDGET` value to add, and no new enum value is needed
   here at all. `ContestConfiguration.configMode` goes with it as a redundant second copy of
-  `selectionType`; `ContestConfigTemplate.configMode` is renamed `selectionType` by #248.
+  `selectionType`; `ContestConfigTemplate.configMode` is renamed `selectionType` by #244 as well.
 - **`pricingMethod` is dropped**, so it is no longer a field of this shape. See §4a.
 
 **Price-range guidance for the seed preset, not enforced logic**: `adminAutoAssignGolfPrices`'s

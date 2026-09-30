@@ -13,7 +13,6 @@ describe('contest-management dto schemas', () => {
       sportEventId: '11111111-1111-1111-1111-111111111111',
       contestFormat: 'ROSTER',
       configuration: {
-        mode: 'GOLF_TIERED',
         locksAt: '2026-04-10T12:00:00.000Z',
         maxEntriesPerSquad: 3,
         rosterSize: 6,
@@ -23,10 +22,6 @@ describe('contest-management dto schemas', () => {
 
     if (!('configuration' in parsed)) {
       throw new Error('Expected legacy configuration payload');
-    }
-    expect(parsed.configuration.mode).toBe('GOLF_TIERED');
-    if (parsed.configuration.mode !== 'GOLF_TIERED') {
-      throw new Error('Expected golf tiered configuration');
     }
     expect(parsed.configuration.rosterSize).toBe(6);
     expect(parsed.configuration.countedScores).toBe(4);
@@ -62,7 +57,7 @@ describe('contest-management dto schemas', () => {
       id: '11111111-1111-4111-8111-111111111111',
       sport: 'GOLF',
       contestFormat: 'ROSTER',
-      configMode: 'GOLF_TIERED',
+      selectionType: 'TIERED',
       templateKey: 'golf-tiered-pick-6',
       name: 'Select one from each tier, 4 count',
       description: 'Default golf tiered template',
@@ -71,7 +66,6 @@ describe('contest-management dto schemas', () => {
       active: true,
       schemaVersion: 1,
       configuration: {
-        mode: 'GOLF_TIERED',
         locksAt: '2026-04-10T12:00:00.000Z',
         maxEntriesPerSquad: 1,
         rosterSize: 6,
@@ -117,7 +111,6 @@ describe('contest-management dto schemas', () => {
         configuration: {
           id: 'config-1',
           contestId: 'contest-1',
-          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 1,
           rosterSize: 6,
@@ -160,7 +153,6 @@ describe('contest-management dto schemas', () => {
           configuration: {
             id: 'config-1',
             contestId: 'contest-1',
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 1,
             rosterSize: 6,

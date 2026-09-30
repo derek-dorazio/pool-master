@@ -5,13 +5,11 @@ export * from './providers';
 export * from './system';
 export * from './sport-catalog-types';
 export {
-  AggregationDefinitionIdSchema,
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
 } from './contest-scoring';
 export type {
-  AggregationDefinitionId,
   ParticipantScoringDefinition,
   ParticipantScoringDefinitionId,
   ScoreDirection,
@@ -21,7 +19,6 @@ export type {
   ContestTimingPolicy,
   ContestConfiguration,
   ContestCoreSummary,
-  ContestEntryAggregationRule,
   ContestPrizeDefinition,
   GolfContestConfig,
   GolfContestTierDefinition,

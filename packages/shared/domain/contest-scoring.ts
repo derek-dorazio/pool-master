@@ -12,13 +12,6 @@ export type ParticipantScoringDefinitionId = z.infer<
   typeof ParticipantScoringDefinitionIdSchema
 >;
 
-export const AggregationDefinitionIdSchema = z.enum([
-  'SUM_ALL_ENTRIES',
-]);
-export type AggregationDefinitionId = z.infer<
-  typeof AggregationDefinitionIdSchema
->;
-
 /**
  * Direction of merit is a property of the thing being measured, not of a
  * contest or a sport: golf stroke play is lower-is-better, Stableford points

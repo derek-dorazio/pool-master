@@ -10,7 +10,7 @@ export function mapContestConfigTemplateDto(
     sport: template.sport,
     eventType: template.eventType ?? null,
     contestFormat: template.contestFormat,
-    configMode: template.configMode,
+    selectionType: template.selectionType,
     templateKey: template.templateKey,
     name: template.name,
     description: template.description,

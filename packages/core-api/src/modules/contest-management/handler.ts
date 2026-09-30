@@ -94,13 +94,13 @@ export function createContestManagementHandlers(
     reply: FastifyReply,
   ): Promise<void> {
     const logger = createRequestContextLogger(request);
-    logger.debug({ contestId: request.params.contestId, mode: request.body.mode }, 'contest management update route start');
+    logger.debug({ contestId: request.params.contestId }, 'contest management update route start');
     try {
       const contest = await contestManagementService.updateContestConfiguration(
         request.params.contestId,
         request.body,
       );
-      logger.info({ contestId: request.params.contestId, mode: request.body.mode }, 'contest management update route completed');
+      logger.info({ contestId: request.params.contestId }, 'contest management update route completed');
       return reply.send({ contest });
     } catch (error) {
       if (error instanceof ContestManagementError) {

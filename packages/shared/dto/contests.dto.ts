@@ -37,9 +37,7 @@ export const ContestCrudConfigurationRequestSchema = z.object({
   timePerPickSeconds: z.number().int().optional(),
   autoPickPolicy: z.string().optional(),
   tierConfig: z.array(TierDefinitionRequestSchema).optional(),
-  tierAssignmentMethod: z.string().optional(),
   budget: z.number().optional(),
-  pricingMethod: z.string().optional(),
   rosterSize: z.number().int().optional(),
   pickCount: z.number().int().optional(),
   picksPerPeriod: z.number().int().optional(),
@@ -362,7 +360,6 @@ const nullablePositiveIntSchema = z
   .describe('Maximum entries a Team may create. Null means unlimited.');
 
 export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
-  mode: z.string().optional().describe('Optional typed configuration mode for golf-first managed contests.'),
   locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp stored on the contest configuration record.'),
   maxEntriesPerSquad: nullablePositiveIntSchema,
   countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),

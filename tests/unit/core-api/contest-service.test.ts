@@ -849,7 +849,7 @@ describe('ContestService', () => {
         },
         contestConfiguration: {
           findUnique: jest.fn().mockResolvedValue({
-            configMode: 'GOLF_TIERED',
+            configJson: { rosterSize: 6, countedScores: 4 },
             maxEntriesPerSquad: null,
           }),
         },
@@ -937,7 +937,6 @@ describe('ContestService', () => {
         },
         configuration: {
           configJson: {
-            mode: 'GOLF_TIERED',
             countedScores: 2,
           },
           rosterSize: 3,

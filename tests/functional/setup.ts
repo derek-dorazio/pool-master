@@ -235,15 +235,6 @@ async function cleanupContestArtifacts(
       },
     },
   });
-  await database.contestEntryAggregationRule.deleteMany({
-    where: {
-      contestConfiguration: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
   await database.contestPrizeDefinition.deleteMany({
     where: {
       contestConfiguration: {

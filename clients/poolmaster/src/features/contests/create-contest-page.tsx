@@ -13,6 +13,7 @@ import type { SportEventDto, GetManagedContestResponses, ListManagedContestTempl
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
+  SelectionType,
   Sport,
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
@@ -352,7 +353,7 @@ export function CreateContestPage() {
     [eventsQuery.data],
   );
   const visibleTemplates = useMemo(
-    () => (templatesQuery.data ?? []).filter((template) => template.configMode === 'GOLF_TIERED'),
+    () => (templatesQuery.data ?? []).filter((template) => template.selectionType === SelectionType.TIERED),
     [templatesQuery.data],
   );
   const derivedLockAt = useMemo(
@@ -369,10 +370,6 @@ export function CreateContestPage() {
   function applyTemplateConfiguration(
     configuration: ManagedContestTemplate['configuration'],
   ) {
-    if (configuration.mode !== 'GOLF_TIERED') {
-      return;
-    }
-
     setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
     setContestFormValue(
       'maxEntriesPerTeam',
@@ -411,10 +408,8 @@ export function CreateContestPage() {
         : String(configuration.maxEntriesPerSquad),
     );
 
-    if (configuration.mode === 'GOLF_TIERED') {
-      setContestFormValue('rosterSize', String(configuration.rosterSize));
-      setContestFormValue('countedScores', String(configuration.countedScores));
-    }
+    setContestFormValue('rosterSize', String(configuration.rosterSize));
+    setContestFormValue('countedScores', String(configuration.countedScores));
 
     const eventStart = eventsQuery.data?.find((event) => event.id === contest.sportEventId)?.startDate;
     if (eventStart && configuration.locksAt) {
@@ -615,7 +610,6 @@ export function CreateContestPage() {
       }
 
       const configuration = {
-        mode: 'GOLF_TIERED' as const,
         rosterSize: parsedRosterSize,
         countedScores: parsedCountedScores,
         locksAt: parsedLockAt,

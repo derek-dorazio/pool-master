@@ -102,7 +102,6 @@ describe('RosterPick CRUD integration', () => {
         sportEventId: sportEvent.id,
         contestFormat: 'ROSTER',
         configuration: {
-          mode: 'GOLF_TIERED',
           locksAt: entryLocksAt,
           maxEntriesPerSquad: 1,
           rosterSize: 1,

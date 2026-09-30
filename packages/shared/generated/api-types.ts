@@ -3108,9 +3108,7 @@ export interface components {
                 /** @description Participants assigned to the tier. */
                 participantIds: string[];
             }[];
-            tierAssignmentMethod?: string;
             budget?: number;
-            pricingMethod?: string;
             rosterSize?: number;
             pickCount?: number;
             picksPerPeriod?: number;
@@ -3163,9 +3161,7 @@ export interface components {
                     /** @description Participants assigned to the tier. */
                     participantIds: string[];
                 }[];
-                tierAssignmentMethod?: string;
                 budget?: number;
-                pricingMethod?: string;
                 rosterSize?: number;
                 pickCount?: number;
                 picksPerPeriod?: number;
@@ -4416,9 +4412,7 @@ export interface components {
                 /** @description Participants assigned to the tier. */
                 participantIds: string[];
             }[];
-            tierAssignmentMethod?: string;
             budget?: number;
-            pricingMethod?: string;
             rosterSize?: number;
             pickCount?: number;
             picksPerPeriod?: number;
@@ -4429,8 +4423,6 @@ export interface components {
             missedCutPenalty?: number;
             captainSlot?: boolean;
             captainMultiplier?: number;
-            /** @description Optional typed configuration mode for golf-first managed contests. */
-            mode?: string;
             /**
              * Format: date-time
              * @description Contest entry lock timestamp stored on the contest configuration record.
@@ -4546,9 +4538,7 @@ export interface components {
                     /** @description Participants assigned to the tier. */
                     participantIds: string[];
                 }[];
-                tierAssignmentMethod?: string;
                 budget?: number;
-                pricingMethod?: string;
                 rosterSize?: number;
                 pickCount?: number;
                 picksPerPeriod?: number;
@@ -4559,8 +4549,6 @@ export interface components {
                 missedCutPenalty?: number;
                 captainSlot?: boolean;
                 captainMultiplier?: number;
-                /** @description Optional typed configuration mode for golf-first managed contests. */
-                mode?: string;
                 /**
                  * Format: date-time
                  * @description Contest entry lock timestamp stored on the contest configuration record.
@@ -13754,10 +13742,10 @@ export interface operations {
                              */
                             contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
-                             * @description Configuration mode seeded by the template.
+                             * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -13774,8 +13762,6 @@ export interface operations {
                             schemaVersion: number;
                             /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -13878,8 +13864,6 @@ export interface operations {
                     contestFormat: "ROSTER";
                     /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
                     configuration: {
-                        /** @enum {string} */
-                        mode: "GOLF_TIERED";
                         /**
                          * Format: date-time
                          * @description Contest entry lock timestamp.
@@ -13912,8 +13896,6 @@ export interface operations {
                     templateId: string;
                     /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
                     configurationOverrides?: {
-                        /** @enum {string} */
-                        mode: "GOLF_TIERED";
                         /**
                          * Format: date-time
                          * @description Contest entry lock timestamp.
@@ -13951,8 +13933,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -14123,8 +14103,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -14276,8 +14254,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
-                    mode: "GOLF_TIERED";
                     /**
                      * Format: date-time
                      * @description Contest entry lock timestamp.
@@ -14314,8 +14290,6 @@ export interface operations {
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -19281,10 +19255,10 @@ export interface operations {
                              */
                             contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
-                             * @description Configuration mode seeded by the template.
+                             * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -19301,8 +19275,6 @@ export interface operations {
                             schemaVersion: number;
                             /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -19365,8 +19337,6 @@ export interface operations {
                     active?: boolean;
                     /** @description Updated persisted configuration payload copied into future contests when this template is selected. */
                     configuration?: {
-                        /** @enum {string} */
-                        mode: "GOLF_TIERED";
                         /**
                          * Format: date-time
                          * @description Contest entry lock timestamp.
@@ -19410,10 +19380,10 @@ export interface operations {
                              */
                             contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
-                             * @description Configuration mode seeded by the template.
+                             * @description How an entry picks in a contest created from this template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED";
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -19430,8 +19400,6 @@ export interface operations {
                             schemaVersion: number;
                             /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
                             configuration: {
-                                /** @enum {string} */
-                                mode: "GOLF_TIERED";
                                 /**
                                  * Format: date-time
                                  * @description Contest entry lock timestamp.
@@ -21610,7 +21578,6 @@ export interface operations {
                             pickCount?: number;
                             rosterSize?: number;
                             budget?: number;
-                            pricingMethod?: string;
                             timePerPickSeconds?: number;
                             picksPerPeriod?: number;
                             roundValues?: number[];
@@ -21822,7 +21789,6 @@ export interface operations {
                             pickCount?: number;
                             rosterSize?: number;
                             budget?: number;
-                            pricingMethod?: string;
                             timePerPickSeconds?: number;
                             picksPerPeriod?: number;
                             roundValues?: number[];

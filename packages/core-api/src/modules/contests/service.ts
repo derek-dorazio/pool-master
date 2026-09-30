@@ -1231,7 +1231,7 @@ export class ContestService {
     const configuration = await prisma.contestConfiguration.findUnique({
       where: { contestId },
       select: {
-        configMode: true,
+        configJson: true,
         maxEntriesPerSquad: true,
       },
     });
@@ -1239,7 +1239,9 @@ export class ContestService {
       return 1;
     }
 
-    if (!configuration.configMode) {
+    // A managed configuration (one with a typed configJson) treats a missing limit as
+    // unlimited; an untyped one as a single entry. Same rule as toContestConfigurationDetailDto.
+    if (!configuration.configJson) {
       return configuration.maxEntriesPerSquad ?? 1;
     }
 

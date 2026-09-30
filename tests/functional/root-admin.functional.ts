@@ -550,20 +550,15 @@ describe('SDK Functional: Root Admin', () => {
         },
         body: {
           description: 'Updated from functional root-admin coverage.',
-          configuration: template.configuration.mode === 'GOLF_TIERED'
-            ? {
-                ...template.configuration,
-                countedScores: 5,
-              }
-            : template.configuration,
+          configuration: {
+            ...template.configuration,
+            countedScores: 5,
+          },
         },
       });
 
       expect(updateResponse.data?.template.description).toBe('Updated from functional root-admin coverage.');
-      if (updateResponse.data?.template.configuration.mode !== 'GOLF_TIERED') {
-        throw new Error('Expected tiered contest template');
-      }
-      expect(updateResponse.data.template.configuration.countedScores).toBe(5);
+      expect(updateResponse.data?.template.configuration.countedScores).toBe(5);
     } finally {
       await getFunctionalPrisma().contestConfigTemplate.update({
         where: { id: template.id },

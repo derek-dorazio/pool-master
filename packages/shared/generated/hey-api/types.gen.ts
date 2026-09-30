@@ -581,9 +581,7 @@ export type ContestCrudConfigurationRequest = {
          */
         participantIds: Array<string>;
     }>;
-    tierAssignmentMethod?: string;
     budget?: number;
-    pricingMethod?: string;
     rosterSize?: number;
     pickCount?: number;
     picksPerPeriod?: number;
@@ -655,9 +653,7 @@ export type CreateContestRequest = {
              */
             participantIds: Array<string>;
         }>;
-        tierAssignmentMethod?: string;
         budget?: number;
-        pricingMethod?: string;
         rosterSize?: number;
         pickCount?: number;
         picksPerPeriod?: number;
@@ -2466,9 +2462,7 @@ export type ContestConfigurationDetailDto = {
          */
         participantIds: Array<string>;
     }>;
-    tierAssignmentMethod?: string;
     budget?: number;
-    pricingMethod?: string;
     rosterSize?: number;
     pickCount?: number;
     picksPerPeriod?: number;
@@ -2479,10 +2473,6 @@ export type ContestConfigurationDetailDto = {
     missedCutPenalty?: number;
     captainSlot?: boolean;
     captainMultiplier?: number;
-    /**
-     * Optional typed configuration mode for golf-first managed contests.
-     */
-    mode?: string;
     /**
      * Contest entry lock timestamp stored on the contest configuration record.
      */
@@ -2646,9 +2636,7 @@ export type ContestResponse = {
              */
             participantIds: Array<string>;
         }>;
-        tierAssignmentMethod?: string;
         budget?: number;
-        pricingMethod?: string;
         rosterSize?: number;
         pickCount?: number;
         picksPerPeriod?: number;
@@ -2659,10 +2647,6 @@ export type ContestResponse = {
         missedCutPenalty?: number;
         captainSlot?: boolean;
         captainMultiplier?: number;
-        /**
-         * Optional typed configuration mode for golf-first managed contests.
-         */
-        mode?: string;
         /**
          * Contest entry lock timestamp stored on the contest configuration record.
          */
@@ -13674,9 +13658,9 @@ export type ListManagedContestTemplatesResponses = {
              */
             contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
-             * Configuration mode seeded by the template.
+             * How an entry picks in a contest created from this template.
              */
-            configMode: 'GOLF_TIERED';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */
@@ -13706,10 +13690,9 @@ export type ListManagedContestTemplatesResponses = {
              */
             schemaVersion: number;
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -13751,10 +13734,9 @@ export type CreateManagedContestData = {
          */
         contestFormat: 'ROSTER';
         /**
-         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
          */
         configuration: {
-            mode: 'GOLF_TIERED';
             /**
              * Contest entry lock timestamp.
              */
@@ -13790,10 +13772,9 @@ export type CreateManagedContestData = {
          */
         templateId: string;
         /**
-         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
          */
         configurationOverrides?: {
-            mode: 'GOLF_TIERED';
             /**
              * Contest entry lock timestamp.
              */
@@ -13939,10 +13920,9 @@ export type CreateManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Current commissioner-managed contest configuration.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -14162,10 +14142,9 @@ export type GetManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Current commissioner-managed contest configuration.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -14257,10 +14236,9 @@ export type GetManagedContestResponse = GetManagedContestResponses[keyof GetMana
 
 export type UpdateManagedContestConfigurationData = {
     /**
-     * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+     * Approved commissioner-managed contest configuration payload for golf-first contest creation.
      */
     body: {
-        mode: 'GOLF_TIERED';
         /**
          * Contest entry lock timestamp.
          */
@@ -14428,10 +14406,9 @@ export type UpdateManagedContestConfigurationResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Current commissioner-managed contest configuration.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -19813,9 +19790,9 @@ export type AdminListContestConfigTemplatesResponses = {
              */
             contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
-             * Configuration mode seeded by the template.
+             * How an entry picks in a contest created from this template.
              */
-            configMode: 'GOLF_TIERED';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */
@@ -19845,10 +19822,9 @@ export type AdminListContestConfigTemplatesResponses = {
              */
             schemaVersion: number;
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -19898,10 +19874,9 @@ export type AdminUpdateContestConfigTemplateData = {
          */
         active?: boolean;
         /**
-         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+         * Updated persisted configuration payload copied into future contests when this template is selected.
          */
         configuration?: {
-            mode: 'GOLF_TIERED';
             /**
              * Contest entry lock timestamp.
              */
@@ -20024,9 +19999,9 @@ export type AdminUpdateContestConfigTemplateResponses = {
              */
             contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
-             * Configuration mode seeded by the template.
+             * How an entry picks in a contest created from this template.
              */
-            configMode: 'GOLF_TIERED';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             /**
              * Stable machine key for the template.
              */
@@ -20056,10 +20031,9 @@ export type AdminUpdateContestConfigTemplateResponses = {
              */
             schemaVersion: number;
             /**
-             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
              */
             configuration: {
-                mode: 'GOLF_TIERED';
                 /**
                  * Contest entry lock timestamp.
                  */
@@ -22368,7 +22342,6 @@ export type GetDraftStateResponses = {
             pickCount?: number;
             rosterSize?: number;
             budget?: number;
-            pricingMethod?: string;
             timePerPickSeconds?: number;
             picksPerPeriod?: number;
             roundValues?: Array<number>;
@@ -22677,7 +22650,6 @@ export type SubmitContestSelectionResponses = {
             pickCount?: number;
             rosterSize?: number;
             budget?: number;
-            pricingMethod?: string;
             timePerPickSeconds?: number;
             picksPerPeriod?: number;
             roundValues?: Array<number>;

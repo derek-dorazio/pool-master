@@ -331,7 +331,6 @@ function buildContestConfigurationResponse(
     pickCount: contestConfiguration.pickCount ?? undefined,
     rosterSize: rosterSize || contestConfiguration.rosterSize || contestConfiguration.pickCount || contestConfiguration.rounds || undefined,
     budget: contestConfiguration.budget ?? undefined,
-    pricingMethod: contestConfiguration.pricingMethod ?? undefined,
     timePerPickSeconds: contestConfiguration.timePerPickSeconds ?? undefined,
     picksPerPeriod: contestConfiguration.picksPerPeriod ?? undefined,
     roundValues: contestConfiguration.roundValues ?? undefined,

@@ -27,13 +27,6 @@ export class ContestConfigTemplateNotFoundError extends Error {
   }
 }
 
-export class ContestConfigTemplateUpdateError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ContestConfigTemplateUpdateError';
-  }
-}
-
 export class ContestTemplateAdminService {
   constructor(
     private readonly repository: ContestConfigTemplateRepository,
@@ -75,12 +68,6 @@ export class ContestTemplateAdminService {
     const existing = await this.repository.findById(templateId);
     if (!existing) {
       throw new ContestConfigTemplateNotFoundError(templateId);
-    }
-
-    if (input.configuration && input.configuration.mode !== existing.configMode) {
-      throw new ContestConfigTemplateUpdateError(
-        'Updated contest template configuration must keep the same configuration mode.',
-      );
     }
 
     const nextIsDefault = input.active === false

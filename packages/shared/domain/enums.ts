@@ -359,12 +359,6 @@ export const DateFormat = {
 } as const;
 export type DateFormat = (typeof DateFormat)[keyof typeof DateFormat];
 
-export const GolfContestConfigMode = {
-  GOLF_TIERED: 'GOLF_TIERED',
-} as const;
-export type GolfContestConfigMode =
-  (typeof GolfContestConfigMode)[keyof typeof GolfContestConfigMode];
-
 /** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
 export const TierSource = {
   ODDS: 'ODDS',
@@ -515,29 +509,6 @@ export const SquadOwnerInvitationStatus = {
 } as const;
 export type SquadOwnerInvitationStatus =
   (typeof SquadOwnerInvitationStatus)[keyof typeof SquadOwnerInvitationStatus];
-
-// --- Pricing (for Tiered and Budget Pick contests) ---
-
-export const PricingMethod = {
-  ODDS: 'ODDS',
-  SEED: 'SEED',
-  WORLD_RANKING: 'WORLD_RANKING',
-  SEASON_STATS: 'SEASON_STATS',
-  COMMISSIONER: 'COMMISSIONER',
-} as const;
-export type PricingMethod = (typeof PricingMethod)[keyof typeof PricingMethod];
-
-export const TierAssignmentMethod = {
-  SEED: 'SEED',
-  WORLD_RANKING: 'WORLD_RANKING',
-  ODDS: 'ODDS',
-  CONFERENCE: 'CONFERENCE',
-  DIVISION: 'DIVISION',
-  POT: 'POT',
-  BOUT_POSITION: 'BOUT_POSITION',
-  COMMISSIONER: 'COMMISSIONER',
-} as const;
-export type TierAssignmentMethod = (typeof TierAssignmentMethod)[keyof typeof TierAssignmentMethod];
 
 // --- League Invitation ---
 

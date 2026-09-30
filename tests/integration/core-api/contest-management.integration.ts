@@ -180,7 +180,6 @@ describe('Contest management integration', () => {
         sportEventId,
         contestFormat: 'ROSTER',
         configuration: {
-          mode: 'GOLF_TIERED',
           locksAt: entryLocksAt,
           maxEntriesPerSquad: 3,
           rosterSize: 6,
@@ -194,13 +193,12 @@ describe('Contest management integration', () => {
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.OPEN);
     expect(createdContest.sportEventId).toBe(sportEventId);
-    expect(createdContest.configuration.mode).toBe('GOLF_TIERED');
     expect(createdContest.configuration.countedScores).toBe(4);
 
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
     });
-    // Tiers are event-owned now (plans/124 §4.6) — a GOLF_TIERED contest no
+    // Tiers are event-owned now (plans/124 §4.6) — a tiered contest no
     // longer persists its own tierConfig snapshot; SportEventTierService is the
     // one path to a contest's effective tiers.
     expect(createdConfiguration.tierConfig).toBeNull();
@@ -243,15 +241,13 @@ describe('Contest management integration', () => {
       }),
     ]);
 
-    // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11
-    // removed the GOLF_CATEGORY_PICKS stub); the update path is exercised by
-    // re-submitting the tiered shape with changed roster values.
+    // The update path is exercised by re-submitting the tiered shape with
+    // changed roster values.
     const updateRes = await getApp().inject({
       method: 'PUT',
       url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
       headers: ownerHeaders,
       payload: {
-        mode: 'GOLF_TIERED',
         locksAt: entryLocksAt,
         maxEntriesPerSquad: null,
         rosterSize: 6,
@@ -261,7 +257,6 @@ describe('Contest management integration', () => {
 
     expect(updateRes.statusCode).toBe(200);
     const updatedContest = updateRes.json().contest;
-    expect(updatedContest.configuration.mode).toBe('GOLF_TIERED');
     expect(updatedContest.configuration.rosterSize).toBe(6);
     expect(updatedContest.configuration.countedScores).toBe(5);
     expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
@@ -270,14 +265,9 @@ describe('Contest management integration', () => {
       where: { contestId },
       include: {
         participantScoringRules: true,
-        entryAggregationRule: true,
       },
     });
 
-    expect(configuration.configMode).toBe('GOLF_TIERED');
-    expect(configuration.entryAggregationRule?.aggregationDefinitionId).toBe(
-      'SUM_ALL_ENTRIES',
-    );
     expect(configuration.participantScoringRules).toHaveLength(1);
   });
 
@@ -294,7 +284,7 @@ describe('Contest management integration', () => {
     expect(templateRes.statusCode).toBe(200);
     const templates = templateRes.json().templates;
     expect(templates.length).toBeGreaterThan(0);
-    expect(templates[0].configuration.mode).toBeTruthy();
+    expect(templates[0].selectionType).toBe('TIERED');
 
     const defaultTemplate = templates.find(
       (template: { isDefault: boolean }) => template.isDefault,
@@ -318,7 +308,7 @@ describe('Contest management integration', () => {
     expect(createdContest.status).toBe(ContestStatus.OPEN);
     expect(createdContest.templateId).toBe(defaultTemplate.id);
     expect(createdContest.templateVersion).toBe(1);
-    expect(createdContest.configuration.mode).toBe(defaultTemplate.configuration.mode);
+    expect(createdContest.configuration.rosterSize).toBe(defaultTemplate.configuration.rosterSize);
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId: createdContest.id },

@@ -914,14 +914,8 @@
               "description": "Tier definition used in contest create and update flows."
             }
           },
-          "tierAssignmentMethod": {
-            "type": "string"
-          },
           "budget": {
             "type": "number"
-          },
-          "pricingMethod": {
-            "type": "string"
           },
           "rosterSize": {
             "type": "integer"
@@ -1073,14 +1067,8 @@
                   "description": "Tier definition used in contest create and update flows."
                 }
               },
-              "tierAssignmentMethod": {
-                "type": "string"
-              },
               "budget": {
                 "type": "number"
-              },
-              "pricingMethod": {
-                "type": "string"
               },
               "rosterSize": {
                 "type": "integer"
@@ -5045,14 +5033,8 @@
               "description": "Tier definition used in contest create and update flows."
             }
           },
-          "tierAssignmentMethod": {
-            "type": "string"
-          },
           "budget": {
             "type": "number"
-          },
-          "pricingMethod": {
-            "type": "string"
           },
           "rosterSize": {
             "type": "integer"
@@ -5086,10 +5068,6 @@
           },
           "captainMultiplier": {
             "type": "number"
-          },
-          "mode": {
-            "type": "string",
-            "description": "Optional typed configuration mode for golf-first managed contests."
           },
           "locksAt": {
             "type": [
@@ -5472,14 +5450,8 @@
                   "description": "Tier definition used in contest create and update flows."
                 }
               },
-              "tierAssignmentMethod": {
-                "type": "string"
-              },
               "budget": {
                 "type": "number"
-              },
-              "pricingMethod": {
-                "type": "string"
               },
               "rosterSize": {
                 "type": "integer"
@@ -5513,10 +5485,6 @@
               },
               "captainMultiplier": {
                 "type": "number"
-              },
-              "mode": {
-                "type": "string",
-                "description": "Optional typed configuration mode for golf-first managed contests."
               },
               "locksAt": {
                 "type": [
@@ -26765,12 +26733,17 @@
                             ],
                             "description": "Contest type that may use the template."
                           },
-                          "configMode": {
+                          "selectionType": {
                             "type": "string",
                             "enum": [
-                              "GOLF_TIERED"
+                              "SNAKE_DRAFT",
+                              "TIERED",
+                              "BUDGET_PICK",
+                              "OPEN_SELECTION",
+                              "PICK_EM",
+                              "BRACKET_PICK_EM"
                             ],
-                            "description": "Configuration mode seeded by the template."
+                            "description": "How an entry picks in a contest created from this template."
                           },
                           "templateKey": {
                             "type": "string",
@@ -26801,52 +26774,40 @@
                             "description": "Version of the configuration schema metadata expected by the template."
                           },
                           "configuration": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "mode": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GOLF_TIERED"
-                                    ]
-                                  },
-                                  "locksAt": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ],
-                                    "format": "date-time",
-                                    "description": "Contest entry lock timestamp."
-                                  },
-                                  "maxEntriesPerSquad": {
-                                    "type": [
-                                      "integer",
-                                      "null"
-                                    ],
-                                    "minimum": 1,
-                                    "description": "Maximum entries a Team may create. Null means unlimited."
-                                  },
-                                  "rosterSize": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many golfers each Team entry must pick."
-                                  },
-                                  "countedScores": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many golfer scores count toward the Team total."
-                                  }
-                                },
-                                "required": [
-                                  "mode",
-                                  "rosterSize",
-                                  "countedScores"
+                            "type": "object",
+                            "properties": {
+                              "locksAt": {
+                                "type": [
+                                  "string",
+                                  "null"
                                 ],
-                                "additionalProperties": false,
-                                "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                                "format": "date-time",
+                                "description": "Contest entry lock timestamp."
+                              },
+                              "maxEntriesPerSquad": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "description": "Maximum entries a Team may create. Null means unlimited."
+                              },
+                              "rosterSize": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfers each Team entry must pick."
+                              },
+                              "countedScores": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfer scores count toward the Team total."
                               }
+                            },
+                            "required": [
+                              "rosterSize",
+                              "countedScores"
                             ],
+                            "additionalProperties": false,
                             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
                           }
                         },
@@ -26854,7 +26815,7 @@
                           "id",
                           "sport",
                           "contestFormat",
-                          "configMode",
+                          "selectionType",
                           "templateKey",
                           "name",
                           "description",
@@ -27034,52 +26995,40 @@
                         "description": "First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility."
                       },
                       "configuration": {
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "mode": {
-                                "type": "string",
-                                "enum": [
-                                  "GOLF_TIERED"
-                                ]
-                              },
-                              "locksAt": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
-                                "format": "date-time",
-                                "description": "Contest entry lock timestamp."
-                              },
-                              "maxEntriesPerSquad": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 1,
-                                "description": "Maximum entries a Team may create. Null means unlimited."
-                              },
-                              "rosterSize": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfers each Team entry must pick."
-                              },
-                              "countedScores": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfer scores count toward the Team total."
-                              }
-                            },
-                            "required": [
-                              "mode",
-                              "rosterSize",
-                              "countedScores"
+                        "type": "object",
+                        "properties": {
+                          "locksAt": {
+                            "type": [
+                              "string",
+                              "null"
                             ],
-                            "additionalProperties": false,
-                            "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                            "format": "date-time",
+                            "description": "Contest entry lock timestamp."
+                          },
+                          "maxEntriesPerSquad": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "description": "Maximum entries a Team may create. Null means unlimited."
+                          },
+                          "rosterSize": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfers each Team entry must pick."
+                          },
+                          "countedScores": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfer scores count toward the Team total."
                           }
+                        },
+                        "required": [
+                          "rosterSize",
+                          "countedScores"
                         ],
+                        "additionalProperties": false,
                         "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
                       }
                     },
@@ -27119,52 +27068,40 @@
                         "description": "Seeded contest template selected for the create flow."
                       },
                       "configurationOverrides": {
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "mode": {
-                                "type": "string",
-                                "enum": [
-                                  "GOLF_TIERED"
-                                ]
-                              },
-                              "locksAt": {
-                                "type": [
-                                  "string",
-                                  "null"
-                                ],
-                                "format": "date-time",
-                                "description": "Contest entry lock timestamp."
-                              },
-                              "maxEntriesPerSquad": {
-                                "type": [
-                                  "integer",
-                                  "null"
-                                ],
-                                "minimum": 1,
-                                "description": "Maximum entries a Team may create. Null means unlimited."
-                              },
-                              "rosterSize": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfers each Team entry must pick."
-                              },
-                              "countedScores": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "How many golfer scores count toward the Team total."
-                              }
-                            },
-                            "required": [
-                              "mode",
-                              "rosterSize",
-                              "countedScores"
+                        "type": "object",
+                        "properties": {
+                          "locksAt": {
+                            "type": [
+                              "string",
+                              "null"
                             ],
-                            "additionalProperties": false,
-                            "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                            "format": "date-time",
+                            "description": "Contest entry lock timestamp."
+                          },
+                          "maxEntriesPerSquad": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "description": "Maximum entries a Team may create. Null means unlimited."
+                          },
+                          "rosterSize": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfers each Team entry must pick."
+                          },
+                          "countedScores": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfer scores count toward the Team total."
                           }
+                        },
+                        "required": [
+                          "rosterSize",
+                          "countedScores"
                         ],
+                        "additionalProperties": false,
                         "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
                       }
                     },
@@ -27234,62 +27171,50 @@
                           ]
                         },
                         "configuration": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "GOLF_TIERED"
-                                  ]
-                                },
-                                "locksAt": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ],
-                                  "format": "date-time",
-                                  "description": "Contest entry lock timestamp."
-                                },
-                                "maxEntriesPerSquad": {
-                                  "type": [
-                                    "integer",
-                                    "null"
-                                  ],
-                                  "minimum": 1,
-                                  "description": "Maximum entries a Team may create. Null means unlimited."
-                                },
-                                "rosterSize": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfers each Team entry must pick."
-                                },
-                                "countedScores": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfer scores count toward the Team total."
-                                },
-                                "id": {
-                                  "type": "string",
-                                  "description": "Contest-configuration identifier."
-                                },
-                                "contestId": {
-                                  "type": "string",
-                                  "description": "Contest that owns the configuration."
-                                }
-                              },
-                              "required": [
-                                "mode",
-                                "rosterSize",
-                                "countedScores",
-                                "id",
-                                "contestId"
+                          "type": "object",
+                          "properties": {
+                            "locksAt": {
+                              "type": [
+                                "string",
+                                "null"
                               ],
-                              "additionalProperties": false,
-                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                              "format": "date-time",
+                              "description": "Contest entry lock timestamp."
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "description": "Maximum entries a Team may create. Null means unlimited."
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers each Team entry must pick."
+                            },
+                            "countedScores": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfer scores count toward the Team total."
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "Contest-configuration identifier."
+                            },
+                            "contestId": {
+                              "type": "string",
+                              "description": "Contest that owns the configuration."
                             }
+                          },
+                          "required": [
+                            "rosterSize",
+                            "countedScores",
+                            "id",
+                            "contestId"
                           ],
+                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "effectiveTiers": {
@@ -27640,62 +27565,50 @@
                           ]
                         },
                         "configuration": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "GOLF_TIERED"
-                                  ]
-                                },
-                                "locksAt": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ],
-                                  "format": "date-time",
-                                  "description": "Contest entry lock timestamp."
-                                },
-                                "maxEntriesPerSquad": {
-                                  "type": [
-                                    "integer",
-                                    "null"
-                                  ],
-                                  "minimum": 1,
-                                  "description": "Maximum entries a Team may create. Null means unlimited."
-                                },
-                                "rosterSize": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfers each Team entry must pick."
-                                },
-                                "countedScores": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfer scores count toward the Team total."
-                                },
-                                "id": {
-                                  "type": "string",
-                                  "description": "Contest-configuration identifier."
-                                },
-                                "contestId": {
-                                  "type": "string",
-                                  "description": "Contest that owns the configuration."
-                                }
-                              },
-                              "required": [
-                                "mode",
-                                "rosterSize",
-                                "countedScores",
-                                "id",
-                                "contestId"
+                          "type": "object",
+                          "properties": {
+                            "locksAt": {
+                              "type": [
+                                "string",
+                                "null"
                               ],
-                              "additionalProperties": false,
-                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                              "format": "date-time",
+                              "description": "Contest entry lock timestamp."
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "description": "Maximum entries a Team may create. Null means unlimited."
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers each Team entry must pick."
+                            },
+                            "countedScores": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfer scores count toward the Team total."
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "Contest-configuration identifier."
+                            },
+                            "contestId": {
+                              "type": "string",
+                              "description": "Contest that owns the configuration."
                             }
+                          },
+                          "required": [
+                            "rosterSize",
+                            "countedScores",
+                            "id",
+                            "contestId"
                           ],
+                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "effectiveTiers": {
@@ -27993,52 +27906,40 @@
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "enum": [
-                          "GOLF_TIERED"
-                        ]
-                      },
-                      "locksAt": {
-                        "type": [
-                          "string",
-                          "null"
-                        ],
-                        "format": "date-time",
-                        "description": "Contest entry lock timestamp."
-                      },
-                      "maxEntriesPerSquad": {
-                        "type": [
-                          "integer",
-                          "null"
-                        ],
-                        "minimum": 1,
-                        "description": "Maximum entries a Team may create. Null means unlimited."
-                      },
-                      "rosterSize": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How many golfers each Team entry must pick."
-                      },
-                      "countedScores": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "description": "How many golfer scores count toward the Team total."
-                      }
-                    },
-                    "required": [
-                      "mode",
-                      "rosterSize",
-                      "countedScores"
+                "type": "object",
+                "properties": {
+                  "locksAt": {
+                    "type": [
+                      "string",
+                      "null"
                     ],
-                    "additionalProperties": false,
-                    "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                    "format": "date-time",
+                    "description": "Contest entry lock timestamp."
+                  },
+                  "maxEntriesPerSquad": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "description": "Maximum entries a Team may create. Null means unlimited."
+                  },
+                  "rosterSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfers each Team entry must pick."
+                  },
+                  "countedScores": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many golfer scores count toward the Team total."
                   }
+                },
+                "required": [
+                  "rosterSize",
+                  "countedScores"
                 ],
+                "additionalProperties": false,
                 "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
               }
             }
@@ -28103,62 +28004,50 @@
                           ]
                         },
                         "configuration": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "GOLF_TIERED"
-                                  ]
-                                },
-                                "locksAt": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ],
-                                  "format": "date-time",
-                                  "description": "Contest entry lock timestamp."
-                                },
-                                "maxEntriesPerSquad": {
-                                  "type": [
-                                    "integer",
-                                    "null"
-                                  ],
-                                  "minimum": 1,
-                                  "description": "Maximum entries a Team may create. Null means unlimited."
-                                },
-                                "rosterSize": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfers each Team entry must pick."
-                                },
-                                "countedScores": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfer scores count toward the Team total."
-                                },
-                                "id": {
-                                  "type": "string",
-                                  "description": "Contest-configuration identifier."
-                                },
-                                "contestId": {
-                                  "type": "string",
-                                  "description": "Contest that owns the configuration."
-                                }
-                              },
-                              "required": [
-                                "mode",
-                                "rosterSize",
-                                "countedScores",
-                                "id",
-                                "contestId"
+                          "type": "object",
+                          "properties": {
+                            "locksAt": {
+                              "type": [
+                                "string",
+                                "null"
                               ],
-                              "additionalProperties": false,
-                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                              "format": "date-time",
+                              "description": "Contest entry lock timestamp."
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "description": "Maximum entries a Team may create. Null means unlimited."
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers each Team entry must pick."
+                            },
+                            "countedScores": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfer scores count toward the Team total."
+                            },
+                            "id": {
+                              "type": "string",
+                              "description": "Contest-configuration identifier."
+                            },
+                            "contestId": {
+                              "type": "string",
+                              "description": "Contest that owns the configuration."
                             }
+                          },
+                          "required": [
+                            "rosterSize",
+                            "countedScores",
+                            "id",
+                            "contestId"
                           ],
+                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "effectiveTiers": {
@@ -37954,12 +37843,17 @@
                             ],
                             "description": "Contest type that may use the template."
                           },
-                          "configMode": {
+                          "selectionType": {
                             "type": "string",
                             "enum": [
-                              "GOLF_TIERED"
+                              "SNAKE_DRAFT",
+                              "TIERED",
+                              "BUDGET_PICK",
+                              "OPEN_SELECTION",
+                              "PICK_EM",
+                              "BRACKET_PICK_EM"
                             ],
-                            "description": "Configuration mode seeded by the template."
+                            "description": "How an entry picks in a contest created from this template."
                           },
                           "templateKey": {
                             "type": "string",
@@ -37990,52 +37884,40 @@
                             "description": "Version of the configuration schema metadata expected by the template."
                           },
                           "configuration": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "mode": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GOLF_TIERED"
-                                    ]
-                                  },
-                                  "locksAt": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ],
-                                    "format": "date-time",
-                                    "description": "Contest entry lock timestamp."
-                                  },
-                                  "maxEntriesPerSquad": {
-                                    "type": [
-                                      "integer",
-                                      "null"
-                                    ],
-                                    "minimum": 1,
-                                    "description": "Maximum entries a Team may create. Null means unlimited."
-                                  },
-                                  "rosterSize": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many golfers each Team entry must pick."
-                                  },
-                                  "countedScores": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many golfer scores count toward the Team total."
-                                  }
-                                },
-                                "required": [
-                                  "mode",
-                                  "rosterSize",
-                                  "countedScores"
+                            "type": "object",
+                            "properties": {
+                              "locksAt": {
+                                "type": [
+                                  "string",
+                                  "null"
                                 ],
-                                "additionalProperties": false,
-                                "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                                "format": "date-time",
+                                "description": "Contest entry lock timestamp."
+                              },
+                              "maxEntriesPerSquad": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "description": "Maximum entries a Team may create. Null means unlimited."
+                              },
+                              "rosterSize": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfers each Team entry must pick."
+                              },
+                              "countedScores": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "How many golfer scores count toward the Team total."
                               }
+                            },
+                            "required": [
+                              "rosterSize",
+                              "countedScores"
                             ],
+                            "additionalProperties": false,
                             "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
                           }
                         },
@@ -38043,7 +37925,7 @@
                           "id",
                           "sport",
                           "contestFormat",
-                          "configMode",
+                          "selectionType",
                           "templateKey",
                           "name",
                           "description",
@@ -38151,52 +38033,40 @@
                     "description": "Whether commissioners can select this template in future create flows."
                   },
                   "configuration": {
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "mode": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF_TIERED"
-                            ]
-                          },
-                          "locksAt": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "description": "Contest entry lock timestamp."
-                          },
-                          "maxEntriesPerSquad": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": 1,
-                            "description": "Maximum entries a Team may create. Null means unlimited."
-                          },
-                          "rosterSize": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfers each Team entry must pick."
-                          },
-                          "countedScores": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "How many golfer scores count toward the Team total."
-                          }
-                        },
-                        "required": [
-                          "mode",
-                          "rosterSize",
-                          "countedScores"
+                    "type": "object",
+                    "properties": {
+                      "locksAt": {
+                        "type": [
+                          "string",
+                          "null"
                         ],
-                        "additionalProperties": false,
-                        "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                        "format": "date-time",
+                        "description": "Contest entry lock timestamp."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "rosterSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfers each Team entry must pick."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the Team total."
                       }
+                    },
+                    "required": [
+                      "rosterSize",
+                      "countedScores"
                     ],
+                    "additionalProperties": false,
                     "description": "Updated persisted configuration payload copied into future contests when this template is selected."
                   }
                 },
@@ -38271,12 +38141,17 @@
                           ],
                           "description": "Contest type that may use the template."
                         },
-                        "configMode": {
+                        "selectionType": {
                           "type": "string",
                           "enum": [
-                            "GOLF_TIERED"
+                            "SNAKE_DRAFT",
+                            "TIERED",
+                            "BUDGET_PICK",
+                            "OPEN_SELECTION",
+                            "PICK_EM",
+                            "BRACKET_PICK_EM"
                           ],
-                          "description": "Configuration mode seeded by the template."
+                          "description": "How an entry picks in a contest created from this template."
                         },
                         "templateKey": {
                           "type": "string",
@@ -38307,52 +38182,40 @@
                           "description": "Version of the configuration schema metadata expected by the template."
                         },
                         "configuration": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "GOLF_TIERED"
-                                  ]
-                                },
-                                "locksAt": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ],
-                                  "format": "date-time",
-                                  "description": "Contest entry lock timestamp."
-                                },
-                                "maxEntriesPerSquad": {
-                                  "type": [
-                                    "integer",
-                                    "null"
-                                  ],
-                                  "minimum": 1,
-                                  "description": "Maximum entries a Team may create. Null means unlimited."
-                                },
-                                "rosterSize": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfers each Team entry must pick."
-                                },
-                                "countedScores": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfer scores count toward the Team total."
-                                }
-                              },
-                              "required": [
-                                "mode",
-                                "rosterSize",
-                                "countedScores"
+                          "type": "object",
+                          "properties": {
+                            "locksAt": {
+                              "type": [
+                                "string",
+                                "null"
                               ],
-                              "additionalProperties": false,
-                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
+                              "format": "date-time",
+                              "description": "Contest entry lock timestamp."
+                            },
+                            "maxEntriesPerSquad": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "description": "Maximum entries a Team may create. Null means unlimited."
+                            },
+                            "rosterSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers each Team entry must pick."
+                            },
+                            "countedScores": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfer scores count toward the Team total."
                             }
+                          },
+                          "required": [
+                            "rosterSize",
+                            "countedScores"
                           ],
+                          "additionalProperties": false,
                           "description": "Seeded configuration payload copied into a contest instance when the template is chosen."
                         }
                       },
@@ -38360,7 +38223,7 @@
                         "id",
                         "sport",
                         "contestFormat",
-                        "configMode",
+                        "selectionType",
                         "templateKey",
                         "name",
                         "description",
@@ -43543,9 +43406,6 @@
                         "budget": {
                           "type": "number"
                         },
-                        "pricingMethod": {
-                          "type": "string"
-                        },
                         "timePerPickSeconds": {
                           "type": "number"
                         },
@@ -44305,9 +44165,6 @@
                         },
                         "budget": {
                           "type": "number"
-                        },
-                        "pricingMethod": {
-                          "type": "string"
                         },
                         "timePerPickSeconds": {
                           "type": "number"

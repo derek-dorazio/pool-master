@@ -9,10 +9,7 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
-  ContestEntryAggregationRuleRepository,
-  ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
-  SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import {
   ContestManagementError,
@@ -21,10 +18,7 @@ import {
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestCoreRepo,
-  fakeContestEntryAggregationRuleRepo,
-  fakeContestPrizeDefinitionRepo,
   fakeParticipantContestScoringRuleRepo,
-  fakeSportEventParticipantRepo,
 } from '../../support/repo-fakes';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
@@ -63,9 +57,7 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
     templateId: null,
     templateVersion: null,
     selectionType: 'TIERED',
-    configMode: 'GOLF_TIERED',
     configJson: {
-      mode: 'GOLF_TIERED',
       locksAt: '2026-04-10T12:00:00.000Z',
       maxEntriesPerSquad: 1,
       rosterSize: 6,
@@ -113,7 +105,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
     contestFormat: 'ROSTER',
-    configMode: 'GOLF_TIERED',
+    selectionType: 'TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
     description: 'Default golf tiered template',
@@ -121,7 +113,6 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     isDefault: true,
     active: true,
     configJson: {
-      mode: 'GOLF_TIERED',
       locksAt: '2026-04-10T12:00:00.000Z',
       maxEntriesPerSquad: 1,
       rosterSize: 6,
@@ -164,56 +155,6 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
       createdAt: new Date('2026-04-07T12:00:02.000Z'),
       updatedAt: new Date('2026-04-07T12:00:02.000Z'),
     })),
-  });
-}
-
-function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
-  return fakeContestEntryAggregationRuleRepo({
-    findByContestConfiguration: jest.fn().mockResolvedValue({
-      id: 'agg-existing',
-      contestConfigurationId: 'config-1',
-      aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-      config: {},
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }),
-    create: jest.fn().mockImplementation(async (rule) => ({
-      id: 'agg-1',
-      ...rule,
-      createdAt: new Date('2026-04-07T12:00:03.000Z'),
-      updatedAt: new Date('2026-04-07T12:00:03.000Z'),
-    })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
-      id,
-      contestConfigurationId: 'config-1',
-      aggregationDefinitionId:
-        updates.aggregationDefinitionId ?? 'SUM_ALL_ENTRIES',
-      config: updates.config ?? {},
-      active: updates.active ?? true,
-      createdAt: new Date('2026-04-07T12:00:03.000Z'),
-      updatedAt: new Date('2026-04-07T12:00:03.000Z'),
-    })),
-  });
-}
-
-function createPrizeDefinitionRepo(): ContestPrizeDefinitionRepository {
-  return fakeContestPrizeDefinitionRepo();
-}
-
-function createSportEventParticipantRepo(): SportEventParticipantRepository {
-  return fakeSportEventParticipantRepo({
-    findBySportEvent: jest.fn().mockResolvedValue([
-      {
-        id: 'sep-1',
-        sportEventId: '11111111-1111-1111-1111-111111111111',
-        participantId: 'participant-1',
-        status: 'ACTIVE',
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]),
   });
 }
 
@@ -293,16 +234,12 @@ describe('ContestManagementService', () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
-    const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
 
     const service = new ContestManagementService(
       contestCoreRepo,
       contestConfigTemplateRepo,
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
-      contestEntryAggregationRuleRepo,
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
@@ -315,7 +252,6 @@ describe('ContestManagementService', () => {
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
         configuration: {
-          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,
@@ -333,10 +269,6 @@ describe('ContestManagementService', () => {
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.OPEN,
     });
-    expect(result.configuration.mode).toBe('GOLF_TIERED');
-    if (result.configuration.mode !== 'GOLF_TIERED') {
-      throw new Error('Expected golf tiered configuration');
-    }
     expect(result.configuration.countedScores).toBe(4);
     // pool-master-41t — the create response also carries the read-only
     // effectiveTiers echo (plans/124 §5.3), empty for an event with no tiers.
@@ -368,9 +300,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
@@ -387,7 +316,6 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: 'ROSTER',
           configuration: {
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 5,
@@ -409,9 +337,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
@@ -428,7 +353,6 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: 'ROSTER',
           configuration: {
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
@@ -450,9 +374,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({ sport: Sport.GOLF }),
@@ -466,7 +387,6 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.BRACKET,
           configuration: {
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
@@ -510,9 +430,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
@@ -529,7 +446,6 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.BRACKET,
           configuration: {
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
@@ -573,9 +489,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
@@ -592,7 +505,6 @@ describe('ContestManagementService', () => {
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.ROSTER,
           configuration: {
-            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
             rosterSize: 4,
@@ -610,22 +522,17 @@ describe('ContestManagementService', () => {
   it('updates the persisted typed contest configuration shape', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
-    const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
     const service = new ContestManagementService(
       createContestCoreRepo(),
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
-      contestEntryAggregationRuleRepo,
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
 
     const result = await service.updateContestConfiguration('contest-1', {
-      mode: 'GOLF_TIERED',
       locksAt: '2026-04-11T12:00:00.000Z',
       maxEntriesPerSquad: 2,
       rosterSize: 8,
@@ -634,9 +541,7 @@ describe('ContestManagementService', () => {
 
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       selectionType: 'TIERED',
-      configMode: 'GOLF_TIERED',
       configJson: {
-        mode: 'GOLF_TIERED',
         countedScores: 5,
         locksAt: '2026-04-11T12:00:00.000Z',
         maxEntriesPerSquad: 2,
@@ -651,9 +556,6 @@ describe('ContestManagementService', () => {
     expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
       'rule-old',
     );
-    if (result.configuration.mode !== 'GOLF_TIERED') {
-      throw new Error('Expected golf tiered configuration');
-    }
     expect(result.configuration.rosterSize).toBe(8);
     expect(result.configuration.countedScores).toBe(5);
     // pool-master-41t — the refreshed detail carries the read-only
@@ -668,9 +570,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(2),
       undefined,
       createSportEventReader({
@@ -681,7 +580,6 @@ describe('ContestManagementService', () => {
 
     await expect(
       service.updateContestConfiguration('contest-1', {
-        mode: 'GOLF_TIERED',
         locksAt: '2026-04-11T12:00:00.000Z',
         maxEntriesPerSquad: 2,
         rosterSize: 5,
@@ -700,9 +598,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
@@ -712,10 +607,6 @@ describe('ContestManagementService', () => {
 
     expect(result.id).toBe('contest-1');
     expect(result.configuration.id).toBe('config-1');
-    expect(result.configuration.mode).toBe('GOLF_TIERED');
-    if (result.configuration.mode !== 'GOLF_TIERED') {
-      throw new Error('Expected golf tiered configuration');
-    }
     expect(result.configuration.countedScores).toBe(4);
     // pool-master-41t — the detail response always carries the read-only
     // effectiveTiers echo (plans/124 §5.3); empty here because this event
@@ -730,9 +621,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       golfTierService,
       undefined,
       createSportEventReader(),
@@ -780,16 +668,12 @@ describe('ContestManagementService', () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
-    const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
 
     const service = new ContestManagementService(
       contestCoreRepo,
       contestConfigTemplateRepo,
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
-      contestEntryAggregationRuleRepo,
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
@@ -812,7 +696,6 @@ describe('ContestManagementService', () => {
       expect.objectContaining({
         templateId: '11111111-1111-4111-8111-111111111111',
         templateVersion: 1,
-        configMode: 'GOLF_TIERED',
       }),
     );
     expect(result.templateId).toBe('11111111-1111-4111-8111-111111111111');
@@ -828,9 +711,6 @@ describe('ContestManagementService', () => {
       contestConfigTemplateRepo,
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
@@ -864,9 +744,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader(),
@@ -890,9 +767,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
@@ -908,7 +782,6 @@ describe('ContestManagementService', () => {
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
         configuration: {
-          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,
@@ -929,9 +802,6 @@ describe('ContestManagementService', () => {
       createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-      createSportEventParticipantRepo(),
       createSportEventTierServiceStub(),
       undefined,
       createSportEventReader({
@@ -947,7 +817,6 @@ describe('ContestManagementService', () => {
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
         configuration: {
-          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
           rosterSize: 6,

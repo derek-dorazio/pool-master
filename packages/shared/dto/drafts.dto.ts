@@ -86,7 +86,6 @@ export const DraftContestConfigurationDtoSchema = z.object({
   pickCount: z.number().optional(),
   rosterSize: z.number().optional(),
   budget: z.number().optional(),
-  pricingMethod: z.string().optional(),
   timePerPickSeconds: z.number().optional(),
   picksPerPeriod: z.number().optional(),
   roundValues: z.array(z.number()).optional(),

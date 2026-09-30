@@ -206,7 +206,6 @@ function toContestConfigurationDetailDto(
   if (isManagedConfiguration && contestConfiguration.configJson) {
     return {
       ...contestConfiguration.configJson,
-      mode: contestConfiguration.configMode ?? contestConfiguration.configJson.mode,
       locksAt: contestConfiguration.locksAt?.toISOString() ?? null,
       maxEntriesPerSquad,
     };

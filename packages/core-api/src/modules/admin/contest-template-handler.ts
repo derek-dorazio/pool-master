@@ -7,7 +7,6 @@ import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
 import {
   ContestConfigTemplateNotFoundError,
-  ContestConfigTemplateUpdateError,
   type ContestTemplateAdminService,
 } from './contest-template-service';
 
@@ -49,10 +48,6 @@ export function createContestTemplateAdminHandlers(
     } catch (error) {
       if (error instanceof ContestConfigTemplateNotFoundError) {
         return sendError(reply, 404, 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', error.message);
-      }
-
-      if (error instanceof ContestConfigTemplateUpdateError) {
-        return sendError(reply, 400, 'CONTEST_CONFIG_TEMPLATE_INVALID', error.message);
       }
 
       throw error;

@@ -3,10 +3,7 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
-  ContestEntryAggregationRuleRepository,
-  ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
-  SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type {
@@ -27,7 +24,6 @@ import type {
 import {
   ContestFormat,
   ContestStatus,
-  GolfContestConfigMode,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -79,9 +75,6 @@ export class ContestManagementService {
     private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository,
     private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
-    private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
-    private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
-    private readonly sportEventParticipantRepo: SportEventParticipantRepository,
     private readonly sportEventTierService: SportEventTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader?: ContestCreateSportEventReader,
@@ -138,7 +131,6 @@ export class ContestManagementService {
       templateId: resolvedConfiguration.template?.id,
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
-      configMode: resolvedConfiguration.configuration.mode,
       configJson: resolvedConfiguration.configuration,
       locksAt: resolvedConfiguration.configuration.locksAt
         ? new Date(resolvedConfiguration.configuration.locksAt)
@@ -153,14 +145,12 @@ export class ContestManagementService {
     await syncDerivedScoring(
       configuration,
       this.participantContestScoringRuleRepo,
-      this.contestEntryAggregationRuleRepo,
     );
 
     this.logger.info({
       contestId: contest.id,
       leagueId: context.leagueId,
       selectionType,
-      configMode: resolvedConfiguration.configuration.mode,
       templateId: resolvedConfiguration.template?.id ?? null,
     }, 'contest management create contest completed');
 
@@ -251,7 +241,7 @@ export class ContestManagementService {
 
     this.logger.info({
       contestId,
-      configMode: configuration.configMode ?? null,
+      selectionType: configuration.selectionType,
       templateId: configuration.templateId ?? null,
     }, 'contest management get contest completed');
     return buildContestManagementDetail(
@@ -267,7 +257,6 @@ export class ContestManagementService {
   ): Promise<ContestManagementDetailDto> {
     this.logger.debug({
       contestId,
-      configMode: input.mode,
       hasLockAt: Boolean(input.locksAt),
     }, 'contest management update configuration start');
     const configuration = await this.contestConfigurationRepo.findByContest(
@@ -288,7 +277,6 @@ export class ContestManagementService {
 
     await this.contestConfigurationRepo.update(configuration.id, {
       selectionType,
-      configMode: input.mode,
       configJson: input,
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
@@ -306,13 +294,11 @@ export class ContestManagementService {
     await syncDerivedScoring(
       refreshedConfiguration,
       this.participantContestScoringRuleRepo,
-      this.contestEntryAggregationRuleRepo,
     );
 
     this.logger.info({
       contestId,
       selectionType,
-      configMode: refreshedConfiguration.configMode ?? null,
     }, 'contest management update configuration completed');
     return buildContestManagementDetail(
       contest,
@@ -415,7 +401,7 @@ export class ContestManagementService {
     sportEventId: string | null | undefined,
     configuration: ContestConfigurationRequest,
   ): Promise<void> {
-    if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || !sportEventId) {
+    if (!sportEventId) {
       return;
     }
     const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
@@ -456,7 +442,7 @@ function assertRosterSizeFitsTierCount(
   configuration: ContestConfigurationRequest,
   tierCount: number,
 ): void {
-  if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || tierCount === 0) {
+  if (tierCount === 0) {
     return;
   }
 
@@ -480,8 +466,7 @@ function deriveLegacyPersistenceFields(
   // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
   // SportEventTierService.getEffectiveTiersForSportEvent is the one path to a
   // contest's effective tiers now; this function no longer computes or
-  // persists a contest-specific tierConfig snapshot. GOLF_TIERED is the only
-  // managed configuration mode (plans/124 §4.11 removed GOLF_CATEGORY_PICKS).
+  // persists a contest-specific tierConfig snapshot.
   return {
     pickCount: configuration.rosterSize,
     rosterSize: configuration.rosterSize,
@@ -492,7 +477,6 @@ function deriveLegacyPersistenceFields(
 async function syncDerivedScoring(
   configuration: ContestConfiguration,
   participantRuleRepo: ParticipantContestScoringRuleRepository,
-  aggregationRuleRepo: ContestEntryAggregationRuleRepository,
 ): Promise<void> {
   const typedConfiguration = ensureTypedConfiguration(configuration);
   const existingParticipantRules =
@@ -508,22 +492,6 @@ async function syncDerivedScoring(
     config: buildParticipantScoringConfig(typedConfiguration),
     active: true,
   });
-
-  const existingAggregationRule =
-    await aggregationRuleRepo.findByContestConfiguration(configuration.id);
-  const aggregationPayload = buildAggregationRule(typedConfiguration);
-
-  if (existingAggregationRule) {
-    await aggregationRuleRepo.update(
-      existingAggregationRule.id,
-      aggregationPayload,
-    );
-  } else {
-    await aggregationRuleRepo.create({
-      contestConfigurationId: configuration.id,
-      ...aggregationPayload,
-    });
-  }
 }
 
 /**
@@ -538,23 +506,6 @@ function buildParticipantScoringConfig(
   _configuration: GolfContestConfig,
 ): Record<string, unknown> {
   return {};
-}
-
-function buildAggregationRule(_configuration: GolfContestConfig): {
-  aggregationDefinitionId: 'SUM_ALL_ENTRIES';
-  config: Record<string, unknown>;
-  active: boolean;
-} {
-  // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11 removed
-  // the GOLF_CATEGORY_PICKS stub); every managed contest sums entry totals.
-  // No direction is stored: a sum ranks in the direction of what it sums, so
-  // entry direction is always the participant scoring definition's
-  // (PARTICIPANT_SCORING_DEFINITIONS in @poolmaster/shared/domain).
-  return {
-    aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-    config: {},
-    active: true,
-  };
 }
 
 function buildContestManagementDetail(
@@ -572,7 +523,6 @@ function buildContestManagementDetail(
     contestId: string;
     templateId?: string | null;
     templateVersion?: number | null;
-    configMode?: string | null;
     configJson?: GolfContestConfig;
     locksAt?: Date | null;
     maxEntriesPerSquad?: number | null;
@@ -604,7 +554,6 @@ function buildContestManagementDetail(
 }
 
 function ensureTypedConfiguration(configuration: {
-  configMode?: string | null;
   configJson?: GolfContestConfig;
   locksAt?: Date | null;
   maxEntriesPerSquad?: number | null;
@@ -629,9 +578,8 @@ function ensureTypedConfiguration(configuration: {
     // SportEventTierService.getEffectiveTiersForSportEvent is the one path to
     // them; this fallback (for a contest with no typed configJson, e.g. one
     // created through the legacy tierConfig-based create path) only needs
-    // to synthesize the trimmed { mode, rosterSize, countedScores } shape.
+    // to synthesize the trimmed { rosterSize, countedScores } shape.
     return {
-      mode: GolfContestConfigMode.GOLF_TIERED,
       locksAt: configuration.locksAt?.toISOString() ?? null,
       maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
       rosterSize: configuration.rosterSize ?? configuration.pickCount ?? 6,
@@ -672,12 +620,6 @@ async function resolveCreateConfiguration(
   const configuration =
     input.configurationOverrides ??
     (template.configJson as ContestConfigurationRequest);
-
-  if (configuration.mode !== template.configMode) {
-    throw new ContestManagementError(
-      'Advanced configuration override must use the same configuration mode as the selected template',
-    );
-  }
 
   return {
     template,

@@ -1,7 +1,6 @@
 import type {
   ContestStatus,
   ContestFormat,
-  GolfContestConfigMode,
   ParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
@@ -9,10 +8,7 @@ import type {
   SportEventStatus,
   SportEventSyncScope,
 } from './enums';
-import type {
-  AggregationDefinitionId,
-  ParticipantScoringDefinitionId,
-} from './contest-scoring';
+import type { ParticipantScoringDefinitionId } from './contest-scoring';
 import type { DomainEntity } from './types';
 
 export interface GolfContestTierDefinition {
@@ -43,7 +39,6 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
  * pick different roster sizes).
  */
 export interface GolfTieredContestConfig {
-  mode: 'GOLF_TIERED';
   rosterSize: number;
   countedScores: number;
 }
@@ -142,7 +137,6 @@ export interface ContestConfiguration extends DomainEntity {
   templateId?: string | null;
   templateVersion?: number | null;
   selectionType: SelectionType;
-  configMode?: GolfContestConfigMode | null;
   configJson?: GolfContestConfig;
   rounds?: number;
   timePerPickSeconds?: number;
@@ -157,7 +151,6 @@ export interface ContestConfiguration extends DomainEntity {
   startRound?: string;
   tierConfig?: PersistedGolfContestTierDefinition[];
   budget?: number;
-  pricingMethod?: string;
   pickCount?: number;
   isExclusive?: boolean;
   picksPerPeriod?: number;
@@ -169,7 +162,8 @@ export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
   eventType?: string | null;
   contestFormat: ContestFormat;
-  configMode: GolfContestConfigMode;
+  /** How an entry in a contest created from this template picks. */
+  selectionType: SelectionType;
   templateKey: string;
   name: string;
   description: string;
@@ -185,14 +179,6 @@ export interface ParticipantContestScoringRule extends DomainEntity {
   contestConfigurationId: string;
   participantScoringDefinitionId: ParticipantScoringDefinitionId;
   sortOrder: number;
-  config: Record<string, unknown>;
-  active: boolean;
-}
-
-/** Entry aggregation rule that converts participant points into entry points. */
-export interface ContestEntryAggregationRule extends DomainEntity {
-  contestConfigurationId: string;
-  aggregationDefinitionId: AggregationDefinitionId;
   config: Record<string, unknown>;
   active: boolean;
 }

@@ -50,7 +50,6 @@ describe('Contest Validation Integration', () => {
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
-          tierAssignmentMethod: 'ODDS',
           rounds: 6,
         },
       },
