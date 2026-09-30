@@ -7,7 +7,6 @@ import { fakeContestRepo } from '../../support/repo-fakes';
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
     findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.ACTIVE })),
-    create: jest.fn().mockResolvedValue(buildContest()),
     update: jest.fn().mockImplementation(async (id, updates) => ({ ...buildContest({ id }), ...updates })),
     ...overrides,
   });

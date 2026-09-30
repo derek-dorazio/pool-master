@@ -1,12 +1,12 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestConfigTemplateRepository } from '@poolmaster/shared/db';
 import type {
-  AdminListContestConfigTemplatesQuery,
   AdminUpdateContestConfigTemplateRequest,
   ContestConfigTemplateDto,
+  ListContestConfigTemplatesQuery,
 } from '@poolmaster/shared/dto';
 import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
-import { logAdminAction } from './admin-audit-service';
+import { logAdminAction } from '../admin/admin-audit-service';
 import { mapContestConfigTemplateDto } from '../../mappers/contest-management.mapper';
 
 function createNoopLogger(): Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'> {
@@ -27,30 +27,36 @@ export class ContestConfigTemplateNotFoundError extends Error {
   }
 }
 
-export class ContestTemplateAdminService {
+/**
+ * `ContestConfigTemplate` is global under A11: any signed-in user reads it, only a root admin
+ * writes it. One read for the commissioner's create flow and the root-admin screens alike.
+ */
+export class ContestConfigTemplateService {
   constructor(
     private readonly repository: ContestConfigTemplateRepository,
     private readonly logger: Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'> = createNoopLogger(),
   ) {}
 
   async listTemplates(
-    query: AdminListContestConfigTemplatesQuery,
+    query: ListContestConfigTemplatesQuery,
   ): Promise<ContestConfigTemplateDto[]> {
     this.logger.debug({
       sport: query.sport ?? null,
       contestFormat: query.contestFormat ?? null,
+      eventType: query.eventType ?? null,
       active: query.active ?? null,
-    }, 'contest template admin list start');
+    }, 'contest template list start');
 
     const templates = await this.repository.list({
       sport: query.sport,
       contestFormat: query.contestFormat,
+      eventType: query.eventType,
       active: query.active,
     });
 
     this.logger.info({
       templateCount: templates.length,
-    }, 'contest template admin list completed');
+    }, 'contest template list completed');
     return templates.map(mapContestConfigTemplateDto);
   }
 
@@ -84,11 +90,13 @@ export class ContestTemplateAdminService {
     };
 
     if (nextIsDefault) {
-      const scopeTemplates = await this.repository.list({
+      // The default is unique per exact event type. `list` also returns any-event-type
+      // templates for an event type, so the scope is narrowed back to the exact match here.
+      const scopeTemplates = (await this.repository.list({
         sport: existing.sport,
         contestFormat: existing.contestFormat,
         eventType: existing.eventType ?? null,
-      });
+      })).filter((template) => (template.eventType ?? null) === (existing.eventType ?? null));
 
       await Promise.all(
         scopeTemplates

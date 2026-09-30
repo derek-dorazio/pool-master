@@ -16,7 +16,6 @@ import {
   PrismaContestRepository,
   PrismaContestConfigurationRepository,
   PrismaLeagueMembershipRepository,
-  PrismaLeagueRepository,
   PrismaContestEntryRepository,
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
@@ -27,7 +26,8 @@ import {
 } from '../leagues/permissions';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
-import { createContestHandlers } from './handler';
+import { createContestHandlers, createCreateContestHandler } from './handler';
+import { createContestManagementService } from '../contest-management/wiring';
 import { createOverrideHandlers } from './override-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import {
@@ -45,7 +45,6 @@ export function contestsModule(fastify: FastifyInstance): void {
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const leagueRepo = new PrismaLeagueRepository(prisma);
   const mailDelivery = createMailDeliveryProvider(
     readMailDeliveryConfig(process.env),
     fastify.log,
@@ -56,7 +55,6 @@ export function contestsModule(fastify: FastifyInstance): void {
     contestRepo,
     contestConfigurationRepo,
     membershipRepo,
-    leagueRepo,
     squadRepo,
     squadMembershipRepo,
     undefined,
@@ -66,6 +64,10 @@ export function contestsModule(fastify: FastifyInstance): void {
     appBaseUrl,
   );
   const handlers = createContestHandlers(contestService);
+  const createContest = createCreateContestHandler(
+    contestService,
+    createContestManagementService(prisma, fastify.log),
+  );
 
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId
@@ -87,17 +89,25 @@ export function contestsModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Create a new contest in a league',
       description:
-        'Creates a contest inside the target league using the league-scoped contest creation flow for commissioners.',
+        'The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. Commissioners of the league only.',
       operationId: 'createContest',
       body: schemaRef('CreateContestRequest'),
       response: {
         201: schemaRef('ContestResponse'),
-        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        400: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema.',
+        },
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        422: {
+          ...zodToJsonSchema(ErrorEnvelopeSchema),
+          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_FIELD_LOCKED. The format: CONTEST_FORMAT_NOT_ALLOWED, CONTEST_FORMAT_NOT_SUPPORTED, CONTEST_SPORT_NOT_SUPPORTED. The configuration: CONTEST_TIER_FIELD_OUT_OF_RANGE, or CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type).',
+        },
       },
     },
     preHandler: requireCommissioner(membershipRepo),
-    handler: handlers.createContest,
+    handler: createContest,
   });
 }
 
@@ -114,7 +124,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
   const mailDelivery = createMailDeliveryProvider(
     readMailDeliveryConfig(process.env),
@@ -126,7 +135,6 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     contestRepo,
     contestConfigurationRepo,
     membershipRepo,
-    leagueRepo,
     squadRepo,
     squadMembershipRepo,
     entryRepo,

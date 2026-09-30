@@ -81,35 +81,6 @@ export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
 
-const CreateContestManagementBaseSchema = z.object({
-  name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
-  sportEventId: z.string().uuid().describe('Sport-event identifier that anchors the contest.'),
-  contestFormat: z.literal(ContestFormat.ROSTER).describe(
-    'First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.',
-  ),
-});
-
-export const LegacyCreateContestManagementRequestSchema =
-  CreateContestManagementBaseSchema.extend({
-    configuration: ContestConfigurationRequestSchema,
-  }).describe('Legacy commissioner request payload that supplies the full contest configuration directly.');
-
-export const TemplateCreateContestManagementRequestSchema =
-  CreateContestManagementBaseSchema.extend({
-    templateId: z.string().uuid().describe('Seeded contest template selected for the create flow.'),
-    configurationOverrides: ContestConfigurationRequestSchema.optional().describe(
-      'Optional full configuration payload used after selecting advanced mode. First pass expects a complete configuration object when overrides are supplied.',
-    ),
-  }).describe('Template-first commissioner request payload for creating a managed contest.');
-
-export const CreateContestManagementRequestSchema = z.union([
-  LegacyCreateContestManagementRequestSchema,
-  TemplateCreateContestManagementRequestSchema,
-]).describe('Commissioner request payload for creating a golf-first managed contest.');
-export type CreateContestManagementRequest = z.infer<
-  typeof CreateContestManagementRequestSchema
->;
-
 export const UpdateContestConfigurationRequestSchema =
   ContestConfigurationRequestSchema;
 export type UpdateContestConfigurationRequest = z.infer<
@@ -143,10 +114,11 @@ export const ContestConfigTemplateDtoSchema = z.object({
 export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSchema>;
 
 export const ListContestConfigTemplatesQuerySchema = z.object({
-  sport: z.enum(sportValues).describe('Sport to filter templates by.'),
-  contestFormat: z.enum(contestFormatValues).describe('Contest type to filter templates by.'),
-  eventType: z.string().optional().describe('Optional event type used to narrow template selection.'),
-}).describe('Query parameters for listing commissioner contest templates.');
+  sport: z.enum(sportValues).optional().describe('Only templates for this sport.'),
+  contestFormat: z.enum(contestFormatValues).optional().describe('Only templates for this contest format.'),
+  eventType: z.string().optional().describe('Templates for this event type, plus the ones that apply to any event type.'),
+  active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),
+}).describe('Filters for listing contest configuration templates. Every filter is optional.');
 export type ListContestConfigTemplatesQuery = z.infer<
   typeof ListContestConfigTemplatesQuerySchema
 >;
@@ -156,15 +128,6 @@ export const ContestConfigTemplateListResponseSchema = z.object({
 }).describe('Available seeded contest templates for commissioner create flow.');
 export type ContestConfigTemplateListResponse = z.infer<
   typeof ContestConfigTemplateListResponseSchema
->;
-
-export const AdminListContestConfigTemplatesQuerySchema = z.object({
-  sport: z.enum(sportValues).optional().describe('Optional sport filter for root-admin contest template management.'),
-  contestFormat: z.enum(contestFormatValues).optional().describe('Optional contest-type filter for root-admin contest template management.'),
-  active: z.boolean().optional().describe('Optional active-state filter for root-admin contest template management.'),
-}).describe('Query parameters for root-admin contest template management listing.');
-export type AdminListContestConfigTemplatesQuery = z.infer<
-  typeof AdminListContestConfigTemplatesQuerySchema
 >;
 
 export const AdminUpdateContestConfigTemplateRequestSchema = z.object({

@@ -287,7 +287,6 @@ export interface ParticipantProviderMappingRepository {
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
-  create(contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>): Promise<Contest>;
   update(id: string, updates: Partial<Contest>): Promise<Contest>;
   delete(id: string): Promise<void>;
 }

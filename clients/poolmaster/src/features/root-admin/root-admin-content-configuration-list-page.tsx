@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { adminListContestConfigTemplates } from '@/lib/api';
+import { listContestConfigTemplates } from '@/lib/api';
 import {
   DataGridPage,
   StatusBadge,
@@ -19,9 +19,9 @@ export function RootAdminContentConfigurationListPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
+    queryKey: QueryKeys.contestConfigTemplates.list({}),
     queryFn: async (): Promise<ContestConfigTemplate[]> => {
-      const response = await adminListContestConfigTemplates();
+      const response = await listContestConfigTemplates();
 
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');

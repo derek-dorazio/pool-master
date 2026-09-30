@@ -88,35 +88,29 @@ describe('League Dashboard Read Integration', () => {
     });
     expect(acceptRes.statusCode).toBe(201);
 
-    const contestRes = await getApp().inject({
-      method: 'POST',
-      url: API_ROUTES.leagues.contests(leagueId),
-      headers: ownerHeaders,
-      payload: {
+    // #245 retired the event-less legacy create; the dashboard read needs only a future contest
+    // row, so it is a fixture with the same shape that create used to write.
+    const contest = await getPrisma().contest.create({
+      data: {
+        leagueId,
         name: 'Dashboard Future Contest',
-        sport: 'GOLF',
+        status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        startsAt: '2099-05-06T12:00:00.000Z',
-        lockAt: '2099-05-06T13:00:00.000Z',
-        endsAt: '2099-05-06T18:00:00.000Z',
-        contestConfiguration: {
-          rounds: 1,
-          tierConfig: [
-            {
-              tierId: 'tier-1',
-              tierName: 'Tier 1',
-              tierNumber: 1,
-              picksFromTier: 1,
-              participantIds: [],
-            },
-          ],
-        },
+        startsAt: new Date('2099-05-06T12:00:00.000Z'),
+        lockAt: new Date('2099-05-06T13:00:00.000Z'),
+        endsAt: new Date('2099-05-06T18:00:00.000Z'),
       },
     });
-    expect(contestRes.statusCode).toBe(201);
-    contestId = contestRes.json().contest.id;
+    await getPrisma().contestConfiguration.create({
+      data: {
+        contestId: contest.id,
+        selectionType: SelectionType.TIERED,
+        maxEntriesPerSquad: 1,
+      },
+    });
+    contestId = contest.id;
 
     // #202 — note what this insert proves: there is no product path that creates a
     // `CommissionerActionItem`. `createActionItem` and `resolveActionItem` are deleted, so the

@@ -1,9 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type {
-  CreateContestManagementRequest,
-  ListContestConfigTemplatesQuery,
-  UpdateContestConfigurationRequest,
-} from '@poolmaster/shared/dto';
+import type { UpdateContestConfigurationRequest } from '@poolmaster/shared/dto';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
@@ -15,54 +11,9 @@ export function createContestManagementHandlers(
   contestManagementService: ContestManagementService,
 ) {
   return {
-    createContest,
-    listTemplates,
     getContest,
     updateContestConfiguration,
   };
-
-  async function createContest(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: CreateContestManagementRequest;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = createRequestContextLogger(request);
-    logger.debug({
-      leagueId: request.params.id,
-      sportEventId: request.body.sportEventId,
-      contestFormat: request.body.contestFormat,
-    }, 'contest management create route start');
-    try {
-      const contest = await contestManagementService.createContest(
-        { leagueId: request.params.id },
-        request.body,
-      );
-      logger.info({ contestId: contest.id, leagueId: request.params.id }, 'contest management create route completed');
-      return reply.status(201).send({ contest });
-    } catch (error) {
-      if (error instanceof ContestManagementError) {
-        logger.warn({ leagueId: request.params.id, error: error.message }, 'contest management create route rejected');
-        return sendError(reply, error.statusCode, error.code, error.message);
-      }
-      logger.error({ leagueId: request.params.id, err: error }, 'contest management create route failed');
-      throw error;
-    }
-  }
-
-  async function listTemplates(
-    request: FastifyRequest<{
-      Querystring: ListContestConfigTemplatesQuery;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = createRequestContextLogger(request);
-    logger.debug(request.query, 'contest management list templates route start');
-    const templates = await contestManagementService.listTemplates(request.query);
-    logger.info({ templateCount: templates.length }, 'contest management list templates route completed');
-    return reply.send({ templates });
-  }
 
   async function getContest(
     request: FastifyRequest<{ Params: { contestId: string } }>,

@@ -6,11 +6,11 @@ import { bindApiMocks } from '@/test/msw-api';
 import { CreateContestPage } from './create-contest-page';
 
 const {
-  createManagedContestMock,
+  createContestMock,
   deleteContestMock,
   getLeagueByCodeMock,
   getManagedContestMock,
-  listManagedContestTemplatesMock,
+  listContestConfigTemplatesMock,
   listEventsMock,
   mockLogger,
   updateContestMock,
@@ -28,11 +28,11 @@ const {
   logger.child.mockImplementation(() => logger);
 
   return {
-    createManagedContestMock: vi.fn(),
+    createContestMock: vi.fn(),
     deleteContestMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
     getManagedContestMock: vi.fn(),
-    listManagedContestTemplatesMock: vi.fn(),
+    listContestConfigTemplatesMock: vi.fn(),
     listEventsMock: vi.fn(),
     mockLogger: logger,
     updateContestMock: vi.fn(),
@@ -41,11 +41,11 @@ const {
 });
 
 bindApiMocks({
-  createManagedContest: createManagedContestMock,
+  createContest: createContestMock,
   deleteContest: deleteContestMock,
   getLeagueByCode: getLeagueByCodeMock,
   getManagedContest: getManagedContestMock,
-  listManagedContestTemplates: listManagedContestTemplatesMock,
+  listContestConfigTemplates: listContestConfigTemplatesMock,
   listEvents: listEventsMock,
   updateContest: updateContestMock,
   updateManagedContestConfiguration: updateManagedContestConfigurationMock,
@@ -165,7 +165,7 @@ function primeCommonMocks() {
       ],
     },
   });
-  listManagedContestTemplatesMock.mockResolvedValue({
+  listContestConfigTemplatesMock.mockResolvedValue({
     data: {
       templates: [
         {
@@ -211,11 +211,11 @@ function primeCommonMocks() {
 
 describe('CreateContestPage', () => {
   afterEach(() => {
-    createManagedContestMock.mockReset();
+    createContestMock.mockReset();
     deleteContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
     getManagedContestMock.mockReset();
-    listManagedContestTemplatesMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
     listEventsMock.mockReset();
     updateContestMock.mockReset();
     updateManagedContestConfigurationMock.mockReset();
@@ -227,7 +227,7 @@ describe('CreateContestPage', () => {
 
   it('submits the commissioner golf tiered contest payload', async () => {
     primeCommonMocks();
-    createManagedContestMock.mockResolvedValue({
+    createContestMock.mockResolvedValue({
       data: {
         contest: {
           id: 'contest-1',
@@ -250,16 +250,17 @@ describe('CreateContestPage', () => {
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     await waitFor(() =>
-      expect(createManagedContestMock).toHaveBeenCalledWith({
+      expect(createContestMock).toHaveBeenCalledWith({
         path: { id: 'league-1' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           name: 'Masters Pick 6',
           sportEventId: 'event-1',
           contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
           templateId: '11111111-1111-4111-8111-111111111111',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-          configurationOverrides: expect.objectContaining({
+          configuration: expect.objectContaining({
             locksAt: '2026-04-10T11:55:00.000Z',
             rosterSize: 6,
             countedScores: 4,
@@ -290,13 +291,13 @@ describe('CreateContestPage', () => {
     expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
       'Contest name is required.',
     );
-    expect(createManagedContestMock).not.toHaveBeenCalled();
+    expect(createContestMock).not.toHaveBeenCalled();
   });
 
   // pool-master-dxd.39 — pick-12 templates seed the wider roster shape.
   it('applies the pick-12 template roster size and counted scores', async () => {
     primeCommonMocks();
-    createManagedContestMock.mockResolvedValue({
+    createContestMock.mockResolvedValue({
       data: {
         contest: {
           id: 'contest-12',
@@ -318,13 +319,13 @@ describe('CreateContestPage', () => {
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
     await waitFor(() =>
-      expect(createManagedContestMock).toHaveBeenCalledWith({
+      expect(createContestMock).toHaveBeenCalledWith({
         path: { id: 'league-1' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
         body: expect.objectContaining({
           templateId: '33333333-3333-4333-8333-333333333333',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
-          configurationOverrides: expect.objectContaining({
+          configuration: expect.objectContaining({
             rosterSize: 12,
             countedScores: 8,
           }),
@@ -333,9 +334,87 @@ describe('CreateContestPage', () => {
     );
   });
 
+  // #245 — a template is optional: with none, the complete form configuration is the contest's.
+  it('creates a contest from the form configuration alone when no template is offered', async () => {
+    primeCommonMocks();
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
+    createContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-no-template',
+        },
+      },
+    });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.change(screen.getByTestId('contest-name'), {
+      target: { value: 'Masters Custom' },
+    });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
+    const [call] = createContestMock.mock.calls[0] as [{ body: Record<string, unknown> }];
+    expect(call.body).not.toHaveProperty('templateId');
+    expect(call.body).toEqual(
+      expect.objectContaining({
+        name: 'Masters Custom',
+        selectionType: 'TIERED',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- expect.objectContaining(...) is Vitest's asymmetric-matcher sentinel, typed any by design.
+        configuration: expect.objectContaining({ rosterSize: 6, countedScores: 4 }),
+      }),
+    );
+  });
+
+  // #245 client obligation — with neither a template nor a complete configuration, submit stays
+  // disabled; the server's CONTEST_CONFIGURATION_REQUIRED is the contract, this is the experience.
+  it('keeps submit disabled with no template and an incomplete configuration', async () => {
+    primeCommonMocks();
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [] } });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.change(screen.getByTestId('contest-name'), {
+      target: { value: 'Masters Custom' },
+    });
+    await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
+
+    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
+      target: { value: '' },
+    });
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
+      target: { value: '3' },
+    });
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
+      target: { value: '3' },
+    });
+    expect(screen.getByTestId('create-contest-submit')).toBeEnabled();
+    expect(createContestMock).not.toHaveBeenCalled();
+  });
+
+  // #245 — a selected template never disables submit, even while the form configuration is
+  // incomplete (the form's own validation reports that on submit).
+  it('keeps submit enabled while a template is selected', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.change(screen.getByTestId('contest-tiered-roster-size'), {
+      target: { value: '' },
+    });
+    await waitFor(() => expect(screen.getByTestId('create-contest-submit')).toBeEnabled());
+  });
+
   it('shows the rejection message when contest creation is rejected with an expected payload', async () => {
     primeCommonMocks();
-    createManagedContestMock.mockResolvedValue({
+    createContestMock.mockResolvedValue({
       error: {
         message: 'Contest name is already in use.',
       },

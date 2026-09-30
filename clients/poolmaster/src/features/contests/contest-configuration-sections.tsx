@@ -1,7 +1,7 @@
 import type {
   SportEventDto,
   GetManagedContestResponses,
-  ListManagedContestTemplatesResponses,
+  ListContestConfigTemplatesResponses,
 } from "@/lib/api";
 import {
   Alert,
@@ -14,8 +14,8 @@ import {
   Tile,
 } from "@/features/shared/ui";
 
-type ManagedContestTemplate =
-  ListManagedContestTemplatesResponses[200]["templates"][number];
+type ContestConfigTemplate =
+  ListContestConfigTemplatesResponses[200]["templates"][number];
 type InheritedTier =
   GetManagedContestResponses[200]["contest"]["effectiveTiers"][number];
 
@@ -23,7 +23,7 @@ type ContestTemplatePickerProps = {
   isEditMode: boolean;
   onSelectTemplate: (templateId: string) => void;
   selectedTemplateId: string;
-  templates: ManagedContestTemplate[];
+  templates: ContestConfigTemplate[];
 };
 
 export function ContestTemplatePicker({

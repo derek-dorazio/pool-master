@@ -4,7 +4,7 @@ import {
   Sport,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
-import type { CreateContestManagementRequest } from '@poolmaster/shared/dto';
+import { CONTEST_CONFIGURATION_REQUIRED, type CreateContestRequest } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -126,7 +126,6 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   return {
     findById: jest.fn().mockResolvedValue(template),
     list: jest.fn().mockResolvedValue([template]),
-    listBySportAndContestFormat: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockImplementation(async (_id, updates) => ({
       ...template,
       ...updates,
@@ -251,6 +250,7 @@ describe('ContestManagementService', () => {
         name: 'Masters Pick 6',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
@@ -269,10 +269,14 @@ describe('ContestManagementService', () => {
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.OPEN,
     });
-    expect(result.configuration.countedScores).toBe(4);
-    // pool-master-41t — the create response also carries the read-only
-    // effectiveTiers echo (plans/124 §5.3), empty for an event with no tiers.
-    expect(result.effectiveTiers).toEqual([]);
+    expect(result).toBe('contest-1');
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateId: undefined,
+        selectionType: 'TIERED',
+        configJson: expect.objectContaining({ rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 3 }),
+      }),
+    );
     // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
     // creation no longer computes or persists a per-contest tierConfig
     // snapshot, so the create call carries no tierConfig key at all.
@@ -315,6 +319,7 @@ describe('ContestManagementService', () => {
           name: 'Invalid tiers',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
           configuration: {
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
@@ -352,6 +357,7 @@ describe('ContestManagementService', () => {
           name: 'Invalid counted scores',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
           configuration: {
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
@@ -386,6 +392,7 @@ describe('ContestManagementService', () => {
           name: 'Invalid bracket',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.BRACKET,
+          selectionType: 'TIERED',
           configuration: {
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
@@ -414,7 +421,7 @@ describe('ContestManagementService', () => {
               type: 'PREDICT_WINNING_SCORE',
             },
           },
-        } as unknown as CreateContestManagementRequest,
+        } as unknown as CreateContestRequest,
       ),
     ).rejects.toMatchObject({
       code: 'CONTEST_FORMAT_NOT_ALLOWED',
@@ -445,6 +452,7 @@ describe('ContestManagementService', () => {
           name: 'Bracket Pool',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.BRACKET,
+          selectionType: 'TIERED',
           configuration: {
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
@@ -473,7 +481,7 @@ describe('ContestManagementService', () => {
               type: 'PREDICT_WINNING_SCORE',
             },
           },
-        } as unknown as CreateContestManagementRequest,
+        } as unknown as CreateContestRequest,
       ),
     ).rejects.toMatchObject({
       code: 'CONTEST_FORMAT_NOT_SUPPORTED',
@@ -504,6 +512,7 @@ describe('ContestManagementService', () => {
           name: 'Basketball Roster Pool',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: ContestFormat.ROSTER,
+          selectionType: 'TIERED',
           configuration: {
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
@@ -539,8 +548,9 @@ describe('ContestManagementService', () => {
       countedScores: 5,
     });
 
+    // #245 — an update never rewrites selectionType: it is fixed at create, and the
+    // mapSelectionType echo that re-derived it on every save is gone.
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
-      selectionType: 'TIERED',
       configJson: {
         countedScores: 5,
         locksAt: '2026-04-11T12:00:00.000Z',
@@ -685,6 +695,7 @@ describe('ContestManagementService', () => {
         name: 'Masters Template Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
       },
     );
@@ -698,8 +709,118 @@ describe('ContestManagementService', () => {
         templateVersion: 1,
       }),
     );
-    expect(result.templateId).toBe('11111111-1111-4111-8111-111111111111');
-    expect(result.templateVersion).toBe(1);
+    // With no configuration supplied, the template's configuration is the contest's.
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configJson: expect.objectContaining({ rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 1 }),
+      }),
+    );
+    expect(result).toBe('contest-1');
+  });
+
+  // #245 — template and configuration together: the template is provenance, the supplied
+  // configuration replaces the template's whole.
+  it('creates from a template with a supplied configuration replacing the template configuration', async () => {
+    const contestConfigTemplateRepo = createContestConfigTemplateRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService(
+      createContestCoreRepo(),
+      contestConfigTemplateRepo,
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader(),
+    );
+
+    await service.createContest(
+      { leagueId: 'league-1' },
+      {
+        name: 'Masters Template Override',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        templateId: '11111111-1111-4111-8111-111111111111',
+        configuration: {
+          rosterSize: 12,
+          countedScores: 8,
+        },
+      },
+    );
+
+    const [createInput] = (contestConfigurationRepo.create as jest.Mock).mock.calls[0] as [
+      { templateId: string; templateVersion: number; configJson: Record<string, unknown> },
+    ];
+    expect(createInput.templateId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(createInput.templateVersion).toBe(1);
+    // Replaced whole, not merged: the template's maxEntriesPerSquad does not survive.
+    expect(createInput.configJson).toEqual({ rosterSize: 12, countedScores: 8 });
+  });
+
+  // #245 — neither a template nor a configuration: the service holds the rule even without the
+  // route's refine in front of it.
+  it('rejects a create naming neither a template nor a configuration', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader(),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Empty create',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+        },
+      ),
+    ).rejects.toMatchObject({ code: CONTEST_CONFIGURATION_REQUIRED, statusCode: 400 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  // #245 — the request's selectionType is authoritative; a template of another selection
+  // type is refused rather than silently winning.
+  it('rejects a template whose selection type differs from the request', async () => {
+    const contestConfigTemplateRepo = createContestConfigTemplateRepo();
+    const template = await contestConfigTemplateRepo.findById('any');
+    (contestConfigTemplateRepo.findById as jest.Mock).mockResolvedValueOnce({
+      ...template,
+      selectionType: 'BUDGET_PICK',
+    });
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      contestConfigTemplateRepo,
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createSportEventTierServiceStub(),
+      undefined,
+      createSportEventReader(),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Mismatched template',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          templateId: '11111111-1111-4111-8111-111111111111',
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_CONFIGURATION_INVALID',
+      message: 'Contest configuration template does not match the requested selection type',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
   it('throws when a seeded template cannot be found', async () => {
@@ -724,6 +845,7 @@ describe('ContestManagementService', () => {
           name: 'Missing Template Contest',
           sportEventId: '11111111-1111-1111-1111-111111111111',
           contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
           templateId: 'missing-template-id',
         },
       );
@@ -781,6 +903,7 @@ describe('ContestManagementService', () => {
         name: 'Missing Field Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,
@@ -816,6 +939,7 @@ describe('ContestManagementService', () => {
         name: 'Unreleased Event Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
         configuration: {
           locksAt: '2026-04-10T12:00:00.000Z',
           maxEntriesPerSquad: 3,

@@ -7,14 +7,13 @@ import type {
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type {
-  ContestConfigTemplateDto,
   ContestManagementDetailDto,
   ContestConfigurationRequest,
-  CreateContestManagementRequest,
+  CreateContestRequest,
   GolfEffectiveTierDto,
-  ListContestConfigTemplatesQuery,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
+import { CONTEST_CONFIGURATION_REQUIRED } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplate,
   ContestConfiguration,
@@ -29,10 +28,7 @@ import {
   Sport,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import {
-  mapContestConfigTemplateDto,
-  toGolfEffectiveTierDtoList,
-} from '../../mappers/contest-management.mapper';
+import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState } from '../events/operational-timing';
 
 interface CreateContestManagementContext {
@@ -80,16 +76,23 @@ export class ContestManagementService {
     private readonly sportEventReader?: ContestCreateSportEventReader,
   ) {}
 
+  /**
+   * The one way a contest is created (#245). The configuration comes from the named template,
+   * from `configuration`, or from both — the template seeding it and `configuration` replacing
+   * it. Returns the new contest's id; the route answers with the canonical contest read.
+   */
   async createContest(
     context: CreateContestManagementContext,
-    input: CreateContestManagementRequest,
-  ): Promise<ContestManagementDetailDto> {
+    input: CreateContestRequest,
+  ): Promise<string> {
     this.logger.debug({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
       contestFormat: input.contestFormat,
-      hasTemplate: 'templateId' in input,
-    }, 'contest management create contest start');
+      selectionType: input.selectionType,
+      hasTemplate: input.templateId !== undefined,
+      hasConfiguration: input.configuration !== undefined,
+    }, 'contest create start');
     const resolvedConfiguration = await resolveCreateConfiguration(
       input,
       this.contestConfigTemplateRepo,
@@ -115,7 +118,7 @@ export class ContestManagementService {
     }
     this.assertContestCreationSupported(sportEvent, input.contestFormat);
     await this.assertTierConfigurationFitsTierCount(input.sportEventId, resolvedConfiguration.configuration);
-    const selectionType = mapSelectionType(resolvedConfiguration.configuration);
+    const { selectionType } = input;
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
@@ -152,13 +155,9 @@ export class ContestManagementService {
       leagueId: context.leagueId,
       selectionType,
       templateId: resolvedConfiguration.template?.id ?? null,
-    }, 'contest management create contest completed');
+    }, 'contest create completed');
 
-    return buildContestManagementDetail(
-      contest,
-      configuration,
-      await this.resolveEffectiveTiers(contest.sportEventId),
-    );
+    return contest.id;
   }
 
   /**
@@ -178,30 +177,6 @@ export class ContestManagementService {
     }
     const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
     return toGolfEffectiveTierDtoList(tiers);
-  }
-
-  async listTemplates(
-    input: ListContestConfigTemplatesQuery,
-  ): Promise<ContestConfigTemplateDto[]> {
-    this.logger.debug({
-      sport: input.sport,
-      contestFormat: input.contestFormat,
-      eventType: input.eventType ?? null,
-    }, 'contest management list templates start');
-    const templates =
-      await this.contestConfigTemplateRepo.listBySportAndContestFormat({
-        sport: input.sport,
-        contestFormat: input.contestFormat,
-        eventType: input.eventType,
-      });
-
-    this.logger.info({
-      sport: input.sport,
-      contestFormat: input.contestFormat,
-      templateCount: templates.length,
-    }, 'contest management list templates completed');
-
-    return templates.map(mapContestConfigTemplateDto);
   }
 
   private assertContestCreationSupported(
@@ -267,7 +242,6 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
-    const selectionType = mapSelectionType(input);
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
@@ -276,7 +250,6 @@ export class ContestManagementService {
     await this.assertTierConfigurationFitsSportEvent(contest.sportEventId, input);
 
     await this.contestConfigurationRepo.update(configuration.id, {
-      selectionType,
       configJson: input,
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
@@ -298,7 +271,7 @@ export class ContestManagementService {
 
     this.logger.info({
       contestId,
-      selectionType,
+      selectionType: refreshedConfiguration.selectionType,
     }, 'contest management update configuration completed');
     return buildContestManagementDetail(
       contest,
@@ -421,14 +394,6 @@ export class ContestManagementError extends Error {
     super(message);
     this.name = 'ContestManagementError';
   }
-}
-
-function mapSelectionType(
-  _configuration: ContestConfigurationRequest,
-): SelectionType {
-  // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11 removed
-  // the GOLF_CATEGORY_PICKS stub); every managed contest is tier-selected.
-  return SelectionType.TIERED;
 }
 
 /**
@@ -596,13 +561,21 @@ function ensureTypedConfiguration(configuration: {
 }
 
 async function resolveCreateConfiguration(
-  input: CreateContestManagementRequest,
+  input: CreateContestRequest,
   templateRepo: ContestConfigTemplateRepository,
 ): Promise<{
   template?: ContestConfigTemplate;
   configuration: ContestConfigurationRequest;
 }> {
-  if ('configuration' in input) {
+  if (input.templateId === undefined) {
+    if (input.configuration === undefined) {
+      // The route's refine refuses this first; kept so the service holds the rule on its own.
+      throw new ContestManagementError(
+        'Name a template, supply a configuration, or both.',
+        CONTEST_CONFIGURATION_REQUIRED,
+        400,
+      );
+    }
     return { configuration: input.configuration };
   }
 
@@ -617,12 +590,14 @@ async function resolveCreateConfiguration(
     );
   }
 
-  const configuration =
-    input.configurationOverrides ??
-    (template.configJson as ContestConfigurationRequest);
+  if (template.selectionType !== input.selectionType) {
+    throw new ContestManagementError(
+      'Contest configuration template does not match the requested selection type',
+    );
+  }
 
   return {
     template,
-    configuration,
+    configuration: input.configuration ?? (template.configJson as ContestConfigurationRequest),
   };
 }

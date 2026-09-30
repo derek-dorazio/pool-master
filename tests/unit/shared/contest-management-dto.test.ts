@@ -2,16 +2,18 @@ import {
   ContestConfigTemplateDtoSchema,
   ContestConfigurationRequestSchema,
   ContestManagementResponseSchema,
-  CreateContestManagementRequestSchema,
+  CONTEST_CONFIGURATION_REQUIRED,
+  CreateContestRequestSchema,
   ListContestConfigTemplatesQuerySchema,
 } from '../../../packages/shared/dto';
 
 describe('contest-management dto schemas', () => {
-  it('accepts a golf tiered contest configuration', () => {
-    const parsed = CreateContestManagementRequestSchema.parse({
+  it('accepts a create carrying a configuration and no template', () => {
+    const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Pick 6',
       sportEventId: '11111111-1111-1111-1111-111111111111',
       contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
       configuration: {
         locksAt: '2026-04-10T12:00:00.000Z',
         maxEntriesPerSquad: 3,
@@ -20,11 +22,8 @@ describe('contest-management dto schemas', () => {
       },
     });
 
-    if (!('configuration' in parsed)) {
-      throw new Error('Expected legacy configuration payload');
-    }
-    expect(parsed.configuration.rosterSize).toBe(6);
-    expect(parsed.configuration.countedScores).toBe(4);
+    expect(parsed.configuration?.rosterSize).toBe(6);
+    expect(parsed.templateId).toBeUndefined();
   });
 
   it('rejects unsupported legacy contest-management payloads', () => {
@@ -35,15 +34,46 @@ describe('contest-management dto schemas', () => {
     ).toThrow();
   });
 
-  it('accepts template-first contest creation payloads', () => {
-    const parsed = CreateContestManagementRequestSchema.parse({
+  it('accepts a create naming a template and no configuration', () => {
+    const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Template Contest',
       sportEventId: '11111111-1111-1111-1111-111111111111',
       contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
       templateId: '11111111-1111-4111-8111-111111111111',
     });
 
-    expect('templateId' in parsed).toBe(true);
+    expect(parsed.templateId).toBe('11111111-1111-4111-8111-111111111111');
+  });
+
+  // #245 — the one structural rule JSON Schema cannot carry: at least one of the two.
+  it('refuses a create naming neither a template nor a configuration, with the documented code', () => {
+    const result = CreateContestRequestSchema.safeParse({
+      name: 'Empty',
+      sportEventId: '11111111-1111-1111-1111-111111111111',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        code: 'custom',
+        params: expect.objectContaining({ code: CONTEST_CONFIGURATION_REQUIRED }),
+      }),
+    ]);
+  });
+
+  it('refuses a selection type other than TIERED', () => {
+    expect(
+      CreateContestRequestSchema.safeParse({
+        name: 'Budget',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestFormat: 'ROSTER',
+        selectionType: 'BUDGET_PICK',
+        templateId: '11111111-1111-4111-8111-111111111111',
+      }).success,
+    ).toBe(false);
   });
 
   it('accepts template list query params and template dto payloads', () => {

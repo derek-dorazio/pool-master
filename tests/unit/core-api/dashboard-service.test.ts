@@ -50,7 +50,6 @@ function createMockContestRepo(overrides: Partial<ContestRepository> = {}): Cont
         lockAt: new Date('2099-05-31'),
       }),
     ]),
-    create: jest.fn().mockResolvedValue(buildContest()),
     update: jest.fn().mockResolvedValue(buildContest()),
     ...overrides,
   });

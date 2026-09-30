@@ -1,17 +1,17 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
-  AdminListContestConfigTemplatesQuery,
   AdminUpdateContestConfigTemplateRequest,
+  ListContestConfigTemplatesQuery,
 } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { extractRootAdminContext } from './request-admin-context';
+import { extractRootAdminContext } from '../admin/request-admin-context';
 import {
   ContestConfigTemplateNotFoundError,
-  type ContestTemplateAdminService,
-} from './contest-template-service';
+  type ContestConfigTemplateService,
+} from './service';
 
-export function createContestTemplateAdminHandlers(
-  service: ContestTemplateAdminService,
+export function createContestConfigTemplateHandlers(
+  service: ContestConfigTemplateService,
 ) {
   return {
     listTemplates,
@@ -20,7 +20,7 @@ export function createContestTemplateAdminHandlers(
 
   async function listTemplates(
     request: FastifyRequest<{
-      Querystring: AdminListContestConfigTemplatesQuery;
+      Querystring: ListContestConfigTemplatesQuery;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
