@@ -1936,6 +1936,75 @@ wiring (now `contest-management/wiring.ts`) — `rules:check` reports three fewe
 edit rather than a second copy of anything in this slice (#248 owns their naming), and `tech-specs/features/contest-event-feed-integration/`, which is design input, as
 #244 recorded.
 
+## Slice 3 standing split and freeze — outcome, 2026-09-30
+
+#246. The standing is split, settled contests read it, a settled contest's configuration cannot
+change, every configuration carries a scoring rule and the fallback is gone, and event-side
+position is written.
+
+**3.1 — schema.** One migration, one transaction, following #240: `contest_entry_standings` is
+created and filled from `contest_entry_golf_standings` with the same ids, then the golf table is
+reshaped into the extension (`total_score_to_par` only, pointing at the core row with its own
+id, cascading from it so deleting an entry still removes the whole standing). `status` is
+dropped; `counting_pick_count` becomes `counting_pick_limit`. `participants.position` is renamed
+`role` — a rename, so the values survive. The same migration gives every golf-event
+configuration without an active scoring rule the `GOLF_RELATIVE_TO_PAR_TOTAL` rule the fallback
+returned for it, so deleting the fallback changes nothing observable; non-golf and event-less
+configurations get nothing, since no definition exists for them and the golf leaderboard
+already refuses them. Verified with psql against a database built at `main` and seeded with a
+settled contest (three standings, one tied pair, one unscored), a golf configuration with and
+one without a rule, a non-golf and an event-less configuration, and participants with and
+without a role: every standing value and id survives on both halves, the role survives, only
+the rule-less golf configuration gains a rule, an entry delete still cascades through both
+tables, and `prisma migrate diff` shows the same 11 pre-existing statements as `main` and none
+on the tables this touches.
+
+**The four behaviours, each tested.**
+
+1. **Frozen read.** A `COMPLETED` contest's leaderboard takes each entry's total, rank, pick
+   counts, the counting rule and `asOf` from its standing (`applySettledContestStandings`); live
+   contests compute as before. Integration: a settled result that deliberately disagrees with
+   the live scores is the one returned.
+2. **Configuration guard.** `updateManagedContestConfiguration` refuses a `COMPLETED` contest
+   with 409 `CONTEST_CONFIGURATION_SETTLED`; reopening (`OverrideService.reopenContest`) is the
+   path back.
+3. **Scoring rule on every configuration, fallback deleted.** The one create already writes the
+   rule (#245 left only that path), and the migration backfills the rest. With no rule the
+   leaderboard answers 400 `CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING` — distinct from a rule
+   naming an unknown definition — and settlement skips the contest at error rather than settle
+   it under a guessed direction.
+4. **Event-side position.** Every golf score write (feed or correction) re-ranks the whole event
+   from `eventScoreToPar` and writes `position`/`displayPosition` where they changed; a withdrawn
+   or cut golfer is unranked. One ranking rule, `rankSortedScores`, now serves contest entries
+   and event participants alike.
+
+**Judgement calls.**
+
+- **Settlement skips a contest that is already `COMPLETED`.** Wiring the read alone would not
+  have made the freeze real: settlement runs on every transition to `COMPLETED`, including a
+  provider re-sending it, and upserted every non-cancelled contest's standings — so a late
+  correction plus a re-sent completion rewrote the frozen rows the read now trusts. Reopening
+  moves a contest to `ACTIVE`, which is what makes it settle again.
+- **The freeze covers the entry's result, not the scorecard.** The standing stores entry-level
+  numbers only, so per-pick rows and the event field still show current scores. After a
+  correction, a settled contest can show a pick's counting flag that disagrees with its frozen
+  total. Freezing picks would need a per-pick table; not in this ticket.
+- **Ranking runs in the golf score service, not the publisher.** The publisher hands golf
+  persistence to that service, and admin corrections write through it too, so ranking there
+  covers both; ranking in the publisher would miss corrections.
+- **The role rename followed the field.** Besides `Participant.role`, its DTO field and the
+  provider interface: the copies of the same value on the contest-entry participant detail and
+  the two draft participant DTOs, the participant list filter (`?role=`), the admin player form
+  and the fallback-photo lookup. `position` now means rank everywhere.
+
+**3.6 — the sweep** also removed three draft-search DTOs (`DraftSearchItemDtoSchema`,
+`DraftSearchFacetBucketDtoSchema`, `DraftSearchResponseSchema`) that nothing registered,
+published or imported — found because one carried a role-meaning `position`. Two
+`no-widened-enum-fields` / `no-bare-enum-literals` fixtures used `role` as the always-enum
+example; `Participant.role` is a String, so the rule now correctly stays silent on `role` and the
+fixtures use `joinPolicy`. Left on purpose: `countingPickCount` on the published leaderboard
+DTO and its in-memory row — #248 moves that family cross-sport and names it once.
+
 ## Slice 4 stage 1 — outcome, 2026-09-30
 
 #205 had never had its stage 1 done. Doing it changed the slice from an epic stage into a

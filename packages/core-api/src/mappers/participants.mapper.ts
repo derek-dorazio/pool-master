@@ -16,7 +16,7 @@ export function mapParticipantToDto(participant: Participant) {
     lastName: participant.lastName,
     shortName: participant.shortName,
     nationality: participant.nationality,
-    position: participant.position,
+    role: participant.role,
     teamAffiliation: participant.teamAffiliation,
     status: participant.status,
     injuryStatus: {

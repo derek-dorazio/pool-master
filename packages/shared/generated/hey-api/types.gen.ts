@@ -829,7 +829,10 @@ export type ContestEntryParticipantDetailDto = {
     participantId: string;
     participantName: string;
     participantStatus?: string | null;
-    position?: string | null;
+    /**
+     * The participant's playing role, when known.
+     */
+    role?: string | null;
     teamAffiliation?: string | null;
     /**
      * When the participant was added to the contest entry.
@@ -871,7 +874,10 @@ export type ContestEntryDetailDto = {
         participantId: string;
         participantName: string;
         participantStatus?: string | null;
-        position?: string | null;
+        /**
+         * The participant's playing role, when known.
+         */
+        role?: string | null;
         teamAffiliation?: string | null;
         /**
          * When the participant was added to the contest entry.
@@ -2779,7 +2785,10 @@ export type ContestEntryDetailResponse = {
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
-            position?: string | null;
+            /**
+             * The participant's playing role, when known.
+             */
+            role?: string | null;
             teamAffiliation?: string | null;
             /**
              * When the participant was added to the contest entry.
@@ -2851,7 +2860,10 @@ export type ContestEntryListResponse = {
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
-            position?: string | null;
+            /**
+             * The participant's playing role, when known.
+             */
+            role?: string | null;
             teamAffiliation?: string | null;
             /**
              * When the participant was added to the contest entry.
@@ -5128,9 +5140,9 @@ export type ParticipantDto = {
      */
     nationality?: string;
     /**
-     * Position, role, or event classification when known.
+     * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
      */
-    position?: string | null;
+    role?: string | null;
     /**
      * Current team affiliation when the participant is not itself a team.
      */
@@ -5205,9 +5217,9 @@ export type ParticipantListQuery = {
      */
     status?: string;
     /**
-     * Comma-separated positions to include.
+     * Comma-separated playing roles to include.
      */
-    position?: string;
+    role?: string;
     /**
      * Comma-separated team affiliations to include.
      */
@@ -5263,9 +5275,9 @@ export type ParticipantListResponse = {
          */
         nationality?: string;
         /**
-         * Position, role, or event classification when known.
+         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
          */
-        position?: string | null;
+        role?: string | null;
         /**
          * Current team affiliation when the participant is not itself a team.
          */
@@ -5369,9 +5381,9 @@ export type ParticipantResponse = {
          */
         nationality?: string;
         /**
-         * Position, role, or event classification when known.
+         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
          */
-        position?: string | null;
+        role?: string | null;
         /**
          * Current team affiliation when the participant is not itself a team.
          */
@@ -6916,9 +6928,9 @@ export type SportEventParticipantDto = {
          */
         nationality?: string;
         /**
-         * Position, role, or event classification when known.
+         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
          */
-        position?: string | null;
+        role?: string | null;
         /**
          * Current team affiliation when the participant is not itself a team.
          */
@@ -7136,9 +7148,9 @@ export type SportEventParticipantListResponse = {
              */
             nationality?: string;
             /**
-             * Position, role, or event classification when known.
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
              */
-            position?: string | null;
+            role?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
@@ -7417,9 +7429,9 @@ export type SportEventParticipantResponse = {
              */
             nationality?: string;
             /**
-             * Position, role, or event classification when known.
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
              */
-            position?: string | null;
+            role?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
@@ -7889,9 +7901,9 @@ export type ParticipantLeagueAffiliationDto = {
          */
         nationality?: string;
         /**
-         * Position, role, or event classification when known.
+         * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
          */
-        position?: string | null;
+        role?: string | null;
         /**
          * Current team affiliation when the participant is not itself a team.
          */
@@ -8017,9 +8029,9 @@ export type ParticipantLeagueAffiliationListResponse = {
              */
             nationality?: string;
             /**
-             * Position, role, or event classification when known.
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
              */
-            position?: string | null;
+            role?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
@@ -8146,9 +8158,9 @@ export type ParticipantLeagueAffiliationResponse = {
              */
             nationality?: string;
             /**
-             * Position, role, or event classification when known.
+             * Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.
              */
-            position?: string | null;
+            role?: string | null;
             /**
              * Current team affiliation when the participant is not itself a team.
              */
@@ -13686,6 +13698,28 @@ export type UpdateManagedContestConfigurationErrors = {
         };
     };
     /**
+     * CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
      * Standard API error envelope.
      */
     422: {
@@ -18398,9 +18432,9 @@ export type ListParticipantsData = {
          */
         status?: string;
         /**
-         * Comma-separated positions to include.
+         * Comma-separated playing roles to include.
          */
-        position?: string;
+        role?: string;
         /**
          * Comma-separated team affiliations to include.
          */
@@ -18432,7 +18466,7 @@ export type CreateParticipantData = {
         lastName?: string;
         shortName?: string;
         nationality?: string;
-        position?: string;
+        role?: string;
         teamAffiliation?: string;
         externalIds?: {
             [key: string]: unknown;
@@ -18531,7 +18565,7 @@ export type UpdateParticipantData = {
         lastName?: string;
         shortName?: string;
         nationality?: string;
-        position?: string;
+        role?: string;
         teamAffiliation?: string;
         status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
         injuryStatus?: {
@@ -21555,7 +21589,7 @@ export type GetDraftStateResponses = {
             entryName: string;
             participantId: string | null;
             participantName: string | null;
-            position?: string;
+            role?: string;
             team?: string;
             price?: number;
             tierId?: string;
@@ -21587,7 +21621,7 @@ export type GetDraftStateResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string | null;
+                role?: string | null;
                 team?: string | null;
                 status?: string | null;
                 price?: number | null;
@@ -21863,7 +21897,7 @@ export type SubmitContestSelectionResponses = {
             entryName: string;
             participantId: string | null;
             participantName: string | null;
-            position?: string;
+            role?: string;
             team?: string;
             price?: number;
             tierId?: string;
@@ -21895,7 +21929,7 @@ export type SubmitContestSelectionResponses = {
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
-                position?: string | null;
+                role?: string | null;
                 team?: string | null;
                 status?: string | null;
                 price?: number | null;

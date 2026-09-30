@@ -55,3 +55,34 @@ export function compareScores(
   if (right === null) return -1;
   return direction === 'LOWER_IS_BETTER' ? left - right : right - left;
 }
+
+/** A rank computed from a raw score: direction-free, 1 is best, ties share a position. */
+export interface ScoreRank {
+  position: number | null;
+  /** The position as displayed, "T3" when tied; null when unranked. */
+  displayPosition: string | null;
+}
+
+/**
+ * Standard competition ranking over scores already sorted best-first (`compareScores`):
+ * equal scores share a position and are shown as "T<n>", the next distinct score takes its
+ * index + 1 (1, T2, T2, 4), and an unscored item is unranked. The one ranking rule for a
+ * contest's entries and an event's participants alike.
+ */
+export function rankSortedScores(sortedScores: ReadonlyArray<number | null>): ScoreRank[] {
+  const counts = new Map<number, number>();
+  for (const score of sortedScores) {
+    if (score !== null) counts.set(score, (counts.get(score) ?? 0) + 1);
+  }
+  let lastScore: number | null = null;
+  let lastPosition = 0;
+  return sortedScores.map((score, index) => {
+    if (score === null) return { position: null, displayPosition: null };
+    if (lastScore === null || score !== lastScore) {
+      lastScore = score;
+      lastPosition = index + 1;
+    }
+    const tied = (counts.get(score) ?? 1) > 1;
+    return { position: lastPosition, displayPosition: tied ? `T${lastPosition}` : String(lastPosition) };
+  });
+}

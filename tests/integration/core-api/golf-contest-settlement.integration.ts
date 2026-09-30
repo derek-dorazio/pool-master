@@ -105,7 +105,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         strokes: 291,
       }),
     ]);
-    const [directContest, invalidContest] = await Promise.all([
+    const [directContest, invalidContest, noRuleContest] = await Promise.all([
       createSettlementContest({
         leagueId: league.id,
         sportEventId: event.id,
@@ -121,6 +121,14 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
           selectionType: 'TIERED',
           scoringEngine: 'STROKE_PLAY',
         },
+      }),
+      // #246: the golf fallback is gone, so a configuration without a scoring rule is
+      // skipped rather than settled under an assumed direction.
+      createSettlementContest({
+        leagueId: league.id,
+        sportEventId: event.id,
+        name: `No Rule Settlement ${suffix}`,
+        withScoringRule: false,
       }),
     ]);
     const directEntries = await createSettlementEntries({
@@ -138,96 +146,90 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       contestsCompleted: 1,
       standingsUpserted: 2,
     });
-    await expect(prisma.contest.findMany({
-      where: { id: { in: [directContest.id, invalidContest.id] } },
-      select: { status: true, endsAt: true },
-      orderBy: { id: 'asc' },
-    })).resolves.toEqual(expect.arrayContaining([
-      expect.objectContaining({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') }),
-      expect.objectContaining({ status: 'ACTIVE', endsAt: null }),
-    ]));
+    const statuses = await prisma.contest.findMany({
+      where: { id: { in: [directContest.id, invalidContest.id, noRuleContest.id] } },
+      select: { id: true, status: true, endsAt: true },
+    });
+    expect(Object.fromEntries(statuses.map((contest) => [contest.id, contest.status]))).toEqual({
+      [directContest.id]: 'COMPLETED',
+      [invalidContest.id]: 'ACTIVE',
+      [noRuleContest.id]: 'ACTIVE',
+    });
+    expect(statuses.find((contest) => contest.id === directContest.id)?.endsAt)
+      .toEqual(new Date('2026-05-31T22:00:00.000Z'));
+    await expect(prisma.contestEntryStanding.count({ where: { contestId: noRuleContest.id } })).resolves.toBe(0);
     expect(completedEvents).toHaveLength(1);
-    const standings = await prisma.contestEntryGolfStanding.findMany({
+
+    const readStandings = async () => (await prisma.contestEntryStanding.findMany({
       where: { contestId: directContest.id },
       orderBy: { position: 'asc' },
-    });
-    expect(standings.map((standing) => ({
+      include: { golf: true },
+    })).map((standing) => ({
       contestEntryId: standing.contestEntryId,
-      totalScoreToPar: standing.totalScoreToPar,
+      totalScoreToPar: standing.golf?.totalScoreToPar,
       position: standing.position,
       displayPosition: standing.displayPosition,
-      countingPickCount: standing.countingPickCount,
+      countingPickLimit: standing.countingPickLimit,
       scoredPickCount: standing.scoredPickCount,
-      status: standing.status,
-    }))).toEqual([
+    }));
+    const frozen = [
       {
         contestEntryId: directEntries.winner.id,
         totalScoreToPar: -9,
         position: 1,
         displayPosition: '1',
-        countingPickCount: 2,
+        countingPickLimit: 2,
         scoredPickCount: 3,
-        status: 'FINAL',
       },
       {
         contestEntryId: directEntries.runnerUp.id,
         totalScoreToPar: 1,
         position: 2,
         displayPosition: '2',
-        countingPickCount: 2,
+        countingPickLimit: 2,
         scoredPickCount: 2,
-        status: 'FINAL',
       },
-    ]);
+    ];
+    await expect(readStandings()).resolves.toEqual(frozen);
 
+    // #246 — the freeze. A late provider correction (Winner A's -7 becomes +10, which would
+    // drop the winner's best-2 total to +1 and tie it with the runner-up) followed by the event
+    // being settled again must not rewrite a COMPLETED contest's result.
+    await prisma.sportEventParticipantGolfStanding.updateMany({
+      where: { standing: { sportEventParticipantId: participants[0].id } },
+      data: { eventScoreToPar: 10 },
+    });
     const second = await service.settleCompletedSportEvent(event.id);
 
     expect(second).toEqual({
       sportEventId: event.id,
-      contestsSettled: 1,
+      contestsSettled: 0,
       contestsCompleted: 0,
-      standingsUpserted: 2,
+      standingsUpserted: 0,
     });
-    await expect(prisma.contestEntryGolfStanding.count({
-      where: {
-        contestEntryId: {
-          in: [
-            directEntries.winner.id,
-            directEntries.runnerUp.id,
-          ],
-        },
-      },
-    })).resolves.toBe(2);
+    await expect(readStandings()).resolves.toEqual(frozen);
     expect(completedEvents).toHaveLength(1);
 
-    // Idempotency is the point of the second settle: the frozen standings must be
-    // byte-for-byte what the first settlement wrote. This previously read back through
-    // GET /contests/:id/history/summary; that module was deleted as dead code (#192), so
-    // the assertion now reads the frozen rows directly, which is strictly stronger than
-    // asserting on a route's projection of them.
-    const settledStandings = await prisma.contestEntryGolfStanding.findMany({
-      where: { contestId: directContest.id },
-      orderBy: { position: 'asc' },
+    // Reopening (OverrideService.reopenContest moves COMPLETED → ACTIVE) is the deliberate
+    // path back: the next settlement recomputes the standing from the corrected scores.
+    await prisma.contest.update({ where: { id: directContest.id }, data: { status: 'ACTIVE' } });
+    const third = await service.settleCompletedSportEvent(event.id);
+
+    expect(third).toEqual({
+      sportEventId: event.id,
+      contestsSettled: 1,
+      contestsCompleted: 1,
+      standingsUpserted: 2,
     });
-    expect(settledStandings.map((standing) => ({
-      contestEntryId: standing.contestEntryId,
-      totalScoreToPar: standing.totalScoreToPar,
-      position: standing.position,
-      status: standing.status,
-    }))).toEqual([
-      {
-        contestEntryId: directEntries.winner.id,
-        totalScoreToPar: -9,
-        position: 1,
-        status: 'FINAL',
-      },
-      {
-        contestEntryId: directEntries.runnerUp.id,
-        totalScoreToPar: 1,
-        position: 2,
-        status: 'FINAL',
-      },
+    const resettled = await readStandings();
+    expect(resettled.map((standing) => [standing.totalScoreToPar, standing.displayPosition])).toEqual([
+      [1, 'T1'],
+      [1, 'T1'],
     ]);
+    // Still one row per entry: the resettle updated the standings in place (core and extension).
+    await expect(prisma.contestEntryGolfStanding.count({
+      where: { contestEntryStanding: { contestId: directContest.id } },
+    })).resolves.toBe(2);
   });
 });
 
@@ -272,6 +274,8 @@ async function createSettlementContest(input: {
   leagueId: string;
   sportEventId: string | null;
   name: string;
+  /** Every real configuration carries a scoring rule (#246); false builds one that does not. */
+  withScoringRule?: boolean;
 }) {
   const prisma = getPrisma();
   const contest = await prisma.contest.create({
@@ -292,6 +296,11 @@ async function createSettlementContest(input: {
       configJson: { countedScores: 2 },
       rosterSize: 3,
       pickCount: 3,
+      ...(input.withScoringRule !== false && {
+        participantScoringRules: {
+          create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+        },
+      }),
     },
   });
   return contest;

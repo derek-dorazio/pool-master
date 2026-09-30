@@ -162,6 +162,10 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         },
         rosterSize: 3,
         pickCount: 3,
+        // Every configuration carries its scoring rule (#246); there is no golf fallback.
+        participantScoringRules: {
+          create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+        },
       },
     });
     const [entryOne, entryTwo] = await Promise.all([
@@ -225,6 +229,53 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       displayValue: '-2',
       thru: 9,
     }));
+
+    // #246 — once the contest is COMPLETED the leaderboard answers from the frozen standings,
+    // not from live scores. The settled result below deliberately disagrees with the live one
+    // (entry one won at -11 under a best-3 rule) so the test proves which one was read.
+    const settledAt = new Date('2026-05-31T22:00:00.000Z');
+    await prisma.contest.update({ where: { id: contest.id }, data: { status: 'COMPLETED' } });
+    for (const [entryId, totalScoreToPar, position] of [[entryOne.id, -11, 1], [entryTwo.id, -4, 2]] as const) {
+      await prisma.contestEntryStanding.create({
+        data: {
+          contestId: contest.id,
+          contestEntryId: entryId,
+          position,
+          displayPosition: String(position),
+          countingPickLimit: 3,
+          scoredPickCount: 3,
+          asOf: settledAt,
+          settledAt,
+          golf: { create: { totalScoreToPar } },
+        },
+      });
+    }
+    const settledResponse = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/contests/${contest.id}/golf/leaderboard`,
+      headers: owner.headers,
+    });
+    expect(settledResponse.statusCode).toBe(200);
+    const settled = GolfLeaderboardResponseSchema.parse(settledResponse.json());
+    expect(settled.entries.map((entry) => [entry.entryId, entry.totalScoreToPar, entry.position])).toEqual([
+      [entryOne.id, -11, 1],
+      [entryTwo.id, -4, 2],
+    ]);
+    expect(settled.entries[0].countingPickCount).toBe(3);
+    expect(settled.countingRule.count).toBe(3);
+    expect(settled.asOf).toBe(settledAt.toISOString());
+
+    // #246 — no fallback: a configuration without a scoring rule is refused with its own code.
+    await prisma.participantContestScoringRule.deleteMany({
+      where: { contestConfiguration: { contestId: contest.id } },
+    });
+    const noRuleResponse = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/contests/${contest.id}/golf/leaderboard`,
+      headers: owner.headers,
+    });
+    expect(noRuleResponse.statusCode).toBe(400);
+    expect(noRuleResponse.json().error.code).toBe('CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING');
   });
 });
 

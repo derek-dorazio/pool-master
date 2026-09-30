@@ -761,7 +761,7 @@ export const getManagedContest = <ThrowOnError extends boolean = false>(options:
 /**
  * Update commissioner contest configuration
  *
- * Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload.
+ * Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.
  */
 export const updateManagedContestConfiguration = <ThrowOnError extends boolean = false>(options: Options<UpdateManagedContestConfigurationData, ThrowOnError>) => (options.client ?? client).put<UpdateManagedContestConfigurationResponses, UpdateManagedContestConfigurationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

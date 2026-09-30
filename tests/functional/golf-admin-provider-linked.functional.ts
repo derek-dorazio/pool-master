@@ -156,7 +156,7 @@ async function cleanup(): Promise<void> {
     const cids = [...contestIds];
     await db.draftPickHistory.deleteMany({ where: { entry: { contestId: { in: cids } } } });
     await db.contestEntryPick.deleteMany({ where: { entry: { contestId: { in: cids } } } });
-    await db.contestEntryGolfStanding.deleteMany({ where: { contestId: { in: cids } } });
+    await db.contestEntryStanding.deleteMany({ where: { contestId: { in: cids } } });
     await db.contestEntry.deleteMany({ where: { contestId: { in: cids } } });
     await db.draftSession.deleteMany({ where: { contestId: { in: cids } } });
     await db.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: { in: cids } } } });
@@ -516,10 +516,10 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(toDone.response?.status).toBe(200);
     expect(toDone.data!.event.status).toBe('COMPLETED');
 
-    const settlement = await db.contestEntryGolfStanding.findMany({ where: { contestId } });
+    const settlement = await db.contestEntryStanding.findMany({ where: { contestId }, include: { golf: true } });
     expect(settlement.length).toBeGreaterThanOrEqual(1);
-    expect(settlement.every((s) => Number.isInteger(s.totalScoreToPar))).toBe(true);
-    expect(settlement.every((s) => s.status === 'FINAL')).toBe(true);
+    expect(settlement.every((s) => Number.isInteger(s.golf?.totalScoreToPar))).toBe(true);
+    expect(settlement.every((s) => s.settledAt instanceof Date)).toBe(true);
     const settledContest = await db.contest.findUniqueOrThrow({ where: { id: contestId } });
     expect(settledContest.status).toBe('COMPLETED');
 
@@ -667,6 +667,10 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
       configJson: { countedScores: 2 },
       rosterSize: 3,
       pickCount: 3,
+      // Every configuration carries its scoring rule (#246); there is no golf fallback.
+      participantScoringRules: {
+        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+      },
     },
   });
 

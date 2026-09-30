@@ -27,7 +27,7 @@ export interface CreateParticipantInput {
   lastName?: string;
   shortName?: string;
   nationality?: string;
-  position?: string;
+  role?: string;
   teamAffiliation?: string;
   externalIds?: Record<string, string>;
 }
@@ -38,7 +38,7 @@ export interface UpdateParticipantInput {
   lastName?: string;
   shortName?: string;
   nationality?: string;
-  position?: string;
+  role?: string;
   teamAffiliation?: string;
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
@@ -105,7 +105,7 @@ export class ParticipantService {
         lastName: input.lastName,
         shortName: input.shortName,
         nationality: input.nationality,
-        position: input.position,
+        role: input.role,
         teamAffiliation: input.teamAffiliation,
         status: ParticipantStatus.ACTIVE,
         injuryStatus: DEFAULT_INJURY_STATUS,

@@ -83,7 +83,7 @@ function ParticipantsTable({
                 <div className="mt-1 text-xs text-muted-foreground">
                   {participant.participantStatus
                     ? `Status: ${formatParticipantStatusLabel(participant.participantStatus, sport)}`
-                    : participant.teamAffiliation ?? participant.position ?? 'Contest participant'}
+                    : participant.teamAffiliation ?? participant.role ?? 'Contest participant'}
                 </div>
               </div>
               <span className="text-muted-foreground">
@@ -92,7 +92,7 @@ function ParticipantsTable({
                   : 'Active'}
               </span>
               <span className="text-muted-foreground">
-                {participant.teamAffiliation ?? participant.position ?? '—'}
+                {participant.teamAffiliation ?? participant.role ?? '—'}
               </span>
             </div>
           );

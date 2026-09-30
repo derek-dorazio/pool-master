@@ -372,6 +372,10 @@ async function createGolfLiveContestConfiguration(contestId: string) {
       },
       rosterSize: 3,
       pickCount: 3,
+      // Every configuration carries its scoring rule (#246); there is no golf fallback.
+      participantScoringRules: {
+        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+      },
     },
   });
 }
@@ -995,7 +999,7 @@ describe('mock contest feed provider event-first verification', () => {
       (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
     )?.participant.totalScoreToPar;
     expect(golfer01AfterR2).not.toBeNull();
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
     await expect(prisma.contest.findMany({
@@ -1037,7 +1041,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     await waitForProviderSyncRuns(finalLive.syncRuns.map((run) => run.id));
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
 
@@ -1069,7 +1073,7 @@ describe('mock contest feed provider event-first verification', () => {
     })).resolves.toEqual([
       expect.objectContaining({ status: 'COMPLETED' }),
     ]);
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: {
         contestEntryId: {
           in: [
@@ -1101,7 +1105,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     await waitForProviderSyncRuns(rerunCompletedDetail.syncRuns.map((run) => run.id));
-    await expect(prisma.contestEntryGolfStanding.count({
+    await expect(prisma.contestEntryStanding.count({
       where: {
         contestEntryId: {
           in: [

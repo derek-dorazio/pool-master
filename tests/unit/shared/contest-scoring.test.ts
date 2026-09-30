@@ -1,6 +1,7 @@
 import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
+  rankSortedScores,
 } from '@poolmaster/shared/domain';
 
 describe('participant scoring definitions', () => {
@@ -25,5 +26,28 @@ describe('compareScores', () => {
 
     expect([...scores].sort((l, r) => compareScores('LOWER_IS_BETTER', l, r))).toEqual([1, 3, null]);
     expect([...scores].sort((l, r) => compareScores('HIGHER_IS_BETTER', l, r))).toEqual([3, 1, null]);
+  });
+});
+
+// #246 — the one ranking rule, shared by contest entries and event participants.
+describe('rankSortedScores', () => {
+  it('gives tied scores one position shown as "T<n>", and the next score its index + 1', () => {
+    expect(rankSortedScores([-5, -2, -2, 1, 1, 1, 4])).toEqual([
+      { position: 1, displayPosition: '1' },
+      { position: 2, displayPosition: 'T2' },
+      { position: 2, displayPosition: 'T2' },
+      { position: 4, displayPosition: 'T4' },
+      { position: 4, displayPosition: 'T4' },
+      { position: 4, displayPosition: 'T4' },
+      { position: 7, displayPosition: '7' },
+    ]);
+  });
+
+  it('leaves unscored items unranked', () => {
+    expect(rankSortedScores([3, null, null])).toEqual([
+      { position: 1, displayPosition: '1' },
+      { position: null, displayPosition: null },
+      { position: null, displayPosition: null },
+    ]);
   });
 });

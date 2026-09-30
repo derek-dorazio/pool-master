@@ -13,7 +13,7 @@ import type {
   GolfEffectiveTierDto,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
-import { CONTEST_CONFIGURATION_REQUIRED } from '@poolmaster/shared/dto';
+import { CONTEST_CONFIGURATION_REQUIRED, CONTEST_CONFIGURATION_SETTLED } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplate,
   ContestConfiguration,
@@ -246,6 +246,17 @@ export class ContestManagementService {
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
+    }
+    // A settled contest's result is frozen against the configuration it was settled under
+    // (#246). Reopening it (OverrideService.reopenContest: commissioner-gated, reason recorded)
+    // is the deliberate path back to an editable configuration.
+    if (contest.status === ContestStatus.COMPLETED) {
+      this.logger.warn({ contestId }, 'contest management update configuration refused for a settled contest');
+      throw new ContestManagementError(
+        'A settled contest\'s configuration cannot change. Reopen the contest first.',
+        CONTEST_CONFIGURATION_SETTLED,
+        409,
+      );
     }
     await this.assertTierConfigurationFitsSportEvent(contest.sportEventId, input);
 

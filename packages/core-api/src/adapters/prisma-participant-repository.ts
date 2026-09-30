@@ -40,8 +40,8 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     if (filters.status && filters.status.length > 0) {
       where.status = { in: filters.status };
     }
-    if (filters.position && filters.position.length > 0) {
-      where.position = { in: filters.position };
+    if (filters.role && filters.role.length > 0) {
+      where.role = { in: filters.role };
     }
     if (filters.teamAffiliation && filters.teamAffiliation.length > 0) {
       where.teamAffiliation = { in: filters.teamAffiliation };
@@ -100,7 +100,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         lastName: p.lastName,
         shortName: p.shortName,
         nationality: p.nationality,
-        position: p.position,
+        role: p.role,
         teamAffiliation: p.teamAffiliation,
         status: p.status,
         injuryStatus: p.injuryStatus as object,
@@ -122,7 +122,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.lastName !== undefined && { lastName: updates.lastName }),
         ...(updates.shortName !== undefined && { shortName: updates.shortName }),
         ...(updates.nationality !== undefined && { nationality: updates.nationality }),
-        ...(updates.position !== undefined && { position: updates.position }),
+        ...(updates.role !== undefined && { role: updates.role }),
         ...(updates.teamAffiliation !== undefined && { teamAffiliation: updates.teamAffiliation }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.injuryStatus !== undefined && { injuryStatus: updates.injuryStatus as object }),
@@ -146,7 +146,7 @@ export function mapToParticipant(row: {
   lastName: string | null;
   shortName: string | null;
   nationality: string | null;
-  position: string | null;
+  role: string | null;
   teamAffiliation: string | null;
   status: string;
   injuryStatus: unknown;
@@ -166,7 +166,7 @@ export function mapToParticipant(row: {
     lastName: row.lastName ?? undefined,
     shortName: row.shortName ?? undefined,
     nationality: row.nationality ?? undefined,
-    position: row.position ?? undefined,
+    role: row.role ?? undefined,
     teamAffiliation: row.teamAffiliation ?? undefined,
     status: row.status as ParticipantStatus,
     injuryStatus: (row.injuryStatus ?? { status: 'HEALTHY' }) as InjuryStatus,
@@ -188,7 +188,7 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     lastName: participant.lastName,
     shortName: participant.shortName,
     nationality: participant.nationality,
-    position: participant.position,
+    role: participant.role,
     teamAffiliation: participant.teamAffiliation,
     status: participant.status,
     injuryStatus: participant.injuryStatus as object,

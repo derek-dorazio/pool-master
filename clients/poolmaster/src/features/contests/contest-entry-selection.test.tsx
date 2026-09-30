@@ -18,7 +18,7 @@ function buildParticipant(
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    position: "GOLFER",
+    role: "GOLFER",
     team: undefined,
     status: "ACTIVE",
     price: undefined,

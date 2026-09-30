@@ -67,7 +67,7 @@ export interface ContestEntryParticipantRow {
   participantId: string;
   participantName: string;
   participantStatus?: string | null;
-  position?: string | null;
+  role?: string | null;
   teamAffiliation?: string | null;
   pickedAt: Date;
 }
@@ -280,7 +280,7 @@ export function toContestEntryParticipantDetailDto(
     participantId: participant.participantId,
     participantName: participant.participantName,
     participantStatus: participant.participantStatus ?? null,
-    position: participant.position ?? null,
+    role: participant.role ?? null,
     teamAffiliation: participant.teamAffiliation ?? null,
     pickedAt: participant.pickedAt.toISOString(),
   };

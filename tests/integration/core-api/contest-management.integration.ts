@@ -275,6 +275,25 @@ describe('Contest management integration', () => {
     });
 
     expect(configuration.participantScoringRules).toHaveLength(1);
+
+    // #246 — settled: the configuration is frozen with the result, 409 with its own code.
+    await getPrisma().contest.update({ where: { id: contestId }, data: { status: ContestStatus.COMPLETED } });
+    const settledUpdateRes = await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
+      headers: ownerHeaders,
+      payload: {
+        locksAt: entryLocksAt,
+        maxEntriesPerSquad: null,
+        rosterSize: 6,
+        countedScores: 4,
+      },
+    });
+    expect(settledUpdateRes.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.safeParse(settledUpdateRes.json()).success).toBe(true);
+    expect(settledUpdateRes.json().error.code).toBe('CONTEST_CONFIGURATION_SETTLED');
+    await expect(getPrisma().contestConfiguration.findUniqueOrThrow({ where: { contestId } }))
+      .resolves.toMatchObject({ configJson: expect.objectContaining({ countedScores: 5 }) });
   });
 
   it('lists seeded templates and creates a contest from a selected template', async () => {

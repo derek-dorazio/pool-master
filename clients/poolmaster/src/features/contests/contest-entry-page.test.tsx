@@ -16,7 +16,7 @@ type DraftSelectionGroup = {
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
-    position: string;
+    role: string;
     team: string | null;
     status: string;
     price: number | null;
@@ -253,7 +253,7 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    position: 'GOLFER',
+    role: 'GOLFER',
     team: null,
     status: 'ACTIVE',
     price: null,
@@ -344,7 +344,7 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                position: 'GOLFER',
+                role: 'GOLFER',
                 team: null,
                 status: 'ACTIVE',
                 price: null,
@@ -367,7 +367,7 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-2',
                 participantId: 'participant-2',
                 participantName: 'Rory McIlroy',
-                position: 'GOLFER',
+                role: 'GOLFER',
                 team: null,
                 status: 'ACTIVE',
                 price: null,
@@ -570,7 +570,7 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                position: 'GOLFER',
+                role: 'GOLFER',
                 team: null,
                 status: 'ACTIVE',
                 price: null,

@@ -286,7 +286,7 @@ async function seedBudgetPickFixture() {
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
-      position: 'GOLFER',
+      role: 'GOLFER',
       teamAffiliation: null,
     },
   });
@@ -298,7 +298,7 @@ async function seedBudgetPickFixture() {
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
-      position: 'GOLFER',
+      role: 'GOLFER',
       teamAffiliation: null,
     },
   });
@@ -457,7 +457,7 @@ async function seedTieredDraftFixture(options: {
         name: `Draft Tiered Player ${index + 1} ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
         externalIds: {},
-        position: 'GOLFER',
+        role: 'GOLFER',
         teamAffiliation: null,
       },
     });

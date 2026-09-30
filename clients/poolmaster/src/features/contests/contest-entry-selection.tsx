@@ -118,7 +118,7 @@ export function SelectionParticipantCard({
               {participant.participantName}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              {participant.team ?? participant.position ?? "Golf field participant"}
+              {participant.team ?? participant.role ?? "Golf field participant"}
             </div>
           </div>
           <StatusBadge tone={isSelected ? "success" : "neutral"}>
@@ -278,7 +278,7 @@ export function LockedSelectionGroup({
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {participant.team ??
-                      participant.position ??
+                      participant.role ??
                       "Golf field participant"}
                   </div>
                 </div>

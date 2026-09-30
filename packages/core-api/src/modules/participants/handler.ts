@@ -28,7 +28,7 @@ export function createParticipantHandlers(participantService: ParticipantService
     const filters: ParticipantSearchFilters = {};
     if (qs.sportId) filters.sportId = qs.sportId;
     if (qs.status) filters.status = qs.status.split(',') as ParticipantStatus[];
-    if (qs.position) filters.position = qs.position.split(',');
+    if (qs.role) filters.role = qs.role.split(',');
     if (qs.team) filters.teamAffiliation = qs.team.split(',');
     if (qs.nationality) filters.nationality = qs.nationality.split(',');
 
@@ -116,7 +116,7 @@ export function createParticipantHandlers(participantService: ParticipantService
         lastName?: string;
         shortName?: string;
         nationality?: string;
-        position?: string;
+        role?: string;
         teamAffiliation?: string;
         externalIds?: Record<string, string>;
       };
@@ -147,7 +147,7 @@ export function createParticipantHandlers(participantService: ParticipantService
         lastName: body.lastName,
         shortName: body.shortName,
         nationality: body.nationality,
-        position: body.position,
+        role: body.role,
         teamAffiliation: body.teamAffiliation,
         externalIds: body.externalIds,
       });

@@ -45,7 +45,7 @@ interface SelectionParticipantRecord {
   sportEventParticipantId: string;
   participantId: string;
   participantName: string;
-  position?: string | null;
+  role?: string | null;
   teamAffiliation?: string | null;
   status?: string | null;
   price?: number;
@@ -67,7 +67,7 @@ interface SelectionGroupResponseRecord {
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
-    position?: string | null;
+    role?: string | null;
     team?: string | null;
     status?: string | null;
     price?: number | null;
@@ -298,7 +298,7 @@ export async function loadDraftContext(prisma: PrismaClient, contestId: string):
         sportEventParticipantId: record.id,
         participantId: record.participantId,
         participantName: record.participant.name,
-        position: record.participant.position,
+        role: record.participant.role,
         teamAffiliation: record.participant.teamAffiliation,
         status: legacyStatus,
         price: valuation?.price ?? undefined,
@@ -363,7 +363,7 @@ function buildSelectionGroups(
         sportEventParticipantId: participant.sportEventParticipantId,
         participantId: participant.participantId,
         participantName: participant.participantName,
-        position: participant.position ?? null,
+        role: participant.role ?? null,
         team: participant.teamAffiliation ?? null,
         status: participant.status ?? null,
         price: participant.price ?? null,
@@ -495,7 +495,7 @@ async function buildRosterSelectionResponse(
       entryName: entry?.name ?? pick.entryId,
       participantId: pick.sportEventParticipantId,
       participantName: participant?.name ?? pick.sportEventParticipantId,
-      position: participant?.position ?? undefined,
+      role: participant?.role ?? undefined,
       team: participant?.teamAffiliation ?? undefined,
       price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
       tierId: tier?.tierId,

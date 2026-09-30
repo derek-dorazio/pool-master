@@ -649,7 +649,8 @@ model Participant {
   lastName         String?                 @map("last_name")
   shortName        String?                 @map("short_name") @db.VarChar(100)
   nationality      String?                 @db.VarChar(10)
-  position         String?                 @db.VarChar(50)
+  /// Playing role ("GOLFER", "QB"), not a rank — `position` means rank on the standing tables.
+  role             String?                 @db.VarChar(50)
   teamAffiliation  String?                 @map("team_affiliation")
   status           PrismaParticipantStatus @default(ACTIVE)
   injuryStatus     Json                    @default("{\"status\": \"HEALTHY\"}") @map("injury_status")
@@ -725,12 +726,12 @@ model Contest {
   createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
-  league        League                     @relation(fields: [leagueId], references: [id])
-  sportEvent    SportEvent?                @relation(fields: [sportEventId], references: [id])
-  configuration ContestConfiguration?
-  entries       ContestEntry[]
-  golfStandings ContestEntryGolfStanding[]
-  draftSession  DraftSession?
+  league         League                 @relation(fields: [leagueId], references: [id])
+  sportEvent     SportEvent?            @relation(fields: [sportEventId], references: [id])
+  configuration  ContestConfiguration?
+  entries        ContestEntry[]
+  entryStandings ContestEntryStanding[]
+  draftSession   DraftSession?
 
   @@index([leagueId])
   @@index([sportEventId])
@@ -855,36 +856,58 @@ model ContestEntry {
 
   picks              ContestEntryPick[]
   draftPickHistories DraftPickHistory[]
-  golfStanding       ContestEntryGolfStanding?
+  standing           ContestEntryStanding?
 
   @@unique([contestId, squadId, entryNumber])
   @@map("contest_entries")
 }
 
-/// Final Golf-specific contest-entry standing persisted when the event schedule
-/// marks the related SportEvent completed. This is the frozen contest aggregate;
-/// live/member leaderboard reads still compute current dropped/counting picks at
-/// read time from SportEventParticipantGolfStanding rows.
-model ContestEntryGolfStanding {
+/// A contest entry's standing, frozen when its contest settles — cross-sport.
+///
+/// Written once per entry by settlement when the linked SportEvent completes, and read by
+/// the leaderboard of a COMPLETED contest instead of recomputing from live event scores:
+/// a provider correction after settlement must not silently rewrite a finished result.
+/// `position` is direction-free (1 is best), as on SportEventParticipantStanding; the raw
+/// score lives in the sport's extension row.
+///
+/// `countingPickLimit` is the rule's N captured at settlement (best N picks count).
+/// Configuration stays editable after a contest is reopened, so without it a frozen result
+/// could not be explained. `contestId` is a documented denormalization of
+/// `contestEntry.contestId`: the leaderboard read is per contest and this table's primary
+/// access path, so it gets a covering index instead of a join. Settlement's upsert is its
+/// single writer.
+model ContestEntryStanding {
   id                String    @id @default(uuid()) @db.Uuid
   contestId         String    @map("contest_id") @db.Uuid
   contestEntryId    String    @unique @map("contest_entry_id") @db.Uuid
-  totalScoreToPar   Int?      @map("total_score_to_par")
   position          Int?
   displayPosition   String?   @map("display_position") @db.VarChar(20)
-  countingPickCount Int       @map("counting_pick_count")
+  countingPickLimit Int       @map("counting_pick_limit")
   scoredPickCount   Int       @map("scored_pick_count")
-  status            String    @default("FINAL") @db.VarChar(20)
   asOf              DateTime? @map("as_of") @db.Timestamptz
   settledAt         DateTime  @map("settled_at") @db.Timestamptz
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  contest      Contest                   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry              @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+  golf         ContestEntryGolfStanding?
 
   @@index([contestId, position])
-  @@index([status])
+  @@map("contest_entry_standings")
+}
+
+/// Golf extension of ContestEntryStanding: the entry total its position was ranked from.
+/// Keyed 1:1 to the core standing row.
+model ContestEntryGolfStanding {
+  id                     String   @id @default(uuid()) @db.Uuid
+  contestEntryStandingId String   @unique @map("contest_entry_standing_id") @db.Uuid
+  totalScoreToPar        Int?     @map("total_score_to_par")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contestEntryStanding ContestEntryStanding @relation(fields: [contestEntryStandingId], references: [id], onDelete: Cascade)
+
   @@map("contest_entry_golf_standings")
 }
 

@@ -2,6 +2,7 @@ import {
   compareScores,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
+  rankSortedScores,
   type ParticipantScoringDefinition,
   type ScoreDirection,
 } from '@poolmaster/shared/domain';
@@ -83,27 +84,32 @@ export function resolveGolfLeaderboardCountingRule(
 }
 
 /**
- * The scoring definition a golf leaderboard ranks by, read from the
- * configuration's first active participant scoring rule.
+ * The scoring definition a golf leaderboard ranks by, read from the configuration's first
+ * active participant scoring rule.
  *
- * A configuration with no rule row falls back to `GOLF_RELATIVE_TO_PAR_TOTAL`:
- * only the contest-management path writes rule rows, and `createContest`
- * configurations have none. Golf stroke play is the only golf scoring
- * definition, and this leaderboard serves golf contests only. A rule naming an
- * id the registry does not know returns `null` — ranking by a guessed
- * direction would silently invert the standings.
+ * There is no fallback (#246). Every configuration carries a rule — the one create writes it,
+ * and the #246 migration gave one to every golf configuration that lacked it — so a missing
+ * rule is a real defect, reported as `RULE_MISSING` rather than answered with a golf
+ * assumption. A rule naming an id the registry does not know is `DEFINITION_UNKNOWN`:
+ * ranking by a guessed direction would silently invert the standings.
  */
+export type GolfLeaderboardScoringResolution =
+  | { ok: true; definition: ParticipantScoringDefinition }
+  | { ok: false; reason: 'RULE_MISSING' | 'DEFINITION_UNKNOWN' };
+
 export function resolveGolfLeaderboardScoringDefinition(
   configuration: GolfContestConfigurationRow | null,
-): ParticipantScoringDefinition | null {
+): GolfLeaderboardScoringResolution {
   const rule = [...(configuration?.participantScoringRules ?? [])]
     .filter((candidate) => candidate.active)
     .sort((left, right) => left.sortOrder - right.sortOrder)[0];
   if (!rule) {
-    return PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
+    return { ok: false, reason: 'RULE_MISSING' };
   }
   const id = ParticipantScoringDefinitionIdSchema.safeParse(rule.participantScoringDefinitionId);
-  return id.success ? PARTICIPANT_SCORING_DEFINITIONS[id.data] : null;
+  return id.success
+    ? { ok: true, definition: PARTICIPANT_SCORING_DEFINITIONS[id.data] }
+    : { ok: false, reason: 'DEFINITION_UNKNOWN' };
 }
 
 export function buildGolfLeaderboardEntry(
@@ -189,34 +195,57 @@ export function rankGolfLeaderboardEntries(
     || left.entryName.localeCompare(right.entryName)
     || left.entryId.localeCompare(right.entryId),
   );
-  const scoreCounts = new Map<number, number>();
-  for (const entry of sorted) {
-    if (entry.totalScoreToPar !== null) {
-      scoreCounts.set(entry.totalScoreToPar, (scoreCounts.get(entry.totalScoreToPar) ?? 0) + 1);
-    }
-  }
+  const ranks = rankSortedScores(sorted.map((entry) => entry.totalScoreToPar));
+  return sorted.map((entry, index) => ({ ...entry, ...ranks[index] }));
+}
 
-  let lastScore: number | null = null;
-  let lastPosition = 0;
-  return sorted.map((entry, index) => {
-    if (entry.totalScoreToPar === null) {
+/** A settled entry's frozen standing, as settlement wrote it. */
+export interface SettledContestEntryStanding {
+  contestEntryId: string;
+  position: number | null;
+  displayPosition: string | null;
+  countingPickLimit: number;
+  scoredPickCount: number;
+  totalScoreToPar: number | null;
+}
+
+/**
+ * A settled contest's leaderboard answers from its frozen standings, not from live event
+ * scores: after settlement a provider correction must not silently rewrite the result. Each
+ * entry's rank, total and pick counts come from its standing, and the order is the frozen one
+ * (unranked last). Per-pick rows stay as the live read built them — the standing freezes the
+ * entry's result, not the event's scorecard. An entry with no standing (none is expected once
+ * a contest settles) keeps its live values and sorts after every settled entry.
+ */
+export function applySettledContestStandings(
+  entries: GolfLeaderboardEntryRow[],
+  standings: readonly SettledContestEntryStanding[],
+): GolfLeaderboardEntryRow[] {
+  const byEntryId = new Map(standings.map((standing) => [standing.contestEntryId, standing]));
+  const rank = (entry: GolfLeaderboardEntryRow) => {
+    const standing = byEntryId.get(entry.entryId);
+    if (!standing) return Number.MAX_SAFE_INTEGER;
+    return standing.position ?? Number.MAX_SAFE_INTEGER - 1;
+  };
+  return entries
+    .map((entry) => {
+      const standing = byEntryId.get(entry.entryId);
+      if (!standing) return entry;
       return {
         ...entry,
-        position: null,
-        displayPosition: null,
+        totalScoreToPar: standing.totalScoreToPar,
+        position: standing.position,
+        displayPosition: standing.displayPosition,
+        countingPickCount: standing.countingPickLimit,
+        scoredPickCount: standing.scoredPickCount,
       };
-    }
-    if (lastScore === null || entry.totalScoreToPar !== lastScore) {
-      lastScore = entry.totalScoreToPar;
-      lastPosition = index + 1;
-    }
-    const tieCount = scoreCounts.get(entry.totalScoreToPar) ?? 1;
-    return {
-      ...entry,
-      position: lastPosition,
-      displayPosition: tieCount > 1 ? `T${lastPosition}` : String(lastPosition),
-    };
-  });
+    })
+    .sort((left, right) =>
+      rank(left) - rank(right)
+      || left.entryNumber - right.entryNumber
+      || left.entryName.localeCompare(right.entryName)
+      || left.entryId.localeCompare(right.entryId),
+    );
 }
 
 export function buildGolfRoundColumns(

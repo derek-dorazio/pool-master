@@ -1073,7 +1073,7 @@ export interface paths {
         get?: never;
         /**
          * Update commissioner contest configuration
-         * @description Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload.
+         * @description Updates the commissioner-managed configuration for an existing contest and returns the refreshed management detail payload. Refused with 409 CONTEST_CONFIGURATION_SETTLED while the contest is COMPLETED: its result is frozen against the configuration it settled under, and reopening the contest is the path back.
          */
         put: operations["updateManagedContestConfiguration"];
         post?: never;
@@ -3198,7 +3198,8 @@ export interface components {
             participantId: string;
             participantName: string;
             participantStatus?: string | null;
-            position?: string | null;
+            /** @description The participant's playing role, when known. */
+            role?: string | null;
             teamAffiliation?: string | null;
             /**
              * Format: date-time
@@ -3237,7 +3238,8 @@ export interface components {
                 participantId: string;
                 participantName: string;
                 participantStatus?: string | null;
-                position?: string | null;
+                /** @description The participant's playing role, when known. */
+                role?: string | null;
                 teamAffiliation?: string | null;
                 /**
                  * Format: date-time
@@ -4539,7 +4541,8 @@ export interface components {
                     participantId: string;
                     participantName: string;
                     participantStatus?: string | null;
-                    position?: string | null;
+                    /** @description The participant's playing role, when known. */
+                    role?: string | null;
                     teamAffiliation?: string | null;
                     /**
                      * Format: date-time
@@ -4594,7 +4597,8 @@ export interface components {
                     participantId: string;
                     participantName: string;
                     participantStatus?: string | null;
-                    position?: string | null;
+                    /** @description The participant's playing role, when known. */
+                    role?: string | null;
                     teamAffiliation?: string | null;
                     /**
                      * Format: date-time
@@ -6438,8 +6442,8 @@ export interface components {
             shortName?: string;
             /** @description Participant nationality or country code when known. */
             nationality?: string;
-            /** @description Position, role, or event classification when known. */
-            position?: string | null;
+            /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+            role?: string | null;
             /** @description Current team affiliation when the participant is not itself a team. */
             teamAffiliation?: string | null;
             /**
@@ -6499,8 +6503,8 @@ export interface components {
             sportId?: string;
             /** @description Comma-separated participant statuses to include. */
             status?: string;
-            /** @description Comma-separated positions to include. */
-            position?: string;
+            /** @description Comma-separated playing roles to include. */
+            role?: string;
             /** @description Comma-separated team affiliations to include. */
             team?: string;
             /** @description Comma-separated nationalities to include. */
@@ -6531,8 +6535,8 @@ export interface components {
                 shortName?: string;
                 /** @description Participant nationality or country code when known. */
                 nationality?: string;
-                /** @description Position, role, or event classification when known. */
-                position?: string | null;
+                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                role?: string | null;
                 /** @description Current team affiliation when the participant is not itself a team. */
                 teamAffiliation?: string | null;
                 /**
@@ -6610,8 +6614,8 @@ export interface components {
                 shortName?: string;
                 /** @description Participant nationality or country code when known. */
                 nationality?: string;
-                /** @description Position, role, or event classification when known. */
-                position?: string | null;
+                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                role?: string | null;
                 /** @description Current team affiliation when the participant is not itself a team. */
                 teamAffiliation?: string | null;
                 /**
@@ -7719,8 +7723,8 @@ export interface components {
                 shortName?: string;
                 /** @description Participant nationality or country code when known. */
                 nationality?: string;
-                /** @description Position, role, or event classification when known. */
-                position?: string | null;
+                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                role?: string | null;
                 /** @description Current team affiliation when the participant is not itself a team. */
                 teamAffiliation?: string | null;
                 /**
@@ -7898,8 +7902,8 @@ export interface components {
                     shortName?: string;
                     /** @description Participant nationality or country code when known. */
                     nationality?: string;
-                    /** @description Position, role, or event classification when known. */
-                    position?: string | null;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
                     /** @description Current team affiliation when the participant is not itself a team. */
                     teamAffiliation?: string | null;
                     /**
@@ -8116,8 +8120,8 @@ export interface components {
                     shortName?: string;
                     /** @description Participant nationality or country code when known. */
                     nationality?: string;
-                    /** @description Position, role, or event classification when known. */
-                    position?: string | null;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
                     /** @description Current team affiliation when the participant is not itself a team. */
                     teamAffiliation?: string | null;
                     /**
@@ -8513,8 +8517,8 @@ export interface components {
                 shortName?: string;
                 /** @description Participant nationality or country code when known. */
                 nationality?: string;
-                /** @description Position, role, or event classification when known. */
-                position?: string | null;
+                /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                role?: string | null;
                 /** @description Current team affiliation when the participant is not itself a team. */
                 teamAffiliation?: string | null;
                 /**
@@ -8615,8 +8619,8 @@ export interface components {
                     shortName?: string;
                     /** @description Participant nationality or country code when known. */
                     nationality?: string;
-                    /** @description Position, role, or event classification when known. */
-                    position?: string | null;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
                     /** @description Current team affiliation when the participant is not itself a team. */
                     teamAffiliation?: string | null;
                     /**
@@ -8718,8 +8722,8 @@ export interface components {
                     shortName?: string;
                     /** @description Participant nationality or country code when known. */
                     nationality?: string;
-                    /** @description Position, role, or event classification when known. */
-                    position?: string | null;
+                    /** @description Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects. */
+                    role?: string | null;
                     /** @description Current team affiliation when the participant is not itself a team. */
                     teamAffiliation?: string | null;
                     /**
@@ -13794,6 +13798,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description CONTEST_CONFIGURATION_SETTLED — the contest is COMPLETED; reopen it before changing its configuration. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
             /** @description Standard API error envelope. */
             422: {
                 headers: {
@@ -17988,8 +18011,8 @@ export interface operations {
                 sportId?: string;
                 /** @description Comma-separated participant statuses to include. */
                 status?: string;
-                /** @description Comma-separated positions to include. */
-                position?: string;
+                /** @description Comma-separated playing roles to include. */
+                role?: string;
                 /** @description Comma-separated team affiliations to include. */
                 team?: string;
                 /** @description Comma-separated nationalities to include. */
@@ -18031,7 +18054,7 @@ export interface operations {
                     lastName?: string;
                     shortName?: string;
                     nationality?: string;
-                    position?: string;
+                    role?: string;
                     teamAffiliation?: string;
                     externalIds?: Record<string, never>;
                 };
@@ -18126,7 +18149,7 @@ export interface operations {
                     lastName?: string;
                     shortName?: string;
                     nationality?: string;
-                    position?: string;
+                    role?: string;
                     teamAffiliation?: string;
                     /** @enum {string} */
                     status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
@@ -20825,7 +20848,7 @@ export interface operations {
                             entryName: string;
                             participantId: string | null;
                             participantName: string | null;
-                            position?: string;
+                            role?: string;
                             team?: string;
                             price?: number;
                             tierId?: string;
@@ -20854,7 +20877,7 @@ export interface operations {
                                 sportEventParticipantId: string;
                                 participantId: string;
                                 participantName: string;
-                                position?: string | null;
+                                role?: string | null;
                                 team?: string | null;
                                 status?: string | null;
                                 price?: number | null;
@@ -21036,7 +21059,7 @@ export interface operations {
                             entryName: string;
                             participantId: string | null;
                             participantName: string | null;
-                            position?: string;
+                            role?: string;
                             team?: string;
                             price?: number;
                             tierId?: string;
@@ -21065,7 +21088,7 @@ export interface operations {
                                 sportEventParticipantId: string;
                                 participantId: string;
                                 participantName: string;
-                                position?: string | null;
+                                role?: string | null;
                                 team?: string | null;
                                 status?: string | null;
                                 price?: number | null;

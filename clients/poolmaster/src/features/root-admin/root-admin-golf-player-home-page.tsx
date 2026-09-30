@@ -30,7 +30,7 @@ const editSchema = z.object({
   lastName: z.string().trim().optional(),
   shortName: z.string().trim().optional(),
   nationality: z.string().trim().optional(),
-  position: z.string().trim().optional(),
+  role: z.string().trim().optional(),
   teamAffiliation: z.string().trim().optional(),
   externalId: z.string().trim().optional(),
   status: z.enum(GOLF_PLAYER_STATUSES),
@@ -45,7 +45,7 @@ function toDefaults(player: ParticipantDto): EditValues {
     lastName: player.lastName ?? '',
     shortName: player.shortName ?? '',
     nationality: player.nationality ?? '',
-    position: player.position ?? '',
+    role: player.role ?? '',
     teamAffiliation: player.teamAffiliation ?? '',
     externalId: player.externalId ?? '',
     status: player.status,
@@ -59,7 +59,7 @@ function toBody(values: EditValues): UpdateParticipantData['body'] {
     lastName: values.lastName?.trim() ?? '',
     shortName: values.shortName?.trim() ?? '',
     nationality: values.nationality?.trim() ?? '',
-    position: values.position?.trim() ?? '',
+    role: values.role?.trim() ?? '',
     teamAffiliation: values.teamAffiliation?.trim() ?? '',
     externalId: values.externalId?.trim() ?? '',
     status: values.status,
@@ -119,7 +119,7 @@ export function RootAdminGolfPlayerHomePage() {
           lastName: '',
           shortName: '',
           nationality: '',
-          position: '',
+          role: '',
           teamAffiliation: '',
           externalId: '',
           status: 'ACTIVE',
@@ -208,7 +208,7 @@ export function RootAdminGolfPlayerHomePage() {
                   label: 'Nationality',
                   value: player.nationality || 'Not set',
                 },
-                { id: 'pos', label: 'Position', value: player.position || 'Not set' },
+                { id: 'role', label: 'Role', value: player.role || 'Not set' },
                 {
                   id: 'team',
                   label: 'Team affiliation',
@@ -299,8 +299,8 @@ export function RootAdminGolfPlayerHomePage() {
                 </FormField>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="Position">
-                  <Input {...form.register('position')} />
+                <FormField label="Role">
+                  <Input {...form.register('role')} />
                 </FormField>
                 <FormField label="Team affiliation">
                   <Input {...form.register('teamAffiliation')} />
