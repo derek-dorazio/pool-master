@@ -569,6 +569,26 @@ The per-round join and the running standing. **The score lives in the sport exte
 The tier assignment and price for a participant at an event. 1:1 with
 `SportEventParticipant`.
 
+**One valuation per field row, shared by every contest on the event — deliberate (#249).**
+The row is keyed by `sportEventParticipantId` alone and tiers are keyed
+`(sportEventId, tierKey)`, so two leagues running contests on the same event read the
+same tiers and the same prices. Nothing is scoped to a contest or a league, and only a
+root admin writes them. That is the intent, not an accident of early modelling: it gives
+one valuation per event to maintain, keeps entries comparable across pools, and spares
+every commissioner the work of tiering a full field. A commissioner who wants a different
+difficulty curve cannot have one, and that is the accepted cost.
+
+The alternative — re-keying the valuation to the contest so each pool tunes its own — was
+considered and rejected. It would move the valuation out of the global half of A11 into
+tenant data, needing a commissioner write path, seeding rules for a contest created after
+its event was priced, and a rule for what a price change means once entries exist. Nothing
+has asked for it.
+
+**Price and tier get the same answer.** `price` is published but inert today: it is shown
+on the draft board and in the configuration editor, and nothing enforces a budget until
+budget picks (#93) are built. When they are, the price a budget contest spends against is
+still the event's, by the ruling above. #93 does not get to re-key it on its own.
+
 | Operation | Role | Notes |
 |---|---|---|
 | Read for an event | `authenticated` | On each `listEventParticipants` row |
