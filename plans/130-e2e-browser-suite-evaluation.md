@@ -394,8 +394,30 @@ So:
   logs out. Keeps `needs: deploy-qa`, keeps the admin secrets, leaves
   essentially nothing behind.
 
-One spec set selected by tag or Playwright project, never two copies of the
-same journey.
+**One spec set, selected by tag** — never two copies. The specs are mostly
+selector plumbing, and selectors churn; two copies of "sign in as admin and
+reach `/manage`" drift within a month, and once they differ a red
+post-deploy run no longer distinguishes an environment problem from a stale
+copy. That ambiguity is the one thing a deploy gate exists to resolve.
+
+Playwright is on 1.59, so the first-class `tag` option on `test()` and
+`test.describe()` carries this, with two npm scripts: the pre-merge one runs
+everything, the post-deploy one runs `--grep @smoke`. Not projects, which
+are for browsers and devices and would mean duplicating `use` blocks until
+`baseURL`, trace and retry settings drift; and not a second config file,
+which is the same failure with more surface.
+
+The guards spec earns a place in both runs rather than only pre-merge: its
+"unknown path renders not-found" case depends on CloudFront's
+error-document config rewriting SPA routes to `index.html`, a deploy-only
+failure mode no local run can see. Same assertion, different thing proven.
+
+**The rule that keeps a dual-run spec honest:** it may assert the presence
+of what the run itself created, never the absence or the count of what it
+did not. "Both new users appear in `/manage/users`" holds everywhere;
+"`/manage/users` lists exactly two users" passes against an empty local
+database and fails against QA forever. That is the assertion someone adds
+to make a flake go away.
 
 Two things the local target must get right, both verified against the
 configs on main:
