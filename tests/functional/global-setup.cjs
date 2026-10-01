@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { spawn } = require('node:child_process');
+const { isPidAlive, terminatePid } = require('./process-control.cjs');
 
 const rootDir = path.join(process.cwd());
 const invocationId = process.env.FUNCTIONAL_INVOCATION_ID || randomUUID();
@@ -79,6 +80,13 @@ async function waitForStateFile(filePath, child, timeoutMs = SERVER_STARTUP_BUDG
     await wait(250);
   }
 
+  // #272 — a server that has not become reachable in the budget is stopped before setup gives up.
+  // Left running, it finished booting after jest had exited, was reparented, never installed its
+  // watchdog, and was adopted by the next run; jest runs no globalTeardown after a failed setup,
+  // so nothing else would ever stop it.
+  if (child.exitCode === null && child.pid) {
+    await terminatePid(child.pid);
+  }
   throw new Error(`Timed out waiting for the functional test server to start (budget ${timeoutMs / 1000} s).`);
 }
 
@@ -96,15 +104,6 @@ function readState(filePath) {
   } catch {}
 
   return null;
-}
-
-function isPidRunning(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return !(error && error.code === 'ESRCH');
-  }
 }
 
 function removeRunStateDirs() {
@@ -128,7 +127,7 @@ async function waitForDaemonState(timeoutMs = SERVER_STARTUP_BUDGET_MS) {
     const state = readState(daemonStateFilePath);
     if (
       state?.pid
-      && isPidRunning(state.pid)
+      && isPidAlive(state.pid)
       && await isServerReachable(state.baseUrl)
     ) {
       return state;
@@ -170,6 +169,8 @@ async function startDaemon(runId) {
       AUTO_START_SCHEDULER: 'false',
       FUNCTIONAL_INVOCATION_ID: invocationId,
       FUNCTIONAL_RUN_ID: runId,
+      // #272 — read by the server's parent watchdog; see server.ts.
+      FUNCTIONAL_SPAWNER_PID: String(process.pid),
       FUNCTIONAL_STATE_DIR: daemonDir,
       FUNCTIONAL_SERVER_STATE_FILE: daemonStateFilePath,
       FUNCTIONAL_SERVER_V8_COVERAGE_DIR: functionalServerV8CoverageDir,
@@ -200,7 +201,7 @@ async function ensureSharedServer(runId) {
   const existingState = readState(daemonStateFilePath);
   if (
     existingState?.pid
-    && isPidRunning(existingState.pid)
+    && isPidAlive(existingState.pid)
     && await isServerReachable(existingState.baseUrl)
   ) {
     return existingState;

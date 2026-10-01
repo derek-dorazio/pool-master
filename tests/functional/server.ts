@@ -99,6 +99,12 @@ async function writeState(port: number): Promise<void> {
   );
 }
 
+// #272 — the spawner's pid, handed over by global-setup when it spawns this process, so it does not
+// depend on when it is read. Read as `process.ppid` after `listen()`, as it was, a server whose
+// spawner died mid-boot (setup timed out, Ctrl-C, a crash) saw 1 — it had been reparented —
+// skipped the watchdog below, and ran until killed by hand, adoptable by every later run.
+const spawnerPid = Number(process.env.FUNCTIONAL_SPAWNER_PID) || process.ppid;
+
 async function main(): Promise<void> {
   smtpSink = await startSmtpSinkServer();
   process.env.EMAIL_PROVIDER = 'smtp';
@@ -175,7 +181,7 @@ async function main(): Promise<void> {
   // file liveness (each run writes its own runnerPid; stale entries get cleaned).
   //
   // Polling interval is 5 s — leak duration is bounded.
-  const parentPid = process.ppid;
+  const parentPid = spawnerPid;
   if (parentPid && parentPid > 1) {
     const watchdog = setInterval(() => {
       try {

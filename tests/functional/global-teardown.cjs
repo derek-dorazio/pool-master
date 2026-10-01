@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { isPidAlive, terminatePid } = require('./process-control.cjs');
 
 const rootDir = path.join(process.cwd());
 const invocationId = process.env.FUNCTIONAL_INVOCATION_ID;
@@ -21,13 +22,16 @@ const runsDir = path.join(coverageRoot, 'runs');
 const daemonDir = path.join(coverageRoot, 'daemon');
 const daemonStateFilePath = path.join(daemonDir, 'server-state.json');
 
-function readState() {
-  if (!fs.existsSync(stateFilePath)) {
+// #272 — this took no parameter and always read the run's own state file, which teardown deletes
+// first, so `readState(daemonStateFilePath)` was always null and the daemon was never stopped here:
+// only the server's parent watchdog ever stopped it.
+function readState(filePath) {
+  if (!fs.existsSync(filePath)) {
     return null;
   }
 
   try {
-    return JSON.parse(fs.readFileSync(stateFilePath, 'utf8'));
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch {
     return null;
   }
@@ -64,50 +68,6 @@ function hasActiveRunStateFiles() {
     fs.rmSync(path.join(runsDir, entry.name), { recursive: true, force: true });
   }
   return active;
-}
-
-function isPidAlive(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return !(error && error.code === 'ESRCH');
-  }
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function terminatePid(pid) {
-  try {
-    process.kill(pid, 'SIGTERM');
-  } catch (error) {
-    if (error && error.code !== 'ESRCH') {
-      throw error;
-    }
-    return;
-  }
-
-  for (let i = 0; i < 20; i += 1) {
-    try {
-      process.kill(pid, 0);
-    } catch (error) {
-      if (error && error.code === 'ESRCH') {
-        return;
-      }
-      throw error;
-    }
-    await sleep(250);
-  }
-
-  try {
-    process.kill(pid, 'SIGKILL');
-  } catch (error) {
-    if (error && error.code !== 'ESRCH') {
-      throw error;
-    }
-  }
 }
 
 module.exports = async () => {
