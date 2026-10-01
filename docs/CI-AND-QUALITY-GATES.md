@@ -401,12 +401,22 @@ hardening epic.
 - **`poolmaster-build`** — webapp build verification.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
+  Hands each task definition to later jobs as `family:revision`, never as an
+  ARN: an ARN contains the masked AWS account id, and Actions silently drops
+  any job output containing a masked value (#281).
 - **`deploy-migrate-qa`** (push to `main` only) — runs the migration ECS task
-  and prints its CloudWatch logs, pass or fail, via
-  `scripts/ecs-task-wait-and-print-logs.mjs`.
-- **`deploy-qa`** (push to `main` only) — rolls the new task definitions out
-  to the QA services, waits for stabilization (dumping diagnostics on
-  failure), then syncs the webapp to S3 and invalidates CloudFront.
+  on the revision this run registered and prints its CloudWatch logs, pass or
+  fail, via `scripts/ecs-task-wait-and-print-logs.mjs`. A missing task
+  definition, missing network secrets, or a task ECS would not start fails the
+  job; none of them is a skip.
+- **`deploy-qa`** (push to `main` only) — rolls this run's task definitions out
+  to the QA services and fails if either value is missing. It then asserts
+  that the core-api service and its PRIMARY deployment are on that revision,
+  requires `desiredCount >= 1` before waiting for stabilization (a zero-task
+  service is trivially stable), waits (dumping diagnostics on failure), and
+  asserts again that the rollout `COMPLETED` on that revision, so a
+  circuit-breaker rollback fails the job. Then it syncs the webapp to S3 and
+  invalidates CloudFront.
 - **`deploy-health-issue`** (push to `main` only) — opens, comments on, or
   closes the "QA deploy is failing on main" issue from the deploy jobs'
   results.
