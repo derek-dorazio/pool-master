@@ -8,7 +8,9 @@ import { expect, type Page } from '@playwright/test';
 const ADMIN_PASSWORD_ENV = 'POOLMASTER_E2E_ADMIN_PASSWORD';
 const ADMIN_IDENTIFIER_ENV = 'POOLMASTER_E2E_ADMIN_IDENTIFIER';
 // A username, not a credential: the sign-in field accepts username or email, and the
-// username keeps the admin's personal address out of the repository.
+// username keeps the admin's personal address out of the repository. Keep the secret a
+// username too: auth-login-identifier is a plain-text field, so whatever is typed there shows
+// in screenshots, video and the trace filmstrip, which redaction cannot scrub.
 const DEFAULT_ADMIN_IDENTIFIER = 'poolmaster-admin';
 
 export type AdminCredentials = {

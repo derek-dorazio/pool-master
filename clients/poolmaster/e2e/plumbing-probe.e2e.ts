@@ -6,7 +6,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
-import { GENERATED_PASSWORD_PREFIX } from './redact-artifacts';
+import { GENERATED_PASSWORD_PREFIX } from './helpers/constants';
 
 /**
  * #278 — the phase 2 plumbing probe (plans/130). Proves the mechanisms the journey suite
@@ -120,7 +120,7 @@ async function removeRunData(
   credentials: AdminCredentials,
   created: RunData,
 ): Promise<void> {
-  const log = (message: string) => console.log(`[teardown ${created.runId}] ${message}`);
+  const log: Log = (message) => console.log(`[teardown ${created.runId}] ${message}`);
 
   const login = await api.post('/api/v1/auth/login', {
     data: { identifier: credentials.identifier, password: credentials.password },
@@ -133,30 +133,58 @@ async function removeRunData(
   // A bearer token, not the session cookies, so state-changing calls need no CSRF header.
   const headers = { Authorization: `Bearer ${tokens.accessToken}` };
 
-  // The registered user is the league's commissioner, so the league goes first.
+  // The registered user is the league's commissioner, so the league goes first. Each removal
+  // is attempted on its own: a failure is reported and the next one still runs.
+  await attempt(log, `league ${created.leagueCode}`, () => removeLeague(api, headers, created, log));
+  await attempt(log, `user ${created.username}`, () => removeUser(api, headers, created, log));
+}
+
+type Log = (message: string) => void;
+
+async function attempt(log: Log, what: string, remove: () => Promise<void>): Promise<void> {
+  try {
+    await remove();
+  } catch (error) {
+    log(`could not remove ${what}; it may remain: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function removeLeague(
+  api: APIRequestContext,
+  headers: Record<string, string>,
+  created: RunData,
+  log: Log,
+): Promise<void> {
   const leagueByCode = `/api/v1/leagues/code/${created.leagueCode}`;
   const league = await api.get(leagueByCode, { headers });
   if (league.status() === 404) {
     log(`league ${created.leagueCode} was never created; nothing to remove`);
-  } else if (!league.ok()) {
-    log(`could not resolve league ${created.leagueCode} (${league.status()}); it may remain`);
-  } else {
-    const { league: { id: leagueId } } = (await league.json()) as { league: { id: string } };
-    await expectOk(api.post(`/api/v1/leagues/${leagueId}/inactivate`, { headers }), 'inactivate league');
-    await expectOk(
-      api.delete(`/api/v1/leagues/${leagueId}`, { headers, data: { leagueCode: created.leagueCode } }),
-      'delete league',
-    );
-    const reread = await api.get(leagueByCode, { headers });
-    log(reread.status() === 404
-      ? `league ${created.leagueCode} removed (re-read 404)`
-      : `league ${created.leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
+    return;
   }
+  if (!league.ok()) {
+    throw new Error(`resolve failed: ${league.status()}`);
+  }
+  const { league: { id: leagueId } } = (await league.json()) as { league: { id: string } };
+  await expectOk(api.post(`/api/v1/leagues/${leagueId}/inactivate`, { headers }), 'inactivate league');
+  await expectOk(
+    api.delete(`/api/v1/leagues/${leagueId}`, { headers, data: { leagueCode: created.leagueCode } }),
+    'delete league',
+  );
+  const reread = await api.get(leagueByCode, { headers });
+  log(reread.status() === 404
+    ? `league ${created.leagueCode} removed (re-read 404)`
+    : `league ${created.leagueCode} STILL PRESENT after delete (re-read ${reread.status()})`);
+}
 
+async function removeUser(
+  api: APIRequestContext,
+  headers: Record<string, string>,
+  created: RunData,
+  log: Log,
+): Promise<void> {
   const search = await api.get('/api/v1/users/', { headers, params: { search: created.username } });
   if (!search.ok()) {
-    log(`could not search for user ${created.username} (${search.status()}); it may remain`);
-    return;
+    throw new Error(`search failed: ${search.status()}`);
   }
   const { users } = (await search.json()) as { users: { id: string; username: string }[] };
   const user = users.find((candidate) => candidate.username === created.username);
