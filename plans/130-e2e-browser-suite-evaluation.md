@@ -247,6 +247,24 @@ in `auth-service.ts`), and the suite never uses the email invitation path —
 it uses the invite **link**, which is also the only member-join flow a
 browser can complete unaided.
 
+### Slicing: prove the plumbing before writing the journey
+
+This design rests on five mechanisms that have never run together here:
+CI-secret credentials reaching a Playwright run, a run id that makes names
+unique across runs and retries, a brand-new user registering and writing
+through the UI, a role switch inside one spec, and API teardown with the
+admin token. Every one of them can fail for reasons that have nothing to do
+with the product, and a long journey spec is the worst place to debug any of
+them.
+
+So the first slice (#278) is a **plumbing probe**: admin signs in and reaches
+`/manage`, logs out, a fresh run-named user registers and creates a league,
+and teardown removes both. No golf catalog, no contest, no invite, no entry
+— if a step cannot fail for a plumbing reason, it is not in the probe. The
+journey below is the second slice (#84) and does not start until the probe
+has been green in a real `main` run. After that, a red journey means a
+product bug, which is the only reason to have it.
+
 ### Shape: three specs, one of them a journey
 
 `ping.e2e.ts` stays as-is — a deploy-reachability check whose failure
