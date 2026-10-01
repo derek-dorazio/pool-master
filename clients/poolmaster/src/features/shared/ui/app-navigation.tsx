@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Button, type ButtonProps } from "./button";
+import { Button } from "./button";
 import { cn } from "./class-names";
 import {
   DropdownMenu,
@@ -85,31 +85,5 @@ export function AppNavigationMenu({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-type AppIconActionButtonProps = Omit<ButtonProps, "children" | "variant"> & {
-  icon: ReactNode;
-  label: string;
-};
-
-export function AppIconActionButton({
-  className,
-  icon,
-  label,
-  title,
-  ...props
-}: AppIconActionButtonProps) {
-  return (
-    <Button
-      aria-label={label}
-      className={cn("h-12 w-12 px-0", className)}
-      title={title ?? label}
-      type="button"
-      variant="secondary"
-      {...props}
-    >
-      {icon}
-    </Button>
   );
 }

@@ -49,10 +49,7 @@ function createPrismaMock(passwordHash: string | null = null) {
       updateMany: jest.fn().mockResolvedValue({ count: 2 }),
       deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
-    notification: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    consentRecord: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
     leagueInvitation: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
-    migrationRun: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
   };
 
   const prisma = {

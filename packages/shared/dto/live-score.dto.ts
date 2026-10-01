@@ -5,13 +5,13 @@
  * boundary into a sport-category-discriminated union, replacing the legacy
  * untyped `ProviderStatEvent[]` shape. Each adapter implements one category
  * (mock-feed returns GOLF; openf1 returns F1; etc.). Schemas are
- * Zod-validated at the bus boundary in `publishLiveScoreUpdate` per
- * plans/117 §10.3 — malformed adapter payloads fail validation at the
- * boundary, not inside the scoring consumer.
+ * Zod-validated in `publishLiveScoreUpdate` per plans/117 §10.3 —
+ * malformed adapter payloads fail validation on entry, not inside the
+ * persistence path.
  *
  * Phase 4 (pool-master-rop.78.3) ships only the GOLF schema; the deferred
- * categories below are shape-locked by the design plan so the bus contract
- * is forward-stable.
+ * categories below are shape-locked by the design plan so the contract is
+ * forward-stable.
  */
 
 import { z } from 'zod';
@@ -26,7 +26,7 @@ import { z } from 'zod';
  * Adapters emit `participantExternalId` (the provider-side identifier they
  * know — e.g. `mock-contest-feed`'s contestantId or a real golf provider's
  * player code).
- * The bus-boundary `publishLiveScoreUpdate` resolves to the internal
+ * `publishLiveScoreUpdate` resolves it to the internal
  * `SportEventParticipant.id` UUID before persisting; the design plan §10.2
  * field name `sportEventParticipantId` refers to that internal column,
  * which adapters cannot reach without a DB lookup. Keeping the resolution
@@ -34,7 +34,7 @@ import { z } from 'zod';
  */
 export const GolfRoundUpdateSchema = z.object({
   participantExternalId: z.string().min(1).describe(
-    'Provider-side participant identifier; resolved to SportEventParticipant.id at the bus boundary.',
+    'Provider-side participant identifier; resolved to SportEventParticipant.id before persistence.',
   ),
   round: z.number().int().min(1).max(8),
   strokes: z.number().int().min(0).nullable().describe(
@@ -51,7 +51,7 @@ export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;
 
 /**
  * BASKETBALL — designed-but-deferred (plans/117 §6.3 / §10.2). The schema is
- * present so the bus contract is forward-stable; no adapter currently
+ * present so the contract is forward-stable; no adapter currently
  * implements this category.
  */
 export const BasketballGameUpdateSchema = z.object({
@@ -134,17 +134,17 @@ export type SoccerMatchUpdate = z.infer<typeof SoccerMatchUpdateSchema>;
 // ============================================================================
 
 /**
- * Every LiveScoreResult arm carries `externalEventId` so the bus boundary
+ * Every LiveScoreResult arm carries `externalEventId` so `publishLiveScoreUpdate`
  * can scope persistence to the originating SportEvent. Without this scope,
  * resolving `participantId` to a `SportEventParticipant` row would pick the
  * most recent row across *all* events the participant has played in,
- * silently cross-contaminating scores between concurrent events. The bus
- * boundary resolves external → internal via SportEvent.[providerId,
+ * silently cross-contaminating scores between concurrent events. It
+ * resolves external → internal via SportEvent.[providerId,
  * externalId] before filtering SEP rows.
  */
 const sportEventScope = {
   externalEventId: z.string().min(1).describe(
-    'Provider-side SportEvent identifier; resolved to internal SportEvent.id at the bus boundary so persistence is filtered by event.',
+    'Provider-side SportEvent identifier; resolved to internal SportEvent.id before persistence, so persistence is filtered by event.',
   ),
 };
 

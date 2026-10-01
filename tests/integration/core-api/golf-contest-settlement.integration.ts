@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { EventBus } from '@poolmaster/shared/events/event-bus';
 import { Sport } from '@poolmaster/shared/domain';
 import { createGolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
@@ -20,12 +19,7 @@ afterAll(async () => {
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, and is idempotent', async () => {
     const prisma = getPrisma();
-    const bus = new EventBus();
-    const completedEvents: unknown[] = [];
-    bus.subscribe('contest.completed', async (event) => {
-      completedEvents.push(event);
-    });
-    const service = createGolfContestSettlementService(prisma, undefined, bus);
+    const service = createGolfContestSettlementService(prisma);
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({
@@ -158,7 +152,6 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     expect(statuses.find((contest) => contest.id === directContest.id)?.endsAt)
       .toEqual(new Date('2026-05-31T22:00:00.000Z'));
     await expect(prisma.contestEntryStanding.count({ where: { contestId: noRuleContest.id } })).resolves.toBe(0);
-    expect(completedEvents).toHaveLength(1);
 
     const readStandings = async () => (await prisma.contestEntryStanding.findMany({
       where: { contestId: directContest.id },
@@ -208,7 +201,12 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       standingsUpserted: 0,
     });
     await expect(readStandings()).resolves.toEqual(frozen);
-    expect(completedEvents).toHaveLength(1);
+    // #261 — this asserted one `contest.completed` event across both runs. The outcome it
+    // stood for, asserted directly: the contest was not completed a second time.
+    await expect(prisma.contest.findUniqueOrThrow({
+      where: { id: directContest.id },
+      select: { status: true, endsAt: true },
+    })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
 
     // Reopening (OverrideService.reopenContest moves COMPLETED → ACTIVE) is the deliberate
     // path back: the next settlement recomputes the standing from the corrected scores.

@@ -18,7 +18,6 @@ export type {
 } from './contest-scoring';
 export type {
   ContestConfigTemplate,
-  ContestTimingPolicy,
   ContestConfiguration,
   ContestPrizeDefinition,
   GolfContestConfig,

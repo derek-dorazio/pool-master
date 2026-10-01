@@ -14,18 +14,15 @@ function setup() {
   const ben = store.addParticipant(sport.id, 'Ben Cole');
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
-  const bus = { publish: jest.fn().mockResolvedValue(undefined) };
   const service = new GolfScoreService({
-    sportEvents: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     mappings: store.mappingRepo(),
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
-    bus: bus as never,
   });
-  return { store, service, event, anaEntry, benEntry, bus, sport };
+  return { store, service, event, anaEntry, benEntry, sport };
 }
 
 const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
@@ -58,8 +55,8 @@ describe('GolfScoreService — apply', () => {
     expect(store.golfRoundRows).toEqual([]);
   });
 
-  it('creates the round if needed, skips rows with no strokes, totals each standing, and publishes the persisted event', async () => {
-    const { store, service, event, anaEntry, bus } = setup();
+  it('creates the round if needed, skips rows with no strokes, and totals each standing', async () => {
+    const { store, service, event, anaEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }, { playerName: 'Ben Cole', ...row({ strokes: null }) }]);
     await service.applyRoundScores(event.id, 2, [{ playerName: 'Ana Park', ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
@@ -71,7 +68,6 @@ describe('GolfScoreService — apply', () => {
       standing: { currentRound: 2, status: 'IN_PROGRESS' },
       golf: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 9 },
     });
-    expect(bus.publish).toHaveBeenCalledWith('live_score.persisted', expect.objectContaining({ sportEventId: event.id, providerId: 'feed', updatesPersisted: 1 }));
   });
 
   it('marks a golfer who missed the cut ELIMINATED on the cross-sport standing', async () => {

@@ -369,7 +369,7 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
     // typing it `string` may well be correct — the rule cannot tell which model it
     // mirrors, so it stays silent rather than guessing.
     'interface R { status: string }',
-    // Same ambiguity for contestFormat (String on ContestConfigTemplate/ContestTimingPolicy).
+    // Same ambiguity for contestFormat (String on ContestConfigTemplate).
     'interface R { contestFormat: string }',
     // A non-string annotation is a different question.
     'interface R { role: number }',

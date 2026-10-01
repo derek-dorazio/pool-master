@@ -6,7 +6,7 @@ Modular monolith — all backend modules run in a single Fastify process on port
 
 ```
                     @poolmaster/shared
-        Domain Types | Events | DB Ports | Utils
+        Domain Types | DTOs | DB Ports | Utils
                          |
               ┌──────────┴──────────┐
               │   core-api :3000    │
@@ -15,9 +15,9 @@ Modular monolith — all backend modules run in a single Fastify process on port
               │ contests / events   │
               │ drafts (engines)    │
               │ golf standings      │
-              │ notifications       │──→ SES / APNs / FCM
+              │ email               │──→ SMTP / SES
               │ ingestion           │──→ provider adapters
-              │ admin / consent     │
+              │ platform            │
               └─────────────────────┘
 ```
 
@@ -34,11 +34,9 @@ Modular monolith — all backend modules run in a single Fastify process on port
 | **contest-management** | `/api/v1/contests/:contestId/manage` | Commissioner-owned contest configuration and management workflows |
 | **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
 | **history** | `/api/v1/` | Historical contest reads and roster history; final Golf settlement results land through the Golf-specific scoring model |
-| **account-consent** | `/api/v1/account` | Consent and age-affirmation capture |
 | **events** | `/api/v1/events` | Provider event records, schedules, statuses, and event lookup APIs |
 | **admin** | `/api/v1/admin` | Platform admin operations for health, provider ingestion, migrations, audit, and contest administration |
 | **config** | `/api/v1/config` | Public configuration and poll-interval guidance |
-| **notifications** | `/api/v1/notifications` | In-app notification reads, preferences, and delivery-oriented support APIs |
 | **squads** | `/api/v1/squads` | Squad roster and contest-entry support services |
 
 ### Draft Module (`modules/drafts/`)
@@ -57,23 +55,6 @@ rebuild is deferred to #199. `SelectionType.SNAKE_DRAFT` remains a valid enum va
 contest configured with it gets `501 DRAFT_MODE_UNSUPPORTED` from the draft-room endpoints.
 
 The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
-
-### Notification Module (`modules/notifications/`)
-
-Current active surface: in-app notification reads, preference updates, and delivery-support plumbing retained in the monolith.
-
-| Component | Description |
-|-----------|-------------|
-| `dispatcher.ts` | Resolve recipients, check preferences, render template, deliver |
-| `in-app-channel.ts` | Notification centre (Prisma) |
-| `email-channel.ts` | SMTP (Mailpit dev) / SES (prod) |
-| `push-channel.ts` | APNs + FCM (push-mock dev / real prod) |
-| `rate-limiter.ts` | Per-user push/hr, email/day limits |
-| `event-grouper.ts` | Buffers high-frequency events into grouped summaries |
-| `scheduled-runner.ts` | Polls for due scheduled notifications |
-| `weekly-digest.ts` | League recap emails |
-
-**Routes:** `GET /api/v1/notifications`, `PUT /api/v1/notifications/preferences`, `POST /api/v1/devices`, `POST /api/v1/notifications/dispatch`, `POST /api/v1/notifications/announce`
 
 ### Ingestion Module (`modules/ingestion/`)
 
@@ -95,7 +76,6 @@ Polls configured sports data providers, upserts normalized event data, and store
 |-------|-------|---------|
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
-| `events/` | `base.ts`, `draft.ts`, `scoring.ts`, `contest.ts`, `notification.ts`, `event-bus.ts` | Domain events + in-process EventBus |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 
 ### Key Domain Concepts
@@ -113,7 +93,6 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Component | Description |
 |-----------|-------------|
 | **PostgreSQL 16** | Primary database via Prisma ORM (50+ models) |
-| **In-process EventBus** | Domain-event fan-out inside the monolith |
 
 ## Standalone Support Packages
 

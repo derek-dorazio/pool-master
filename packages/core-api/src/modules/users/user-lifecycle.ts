@@ -78,14 +78,12 @@ export async function revokeUserSessions(prisma: PrismaLike, userId: string): Pr
  * Deletes the user and everything that references them, in one transaction.
  *
  * Takes a transaction client because partial completion would leave orphan rows pointing at
- * a deleted user. The five tables here are those with a `userId`-shaped column and no
+ * a deleted user. The tables here are those with a `userId`-shaped column and no
  * cascade in the schema; league- and squad-scoped rows are NOT among them, which is why the
  * dependency guard above must run first and block.
  */
 export async function deleteUserCascade(tx: Prisma.TransactionClient, userId: string): Promise<void> {
   await tx.refreshToken.deleteMany({ where: { userId } });
-  await tx.notification.deleteMany({ where: { userId } });
-  await tx.consentRecord.deleteMany({ where: { userId } });
   await tx.leagueInvitation.deleteMany({
     where: { OR: [{ invitedBy: userId }, { acceptedBy: userId }] },
   });

@@ -8,7 +8,6 @@
  * - Standings/leaderboard: 10000 (10s)
  * - Draft state: 10000 (10s)
  * - Contest status: 30000 (30s)
- * - Notifications unread count: 30000 (30s)
  * Other GET routes are treated as on-demand and do not receive poll headers.
  */
 
@@ -21,7 +20,6 @@ export const POLL_INTERVALS: Record<string, number> = {
   '/api/v1/contests/*/standings/my-entry': 10000,
   '/api/v1/drafts/*/state': 10000,
   '/api/v1/contests/*': 30000,
-  '/api/v1/notifications/unread-count': 30000,
 };
 
 /**

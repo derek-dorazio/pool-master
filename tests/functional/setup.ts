@@ -433,15 +433,6 @@ export async function cleanupFunctionalData(): Promise<void> {
   });
   const contestIds = contests.map((contest) => contest.id);
 
-  if (userIds.length > 0) {
-    await database.consentRecord.deleteMany({
-      where: {
-        userId: {
-          in: userIds,
-        },
-      },
-    });
-  }
   await cleanupContestArtifacts(database, contestIds);
 
   if (leagueIds.length > 0) {

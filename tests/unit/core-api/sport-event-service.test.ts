@@ -13,10 +13,6 @@ function setup(sportName: Sport = Sport.GOLF) {
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
   const season = store.addSeason(sportLeague.id);
-  const resolveTiming = jest.fn().mockResolvedValue({
-    releaseAt: new Date('2026-05-21T12:00:00.000Z'),
-    fieldLocksAt: new Date('2026-06-03T12:00:00.000Z'),
-  });
   const service = new SportEventService({
     sportEvents: store.sportEventRepo(),
     leagueEvents: store.leagueEventRepo(),
@@ -25,7 +21,6 @@ function setup(sportName: Sport = Sport.GOLF) {
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
-    resolveTiming,
   });
   return { store, service, season, sportLeague };
 }
@@ -90,7 +85,7 @@ describe('SportEventService.createEventFromProviderEvent', () => {
     endDate: new Date('2026-07-19T12:00:00.000Z'),
   };
 
-  it('creates the event linked to its provider for scores, timed by the policy, with the schedule the provider dates imply', async () => {
+  it('creates the event linked to its provider for scores, released and locked at its start, with the schedule the provider dates imply', async () => {
     const { store, service, season } = setup();
 
     const created = await service.createEventFromProviderEvent({ seasonId: season.id, providerId: 'feed', externalId: 'ev-1', providerEvent });
@@ -100,7 +95,8 @@ describe('SportEventService.createEventFromProviderEvent', () => {
       externalId: 'ev-1',
       syncScope: 'SCORES_ONLY',
       name: 'Provider Classic',
-      releaseAt: new Date('2026-05-21T12:00:00.000Z'),
+      releaseAt: providerEvent.startDate,
+      fieldLocksAt: providerEvent.startDate,
       rounds: 4,
     });
     expect(store.roundRows.map((round) => round.scheduledDate.toISOString().slice(0, 10)))

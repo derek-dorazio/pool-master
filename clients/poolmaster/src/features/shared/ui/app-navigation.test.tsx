@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Inbox } from "lucide-react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { AppIconActionButton, AppNavigationMenu } from "./app-navigation";
+import { AppNavigationMenu } from "./app-navigation";
 
 describe("pool-master-dn4.5: shared app navigation primitives", () => {
   it("renders visible grouped menu items with active route state", () => {
@@ -92,19 +91,5 @@ describe("pool-master-dn4.5: shared app navigation primitives", () => {
     fireEvent.click(screen.getByTestId("my-contests"));
 
     expect(handleSelect).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders compact icon action buttons with accessible labels", () => {
-    render(
-      <AppIconActionButton
-        data-testid="notifications"
-        disabled
-        icon={<Inbox aria-hidden size={18} />}
-        label="Notifications"
-      />,
-    );
-
-    expect(screen.getByTestId("notifications")).toHaveAttribute("aria-label", "Notifications");
-    expect(screen.getByTestId("notifications")).toBeDisabled();
   });
 });

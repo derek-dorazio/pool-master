@@ -1,7 +1,7 @@
 /**
- * Unit tests — Ingestion module (ProviderRegistry, IngestionScheduler, publishStatEvents)
+ * Unit tests — Ingestion module (ProviderRegistry, IngestionScheduler)
  *
- * Tests the core ingestion classes with mocked providers and event bus.
+ * Tests the core ingestion classes with mocked providers.
  */
 
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';

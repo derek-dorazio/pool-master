@@ -26,10 +26,10 @@ things deliberately *not* adopted. Those exist nowhere else.
 
 ### Deliberate absences
 
-- **No external queue.** Async work runs on the in-process event bus and service-local
-  scheduling. Add external queueing only when the architecture genuinely requires it —
+- **No external queue.** Async work runs in-process: service-local scheduling and work
+  submitted after a request is accepted. Add external queueing only when the architecture genuinely requires it —
   not because a task is asynchronous.
-- **No Redis.** Caching and messaging use the in-process event bus plus persistent services
+- **No Redis.** Caching and coordination use in-process state plus persistent services
   where needed. The active MVP runtime has no Redis dependency and should not acquire one
   incidentally.
 
@@ -152,11 +152,10 @@ All backend services are TypeScript services with explicit module boundaries.
 
 | Module / Surface | Responsibility |
 |---|---|
-| Core API | Auth, leagues, invitations, contests, squads, participants, events, scoring, standings, notifications, history, config, consent, and root-admin operations |
+| Core API | Auth, leagues, invitations, contests, squads, participants, events, scoring, standings, history, config, and root-admin operations |
 | Draft module | Draft session lifecycle and draft engines inside the monolith |
 | Scoring module | Scoring computation, standings rollups, and event-consumption logic inside the monolith |
 | Ingestion module | Sports-data provider ingestion and provider/status operations inside the monolith |
-| Notification module | In-app notification delivery orchestration inside the monolith |
 
 ### Architectural Rules
 
@@ -193,39 +192,19 @@ All backend services are TypeScript services with explicit module boundaries.
   lifecycle scheduler — each caller supplies a different `actor`, not a
   different implementation.
 
-### Domain Event Bus
+### No event bus — modules call each other
 
-The in-process event bus (`packages/shared/events/event-bus.ts`) is the primary mechanism for cross-module communication. It is an architectural seam, not an implementation detail.
+There is no in-process event bus. One existed in `packages/shared/events/` with typed event
+contracts and two publishers, and #261 deleted it: in six months nothing ever subscribed, so
+every publish iterated an empty handler list. A module that needs another module's effect calls
+that module's service directly, wired in its `wiring.ts`; the event lifecycle service calling
+settlement is the model. The persisted rows are the outcome, and tests assert those rather than
+an event.
 
-- Every domain event type must be defined as a typed interface in `packages/shared/events/`.
-- Services emit events after successful state changes, not before.
-- Subscribers must not assume emission order or delivery guarantees beyond "at least once, in process."
-- Event payloads must be serializable (no Prisma models, no class instances, no functions).
-- When adding a new event type, update the event type registry and add appropriate tests for emission and affected subscriber behavior (see [Testing Rules §8](testing-rules.md)).
-
-### Event-Driven Mutation Discipline
-
-Any domain-event subscriber that mutates application state must be designed for
-at-least-once delivery and partial subscriber failure.
-
-Rules:
-
-- Subscriber side effects must be idempotent for the event key they process, or
-  the subscriber must maintain enough durable state to detect duplicates.
-- Recalculation or rollup subscribers that touch multiple rows must define the
-  transaction boundary explicitly. If the recalculation is logically atomic,
-  wrap the full mutation set in one transaction.
-- Subscribers that can be invoked concurrently for the same aggregate must
-  serialize per aggregate key, use idempotent upserts, or otherwise prove that
-  interleaving cannot corrupt state.
-- The event bus default failure policy is `allSettled`: one subscriber failure
-  must be logged and surfaced without preventing unrelated subscribers from
-  running. Use fail-fast behavior only when the event contract explicitly says
-  all subscribers are part of one atomic operation.
-- Subscriber failures must include event type, aggregate id, subscriber name,
-  and correlation context in logs.
-- Tests for event-driven mutations must cover duplicate event handling and at
-  least one subscriber failure path when the subscriber writes data.
+If pub/sub is wanted later, reintroduce it against a real subscriber, so a concrete consumer
+decides its shape, and write its rules then. The rules that stood here (typed events, emission
+after commit, at-least-once idempotent subscribers, `allSettled` failure policy) were written
+for subscribers that never existed; they are in git history if that day comes.
 
 ---
 

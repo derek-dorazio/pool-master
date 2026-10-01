@@ -21,14 +21,6 @@
       "types": "./db/index.ts",
       "default": "./dist/db/index.js"
     },
-    "./events": {
-      "types": "./events/index.ts",
-      "default": "./dist/events/index.js"
-    },
-    "./events/*": {
-      "types": "./events/*.ts",
-      "default": "./dist/events/*.js"
-    },
     "./i18n": {
       "types": "./i18n/index.ts",
       "default": "./dist/i18n/index.js"

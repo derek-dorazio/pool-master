@@ -434,7 +434,7 @@ poolmaster/
 | Language | TypeScript 5.5 (strict mode) |
 | ORM | Prisma 6 (PostgreSQL) |
 | Database | PostgreSQL 16 |
-| Cache/Queue | In-process event bus + service-local scheduling |
+| Cache/Queue | In-process state + service-local scheduling |
 | Monorepo | Turborepo + npm workspaces |
 | Testing | Jest 29 + ts-jest |
 | Validation | JSON Schema (Fastify built-in) + Zod |
@@ -446,7 +446,7 @@ poolmaster/
 
 - **Hexagonal architecture** — services depend on repository port interfaces, not concrete implementations
 - **Multi-tenancy** — every row carries `tenant_id`, extracted from `x-tenant-id` header
-- **Event-driven** — modules communicate via in-process domain events (EventBus)
+- **Direct calls between modules** — a module that needs another's effect calls its service; there is no event bus (#261)
 - **One export per file** — TypeScript modules follow single-export convention
 - **Tests separate from source** — all tests in `tests/`, never inside `src/`
 

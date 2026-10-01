@@ -5,7 +5,6 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { Sport } from '@poolmaster/shared/domain';
-import { eventBus } from '@poolmaster/shared/events/event-bus';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 
 beforeAll(() => setupIntegrationTests());
@@ -90,7 +89,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       {
         prisma,
         providerId: 'integration-test',
-        bus: eventBus,
       },
     );
 
@@ -146,7 +144,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
   });
 });
 
-// Live-score persistence through the bus boundary, against real rows. Each golfer's round
+// Live-score persistence through `publishLiveScoreUpdate`, against real rows. Each golfer's round
 // lands as a core SportEventParticipantRound plus its golf extension; their standing is
 // recomputed as a core SportEventParticipantStanding plus its golf extension.
 describe('Golf live-score persistence', () => {
@@ -189,19 +187,6 @@ describe('Golf live-score persistence', () => {
     return { event, sepByKey, otherSepByKey };
   }
 
-  function recordingBus(options: { fail?: boolean } = {}) {
-    const published: Array<{ type: string; payload: Record<string, unknown> }> = [];
-    return {
-      published,
-      bus: {
-        publish: async (type: string, payload: Record<string, unknown>) => {
-          published.push({ type, payload });
-          if (options.fail) throw new Error('bus unavailable');
-        },
-      },
-    };
-  }
-
   async function standingOf(sportEventParticipantId: string) {
     return getPrisma().sportEventParticipantStanding.findUnique({
       where: { sportEventParticipantId },
@@ -209,9 +194,8 @@ describe('Golf live-score persistence', () => {
     });
   }
 
-  it('writes each round and standing only for the named event, then publishes live_score.persisted', async () => {
+  it('writes each round and standing only for the named event', async () => {
     const { event, sepByKey, otherSepByKey } = await createLiveField('scoped', ['rory', 'tiger']);
-    const { bus, published } = recordingBus();
 
     const persisted = await publishLiveScoreUpdate({
       category: 'GOLF',
@@ -220,7 +204,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'scoped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
         { participantExternalId: 'scoped-tiger', round: 1, strokes: 37, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
       ],
-    }, { prisma: getPrisma(), providerId: PROVIDER, bus: bus as never });
+    }, { prisma: getPrisma(), providerId: PROVIDER });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
     expect(await standingOf(sepByKey.get('rory')!)).toMatchObject({
@@ -236,10 +220,6 @@ describe('Golf live-score persistence', () => {
     expect(await getPrisma().sportEventParticipantRound.count({
       where: { sportEventParticipantId: { in: [...otherSepByKey.values()] } },
     })).toBe(0);
-    expect(published).toEqual([expect.objectContaining({
-      type: 'live_score.persisted',
-      payload: expect.objectContaining({ category: 'GOLF', providerId: PROVIDER, sportEventId: event.id, updatesPersisted: 2 }),
-    })]);
   });
 
   it('records non-finishers as WITHDRAWN and a missed cut as ELIMINATED on the cross-sport standing', async () => {
@@ -253,7 +233,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'status-dsq', round: 1, strokes: 75, scoreToPar: 3, status: 'DSQ' },
         { participantExternalId: 'status-cut', round: 1, strokes: 78, scoreToPar: 6, status: 'MISSED_CUT' },
       ],
-    }, { prisma: getPrisma(), providerId: PROVIDER, bus: recordingBus().bus as never });
+    }, { prisma: getPrisma(), providerId: PROVIDER });
 
     expect((await standingOf(sepByKey.get('dnf')!))?.status).toBe('WITHDRAWN');
     expect((await standingOf(sepByKey.get('dsq')!))?.status).toBe('WITHDRAWN');
@@ -267,7 +247,7 @@ describe('Golf live-score persistence', () => {
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'idempotent-rory', round: 1, strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }],
     };
-    const deps = { prisma: getPrisma(), providerId: PROVIDER, bus: recordingBus().bus as never };
+    const deps = { prisma: getPrisma(), providerId: PROVIDER };
 
     await publishLiveScoreUpdate(result, deps);
     const second = await publishLiveScoreUpdate(result, deps);
@@ -287,20 +267,6 @@ describe('Golf live-score persistence', () => {
     ]));
   });
 
-  it('keeps the persisted rows and surfaces the error when publishing live_score.persisted fails', async () => {
-    const { event, sepByKey } = await createLiveField('publish-fails', ['rory']);
-    const { bus, published } = recordingBus({ fail: true });
-
-    await expect(publishLiveScoreUpdate({
-      category: 'GOLF',
-      externalEventId: event.externalId,
-      rounds: [{ participantExternalId: 'publish-fails-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'IN_PROGRESS' }],
-    }, { prisma: getPrisma(), providerId: PROVIDER, bus: bus as never })).rejects.toThrow('bus unavailable');
-
-    expect(published).toHaveLength(1);
-    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: sepByKey.get('rory') } })).toBe(1);
-  });
-
   it('skips a round whose provider id maps to no participant, and persists the rest', async () => {
     const { event } = await createLiveField('unmapped', ['rory']);
 
@@ -311,7 +277,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'unmapped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
         { participantExternalId: 'nobody-we-know', round: 1, strokes: 80, scoreToPar: 8, status: 'COMPLETED' },
       ],
-    }, { prisma: getPrisma(), providerId: PROVIDER, bus: recordingBus().bus as never });
+    }, { prisma: getPrisma(), providerId: PROVIDER });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
     expect(await getPrisma().sportEventParticipantRound.count({

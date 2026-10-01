@@ -5,7 +5,7 @@
  * On origin/main, legacy golf adapters synthesized per-round golf strokes from
  * `(par + scoreToPar)` using a notional par of 72 because the
  * `GolfRoundUpdate` schema required `strokes: number`. This produced
- * fabricated strokes data that the bus boundary then upserted into
+ * fabricated strokes data that `publishLiveScoreUpdate` then upserted into
  * `SportEventParticipantGolfRound` rows. These assertions fail against
  * origin/main and pass on this branch, where:
  *   - the schema accepts `strokes: number | null`;

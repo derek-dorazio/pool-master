@@ -46,22 +46,6 @@ describe('shared user delete cascade (#202)', () => {
         expiresAt: new Date(Date.now() + 60_000),
       },
     });
-    await prisma.notification.create({
-      data: {
-        userId: user.id,
-        eventType: 'TEST',
-        title: 'Cascade test',
-        body: 'Should not survive the delete',
-      },
-    });
-    await prisma.consentRecord.create({
-      data: {
-        userId: user.id,
-        consentType: 'TERMS',
-        granted: true,
-        version: '1',
-      },
-    });
     const league = await prisma.league.create({
       data: {
         leagueCode: `${LEAGUE_CODE_PREFIX}1`,
@@ -85,8 +69,6 @@ describe('shared user delete cascade (#202)', () => {
 
     await expect(prisma.user.findUnique({ where: { id: user.id } })).resolves.toBeNull();
     await expect(prisma.refreshToken.count({ where: { userId: user.id } })).resolves.toBe(0);
-    await expect(prisma.notification.count({ where: { userId: user.id } })).resolves.toBe(0);
-    await expect(prisma.consentRecord.count({ where: { userId: user.id } })).resolves.toBe(0);
     await expect(
       prisma.leagueInvitation.count({ where: { invitedBy: user.id } }),
     ).resolves.toBe(0);

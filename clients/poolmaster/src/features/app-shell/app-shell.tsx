@@ -1,4 +1,3 @@
-import { Inbox } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import {
   Outlet,
@@ -13,7 +12,6 @@ import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
 import { formatUserName } from "@/features/account/user-name";
 import {
-  AppIconActionButton,
   AppNavigationMenu,
   type AppNavigationItem,
 } from "@/features/shared/ui";
@@ -287,14 +285,6 @@ export function AppShell() {
           <div className="flex flex-wrap items-center gap-3">
             {auth.isAuthenticated ? (
               <>
-                <AppIconActionButton
-                  className="border-inverse-border bg-on-inverse-subtle text-on-inverse-muted"
-                  data-testid="app-shell-notifications"
-                  disabled
-                  icon={<Inbox aria-hidden size={18} />}
-                  label="Notifications"
-                  title="Notifications are not available yet."
-                />
                 <AccountMenu
                   isRootAdmin={auth.isRootAdmin}
                   profilePath={

@@ -556,24 +556,6 @@ export const WeekDay = {
 } as const;
 export type WeekDay = (typeof WeekDay)[keyof typeof WeekDay];
 
-// --- Notification Delivery ---
-
-export const DeliveryStatus = {
-  SENT: 'SENT',
-  SUPPRESSED: 'SUPPRESSED',
-  FAILED: 'FAILED',
-  PENDING: 'PENDING',
-} as const;
-export type DeliveryStatus = (typeof DeliveryStatus)[keyof typeof DeliveryStatus];
-
-export const NotificationChannel = {
-  EMAIL: 'EMAIL',
-  PUSH: 'PUSH',
-  SMS: 'SMS',
-  IN_APP: 'IN_APP',
-} as const;
-export type NotificationChannel = (typeof NotificationChannel)[keyof typeof NotificationChannel];
-
 // --- Draft ---
 
 export const AutoPickPolicy = {

@@ -6,7 +6,7 @@
  *
  * `getLiveScores` returns the typed `LiveScoreResult` discriminated union per
  * plans/117 §10.2 (pool-master-rop.78.3). Each adapter implements one
- * category; the bus boundary in `publishLiveScoreUpdate` validates the
+ * category; `publishLiveScoreUpdate` validates the
  * result with Zod and persists per-category detail rows. Adapters whose
  * category typing isn't wired yet throw `LiveScoreUnsupportedError`.
  */

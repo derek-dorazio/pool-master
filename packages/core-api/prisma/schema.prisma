@@ -347,7 +347,6 @@ model User {
   invitationsAccepted           LeagueInvitation[]     @relation("AcceptedBy")
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
-  notifications                 Notification[]
 
   refreshTokens RefreshToken[]
 
@@ -1023,23 +1022,6 @@ model SportEvent {
   @@map("sport_events")
 }
 
-model ContestTimingPolicy {
-  id            String   @id @default(uuid()) @db.Uuid
-  sport         String   @db.VarChar(50)
-  eventType     String?  @map("event_type") @db.VarChar(100)
-  contestFormat String?  @map("contest_type") @db.VarChar(100)
-  releaseRule   String   @map("release_rule") @db.VarChar(255)
-  fieldLockRule String   @map("field_lock_rule") @db.VarChar(255)
-  isDefault     Boolean  @default(false) @map("is_default")
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@unique([sport, eventType, contestFormat])
-  @@index([sport, active])
-  @@map("contest_timing_policies")
-}
-
 model SportEventParticipant {
   id             String                     @id @default(uuid()) @db.Uuid
   sportEventId   String                     @map("sport_event_id") @db.Uuid
@@ -1233,52 +1215,6 @@ model ProviderSyncRun {
   @@index([sport, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
-}
-
-// =============================================================================
-// Notifications (Plan 09)
-// =============================================================================
-
-model Notification {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @map("user_id") @db.Uuid
-  eventType    String    @map("event_type") @db.VarChar(100)
-  title        String    @db.VarChar(500)
-  body         String
-  imageUrl     String?   @map("image_url")
-  actionScreen String?   @map("action_screen") @db.VarChar(100)
-  actionParams Json      @default("{}") @map("action_params")
-  read         Boolean   @default(false)
-  readAt       DateTime? @map("read_at") @db.Timestamptz
-  dismissed    Boolean   @default(false)
-  groupKey     String?   @map("group_key") @db.VarChar(255)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId, read, createdAt(sort: Desc)])
-  @@index([userId, groupKey])
-  @@map("notifications")
-}
-
-// =============================================================================
-// User Locale Preferences
-// =============================================================================
-
-model ConsentRecord {
-  id                  String   @id @default(uuid()) @db.Uuid
-  userId              String   @map("user_id") @db.Uuid
-  consentType         String   @map("consent_type") @db.VarChar(50)
-  granted             Boolean
-  version             String   @db.VarChar(20)
-  minimumAgeThreshold Int?     @map("minimum_age_threshold")
-  ageAffirmed         Boolean? @map("age_affirmed")
-  ipAddress           String?  @map("ip_address") @db.VarChar(45)
-  userAgent           String?  @map("user_agent")
-  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  @@index([userId, consentType])
-  @@map("consent_records")
 }
 
 // =============================================================================
