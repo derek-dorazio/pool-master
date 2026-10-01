@@ -352,14 +352,66 @@ Residue is expected and accepted: participants have no delete operation
 removed, and a retried journey leaves a second set behind. Both are
 identifiable by `runId`, and `plans/129`'s QA reset is the backstop.
 
-### CI
+### Where the suite runs: pre-merge against a local stack, post-deploy as a smoke
 
-The `poolmaster-browser-e2e` job keeps `needs: deploy-qa`: phase 1's
-argument for a looser dependency was that the ping test never touches the
-database, and that is no longer true. The job stays `main`-push only, so a
-run's worth of data arrives per merge, not per push. The two admin-credential
-secrets go on the job's `env`, the trace/screenshot artifact upload stays as
-the debugging story, and the summary line gets rewritten to name the acts.
+Nothing in these specs is QA-specific. `baseURL` comes from
+`POOLMASTER_E2E_BASE_URL`, and the client resolves its API base from
+`window.location.origin` whenever `VITE_API_BASE_URL` is unset — which is
+always, in every build this repo produces (it exists only as a commented
+line in `.env.example` for local work). So the same bundle calls the same
+`/api` paths wherever it is served, as long as something routes `/api` to
+the API: CloudFront in QA, a dev-server or preview proxy locally.
+
+That makes the suite runnable **before** any deploy, as an ordinary PR
+check: a Postgres service container, migrate, boot core-api, serve the
+built client, seed the job's own root admin, run. No AWS, no secrets, no
+deploy. And that is where the **journey** belongs:
+
+- A throwaway database per job removes the data problem outright. No
+  accumulating leagues in QA's admin lists, no retry colliding with its own
+  first attempt, no teardown debt. Teardown stays in the spec, but it stops
+  being load-bearing.
+- The job seeds its own admin, so the `POOLMASTER_E2E_ADMIN_*` secrets stop
+  gating the heavy path.
+- It fails before merge. A red post-deploy journey means the bad artifact is
+  already in QA — which is exactly the failure phase 1's evidence found
+  (ten unnoticed failed QA deploys, #191).
+
+The post-deploy run is not redundant, because the two runs prove different
+things. Pre-merge against a local stack proves **the code is coherent end to
+end**: bundle, API, schema and SDK contract agree. Post-deploy against QA
+proves **the environment is wired**: CloudFront serving the right release
+prefix, `/api` path-routing to ECS, the ALB, the migrated QA schema, the
+task's env and secrets, cookies over a real HTTPS origin. None of that
+exists locally, and all of it has broken here before.
+
+So:
+
+- **Pre-merge job (new):** the journey plus the guards spec, local stack,
+  throwaway database, every PR and every main push.
+- **Post-deploy job (`poolmaster-browser-e2e`, existing):** a thin smoke —
+  the ping, the guards spec, and an admin sign-in that reaches `/manage` and
+  logs out. Keeps `needs: deploy-qa`, keeps the admin secrets, leaves
+  essentially nothing behind.
+
+One spec set selected by tag or Playwright project, never two copies of the
+same journey.
+
+Two things the local target must get right, both verified against the
+configs on main:
+
+- **Serve the production build, not the dev server.** `vite dev` is not the
+  artifact: different module graph, no minification, no code splitting. The
+  representative target is `vite build` plus a static serve. But
+  `vite.config.ts` carries a `server.proxy` for `/api` and **no `preview`
+  block**, so a `vite preview` run would not proxy `/api` at all — adding a
+  `preview.proxy` mirroring the dev one (or serving the build behind a small
+  proxy) is part of wiring this up, not an afterthought.
+- **The asset base differs and that is fine.** The deployed bundle is built
+  with `APP_ASSET_BASE=/releases/<sha>/`; a local build defaults to `/`. The
+  release-prefixed asset layout is checked by the deploy job's own curl for
+  `releases/<sha>` in the served HTML, which is the right place for it. The
+  pre-merge run does not cover it, and should not pretend to.
 
 ### Open questions for the implementer — verify, do not assume
 
