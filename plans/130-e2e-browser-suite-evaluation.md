@@ -412,6 +412,32 @@ The guards spec earns a place in both runs rather than only pre-merge: its
 error-document config rewriting SPA routes to `index.html`, a deploy-only
 failure mode no local run can see. Same assertion, different thing proven.
 
+**Tags select tests, not steps — so the post-deploy set drives the act
+structure.** Anything that must run after a deploy is its own `test()`, not a
+`test.step()` inside a longer one; `--grep` cannot reach into a test and run
+one of its steps. The two shapes that follow from that are both wrong: tagging
+a whole multi-act test `@smoke` would have the post-deploy run register users
+and create leagues in QA, and demoting the shared act to a standalone test
+only would delete the role switch inside one browser session that the probe
+exists to prove.
+
+What works is a standalone tagged test and the longer untagged one calling
+**one shared helper**, in **separate spec files**. Separate files because the
+post-deploy smoke outlives the probe: this plan leaves open whether the
+journey absorbs the probe and deletes it, and the one spec that has to
+survive that should not live in the file most likely to be removed.
+
+The shared act therefore runs twice in a pre-merge run, and that is coverage
+rather than waste: it is the only place the standalone smoke test's own
+fixtures, tag and assertions get exercised before a deploy, where otherwise a
+bug in the test itself would first surface as a deploy failure.
+
+A sign-in-and-log-out smoke **creates no domain data**, which is the accurate
+claim and the reason it is the right post-deploy shape — not that it is
+read-only. Sign-in issues a refresh token and logout revokes that one token
+(`auth-service.ts`), so each post-deploy run leaves a revoked token row
+behind, and concurrent sessions for the same admin stay safe.
+
 **The rule that keeps a dual-run spec honest:** it may assert the presence
 of what the run itself created, never the absence or the count of what it
 did not. "Both new users appear in `/manage/users`" holds everywhere;
