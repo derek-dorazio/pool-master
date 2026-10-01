@@ -2644,13 +2644,26 @@ night before" — that is the design to start from, and a seed is the part that 
 nothing wrote. Every symbol had a caller, so no dead-code search finds it; only asking *what
 writes this table* does.
 
-### `LeagueEvent` stays, pending `plans/127`
+### `LeagueEvent` stays — the ticket called it dead, and checking consumers showed it is not
 
-`LeagueEvent` has no code reader, but `plans/127` (in progress, #99) designs the
-`PREVIOUS_WINNER` category on it through a `LeagueEventPreviousWinner` table — the reason #262
-itself said to check before deleting. The ruling did not mention that plan, so the repo owner
-held it out: the table, its port and adapter, `SportEvent.leagueEventId` and
-`SportEventDto.leagueEventId` are unchanged. Whether it stays is `plans/127`'s question.
+#262 described `LeagueEvent` as dead, and the ruling was to delete it. Checking who references
+it, rather than whether anything reads it back, found four things:
+
+- **A live writer.** `SportEventService.createEvent` and `createEventFromProviderEvent` both
+  call `leagueEvents.findOrCreate(...)` and stamp `leagueEventId` on the event they create.
+  Dropping the table would have broken event creation immediately.
+- **A published field.** `SportEventDto.leagueEventId` — "the recurring tournament this is one
+  year's instance of".
+- **A test of the semantics.** A unit test asserts that two events of one tournament in a league
+  share one `LeagueEvent` — the recurring-tournament grouping working.
+- **A planned consumer.** `plans/127` (in progress, #99) designs `PREVIOUS_WINNER` on it through
+  a `LeagueEventPreviousWinner` table, so a tournament's winners need no copying forward between
+  years.
+
+It was kept on that evidence: the table, its port and adapter, `SportEvent.leagueEventId` and the
+DTO field are unchanged. The ticket's error is the shape that recurred through #201 — a table
+judged dead from missing readers where the sweep looked, without asking who writes and references
+it — and the check that caught it is the one to keep doing.
 
 ### Found, not acted on
 
