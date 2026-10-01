@@ -498,7 +498,7 @@ release.
 - **Credentials:** `POOLMASTER_E2E_ADMIN_PASSWORD` (required, no default — a missing value fails the spec immediately) and `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaults to the admin username). Users the suite registers get `@e2e.invalid` addresses.
 - **Concurrency:** `fullyParallel: true`. No spec shares data with another; every name a run creates carries a run id computed inside the test body.
 - **Retries:** 1 in CI, 0 locally.
-- **Artifacts on failure:** trace, screenshot, video. The post-deploy run turns tracing off, because a trace records `fill()` values and request bodies and that run uses the real QA admin password.
+- **Artifacts on failure:** trace, screenshot, video, in both jobs. A trace records every `fill()` value and request and response body, so the config's `globalTeardown` (`e2e/redact-artifacts.ts`) scrubs usernames, email addresses, passwords and session tokens out of everything in `test-results/` before the HTML reporter copies it; a trace it cannot rewrite is deleted rather than kept. It cannot scrub pixels: screenshots, video and the trace's filmstrip still show what was typed into the identifier field (password fields render masked).
 - **Local commands:**
   - `npm run test:poolmaster:browser-e2e` — run every spec
   - `npm run test:poolmaster:browser-e2e:smoke` — run only `@smoke`

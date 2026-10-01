@@ -16,6 +16,10 @@ export type AdminCredentials = {
   password: string;
 };
 
+export function readAdminIdentifier(): string {
+  return process.env[ADMIN_IDENTIFIER_ENV] || DEFAULT_ADMIN_IDENTIFIER;
+}
+
 /**
  * Read at the start of a test, not at module load, so `playwright test --list` still works
  * without secrets. A missing password fails here, naming the secret, rather than as a
@@ -30,7 +34,7 @@ export function readAdminCredentials(): AdminCredentials {
   }
 
   return {
-    identifier: process.env[ADMIN_IDENTIFIER_ENV] || DEFAULT_ADMIN_IDENTIFIER,
+    identifier: readAdminIdentifier(),
     password,
   };
 }

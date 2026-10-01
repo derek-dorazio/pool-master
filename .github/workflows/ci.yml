@@ -1241,11 +1241,11 @@ jobs:
       - name: Install Playwright Chromium
         run: cd clients/poolmaster && npx playwright install --with-deps chromium
       # Only the @smoke specs: the deployed environment gets nothing that
-      # writes domain data. Tracing is off here because a trace records every
-      # fill() value and request body, and this run signs in with the real QA
-      # admin password; screenshots and video mask the password field.
+      # writes domain data. Traces stay on; the config's globalTeardown
+      # (e2e/redact-artifacts.ts) scrubs credentials and session tokens from
+      # them before the report is built and this job uploads it.
       - name: Run PoolMaster browser E2E smoke
-        run: cd clients/poolmaster && npm run test:e2e:smoke -- --trace off
+        run: npm run test:poolmaster:browser-e2e:smoke
       - name: Upload PoolMaster browser E2E artifacts
         if: always()
         uses: actions/upload-artifact@v5

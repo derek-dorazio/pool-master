@@ -6,6 +6,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { GENERATED_PASSWORD_PREFIX } from './redact-artifacts';
 
 /**
  * #278 — the phase 2 plumbing probe (plans/130). Proves the mechanisms the journey suite
@@ -73,8 +74,9 @@ test('a fresh user registers and creates a league after an admin session in the 
     await page.getByTestId('auth-register-last-name').fill(`Probe ${runId}`);
     await page.getByTestId('auth-register-email').fill(created.email);
     await page.getByTestId('auth-register-username').fill(created.username);
-    // Never needed again: teardown deletes this user with the admin token.
-    const userPassword = randomBytes(12).toString('hex');
+    // Never needed again: teardown deletes this user with the admin token. The prefix is
+    // what lets redact-artifacts.ts find it in a trace.
+    const userPassword = `${GENERATED_PASSWORD_PREFIX}${randomBytes(12).toString('hex')}`;
     await page.getByTestId('auth-register-password').fill(userPassword);
     await page.getByTestId('auth-register-confirm-password').fill(userPassword);
     await page.getByTestId('auth-register-submit').click();
