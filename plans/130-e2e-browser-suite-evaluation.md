@@ -267,8 +267,19 @@ product bug, which is the only reason to have it.
 
 ### Shape: three specs, one of them a journey
 
-`ping.e2e.ts` stays as-is — a deploy-reachability check whose failure
-message is unambiguous.
+`ping.e2e.ts` is on its way out. It asserts that `goto('/')` renders
+`auth-login-identifier`, which is the first action of the post-deploy smoke,
+so the smoke passing means ping could not have failed. Its one remaining
+distinction is needing no credentials, which buys a triage split — ping red
+means the deploy is broken, ping green with the smoke red means auth or
+config — and `guards.e2e.ts` below erases even that, being credential-free
+and covering strictly more. So ping keeps running, tagged, until guards
+lands, and is deleted in the slice that adds guards.
+
+Note what introducing `--grep @smoke` does to it: an untagged spec stops
+running post-deploy. Preserving ping therefore means **tagging** it, not
+leaving it alone; left untagged it would have dropped out of the only job it
+ever ran in, without anyone deciding to.
 
 **`guards.e2e.ts`** — unauthenticated surface, no data at all, fast, fully
 parallel: a protected route redirects to sign-in, bad credentials surface an
