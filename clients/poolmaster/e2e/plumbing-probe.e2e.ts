@@ -13,8 +13,10 @@ import { GENERATED_PASSWORD_PREFIX } from './redact-artifacts';
  * rests on, and nothing about the product: a per-run id that keeps every created name
  * unique, a brand-new user registering and writing through the UI, a role switch inside one
  * browser session, and API teardown with the admin token. Pre-merge only; it writes domain
- * data, so it is deliberately untagged and never runs against QA.
+ * data, so it is untagged and refuses any base URL that is not a local stack.
  */
+
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1']);
 
 type RunData = {
   runId: string;
@@ -25,10 +27,11 @@ type RunData = {
 };
 
 let admin: AdminCredentials | undefined;
-let run: RunData | undefined;
+// Every attempt this worker made, not just the last: each one is torn down.
+const runs: RunData[] = [];
 
 test.afterAll(async ({ playwright }, testInfo) => {
-  if (!admin || !run) {
+  if (!admin || runs.length === 0) {
     return;
   }
 
@@ -36,24 +39,37 @@ test.afterAll(async ({ playwright }, testInfo) => {
     baseURL: testInfo.project.use.baseURL,
   });
   try {
-    await removeRunData(api, admin, run);
-  } catch (error) {
-    // Teardown is not the thing under test: report what was left, never fail the test.
-    console.error(`[teardown ${run.runId}] aborted, run data may remain:`, error);
+    for (const run of runs) {
+      try {
+        await removeRunData(api, admin, run);
+      } catch (error) {
+        // Teardown is not the thing under test: report what was left, never fail the test.
+        console.error(`[teardown ${run.runId}] aborted, run data may remain:`, error);
+      }
+    }
   } finally {
     await api.dispose();
   }
 });
 
-test('a fresh user registers and creates a league after an admin session in the same browser', async ({ page }) => {
+test('a fresh user registers and creates a league after an admin session in the same browser', async ({ page }, testInfo) => {
   test.setTimeout(90_000);
+  // playwright.config.ts defaults baseURL to QA. This spec registers users and creates
+  // leagues, so it refuses to start anywhere but a local stack.
+  const baseURL = testInfo.project.use.baseURL ?? '';
+  const host = URL.canParse(baseURL) ? new URL(baseURL).hostname : '';
+  if (!LOCAL_HOSTS.has(host)) {
+    throw new Error(
+      `The plumbing probe writes data and runs only against a local stack (localhost or 127.0.0.1); refusing base URL "${baseURL}". Set POOLMASTER_E2E_BASE_URL to the local stack.`,
+    );
+  }
   const credentials = readAdminCredentials();
   admin = credentials;
 
   // Inside the test body, not at module load: a retry re-imports this module in a new
   // worker and must get its own id rather than collide with its first attempt.
   const runId = `${Date.now().toString(36)}${randomBytes(2).toString('hex')}`;
-  run = {
+  const created: RunData = {
     runId,
     username: `e2e-c-${runId}`,
     // RFC 2606 reserves .invalid, so nothing sent here can reach a real mailbox.
@@ -61,7 +77,7 @@ test('a fresh user registers and creates a league after an admin session in the 
     leagueName: `E2E Probe ${runId}`,
     leagueCode: `E2E${runId.toUpperCase()}`,
   };
-  const created = run;
+  runs.push(created);
   console.log(`[probe ${runId}] user=${created.username} league=${created.leagueCode}`);
 
   await test.step('act one: root admin signs in, reaches /manage, logs out', async () => {

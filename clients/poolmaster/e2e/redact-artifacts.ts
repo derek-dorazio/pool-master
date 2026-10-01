@@ -15,7 +15,9 @@ import { readAdminIdentifier } from './helpers/admin-session';
  * reporter copies them into its report, so both get the scrubbed copy. It runs locally and in
  * both CI jobs alike.
  *
- * Fails closed: a trace that cannot be rewritten is deleted rather than left unredacted.
+ * It is a denylist: it removes the shapes listed in buildRules() and nothing else, so a new
+ * kind of credential needs a new rule. Each file is redacted as text, kept as recognised
+ * media, or deleted; a trace that cannot be rewritten is deleted rather than left unredacted.
  */
 
 /** Every generated password starts with this so it is findable in a trace. */
@@ -23,10 +25,23 @@ export const GENERATED_PASSWORD_PREFIX = 'e2e-pw-';
 
 const REDACTED = '[REDACTED]';
 
-const BINARY_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.webm', '.mp4',
-  '.woff', '.woff2', '.ttf', '.otf', '.eot',
-]);
+// Binary formats a run legitimately produces: screenshots, the trace's screencast frames,
+// video and snapshot fonts. Recognised by signature, not extension, because a trace's
+// resources/ entries often have none. They cannot carry text, so they are kept as-is.
+const MEDIA_SIGNATURES: Array<{ offset: number; bytes: number[] }> = [
+  { offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47] }, // PNG
+  { offset: 0, bytes: [0xff, 0xd8, 0xff] }, // JPEG
+  { offset: 0, bytes: [0x47, 0x49, 0x46, 0x38] }, // GIF
+  { offset: 8, bytes: [0x57, 0x45, 0x42, 0x50] }, // WEBP (inside RIFF)
+  { offset: 0, bytes: [0x1a, 0x45, 0xdf, 0xa3] }, // WebM / Matroska
+  { offset: 4, bytes: [0x66, 0x74, 0x79, 0x70] }, // MP4 (ftyp)
+  { offset: 0, bytes: [0x77, 0x4f, 0x46, 0x46] }, // WOFF
+  { offset: 0, bytes: [0x77, 0x4f, 0x46, 0x32] }, // WOFF2
+  { offset: 0, bytes: [0x00, 0x01, 0x00, 0x00] }, // TrueType
+  { offset: 0, bytes: [0x4f, 0x54, 0x54, 0x4f] }, // OpenType
+];
+
+class UnredactableFileError extends Error {}
 
 const SENSITIVE_JSON_KEYS = [
   'password', 'confirmPassword', 'temporaryPassword', 'identifier', 'username', 'email',
@@ -66,32 +81,70 @@ function buildRules(): Array<[RegExp, string]> {
   return rules;
 }
 
-function redactText(text: string, rules: Array<[RegExp, string]>): string {
-  return rules.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text);
+type Redact = (text: string) => string;
+
+/**
+ * `keep` holds names that are references, not data: a trace's own entry names, such as
+ * screencast frames `page@<id>-<ts>.jpeg` and sources `src@<sha1>.txt`, which the email
+ * rule would otherwise match, cutting the trace off from its own frames. They are swapped
+ * out before the rules run and restored after.
+ */
+function textRedactor(rules: Array<[RegExp, string]>, keep: string[] = []): Redact {
+  const placeholder = (index: number) => `\u0001KEEP${index}\u0001`;
+  return (text) => {
+    let current = keep.reduce((acc, name, index) => acc.split(name).join(placeholder(index)), text);
+    current = rules.reduce((acc, [pattern, replacement]) => acc.replace(pattern, replacement), current);
+    return keep.reduce((acc, name, index) => acc.split(placeholder(index)).join(name), current);
+  };
 }
 
-function redactFile(filePath: string, rules: Array<[RegExp, string]>): void {
-  if (BINARY_EXTENSIONS.has(path.extname(filePath).toLowerCase())) {
-    return;
-  }
-  const buffer = fs.readFileSync(filePath);
+function isMedia(buffer: Buffer): boolean {
+  return MEDIA_SIGNATURES.some(({ offset, bytes }) =>
+    buffer.length >= offset + bytes.length && bytes.every((byte, index) => buffer[offset + index] === byte),
+  );
+}
+
+function decodeText(buffer: Buffer): string | null {
   if (buffer.includes(0)) {
+    return null;
+  }
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every file takes exactly one of three paths: text is redacted, recognised media is kept,
+ * and anything else is unredactable — the caller deletes the artifact rather than keep it.
+ */
+function redactFile(filePath: string, redact: Redact): void {
+  const buffer = fs.readFileSync(filePath);
+  const text = decodeText(buffer);
+  if (text !== null) {
+    const redacted = redact(text);
+    if (redacted !== text) {
+      fs.writeFileSync(filePath, redacted);
+    }
     return;
   }
-  const original = buffer.toString('utf8');
-  const redacted = redactText(original, rules);
-  if (redacted !== original) {
-    fs.writeFileSync(filePath, redacted);
+  if (isMedia(buffer)) {
+    return;
   }
+  throw new UnredactableFileError(`neither text nor a recognised media format: ${filePath}`);
 }
 
 function redactZip(zipPath: string, rules: Array<[RegExp, string]>): void {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-redact-'));
   try {
     execFileSync('unzip', ['-q', '-o', zipPath, '-d', workDir]);
-    walk(workDir, (file) => redactFile(file, rules));
+    const entryNames: string[] = [];
+    walk(workDir, (file) => entryNames.push(path.basename(file)));
+    const redact = textRedactor(rules, entryNames);
+    walk(workDir, (file) => redactFile(file, redact));
     fs.rmSync(zipPath);
-    execFileSync('zip', ['-q', '-r', '-X', zipPath, '.'], { cwd: workDir });
+    execFileSync('zip', ['-q', '-r', '-X', '-D', zipPath, '.'], { cwd: workDir });
   } catch (error) {
     fs.rmSync(zipPath, { force: true });
     console.error(`[redact] could not redact ${zipPath}; deleted it rather than leave it unredacted:`, error);
@@ -113,6 +166,7 @@ function walk(dir: string, visit: (file: string) => void): void {
 
 export default function redactArtifacts(config: FullConfig): void {
   const rules = buildRules();
+  const redact = textRedactor(rules);
   const outputDirs = new Set(config.projects.map((project) => path.resolve(project.outputDir)));
   for (const dir of outputDirs) {
     if (!fs.existsSync(dir)) {
@@ -121,8 +175,13 @@ export default function redactArtifacts(config: FullConfig): void {
     walk(dir, (file) => {
       if (file.endsWith('.zip')) {
         redactZip(file, rules);
-      } else {
-        redactFile(file, rules);
+        return;
+      }
+      try {
+        redactFile(file, redact);
+      } catch (error) {
+        fs.rmSync(file, { force: true });
+        console.error(`[redact] deleted ${file} rather than keep it unredacted:`, error);
       }
     });
   }
