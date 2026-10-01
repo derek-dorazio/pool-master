@@ -1,0 +1,37 @@
+# Throwaway proof for #281; removed before the PR opens. Masks a fake account id the
+# same way aws-actions/configure-aws-credentials masks the real one (core.setSecret,
+# i.e. ::add-mask::), then passes a task definition between jobs in both forms.
+name: scratch-281-output-masking
+
+on:
+  push:
+    branches: [claude/nifty-clarke-8iprde]
+    paths: ['.github/workflows/scratch-281-output-masking.yml']
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    outputs:
+      as_arn: ${{ steps.p.outputs.as_arn }}
+      as_family_revision: ${{ steps.p.outputs.as_family_revision }}
+    steps:
+      - id: p
+        run: |
+          ACCOUNT_ID=123456789012
+          echo "::add-mask::${ACCOUNT_ID}"
+          ARN="arn:aws:ecs:us-east-2:${ACCOUNT_ID}:task-definition/poolmaster-qa-core-api:359"
+          echo "as_arn=${ARN}" >> "$GITHUB_OUTPUT"
+          echo "as_family_revision=${ARN##*/}" >> "$GITHUB_OUTPUT"
+
+  consume:
+    needs: produce
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          AS_ARN: ${{ needs.produce.outputs.as_arn }}
+          AS_FAMILY_REVISION: ${{ needs.produce.outputs.as_family_revision }}
+        run: |
+          echo "as_arn received: '${AS_ARN}'"
+          echo "as_family_revision received: '${AS_FAMILY_REVISION}'"
+          test -z "$AS_ARN"
+          test "$AS_FAMILY_REVISION" = "poolmaster-qa-core-api:359"
