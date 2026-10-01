@@ -262,7 +262,16 @@ resource "aws_ecr_repository" "services" {
   tags = { Service = each.key }
 }
 
-# Lifecycle policy — keep last 10 images, expire untagged after 7 days
+# Lifecycle policy — keep last 100 tagged images, expire untagged after 7 days.
+#
+# #281 — task definitions pin images by digest, so an expired image makes every task
+# definition that references it unlaunchable, and rollback to it impossible. At "keep last
+# 10" with roughly nine main pushes a day (core-api went from revision 332 to 359 in about
+# three days), that window was about a day: a service left on an older revision lost its
+# image and could not even restart. 100 keeps roughly ten days of rollback. Count-based,
+# not age-based, so the newest images are never expired however quiet the repo gets.
+# Unpinning (referencing by tag) would not help: the repositories are IMMUTABLE, so a tag
+# is already as fixed as a digest, and expiry deletes the image whichever way it is named.
 resource "aws_ecr_lifecycle_policy" "cleanup" {
   for_each   = aws_ecr_repository.services
   repository = each.value.name
@@ -282,12 +291,12 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
       },
       {
         rulePriority = 2
-        description  = "Keep last 10 tagged images"
+        description  = "Keep last 100 tagged images"
         selection = {
           tagStatus      = "tagged"
           tagPatternList = ["*"]
           countType      = "imageCountMoreThan"
-          countNumber    = 10
+          countNumber    = 100
         }
         action = { type = "expire" }
       }
@@ -737,6 +746,21 @@ resource "aws_ecs_service" "core_api" {
   task_definition = aws_ecs_task_definition.core_api.arn
   desired_count   = var.environment == "prod" ? 2 : 1
   launch_type     = "FARGATE"
+
+  # #281 — core-api needs tens of seconds to boot Node, connect Prisma and build the
+  # route tree. With the default of 0 the ALB can fail the target before it ever answers,
+  # which crash-loops like an application bug. 120 is the value set live on QA by hand
+  # during recovery; declaring it here keeps the next apply from reverting it to 0.
+  health_check_grace_period_seconds = 120
+
+  # #281 — without the circuit breaker, a deployment that never reaches steady state sits
+  # IN_PROGRESS indefinitely and nothing escalates. With it, ECS fails the deployment and
+  # rolls back to the last working revision. deploy-qa asserts after its wait that the
+  # rollout completed on the new revision, so a rollback still fails the pipeline.
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
