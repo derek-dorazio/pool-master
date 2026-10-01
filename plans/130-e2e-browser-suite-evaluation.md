@@ -187,23 +187,187 @@ passes; if it doesn't, this is the one thing worth knowing.
   completion (not skipped) at least once — this is the real proof, given
   the job hasn't gotten a chance to prove anything for a while.
 
-## Phase 2 — design a real suite together (not designed here)
+## Phase 2 — the journey suite (designed 2026-10-01)
 
-Deliberately thin. Once phase 1 is live and QA is in a saner state (plan
-`pool-master-bwl`'s reset lands), come back and decide together, informed by
-actually watching the ping test run cleanly for a while:
+Phase 1 has been running clean. Phase 2 is now designed, and the three
+questions phase 1 deferred are answered below.
 
-- What does a real browser/deployed-build test need to uniquely prove that
-  the existing RTL component suite and FAPI functional suite structurally
-  can't?
-- If it needs real data (a league, a contest, a draft), how does it get that
-  data without reintroducing shared mutable fixtures — per-run creation via
-  the app's own real APIs (registration, league creation) is the leading
-  candidate, informed by this evaluation's finding that `buildE2EUser`/
-  `buildLeagueSeed`-style per-run fixtures were already half-built and never
-  wired up.
-- Scope: one critical golden-path journey per role, or broader coverage?
+### What a browser test uniquely proves
 
-No slices are cut for this yet — the epic carries a single placeholder
-sub-issue for phase 2 (#84) so the intent isn't lost, with no acceptance
-criteria until that design conversation happens.
+The other two layers are structurally blind to the same three things:
+
+- `test:poolmaster:unit` (RTL) mocks `@/lib/api` — it cannot see a DTO
+  mismatch, an auth-header bug, or a route that 500s.
+- `test:service:functional-api` runs the API in-process against a local
+  Postgres through the generated SDK — no browser, no bundle, no CDN, no
+  cookie/storage behaviour, and never the schema that is actually deployed.
+
+A deployed-build browser test is the only layer where the **shipped
+artifacts agree with each other**: the bundle the CDN serves, the API image
+ECS is running, the migrated QA schema, token refresh across a real origin,
+and the router's guards. That — not business-rule correctness — is what it
+is for. Business rules belong to the layers that can assert them cheaply.
+
+So the suite's assertions stay deliberately shallow: a page landmark
+rendered, a submitted form came back with the thing it created, a created
+row is visible to another role. No exhaustive edge cases, no error-message
+wording, no scoring math — those are already covered where they are cheap.
+
+### How a run gets its data: everything but the root admin
+
+QA is a persistent database, so "starts fresh" cannot mean a reset. It
+means: **every row a run reads by identity was created by that run.**
+
+- Exactly two pre-existing things are read by identity: the **root admin
+  account** and the platform's **contest configuration templates**
+  (`listContestConfigTemplates` — platform configuration, authored through
+  `/manage/content-configuration`, not test data). Everything else — golf
+  tour, season, players, event, field, tiers, commissioner user, league,
+  contest, member user, squad, entry — is created by the run through the
+  app's own UI.
+- Every created name carries a per-run id: a short `runId` computed **inside
+  the test body** (not at module load, so a Playwright retry gets a fresh
+  one) and interpolated into every name, username, email, and league code.
+  No two runs can collide, and anything left behind is identifiable.
+- No fixed league code, no fixed usernames, no shared event. The phase-1
+  failure mode cannot come back, because there is nothing shared to mutate.
+
+Root admin credentials come from the environment, never from a literal in
+the repo: `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaulting to the admin's
+*username*, since the sign-in field accepts username or email, and the
+fixture's address is a personal one that should not spread into more files)
+and `POOLMASTER_E2E_ADMIN_PASSWORD`, which has no default — a spec that
+finds it unset fails immediately with a message naming the secret rather
+than timing out on a login form.
+
+Registered users get `@e2e.invalid` addresses. `.invalid` is reserved by
+RFC 2606 and can never be delivered, so no accidental mail can ever reach a
+real person. Registration itself sends no mail (verified: there is no mailer
+in `auth-service.ts`), and the suite never uses the email invitation path —
+it uses the invite **link**, which is also the only member-join flow a
+browser can complete unaided.
+
+### Shape: three specs, one of them a journey
+
+`ping.e2e.ts` stays as-is — a deploy-reachability check whose failure
+message is unambiguous.
+
+**`guards.e2e.ts`** — unauthenticated surface, no data at all, fast, fully
+parallel: a protected route redirects to sign-in, bad credentials surface an
+error, an unknown invite code renders the invalid-invite state, an unknown
+path renders the not-found page. This covers the router guards, which a
+journey (always authenticated, always on the happy path) structurally
+cannot.
+
+**`golden-journey.e2e.ts`** — one `test()` with a `test.step()` per act, so
+the HTML report reads as a narrative and a failure names the act. One test,
+not four, because the acts share state (ids, codes, the invite URL) and a
+split would either re-create the world per act or need serial mode plus
+module-level state. `test.setTimeout` is raised for this spec only.
+
+### The journey
+
+Each act ends by logging out through the account menu, so the next act
+starts from a genuinely unauthenticated browser rather than a cleared
+storage key.
+
+**Act 1 — root admin builds the catalog.** Sign in. Walk the list pages as
+read checks (`/manage`, `/manage/events`, `/manage/leagues`,
+`/manage/users`, `/manage/golf/tournaments`, `/manage/golf/players`),
+asserting each page's landmark testid and the absence of
+`shared-error-state`. Then create, in order: a golf tour
+(`root-admin-golf-league-list-new`), a season under it
+(`root-admin-golf-season-list-new`), **six** players
+(`root-admin-golf-player-list-new`), and a tournament
+(`/manage/golf/tournaments/new` — season select, name, start date a week
+out, four rounds). Load the field by searching the six run-named players in
+the add-participants modal (its free-text search spans every `Participant`,
+so no league affiliation is needed) and submitting them in one call. On the
+tiers page, place one player in each of the six default tiers with the
+board's own move controls and save.
+
+Six, not twelve, is deliberate: `DEFAULT_TIER_COUNT` is 6 with
+`defaultPickCount: 1` each, so six players fill a six-pick roster exactly
+one per tier. It also halves what a run leaves behind.
+
+**Act 2 — a new commissioner.** Register a fresh user, create a league from
+the welcome page (run-unique name and code), create a contest on act 1's
+event (selected by its run-unique name from the picker, which filters
+nothing and will contain QA's whole golf catalog), roster 6 / counted 4 /
+one entry per team, and confirm it on the league's contest list and board
+with zero entries. Then open the invite panel, generate the join URL, and
+read it out of `league-join-url` — that string is the hand-off to act 3.
+A description edit through `league-open-details` / `league-save-details` is
+a cheap extra write worth keeping.
+
+**Act 3 — a new member.** Open the invite URL unauthenticated, follow
+`invite-create-account` (which carries the invite path through registration
+and returns to it), name the squad in `join-league-team-name`, pick an icon,
+and accept — one flow that covers invite preview, registration,
+acceptance, and squad creation. Then browse to the contest, open the entry
+builder, pick one participant from each of the six tier groups, set the
+tiebreaker, and submit. Assert the entry on the board (`contest-board-entry-*`,
+`contest-board-my-count`) and its six picks on the entry page. Cheap extras:
+rename the entry inline, change a preference on `/my-account`, open the
+league history page.
+
+**Act 4 — scores, and the cross-role read (recommended, droppable).** Sign
+back in as root admin, enter round-1 scores for the six players, transition
+the event to the in-progress status, then open the contest leaderboard and
+assert a scored participant cell renders. This is the one act that reaches
+the scoring path rebuilt in #244–#248, which is exactly why it is worth
+having — and the one act to drop first if it proves flaky, since it depends
+on more admin surface than the rest. Close by confirming the new league
+appears in `/manage/leagues` and both new users in `/manage/users`: the
+cheapest possible proof that one role's writes are visible to another.
+
+### Teardown
+
+`test.afterAll` deletes what the run created, through the API with the admin
+token (teardown is not the thing under test, so it does not go through the
+UI): league first, then contest-free event, season, tour, and the two users.
+It is best-effort — a teardown failure logs what it could not remove and
+never fails the test.
+
+Residue is expected and accepted: participants have no delete operation
+(only `updateParticipant`), so the six players are inactivated rather than
+removed, and a retried journey leaves a second set behind. Both are
+identifiable by `runId`, and `plans/129`'s QA reset is the backstop.
+
+### CI
+
+The `poolmaster-browser-e2e` job keeps `needs: deploy-qa`: phase 1's
+argument for a looser dependency was that the ping test never touches the
+database, and that is no longer true. The job stays `main`-push only, so a
+run's worth of data arrives per merge, not per push. The two admin-credential
+secrets go on the job's `env`, the trace/screenshot artifact upload stays as
+the debugging story, and the summary line gets rewritten to name the acts.
+
+### Open questions for the implementer — verify, do not assume
+
+Every item here is something this design read from a component or a service
+but did not execute. Read the component and run the flow; a wrong guess here
+is the whole cost of the slice.
+
+- The exact field set of each creation form (tour keyword, season tour/year,
+  player create, tournament release/lock inputs) and of the league code
+  validator — names and constraints come from the components, not from here.
+- Whether the tier board's `root-admin-golf-tier-move-*` control is a menu
+  needing a target or a pair of arrows, and whether a freshly added
+  participant starts unassigned.
+- Whether the contest form's template auto-selection fires reliably, and
+  what it does when QA has no templates — the spec should fail loudly and
+  legibly in that case rather than mid-form.
+- Whether `deleteEvent` refuses while a contest references the event, which
+  fixes the teardown order.
+- Act 4's score-entry surface has thinner testid coverage than the rest.
+  Adding the two or three testids it needs is in scope and is the right fix
+  (`plans/137` sanctions `data-testid` for Playwright); text selectors are
+  not.
+
+### Explicitly out of scope
+
+Email-sending flows (league email invitations, squad-owner invitations),
+provider sync, contest settlement and payouts, and any assertion on scoring
+arithmetic. The first group cannot be completed by a browser; the rest are
+covered where they are cheap to cover.
