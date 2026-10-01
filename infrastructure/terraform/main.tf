@@ -775,6 +775,14 @@ resource "aws_ecs_service" "core_api" {
   }
 
   depends_on = [aws_lb_listener.http]
+
+  # #281 — CI owns task_definition: deploy-qa moves the service to the revision each main
+  # push registers. Terraform owns everything else on this service, desired_count included.
+  # Without this, every terraform apply would reconcile the service back onto Terraform's
+  # own bootstrap task definition, off the revision CI deployed.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
 resource "aws_ecs_service" "mock_contest_feed_provider" {
