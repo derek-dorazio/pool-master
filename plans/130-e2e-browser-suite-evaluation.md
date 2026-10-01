@@ -257,6 +257,16 @@ admin token. Every one of them can fail for reasons that have nothing to do
 with the product, and a long journey spec is the worst place to debug any of
 them.
 
+The journey itself then splits again, for the same reason at a smaller
+scale. Act 1 — the golf catalog — carries nearly every assumption this plan
+read off a component without executing: whether the tier board's move
+control is a menu or a pair of arrows, whether a freshly added field
+participant starts unassigned, what the player-create form requires beyond
+a name. The commissioner and member acts were traced more completely. So
+#84 builds the guards spec and act 1 and retires the ping, and #280 adds
+the acts that consume the catalog, so a surprise in tier assignment cannot
+hold up flows that carry less risk.
+
 So the first slice (#278) is a **plumbing probe**: admin signs in and reaches
 `/manage`, logs out, a fresh run-named user registers and creates a league,
 and teardown removes both. No golf catalog, no contest, no invite, no entry
