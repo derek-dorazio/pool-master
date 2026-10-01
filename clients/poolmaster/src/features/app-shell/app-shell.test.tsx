@@ -197,7 +197,8 @@ describe('AppShell', () => {
     expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
     expect(screen.getByText('Ultimate Office Pool Manager')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Help' })).not.toBeInTheDocument();
-    expect(screen.getByTestId('app-shell-notifications')).toHaveAttribute('aria-label', 'Notifications');
+    // #260 — the disabled notifications button is gone with the feature it stood in for.
+    expect(screen.queryByTestId('app-shell-notifications')).not.toBeInTheDocument();
 
     fireEvent.pointerDown(screen.getByTestId('app-menu-my-team-trigger'));
     expect(screen.getByTestId('app-menu-my-team-details')).toHaveAttribute(

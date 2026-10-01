@@ -4,7 +4,6 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { EventBus } from '@poolmaster/shared/events/event-bus';
 import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryPickRepository,
@@ -60,7 +59,6 @@ export function createContestService(
 export function createGolfContestSettlementService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  bus?: EventBus,
 ): GolfContestSettlementService {
   return new GolfContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma, logger),
@@ -68,6 +66,5 @@ export function createGolfContestSettlementService(
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     logger,
-    bus,
   });
 }

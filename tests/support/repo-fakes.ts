@@ -56,7 +56,6 @@ import type {
   ContestEntryStandingRepository,
   ContestPrizeDefinitionRepository,
   ContestRepository,
-  ContestTimingPolicyRepository,
   DraftSessionRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -374,15 +373,6 @@ export function fakeContestEntryStandingRepo(
   return {
     findByContest: many(),
     upsert: nothing(),
-    ...overrides,
-  };
-}
-
-export function fakeContestTimingPolicyRepo(
-  overrides: Partial<ContestTimingPolicyRepository> = {},
-): ContestTimingPolicyRepository {
-  return {
-    findActiveBySport: many(),
     ...overrides,
   };
 }

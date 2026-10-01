@@ -38,9 +38,6 @@ describe('IngestionPersistence', () => {
     const existingReleaseAt = new Date('2026-05-21T12:00:00.000Z');
     const existingFieldLocksAt = new Date('2026-06-03T16:00:00.000Z');
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         findUnique: jest.fn()
           .mockResolvedValueOnce({
@@ -325,9 +322,6 @@ describe('IngestionPersistence', () => {
 
   it('pool-master-rop.68.1.3 hydrates event participants with seed, event-scoped odds, and latest global rank', async () => {
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
@@ -435,9 +429,6 @@ describe('IngestionPersistence', () => {
       ],
     };
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
@@ -522,9 +513,6 @@ describe('IngestionPersistence', () => {
 
   it('pool-master-rop.68.1.3 does not bleed mismatched event odds or absent global ranking onto event participants', async () => {
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
@@ -610,9 +598,6 @@ describe('IngestionPersistence', () => {
   // tests/unit/core-api/event-lifecycle-service.test.ts.
   it('pool-master-g1z calls eventLifecycleService.applySportEventStatusTransition for each persisted event', async () => {
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
@@ -638,9 +623,6 @@ describe('IngestionPersistence', () => {
 
   it('pool-master-g1z does not write SportEvent.status directly — EventLifecycleService owns that write', async () => {
     const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       sportEvent: {
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),

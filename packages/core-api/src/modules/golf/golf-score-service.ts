@@ -12,10 +12,7 @@
  * row together (#235 split them). This service keeps its golf name: it writes golf rows.
  */
 
-import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
-import { eventBus } from '@poolmaster/shared/events/event-bus';
-import type { LiveScorePersistedEvent } from '@poolmaster/shared/events';
 import type { GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   GolfRoundWrite,
@@ -24,7 +21,6 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantRepository,
-  SportEventRepository,
   SportEventRoundRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -99,7 +95,6 @@ export interface GolfRoundScorePatch {
 }
 
 export interface GolfScoreServiceDeps {
-  sportEvents: SportEventRepository;
   rounds: SportEventRoundRepository;
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
@@ -107,7 +102,6 @@ export interface GolfScoreServiceDeps {
   golfRounds: SportEventParticipantGolfRoundRepository;
   golfStandings: SportEventParticipantGolfStandingRepository;
   logger?: FastifyBaseLogger;
-  bus?: typeof eventBus;
 }
 
 export class GolfScoreService {
@@ -379,7 +373,7 @@ export class GolfScoreService {
 
   /**
    * Applies a previewed upload — all or none, 422 when any row is unresolved — then
-   * refreshes standings and publishes live_score.persisted exactly as the sync path does.
+   * refreshes standings exactly as the sync path does.
    */
   async applyRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<void> {
     const preview = await this.previewRoundScores(sportEventId, roundNumber, rows);
@@ -410,20 +404,6 @@ export class GolfScoreService {
       await this.deps.golfRounds.upsertMany(writes);
       await this.refreshGolfStandings(sportEventId, writes.map((write) => write.sportEventParticipantId), new Date());
     }
-
-    const event = await this.deps.sportEvents.findById(sportEventId);
-    const persistedEvent: LiveScorePersistedEvent = {
-      id: randomUUID(),
-      type: 'live_score.persisted',
-      sourceService: 'ingestion-worker',
-      timestamp: new Date().toISOString(),
-      category: 'GOLF',
-      providerId: event?.providerId ?? '',
-      sportEventId,
-      updatesPersisted: writes.length,
-      ingestedAt: new Date().toISOString(),
-    };
-    await (this.deps.bus ?? eventBus).publish('live_score.persisted', persistedEvent);
   }
 
   /** Single-cell correction of one golfer's round. Unpatched values keep what was recorded. */

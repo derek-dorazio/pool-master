@@ -1,34 +1,13 @@
 import {
   evaluateEventOperationalState,
   resolveEventTiming,
-  selectTimingPolicy,
 } from '../../../packages/core-api/src/modules/events/operational-timing';
 
 describe('event operational timing', () => {
-  it('resolves supported relative timing rules against the event start date', () => {
-    const startDate = new Date('2026-04-12T16:00:00.000Z');
-
-    const resolved = resolveEventTiming(
-      {
-        sport: 'GOLF',
-        startDate,
-        metadata: {},
-      },
-      {
-        releaseRule: '3 days prior at 12:00',
-        fieldLockRule: '1 day prior at 09:30',
-      },
-    );
-
-    expect(resolved.releaseAt.toISOString()).toBe('2026-04-09T12:00:00.000Z');
-    expect(resolved.fieldLocksAt.toISOString()).toBe('2026-04-11T09:30:00.000Z');
-  });
-
-  it('falls back to the event start date when no policy exists', () => {
+  it('falls back to the event start date when the provider gives no times', () => {
     const startDate = new Date('2026-05-01T14:00:00.000Z');
 
     const resolved = resolveEventTiming({
-      sport: 'GOLF',
       startDate,
       metadata: {},
     });
@@ -37,11 +16,10 @@ describe('event operational timing', () => {
     expect(resolved.fieldLocksAt.toISOString()).toBe(startDate.toISOString());
   });
 
-  it('pool-master-940 honors provider release and field-lock timestamps when no timing policy exists', () => {
+  it('pool-master-940 honors provider release and field-lock timestamps', () => {
     const startDate = new Date('2026-05-01T14:00:00.000Z');
 
     const resolved = resolveEventTiming({
-      sport: 'GOLF',
       startDate,
       metadata: {
         releaseAt: '2026-04-26T16:00:00.000Z',
@@ -51,25 +29,6 @@ describe('event operational timing', () => {
 
     expect(resolved.releaseAt.toISOString()).toBe('2026-04-26T16:00:00.000Z');
     expect(resolved.fieldLocksAt.toISOString()).toBe('2026-04-30T16:00:00.000Z');
-  });
-
-  it('falls back to the event start date when a timing rule is invalid', () => {
-    const startDate = new Date('2026-05-01T14:00:00.000Z');
-
-    const resolved = resolveEventTiming(
-      {
-        sport: 'GOLF',
-        startDate,
-        metadata: {},
-      },
-      {
-        releaseRule: 'not a real rule',
-        fieldLockRule: '2 days prior at 25:00',
-      },
-    );
-
-    expect(resolved.releaseAt.toISOString()).toBe(startDate.toISOString());
-    expect(resolved.fieldLocksAt.toISOString()).toBe(startDate.toISOString());
   });
 
   it('marks events contest-eligible only after release, before field lock, and with a field loaded', () => {
@@ -140,63 +99,5 @@ describe('event operational timing', () => {
       'FIELD_NOT_LOADED',
       'FIELD_LOCKED',
     ]);
-  });
-
-  it('selects the exact event-type timing policy when available', () => {
-    const policy = selectTimingPolicy(
-      [
-        {
-          eventType: 'MAJOR',
-          isDefault: false,
-          releaseRule: '3 days prior at 12:00',
-          fieldLockRule: '1 day prior at 09:30',
-        },
-        {
-          eventType: null,
-          isDefault: true,
-          releaseRule: '2 days prior at 12:00',
-          fieldLockRule: '1 day prior at 12:00',
-        },
-      ],
-      { eventType: 'MAJOR' },
-    );
-
-    expect(policy?.releaseRule).toBe('3 days prior at 12:00');
-  });
-
-  it('falls back to the default timing policy and then the first policy', () => {
-    const defaultPolicy = selectTimingPolicy(
-      [
-        {
-          eventType: 'INVITATIONAL',
-          isDefault: false,
-          releaseRule: '4 days prior at 12:00',
-          fieldLockRule: '1 day prior at 09:30',
-        },
-        {
-          eventType: null,
-          isDefault: true,
-          releaseRule: '2 days prior at 12:00',
-          fieldLockRule: '1 day prior at 12:00',
-        },
-      ],
-      { eventType: 'MAJOR' },
-    );
-
-    expect(defaultPolicy?.releaseRule).toBe('2 days prior at 12:00');
-
-    const firstPolicy = selectTimingPolicy(
-      [
-        {
-          eventType: 'INVITATIONAL',
-          isDefault: false,
-          releaseRule: '4 days prior at 12:00',
-          fieldLockRule: '1 day prior at 09:30',
-        },
-      ],
-      { eventType: 'MAJOR' },
-    );
-
-    expect(firstPolicy?.releaseRule).toBe('4 days prior at 12:00');
   });
 });

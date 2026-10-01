@@ -33,6 +33,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
+import { resolveEventTiming } from './operational-timing';
 import type { SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
@@ -67,8 +68,6 @@ export interface ProviderEventDetail {
 }
 
 /** Release and field-lock times for an event of this sport starting then — the contest timing policy. */
-export type ResolveEventTiming = (sport: Sport, startDate: Date) => Promise<{ releaseAt: Date; fieldLocksAt: Date }>;
-
 export interface SportEventServiceDeps {
   sportEvents: SportEventRepository;
   leagueEvents: LeagueEventRepository;
@@ -77,7 +76,6 @@ export interface SportEventServiceDeps {
   sports: SportRepository;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
-  resolveTiming: ResolveEventTiming;
   logger?: FastifyBaseLogger;
 }
 
@@ -153,7 +151,8 @@ export class SportEventService {
     }
     const { providerEvent } = input;
     const leagueEvent = await this.deps.leagueEvents.findOrCreate(season.sportLeagueId, providerEvent.name);
-    const timing = await this.deps.resolveTiming(sport, providerEvent.startDate);
+    // No metadata is passed, so both times are the provider event's start (#263).
+    const timing = resolveEventTiming({ startDate: providerEvent.startDate, metadata: {} });
     // The derived schedule applies only when no round count was given; an explicit count
     // falls back to sequential days, so `rounds` always matches the rounds created.
     const derived = deriveGolfTournamentRounds(providerEvent.startDate, providerEvent.endDate);

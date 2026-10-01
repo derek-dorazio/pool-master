@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryStandingRepository,
@@ -6,8 +5,6 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
-import { eventBus, type EventBus } from '@poolmaster/shared/events/event-bus';
-import type { ContestCompletedEvent } from '@poolmaster/shared/events/contest';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -52,16 +49,13 @@ export interface GolfContestSettlementDeps extends ContestLeaderboardReadDeps {
   contests: ContestRepository;
   standings: ContestEntryStandingRepository;
   logger?: LifecycleLogger;
-  bus?: EventBus;
 }
 
 export class GolfContestSettlementService {
   private readonly logger: LifecycleLogger;
-  private readonly bus: EventBus;
 
   constructor(private readonly deps: GolfContestSettlementDeps) {
     this.logger = deps.logger ?? createNoopLogger();
-    this.bus = deps.bus ?? eventBus;
   }
 
   async settleCompletedSportEvent(
@@ -152,7 +146,6 @@ export class GolfContestSettlementService {
       });
       if (completed) {
         contestsCompleted++;
-        await this.publishContestCompleted(contest.id, rankedEntries, completedAt);
       }
     }
 
@@ -170,26 +163,6 @@ export class GolfContestSettlementService {
       contestsCompleted,
       standingsUpserted,
     };
-  }
-
-  private async publishContestCompleted(
-    contestId: string,
-    rankedEntries: Array<{
-      position: number | null;
-      squadId: string;
-    }>,
-    completedAt: Date,
-  ): Promise<void> {
-    const firstPlaceEntries = rankedEntries.filter((entry) => entry.position === 1);
-    const event: ContestCompletedEvent = {
-      id: randomUUID(),
-      type: 'contest.completed',
-      sourceService: 'core-api',
-      contestId,
-      timestamp: completedAt.toISOString(),
-      ...(firstPlaceEntries.length === 1 ? { winnerTeamId: firstPlaceEntries[0].squadId } : {}),
-    };
-    await this.bus.publish('contest.completed', event);
   }
 }
 

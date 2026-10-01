@@ -415,7 +415,8 @@ longer-prefixed name wins:
 
 - `ContestEntryPick` not `Pick` — there are multiple pick-like entities; the
   prefix clarifies the parent.
-- `SportEvent` not `Event` — `Event` overloads with the in-process event bus.
+- `SportEvent` not `Event` — `Event` overloads with DOM and Node events, and with "domain
+  event" as a general term.
 
 This is **not** a rule to prefix every entity. It's a rule to disambiguate
 where there's collision risk. Bare names that have only one referent in the

@@ -85,17 +85,6 @@ export interface SportEvent extends DomainEntity {
   autoLifecycleEnabled: boolean;
 }
 
-/** Seeded timing policy used to resolve event release/field-lock datetimes. */
-export interface ContestTimingPolicy extends DomainEntity {
-  sport: Sport;
-  eventType?: string | null;
-  contestFormat?: ContestFormat | null;
-  releaseRule: string;
-  fieldLockRule: string;
-  isDefault: boolean;
-  active: boolean;
-}
-
 /**
  * Join record linking a provider event to a normalized participant. The
  * Per-event participant state for a normalized event field. `ranking` is the

@@ -1,6 +1,6 @@
 export { ActionList, ActionTile } from "./action-list";
 export { Alert, Callout } from "./alert";
-export { AppIconActionButton, AppNavigationMenu } from "./app-navigation";
+export { AppNavigationMenu } from "./app-navigation";
 export type { AppNavigationItem } from "./app-navigation";
 export { BulkUploadPanel } from "./bulk-upload-panel";
 export type { BulkUploadFormat, BulkUploadPanelProps } from "./bulk-upload-panel";

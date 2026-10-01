@@ -13,7 +13,6 @@ export { PrismaProviderSyncRunRepository } from './prisma-provider-sync-run-repo
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaContestEntryPickRepository } from './prisma-contest-entry-pick-repository';
 export { PrismaContestEntryStandingRepository } from './prisma-contest-entry-standing-repository';
-export { PrismaContestTimingPolicyRepository } from './prisma-contest-timing-policy-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
 export {
   PrismaContestConfigTemplateRepository,

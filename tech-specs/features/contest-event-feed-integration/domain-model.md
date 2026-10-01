@@ -49,7 +49,10 @@ Owns:
 - default field lock rule expression
 
 Current status:
-- implemented
+- removed (#263). The table was built and read on every ingestion run, but no policy was
+  ever seeded, so every read returned nothing. `releaseAt` and `fieldLocksAt` now come from
+  the provider's metadata, else the event's start. The design is recorded in
+  `plans/145-one-object-one-operation-set.md` ("Dead-code sweep — outcome").
 
 Notes:
 - recommended as a persisted seeded concept rather than a code-only registry so

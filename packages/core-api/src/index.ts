@@ -46,8 +46,6 @@ import { versionModule } from './modules/version/routes';
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
 
-// Notification module
-
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
 import type { IngestionCallbacks } from './modules/ingestion/core';

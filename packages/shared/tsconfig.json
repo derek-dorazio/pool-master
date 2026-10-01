@@ -9,7 +9,6 @@
   "include": [
     "domain/**/*",
     "db/**/*",
-    "events/**/*",
     "utils/**/*",
     "src/**/*",
     "i18n/**/*",

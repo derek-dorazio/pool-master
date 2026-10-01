@@ -61,14 +61,6 @@ function row(participantId: string, overrides: Partial<GolfScoreRowInput> = {}):
   return { participantId, strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED', ...overrides };
 }
 
-function recordingBus() {
-  const published: Array<{ type: string; payload: unknown }> = [];
-  return {
-    published,
-    bus: { publish: (type: string, payload: unknown) => { published.push({ type, payload }); return Promise.resolve(); } },
-  };
-}
-
 describe('Golf round scores — admin correction surface', () => {
   it('reads every field golfer, with round scores and standing where they exist and nulls where they do not', async () => {
     const { event, round1, rory } = await createField('read');
@@ -138,7 +130,7 @@ describe('Golf round scores — admin correction surface', () => {
 
   it('refuses an upload with any unresolved row with 422 ROUND_SCORE_ROWS_UNRESOLVED, and writes nothing', async () => {
     const { event, rory } = await createField('unresolved');
-    const service = createGolfScoreService(getPrisma(), undefined, recordingBus().bus as never);
+    const service = createGolfScoreService(getPrisma());
 
     const attempt = service.applyRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -151,10 +143,9 @@ describe('Golf round scores — admin correction surface', () => {
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipant: { sportEventId: event.id } } })).toBe(0);
   });
 
-  it('applies an upload: core round and golf extension written together, standing recomputed, live_score.persisted published', async () => {
+  it('applies an upload: core round and golf extension written together, standing recomputed', async () => {
     const { event, rory } = await createField('apply');
-    const { bus, published } = recordingBus();
-    const service = createGolfScoreService(getPrisma(), undefined, bus as never);
+    const service = createGolfScoreService(getPrisma());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id)]);
 
@@ -174,23 +165,16 @@ describe('Golf round scores — admin correction surface', () => {
       status: 'COMPLETE',
       golf: { eventScoreToPar: -4, eventStrokes: 68, currentRoundThru: 18 },
     });
-    expect(published).toEqual([
-      expect.objectContaining({
-        type: 'live_score.persisted',
-        payload: expect.objectContaining({ category: 'GOLF', sportEventId: event.id, updatesPersisted: 1 }),
-      }),
-    ]);
   });
 
-  it('skips a row with no strokes, as the sync path does, and still publishes that nothing persisted', async () => {
+  it('skips a row with no strokes, as the sync path does, persisting neither a round nor a standing', async () => {
     const { event, rory } = await createField('null-strokes');
-    const { bus, published } = recordingBus();
-    const service = createGolfScoreService(getPrisma(), undefined, bus as never);
+    const service = createGolfScoreService(getPrisma());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id, { strokes: null })]);
 
     expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
-    expect(published).toEqual([expect.objectContaining({ payload: expect.objectContaining({ updatesPersisted: 0 }) })]);
+    expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
   });
 
   it('patches only the supplied round fields and recomputes the standing from the result', async () => {

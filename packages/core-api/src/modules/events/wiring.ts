@@ -9,7 +9,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestEntryRepository,
   PrismaContestRepository,
-  PrismaContestTimingPolicyRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaLeagueEventRepository,
@@ -32,11 +31,10 @@ import {
   PrismaUserRepository,
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
-import { GolfScoreService, type GolfScoreServiceDeps } from '../golf/golf-score-service';
+import { GolfScoreService } from '../golf/golf-score-service';
 import { SeasonService } from '../sport-catalog/season-service';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
-import { resolveEventTiming, resolveTimingPolicyForSport } from './operational-timing';
 import { SportEventService } from './service';
 import { SportEventParticipantService } from './sport-event-participant-service';
 import { SportEventRoundService } from './sport-event-round-service';
@@ -51,9 +49,8 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
   });
 }
 
-export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBaseLogger, bus?: GolfScoreServiceDeps['bus']): GolfScoreService {
+export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBaseLogger): GolfScoreService {
   return new GolfScoreService({
-    sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
@@ -61,7 +58,6 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
     logger,
-    bus,
   });
 }
 
@@ -113,10 +109,6 @@ export function createSportEventServices(prisma: PrismaClient, logger?: FastifyB
       sports,
       rounds,
       tiers,
-      resolveTiming: async (sport, startDate) => resolveEventTiming(
-        { sport, startDate, metadata: {} },
-        await resolveTimingPolicyForSport(new PrismaContestTimingPolicyRepository(prisma), sport, {}),
-      ),
       logger,
     }),
     field: createSportEventParticipantService(prisma, logger),

@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
-import { EventBus } from '@poolmaster/shared/events/event-bus';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -863,12 +862,7 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const bus = new EventBus();
-    const contestCompletedEvents: unknown[] = [];
-    bus.subscribe('contest.completed', async (event) => {
-      contestCompletedEvents.push(event);
-    });
-    const settlement = createGolfContestSettlementService(prisma, undefined, bus);
+    const settlement = createGolfContestSettlementService(prisma);
     const eventLifecycleService = createEventLifecycleService(prisma, {
       appBaseUrl: 'http://localhost:5173',
       golfContestSettlement: settlement,
@@ -885,7 +879,7 @@ describe('mock contest feed provider event-first verification', () => {
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
       onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
       onLiveScores: async (result, providerIdForResult) =>
-        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, bus }),
+        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult }),
     }, undefined, {
       eventReader,
       syncRunLedger,
@@ -1074,7 +1068,22 @@ describe('mock contest feed provider event-first verification', () => {
         },
       },
     })).resolves.toBe(2);
-    expect(contestCompletedEvents).toHaveLength(1);
+    // #261 — this and the check after the rerun asserted one `contest.completed` event. The
+    // outcome it stood for, asserted directly: the contest is settled exactly once, so the
+    // rerun below leaves the contest and its standings untouched. `updatedAt` is the witness —
+    // `settledAt` comes from the event's end date and would read the same after a resettle.
+    const readSettlement = async () => ({
+      contest: await prisma.contest.findUniqueOrThrow({
+        where: { id: directContest.id },
+        select: { status: true, endsAt: true },
+      }),
+      standings: await prisma.contestEntryStanding.findMany({
+        where: { contestEntryId: { in: [directEntries.leader.id, directEntries.chaser.id] } },
+        select: { contestEntryId: true, settledAt: true, updatedAt: true },
+        orderBy: { contestEntryId: 'asc' },
+      }),
+    });
+    const settledOnce = await readSettlement();
 
     const completedLiveCandidates = await eventReader.listEventIdsForFeed({
       sport: Sport.GOLF,
@@ -1106,7 +1115,7 @@ describe('mock contest feed provider event-first verification', () => {
         },
       },
     })).resolves.toBe(2);
-    expect(contestCompletedEvents).toHaveLength(1);
+    await expect(readSettlement()).resolves.toEqual(settledOnce);
   });
 
   it('keeps startup-style schedule sync shallow until an event field sync loads contest-ready event detail', async () => {

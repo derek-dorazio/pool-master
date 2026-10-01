@@ -5,7 +5,6 @@ import {
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
-  PrismaContestTimingPolicyRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
@@ -20,18 +19,13 @@ import {
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
 // No mocks.
 
-/** No migration seeds timing policies; this sport's rows are this suite's own. */
-const POLICY_SPORT = Sport.HORSE_RACING;
-
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   await cleanupTestData();
-  await getPrisma().contestTimingPolicy.deleteMany({ where: { sport: POLICY_SPORT } });
   await teardownIntegrationTests();
 });
 beforeEach(async () => {
   await cleanupTestData();
-  await getPrisma().contestTimingPolicy.deleteMany({ where: { sport: POLICY_SPORT } });
 });
 
 function repos() {
@@ -41,7 +35,6 @@ function repos() {
     entries: new PrismaContestEntryRepository(prisma),
     picks: new PrismaContestEntryPickRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
-    timingPolicies: new PrismaContestTimingPolicyRepository(prisma),
   };
 }
 
@@ -379,47 +372,6 @@ describe('ContestEntryStandingRepository', () => {
 
     const [standing] = await repos().standings.findByContest(contest.id);
     expect(standing.golf).toBeNull();
-  });
-});
-
-describe('ContestTimingPolicyRepository', () => {
-  it('returns a sport\'s active policies, the default first, then oldest first', async () => {
-    const prisma = getPrisma();
-    const olderSpecific = await prisma.contestTimingPolicy.create({
-      data: {
-        sport: POLICY_SPORT, eventType: 'STAKES', releaseRule: 'EVENT_START_MINUS_7D', fieldLockRule: 'EVENT_START',
-        createdAt: new Date('2026-01-01T00:00:00.000Z'),
-      },
-    });
-    const defaultPolicy = await prisma.contestTimingPolicy.create({
-      data: {
-        sport: POLICY_SPORT, eventType: null, releaseRule: 'EVENT_START_MINUS_3D', fieldLockRule: 'EVENT_START', isDefault: true,
-        createdAt: new Date('2026-03-01T00:00:00.000Z'),
-      },
-    });
-    const newerSpecific = await prisma.contestTimingPolicy.create({
-      data: {
-        sport: POLICY_SPORT, eventType: 'DERBY', releaseRule: 'EVENT_START_MINUS_14D', fieldLockRule: 'EVENT_START',
-        createdAt: new Date('2026-02-01T00:00:00.000Z'),
-      },
-    });
-    await prisma.contestTimingPolicy.create({
-      data: {
-        sport: POLICY_SPORT, eventType: 'RETIRED', releaseRule: 'EVENT_START', fieldLockRule: 'EVENT_START', active: false,
-      },
-    });
-
-    const policies = await repos().timingPolicies.findActiveBySport(POLICY_SPORT);
-
-    expect(policies.map((policy) => policy.id)).toEqual([defaultPolicy.id, olderSpecific.id, newerSpecific.id]);
-    expect(policies[0]).toEqual(expect.objectContaining({
-      sport: POLICY_SPORT,
-      eventType: null,
-      releaseRule: 'EVENT_START_MINUS_3D',
-      fieldLockRule: 'EVENT_START',
-      isDefault: true,
-      active: true,
-    }));
   });
 });
 

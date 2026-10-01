@@ -932,49 +932,12 @@ export async function buildContestWithEntries(
 
 ---
 
-## 8. Domain Event Testing
+## 8. Domain Event Testing — removed
 
-The in-process event bus is a critical architectural seam. Services emit domain events and subscribers react to them. This behavior must be tested.
-
-### What Must Be Tested
-
-- **Event emission:** When a service performs a state change, verify the correct event is emitted with the expected payload. Use a test spy or listener on the event bus.
-- **Subscriber behavior:** When an event is received, verify the subscriber performs the expected side effect (e.g., contest status update, scoring recalculation trigger, notification creation).
-- **Event contract:** Event payloads must match the typed event interfaces in `packages/shared/events/`. Add a contract-style assertion when the payload shape changes.
-
-### How To Test
-
-**Unit tests** for event emission:
-
-```typescript
-it('emits ContestStatusChangedEvent when contest transitions to LOCKED', async () => {
-  const events: DomainEvent[] = [];
-  eventBus.subscribe('ContestStatusChangedEvent', (e) => events.push(e));
-
-  await contestService.lockContest(contestId);
-
-  expect(events).toHaveLength(1);
-  expect(events[0].payload).toMatchObject({ contestId, newStatus: 'LOCKED' });
-});
-```
-
-**Integration tests** for subscriber side effects:
-
-```typescript
-it('updates contest status when SportEventStatusChanged is received', async () => {
-  // Setup: contest linked to sport event
-  eventBus.emit('SportEventStatusChangedEvent', { sportEventId, newStatus: 'COMPLETED' });
-
-  // Verify: contest transitioned
-  const contest = await contestRepo.findById(contestId);
-  expect(contest.status).toBe('COMPLETED');
-});
-```
-
-### Rules
-
-- When a slice adds or materially changes domain-event behavior, add tests that cover the relevant event emission and subscriber side effects.
-- Do not test event bus internals (delivery ordering, retry). Test the observable behavior: "when X happens, Y should result."
+There is no event bus to test (`architecture-rules.md` *No event bus — modules call each
+other*; #261). Assert the outcome a change produces — the rows written, the status moved, the
+standing settled — not that something was announced. The section number is kept so references
+to the sections after it stay valid.
 
 ---
 
@@ -1037,7 +1000,6 @@ when you need a clean migrated schema.
 - Error response shape compliance (consistent error envelope)
 - Persistence for changed model fields
 - League isolation (formerly tenant isolation)
-- Domain event emission and subscriber behavior
 - Critical business flows as documented in use-case companions
 
 ### Frontend

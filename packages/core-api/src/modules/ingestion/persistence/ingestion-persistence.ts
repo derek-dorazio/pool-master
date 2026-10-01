@@ -14,14 +14,10 @@ import type {
   SportEventDetail,
   ProviderParticipant,
 } from '../core/provider-interface';
-import { PrismaContestTimingPolicyRepository } from '../../../adapters';
 import { resolveRankingType } from '../core/ranking-types';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
-import {
-  resolveEventTiming,
-  resolveTimingPolicyForSport,
-} from '../../events/operational-timing';
+import { resolveEventTiming } from '../../events/operational-timing';
 
 /**
  * Narrow interface onto EventLifecycleService.applySportEventStatusTransition
@@ -77,12 +73,10 @@ export class IngestionPersistence {
     }, 'Persisting sport events from ingestion');
 
     for (const event of events) {
-      const timingPolicy = await this.resolveTimingPolicy(event.sport, event.metadata);
       const resolvedTiming = resolveEventTiming({
-        sport: event.sport,
         startDate: event.startDate,
         metadata: event.metadata,
-      }, timingPolicy);
+      });
       const existingEvent = await this.prisma.sportEvent.findUnique({
         where: {
           providerId_externalId: {
@@ -169,13 +163,6 @@ export class IngestionPersistence {
       value: count,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
     };
-  }
-
-  private async resolveTimingPolicy(
-    sport: Sport,
-    metadata: Record<string, unknown>,
-  ) {
-    return resolveTimingPolicyForSport(new PrismaContestTimingPolicyRepository(this.prisma), sport, metadata);
   }
 
   /**

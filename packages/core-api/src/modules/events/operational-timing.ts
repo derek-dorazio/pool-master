@@ -1,10 +1,6 @@
-import type { ContestTimingPolicyRepository } from '@poolmaster/shared/db';
-import type { ContestTimingPolicy, Sport, SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
-
-type SelectableTimingPolicy = Pick<ContestTimingPolicy, 'eventType' | 'isDefault' | 'releaseRule' | 'fieldLockRule'>;
+import type { SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
 
 interface EventTimingInput {
-  sport: string;
   startDate: Date;
   metadata: Record<string, unknown>;
 }
@@ -21,17 +17,15 @@ export interface EventOperationalState extends ResolvedEventTiming {
   contestEligible: boolean;
 }
 
-const RELATIVE_RULE_PATTERN =
-  /^(?<days>\d+)\s+day(?:s)?\s+prior\s+at\s+(?<hour>\d{1,2}):(?<minute>\d{2})$/i;
-
-export function resolveEventTiming(
-  input: EventTimingInput,
-  policy?: Pick<ContestTimingPolicy, 'releaseRule' | 'fieldLockRule'> | null,
-): ResolvedEventTiming {
-  const releaseAt = readMetadataDate(input.metadata, 'releaseAt')
-    ?? applyRelativeRule(input.startDate, policy?.releaseRule);
-  const fieldLocksAt = readMetadataDate(input.metadata, 'fieldLocksAt')
-    ?? applyRelativeRule(input.startDate, policy?.fieldLockRule);
+/**
+ * An event's release and field-lock times: the provider's own timestamps when its metadata
+ * carries them, otherwise the event's start. #263 removed the seeded timing policies that
+ * could have supplied rule-based defaults ("N days prior at HH:MM") — nothing ever seeded
+ * one; plans/145 records the rule language.
+ */
+export function resolveEventTiming(input: EventTimingInput): ResolvedEventTiming {
+  const releaseAt = readMetadataDate(input.metadata, 'releaseAt') ?? new Date(input.startDate);
+  const fieldLocksAt = readMetadataDate(input.metadata, 'fieldLocksAt') ?? new Date(input.startDate);
 
   return {
     releaseAt,
@@ -95,69 +89,4 @@ export function evaluateEventOperationalState(input: {
     readinessReasons,
     contestEligible: readinessReasons.length === 0,
   };
-}
-
-/**
- * Loads a sport's active timing policies and picks the one matching
- * `metadata.eventType` (falling back to the sport's default). Shared by the
- * ingestion path (`IngestionPersistence`) and the admin
- * `createEventFromProviderEvent` route (plans/124 §5.2) so
- * there is one "which policy applies" resolution, not two independently
- * drifting queries.
- */
-export async function resolveTimingPolicyForSport(
-  policies: ContestTimingPolicyRepository,
-  sport: Sport,
-  metadata: Record<string, unknown>,
-): Promise<SelectableTimingPolicy | null> {
-  return selectTimingPolicy(await policies.findActiveBySport(sport), metadata);
-}
-
-export function selectTimingPolicy(
-  policies: readonly SelectableTimingPolicy[],
-  metadata: Record<string, unknown>,
-): SelectableTimingPolicy | null {
-  const eventType =
-    typeof metadata.eventType === 'string' && metadata.eventType.trim() !== ''
-      ? metadata.eventType.trim()
-      : null;
-
-  const exactMatch =
-    eventType === null
-      ? null
-      : policies.find((policy) => policy.eventType === eventType);
-
-  return exactMatch ?? policies.find((policy) => policy.isDefault) ?? policies[0] ?? null;
-}
-
-function applyRelativeRule(startDate: Date, rule?: string | null): Date {
-  if (!rule) {
-    return new Date(startDate);
-  }
-
-  const match = RELATIVE_RULE_PATTERN.exec(rule.trim());
-  if (!match?.groups) {
-    return new Date(startDate);
-  }
-
-  const days = Number.parseInt(match.groups.days, 10);
-  const hour = Number.parseInt(match.groups.hour, 10);
-  const minute = Number.parseInt(match.groups.minute, 10);
-
-  if (
-    Number.isNaN(days) ||
-    Number.isNaN(hour) ||
-    Number.isNaN(minute) ||
-    hour < 0 ||
-    hour > 23 ||
-    minute < 0 ||
-    minute > 59
-  ) {
-    return new Date(startDate);
-  }
-
-  const resolved = new Date(startDate);
-  resolved.setUTCDate(resolved.getUTCDate() - days);
-  resolved.setUTCHours(hour, minute, 0, 0);
-  return resolved;
 }

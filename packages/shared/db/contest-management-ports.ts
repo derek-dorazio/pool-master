@@ -3,10 +3,8 @@ import type {
   ContestConfiguration,
   ContestEntryPick,
   ContestPrizeDefinition,
-  ContestTimingPolicy,
   ParticipantContestScoringRule,
   ParticipantInactiveReason,
-  Sport,
 } from '../domain';
 
 export interface ContestConfigurationRepository {
@@ -119,9 +117,4 @@ export interface ContestEntryStandingRepository {
   findByContest(contestId: string): Promise<ContestEntryStandingResult[]>;
   /** One per entry: creates or overwrites the entry's standing, core and golf extension together. */
   upsert(write: ContestEntryStandingWrite): Promise<void>;
-}
-
-export interface ContestTimingPolicyRepository {
-  /** A sport's active policies, the default first, then oldest first. */
-  findActiveBySport(sport: Sport): Promise<ContestTimingPolicy[]>;
 }

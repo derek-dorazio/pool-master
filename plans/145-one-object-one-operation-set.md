@@ -2578,6 +2578,89 @@ where it could be.
 What is not finished is named above: the remaining inline shapes, in the contest cluster's hands.
 The last `admin` route moved in #248, so nothing is registered under `/api/v1/admin`.
 
+## Dead-code sweep — outcome, 2026-10-01
+
+#260, #261, #262 and #263, filed from a sweep on 2026-09-30, ruled delete by the owner on
+2026-10-01, and done in one PR. **`LeagueEvent` (#262) was held out**, below.
+
+### What went
+
+- **Notifications (#260).** The `notifications` table, the `events/notification.ts` contract,
+  the `DeliveryStatus` and `NotificationChannel` domain enums (no importer), the disabled
+  notifications button and the shared `AppIconActionButton` that existed only for it, the
+  `deleteMany` in user deletion, and a poll-interval entry for a route
+  (`/notifications/unread-count`) that never existed. The three notification metrics were
+  already gone with `getBusinessMetrics` in #205.
+- **The event bus (#261).** `packages/shared/events/` entire. It had **three** publish sites,
+  not the two the ticket counted — the ingestion path's `score-publisher.ts` published
+  `live_score.persisted` as well as the admin upload in `golf-score-service.ts` — and no
+  production subscriber anywhere. Two of the three sites did work purely to build the event
+  (`applyRoundScores` re-read the sport event; settlement computed a winner), which went with
+  them, and so did `GolfScoreService`'s `sportEvents` dependency, whose only use that re-read was.
+  The rules that described the bus as *the* cross-module mechanism were rewritten: modules call
+  each other's services directly.
+- **`ConsentRecord` (#262).** Never written; its April columns (`minimum_age_threshold`,
+  `age_affirmed`) appear nowhere outside the schema. The owner weighed the compliance question
+  and ruled delete — the system holds no consent records with or without the table.
+- **Contest timing policies (#263).** The table, its port, adapter and fake,
+  `resolveTimingPolicyForSport`, `selectTimingPolicy`, the rule parser, and the policy branch at
+  both callers. One database round trip per ingested event goes with it.
+
+### Tests that asserted an event now assert its outcome
+
+Four suites asserted that an event fired; each now asserts what the event was for, or loses a
+redundant check where the outcome was already asserted.
+
+- `golf-contest-settlement.integration` — one `contest.completed` across two settlements becomes
+  "the contest is still `COMPLETED` with its original `endsAt`"; the frozen-standings assertion,
+  run after a score correction, already proved no resettlement.
+- `mock-contest-feed-provider.integration` (live scoring end to end) — the same claim, asserted
+  on the contest and on each standing's `updatedAt`. Not `settledAt`: it comes from the event's
+  end date and would read the same after a resettle.
+- `golf-round-scores.integration` and `golf-participant-standing.integration` — already
+  asserted the persisted rounds and standings; the published-event checks were redundant. One
+  case existed only to test a publish failure and was deleted with the publish.
+
+### The timing-policy design, kept as narrative
+
+`selectTimingPolicy` itself encoded nothing worth keeping: exact `eventType` match, else the
+default, else the first row. It ignored `contestFormat` despite the table's unique key
+including it, so the format dimension was never part of selection.
+
+The thinking was in what a policy *carried*: **release and field-lock times as rules relative
+to the event start**, in a small language — `N day(s) prior at HH:MM`, applied in UTC (so `3
+days prior at 12:00` against a Thursday 16:00Z start releases Monday 12:00Z). Resolution order
+for each time was: the provider's own timestamp in the event metadata, else the policy's rule,
+else the event start. An invalid rule fell back to the start date rather than failing. Policies
+were scoped by sport, optional event type and optional contest format, with one default per
+sport — the intent, per `tech-specs/features/contest-event-feed-integration/domain-model.md`,
+being seeded defaults that stay queryable and explainable rather than a code-only registry.
+
+What survives is the first and last step: provider timestamp, else start. If per-sport release
+or lock defaults are wanted — "release the field three days before the first tee, lock it the
+night before" — that is the design to start from, and a seed is the part that was never done.
+
+**The shape worth naming.** A query, a selection algorithm and passing tests over a table
+nothing wrote. Every symbol had a caller, so no dead-code search finds it; only asking *what
+writes this table* does.
+
+### `LeagueEvent` stays, pending `plans/127`
+
+`LeagueEvent` has no code reader, but `plans/127` (in progress, #99) designs the
+`PREVIOUS_WINNER` category on it through a `LeagueEventPreviousWinner` table — the reason #262
+itself said to check before deleting. The ruling did not mention that plan, so the repo owner
+held it out: the table, its port and adapter, `SportEvent.leagueEventId` and
+`SportEventDto.leagueEventId` are unchanged. Whether it stays is `plans/127`'s question.
+
+### Found, not acted on
+
+**The poll-interval runtime config has no consumer.** `PollIntervalConfig` (`standings`,
+`draft`, `contestStatus`, `notifications`, `default`) is stored, served and editable from a
+root-admin page, but nothing reads it: `POLL_INTERVAL_CONFIG` in `plugins/poll-config.ts` is
+never imported, the poll headers come from a hardcoded map, and the webapp reads the config only
+on the page that edits it. Its `notifications` field is notification residue, but removing one
+field from a config nothing reads would be the wrong fix; the whole config is the question.
+
 ## Sources / Prior Decisions
 
 - #201 — this epic. #192 — the publishing mechanism, which must follow this work for
