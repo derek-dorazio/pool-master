@@ -366,6 +366,129 @@ jobs:
         run: npm run typecheck:webapp
       - run: npm run build:poolmaster
 
+  # Browser e2e against a local stack (#278): the production build served by
+  # `vite preview`, whose proxy routes /api to a core-api on a throwaway
+  # Postgres. No deploy, no AWS, no secrets: the job seeds its own root admin
+  # with a password generated for this run. Runs every spec, untagged ones too.
+  poolmaster-browser-e2e-local:
+    name: poolmaster-browser-e2e-local
+    runs-on: ubuntu-latest
+    needs: all-contract-gates
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: poolmaster
+          POSTGRES_PASSWORD: poolmaster
+          POSTGRES_DB: poolmaster_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_e2e
+      # core/config.ts requires these three with no fallback (#134).
+      POOLMASTER_ENVIRONMENT: ci
+      POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
+      CORE_API_PORT: '3000'
+      AUTO_START_SCHEDULER: 'false'
+      POOLMASTER_E2E_BASE_URL: http://localhost:4175
+      POOLMASTER_E2E_ADMIN_IDENTIFIER: e2e-ci-admin
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+      - name: Generate this run's JWT secret and admin password
+        run: |
+          JWT_SECRET=$(openssl rand -hex 32)
+          ADMIN_PASSWORD=$(openssl rand -hex 16)
+          echo "::add-mask::$JWT_SECRET"
+          echo "::add-mask::$ADMIN_PASSWORD"
+          echo "JWT_SECRET=$JWT_SECRET" >> "$GITHUB_ENV"
+          echo "POOLMASTER_E2E_ADMIN_PASSWORD=$ADMIN_PASSWORD" >> "$GITHUB_ENV"
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
+      - name: Seed the run's root admin
+        run: |
+          FIXTURE_JSON=$(node -e 'console.log(JSON.stringify([{
+            email: "e2e-ci-admin@e2e.invalid",
+            username: process.env.POOLMASTER_E2E_ADMIN_IDENTIFIER,
+            password: process.env.POOLMASTER_E2E_ADMIN_PASSWORD,
+            firstName: "E2E",
+            lastName: "Admin",
+            isRootAdmin: true,
+          }]))') node packages/core-api/scripts/bootstrap-users.mjs
+      # Builds packages/shared before the client. core-api resolves shared
+      # through its dist too, and a stale dist fails the API boot with an
+      # unregistered-OpenAPI-component error that looks like a product bug.
+      - name: Build shared and the production client bundle
+        run: npm run build:poolmaster
+      - name: Start core-api
+        run: |
+          cd packages/core-api
+          nohup npx tsx src/index.ts > "$RUNNER_TEMP/core-api.log" 2>&1 &
+          # /health is unauthenticated; /api/v1/health answers 401.
+          for ATTEMPT in $(seq 1 30); do
+            if curl -fs http://localhost:3000/health > /dev/null; then
+              echo "core-api is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/core-api.log"
+          exit 1
+      - name: Serve the build with /api proxied to core-api
+        run: |
+          cd clients/poolmaster
+          nohup npx vite preview > "$RUNNER_TEMP/preview.log" 2>&1 &
+          for ATTEMPT in $(seq 1 30); do
+            if curl -fs "$POOLMASTER_E2E_BASE_URL/" > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          # The static server answers any unknown path with index.html (200);
+          # only core-api answers this with 401, so it proves the proxy.
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$POOLMASTER_E2E_BASE_URL/api/v1/health")
+          if [ "$STATUS" != "401" ]; then
+            echo "Expected 401 from core-api through the preview proxy, got $STATUS"
+            cat "$RUNNER_TEMP/preview.log"
+            exit 1
+          fi
+          echo "Build served at $POOLMASTER_E2E_BASE_URL with /api reaching core-api"
+      - name: Install Playwright Chromium
+        run: cd clients/poolmaster && npx playwright install --with-deps chromium
+      - name: Run PoolMaster browser E2E against the local stack
+        run: npm run test:poolmaster:browser-e2e
+      - name: Collect server logs
+        if: failure()
+        run: cp "$RUNNER_TEMP/core-api.log" "$RUNNER_TEMP/preview.log" clients/poolmaster/ || true
+      - name: Upload PoolMaster browser E2E artifacts
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: poolmaster-browser-e2e-local
+          path: |
+            clients/poolmaster/playwright-report/**
+            clients/poolmaster/test-results/**
+            clients/poolmaster/core-api.log
+            clients/poolmaster/preview.log
+          if-no-files-found: warn
+      - name: PoolMaster browser E2E (local stack) summary
+        if: always()
+        run: |
+          echo "### PoolMaster Browser E2E (local stack)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Target: production build via \`vite preview\`, \`/api\` proxied to core-api on a throwaway Postgres" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: all (ping, smoke, plumbing probe) — #278" >> $GITHUB_STEP_SUMMARY
+
   # =========================================================================
   # QA deploy: publish images -> migrate -> roll out -> browser e2e.
   # Migrations gate the rollout (#191): publish only builds images and
@@ -1088,6 +1211,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
+      POOLMASTER_E2E_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
+      POOLMASTER_E2E_ADMIN_PASSWORD: ${{ secrets.POOLMASTER_E2E_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -1115,8 +1240,12 @@ jobs:
       - run: npm ci
       - name: Install Playwright Chromium
         run: cd clients/poolmaster && npx playwright install --with-deps chromium
-      - name: Run PoolMaster browser E2E
-        run: cd clients/poolmaster && npx playwright test
+      # Only the @smoke specs: the deployed environment gets nothing that
+      # writes domain data. Tracing is off here because a trace records every
+      # fill() value and request body, and this run signs in with the real QA
+      # admin password; screenshots and video mask the password field.
+      - name: Run PoolMaster browser E2E smoke
+        run: cd clients/poolmaster && npm run test:e2e:smoke -- --trace off
       - name: Upload PoolMaster browser E2E artifacts
         if: always()
         uses: actions/upload-artifact@v5
@@ -1133,7 +1262,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
           echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Journeys: minimal deploy-reachability ping (pool-master-303 phase 1 — no data dependency; a real suite is phase 2, see plans/130)" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: \`@smoke\` only — deploy-reachability ping, and root admin signs in, reaches /manage, logs out (#278). Creates no domain data." >> $GITHUB_STEP_SUMMARY
 
   # Ten failed QA deploys in a row went unnoticed (#191) because a red
   # deploy job on main surfaces nowhere. Keep one open issue while the deploy

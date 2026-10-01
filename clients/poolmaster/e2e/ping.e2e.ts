@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
  * unauthenticated sign-in shell, nothing more. Phase 2 (deferred, see the
  * plan) designs whatever comes after this.
  */
-test('pool-master-303: the deployed app boots and renders the sign-in shell', async ({ page }) => {
+test('pool-master-303: the deployed app boots and renders the sign-in shell', { tag: '@smoke' }, async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('auth-login-identifier')).toBeVisible();
 });
