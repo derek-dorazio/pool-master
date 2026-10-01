@@ -135,6 +135,7 @@ flowchart TD
   LT --> SB[service-build]
   LT --> MB[mock-contest-feed-provider-build]
   LT --> PB[poolmaster-build]
+  LT --> EL[poolmaster-browser-e2e-local]
 
   SC --> CS[coverage-summary]
   PU --> CS
@@ -158,7 +159,7 @@ flowchart TD
   classDef report fill:#f3f4f6,stroke:#6b7280
 
   class LT gate
-  class SC,PU,SB,MB,PB test
+  class SC,PU,SB,MB,PB,EL test
   class PI,MQ,DQ,E2E deploy
   class CS,DH report
 ```
@@ -390,7 +391,8 @@ lint-typecheck. Their behavior was not changed by the rule-enforcement
 hardening epic.
 
 - **Test suites** — `service-coverage-report`, `poolmaster-unit-tests`,
-  `coverage-summary`, and `poolmaster-browser-e2e`. See *Test suites*
+  `coverage-summary`, `poolmaster-browser-e2e-local`, and
+  `poolmaster-browser-e2e`. See *Test suites*
   below for each suite's purpose, runner, configuration, coverage
   policy, and CI mapping.
 - **`service-build`** — backend service Docker build verification.
@@ -489,15 +491,22 @@ release.
 
 - **Runner:** Playwright (Chromium project).
 - **Config:** [`clients/poolmaster/playwright.config.ts`](../clients/poolmaster/playwright.config.ts).
-- **Environment:** Real browser (Chromium / optionally a system-installed channel via `POOLMASTER_E2E_BROWSER_CHANNEL`) hitting the **deployed QA frontend** at `qa.ultimateofficepoolmanager.com` (override via `POOLMASTER_E2E_BASE_URL`).
-- **Test count today:** ~5 `.e2e.ts` files plus `*.setup.ts` auth setup.
-- **Concurrency:** `fullyParallel: false`, `workers: 1`. Tests share state through the deployed environment.
-- **Retries:** none. CI fails immediately on flake; local failures are reproducible.
-- **Artifacts on failure:** trace, screenshot, video — all retained on failure for triage.
+- **One spec set, selected by tag.** Specs that may run against a deployed environment carry `{ tag: '@smoke' }` and create no domain data; everything else runs pre-merge only. Never two copies of a spec. A spec that runs in both places may assert the presence of what the run created, never the absence or count of what it did not.
+  - `ping.e2e.ts` (`@smoke`) — the bundle boots to the sign-in shell.
+  - `smoke.e2e.ts` (`@smoke`) — root admin signs in, reaches `/manage`, logs out.
+  - `plumbing-probe.e2e.ts` (untagged) — the same admin act, then a run-named user registers and creates a league in the same browser; `afterAll` removes every attempt's user and league through the API with the admin token. It writes data, so it refuses to start against any base URL whose host is not `localhost` or `127.0.0.1` — including the config's QA default.
+- **Credentials:** `POOLMASTER_E2E_ADMIN_PASSWORD` (required, no default — a missing value fails the spec immediately) and `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaults to the admin username). Users the suite registers get `@e2e.invalid` addresses.
+- **Concurrency:** `fullyParallel: true`. No spec shares data with another; every name a run creates carries a run id computed inside the test body.
+- **Retries:** 1 in CI, 0 locally.
+- **Artifacts on failure:** trace, screenshot, video, in both jobs. A trace records every `fill()` value and request and response body, so the config's `globalTeardown` (`e2e/redact-artifacts.ts`) scrubs usernames, email addresses, passwords and session tokens out of everything in `test-results/` before the HTML reporter copies it. It is a denylist: text is redacted, recognised media is kept, and anything else — or a trace it cannot rewrite — is deleted rather than kept. It cannot scrub pixels: screenshots, video and the trace's filmstrip still show what was typed into the identifier field (password fields render masked).
 - **Local commands:**
-  - `npm run test:poolmaster:browser-e2e` — run the suite
+  - `npm run test:poolmaster:browser-e2e` — run every spec
+  - `npm run test:poolmaster:browser-e2e:smoke` — run only `@smoke`
   - `npm run test:poolmaster:browser-e2e:list` — list tests without running
-- **CI job:** `poolmaster-browser-e2e` (push-to-main only; not run on PR builds). Triggered after `deploy-qa` succeeds.
+- **Running against a local stack:** start Postgres, migrate, seed a root admin with `packages/core-api/scripts/bootstrap-users.mjs` (`FIXTURE_JSON` you compose), `npm run build:poolmaster`, start core-api on port 3000, then `npx vite preview` in `clients/poolmaster` — it serves the production build on port 4175 and proxies `/api` to core-api. Set `POOLMASTER_E2E_BASE_URL=http://localhost:4175` plus the two admin variables. The `poolmaster-browser-e2e-local` job in `ci.yml` is the reference sequence.
+- **CI jobs:**
+  - `poolmaster-browser-e2e-local` — every PR and every main push. All specs against the local stack above on a throwaway Postgres; seeds its own admin with a password generated for the run, so it needs no secrets, no AWS and no deploy.
+  - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 

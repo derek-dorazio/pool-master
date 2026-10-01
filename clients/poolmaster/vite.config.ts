@@ -51,6 +51,13 @@ export default defineConfig(() => {
     },
   };
 
+  const apiProxy = {
+    '/api': {
+      target: 'http://localhost:3000',
+      changeOrigin: true,
+    },
+  };
+
   return {
     base: assetBase,
     define: {
@@ -91,12 +98,15 @@ export default defineConfig(() => {
     },
     server: {
       port: 5175,
-      proxy: {
-        '/api': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-        },
-      },
+      proxy: apiProxy,
+    },
+    // #278 — `vite preview` serves the production build, and the pre-merge browser e2e run
+    // drives exactly that. Without its own proxy the built bundle's same-origin `/api` calls
+    // would 404 against the static server.
+    preview: {
+      port: 4175,
+      strictPort: true,
+      proxy: apiProxy,
     },
     test: {
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
