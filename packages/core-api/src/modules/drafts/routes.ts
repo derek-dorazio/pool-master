@@ -24,6 +24,8 @@ import {
 import { ContestEntryPickService } from '../contest-entry-picks';
 import { createErrorEnvelope } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import { PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
+import { requireMemberOfLeague } from '../leagues/permissions';
 import { createSportEventTierService } from '../events/wiring';
 import type { ParticipantValuationView, SportEventTierGroup } from '../events/sport-event-tier-service';
 
@@ -595,13 +597,19 @@ export function draftsModule(fastify: FastifyInstance): void {
   // Module-scoped (one per fastify register) — see plans/117 §7.1; the service
   // resolves Contest.contestFormat in the same Prisma transaction at insert time.
   const pickService = new ContestEntryPickService(prisma, fastify.log);
+  // #291 — the draft room shows every entry's picks, so reading it needs membership of the
+  // contest's league, as every other contest read does.
+  const requireContestLeagueMember = requireMemberOfLeague(
+    new PrismaContestRepository(prisma),
+    new PrismaLeagueMembershipRepository(prisma),
+  );
 
   fastify.get('/:contestId', {
     schema: {
       tags: ['Drafts'],
       summary: 'Get current draft state for a contest',
       description:
-        'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability.',
+        'Returns the current draft-room state for the contest, including queue, picks, timers, and selection availability. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getDraftState',
       params: {
         type: 'object',
@@ -611,9 +619,10 @@ export function draftsModule(fastify: FastifyInstance): void {
       querystring: zodToJsonSchema(DraftStateQuerySchema),
       response: {
         200: zodToJsonSchema(DraftStateResponseSchema),
-        ...draftErrorResponses(404, 501),
+        ...draftErrorResponses(401, 403, 404, 501),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
       const { entryId } = (request.query ?? {}) as { entryId?: string };

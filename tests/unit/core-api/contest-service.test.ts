@@ -19,6 +19,7 @@ import {
   SelectionType,
   ScoringEngine,
   ContestFormat,
+  LeagueMembershipStatus,
   Sport,
   SquadMembershipStatus,
   TeamIconKey,
@@ -1530,6 +1531,86 @@ describe('ContestService', () => {
       expect(entries[0].participants).toEqual([
         expect.objectContaining({ participantName: 'Cut Golfer', participantStatus: 'ELIMINATED' }),
       ]);
+    });
+  });
+
+  /**
+   * #291 — getEntryContext is the one resolver behind every entry operation, and it hands out only
+   * ACTIVE memberships. Leaving a league keeps both rows as INACTIVE, so before this a removed
+   * member could still rename or delete their former squad's entries.
+   */
+  describe('entry access resolves only ACTIVE memberships (#291)', () => {
+    const openContest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
+
+    function serviceFor(options: {
+      league: ReturnType<typeof buildMembership> | null;
+      squad: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>;
+      entries?: ContestEntryRepository;
+    }) {
+      return buildService({
+        contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(openContest) }),
+        memberships: createMockMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(options.league),
+        }),
+        squadMemberships: createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(options.squad),
+        }),
+        entries: options.entries ?? createMockEntryRepo({
+          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        }),
+      });
+    }
+
+    const inactiveLeague = buildMembership({ status: LeagueMembershipStatus.INACTIVE });
+    const inactiveSquad = { ...ACTIVE_SQUAD_MEMBERSHIP, status: SquadMembershipStatus.INACTIVE as SquadMembershipStatus };
+
+    it.each([
+      ['updateEntry', (service: ContestService) => service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' })],
+      ['deleteMyEntry', (service: ContestService) => service.deleteMyEntry('contest-1', 'user-1')],
+      ['createEntry', (service: ContestService) => service.createEntry('contest-1', 'user-1')],
+    ])('%s refuses a former league member with LEAGUE_MEMBERSHIP_INACTIVE and writes nothing', async (_name, act) => {
+      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const service = serviceFor({ league: inactiveLeague, squad: inactiveSquad, entries });
+
+      await expect(act(service)).rejects.toMatchObject({
+        name: 'ContestEntryAccessError',
+        code: 'LEAGUE_MEMBERSHIP_INACTIVE',
+      });
+      expect(entries.update).not.toHaveBeenCalled();
+      expect(entries.delete).not.toHaveBeenCalled();
+      expect(entries.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a non-member with LEAGUE_MEMBERSHIP_REQUIRED, a different code from an ended membership', async () => {
+      const service = serviceFor({ league: null, squad: null });
+
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))
+        .rejects.toMatchObject({ name: 'ContestEntryAccessError', code: 'LEAGUE_MEMBERSHIP_REQUIRED' });
+    });
+
+    it('refuses an active league member whose squad membership has ended with SQUAD_MEMBERSHIP_INACTIVE', async () => {
+      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const service = serviceFor({ league: buildMembership(), squad: inactiveSquad, entries });
+
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))
+        .rejects.toMatchObject({ name: 'ContestEntryAccessError', code: 'SQUAD_MEMBERSHIP_INACTIVE' });
+      expect(entries.update).not.toHaveBeenCalled();
+    });
+
+    it('keeps "no squad at all" distinct: SQUAD_MANAGER_REQUIRED for a change, SQUAD_MEMBERSHIP_REQUIRED for a create', async () => {
+      await expect(serviceFor({ league: buildMembership(), squad: null })
+        .updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))
+        .rejects.toMatchObject({ code: 'SQUAD_MANAGER_REQUIRED' });
+      await expect(serviceFor({ league: buildMembership(), squad: null })
+        .createEntry('contest-1', 'user-1'))
+        .rejects.toMatchObject({ code: 'SQUAD_MEMBERSHIP_REQUIRED' });
+    });
+
+    it('getMyEntry returns null, not an error, both for no squad and for an ended squad membership', async () => {
+      await expect(serviceFor({ league: buildMembership(), squad: null }).getMyEntry('contest-1', 'user-1'))
+        .resolves.toBeNull();
+      await expect(serviceFor({ league: buildMembership(), squad: inactiveSquad }).getMyEntry('contest-1', 'user-1'))
+        .resolves.toBeNull();
     });
   });
 });

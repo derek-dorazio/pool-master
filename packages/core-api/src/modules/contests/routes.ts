@@ -19,6 +19,8 @@ import {
 import {
   requireCommissioner,
   requireCommissionerForContest,
+  requireLeagueMembership,
+  requireMemberOfLeague,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
 import { OverrideService } from './override-service';
@@ -55,10 +57,15 @@ export function contestsModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'List contests for a league',
       description:
-        'Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests.',
+        'Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'listContests',
-      response: { 200: schemaRef('ContestListResponse') },
+      response: {
+        200: schemaRef('ContestListResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
     },
+    preHandler: requireLeagueMembership(membershipRepo),
     handler: handlers.listContests,
   });
 
@@ -115,6 +122,10 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     contestRepo,
     membershipRepo,
   );
+  // #193 — the read-only gate: any active member of the league that owns the contest. Every
+  // route here either declares a gate or is on scripts/route-authorization-opt-outs.mjs with
+  // the reason it authorizes elsewhere; `npm run rules:check` fails a route that does neither.
+  const requireContestLeagueMember = requireMemberOfLeague(contestRepo, membershipRepo);
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {
@@ -122,13 +133,16 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       description:
-        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier.',
+        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getContest',
       response: {
         200: schemaRef('ContestResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.getContest,
   });
 
@@ -137,14 +151,17 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'List contest entries',
       description:
-        'Lists the contest entries currently registered for the contest, including data needed for administration and participant views.',
+        'Lists the contest entries currently registered for the contest, including data needed for administration and participant views. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'listContestEntries',
       response: {
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         200: schemaRef('ContestEntryListResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.listEntries,
   });
 
@@ -153,14 +170,17 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Get contest entry detail',
       description:
-        'Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks.',
+        'Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getContestEntry',
       response: {
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         200: schemaRef('ContestEntryDetailResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.getEntry,
   });
 
@@ -169,9 +189,11 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Get Golf contest leaderboard',
       description:
-        'Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event\'s standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event\'s own field rows). Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Golf only today: another sport answers 400 _SPORT_UNSUPPORTED.',
+        'Returns the member-facing leaderboard for a golf contest, as the cross-sport ContestLeaderboardResponse. While the contest is live, entry standings are computed from the event\'s standings and joined to entry picks in memory, so picks remain pointers into `participants` (the event\'s own field rows). Once the contest is COMPLETED, each entry\'s total, rank, pick counts, the counting rule and asOf come from the standings frozen at settlement, so a later score correction does not change a settled result; the event field still shows current scores. `scoringDefinitionId` names the scoring definition the leaderboard was ranked by; render scores and rounds through it. Golf only today: another sport answers 400 _SPORT_UNSUPPORTED. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getGolfContestLeaderboard',
       response: {
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         200: schemaRef('ContestLeaderboardResponse'),
         400: {
           ...zodToJsonSchema(ErrorEnvelopeSchema),
@@ -180,6 +202,7 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.getGolfLeaderboard,
   });
 
@@ -205,11 +228,12 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Create the current user contest entry',
       description:
-        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation.',
+        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no team.',
       operationId: 'enterContest',
       response: {
         201: schemaRef('ContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
@@ -222,11 +246,12 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Delete the current user contest entry',
       description:
-        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest.',
+        'Deletes the authenticated user contest entry when the contest rules still allow the user to leave the contest. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'leaveContest',
       response: {
         200: schemaRef('ContestEntryDeletionResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -238,12 +263,13 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Update a contest entry',
       description:
-        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable.',
+        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MANAGER_REQUIRED when the caller has no team.',
       operationId: 'updateContestEntry',
       body: schemaRef('UpdateContestEntryRequest'),
       response: {
         200: schemaRef('ContestEntryResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -255,15 +281,18 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Update a contest',
       description:
-        'Updates mutable contest fields for the target contest and returns the refreshed contest payload.',
+        'Updates mutable contest fields for the target contest and returns the refreshed contest payload. Commissioners of the contest\'s league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.',
       operationId: 'updateContest',
       body: schemaRef('UpdateContestRequest'),
       response: {
         200: schemaRef('ContestResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestCommissioner,
     handler: handlers.updateContest,
   });
 
@@ -272,14 +301,17 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Delete a contest',
       description:
-        'Deletes the target contest when the contest state and permissions allow removal.',
+        'Deletes the target contest when the contest is still DRAFT. Commissioners of the contest\'s league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.',
       operationId: 'deleteContest',
       response: {
         200: zodToJsonSchema(SuccessSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestCommissioner,
     handler: handlers.deleteContest,
   });
 

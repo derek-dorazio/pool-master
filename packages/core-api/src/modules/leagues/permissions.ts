@@ -20,7 +20,7 @@ function isRootAdmin(request: FastifyRequest) {
   return request.authUser?.isRootAdmin === true;
 }
 
-function validateLeagueScopeRequest(
+async function validateLeagueScopeRequest(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
@@ -31,7 +31,7 @@ function validateLeagueScopeRequest(
       action: 'leaguePermission.loadMembership.unauthenticated',
       data: { leagueId: leagueId ?? null },
     }, 'Rejected league permission check without authenticated session');
-    void sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    await sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     return null;
   }
   if (!leagueId) {
@@ -39,7 +39,7 @@ function validateLeagueScopeRequest(
       action: 'leaguePermission.loadMembership.missingLeagueId',
       data: { userId },
     }, 'Rejected league permission check without league id');
-    void sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
+    await sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
     return null;
   }
   return { userId, leagueId };
@@ -51,7 +51,7 @@ async function loadMembership(
   reply: FastifyReply,
 ) {
   const logger = request.contextLogger ?? request.log;
-  const scope = validateLeagueScopeRequest(request, reply);
+  const scope = await validateLeagueScopeRequest(request, reply);
   if (!scope) {
     return null;
   }
@@ -100,7 +100,7 @@ export function requireLeagueMembership(
       action: 'leaguePermission.requireMembership.enter',
       data: { leagueId: (request.params as { id?: string }).id ?? null },
     }, 'Checking league membership permission');
-    const scope = validateLeagueScopeRequest(request, reply);
+    const scope = await validateLeagueScopeRequest(request, reply);
     if (!scope) {
       return;
     }
@@ -125,7 +125,7 @@ export function requireCommissioner(
       action: 'leaguePermission.requireCommissioner.enter',
       data: { leagueId: (request.params as { id?: string }).id ?? null },
     }, 'Checking commissioner permission');
-    const scope = validateLeagueScopeRequest(request, reply);
+    const scope = await validateLeagueScopeRequest(request, reply);
     if (!scope) {
       return;
     }
@@ -159,6 +159,101 @@ export function requireCommissioner(
   };
 }
 
+type ContestScopedGate = 'requireCommissionerForContest' | 'requireMemberOfLeague';
+
+function contestIdOf(request: FastifyRequest): string | undefined {
+  return (request.params as { contestId?: string }).contestId;
+}
+
+/**
+ * The work both contest-scoped gates share: resolve the contest named by `:contestId`, walk to
+ * the league that owns it, and load the caller's active membership there. Sends the rejection
+ * and returns `null` when the request cannot proceed; returns `'root-admin'` for a root admin,
+ * who bypasses league membership (access rule A10); otherwise returns the active membership.
+ *
+ * Membership is read per request, never from the access token (access rule A12).
+ *
+ * Every rejection here and in the gates **awaits** `sendError`. An async hook that sends without
+ * awaiting resolves before the response has finished (the etag `onSend` hook makes it finish
+ * later), `reply.sent` is still false, and Fastify runs the handler as well: the caller gets the
+ * 403 and the write lands anyway. That is how `requireCommissionerForContest` behaved until #193.
+ */
+async function loadActiveMembershipForContest(
+  gate: ContestScopedGate,
+  contestRepo: ContestRepository,
+  membershipRepo: LeagueMembershipRepository,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const logger = request.contextLogger ?? request.log;
+  const userId = request.authUser?.userId;
+  const contestId = contestIdOf(request);
+  logger.debug({
+    action: `leaguePermission.${gate}.enter`,
+    data: { contestId: contestId ?? null },
+  }, 'Checking contest-scoped league permission');
+  if (!userId) {
+    logger.warn({
+      action: `leaguePermission.${gate}.unauthenticated`,
+      data: { contestId: contestId ?? null },
+    }, 'Rejected contest-scoped permission check without authenticated session');
+    await sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    return null;
+  }
+  if (!contestId) {
+    logger.warn({
+      action: `leaguePermission.${gate}.missingContestId`,
+      data: { userId },
+    }, 'Rejected contest-scoped permission check without contest id');
+    await sendError(reply, 400, 'CONTEST_ID_REQUIRED', 'Contest id is required');
+    return null;
+  }
+  const contest = await contestRepo.findById(contestId);
+  if (!contest) {
+    logger.warn({
+      action: `leaguePermission.${gate}.contestNotFound`,
+      data: { contestId, userId },
+    }, 'Rejected contest-scoped permission check for missing contest');
+    await sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
+    return null;
+  }
+  if (request.authUser?.isRootAdmin === true) {
+    logger.debug({
+      action: `leaguePermission.${gate}.rootAdminBypass`,
+      data: { contestId, leagueId: contest.leagueId, userId },
+    }, 'Granted contest-scoped permission via root-admin override');
+    return 'root-admin' as const;
+  }
+  const membership = await membershipRepo.findByLeagueAndUser(contest.leagueId, userId);
+  if (!membership) {
+    logger.warn({
+      action: `leaguePermission.${gate}.missingMembership`,
+      data: { contestId, leagueId: contest.leagueId, userId },
+    }, 'Rejected contest-scoped permission check for missing membership');
+    await sendError(
+      reply,
+      403,
+      'LEAGUE_MEMBERSHIP_REQUIRED',
+      'You must be an active member of this league to perform this action',
+    );
+    return null;
+  }
+  if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+    logger.warn({
+      action: `leaguePermission.${gate}.inactiveMembership`,
+      data: { contestId, leagueId: contest.leagueId, userId, status: membership.status },
+    }, 'Rejected contest-scoped permission check for inactive membership');
+    await sendError(
+      reply,
+      403,
+      'LEAGUE_MEMBERSHIP_INACTIVE',
+      'Your membership in this league is inactive',
+    );
+    return null;
+  }
+  return membership;
+}
+
 /**
  * Contest-scoped commissioner gate. Used by override-style endpoints whose
  * route paths use `:contestId` rather than `:id` (the league id), so the
@@ -174,80 +269,22 @@ export function requireCommissionerForContest(
 ): preHandlerAsyncHookHandler {
   return async function checkContestCommissioner(request, reply): Promise<void> {
     const logger = request.contextLogger ?? request.log;
-    const userId = request.authUser?.userId;
-    const contestId = (request.params as { contestId?: string }).contestId;
-    logger.debug({
-      action: 'leaguePermission.requireCommissionerForContest.enter',
-      data: { contestId: contestId ?? null },
-    }, 'Checking contest-scoped commissioner permission');
-    if (!userId) {
-      logger.warn({
-        action: 'leaguePermission.requireCommissionerForContest.unauthenticated',
-        data: { contestId: contestId ?? null },
-      }, 'Rejected contest commissioner check without authenticated session');
-      void sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
-      return;
-    }
-    if (!contestId) {
-      logger.warn({
-        action: 'leaguePermission.requireCommissionerForContest.missingContestId',
-        data: { userId },
-      }, 'Rejected contest commissioner check without contest id');
-      void sendError(reply, 400, 'CONTEST_ID_REQUIRED', 'Contest id is required');
-      return;
-    }
-    const contest = await contestRepo.findById(contestId);
-    if (!contest) {
-      logger.warn({
-        action: 'leaguePermission.requireCommissionerForContest.contestNotFound',
-        data: { contestId, userId },
-      }, 'Rejected contest commissioner check for missing contest');
-      void sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
-      return;
-    }
-    if (request.authUser?.isRootAdmin === true) {
-      logger.debug({
-        action: 'leaguePermission.requireCommissionerForContest.rootAdminBypass',
-        data: { contestId, leagueId: contest.leagueId, userId },
-      }, 'Granted contest commissioner permission via root-admin override');
-      return;
-    }
-    const membership = await membershipRepo.findByLeagueAndUser(
-      contest.leagueId,
-      userId,
+    const membership = await loadActiveMembershipForContest(
+      'requireCommissionerForContest',
+      contestRepo,
+      membershipRepo,
+      request,
+      reply,
     );
-    if (!membership) {
-      logger.warn({
-        action: 'leaguePermission.requireCommissionerForContest.missingMembership',
-        data: { contestId, leagueId: contest.leagueId, userId },
-      }, 'Rejected contest commissioner check for missing membership');
-      void sendError(
-        reply,
-        403,
-        'LEAGUE_MEMBERSHIP_REQUIRED',
-        'You must be an active member of this league to perform this action',
-      );
-      return;
-    }
-    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
-      logger.warn({
-        action: 'leaguePermission.requireCommissionerForContest.inactiveMembership',
-        data: { contestId, leagueId: contest.leagueId, userId, status: membership.status },
-      }, 'Rejected contest commissioner check for inactive membership');
-      void sendError(
-        reply,
-        403,
-        'LEAGUE_MEMBERSHIP_INACTIVE',
-        'Your membership in this league is inactive',
-      );
+    if (membership === null || membership === 'root-admin') {
       return;
     }
     if (membership.role !== LeagueRole.COMMISSIONER) {
       logger.warn({
         action: 'leaguePermission.requireCommissionerForContest.denied',
-        data: { contestId, leagueId: contest.leagueId, userId, role: membership.role },
-      }, 'Rejected commissioner-only contest override');
-      void sendError(
+        data: { contestId: contestIdOf(request), leagueId: membership.leagueId, userId: membership.userId, role: membership.role },
+      }, 'Rejected commissioner-only contest action');
+      await sendError(
         reply,
         403,
         'LEAGUE_PERMISSION_DENIED',
@@ -257,7 +294,40 @@ export function requireCommissionerForContest(
     }
     logger.debug({
       action: 'leaguePermission.requireCommissionerForContest.success',
-      data: { contestId, leagueId: contest.leagueId, userId },
-    }, 'Granted commissioner-only contest override');
+      data: { contestId: contestIdOf(request), leagueId: membership.leagueId, userId: membership.userId },
+    }, 'Granted commissioner-only contest action');
+  };
+}
+
+/**
+ * League-member gate for a resource reached by id (#193). The read-only half of the league
+ * access model: browsing contests, leaderboards, other squads and members within a league
+ * requires being an active member of the league that owns the resource, and nothing more.
+ *
+ * The contest-scoped form: resolves the contest named by `:contestId`, walks to its league, and
+ * asserts the caller is an active member of any role there (root-admins bypass). Returns 401
+ * unauthenticated, 404 contest-not-found, 403 not-a-member or inactive. `requireLeagueMembership`
+ * is the same rule for routes that carry the league id in the path as `:id`.
+ */
+export function requireMemberOfLeague(
+  contestRepo: ContestRepository,
+  membershipRepo: LeagueMembershipRepository,
+): preHandlerAsyncHookHandler {
+  return async function checkMemberOfLeague(request, reply): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    const membership = await loadActiveMembershipForContest(
+      'requireMemberOfLeague',
+      contestRepo,
+      membershipRepo,
+      request,
+      reply,
+    );
+    if (membership === null || membership === 'root-admin') {
+      return;
+    }
+    logger.debug({
+      action: 'leaguePermission.requireMemberOfLeague.success',
+      data: { contestId: contestIdOf(request), leagueId: membership.leagueId, userId: membership.userId, role: membership.role },
+    }, 'Granted league-member contest access');
   };
 }
