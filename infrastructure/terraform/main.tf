@@ -805,6 +805,17 @@ resource "aws_ecs_service" "mock_contest_feed_provider" {
   }
 
   depends_on = [aws_service_discovery_service.mock_contest_feed_provider]
+
+  # #281 — CI owns task_definition here for the same reason it does on core-api:
+  # deploy-qa's "Deploy QA services" step calls update-service for both services,
+  # so both are moved by each main push and neither should be reconciled by an
+  # apply. #282 added this to core_api and missed this service. Without it, a
+  # terraform apply rolls the service back to Terraform's own revision — 104
+  # against CI's 216 on 2026-10-02 — whose image ECR expired long ago, so the
+  # service cannot place a task at all.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
 # Draft, scoring, ingestion, and notification services removed — merged into core-api monolith
