@@ -29,7 +29,8 @@ everything, and repeating it on every row adds noise.
 
 **These rules decide every row in the tables below.** A1–A7 decide *who may call* an
 operation; A11 decides which objects A1 applies to; A8 decides *what viewer context the
-response carries*; A9 decides what `isActive` does and does not constrain. Where a table
+response carries*; A9 decides what `isActive` does and does not constrain; A10 and A12 decide
+*where authority is read from* — the token for root admin, a query for membership. Where a table
 and a rule disagree, the rule wins and the table is a bug. New operations are assigned a role by
 applying these rules, not by precedent from a similar-looking route.
 
@@ -338,6 +339,55 @@ of the contest: the template is where it came from, not what it is.
 - **Global is not an argument for widening tenant reads.** No tenant-scoped object becomes
   readable because it is "not very sensitive". A11 is a structural test, not a judgement
   about harm.
+
+---
+
+## A12. Relational authority is resolved by query in the pre-check, never carried on the token
+
+**Settled 2026-10-01 with the repo owner (#193).** League membership and squad affiliation —
+the authority a caller has *relative to a resource* — are resolved per request, by query, inside
+the pre-check that gates the route. They are never carried on the access token as claims.
+
+The pre-checks are `requireMemberOfLeague` for read-only access within a league's scope
+(browsing contests, the leaderboard, other squads and members), the commissioner gates for
+league administration, and squad affiliation for anything done on a squad's behalf, entries
+included. Each one resolves the resource's league from the database and reads the caller's
+membership there.
+
+### Why A10 does not transfer
+
+A10 reads root-admin authority from a claim, and someone reading it could reasonably conclude
+that claims are how authority works here. They are not; A10 is the exception, and the line is
+**a global property of the user versus a relation to data**, not tolerance for staleness.
+
+| | Root-admin authority (A10) | League and squad membership |
+|---|---|---|
+| Shape | one global property of the user | a relation between a user and a specific resource |
+| Needs data to interpret | no | yes — which league owns this contest, this squad |
+| Changes | effectively never within a session | constantly, and by side effect: ADR-0004 removes league access when a team is inactivated |
+| Cardinality | one boolean | many leagues, many squads per user |
+| Revocation | `setUserRootAdmin` revokes the subject's sessions on demotion | nothing comparable exists |
+
+Root-admin is safe as a claim because it needs no data to interpret, does not change within a
+session, and has a revocation path that closes the window when it does. Membership has none of
+those properties. And a claim could not remove the database read anyway: the pre-check must
+resolve the resource's league from the database whatever the token says, so a membership claim
+would not save the query, only add a second and staler source of truth beside it.
+
+### No caching, and no claim-based optimization, for now
+
+This is early-stage feature development, and the cost is one indexed read —
+`findByLeagueAndUser` on the `(leagueId, userId)` unique key — that `requireCommissionerForContest`
+already performs for every contest-scoped commissioner gate. Nothing about it needs optimizing.
+
+### The prerequisite for revisiting it
+
+**Anyone who later wants membership claims, or a membership cache, must first build a revocation
+path equivalent to the one that makes A10 safe** — removing a member, inactivating a squad or
+team, and every other path that ends a membership must invalidate whatever carries it, before
+the next request is decided. Nothing comparable exists for membership removal today, and
+ADR-0004's implicit removal makes it harder, not easier. Without it, saving the query introduces
+a gate that keeps granting access to a league the user was removed from.
 
 ---
 

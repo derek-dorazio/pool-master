@@ -776,7 +776,7 @@ export const updateContestConfiguration = <ThrowOnError extends boolean = false>
 /**
  * Delete a contest
  *
- * Deletes the target contest when the contest state and permissions allow removal.
+ * Deletes the target contest when the contest is still DRAFT. Commissioners of the contest's league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.
  */
 export const deleteContest = <ThrowOnError extends boolean = false>(options: Options<DeleteContestData, ThrowOnError>) => (options.client ?? client).delete<DeleteContestResponses, DeleteContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -787,7 +787,7 @@ export const deleteContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Get a contest by ID
  *
- * Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier.
+ * Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const getContest = <ThrowOnError extends boolean = false>(options: Options<GetContestData, ThrowOnError>) => (options.client ?? client).get<GetContestResponses, GetContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -798,7 +798,7 @@ export const getContest = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Update a contest
  *
- * Updates mutable contest fields for the target contest and returns the refreshed contest payload.
+ * Updates mutable contest fields for the target contest and returns the refreshed contest payload. Commissioners of the contest's league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.
  */
 export const updateContest = <ThrowOnError extends boolean = false>(options: Options<UpdateContestData, ThrowOnError>) => (options.client ?? client).put<UpdateContestResponses, UpdateContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

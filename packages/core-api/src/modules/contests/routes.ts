@@ -19,6 +19,7 @@ import {
 import {
   requireCommissioner,
   requireCommissionerForContest,
+  requireMemberOfLeague,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
 import { OverrideService } from './override-service';
@@ -115,6 +116,10 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
     contestRepo,
     membershipRepo,
   );
+  // #193 — the read-only gate: any active member of the league that owns the contest. Every
+  // route here either declares a gate or is on scripts/route-authorization-opt-outs.mjs with
+  // the reason it authorizes elsewhere; `npm run rules:check` fails a route that does neither.
+  const requireContestLeagueMember = requireMemberOfLeague(contestRepo, membershipRepo);
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {
@@ -122,13 +127,16 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       description:
-        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier.',
+        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getContest',
       response: {
         200: schemaRef('ContestResponse'),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestLeagueMember,
     handler: handlers.getContest,
   });
 
@@ -255,15 +263,18 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Update a contest',
       description:
-        'Updates mutable contest fields for the target contest and returns the refreshed contest payload.',
+        'Updates mutable contest fields for the target contest and returns the refreshed contest payload. Commissioners of the contest\'s league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.',
       operationId: 'updateContest',
       body: schemaRef('UpdateContestRequest'),
       response: {
         200: schemaRef('ContestResponse'),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestCommissioner,
     handler: handlers.updateContest,
   });
 
@@ -272,14 +283,17 @@ export function contestsByIdModule(fastify: FastifyInstance): void {
       tags: ['Contests'],
       summary: 'Delete a contest',
       description:
-        'Deletes the target contest when the contest state and permissions allow removal.',
+        'Deletes the target contest when the contest is still DRAFT. Commissioners of the contest\'s league only (root admins bypass): 403 LEAGUE_PERMISSION_DENIED for a member who is not a commissioner, LEAGUE_MEMBERSHIP_REQUIRED for a non-member.',
       operationId: 'deleteContest',
       response: {
         200: zodToJsonSchema(SuccessSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
+    preHandler: requireContestCommissioner,
     handler: handlers.deleteContest,
   });
 

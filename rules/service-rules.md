@@ -106,6 +106,27 @@ Rules:
 - Services own business logic.
 - Mappers translate domain/service results to DTOs.
 
+### Route Authorization
+
+The global auth guard proves only that the caller is signed in. Every route that reaches data
+someone else owns decides who may reach it, and says so where a reader will look:
+
+- **A `preHandler` is the default** for anything decidable from the path and the session. The
+  league gates live in `modules/leagues/permissions.ts`: `requireLeagueMembership` and
+  `requireCommissioner` for routes carrying the league id as `:id`; `requireMemberOfLeague`
+  (read-only access within a league) and `requireCommissionerForContest` for routes that reach a
+  contest by `:contestId` and must resolve its league first. Root admins bypass all of them.
+- **Authorizing in the handler or service is the declared exception**, taken only when the check
+  needs what a hook cannot see — the request body, or which sub-resource is being acted on — or
+  when the service already takes the actor and enforces the rule itself.
+- **A declared exception is stated, not implied.** A by-id mount (a prefix with no path parameter,
+  such as `/api/v1/contests`) has lost the league context a nested mount carries, so every route
+  under one with a path parameter either declares a `preHandler`/`onRequest` hook or appears in
+  `scripts/route-authorization-opt-outs.mjs` with a one-line reason. `npm run rules:check`
+  (`rules:check:route-authorization`) fails a route that does neither.
+- League and squad membership are resolved by query inside the gate, never read from the token —
+  `docs/DOMAIN-OPERATIONS.md` access rule A12.
+
 ---
 
 ## 4. DTOs, Mappers, and OpenAPI
