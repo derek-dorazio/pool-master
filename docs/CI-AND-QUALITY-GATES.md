@@ -236,6 +236,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 2 | Route discipline | `rules:check:route-discipline` | warn-only | 95 | The `service-rules.md §10` grep set: `prisma.*` calls in routes/handlers, inline `.map((`, `additionalProperties: true`, `SuccessSchema` on domain endpoints, inline JSON schemas | `scripts/check-route-discipline.mjs` |
 | 3 | ~~Test-disable discipline~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` / `pending()`, plus `*.skip.test.ts` files and `skipped/` dirs. The `SKIP: #NN` escape comment was **removed** — see below. | `eslint-rules/no-disabled-tests.mjs` |
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
+| 2a | Route authorization | `rules:check:route-authorization` | **blocking** | clean | A route with a path parameter under a by-id mount (a prefix with no path parameter, e.g. `/api/v1/contests`) that declares no `preHandler`/`onRequest` hook and is not on `scripts/route-authorization-opt-outs.mjs` with a reason. Also fails a stale or reasonless opt-out. Added by #193. | `scripts/check-route-authorization.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
 | (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | advisory (warns; **was blocking** until #284) | clean | The PR body should contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. A missing marker emits a warning annotation and the job still passes. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
@@ -382,6 +383,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 |---|---|---|
 | `poolmaster/no-mocked-api` via `npm run lint` (**block**) | A test added a module-level mock of the generated API. | Replace `vi.mock('@/lib/api', ...)` with MSW handlers under a shared test-handler module. See `rules/testing-rules.md §5` and the `pool-master-rop.4` cleanup defect. |
 | `rules:check:route-discipline` (warn) | A route or handler file violates `service-rules.md §10`. | Pull `prisma.*` calls into a service. Move inline `.map((...))` shaping into `packages/core-api/src/mappers/<module>.mapper.ts`. Replace `additionalProperties: true` with `zodToJsonSchema(SomeSchema)`. |
+| `rules:check:route-authorization` (**block**) | A by-id route authorizes nowhere a reader can see, or an opt-out entry is stale or has no reason. | Declare the gate as a `preHandler` (`requireMemberOfLeague`, `requireCommissionerForContest`, ...). If the route genuinely authorizes in its handler or service, add it to `scripts/route-authorization-opt-outs.mjs` with a one-line reason naming the function that does it. See `rules/service-rules.md` §3 *Route Authorization*. |
 | `poolmaster/no-disabled-tests` via `npm run lint` (**block**) | A test was disabled. There is no exempting comment. | Either fix the test, or delete it and note the coverage gap in the slice's closing comment. |
 | `poolmaster/no-bare-ui-controls` via `npm run lint` (**block**) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
@@ -583,6 +585,8 @@ package.json                         — npm script wiring (rules:check chain, a
 scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
 eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
 scripts/check-route-discipline.mjs   — gate 2
+scripts/check-route-authorization.mjs — gate 2a, with its opt-out list in
+                                        scripts/route-authorization-opt-outs.mjs
 eslint-rules/no-disabled-tests.mjs — gate 3 (migrated from scripts/)
 eslint-rules/no-bare-ui-controls.mjs — gate 4 (migrated from scripts/)
 scripts/check-form-query-mirror.mjs  — gate 5
