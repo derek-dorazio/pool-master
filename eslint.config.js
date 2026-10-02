@@ -1,5 +1,13 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import tanstackQuery from '@tanstack/eslint-plugin-query';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import importX from 'eslint-plugin-import-x';
+import jest from 'eslint-plugin-jest';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import vitest from 'eslint-plugin-vitest';
 import poolmaster from './eslint-rules/index.mjs';
 
 /**
@@ -45,6 +53,23 @@ const CAST_SELECTORS = [
     message: 'Avoid "as any" in application code; use a real type, helper, or documented boundary.',
   },
 ];
+
+const WEBAPP_FILES = ['clients/poolmaster/src/**/*.{ts,tsx}'];
+
+/**
+ * Several plugin presets ship some rules at `warn`. Under `--max-warnings 0` a
+ * warning fails CI anyway, so `warn` only misleads; this pins every rule a preset
+ * enables to `error`, keeping its options and leaving its `off` rules off.
+ */
+function asErrors(rules) {
+  return Object.fromEntries(
+    Object.entries(rules).map(([name, entry]) => {
+      const [severity, ...options] = Array.isArray(entry) ? entry : [entry];
+      const off = severity === 'off' || severity === 0;
+      return [name, off ? entry : ['error', ...options]];
+    }),
+  );
+}
 
 /**
  * Repo conventions live here rather than in `scripts/check-*.mjs` wherever ESLint
@@ -276,6 +301,126 @@ export default tseslint.config(
         // else that reads an env name gets a reader that throws.
         allow: ['LOG_LEVEL'],
       }],
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // Third-party plugins (#156). Each was measured at zero findings against the
+  // tree, with a planted positive control proving the rule actually ran, before
+  // being adopted -- a zero without a control is indistinguishable from a rule
+  // that matched no files.
+  //
+  // Appended last so nothing here can sit between the shared-rules block and the
+  // test-file override above. None of these plugins declares any rule name that
+  // block declares, so they cannot replace its options in either order.
+  //
+  // Every block carries an explicit `files` key: without one, a block matches only
+  // ESLint's default js/mjs/cjs extensions and the rules silently lint nothing.
+  // ---------------------------------------------------------------------------
+  {
+    files: WEBAPP_FILES,
+    plugins: { 'react-hooks': reactHooks },
+    // `exhaustive-deps` is deliberately not adopted; it conflicts with written
+    // repo rules and is tracked separately (#157).
+    rules: { 'react-hooks/rules-of-hooks': 'error' },
+  },
+  {
+    files: WEBAPP_FILES,
+    plugins: { react },
+    settings: { react: { version: 'detect' } },
+    rules: asErrors({
+      ...react.configs.flat.recommended.rules,
+      ...react.configs.flat['jsx-runtime'].rules,
+    }),
+  },
+  {
+    // Tests included: the one `aria-role` finding the option below answers was in
+    // a test file, and an inaccessible fixture is still worth knowing about.
+    files: ['clients/poolmaster/src/**/*.tsx'],
+    plugins: { 'jsx-a11y': jsxA11y },
+    rules: {
+      ...asErrors(jsxA11y.flatConfigs.recommended.rules),
+      // The plugin cannot see through the shared primitives: in
+      // `<label><span>Text</span><Input /></label>` it does not know `Input`
+      // renders an <input>. Naming the primitives is the configuration answer.
+      'jsx-a11y/label-has-associated-control': ['error', {
+        controlComponents: ['Input', 'Textarea', 'Checkbox', 'Select', 'FileInput'],
+      }],
+      // The repo uses `role` as a domain prop (a league-membership role such as
+      // "Member") on its own components. Those are not ARIA roles; DOM elements
+      // are still checked.
+      'jsx-a11y/aria-role': ['error', { ignoreNonDOM: true }],
+    },
+  },
+  {
+    files: ['packages/**/*.ts', ...WEBAPP_FILES],
+    plugins: { 'import-x': importX },
+    settings: {
+      // `flatConfigs.typescript` is what puts .ts/.tsx into `import-x/extensions`.
+      // Without it the module graph is empty for every TS file and `no-cycle`
+      // reports zero forever, however many cycles exist.
+      ...importX.flatConfigs.typescript.settings,
+      // Takes precedence over the preset's legacy `import-x/resolver`. Naming the
+      // projects is what resolves the webapp's `@/` alias; each file resolves
+      // against the tsconfig that includes it.
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({
+          project: ['clients/poolmaster/tsconfig.json', 'packages/*/tsconfig.json'],
+          noWarnOnMultipleProjects: true,
+        }),
+      ],
+    },
+    rules: {
+      'import-x/no-cycle': 'error',
+      'import-x/no-unresolved': 'error',
+      'import-x/no-self-import': 'error',
+      'import-x/no-useless-path-segments': 'error',
+    },
+  },
+  {
+    files: WEBAPP_FILES,
+    plugins: { '@tanstack/query': tanstackQuery },
+    // Recommended minus `exhaustive-deps`, which cannot see inside the query-key
+    // factories `react-ui-rules.md` §4 mandates and so reports ids that are
+    // already in the key. Listed rather than spread so a plugin upgrade cannot
+    // add a rule here unreviewed.
+    rules: {
+      '@tanstack/query/no-rest-destructuring': 'error',
+      '@tanstack/query/stable-query-client': 'error',
+      '@tanstack/query/no-unstable-deps': 'error',
+      '@tanstack/query/infinite-query-property-order': 'error',
+      '@tanstack/query/no-void-query-fn': 'error',
+      '@tanstack/query/mutation-property-order': 'error',
+    },
+  },
+  {
+    // Test-scoped blocks sit after the test-file override above.
+    //
+    // `no-disabled-tests` is deliberately not adopted from either test plugin:
+    // `poolmaster/no-disabled-tests` already reports every form they do (and
+    // `todo`, `fails`, and parked files besides), so a second rule would report
+    // each violation twice.
+    files: ['clients/poolmaster/src/**/*.{test,spec}.{ts,tsx}'],
+    plugins: { vitest },
+    rules: {
+      ...asErrors(vitest.configs.recommended.rules),
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-commented-out-tests': 'error',
+    },
+  },
+  {
+    // The Jest suites live under tests/, which `npm run lint` does not pass to
+    // ESLint today (see eslint.tests.config.mjs for why). These rules are in
+    // place for when it does; until then they reach no file in that run.
+    files: ['tests/**/*.{ts,tsx}'],
+    plugins: { jest },
+    // The two rules below do not read it, but any version-aware jest rule added
+    // later would otherwise detect Jest from the cwd and throw "Unable to detect
+    // Jest version" rather than report anything.
+    settings: { jest: { version: 29 } },
+    rules: {
+      'jest/no-focused-tests': 'error',
+      'jest/no-commented-out-tests': 'error',
     },
   },
 );
