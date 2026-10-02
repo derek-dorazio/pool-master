@@ -938,7 +938,7 @@ the cross-league team console, and a scaffold test still asserted that section w
 gone. `teams-page.tsx` had a local `getOwnerLabel` with an "Unknown owner" fallback that existed
 only because the flattened name fields were optional; it now uses the shared `formatUserName`.
 `ManageLeagueModal` has no caller outside its own test — flagged, not deleted, since deleting a
-whole surface is the repo owner's call.
+whole surface is the repo owner's call. (Superseded: deleted in #216, via #310.)
 
 **Counts.** Webapp 119 suites / 495 tests (was 120/499 — one suite and one test removed as the
 code they covered went, the rest net-neutral). Backend unchanged and green: unit 88/1046,
