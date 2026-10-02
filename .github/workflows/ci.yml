@@ -120,13 +120,17 @@ jobs:
   # =========================================================================
   # Service test suites (#294)
   # =========================================================================
-  # One job per suite, in parallel, each with its own database. They need only
-  # all-contract-gates: lint and typecheck still block publish (deploy-publish-images
-  # needs service-lint-typecheck), but no longer hold the tests back. Each job publishes
-  # its own coverage; merging them is coverage-report's job and gates nothing.
+  # One job per suite, in parallel, each with its own database. They need
+  # all-contract-gates and changes (#300), not service-lint-typecheck: lint and typecheck
+  # still block publish (deploy-publish-images needs service-lint-typecheck), but no longer
+  # hold the tests back.
+  #
+  # Only the unit suite collects coverage here, because only it is gated (#302). The
+  # merged unit + integration + FAPI report is .github/workflows/coverage.yml, run on
+  # demand: V8 coverage, which the merge needs, more than doubles integration time.
 
   # No database. The coverage threshold in tests/jest.config.js is enforced here and is
-  # the only coverage gate in CI.
+  # the only coverage gate in CI. Jest's default provider (Babel) — see the config.
   service-unit-tests:
     name: service-unit-tests
     runs-on: ubuntu-latest
@@ -153,19 +157,6 @@ jobs:
       - name: Service unit coverage summary
         if: ${{ !cancelled() }}
         run: node scripts/write-coverage-summary.mjs "Service Unit Coverage" "Unit=coverage/service-unit/coverage-summary.json"
-
-      - name: Upload service unit coverage artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: coverage-service-unit
-          path: |
-            coverage/service-unit/coverage-final.json
-            coverage/service-unit/coverage-summary.json
-            coverage/service-unit/lcov.info
-            coverage/service-unit/clover.xml
-            coverage/service-unit/lcov-report/**
-          if-no-files-found: warn
 
   service-integration-tests:
     name: service-integration-tests
@@ -205,25 +196,8 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run service integration tests with coverage
-        run: npm run test:coverage:service:integration
-
-      - name: Service integration coverage summary
-        if: ${{ !cancelled() }}
-        run: node scripts/write-coverage-summary.mjs "Service Integration Coverage" "Integration=coverage/service-integration/coverage-summary.json"
-
-      - name: Upload service integration coverage artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: coverage-service-integration
-          path: |
-            coverage/service-integration/coverage-final.json
-            coverage/service-integration/coverage-summary.json
-            coverage/service-integration/lcov.info
-            coverage/service-integration/clover.xml
-            coverage/service-integration/lcov-report/**
-          if-no-files-found: warn
+      - name: Run service integration tests
+        run: npm run test:service:integration
 
   service-functional-api-tests:
     name: service-functional-api-tests
@@ -263,25 +237,8 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 
-      - name: Run service functional API tests with coverage
-        run: npm run test:coverage:service:functional-api
-
-      - name: Service functional API coverage summary
-        if: ${{ !cancelled() }}
-        run: node scripts/write-coverage-summary.mjs "Service Functional API Coverage" "Functional API=coverage/service-functional-api/coverage-summary.json"
-
-      - name: Upload service functional API coverage artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: coverage-service-functional-api
-          path: |
-            coverage/service-functional-api/coverage-final.json
-            coverage/service-functional-api/coverage-summary.json
-            coverage/service-functional-api/lcov.info
-            coverage/service-functional-api/clover.xml
-            coverage/service-functional-api/lcov-report/**
-          if-no-files-found: warn
+      - name: Run service functional API tests
+        run: npm run test:service:functional-api
 
   # =========================================================================
   # PoolMaster Webapp Unit Tests + Coverage (Vitest)
@@ -355,78 +312,6 @@ jobs:
             clients/poolmaster/coverage/lcov.info
             clients/poolmaster/coverage/clover.xml
             clients/poolmaster/coverage/coverage-final.json
-          if-no-files-found: warn
-
-  # Advisory (#294): merges the three service suites' coverage into one report and
-  # tabulates it beside PoolMaster unit coverage. It runs no tests and nothing needs it, so
-  # deploy-publish-images never waits on it; continue-on-error keeps a failed merge from
-  # failing the run. Main pushes only — on PRs each suite job's own summary is the view.
-  # !cancelled() rather than always(): a run superseded under cancel-in-progress should not
-  # start a merge.
-  coverage-report:
-    name: coverage-report
-    runs-on: ubuntu-latest
-    needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, poolmaster-unit-tests]
-    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-
-      - name: Download service unit coverage
-        continue-on-error: true
-        uses: actions/download-artifact@v5
-        with:
-          name: coverage-service-unit
-          path: coverage/service-unit
-
-      - name: Download service integration coverage
-        continue-on-error: true
-        uses: actions/download-artifact@v5
-        with:
-          name: coverage-service-integration
-          path: coverage/service-integration
-
-      - name: Download service functional API coverage
-        continue-on-error: true
-        uses: actions/download-artifact@v5
-        with:
-          name: coverage-service-functional-api
-          path: coverage/service-functional-api
-
-      - name: Download PoolMaster unit coverage
-        continue-on-error: true
-        uses: actions/download-artifact@v5
-        with:
-          name: coverage-poolmaster-unit
-          path: coverage/poolmaster-unit
-
-      # Warns (a run-page annotation) for each missing suite and merges the rest.
-      - name: Merge service coverage
-        run: node scripts/merge-service-coverage.mjs
-
-      - name: Coverage summary
-        if: ${{ !cancelled() }}
-        run: |
-          node scripts/write-coverage-summary.mjs "Coverage Summary" \
-            "Service (merged unit + integration + functional API)=coverage/service-merged/coverage-summary.json" \
-            "PoolMaster Unit=coverage/poolmaster-unit/coverage-summary.json"
-
-      - name: Upload merged service coverage artifact
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: coverage-service-report
-          path: |
-            coverage/service-merged/coverage-final.json
-            coverage/service-merged/coverage-summary.json
-            coverage/service-merged/lcov.info
-            coverage/service-merged/clover.xml
-            coverage/service-merged/lcov-report/**
           if-no-files-found: warn
 
   service-build:
@@ -614,7 +499,7 @@ jobs:
   deploy-publish-images:
     name: deploy-publish-images
     runs-on: ubuntu-latest
-    # The three service suite jobs, not coverage-report: the merged report gates nothing (#294).
+    # The three service suite jobs; coverage reporting gates nothing and is not here (#294, #302).
     # service-lint-typecheck is also reached through service-build; it is listed so the lint
     # gate stays visible now that the test jobs no longer wait on it.
     needs: [service-unit-tests, service-integration-tests, service-functional-api-tests, service-lint-typecheck, poolmaster-unit-tests, service-build, service-mock-provider-build, poolmaster-build]

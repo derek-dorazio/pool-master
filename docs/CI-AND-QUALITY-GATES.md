@@ -154,11 +154,6 @@ flowchart TD
   LT --> SB[service-build]
   LT --> MB[service-mock-provider-build]
 
-  SU -.-> CR[coverage-report]
-  SI -.-> CR
-  SF -.-> CR
-  PU -.-> CR
-
   SU --> PI[deploy-publish-images]
   SI --> PI
   SF --> PI
@@ -183,7 +178,7 @@ flowchart TD
   class CG,LT,CH gate
   class SU,SI,SF,PU,SB,MB,PB,EL test
   class PI,MQ,DQ,E2E deploy
-  class CR,DH report
+  class DH report
 ```
 
 `all-contract-gates` is the gate. Every other job depends on it, directly or
@@ -195,11 +190,11 @@ they do not wait on `service-lint-typecheck` (#294). Lint and typecheck still
 block the deploy track, because `deploy-publish-images` needs
 `service-lint-typecheck`.
 
-`coverage-report` (dotted edges) is advisory and push-to-main-only. It merges the
-three service suites' coverage artifacts and tabulates them beside PoolMaster unit
-coverage. It runs no tests, nothing depends on it, and `continue-on-error` keeps a
-failed merge from failing the run; a missing suite artifact shows as a warning
-annotation. On PRs, each suite job's own step summary is the coverage view.
+Only `service-unit-tests` collects service coverage in this workflow, because only
+the unit suite has a coverage threshold (#302). Integration and functional API run
+without coverage. The merged service coverage report is a separate, on-demand
+workflow, `coverage.yml`. See *Merged coverage and the
+coverage.yml workflow* below.
 
 ### Path filtering: jobs a change cannot affect are skipped (#300)
 
@@ -479,8 +474,8 @@ hardening epic.
   `poolmaster-browser-e2e`. See *Test suites*
   below for each suite's purpose, runner, configuration, coverage
   policy, and CI mapping.
-- **`coverage-report`** — advisory merged coverage view, push-to-main only.
-  See *Merged coverage and the coverage-report job* below.
+- **Merged coverage** — not in `ci.yml`. It is the separate `coverage.yml` workflow.
+  See *Merged coverage and the coverage.yml workflow* below.
 - **`service-build`** — backend service Docker build verification.
 - **`mock-contest-feed-provider-build`** — mock provider Docker build
   verification.
@@ -528,7 +523,7 @@ release.
 - **Local commands:**
   - `npm run test:service:unit` (or `npm test`) — run the suite
   - `npm run test:coverage:service:unit` — run with coverage
-- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit`; the coverage threshold below fails the job, and it is the only coverage gate in CI.
+- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit` with Jest's default Babel coverage provider; the coverage threshold below fails the job, and it is the only coverage gate in CI.
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 24% statements, 14.2% branches, 21.15% functions, 24.53% lines. These are floor values from the rule-enforcement epic baseline, not aspirational targets — they exist to prevent regression while real coverage targets are set per-feature.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
@@ -545,9 +540,9 @@ release.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** `service-integration-tests` (its own Postgres service container).
+- **CI job:** `service-integration-tests` (its own Postgres service container). Runs `npm run test:service:integration` with no coverage (#302).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
-- **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`. Integration coverage feeds the merged report but isn't gated on its own.
+- **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`, and no coverage in CI. Integration coverage is collected only for the merged report in `coverage.yml`.
 - **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
 
 ### 3. Backend functional API / FAPI (`tests/functional/**/*.functional.ts`)
@@ -564,9 +559,9 @@ release.
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
   - `npm run test:coverage:service:functional-api` — coverage variant
-- **CI job:** `service-functional-api-tests` (its own Postgres service container).
+- **CI job:** `service-functional-api-tests` (its own Postgres service container). Runs `npm run test:service:functional-api` with no coverage (#302).
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
-- **Coverage policy:** No threshold; coverage feeds the merged report.
+- **Coverage policy:** No threshold, and no coverage in CI. FAPI coverage is collected only for the merged report in `coverage.yml`.
 
 ### 4. Webapp unit (`clients/poolmaster/src/**/*.test.{ts,tsx}`)
 
@@ -606,13 +601,14 @@ release.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 
-### Merged coverage and the coverage-report job
+### Merged coverage and the coverage.yml workflow
 
-- **`test:coverage:service:merged`** (`scripts/run-backend-coverage.mjs`) runs all three backend suites (unit + integration + FAPI) with coverage collection, one after another, then merges the results into `coverage/service-merged/`. This is the canonical local backend coverage command.
-- **`scripts/merge-service-coverage.mjs`** is the merge on its own. It runs no tests: it takes the per-suite `coverage-final.json` files, merges whichever exist, and warns about any that are missing. The local runner and CI both call it.
-- **`coverage-report`** (CI job, push to main only, advisory) downloads the three service suite artifacts and `coverage-poolmaster-unit`, runs the merge, writes one step-summary table (merged Service, PoolMaster Unit), and uploads `coverage-service-report`. Nothing depends on it and a failure does not fail the run (#294).
+- **`.github/workflows/coverage.yml`** runs on demand only, from the Actions tab ("Run workflow", any branch). It runs `npm run test:coverage:service:merged`, writes per-suite and merged tables to the step summary, and uploads `coverage-service-report`, which includes the merged HTML report. It gates nothing. Use it to find where a suite needs more tests (#302).
+- **`test:coverage:service:merged`** (`scripts/run-backend-coverage.mjs`) runs all three backend suites with coverage, one after another, then merges them into `coverage/service-merged/`. The workflow and a local run use the same command.
+- **`scripts/merge-service-coverage.mjs`** is the merge on its own. It runs no tests: it takes the per-suite `coverage-final.json` files, merges whichever exist, and warns about any that are missing.
 - **Why merged matters:** the same source file is often partly covered by a unit test (logic correctness) and partly by an integration test (real-DB behavior). Merging gives an honest count of "how much of this file is exercised by *any* test."
-- **One coverage method across all three suites (#296).** Unit and integration set Jest's `coverageProvider: 'v8'`, and the FAPI runner converts the server's raw V8 coverage with `v8-to-istanbul` through each module's cached source map. All three therefore produce the same per-line statement map for a given `.ts` file, and the merge adds hits on identical locations. Mixing Babel-instrumented statements with V8 per-line statements double-counts: the two maps share almost no locations, so the merge unions them. Counts are per line, so comment and type-only lines inside an executed module count as covered.
+- **One coverage method within a merge (#296).** The FAPI server runs out of process under ts-node, so only V8 coverage can see it; the FAPI runner converts that coverage with `v8-to-istanbul` through each module's cached source map. For the merge to add up, the Jest suites must count the same way, so `run-backend-coverage.mjs` passes `--coverageProvider=v8` to unit and integration. Mixing Babel-instrumented statements with V8 per-line statements double-counts: the two maps share almost no locations, so the merge unions them. V8 counts per line, so comment and type-only lines inside an executed module count as covered, and merged percentages run higher than Babel's.
+- **Why V8 is not the default.** On a 4-vCPU runner, V8 coverage took unit from 12s (no coverage) to 49s and integration from 168s to 403s; Babel took them to 19s and 174s. So `tests/jest.config.js` and `tests/integration/jest.config.js` leave the provider at Jest's default (Babel), and V8 is used only where a merge needs it (#302).
 
 ### Coverage thresholds — current state and roadmap
 
@@ -624,7 +620,7 @@ release.
 | Webapp unit | none | — |
 | Webapp E2E | N/A | — |
 
-The single configured threshold is intentionally a **regression floor**, not a target. It was set against Babel statement counts; since #296 the suite reports V8 per-line counts, which run higher, so the floor is looser than when it was set. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+The single configured threshold is intentionally a **regression floor**, not a target. It is measured with Babel statement counts, the method it was set against (#302). Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 

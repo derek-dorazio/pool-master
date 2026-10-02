@@ -1,9 +1,10 @@
 // #294 — merges per-suite service coverage into coverage/service-merged/. It runs no tests.
 //
-// CI runs each service suite in its own job and the advisory coverage-report job calls this
-// on the downloaded artifacts; run-backend-coverage.mjs calls it after running the suites
-// locally. A missing input is a warning, not an error: a suite that failed still leaves the
-// others worth reporting. Only an empty merge (no inputs at all) fails.
+// run-backend-coverage.mjs calls it after running the suites, locally and in the on-demand
+// coverage.yml workflow (#302). It takes any list of inputs, so per-suite coverage gathered
+// elsewhere (separate CI jobs, shards) can be merged the same way. A missing input is a
+// warning, not an error: a suite that failed still leaves the others worth reporting. Only
+// an empty merge (no inputs at all) fails.
 //
 // CLI: node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]  (USAGE)
 // With no inputs it reads the three default per-suite locations under coverage/.
