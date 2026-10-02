@@ -425,7 +425,11 @@ export function AuthHomePage() {
             }
             options={[
               { label: "Sign in", value: "login" },
-              { label: "Create account", value: "register" },
+              {
+                label: "Create account",
+                testId: "auth-mode-register",
+                value: "register",
+              },
             ]}
             value={mode}
           />

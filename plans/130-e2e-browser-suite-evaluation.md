@@ -187,23 +187,326 @@ passes; if it doesn't, this is the one thing worth knowing.
   completion (not skipped) at least once — this is the real proof, given
   the job hasn't gotten a chance to prove anything for a while.
 
-## Phase 2 — design a real suite together (not designed here)
+## Phase 2 — the journey suite (designed 2026-10-01)
 
-Deliberately thin. Once phase 1 is live and QA is in a saner state (plan
-`pool-master-bwl`'s reset lands), come back and decide together, informed by
-actually watching the ping test run cleanly for a while:
+Phase 1 has been running clean. Phase 2 is now designed, and the three
+questions phase 1 deferred are answered below.
 
-- What does a real browser/deployed-build test need to uniquely prove that
-  the existing RTL component suite and FAPI functional suite structurally
-  can't?
-- If it needs real data (a league, a contest, a draft), how does it get that
-  data without reintroducing shared mutable fixtures — per-run creation via
-  the app's own real APIs (registration, league creation) is the leading
-  candidate, informed by this evaluation's finding that `buildE2EUser`/
-  `buildLeagueSeed`-style per-run fixtures were already half-built and never
-  wired up.
-- Scope: one critical golden-path journey per role, or broader coverage?
+### What a browser test uniquely proves
 
-No slices are cut for this yet — the epic carries a single placeholder
-sub-issue for phase 2 (#84) so the intent isn't lost, with no acceptance
-criteria until that design conversation happens.
+The other two layers are structurally blind to the same three things:
+
+- `test:poolmaster:unit` (RTL) mocks `@/lib/api` — it cannot see a DTO
+  mismatch, an auth-header bug, or a route that 500s.
+- `test:service:functional-api` runs the API in-process against a local
+  Postgres through the generated SDK — no browser, no bundle, no CDN, no
+  cookie/storage behaviour, and never the schema that is actually deployed.
+
+A deployed-build browser test is the only layer where the **shipped
+artifacts agree with each other**: the bundle the CDN serves, the API image
+ECS is running, the migrated QA schema, token refresh across a real origin,
+and the router's guards. That — not business-rule correctness — is what it
+is for. Business rules belong to the layers that can assert them cheaply.
+
+So the suite's assertions stay deliberately shallow: a page landmark
+rendered, a submitted form came back with the thing it created, a created
+row is visible to another role. No exhaustive edge cases, no error-message
+wording, no scoring math — those are already covered where they are cheap.
+
+### How a run gets its data: everything but the root admin
+
+QA is a persistent database, so "starts fresh" cannot mean a reset. It
+means: **every row a run reads by identity was created by that run.**
+
+- Exactly two pre-existing things are read by identity: the **root admin
+  account** and the platform's **contest configuration templates**
+  (`listContestConfigTemplates` — platform configuration, authored through
+  `/manage/content-configuration`, not test data). Everything else — golf
+  tour, season, players, event, field, tiers, commissioner user, league,
+  contest, member user, squad, entry — is created by the run through the
+  app's own UI.
+- Every created name carries a per-run id: a short `runId` computed **inside
+  the test body** (not at module load, so a Playwright retry gets a fresh
+  one) and interpolated into every name, username, email, and league code.
+  No two runs can collide, and anything left behind is identifiable.
+- No fixed league code, no fixed usernames, no shared event. The phase-1
+  failure mode cannot come back, because there is nothing shared to mutate.
+
+Root admin credentials come from the environment, never from a literal in
+the repo: `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaulting to the admin's
+*username*, since the sign-in field accepts username or email, and the
+fixture's address is a personal one that should not spread into more files)
+and `POOLMASTER_E2E_ADMIN_PASSWORD`, which has no default — a spec that
+finds it unset fails immediately with a message naming the secret rather
+than timing out on a login form.
+
+Registered users get `@e2e.invalid` addresses. `.invalid` is reserved by
+RFC 2606 and can never be delivered, so no accidental mail can ever reach a
+real person. Registration itself sends no mail (verified: there is no mailer
+in `auth-service.ts`), and the suite never uses the email invitation path —
+it uses the invite **link**, which is also the only member-join flow a
+browser can complete unaided.
+
+### Slicing: prove the plumbing before writing the journey
+
+This design rests on five mechanisms that have never run together here:
+CI-secret credentials reaching a Playwright run, a run id that makes names
+unique across runs and retries, a brand-new user registering and writing
+through the UI, a role switch inside one spec, and API teardown with the
+admin token. Every one of them can fail for reasons that have nothing to do
+with the product, and a long journey spec is the worst place to debug any of
+them.
+
+The journey itself then splits again, for the same reason at a smaller
+scale. Act 1 — the golf catalog — carries nearly every assumption this plan
+read off a component without executing: whether the tier board's move
+control is a menu or a pair of arrows, whether a freshly added field
+participant starts unassigned, what the player-create form requires beyond
+a name. The commissioner and member acts were traced more completely. So
+#84 builds the guards spec and act 1 and retires the ping, and #280 adds
+the acts that consume the catalog, so a surprise in tier assignment cannot
+hold up flows that carry less risk.
+
+So the first slice (#278) is a **plumbing probe**: admin signs in and reaches
+`/manage`, logs out, a fresh run-named user registers and creates a league,
+and teardown removes both. No golf catalog, no contest, no invite, no entry
+— if a step cannot fail for a plumbing reason, it is not in the probe. The
+journey below is the second slice (#84) and does not start until the probe
+has been green in a real `main` run. After that, a red journey means a
+product bug, which is the only reason to have it.
+
+### Shape: three specs, one of them a journey
+
+`ping.e2e.ts` is on its way out. It asserts that `goto('/')` renders
+`auth-login-identifier`, which is the first action of the post-deploy smoke,
+so the smoke passing means ping could not have failed. Its one remaining
+distinction is needing no credentials, which buys a triage split — ping red
+means the deploy is broken, ping green with the smoke red means auth or
+config — and `guards.e2e.ts` below erases even that, being credential-free
+and covering strictly more. So ping keeps running, tagged, until guards
+lands, and is deleted in the slice that adds guards.
+
+Note what introducing `--grep @smoke` does to it: an untagged spec stops
+running post-deploy. Preserving ping therefore means **tagging** it, not
+leaving it alone; left untagged it would have dropped out of the only job it
+ever ran in, without anyone deciding to.
+
+**`guards.e2e.ts`** — unauthenticated surface, no data at all, fast, fully
+parallel: a protected route redirects to sign-in, bad credentials surface an
+error, an unknown invite code renders the invalid-invite state, an unknown
+path renders the not-found page. This covers the router guards, which a
+journey (always authenticated, always on the happy path) structurally
+cannot.
+
+**`golden-journey.e2e.ts`** — one `test()` with a `test.step()` per act, so
+the HTML report reads as a narrative and a failure names the act. One test,
+not four, because the acts share state (ids, codes, the invite URL) and a
+split would either re-create the world per act or need serial mode plus
+module-level state. `test.setTimeout` is raised for this spec only.
+
+### The journey
+
+Each act ends by logging out through the account menu, so the next act
+starts from a genuinely unauthenticated browser rather than a cleared
+storage key.
+
+**Act 1 — root admin builds the catalog.** Sign in. Walk the list pages as
+read checks (`/manage`, `/manage/events`, `/manage/leagues`,
+`/manage/users`, `/manage/golf/tournaments`, `/manage/golf/players`),
+asserting each page's landmark testid and the absence of
+`shared-error-state`. Then create, in order: a golf tour
+(`root-admin-golf-league-list-new`), a season under it
+(`root-admin-golf-season-list-new`), **six** players
+(`root-admin-golf-player-list-new`), and a tournament
+(`/manage/golf/tournaments/new` — season select, name, start date a week
+out, four rounds). Load the field by searching the six run-named players in
+the add-participants modal (its free-text search spans every `Participant`,
+so no league affiliation is needed) and submitting them in one call. On the
+tiers page, place one player in each of the six default tiers with the
+board's own move controls and save.
+
+Six, not twelve, is deliberate: `DEFAULT_TIER_COUNT` is 6 with
+`defaultPickCount: 1` each, so six players fill a six-pick roster exactly
+one per tier. It also halves what a run leaves behind.
+
+**Act 2 — a new commissioner.** Register a fresh user, create a league from
+the welcome page (run-unique name and code), create a contest on act 1's
+event (selected by its run-unique name from the picker, which filters
+nothing and will contain QA's whole golf catalog), roster 6 / counted 4 /
+one entry per team, and confirm it on the league's contest list and board
+with zero entries. Then open the invite panel, generate the join URL, and
+read it out of `league-join-url` — that string is the hand-off to act 3.
+A description edit through `league-open-details` / `league-save-details` is
+a cheap extra write worth keeping.
+
+**Act 3 — a new member.** Open the invite URL unauthenticated, follow
+`invite-create-account` (which carries the invite path through registration
+and returns to it), name the squad in `join-league-team-name`, pick an icon,
+and accept — one flow that covers invite preview, registration,
+acceptance, and squad creation. Then browse to the contest, open the entry
+builder, pick one participant from each of the six tier groups, set the
+tiebreaker, and submit. Assert the entry on the board (`contest-board-entry-*`,
+`contest-board-my-count`) and its six picks on the entry page. Cheap extras:
+rename the entry inline, change a preference on `/my-account`, open the
+league history page.
+
+**Act 4 — scores, and the cross-role read (recommended, droppable).** Sign
+back in as root admin, enter round-1 scores for the six players, transition
+the event to the in-progress status, then open the contest leaderboard and
+assert a scored participant cell renders. This is the one act that reaches
+the scoring path rebuilt in #244–#248, which is exactly why it is worth
+having — and the one act to drop first if it proves flaky, since it depends
+on more admin surface than the rest. Close by confirming the new league
+appears in `/manage/leagues` and both new users in `/manage/users`: the
+cheapest possible proof that one role's writes are visible to another.
+
+### Teardown
+
+`test.afterAll` deletes what the run created, through the API with the admin
+token (teardown is not the thing under test, so it does not go through the
+UI): league first, then contest-free event, season, tour, and the two users.
+It is best-effort — a teardown failure logs what it could not remove and
+never fails the test.
+
+Residue is expected and accepted: participants have no delete operation
+(only `updateParticipant`), so the six players are inactivated rather than
+removed, and a retried journey leaves a second set behind. Both are
+identifiable by `runId`, and `plans/129`'s QA reset is the backstop.
+
+### Where the suite runs: pre-merge against a local stack, post-deploy as a smoke
+
+Nothing in these specs is QA-specific. `baseURL` comes from
+`POOLMASTER_E2E_BASE_URL`, and the client resolves its API base from
+`window.location.origin` whenever `VITE_API_BASE_URL` is unset — which is
+always, in every build this repo produces (it exists only as a commented
+line in `.env.example` for local work). So the same bundle calls the same
+`/api` paths wherever it is served, as long as something routes `/api` to
+the API: CloudFront in QA, a dev-server or preview proxy locally.
+
+That makes the suite runnable **before** any deploy, as an ordinary PR
+check: a Postgres service container, migrate, boot core-api, serve the
+built client, seed the job's own root admin, run. No AWS, no secrets, no
+deploy. And that is where the **journey** belongs:
+
+- A throwaway database per job removes the data problem outright. No
+  accumulating leagues in QA's admin lists, no retry colliding with its own
+  first attempt, no teardown debt. Teardown stays in the spec, but it stops
+  being load-bearing.
+- The job seeds its own admin, so the `POOLMASTER_E2E_ADMIN_*` secrets stop
+  gating the heavy path.
+- It fails before merge. A red post-deploy journey means the bad artifact is
+  already in QA — which is exactly the failure phase 1's evidence found
+  (ten unnoticed failed QA deploys, #191).
+
+The post-deploy run is not redundant, because the two runs prove different
+things. Pre-merge against a local stack proves **the code is coherent end to
+end**: bundle, API, schema and SDK contract agree. Post-deploy against QA
+proves **the environment is wired**: CloudFront serving the right release
+prefix, `/api` path-routing to ECS, the ALB, the migrated QA schema, the
+task's env and secrets, cookies over a real HTTPS origin. None of that
+exists locally, and all of it has broken here before.
+
+So:
+
+- **Pre-merge job (new):** the journey plus the guards spec, local stack,
+  throwaway database, every PR and every main push.
+- **Post-deploy job (`poolmaster-browser-e2e`, existing):** a thin smoke —
+  the ping, the guards spec, and an admin sign-in that reaches `/manage` and
+  logs out. Keeps `needs: deploy-qa`, keeps the admin secrets, leaves
+  essentially nothing behind.
+
+**One spec set, selected by tag** — never two copies. The specs are mostly
+selector plumbing, and selectors churn; two copies of "sign in as admin and
+reach `/manage`" drift within a month, and once they differ a red
+post-deploy run no longer distinguishes an environment problem from a stale
+copy. That ambiguity is the one thing a deploy gate exists to resolve.
+
+Playwright is on 1.59, so the first-class `tag` option on `test()` and
+`test.describe()` carries this, with two npm scripts: the pre-merge one runs
+everything, the post-deploy one runs `--grep @smoke`. Not projects, which
+are for browsers and devices and would mean duplicating `use` blocks until
+`baseURL`, trace and retry settings drift; and not a second config file,
+which is the same failure with more surface.
+
+The guards spec earns a place in both runs rather than only pre-merge: its
+"unknown path renders not-found" case depends on CloudFront's
+error-document config rewriting SPA routes to `index.html`, a deploy-only
+failure mode no local run can see. Same assertion, different thing proven.
+
+**Tags select tests, not steps — so the post-deploy set drives the act
+structure.** Anything that must run after a deploy is its own `test()`, not a
+`test.step()` inside a longer one; `--grep` cannot reach into a test and run
+one of its steps. The two shapes that follow from that are both wrong: tagging
+a whole multi-act test `@smoke` would have the post-deploy run register users
+and create leagues in QA, and demoting the shared act to a standalone test
+only would delete the role switch inside one browser session that the probe
+exists to prove.
+
+What works is a standalone tagged test and the longer untagged one calling
+**one shared helper**, in **separate spec files**. Separate files because the
+post-deploy smoke outlives the probe: this plan leaves open whether the
+journey absorbs the probe and deletes it, and the one spec that has to
+survive that should not live in the file most likely to be removed.
+
+The shared act therefore runs twice in a pre-merge run, and that is coverage
+rather than waste: it is the only place the standalone smoke test's own
+fixtures, tag and assertions get exercised before a deploy, where otherwise a
+bug in the test itself would first surface as a deploy failure.
+
+A sign-in-and-log-out smoke **creates no domain data**, which is the accurate
+claim and the reason it is the right post-deploy shape — not that it is
+read-only. Sign-in issues a refresh token and logout revokes that one token
+(`auth-service.ts`), so each post-deploy run leaves a revoked token row
+behind, and concurrent sessions for the same admin stay safe.
+
+**The rule that keeps a dual-run spec honest:** it may assert the presence
+of what the run itself created, never the absence or the count of what it
+did not. "Both new users appear in `/manage/users`" holds everywhere;
+"`/manage/users` lists exactly two users" passes against an empty local
+database and fails against QA forever. That is the assertion someone adds
+to make a flake go away.
+
+Two things the local target must get right, both verified against the
+configs on main:
+
+- **Serve the production build, not the dev server.** `vite dev` is not the
+  artifact: different module graph, no minification, no code splitting. The
+  representative target is `vite build` plus a static serve. But
+  `vite.config.ts` carries a `server.proxy` for `/api` and **no `preview`
+  block**, so a `vite preview` run would not proxy `/api` at all — adding a
+  `preview.proxy` mirroring the dev one (or serving the build behind a small
+  proxy) is part of wiring this up, not an afterthought.
+- **The asset base differs and that is fine.** The deployed bundle is built
+  with `APP_ASSET_BASE=/releases/<sha>/`; a local build defaults to `/`. The
+  release-prefixed asset layout is checked by the deploy job's own curl for
+  `releases/<sha>` in the served HTML, which is the right place for it. The
+  pre-merge run does not cover it, and should not pretend to.
+
+### Open questions for the implementer — verify, do not assume
+
+Every item here is something this design read from a component or a service
+but did not execute. Read the component and run the flow; a wrong guess here
+is the whole cost of the slice.
+
+- The exact field set of each creation form (tour keyword, season tour/year,
+  player create, tournament release/lock inputs) and of the league code
+  validator — names and constraints come from the components, not from here.
+- Whether the tier board's `root-admin-golf-tier-move-*` control is a menu
+  needing a target or a pair of arrows, and whether a freshly added
+  participant starts unassigned.
+- Whether the contest form's template auto-selection fires reliably, and
+  what it does when QA has no templates — the spec should fail loudly and
+  legibly in that case rather than mid-form.
+- Whether `deleteEvent` refuses while a contest references the event, which
+  fixes the teardown order.
+- Act 4's score-entry surface has thinner testid coverage than the rest.
+  Adding the two or three testids it needs is in scope and is the right fix
+  (`plans/137` sanctions `data-testid` for Playwright); text selectors are
+  not.
+
+### Explicitly out of scope
+
+Email-sending flows (league email invitations, squad-owner invitations),
+provider sync, contest settlement and payouts, and any assertion on scoring
+arithmetic. The first group cannot be completed by a browser; the rest are
+covered where they are cheap to cover.

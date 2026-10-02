@@ -857,8 +857,10 @@ Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above.
 ### Review triggers in the PR body
 
 Every PR body carries a **Review triggers** section under the literal HTML comment
-`<!-- review:triggers -->`. CI enforces its presence via
-`npm run rules:check:pr-review-triggers`.
+`<!-- review:triggers -->`. CI reports on its presence via
+`npm run rules:check:pr-review-triggers`, which is **advisory**: a missing marker produces a
+warning annotation, not a failure (#284). Write the section anyway — it is read, by the owner
+and by the review session, and it is the reason the gate list below can stay mechanical.
 
 The section names what the slice touched that warrants a closer read. This exists because
 the owner reviews at file-list-and-changeset resolution, and that is exactly the altitude at

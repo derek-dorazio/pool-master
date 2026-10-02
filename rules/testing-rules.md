@@ -854,7 +854,7 @@ Redundancy between suites is acceptable when each suite is true to its purpose. 
 
 - Browser E2E should target only the PoolMaster web app.
 - The current active browser lane is intentionally tiny and does block the deploy pipeline once QA deploy succeeds.
-- The current deploy-gate journey is limited to: login page -> self-registration -> authenticated landing selector.
+- The deploy-gate lane runs only specs tagged `@smoke`, which create no domain data: today the boot ping and a root-admin sign-in that reaches `/manage` and logs out. Specs that write data run pre-merge, against the production build on a local stack with a throwaway database (`poolmaster-browser-e2e-local`). One spec set selected by tag, never two copies.
 - Do not expand this deploy-gate lane into deeper product coverage until those product surfaces are intentionally designed and stabilized.
 
 **Use-case-driven E2E:**

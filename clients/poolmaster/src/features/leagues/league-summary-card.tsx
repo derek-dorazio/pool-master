@@ -44,7 +44,12 @@ export function LeagueSummaryCard({
               {icon}
             </IconAvatar>
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight">{name}</h2>
+              <h2
+                className="text-3xl font-semibold tracking-tight"
+                data-testid="league-summary-name"
+              >
+                {name}
+              </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {description?.trim() ||
                   "Manage league identity, commissioner controls, and member actions here."}

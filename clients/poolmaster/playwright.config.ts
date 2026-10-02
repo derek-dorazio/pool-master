@@ -4,6 +4,9 @@ const browserChannel = process.env.POOLMASTER_E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './e2e',
+  // #278 — scrubs credentials and session tokens out of traces and other output before the
+  // HTML reporter copies them, so tracing can stay on against deployed environments.
+  globalTeardown: './e2e/redact-artifacts.ts',
   // pool-master-303: no shared mutable fixtures left to race over (phase 1
   // of plans/130 deleted them) — safe to parallelize.
   fullyParallel: true,

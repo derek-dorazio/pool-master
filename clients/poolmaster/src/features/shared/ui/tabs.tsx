@@ -39,6 +39,7 @@ export const TabsContent = TabsPrimitive.Content;
 type SegmentedControlOption = {
   disabled?: boolean;
   label: string;
+  testId?: string;
   value: string;
 };
 
@@ -70,6 +71,7 @@ export function SegmentedControl({
               ? "bg-card text-foreground"
               : "hover:bg-muted/40",
           )}
+          data-testid={option.testId}
           disabled={option.disabled}
           key={option.value}
           onClick={() => onChange(option.value)}

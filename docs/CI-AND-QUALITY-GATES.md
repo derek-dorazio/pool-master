@@ -27,8 +27,9 @@ backs the workflow.
 
 Without this configuration, direct pushes to `main` bypass every gate:
 the rule-enforcement scanners, `api:check`, the review triggers marker, and
-the test/build/coverage jobs. The `rules:check:pr-review-triggers` gate
-specifically becomes meaningless without enforced PR flow.
+the test/build/coverage jobs. The `rules:check:pr-review-triggers` check
+specifically becomes meaningless without enforced PR flow — though since #284
+it is advisory, so it reports rather than blocks even when it does run.
 
 ### Where to configure
 
@@ -116,13 +117,14 @@ ruleset is configured strictly. If the `required_status_checks` list does
 not include all six job names, the gates are partially bypassed — fix
 before treating the configuration as complete.
 
-### Why the marker gate matters here
+### Why the marker check matters here
 
-`rules:check:pr-review-triggers` (gate 8 below) reads the PR body for a
-literal `<!-- review:triggers -->` marker and fails if missing. If branch
-protection does not require PRs, a contributor can bypass the marker by
-direct-pushing to `main`, in which case the gate never runs. The marker
-gate's value depends entirely on PR flow being enforced.
+`rules:check:pr-review-triggers` (step 3 below) reads the PR body for a
+literal `<!-- review:triggers -->` marker and **warns** if missing (#284 — it
+used to fail). If branch protection does not require PRs, a contributor can
+bypass the marker by direct-pushing to `main`, in which case the check never
+runs at all. Its value depends entirely on PR flow being enforced, and now
+also on the warning being read.
 
 ## Job DAG
 
@@ -135,6 +137,7 @@ flowchart TD
   LT --> SB[service-build]
   LT --> MB[mock-contest-feed-provider-build]
   LT --> PB[poolmaster-build]
+  LT --> EL[poolmaster-browser-e2e-local]
 
   SC --> CS[coverage-summary]
   PU --> CS
@@ -158,7 +161,7 @@ flowchart TD
   classDef report fill:#f3f4f6,stroke:#6b7280
 
   class LT gate
-  class SC,PU,SB,MB,PB test
+  class SC,PU,SB,MB,PB,EL test
   class PI,MQ,DQ,E2E deploy
   class CS,DH report
 ```
@@ -184,7 +187,7 @@ runtime cost.
 flowchart LR
   I[npm ci + prisma generate + build shared] --> R[npm run rules:check]
   R --> A[npm run api:check]
-  A --> M[Review triggers (PRs only)]
+  A --> M[Review triggers (PRs only, advisory)]
   M --> L[npm run lint]
   L --> TC[npm run typecheck]
 ```
@@ -193,7 +196,7 @@ flowchart LR
 |---|---|---|---|
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | Two sub-checks are blocking; four are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
-| 3 | review triggers marker | <1s (single API call to GitHub) | Yes (PRs only) |
+| 3 | review triggers marker | <1s (single API call to GitHub) | No — warns only (PRs only) |
 | 4 | `npm run lint` | ~10-20s | Yes |
 | 5 | `npm run typecheck` | ~30-60s | Yes |
 
@@ -212,7 +215,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 4 | ~~Shared UI controls~~ | **migrated to ESLint** | blocking via `npm run lint` | 0 | Bare `<button>`, `<input>`, `<textarea>` in `features/**` outside `features/shared/ui/`. More precise than the scanner, which also flagged controls inside comments. | `eslint-rules/no-bare-ui-controls.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
-| (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
+| (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | advisory (warns; **was blocking** until #284) | clean | The PR body should contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. A missing marker emits a warning annotation and the job still passes. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
 
 > **Baselines rot.** The counts above were re-measured on 2026-09-23 and four of the six
 > had drifted — three of them to zero, because backlogs were cleaned without the table
@@ -279,23 +282,30 @@ test or delete it.
 Migration cost was zero: the repo had no skipped tests when this landed, so the
 ban locked in the existing state rather than demanding a cleanup.
 
-## Detail: the review triggers gate
+## Detail: the review triggers check (advisory)
 
-This gate runs only on `pull_request` events. It calls
+This check runs only on `pull_request` events. It calls
 `gh pr view <PR_NUMBER> --json body --jq .body` and greps for the literal
-HTML comment `<!-- review:triggers -->`. If the marker is missing, the gate
-fails and the PR cannot merge.
+HTML comment `<!-- review:triggers -->`. If the marker is missing, it emits a
+GitHub warning annotation and **exits 0** — the job passes and the PR can
+merge. It behaves the same way when it cannot read the PR body at all.
 
-The marker is presence-enforced only: it proves the section exists, not that its
-contents are accurate or complete. That is the honest limit of this gate.
-The gate does not enforce the *content* under the marker — that's between
-the implementing agent's own disclosure. The gate just enforces
-the structural requirement that the marker exists, which means the
-implementing agent at least followed the workflow.
+**It blocked until #284.** Two reasons it stopped. First, the check can only
+confirm the marker is *present*; it cannot judge whether the disclosure is
+accurate or complete, so a failure never meant the section was any good. Second,
+and decisively, the step runs inside `all-contract-gates`, which every other job
+in `ci.yml` declares in `needs:` — so a missing prose section did not cost one
+check, it withheld all twelve downstream jobs. On #283 an 11-line Terraform
+change got no lint, typecheck, or test verdict at all for that reason.
+
+The marker remains presence-reported only: it shows the section exists, not that
+its contents are accurate or complete. That is the honest limit of this check,
+and the reason everything mechanically detectable stays a scanner instead.
 
 The marker is pre-populated in `.github/pull_request_template.md` so PR
 authors don't have to remember it. Removing the marker from a PR body
-fails the gate and blocks merge.
+produces a warning, not a failure — but the section is still expected, and it is
+read by the owner and by the review session.
 
 The gate skips silently on `push` events (no `PR_NUMBER` in scope), so
 direct pushes to `main` (e.g., admin-bypass cleanup work) do not trip it.
@@ -353,7 +363,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 | `poolmaster/no-bare-ui-controls` via `npm run lint` (**block**) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
-| `rules:check:pr-review-triggers` (**block**, PRs only) | The PR body is missing the `<!-- review:triggers -->` marker. | Edit the PR body to include the marker section. The PR template pre-populates it; removing it manually fails the gate. See `rules/workflow-rules.md §6` and `rules/review-triggers.md`. |
+| `rules:check:pr-review-triggers` (warn, PRs only) | The PR body is missing the `<!-- review:triggers -->` marker. | Nothing is blocked (#284) — but edit the PR body to include the marker section anyway. The PR template pre-populates it. See `rules/workflow-rules.md §6` and `rules/review-triggers.md`. |
 
 ## Baseline counts and the ramp to fail-on-new
 
@@ -390,7 +400,8 @@ lint-typecheck. Their behavior was not changed by the rule-enforcement
 hardening epic.
 
 - **Test suites** — `service-coverage-report`, `poolmaster-unit-tests`,
-  `coverage-summary`, and `poolmaster-browser-e2e`. See *Test suites*
+  `coverage-summary`, `poolmaster-browser-e2e-local`, and
+  `poolmaster-browser-e2e`. See *Test suites*
   below for each suite's purpose, runner, configuration, coverage
   policy, and CI mapping.
 - **`service-build`** — backend service Docker build verification.
@@ -399,12 +410,22 @@ hardening epic.
 - **`poolmaster-build`** — webapp build verification.
 - **`deploy-publish-images`** (push to `main` only) — builds and pushes
   Docker images to ECR and registers ECS task definitions. Deploys nothing.
+  Hands each task definition to later jobs as `family:revision`, never as an
+  ARN: an ARN contains the masked AWS account id, and Actions silently drops
+  any job output containing a masked value (#281).
 - **`deploy-migrate-qa`** (push to `main` only) — runs the migration ECS task
-  and prints its CloudWatch logs, pass or fail, via
-  `scripts/ecs-task-wait-and-print-logs.mjs`.
-- **`deploy-qa`** (push to `main` only) — rolls the new task definitions out
-  to the QA services, waits for stabilization (dumping diagnostics on
-  failure), then syncs the webapp to S3 and invalidates CloudFront.
+  on the revision this run registered and prints its CloudWatch logs, pass or
+  fail, via `scripts/ecs-task-wait-and-print-logs.mjs`. A missing task
+  definition, missing network secrets, or a task ECS would not start fails the
+  job; none of them is a skip.
+- **`deploy-qa`** (push to `main` only) — rolls this run's task definitions out
+  to the QA services and fails if either value is missing. It then asserts
+  that the core-api service and its PRIMARY deployment are on that revision,
+  requires `desiredCount >= 1` before waiting for stabilization (a zero-task
+  service is trivially stable), waits (dumping diagnostics on failure), and
+  asserts again that the rollout `COMPLETED` on that revision, so a
+  circuit-breaker rollback fails the job. Then it syncs the webapp to S3 and
+  invalidates CloudFront.
 - **`deploy-health-issue`** (push to `main` only) — opens, comments on, or
   closes the "QA deploy is failing on main" issue from the deploy jobs'
   results.
@@ -489,15 +510,22 @@ release.
 
 - **Runner:** Playwright (Chromium project).
 - **Config:** [`clients/poolmaster/playwright.config.ts`](../clients/poolmaster/playwright.config.ts).
-- **Environment:** Real browser (Chromium / optionally a system-installed channel via `POOLMASTER_E2E_BROWSER_CHANNEL`) hitting the **deployed QA frontend** at `qa.ultimateofficepoolmanager.com` (override via `POOLMASTER_E2E_BASE_URL`).
-- **Test count today:** ~5 `.e2e.ts` files plus `*.setup.ts` auth setup.
-- **Concurrency:** `fullyParallel: false`, `workers: 1`. Tests share state through the deployed environment.
-- **Retries:** none. CI fails immediately on flake; local failures are reproducible.
-- **Artifacts on failure:** trace, screenshot, video — all retained on failure for triage.
+- **One spec set, selected by tag.** Specs that may run against a deployed environment carry `{ tag: '@smoke' }` and create no domain data; everything else runs pre-merge only. Never two copies of a spec. A spec that runs in both places may assert the presence of what the run created, never the absence or count of what it did not.
+  - `ping.e2e.ts` (`@smoke`) — the bundle boots to the sign-in shell.
+  - `smoke.e2e.ts` (`@smoke`) — root admin signs in, reaches `/manage`, logs out.
+  - `plumbing-probe.e2e.ts` (untagged) — the same admin act, then a run-named user registers and creates a league in the same browser; `afterAll` removes every attempt's user and league through the API with the admin token. It writes data, so it refuses to start against any base URL whose host is not `localhost` or `127.0.0.1` — including the config's QA default.
+- **Credentials:** `POOLMASTER_E2E_ADMIN_PASSWORD` (required, no default — a missing value fails the spec immediately) and `POOLMASTER_E2E_ADMIN_IDENTIFIER` (defaults to the admin username). Users the suite registers get `@e2e.invalid` addresses.
+- **Concurrency:** `fullyParallel: true`. No spec shares data with another; every name a run creates carries a run id computed inside the test body.
+- **Retries:** 1 in CI, 0 locally.
+- **Artifacts on failure:** trace, screenshot, video, in both jobs. A trace records every `fill()` value and request and response body, so the config's `globalTeardown` (`e2e/redact-artifacts.ts`) scrubs usernames, email addresses, passwords and session tokens out of everything in `test-results/` before the HTML reporter copies it. It is a denylist: text is redacted, recognised media is kept, and anything else — or a trace it cannot rewrite — is deleted rather than kept. It cannot scrub pixels: screenshots, video and the trace's filmstrip still show what was typed into the identifier field (password fields render masked).
 - **Local commands:**
-  - `npm run test:poolmaster:browser-e2e` — run the suite
+  - `npm run test:poolmaster:browser-e2e` — run every spec
+  - `npm run test:poolmaster:browser-e2e:smoke` — run only `@smoke`
   - `npm run test:poolmaster:browser-e2e:list` — list tests without running
-- **CI job:** `poolmaster-browser-e2e` (push-to-main only; not run on PR builds). Triggered after `deploy-qa` succeeds.
+- **Running against a local stack:** start Postgres, migrate, seed a root admin with `packages/core-api/scripts/bootstrap-users.mjs` (`FIXTURE_JSON` you compose), `npm run build:poolmaster`, start core-api on port 3000, then `npx vite preview` in `clients/poolmaster` — it serves the production build on port 4175 and proxies `/api` to core-api. Set `POOLMASTER_E2E_BASE_URL=http://localhost:4175` plus the two admin variables. The `poolmaster-browser-e2e-local` job in `ci.yml` is the reference sequence.
+- **CI jobs:**
+  - `poolmaster-browser-e2e-local` — every PR and every main push. All specs against the local stack above on a throwaway Postgres; seeds its own admin with a password generated for the run, so it needs no secrets, no AWS and no deploy.
+  - `poolmaster-browser-e2e` — push-to-main only, after `deploy-qa` succeeds. `@smoke` only, against the deployed QA frontend at `qa.ultimateofficepoolmanager.com`. Reads the `POOLMASTER_E2E_ADMIN_IDENTIFIER` and `POOLMASTER_E2E_ADMIN_PASSWORD` repository secrets.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 
