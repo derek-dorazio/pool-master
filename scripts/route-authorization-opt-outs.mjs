@@ -16,44 +16,28 @@
  * Keys are `METHOD /full/path`, exactly as the scanner prints them.
  */
 export const ROUTE_AUTHORIZATION_OPT_OUTS = [
-  // --- Contests: entries act for the caller's own squad, resolved in ContestService ---
+  // --- Contests: entries act for the caller's own squad, resolved in ContestService.getEntryContext ---
   {
     route: 'POST /api/v1/contests/:contestId/entries/me',
-    reason: 'Acts for the caller\'s own squad: ContestService.createEntry requires league membership and an ACTIVE squad membership (requireSquadForEntry) and derives the squad from them.',
+    reason: 'Acts for the caller\'s own squad, derived in the service: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships; createEntry refuses a caller with no team.',
   },
   {
     route: 'DELETE /api/v1/contests/:contestId/entries/me',
-    reason: 'Acts for the caller\'s own squad: ContestService.deleteMyEntry requires a league and squad membership and deletes only that squad\'s entry. Membership status is unchecked: #291.',
+    reason: 'Acts for the caller\'s own squad, derived in the service: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships; deleteMyEntry deletes only that squad\'s entry.',
   },
   {
     route: 'PATCH /api/v1/contests/:contestId/entries/:entryId',
-    reason: 'Needs the entry id: ContestService.updateEntry scopes the lookup to the caller\'s squad (findEntriesBySquad) before matching entryId. Membership status is unchecked: #291.',
+    reason: 'Needs the entry id: ContestService.getEntryContext(\'act\') requires ACTIVE league and squad memberships, then updateEntry scopes the lookup to that squad (findEntriesBySquad) before matching entryId.',
   },
   {
     route: 'GET /api/v1/contests/:contestId/entries/me',
-    reason: 'Scoped to the caller\'s own squad in ContestService.getMyEntry; a caller with no squad in the league gets a null entry, never another squad\'s.',
-  },
-  {
-    route: 'GET /api/v1/contests/:contestId/entries/:entryId',
-    reason: 'AUTHORIZES NOWHERE: ContestService.getEntryDetail reads membership only to decide pick visibility; any signed-in user can read any entry. Owes requireMemberOfLeague: #291.',
-  },
-  {
-    route: 'GET /api/v1/contests/:contestId/entries',
-    reason: 'AUTHORIZES NOWHERE: ContestService.listEntries reads membership only to order and mark the caller\'s entries; any signed-in user can list any contest\'s entries. Owes requireMemberOfLeague: #291.',
-  },
-  {
-    route: 'GET /api/v1/contests/:contestId/golf/leaderboard',
-    reason: 'AUTHORIZES NOWHERE: ContestService.getGolfLeaderboard never checks membership; any signed-in user can read any revealed leaderboard. Owes requireMemberOfLeague: #291.',
+    reason: 'Scoped to the caller\'s own ACTIVE squad in ContestService.getMyEntry; a caller with no active squad in the league gets a null entry, never another squad\'s.',
   },
 
   // --- Drafts ---
   {
     route: 'POST /api/v1/drafts/:contestId/pick',
     reason: 'Needs the body\'s entryId: the handler requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
-  },
-  {
-    route: 'GET /api/v1/drafts/:contestId',
-    reason: 'AUTHORIZES NOWHERE: buildDraftStateResponse never checks membership; any signed-in user sees every entry\'s picks. Owes requireMemberOfLeague: #291.',
   },
 
   // --- Leagues: the league id is in the route path, so these are league-scoped already ---

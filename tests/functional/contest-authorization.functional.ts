@@ -13,9 +13,19 @@ import {
   acceptInvitation,
   closeContest,
   deleteContest,
+  enterContest,
   generateInviteLink,
   getContest,
+  getContestEntry,
+  getDraftState,
+  getGolfContestLeaderboard,
+  getMyContestEntry,
+  leaveContest,
+  listContestEntries,
+  listContests,
+  removeMember,
   updateContest,
+  updateContestEntry,
 } from '@poolmaster/shared/generated/hey-api';
 import { ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
@@ -60,7 +70,7 @@ async function buildContestWithMemberAndOutsider() {
     scoringEngine: ScoringEngine.POSITION,
   });
 
-  return { commissioner, member, outsider, contestId: contestId as string };
+  return { commissioner, member, outsider, league, contestId: contestId as string };
 }
 
 async function expectContestUnchanged(commissioner: RegisteredUserContext, contestId: string) {
@@ -149,5 +159,96 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
 
     const deleteResponse = await deleteContest({ client: commissioner.client, path: { contestId } });
     expect(deleteResponse.response.status).toBe(204);
+  });
+});
+
+/**
+ * #291 — the rest of #193's defect class. Four contest reads and the league's contest list
+ * authorized nowhere; and the entry mutations accepted a member who had left the league, because
+ * leaving keeps both membership rows as INACTIVE and nothing checked status. Every refused write
+ * is followed by a re-read of the entry, since "403 and the write lands anyway" is this class.
+ */
+describe('SDK Functional: contest reads and entry access (#291)', () => {
+  it('refuses a user outside the league each newly gated read', async () => {
+    const { commissioner, outsider, league, contestId } = await buildContestWithMemberAndOutsider();
+    const entered = await enterContest({ client: commissioner.client, path: { contestId } });
+    const entryId = entered.data?.entry.id as string;
+    expect(entryId).toBeTruthy();
+
+    const reads = {
+      listContestEntries: await listContestEntries({ client: outsider.client, path: { contestId } }),
+      getContestEntry: await getContestEntry({ client: outsider.client, path: { contestId, entryId } }),
+      getGolfContestLeaderboard: await getGolfContestLeaderboard({ client: outsider.client, path: { contestId } }),
+      getDraftState: await getDraftState({ client: outsider.client, path: { contestId } }),
+      listContests: await listContests({ client: outsider.client, path: { id: league.id } }),
+    };
+    // All five at once, so a failure names every read that let the outsider through.
+    expect(Object.fromEntries(Object.entries(reads).map(([name, response]) => [name, response.response.status])))
+      .toEqual({
+        listContestEntries: 403,
+        getContestEntry: 403,
+        getGolfContestLeaderboard: 403,
+        getDraftState: 403,
+        listContests: 403,
+      });
+    for (const response of Object.values(reads)) {
+      expectFunctionalError(response, { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' });
+    }
+  });
+
+  it('still serves those reads to a league member', async () => {
+    const { commissioner, member, league, contestId } = await buildContestWithMemberAndOutsider();
+    const entered = await enterContest({ client: commissioner.client, path: { contestId } });
+    const entryId = entered.data?.entry.id as string;
+
+    expect((await listContestEntries({ client: member.client, path: { contestId } })).response.status).toBe(200);
+    expect((await getContestEntry({ client: member.client, path: { contestId, entryId } })).response.status).toBe(200);
+    expect((await listContests({ client: member.client, path: { id: league.id } })).response.status).toBe(200);
+    // Past the gate, the golf leaderboard refuses a DRAFT contest on its own terms: 400, not 403.
+    expectFunctionalError(
+      await getGolfContestLeaderboard({ client: member.client, path: { contestId } }),
+      { status: 400, code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN' },
+    );
+  });
+
+  it('refuses a member removed from the league a PATCH and a DELETE of their former entry, and the entry is unchanged', async () => {
+    const { commissioner, member, league, contestId } = await buildContestWithMemberAndOutsider();
+    const entered = await enterContest({ client: member.client, path: { contestId } });
+    expect(entered.response.status).toBe(201);
+    const entryId = entered.data?.entry.id as string;
+    const originalName = entered.data?.entry.name;
+
+    const removed = await removeMember({ client: commissioner.client, path: { id: league.id, uid: member.userId } });
+    expect(removed.response.status).toBe(200);
+
+    const patchResponse = await updateContestEntry({
+      client: member.client,
+      path: { contestId, entryId },
+      body: { name: 'Renamed After Removal', tiebreakerValue: 99 },
+    });
+    expectFunctionalError(patchResponse, { status: 403, code: 'LEAGUE_MEMBERSHIP_INACTIVE' });
+
+    const deleteResponse = await leaveContest({ client: member.client, path: { contestId } });
+    expectFunctionalError(deleteResponse, { status: 403, code: 'LEAGUE_MEMBERSHIP_INACTIVE' });
+
+    const reread = await getContestEntry({ client: commissioner.client, path: { contestId, entryId } });
+    expect(reread.response.status).toBe(200);
+    expect(reread.data?.entry.id).toBe(entryId);
+    expect(reread.data?.entry.name).toBe(originalName);
+    expect(reread.data?.entry.status).toBe('ACTIVE');
+    expect(reread.data?.entry.tiebreakerValue ?? null).toBeNull();
+  });
+
+  it('refuses an outsider entry into the contest with 403', async () => {
+    const { outsider, contestId } = await buildContestWithMemberAndOutsider();
+
+    expectFunctionalError(
+      await enterContest({ client: outsider.client, path: { contestId } }),
+      { status: 403, code: 'LEAGUE_MEMBERSHIP_REQUIRED' },
+    );
+    // getMyContestEntry stays a tolerant read: no league or team means no entry, not an error.
+    const mine = await getMyContestEntry({ client: outsider.client, path: { contestId } });
+    expect(mine.response.status).toBe(200);
+    expect(mine.data?.entry ?? null).toBeNull();
   });
 });

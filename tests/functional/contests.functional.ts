@@ -1042,8 +1042,9 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
+    // #291 — a membership refusal is an authorization failure: 403, as the league pre-checks answer.
     expectFunctionalError(enterResponse, {
-      status: 400,
+      status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
 
