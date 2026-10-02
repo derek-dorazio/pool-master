@@ -375,6 +375,10 @@ export default tseslint.config(
       'import-x/no-unresolved': 'error',
       'import-x/no-self-import': 'error',
       'import-x/no-useless-path-segments': 'error',
+      // #159 — a barrel that `export *`s one module and explicitly re-exports the
+      // same name from another hands consumers the type of one definition and the
+      // value of the other. tsc does not report that; this does.
+      'import-x/export': 'error',
     },
   },
   {
