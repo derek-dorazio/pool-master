@@ -13,6 +13,9 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   coverageDirectory: '<rootDir>/coverage',
+  // #296 — same provider as the integration and functional suites, so the merged report
+  // adds up identical per-line statement maps instead of two incompatible ones.
+  coverageProvider: 'v8',
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',
