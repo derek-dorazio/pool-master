@@ -200,13 +200,24 @@ test('act 1: the root admin builds a golf catalog — tour, season, six players,
   });
 
   await test.step('place one player in each default tier and save', async () => {
-    // The board's cards are keyed by field entry, not player: read the mapping from the
-    // field the page itself loads.
-    const fieldLoaded = page.waitForResponse((response) =>
-      isCall(response, 'GET', `/api/v1/events/${eventId}/participants`),
-    );
     await page.goto(`/manage/golf/tournaments/${eventId}/tiers`);
-    const field = (await (await fieldLoaded).json()) as {
+    // The board's cards are keyed by field entry, not player, so the act needs that mapping.
+    // It reads it straight from the API rather than by sniffing the page's own response.
+    //
+    // A `waitForResponse` registered before this navigation could match the FIELD page's
+    // refetch of the very same path -- both pages read it through `useGolfFieldQuery`, and
+    // adding the field invalidates that query. Once `goto` replaced that document Chromium
+    // discarded its response bodies, so `.json()` failed with "Protocol error
+    // (Network.getResponseBody): No resource with given identifier found". Which response
+    // matched came down to latency, so it passed every local run and one QA run before
+    // failing the next. `page.request` shares the browser context's cookies, and a GET needs
+    // no CSRF header.
+    const fieldResponse = await page.request.get(`/api/v1/events/${eventId}/participants`);
+    expect(
+      fieldResponse.ok(),
+      `GET the field answered ${fieldResponse.status()}`,
+    ).toBe(true);
+    const field = (await fieldResponse.json()) as {
       participants: { id: string; participantId: string }[];
     };
     const entryIds = playerIds.map((playerId) => {
