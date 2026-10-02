@@ -94,7 +94,6 @@ export const QueryKeys = {
      */
     contextById: (leagueId: QueryKeyId) => ['poolmaster', 'league-by-id', leagueId] as const,
     dashboard: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'dashboard'] as const,
-    manage: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'manage'] as const,
     members: (leagueId: QueryKeyId) => ['poolmaster', 'league-members', leagueId] as const,
   },
   leagueTeams: {
