@@ -74,6 +74,21 @@ function normalizeCoverageUrl(url) {
   return null;
 }
 
+// #296 — the server runs .ts through ts-node, so V8's byte offsets are into the transpiled
+// JavaScript, not the file on disk. Applied to the .ts file directly they land on the wrong
+// lines. Node records each module's source map and transpiled line lengths in
+// 'source-map-cache'; a placeholder source with those line lengths plus the map lets
+// v8-to-istanbul remap offsets onto the original TypeScript, as c8 does.
+function transpiledSources(cacheEntry) {
+  if (!cacheEntry?.data || !cacheEntry.lineLengths) {
+    return undefined;
+  }
+  return {
+    source: cacheEntry.lineLengths.map((length) => ''.padEnd(length, '.')).join('\n'),
+    sourceMap: { sourcemap: cacheEntry.data },
+  };
+}
+
 async function buildFunctionalCoverage() {
   const coverageMap = createCoverageMap({});
   const entries = fs.readdirSync(serviceFunctionalApiV8Dir, { withFileTypes: true });
@@ -87,13 +102,15 @@ async function buildFunctionalCoverage() {
       fs.readFileSync(path.join(serviceFunctionalApiV8Dir, entry.name), 'utf8'),
     );
 
+    const sourceMapCache = raw['source-map-cache'] ?? {};
+
     for (const scriptCoverage of raw.result ?? []) {
       const filePath = normalizeCoverageUrl(scriptCoverage.url);
       if (!filePath || !fs.existsSync(filePath) || !isRelevantSourceFile(filePath)) {
         continue;
       }
 
-      const converter = v8ToIstanbul(filePath);
+      const converter = v8ToIstanbul(filePath, 0, transpiledSources(sourceMapCache[scriptCoverage.url]));
       await converter.load();
       converter.applyCoverage(scriptCoverage.functions ?? []);
       coverageMap.merge(converter.toIstanbul());

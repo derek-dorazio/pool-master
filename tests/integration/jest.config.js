@@ -12,6 +12,9 @@ module.exports = {
   testTimeout: 30_000,
   // Run serially — integration tests share a database
   maxWorkers: 1,
+  // #296 — same provider as the unit and functional suites, so the merged report adds up
+  // identical per-line statement maps instead of two incompatible ones.
+  coverageProvider: 'v8',
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

@@ -561,6 +561,7 @@ release.
 - **`scripts/merge-service-coverage.mjs`** is the merge on its own. It runs no tests: it takes the per-suite `coverage-final.json` files, merges whichever exist, and warns about any that are missing. The local runner and CI both call it.
 - **`coverage-report`** (CI job, push to main only, advisory) downloads the three service suite artifacts and `coverage-poolmaster-unit`, runs the merge, writes one step-summary table (merged Service, PoolMaster Unit), and uploads `coverage-service-report`. Nothing depends on it and a failure does not fail the run (#294).
 - **Why merged matters:** the same source file is often partly covered by a unit test (logic correctness) and partly by an integration test (real-DB behavior). Merging gives an honest count of "how much of this file is exercised by *any* test."
+- **One coverage method across all three suites (#296).** Unit and integration set Jest's `coverageProvider: 'v8'`, and the FAPI runner converts the server's raw V8 coverage with `v8-to-istanbul` through each module's cached source map. All three therefore produce the same per-line statement map for a given `.ts` file, and the merge adds hits on identical locations. Mixing Babel-instrumented statements with V8 per-line statements double-counts: the two maps share almost no locations, so the merge unions them. Counts are per line, so comment and type-only lines inside an executed module count as covered.
 
 ### Coverage thresholds — current state and roadmap
 
@@ -572,7 +573,7 @@ release.
 | Webapp unit | none | — |
 | Webapp E2E | N/A | — |
 
-The single configured threshold is intentionally a **regression floor**, not a target. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
+The single configured threshold is intentionally a **regression floor**, not a target. It was set against Babel statement counts; since #296 the suite reports V8 per-line counts, which run higher, so the floor is looser than when it was set. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 
