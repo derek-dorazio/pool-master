@@ -97,6 +97,10 @@ describe("pool-master-3ew: shared page templates", () => {
     );
 
     expect(screen.getByText("Root admin required.")).toBeInTheDocument();
+    // #84 — the browser specs assert that neither state is on a page they expect to have
+    // loaded, so each carries its own id: "not allowed" must not report as "did not load".
+    expect(screen.getByTestId("shared-forbidden-state")).toBeInTheDocument();
+    expect(screen.queryByTestId("shared-error-state")).not.toBeInTheDocument();
 
     rerender(
       <AsyncPage
@@ -110,6 +114,8 @@ describe("pool-master-3ew: shared page templates", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Provider health unavailable.",
     );
+    expect(screen.getByTestId("shared-error-state")).toBeInTheDocument();
+    expect(screen.queryByTestId("shared-forbidden-state")).not.toBeInTheDocument();
   });
 
   it("pool-master-3ew.3: composes details beside action menu content", () => {

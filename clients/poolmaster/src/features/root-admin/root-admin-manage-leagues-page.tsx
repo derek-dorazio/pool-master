@@ -111,6 +111,7 @@ export function RootAdminManageLeaguesPage() {
             ? "error"
             : "ready"
       }
+      tableTestId="root-admin-manage-leagues-table"
       testId="root-admin-manage-leagues-page"
     />
   );

@@ -106,6 +106,7 @@ export function RootAdminManageUsersPage() {
             ? "error"
             : "ready"
       }
+      tableTestId="root-admin-manage-users-table"
       testId="root-admin-manage-users-page"
     />
   );

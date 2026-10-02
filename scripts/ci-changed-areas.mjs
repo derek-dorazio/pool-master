@@ -64,6 +64,11 @@ const SERVICE_PREFIXES = [
 
 const CLIENT_PREFIXES = [
   'clients/',
+  // packages/shared is in BOTH lists deliberately: the client consumes it through the generated
+  // SDK, so a shared change can break client code. It was service-only until #303, whose
+  // packages/shared/domain change skipped poolmaster-unit-tests -- the first qualifying PR found
+  // the gap, so the gap is widened rather than documented.
+  'packages/shared/',
 ];
 
 function matches(file, prefixes, files) {

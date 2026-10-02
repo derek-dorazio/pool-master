@@ -8,7 +8,8 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '../../../packages/shared/db';
-import { SquadOperationError, SquadService } from '../../../packages/core-api/src/modules/squads/service';
+import { SquadOperationError } from '../../../packages/core-api/src/modules/squads/errors';
+import { SquadService } from '../../../packages/core-api/src/modules/squads/service';
 import {
   fakeLeagueMembershipRepo,
   fakeSquadMembershipRepo,

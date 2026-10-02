@@ -1,10 +1,7 @@
 import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify';
 import type { TeamIconKey } from '@poolmaster/shared/domain';
-import {
-  SquadNotFoundError,
-  SquadOperationError,
-  type SquadService,
-} from './service';
+import { SquadNotFoundError, SquadOperationError } from './errors';
+import type { SquadService } from './service';
 import { sendError } from '../../core/error-handler';
 
 export function createSquadHandlers(service: SquadService) {

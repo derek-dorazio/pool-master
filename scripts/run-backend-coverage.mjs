@@ -47,10 +47,17 @@ removeDir(serviceFunctionalApiDir);
 removeDir(serviceMergedDir);
 fs.mkdirSync(coverageRoot, { recursive: true });
 
+// The FAPI server can only be covered by V8 (it runs out of process, outside Jest's Babel
+// instrumentation), and merging needs every suite to count the same way: V8 emits per-line
+// statement maps, Babel real statements, and unioning the two double-counts (#296). So the
+// Jest suites switch to V8 here, and only here — their configs default to Babel, which is what
+// CI's unit coverage gate measures (#302).
+const V8 = ['--', '--coverageProvider=v8'];
+
 console.log('Running service unit tests with coverage...');
-run('npm', ['run', 'test:coverage:service:unit']);
+run('npm', ['run', 'test:coverage:service:unit', ...V8]);
 console.log('Running service integration tests with coverage...');
-run('npm', ['run', 'test:coverage:service:integration']);
+run('npm', ['run', 'test:coverage:service:integration', ...V8]);
 console.log('Running service functional API tests with coverage...');
 run('npm', ['run', 'test:coverage:service:functional-api']);
 
@@ -58,6 +65,6 @@ printSummary('Service unit', path.join(serviceUnitDir, 'coverage-summary.json'))
 printSummary('Service integration', path.join(serviceIntegrationDir, 'coverage-summary.json'));
 printSummary('Service functional API', path.join(serviceFunctionalApiDir, 'coverage-summary.json'));
 
-// The merge itself lives in merge-service-coverage.mjs so CI's coverage-report job, which
-// merges artifacts from three parallel suite jobs, runs exactly this code (#294).
+// The merge itself lives in merge-service-coverage.mjs (#294), so it can also merge
+// per-suite coverage produced somewhere other than this script.
 run('node', ['scripts/merge-service-coverage.mjs', '--out', serviceMergedDir, ...DEFAULT_INPUTS]);

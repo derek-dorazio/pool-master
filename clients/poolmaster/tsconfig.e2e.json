@@ -1,0 +1,20 @@
+{
+  // #84 review — `tsconfig.json` includes only `src`, so nothing in CI ever typechecked the
+  // Playwright specs: a type error in `e2e/` reached `main` and only showed up at runtime,
+  // because Playwright strips types without checking them.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}
