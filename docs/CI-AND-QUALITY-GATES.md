@@ -233,6 +233,14 @@ every suite. It is in both lists deliberately: the service imports shared direct
 and the client consumes it through the generated SDK, so a change there can break
 either tier.
 
+**The reason is structural, not incidental.** `packages/shared` is the contract
+barrier between the tiers — it is where the DTOs, the domain types and the
+generated SDK live, which is the whole point of `architecture-rules.md` §2's
+contract-first chain. A change at a boundary both sides depend on is exactly the
+case where breadth is worth paying for, so the slower run is the intended
+behaviour rather than a reluctant trade. Treat a proposal to narrow this as a
+proposal to stop testing one side of the contract.
+
 That was not the original behaviour. Shared was service-only when the filter
 landed in #300, recorded at the time as a known narrowing on the grounds that
 `api:check` still covers the contract unconditionally. #303 then changed
