@@ -40,10 +40,11 @@ test.afterAll(async ({ playwright }, testInfo) => {
     return;
   }
 
-  const api = await playwright.request.newContext({
-    baseURL: testInfo.project.use.baseURL,
-  });
+  let api: APIRequestContext | undefined;
   try {
+    api = await playwright.request.newContext({
+      baseURL: testInfo.project.use.baseURL,
+    });
     for (const run of runs) {
       try {
         await removeRunData(api, admin, run);
@@ -53,7 +54,7 @@ test.afterAll(async ({ playwright }, testInfo) => {
       }
     }
   } finally {
-    await api.dispose();
+    await api?.dispose();
   }
 });
 

@@ -18,6 +18,10 @@ type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
 // page that rendered its landmark around an error from one that loaded.
 const SHARED_ERROR_STATE_TEST_ID = "shared-error-state";
 
+// The permission state is its own id, not the load-failure one: "you may not see this" and
+// "this did not load" fail a spec for different reasons and should not report as one.
+const SHARED_FORBIDDEN_STATE_TEST_ID = "shared-forbidden-state";
+
 type HeaderConfig = {
   actions?: ReactNode;
   breadcrumbLabel?: string;
@@ -108,6 +112,7 @@ function renderAsyncState({
     return (
       <ErrorState
         body={permissionBody ?? "You do not have access to this page."}
+        testId={SHARED_FORBIDDEN_STATE_TEST_ID}
         title={permissionTitle ?? "Access unavailable"}
       />
     );

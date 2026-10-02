@@ -50,10 +50,11 @@ test.afterAll(async ({ playwright }, testInfo) => {
     return;
   }
 
-  const api = await playwright.request.newContext({
-    baseURL: testInfo.project.use.baseURL,
-  });
+  let api: APIRequestContext | undefined;
   try {
+    api = await playwright.request.newContext({
+      baseURL: testInfo.project.use.baseURL,
+    });
     for (const run of runs) {
       try {
         await removeCatalogRun(api, admin, run);
@@ -63,7 +64,7 @@ test.afterAll(async ({ playwright }, testInfo) => {
       }
     }
   } finally {
-    await api.dispose();
+    await api?.dispose();
   }
 });
 
@@ -249,6 +250,7 @@ async function expectListPageLoaded(page: Page, path: string, landmark: string, 
   // absence check below cannot pass merely because the page is still loading.
   await expect(page.getByTestId(table)).toBeVisible();
   await expect(page.getByTestId('shared-error-state')).toHaveCount(0);
+  await expect(page.getByTestId('shared-forbidden-state')).toHaveCount(0);
 }
 
 // The generated SDK sends collection routes with a trailing slash (`/api/v1/events/`), so

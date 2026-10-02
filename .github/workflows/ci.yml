@@ -116,6 +116,11 @@ jobs:
       # modules the change had deleted.
       - name: service - typecheck tests
         run: npm run typecheck:tests
+      # clients/poolmaster/tsconfig.json includes only `src`, so the Playwright specs were
+      # typechecked by nothing: Playwright strips their types without checking them, and a
+      # type error only surfaced as a runtime failure. #84 added ~500 lines there.
+      - name: webapp - typecheck e2e specs
+        run: npm run typecheck:e2e
 
   # =========================================================================
   # Service test suites (#294)
