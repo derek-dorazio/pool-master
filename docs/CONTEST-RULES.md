@@ -574,7 +574,6 @@ All survivor contests share these configurable options:
 
 ## Source Files
 
-- Launch scoring rules and aggregation rules are defined in `plans/51-scoring-and-participant-data-review.md`
-- Later rule expansion ideas are tracked in `plans/52-potential-rules-function-expansion.md`
+- Entry aggregation — how an entry's pick scores roll up into its standing: `packages/core-api/src/modules/contests/contest-leaderboard-calculator.ts`. `ContestCountingRule` is the rule, `resolveContestCountingRule` reads N from the configuration (`configJson.countedScores`, else `rosterSize`, else `pickCount`), and `buildContestEntryStanding` sums the best N scored picks in the scoring definition's direction. Live leaderboards and settlement both go through it. `BEST_N_GOLFERS` is the only counting rule implemented; the other sports' aggregation described above has no implementation yet.
 - Participant scoring definitions — score direction, unit and the one display format per measure: `packages/shared/domain/contest-scoring.ts`
 - Domain enums: `packages/shared/domain/enums.ts`

@@ -659,7 +659,8 @@ An entry's result, frozen when its contest settles — cross-sport core plus a s
 
 A selection on an entry. **One insert path**, `ContestEntryPickService.createPick`, which
 copies the contest's format onto the pick inside its transaction so the per-format unique
-indexes hold (plans/117 §7.1). Its port, `ContestEntryPickRepository`, is read-only by
+indexes hold (plans/117 §7.1, deleted with its epic; retrieve via
+`git show c0191969^:plans/117-league-contest-substrate-redesign.md`). Its port, `ContestEntryPickRepository`, is read-only by
 design (#247), so no adapter or fake can become a second way in. The selection operations
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
