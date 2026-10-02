@@ -25,10 +25,13 @@ import type {
   Contest,
   ContestEntry,
   ContestConfiguration,
+  LeagueMembership,
+  SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   deriveLegacyParticipantStatus,
+  LeagueMembershipStatus,
   Sport,
   SquadMembershipStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
@@ -259,7 +262,7 @@ export class ContestService {
     myEntryIds: string[];
     picksRevealed: boolean;
   }> {
-    const context = await this.getEntryContext(contestId, userId);
+    const context = await this.getEntryContext(contestId, userId, 'read');
     const squadId = context.squadMembership?.squadId ?? null;
     const picksRevealed = contestPicksRevealed(context.contest.status);
     const entries = await this.loadEntryDetailDtos(contestId, {
@@ -288,7 +291,7 @@ export class ContestService {
     contestId: string,
     userId: string,
   ): Promise<ContestEntryDto | null> {
-    const context = await this.getEntryContext(contestId, userId);
+    const context = await this.getEntryContext(contestId, userId, 'read');
     if (!context.squadMembership) {
       return null;
     }
@@ -301,7 +304,7 @@ export class ContestService {
     entryId: string,
     requesterUserId: string,
   ): Promise<{ entry: ContestEntryDto; picksRevealed: boolean }> {
-    const context = await this.getEntryContext(contestId, requesterUserId);
+    const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     const requesterSquadId = context.squadMembership?.squadId ?? null;
     const picksRevealed = contestPicksRevealed(context.contest.status);
 
@@ -336,7 +339,7 @@ export class ContestService {
     contestId: string,
     requesterUserId: string,
   ): Promise<ContestLeaderboardModel> {
-    const context = await this.getEntryContext(contestId, requesterUserId);
+    const context = await this.getEntryContext(contestId, requesterUserId, 'read');
     if (!contestPicksRevealed(context.contest.status)) {
       throw new ContestOperationError(
         'Golf leaderboard is not available until contest picks are revealed.',
@@ -448,15 +451,7 @@ export class ContestService {
     userId: string,
   ): Promise<ContestEntryDto> {
     this.logger.debug({ contestId, userId }, 'contest entry create start');
-    const context = await this.getEntryContext(contestId, userId);
-    const membership = context.membership;
-    if (!membership) {
-      this.logger.warn({ contestId, userId }, 'contest entry create missing membership');
-      throw new ContestEntryOperationError(
-        'You must be an active league member to enter this contest',
-        'LEAGUE_MEMBERSHIP_REQUIRED',
-      );
-    }
+    const context = await this.getEntryContext(contestId, userId, 'act');
     if (!isContestJoinable(context.contest.status)) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry create locked contest');
       throw new ContestEntryOperationError(
@@ -512,15 +507,7 @@ export class ContestService {
     userId: string,
   ): Promise<void> {
     this.logger.debug({ contestId, userId }, 'contest entry delete start');
-    const context = await this.getEntryContext(contestId, userId);
-    const membership = context.membership;
-    if (!membership) {
-      this.logger.warn({ contestId, userId }, 'contest entry delete missing membership');
-      throw new ContestEntryOperationError(
-        'You must be an active league member to leave this contest',
-        'LEAGUE_MEMBERSHIP_REQUIRED',
-      );
-    }
+    const context = await this.getEntryContext(contestId, userId, 'act');
     if (!isContestJoinable(context.contest.status)) {
       this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry delete locked contest');
       throw new ContestEntryOperationError(
@@ -530,7 +517,7 @@ export class ContestService {
     }
     if (!context.squadMembership) {
       this.logger.warn({ contestId, userId }, 'contest entry delete missing squad manager');
-      throw new ContestEntryOperationError(
+      throw new ContestEntryAccessError(
         'You do not manage a squad in this league',
         'SQUAD_MANAGER_REQUIRED',
       );
@@ -567,15 +554,7 @@ export class ContestService {
       userId,
       updateKeys: Object.keys(updates),
     }, 'contest entry update start');
-    const context = await this.getEntryContext(contestId, userId);
-    const membership = context.membership;
-    if (!membership) {
-      this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing membership');
-      throw new ContestEntryOperationError(
-        'You must be an active league member to rename this contest entry',
-        'LEAGUE_MEMBERSHIP_REQUIRED',
-      );
-    }
+    const context = await this.getEntryContext(contestId, userId, 'act');
     if (!isContestJoinable(context.contest.status)) {
       this.logger.warn({ contestId, entryId, userId, status: context.contest.status }, 'contest entry update locked contest');
       throw new ContestEntryOperationError(
@@ -585,7 +564,7 @@ export class ContestService {
     }
     if (!context.squadMembership) {
       this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing squad manager');
-      throw new ContestEntryOperationError(
+      throw new ContestEntryAccessError(
         'You do not manage a squad in this league',
         'SQUAD_MANAGER_REQUIRED',
       );
@@ -818,23 +797,67 @@ export class ContestService {
     };
   }
 
+  /**
+   * The one resolver behind every entry operation (#291): the contest, and the caller's league
+   * and squad memberships in its league. **Only ACTIVE memberships are returned.** An inactive
+   * row is a relation that has ended — leaving a league keeps both rows as INACTIVE — and it
+   * confers nothing, so no caller can act on one by forgetting to check its status.
+   *
+   * `access` says what the operation does with them:
+   * - `'read'` — inactive rows confer nothing and nothing is refused here. League access for the
+   *   reads is the route's `requireMemberOfLeague` pre-check, which also carries the root-admin
+   *   bypass; a caller with no active squad simply owns nothing.
+   * - `'act'` — the operation acts for the caller's squad, so the caller must be an ACTIVE league
+   *   member (403 `LEAGUE_MEMBERSHIP_REQUIRED` absent, `LEAGUE_MEMBERSHIP_INACTIVE` ended), and a
+   *   squad membership that has ended is refused (`SQUAD_MEMBERSHIP_INACTIVE`). Having *no* squad
+   *   membership is left to the caller: creating an entry and changing one name it differently.
+   */
   private async getEntryContext(
     contestId: string,
     userId: string,
+    access: 'read' | 'act',
   ): Promise<{
     contest: Contest;
-    membership: Awaited<ReturnType<LeagueMembershipRepository['findByLeagueAndUser']>>;
-    squadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>;
+    membership: LeagueMembership | null;
+    squadMembership: SquadMembership | null;
   }> {
     const contest = await this.deps.contests.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId, userId }, 'contest entry context missing contest');
       throw new ContestNotFoundError(contestId);
     }
-    const membership = await this.deps.memberships.findByLeagueAndUser(contest.leagueId, userId);
-    const squadMembership = membership
+    const leagueRow = await this.deps.memberships.findByLeagueAndUser(contest.leagueId, userId);
+    const squadRow = leagueRow
       ? await this.deps.squadMemberships.findByLeagueAndUser(contest.leagueId, userId)
       : null;
+    const membership = leagueRow?.status === LeagueMembershipStatus.ACTIVE ? leagueRow : null;
+    const squadMembership = membership && squadRow?.status === SquadMembershipStatus.ACTIVE
+      ? squadRow
+      : null;
+
+    if (access === 'act') {
+      if (!leagueRow) {
+        this.logger.warn({ contestId, userId }, 'contest entry access missing league membership');
+        throw new ContestEntryAccessError(
+          'You must be an active member of this league to change its contest entries',
+          'LEAGUE_MEMBERSHIP_REQUIRED',
+        );
+      }
+      if (!membership) {
+        this.logger.warn({ contestId, userId, status: leagueRow.status }, 'contest entry access inactive league membership');
+        throw new ContestEntryAccessError(
+          'Your membership in this league is inactive',
+          'LEAGUE_MEMBERSHIP_INACTIVE',
+        );
+      }
+      if (squadRow && !squadMembership) {
+        this.logger.warn({ contestId, userId, squadId: squadRow.squadId, status: squadRow.status }, 'contest entry access inactive squad membership');
+        throw new ContestEntryAccessError(
+          'Your membership of this team has ended',
+          'SQUAD_MEMBERSHIP_INACTIVE',
+        );
+      }
+    }
     return { contest, membership, squadMembership };
   }
 
@@ -978,7 +1001,7 @@ export class ContestService {
       }
     }
 
-    throw new ContestEntryOperationError(
+    throw new ContestEntryAccessError(
       'You must have an active team in this league before entering a contest',
       'SQUAD_MEMBERSHIP_REQUIRED',
     );
@@ -1025,6 +1048,20 @@ export class ContestEntryOperationError extends Error {
   constructor(reason: string, code = 'CONTEST_ENTRY_OPERATION_INVALID') {
     super(reason);
     this.name = 'ContestEntryOperationError';
+    this.code = code;
+  }
+}
+
+/**
+ * The caller is not entitled to act on a contest entry: no active league membership, or no
+ * active squad to act for. Routes answer 403, the same status the league pre-checks use.
+ */
+export class ContestEntryAccessError extends Error {
+  code: string;
+
+  constructor(reason: string, code: string) {
+    super(reason);
+    this.name = 'ContestEntryAccessError';
     this.code = code;
   }
 }

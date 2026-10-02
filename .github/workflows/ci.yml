@@ -1227,17 +1227,44 @@ jobs:
           CLUSTER="poolmaster-qa-cluster"
           SERVICE="poolmaster-qa-core-api"
 
-          REPORTED=$(aws ecs describe-services \
-            --cluster "$CLUSTER" \
-            --services "$SERVICE" \
-            --query 'services[0].taskDefinition' \
-            --output text)
-          REPORTED="${REPORTED##*/}"
-          ROLLOUT_STATE=$(aws ecs describe-services \
-            --cluster "$CLUSTER" \
-            --services "$SERVICE" \
-            --query 'services[0].deployments[?status==`PRIMARY`] | [0].rolloutState' \
-            --output text)
+          # #287 — poll for a terminal rolloutState rather than sampling it once.
+          #
+          # services-stable does not wait on rolloutState. Its success condition is
+          # `length(deployments) == 1 && runningCount == desiredCount`, which is true as soon as
+          # the old deployment has drained and the new task is RUNNING. ECS marks the deployment
+          # COMPLETED later, once it is satisfied the rollout succeeded, which includes ALB
+          # target-group health -- and #281's own health_check_grace_period_seconds = 120 delays
+          # exactly that. QA runs desired_count = 1, so there is no second task to cover the gap.
+          # Sampling once inside that window failed run 1142 on a deploy that had placed the
+          # right revision: "service is on :362 ... rolloutState is IN_PROGRESS".
+          #
+          # FAILED is still a hard stop on the first read -- that is the circuit-breaker rollback
+          # this step exists to catch, and there is no point waiting out a deployment ECS has
+          # already given up on.
+          DEADLINE=$((SECONDS + 300))
+          while :; do
+            REPORTED=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$SERVICE" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+            REPORTED="${REPORTED##*/}"
+            ROLLOUT_STATE=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$SERVICE" \
+              --query 'services[0].deployments[?status==`PRIMARY`] | [0].rolloutState' \
+              --output text)
+
+            if [ "$ROLLOUT_STATE" = "FAILED" ] || [ "$ROLLOUT_STATE" = "COMPLETED" ]; then
+              break
+            fi
+            if [ "$SECONDS" -ge "$DEADLINE" ]; then
+              echo "::error::${SERVICE} rollout of ${EXPECTED_TASK_DEFINITION} did not reach a terminal state within 300s: service is on ${REPORTED}, PRIMARY rolloutState is ${ROLLOUT_STATE}."
+              exit 1
+            fi
+            echo "PRIMARY rolloutState is ${ROLLOUT_STATE}; waiting for a terminal state."
+            sleep 10
+          done
 
           echo "- After the wait: service on \`${REPORTED}\`, PRIMARY rolloutState \`${ROLLOUT_STATE}\`" >> "$GITHUB_STEP_SUMMARY"
 

@@ -459,6 +459,54 @@ read-only. Sign-in issues a refresh token and logout revokes that one token
 (`auth-service.ts`), so each post-deploy run leaves a revoked token row
 behind, and concurrent sessions for the same admin stay safe.
 
+### Owner ruling: the first journey acts are tagged `@smoke`, so the post-deploy run does write
+
+**This supersedes the paragraph above as a statement of what post-deploy does.**
+The reasoning there — that a no-domain-data smoke is the right post-deploy shape
+— was an argument from safety, not from coverage, and the coverage gap it leaves
+is the one that matters: with the local job running every spec and the QA job
+running only `@smoke`, a breakage that exists **only in QA** anywhere past the
+login screen is invisible. The deploy that stayed broken for four days
+(see the deploy-qa section) failed in exactly that blind spot.
+
+So the ruling is breadth now, detail later: **the first acts carry `@smoke` and
+run post-deploy.** When the pre-release suite grows enough to carry the detail,
+the narrow acts lose the tag and the QA set shrinks back toward a smoke. The tag
+is a statement about what is worth proving against a real deploy today, not a
+permanent property of a spec.
+
+Four things this forces, none optional:
+
+1. **Teardown becomes load-bearing, not hygiene.** Post-deploy runs now create
+   leagues, squads, contests and users in QA on every merge to main. The probe's
+   pattern is the floor: accumulate every attempt's created ids and remove them
+   through the API in `afterAll`, per attempt, so a retry does not orphan the
+   first attempt's data. Teardown that only runs on success will silently fill QA.
+
+2. **The localhost-only guard must not be copied into the journey specs.**
+   `plumbing-probe.e2e.ts` refuses any base URL whose host is not `localhost` or
+   `127.0.0.1`, deliberately, because it writes domain data and the config
+   defaults to QA. That guard is correct for a throwaway probe and is
+   *incompatible with being tagged* — a tagged spec carrying it would throw on
+   every post-deploy run. The journey specs need the opposite property: safe to
+   run against QA by construction. Do not resolve this by loosening the probe's
+   guard; the probe is superseded by #84 and retires.
+
+3. **The member act must use the invite-link flow, not email invitations.**
+   Verified on `774166f`: `POST /:id/invite-link` (`leagues/routes.ts:284`)
+   returns the invite code in the response body, while the direct invitations at
+   line 271 go out by email. The local stack has an SMTP sink; QA has SES and no
+   inbox the suite can read. So the email path cannot complete post-deploy and
+   the link path can. Registration itself is not gated — there is no
+   `emailVerified` field or verification check anywhere in `modules/auth` or the
+   Prisma schema — so register-then-login works against QA unassisted.
+
+4. **The presence-not-absence rule stops being advice.** It was already stated
+   below for dual-run specs; with writing acts running against a QA database that
+   accumulates across months, any assertion on a count or an absence is a
+   time bomb rather than a flake. Run-scoped names are what make presence
+   assertions precise enough to be useful.
+
 **The rule that keeps a dual-run spec honest:** it may assert the presence
 of what the run itself created, never the absence or the count of what it
 did not. "Both new users appear in `/manage/users`" holds everywhere;

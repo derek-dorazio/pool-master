@@ -27,6 +27,7 @@ import {
   type ContestManagementService,
 } from '../contest-management/service';
 import {
+  ContestEntryAccessError,
   ContestEntryNotFoundError,
   ContestEntryOperationError,
   ContestNotFoundError,
@@ -247,6 +248,10 @@ export function createContestHandlers(contestService: ContestService) {
         logger.warn({ contestId: request.params.contestId, userId }, 'contest create entry route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
+      if (err instanceof ContestEntryAccessError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest create entry route forbidden');
+        return sendError(reply, 403, err.code, err.message);
+      }
       if (err instanceof ContestEntryOperationError) {
         logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest create entry route rejected');
         const statusCode = err.code === 'CONTEST_ENTRY_LIMIT_REACHED' ? 409 : 400;
@@ -275,6 +280,10 @@ export function createContestHandlers(contestService: ContestService) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
         logger.warn({ contestId: request.params.contestId, userId }, 'contest delete entry route missing contest or entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestEntryAccessError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest delete entry route forbidden');
+        return sendError(reply, 403, err.code, err.message);
       }
       if (err instanceof ContestEntryOperationError) {
         logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest delete entry route rejected');
@@ -312,6 +321,10 @@ export function createContestHandlers(contestService: ContestService) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
         logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId }, 'contest update entry route missing contest or entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestEntryAccessError) {
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId, code: err.code }, 'contest update entry route forbidden');
+        return sendError(reply, 403, err.code, err.message);
       }
       if (err instanceof ContestEntryOperationError) {
         logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId, code: err.code }, 'contest update entry route rejected');
