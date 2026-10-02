@@ -50,7 +50,10 @@ export function LeagueSummaryCard({
               >
                 {name}
               </h2>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              <p
+                className="mt-2 max-w-2xl text-sm text-muted-foreground"
+                data-testid="league-summary-description"
+              >
                 {description?.trim() ||
                   "Manage league identity, commissioner controls, and member actions here."}
               </p>

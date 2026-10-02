@@ -499,7 +499,7 @@ jobs:
           echo "### PoolMaster Browser E2E (local stack)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Target: production build via \`vite preview\`, \`/api\` proxied to core-api on a throwaway Postgres" >> $GITHUB_STEP_SUMMARY
-          echo "- Specs: all (guards, smoke, golden journey act 1, plumbing probe) — #278, #84" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: all (guards, smoke, golden journey acts 1-4) — #278, #84, #280" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA deploy: publish images -> migrate -> roll out -> browser e2e.
@@ -1370,9 +1370,10 @@ jobs:
       - run: npm ci
       - name: Install Playwright Chromium
         run: cd clients/poolmaster && npx playwright install --with-deps chromium
-      # Only the @smoke specs. Since #84 that includes the journey's act 1,
-      # which writes a run-named golf catalog to QA and tears it down in
-      # afterAll (plans/130 "Owner ruling"). Traces stay on; the config's
+      # Only the @smoke specs. Since #84 and #280 that includes the journey's
+      # acts 1-3, which write a run-named golf catalog, league, contest, entry
+      # and two users to QA and tear them down in afterAll (plans/130 "Owner
+      # ruling"). Act 4 is untagged and does not run here. Traces stay on; the config's
       # globalTeardown (e2e/redact-artifacts.ts) scrubs credentials and
       # session tokens from them before the report is built and uploaded.
       - name: Run PoolMaster browser E2E smoke
@@ -1393,7 +1394,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
           echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Specs: \`@smoke\` only — unauthenticated guards, admin sign-in smoke (#278), and journey act 1, which creates and tears down a run-named golf catalog (#84)." >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: \`@smoke\` only — unauthenticated guards, admin sign-in smoke (#278), and journey acts 1-3, which create and tear down a run-named golf catalog, league, contest, entry and two users (#84, #280)." >> $GITHUB_STEP_SUMMARY
 
   # Ten failed QA deploys in a row went unnoticed (#191) because a red
   # deploy job on main surfaces nowhere. Keep one open issue while the deploy

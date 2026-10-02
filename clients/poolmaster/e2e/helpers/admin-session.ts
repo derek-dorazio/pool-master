@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 /**
  * #278 — the sign-in sequence every spec that acts as the root admin shares: the post-deploy
- * smoke, the plumbing probe and the journey. One copy, so there are no selectors to drift.
+ * smoke and the journey. One copy, so there are no selectors to drift.
  */
 
 const ADMIN_PASSWORD_ENV = 'POOLMASTER_E2E_ADMIN_PASSWORD';
