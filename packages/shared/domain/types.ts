@@ -31,6 +31,7 @@ import type {
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
   TeamIconKey,
+  TierAssignmentMode,
   TimeFormat,
   TournamentFormat,
 } from './enums';
@@ -248,8 +249,6 @@ export interface PriceOverride {
   setBy: string;
   setAt: Date;
 }
-
-export type TierAssignmentMode = 'AUTO_RANKING' | 'AUTO_PRICE' | 'AUTO_ODDS' | 'AUTO_SEED' | 'MANUAL';
 
 /** Tier assignment configuration for contests that use tier-based selection. */
 export interface TierConfig {

@@ -56,7 +56,6 @@ export type {
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
-  TierAssignmentMode,
   TierConfig,
   TierDefinition,
   UpcomingEvent,
