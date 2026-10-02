@@ -645,14 +645,15 @@ push.
 
 The integration and functional-api suites need Postgres, which is not available in every
 working environment. Where it is missing, push the branch and let CI run them:
-`service-coverage-report` is the job that does.
+`service-integration-tests` and `service-functional-api-tests` are the jobs that do (#294).
 
 ### CI during phase 1
 
 The CI jobs were split so a broken webapp does not block the backend suites
 (`b20c653`, `a2830d9`). The backend chain is `all-contract-gates` →
-`service-lint-typecheck` → `service-coverage-report` / `service-build`, and none of it
-depends on `poolmaster-build`. Expect `poolmaster-build` and `poolmaster-unit-tests` to be
+`service-unit-tests` / `service-integration-tests` / `service-functional-api-tests` in
+parallel, and `all-contract-gates` → `service-lint-typecheck` → `service-build` (#294).
+None of it depends on `poolmaster-build`. Expect `poolmaster-build` and `poolmaster-unit-tests` to be
 red for all of phase 1; that is the plan working, not a regression. They must be green
 before phase 2 is done.
 

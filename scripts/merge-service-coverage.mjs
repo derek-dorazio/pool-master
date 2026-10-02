@@ -5,7 +5,7 @@
 // locally. A missing input is a warning, not an error: a suite that failed still leaves the
 // others worth reporting. Only an empty merge (no inputs at all) fails.
 //
-// CLI: node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]
+// CLI: node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]  (USAGE)
 // With no inputs it reads the three default per-suite locations under coverage/.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,7 @@ export const DEFAULT_INPUTS = [
   'coverage/service-functional-api/coverage-final.json',
 ];
 export const DEFAULT_OUT_DIR = 'coverage/service-merged';
+export const USAGE = 'node scripts/merge-service-coverage.mjs [--out <dir>] [<coverage-final.json> ...]';
 
 export function mergeServiceCoverage({ inputs, outDir }) {
   const coverageMap = createCoverageMap({});
@@ -67,6 +68,9 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--out') {
       outDir = argv[i + 1];
+      if (outDir === undefined) {
+        return null;
+      }
       i += 1;
     } else {
       inputs.push(argv[i]);
@@ -76,7 +80,12 @@ function parseArgs(argv) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const { inputs, outDir } = parseArgs(process.argv.slice(2));
+  const args = parseArgs(process.argv.slice(2));
+  if (!args) {
+    console.error(`--out needs a directory.\nUsage: ${USAGE}`);
+    process.exit(1);
+  }
+  const { inputs, outDir } = args;
   const { merged, missing, total } = mergeServiceCoverage({ inputs, outDir });
 
   for (const input of missing) {
