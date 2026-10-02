@@ -13,9 +13,9 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   coverageDirectory: '<rootDir>/coverage',
-  // #296 — same provider as the integration and functional suites, so the merged report
-  // adds up identical per-line statement maps instead of two incompatible ones.
-  coverageProvider: 'v8',
+  // #302 — no coverageProvider here: CI's gating run uses Jest's default (Babel), which is the
+  // method the coverageThreshold below was set against and costs ~7s rather than V8's ~37s.
+  // run-backend-coverage.mjs passes --coverageProvider=v8 for the merged report (#296).
   collectCoverageFrom: [
     'packages/core-api/src/**/*.ts',
     'packages/shared/**/*.ts',

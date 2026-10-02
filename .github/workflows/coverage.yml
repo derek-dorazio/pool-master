@@ -1,0 +1,86 @@
+name: Coverage report
+
+# #302 — the merged service coverage report, off the CI critical path. It gates nothing.
+# On demand only: run it from the Actions tab ("Run workflow"), against any branch.
+#
+# ci.yml collects coverage only for the unit suite, because only the unit suite has a
+# coverage threshold. This workflow runs all three service suites with V8 coverage and merges
+# them: V8 is the only way to cover the functional API server (it runs out of process,
+# outside Jest's Babel instrumentation), and the merge needs every suite to count the same
+# way (#296). V8 more than doubles integration time, which is why this is not on every push.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  service-coverage:
+    name: service-coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: poolmaster
+          POSTGRES_PASSWORD: poolmaster
+          POSTGRES_DB: poolmaster_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
+      # Required at bootstrap with no fallback (#134, core/config.ts).
+      POOLMASTER_ENVIRONMENT: ci
+      RELEASE_VERSION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
+
+      # The same command a contributor runs locally: unit, integration and functional API in
+      # sequence, all with V8 coverage, then scripts/merge-service-coverage.mjs.
+      - name: Run service suites with coverage and merge
+        run: npm run test:coverage:service:merged
+
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/write-coverage-summary.mjs "Service Coverage" \
+            "Merged (unit + integration + functional API)=coverage/service-merged/coverage-summary.json" \
+            "Unit=coverage/service-unit/coverage-summary.json" \
+            "Integration=coverage/service-integration/coverage-summary.json" \
+            "Functional API=coverage/service-functional-api/coverage-summary.json"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-service-report
+          path: |
+            coverage/service-merged/coverage-final.json
+            coverage/service-merged/coverage-summary.json
+            coverage/service-merged/lcov.info
+            coverage/service-merged/clover.xml
+            coverage/service-merged/lcov-report/**
+            coverage/service-unit/coverage-summary.json
+            coverage/service-integration/coverage-summary.json
+            coverage/service-functional-api/coverage-summary.json
+          retention-days: 30
+          if-no-files-found: warn
