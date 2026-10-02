@@ -63,8 +63,10 @@ Blast-radius disclosure is mandatory, not optional: destructive migrations,
 data backfills, and non-reversible production effects must be stated here with
 what they touch and whether rollback is possible.
 
-The marker line above (the review:triggers HTML comment) MUST remain in the PR
-body — CI greps every PR for it via npm run rules:check:pr-review-triggers.
+Keep the marker line above (the review:triggers HTML comment) in the PR body.
+CI greps every PR for it via npm run rules:check:pr-review-triggers, which
+warns if it is missing and does not fail the build (#284). The section is worth
+writing because it is read, not because CI would otherwise stop the merge.
 -->
 
 ## Merge

@@ -100,11 +100,12 @@ is one that stops being read.
 
 ---
 
-## 4. What this gate actually guarantees
+## 4. What this check actually guarantees
 
-`check-pr-review-triggers` verifies the section **exists**. It cannot verify the triggers
-are accurate or complete — no scanner can read a diff and know what the author was
-uncertain about.
+`check-pr-review-triggers` verifies the section **exists**, and since #284 it is **advisory**:
+a missing marker produces a warning annotation on `all-contract-gates`, and the build goes
+green. It cannot verify the triggers are accurate or complete — no scanner can read a diff and
+know what the author was uncertain about.
 
 So the honest guarantee is: the implementer was prompted to think about it, and wrote down
 what it thought. That is weaker than a second reader, and it is why the mechanical half
@@ -113,7 +114,7 @@ stays mechanical and why `/code-review` before opening a PR is worth the one com
 Self-disclosure catches the case where the agent knows it did something notable. It does
 not catch the case where the agent did not recognise the significance.
 
-### Why this is enforced at CI only
+### Why this is reported at CI only, and why it stopped blocking
 
 A second gate was once specified: a PreToolUse hook on PR creation that would block a PR
 whose body lacked the section, catching it *before* the PR exists rather than after. It was
@@ -131,8 +132,24 @@ because it manufactures confidence in a check that never ran. That exact failure
 already happened here once, to the tracker reconciliation `Stop` hook, which was keyed to
 the `gh` CLI and was therefore inert in every cloud session.
 
-So enforcement is CI-only, by decision rather than by omission. The cost is one CI cycle on
-the occasions the section is forgotten. Nothing reaches `main` without it either way.
+So reporting is CI-only, by decision rather than by omission.
+
+**And in October 2026 the CI half stopped blocking (#284).** The sentence that used to close
+this section read "the cost is one CI cycle on the occasions the section is forgotten" — which
+undercounted. The step runs inside `all-contract-gates`, and every other job in `ci.yml`
+declares that job in `needs:`. So a missing marker did not cost one cycle; it withheld all
+twelve downstream jobs. On #283, an 11-line Terraform change received no lint, typecheck, or
+test verdict at all because a prose section was absent.
+
+That is the wrong price for a check that, by the paragraph above, can only confirm a string is
+present. The same argument that sank the blocking hook applies to blocking in CI: a gate
+satisfied by typing `None.` buys compliance, not disclosure. So the check now warns, and the
+section's authority rests where it always actually rested — on being read.
+
+What this costs: a PR can now reach `main` with no Review triggers section. That is accepted.
+The section is worth writing because the owner and the review session read it, not because CI
+would otherwise stop the merge; a disclosure that needs a gate to exist was not going to be a
+good disclosure.
 
 ---
 
