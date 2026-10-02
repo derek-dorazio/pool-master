@@ -19,7 +19,7 @@
  */
 import type { SquadRepository } from '@poolmaster/shared/db';
 import { buildDefaultSquadName } from '../../core/user-name';
-import { SquadOperationError } from './service';
+import { SquadOperationError } from './errors';
 
 /** Upper bound on default-name disambiguation attempts before giving up. */
 const MAX_DEFAULT_NAME_ATTEMPTS = 50;

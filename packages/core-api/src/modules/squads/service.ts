@@ -14,6 +14,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
+import { SquadNotFoundError, SquadOperationError } from './errors';
 import { assertSquadNameAvailable, resolveAvailableDefaultSquadName } from './squad-name';
 import {
   inactivateLeagueMemberUnit,
@@ -666,19 +667,3 @@ export class SquadService {
   }
 }
 
-export class SquadOperationError extends Error {
-  code: string;
-
-  constructor(message: string, code = 'SQUAD_OPERATION_INVALID') {
-    super(message);
-    this.name = 'SquadOperationError';
-    this.code = code;
-  }
-}
-
-export class SquadNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'SquadNotFoundError';
-  }
-}
