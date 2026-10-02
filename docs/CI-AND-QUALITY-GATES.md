@@ -56,11 +56,14 @@ Rules:
   ✓ Require status checks to pass before merging
       Require branches to be up to date before merging: on
       Required status checks:
-        - lint-and-typecheck
-        - service-coverage-report
+        - all-contract-gates
+        - service-lint-typecheck
+        - service-unit-tests
+        - service-integration-tests
+        - service-functional-api-tests
         - poolmaster-unit-tests
         - service-build
-        - mock-contest-feed-provider-build
+        - service-mock-provider-build
         - poolmaster-build
 
 Bypass list:
@@ -107,14 +110,14 @@ Expected output for the recommended configuration:
   "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
   "current_user_can_bypass": "always",
   "strict_status_checks": true,
-  "required_status_checks": ["lint-and-typecheck", "service-coverage-report", "poolmaster-unit-tests", "service-build", "mock-contest-feed-provider-build", "poolmaster-build"],
+  "required_status_checks": ["all-contract-gates", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
   "allowed_merge_methods": ["squash"]
 }
 ```
 
 If `bypass_actors` is empty and `current_user_can_bypass` is `"never"`, the
 ruleset is configured strictly. If the `required_status_checks` list does
-not include all six job names, the gates are partially bypassed — fix
+not include all nine job names, the gates are partially bypassed — fix
 before treating the configuration as complete.
 
 ### Why the marker check matters here
@@ -130,19 +133,27 @@ also on the warning being read.
 
 ```mermaid
 flowchart TD
-  T[push to main / PR to main] --> LT[lint-typecheck]
+  T[push to main / PR to main] --> CG[all-contract-gates]
 
-  LT --> SC[service-coverage-report]
-  LT --> PU[poolmaster-unit-tests]
+  CG --> LT[service-lint-typecheck]
+  CG --> SU[service-unit-tests]
+  CG --> SI[service-integration-tests]
+  CG --> SF[service-functional-api-tests]
+  CG --> PU[poolmaster-unit-tests]
+  CG --> PB[poolmaster-build]
+  CG --> EL[poolmaster-browser-e2e-local]
   LT --> SB[service-build]
-  LT --> MB[mock-contest-feed-provider-build]
-  LT --> PB[poolmaster-build]
-  LT --> EL[poolmaster-browser-e2e-local]
+  LT --> MB[service-mock-provider-build]
 
-  SC --> CS[coverage-summary]
-  PU --> CS
+  SU -.-> CR[coverage-report]
+  SI -.-> CR
+  SF -.-> CR
+  PU -.-> CR
 
-  SC --> PI[deploy-publish-images]
+  SU --> PI[deploy-publish-images]
+  SI --> PI
+  SF --> PI
+  LT --> PI
   PU --> PI
   SB --> PI
   MB --> PI
@@ -160,14 +171,26 @@ flowchart TD
   classDef deploy fill:#e6ffed,stroke:#15803d
   classDef report fill:#f3f4f6,stroke:#6b7280
 
-  class LT gate
-  class SC,PU,SB,MB,PB,EL test
+  class CG,LT gate
+  class SU,SI,SF,PU,SB,MB,PB,EL test
   class PI,MQ,DQ,E2E deploy
-  class CS,DH report
+  class CR,DH report
 ```
 
-The `lint-typecheck` job is the gate. Every downstream job depends on it
-(`needs: lint-typecheck`). If lint-typecheck fails, nothing else runs.
+`all-contract-gates` is the gate. Every other job depends on it, directly or
+through `service-lint-typecheck`, so if it fails nothing else runs.
+
+The three service test suites run as separate jobs in parallel, each with its own
+Postgres where it needs one, and start as soon as `all-contract-gates` passes —
+they do not wait on `service-lint-typecheck` (#294). Lint and typecheck still
+block the deploy track, because `deploy-publish-images` needs
+`service-lint-typecheck`.
+
+`coverage-report` (dotted edges) is advisory and push-to-main-only. It merges the
+three service suites' coverage artifacts and tabulates them beside PoolMaster unit
+coverage. It runs no tests, nothing depends on it, and `continue-on-error` keeps a
+failed merge from failing the run; a missing suite artifact shows as a warning
+annotation. On PRs, each suite job's own step summary is the coverage view.
 
 The deploy track (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`
 → `poolmaster-browser-e2e`) is push-to-main-only and additionally requires all
@@ -399,11 +422,14 @@ For completeness, the workflow continues with these jobs after
 lint-typecheck. Their behavior was not changed by the rule-enforcement
 hardening epic.
 
-- **Test suites** — `service-coverage-report`, `poolmaster-unit-tests`,
-  `coverage-summary`, `poolmaster-browser-e2e-local`, and
+- **Test suites** — `service-unit-tests`, `service-integration-tests`,
+  `service-functional-api-tests`, `poolmaster-unit-tests`,
+  `poolmaster-browser-e2e-local`, and
   `poolmaster-browser-e2e`. See *Test suites*
   below for each suite's purpose, runner, configuration, coverage
   policy, and CI mapping.
+- **`coverage-report`** — advisory merged coverage view, push-to-main only.
+  See *Merged coverage and the coverage-report job* below.
 - **`service-build`** — backend service Docker build verification.
 - **`mock-contest-feed-provider-build`** — mock provider Docker build
   verification.
@@ -451,7 +477,7 @@ release.
 - **Local commands:**
   - `npm run test:service:unit` (or `npm test`) — run the suite
   - `npm run test:coverage:service:unit` — run with coverage
-- **CI job:** runs as part of `service-coverage-report` via `npm run test:coverage:service:merged` (the merged-coverage runner runs unit, integration, and FAPI sequentially against the same coverage directory).
+- **CI job:** `service-unit-tests` (no database). Runs `npm run test:coverage:service:unit`; the coverage threshold below fails the job, and it is the only coverage gate in CI.
 - **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 24% statements, 14.2% branches, 21.15% functions, 24.53% lines. These are floor values from the rule-enforcement epic baseline, not aspirational targets — they exist to prevent regression while real coverage targets are set per-feature.
 - **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
@@ -468,7 +494,7 @@ release.
   - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
   - `npm run test:service:integration:fresh` — reset DB then run
   - `npm run test:coverage:service:integration` — coverage variant
-- **CI job:** `service-coverage-report` (Postgres provided as a Docker service container).
+- **CI job:** `service-integration-tests` (its own Postgres service container).
 - **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
 - **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`. Integration coverage feeds the merged report but isn't gated on its own.
 - **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
@@ -487,7 +513,7 @@ release.
   - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
   - `npm run test:service:functional-api:fresh` — reset DB then run
   - `npm run test:coverage:service:functional-api` — coverage variant
-- **CI job:** `service-coverage-report` (runs as part of the merged coverage script).
+- **CI job:** `service-functional-api-tests` (its own Postgres service container).
 - **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
 - **Coverage policy:** No threshold; coverage feeds the merged report.
 
@@ -529,10 +555,11 @@ release.
 - **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
 - **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
 
-### Merged coverage and the consolidation job
+### Merged coverage and the coverage-report job
 
-- **`test:coverage:service:merged`** (`scripts/run-backend-coverage.mjs`) runs all three backend suites (unit + integration + FAPI) with coverage collection and merges the results into `coverage/service-merged/`. This is the canonical local backend coverage command.
-- **`coverage-summary`** (CI job) downloads the `coverage-service-report` and `coverage-webapp-unit` artifacts and emits a single Markdown table to the GitHub Actions step summary covering Service / Web App Unit metrics.
+- **`test:coverage:service:merged`** (`scripts/run-backend-coverage.mjs`) runs all three backend suites (unit + integration + FAPI) with coverage collection, one after another, then merges the results into `coverage/service-merged/`. This is the canonical local backend coverage command.
+- **`scripts/merge-service-coverage.mjs`** is the merge on its own. It runs no tests: it takes the per-suite `coverage-final.json` files, merges whichever exist, and warns about any that are missing. The local runner and CI both call it.
+- **`coverage-report`** (CI job, push to main only, advisory) downloads the three service suite artifacts and `coverage-poolmaster-unit`, runs the merge, writes one step-summary table (merged Service, PoolMaster Unit), and uploads `coverage-service-report`. Nothing depends on it and a failure does not fail the run (#294).
 - **Why merged matters:** the same source file is often partly covered by a unit test (logic correctness) and partly by an integration test (real-DB behavior). Merging gives an honest count of "how much of this file is exercised by *any* test."
 
 ### Coverage thresholds — current state and roadmap

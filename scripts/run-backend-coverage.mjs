@@ -1,13 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import istanbulCoverage from 'istanbul-lib-coverage';
-import istanbulReport from 'istanbul-lib-report';
-import istanbulReports from 'istanbul-reports';
-
-const { createCoverageMap } = istanbulCoverage;
-const { createContext } = istanbulReport;
-const reports = istanbulReports;
+import { DEFAULT_INPUTS } from './merge-service-coverage.mjs';
 
 const rootDir = process.cwd();
 const coverageRoot = path.join(rootDir, 'coverage');
@@ -47,13 +41,6 @@ function run(command, args) {
   }
 }
 
-function readCoverageJson(filePath) {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Coverage file not found: ${filePath}`);
-  }
-  return readJson(filePath);
-}
-
 removeDir(serviceUnitDir);
 removeDir(serviceIntegrationDir);
 removeDir(serviceFunctionalApiDir);
@@ -71,29 +58,6 @@ printSummary('Service unit', path.join(serviceUnitDir, 'coverage-summary.json'))
 printSummary('Service integration', path.join(serviceIntegrationDir, 'coverage-summary.json'));
 printSummary('Service functional API', path.join(serviceFunctionalApiDir, 'coverage-summary.json'));
 
-const coverageMap = createCoverageMap({});
-coverageMap.merge(readCoverageJson(path.join(serviceUnitDir, 'coverage-final.json')));
-coverageMap.merge(readCoverageJson(path.join(serviceIntegrationDir, 'coverage-final.json')));
-coverageMap.merge(readCoverageJson(path.join(serviceFunctionalApiDir, 'coverage-final.json')));
-
-fs.mkdirSync(serviceMergedDir, { recursive: true });
-fs.writeFileSync(
-  path.join(serviceMergedDir, 'coverage-final.json'),
-  JSON.stringify(coverageMap.toJSON()),
-);
-
-const context = createContext({
-  dir: serviceMergedDir,
-  coverageMap,
-});
-
-reports.create('json-summary', { file: 'coverage-summary.json' }).execute(context);
-reports.create('lcovonly', { file: 'lcov.info' }).execute(context);
-reports.create('clover', { file: 'clover.xml' }).execute(context);
-reports.create('html', { subdir: 'lcov-report' }).execute(context);
-reports.create('text-summary').execute(context);
-
-printSummary('Merged service', path.join(serviceMergedDir, 'coverage-summary.json'));
-
-console.log('');
-console.log(`Merged service coverage written to ${serviceMergedDir}`);
+// The merge itself lives in merge-service-coverage.mjs so CI's coverage-report job, which
+// merges artifacts from three parallel suite jobs, runs exactly this code (#294).
+run('node', ['scripts/merge-service-coverage.mjs', '--out', serviceMergedDir, ...DEFAULT_INPUTS]);
