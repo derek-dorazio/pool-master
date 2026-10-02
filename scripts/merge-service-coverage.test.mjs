@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { after, describe, it } from 'node:test';
 
-import { mergeServiceCoverage } from './merge-service-coverage.mjs';
+import { USAGE, mergeServiceCoverage } from './merge-service-coverage.mjs';
+
+const script = fileURLToPath(new URL('./merge-service-coverage.mjs', import.meta.url));
 
 // Minimal istanbul file coverage: one statement, hit `count` times.
 function fileCoverage(filePath, count) {
@@ -66,5 +70,17 @@ describe('merge-service-coverage (#294)', () => {
 
     assert.equal(result.total, null);
     assert.ok(!fs.existsSync(outDir));
+  });
+
+  it('exits 1 with the usage line when --out is the last argument, instead of a type error', () => {
+    // A real input: with none, the old code exited on "no inputs" before reaching rmSync.
+    const input = writeInput('cli-trailing-out', fileCoverage('/src/a.ts', 1));
+    const result = spawnSync(process.execPath, [script, input, '--out'], {
+      encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 1);
+    assert.ok(result.stderr.includes(USAGE), result.stderr);
+    assert.ok(!result.stderr.includes('TypeError'), result.stderr);
   });
 });

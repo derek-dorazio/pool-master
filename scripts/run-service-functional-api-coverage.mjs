@@ -84,7 +84,9 @@ function transpiledSources(cacheEntry) {
     return undefined;
   }
   return {
-    source: cacheEntry.lineLengths.map((length) => ''.padEnd(length, '.')).join('\n'),
+    // A newline after every line, the last one included, as c8's _getSourceMap builds it:
+    // without it the final line ends one character short and a range ending there maps wrong.
+    source: cacheEntry.lineLengths.map((length) => `${''.padEnd(length, '.')}\n`).join(''),
     sourceMap: { sourcemap: cacheEntry.data },
   };
 }
