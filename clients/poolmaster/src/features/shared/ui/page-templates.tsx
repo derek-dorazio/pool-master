@@ -14,6 +14,10 @@ import { Tile } from "./tile";
 
 type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
 
+// #84 — one id for every template page's load-failure state, so a browser spec can tell a
+// page that rendered its landmark around an error from one that loaded.
+const SHARED_ERROR_STATE_TEST_ID = "shared-error-state";
+
 type HeaderConfig = {
   actions?: ReactNode;
   breadcrumbLabel?: string;
@@ -74,6 +78,7 @@ function renderAsyncState({
           }
           onRetry={onRetry}
           retryLabel={retryLabel}
+          testId={SHARED_ERROR_STATE_TEST_ID}
           title={typeof errorTitle === "string" ? errorTitle : "Unable to load"}
         />
       );
@@ -83,6 +88,7 @@ function renderAsyncState({
       <ErrorState
         action={errorAction}
         body={errorBody ?? "We could not load this information right now."}
+        testId={SHARED_ERROR_STATE_TEST_ID}
         title={errorTitle}
       />
     );
