@@ -120,9 +120,10 @@ jobs:
   # =========================================================================
   # Service test suites (#294)
   # =========================================================================
-  # One job per suite, in parallel, each with its own database. They need only
-  # all-contract-gates: lint and typecheck still block publish (deploy-publish-images
-  # needs service-lint-typecheck), but no longer hold the tests back.
+  # One job per suite, in parallel, each with its own database. They need
+  # all-contract-gates and changes (#300), not service-lint-typecheck: lint and typecheck
+  # still block publish (deploy-publish-images needs service-lint-typecheck), but no longer
+  # hold the tests back.
   #
   # Only the unit suite collects coverage here, because only it is gated (#302). The
   # merged unit + integration + FAPI report is .github/workflows/coverage.yml, run on
