@@ -17,6 +17,11 @@
  * WHAT IT DOES NOT CHECK. That the hint's revision resolves. CI checks out shallow, so a real
  * SHA and an invented one look the same there; that is a reviewer's job, done with full history.
  *
+ * WHY WARN-ONLY. "Is the plan missing" is exact; "is there a hint nearby" is a proximity
+ * heuristic. `rules:check` runs inside all-contract-gates, which every other CI job needs, so a
+ * false positive here would withhold the whole pipeline. It runs with `--warn-only`: findings are
+ * printed, and the exit code is 0.
+ *
  * WHY docs/adr IS EXEMPT. Accepted ADRs are immutable, so a finding there could never be fixed,
  * and ADR-0002 explicitly accepts git retrieval for an ADR's historical references.
  */
@@ -24,7 +29,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { readTextFile, reportFindings, walkFiles } from './rule-check-utils.mjs';
+import { parseRuleCheckArgs, readTextFile, reportFindings, walkFiles } from './rule-check-utils.mjs';
 
 export const PERMANENT_ROOTS = ['docs', 'rules', 'requirements', 'tech-specs', 'AGENTS.md', 'CLAUDE.md'];
 const EXEMPT_PREFIXES = ['docs/adr/'];
@@ -74,6 +79,7 @@ export function presentPlanNumbers(plansDir = 'plans') {
 }
 
 function main() {
+  const { warnOnly } = parseRuleCheckArgs();
   const present = presentPlanNumbers();
   const files = walkFiles(PERMANENT_ROOTS, { extensions: ['md'] }).map((filePath) => ({
     path: relative(process.cwd(), filePath),
@@ -83,6 +89,7 @@ function main() {
 
   reportFindings({
     title: 'Plan reference check',
+    warnOnly,
     emptyMessage: `Plan reference check OK (${files.length} permanent files scanned).`,
     findings: findings.map(({ path, line, reference }) => ({
       location: `${path}:${line}`,
