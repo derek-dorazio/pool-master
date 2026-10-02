@@ -197,6 +197,41 @@ async function startDaemon(runId) {
   return waitForStateFile(daemonStateFilePath, child);
 }
 
+/**
+ * #276 — whether a reachable daemon still has an owner: the run that spawned it, or any live run
+ * registered against it. Exactly the condition under which the daemon's own watchdog keeps it
+ * running, so setup adopts only what the watchdog would keep, instead of racing its 5 s poll.
+ *
+ * Not an invocation check: concurrent runs are separate invocations (each runner mints its own
+ * id), and sharing one daemon across them is the design.
+ */
+function daemonHasOwner(daemonState) {
+  if (typeof daemonState.spawnerPid === 'number' && isPidAlive(daemonState.spawnerPid)) {
+    return true;
+  }
+  const runsDir = path.join(rootDir, 'coverage', 'service-functional-api', 'runs');
+  if (!fs.existsSync(runsDir)) {
+    return false;
+  }
+  return fs.readdirSync(runsDir, { withFileTypes: true }).some((entry) => {
+    if (!entry.isDirectory()) {
+      return false;
+    }
+    const runState = readRunState(path.join(runsDir, entry.name, 'server-state.json'));
+    return runState?.pid === daemonState.pid
+      && typeof runState.runnerPid === 'number'
+      && isPidAlive(runState.runnerPid);
+  });
+}
+
+function readRunState(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 async function ensureSharedServer(runId) {
   const existingState = readState(daemonStateFilePath);
   if (
@@ -204,7 +239,16 @@ async function ensureSharedServer(runId) {
     && isPidAlive(existingState.pid)
     && await isServerReachable(existingState.baseUrl)
   ) {
-    return existingState;
+    if (daemonHasOwner(existingState)) {
+      return existingState;
+    }
+    // An orphan: its spawner died mid-boot and no run is using it. Adopted, it would serve this
+    // whole run — the watchdog keeps a daemon alive while any run is registered — on a server
+    // started under another invocation's environment, possibly from older code.
+    process.stderr.write(
+      `Functional server daemon ${existingState.pid} has no live spawner or run; stopping it instead of adopting it.\n`,
+    );
+    await terminatePid(existingState.pid);
   }
 
   fs.rmSync(daemonStateFilePath, { force: true });

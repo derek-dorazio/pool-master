@@ -95,6 +95,9 @@ async function writeState(port: number): Promise<void> {
       port,
       baseUrl: `http://127.0.0.1:${port}`,
       runId,
+      // #276 — read by global-setup, which adopts this daemon only while its spawner or a run using
+      // it is alive: the condition under which the watchdog below keeps it running.
+      spawnerPid,
     }),
   );
 }
