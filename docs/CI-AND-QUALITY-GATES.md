@@ -228,11 +228,17 @@ dependency, a workflow edit, a `scripts/` change, or an unreadable file list all
 run everything. Running a suite needlessly costs minutes; skipping one that was
 needed puts a defect on `main` with a green check beside it.
 
-Known narrowing, recorded rather than left implicit: a change confined to
-`packages/shared/**` sets `service` but not `client`, so the client suites do not
-run even though the client consumes shared through the generated SDK. The
-contract itself is still covered, because `api:check` runs unconditionally in
-`all-contract-gates`.
+`packages/shared/**` sets **both** `service` and `client`, so a shared change runs
+every suite. It is in both lists deliberately: the service imports shared directly
+and the client consumes it through the generated SDK, so a change there can break
+either tier.
+
+That was not the original behaviour. Shared was service-only when the filter
+landed in #300, recorded at the time as a known narrowing on the grounds that
+`api:check` still covers the contract unconditionally. #303 then changed
+`packages/shared/domain` and its run skipped `poolmaster-unit-tests` — the first
+PR that could hit the gap did hit it. Widened rather than re-documented, with a
+regression test in `scripts/ci-changed-areas.test.mjs`.
 
 The deploy track (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`
 → `poolmaster-browser-e2e`) is push-to-main-only and additionally requires all

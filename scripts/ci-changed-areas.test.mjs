@@ -78,12 +78,14 @@ describe('ci-changed-areas (#300)', () => {
     assert.equal(r.service, true);
   });
 
-  it('treats packages/shared as a service change, since the client consumes it through the SDK', () => {
-    // Deliberate: shared feeds both tiers, and the client jobs are gated on `client`. A shared-only
-    // change therefore runs the service suites but not the client ones, which under-covers the
-    // client. Recorded in plans/146 as a known narrowing rather than left implicit.
+  it('treats packages/shared as BOTH a service and a client change', () => {
+    // shared feeds both tiers: the service imports it directly and the client consumes it through
+    // the generated SDK, so a shared change can break either. It was service-only until #303 --
+    // a packages/shared/domain change whose run skipped poolmaster-unit-tests. The first
+    // qualifying PR found the gap, so this is the regression test for widening it.
     const r = classifyChanges(['packages/shared/domain/contest-scoring.ts']);
-    assert.equal(r.service, true);
+    assert.deepEqual({ code: r.code, service: r.service, client: r.client },
+      { code: true, service: true, client: true });
   });
 
   it('runs both tiers for a lint or tsconfig change', () => {
