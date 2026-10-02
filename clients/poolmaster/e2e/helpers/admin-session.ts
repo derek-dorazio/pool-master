@@ -1,8 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 
 /**
- * #278 — the one sequence the post-deploy smoke and the pre-merge plumbing probe share.
- * Both specs call it so there is never a second copy of these selectors to drift.
+ * #278 — the sign-in sequence every spec that acts as the root admin shares: the post-deploy
+ * smoke, the plumbing probe and the journey. One copy, so there are no selectors to drift.
  */
 
 const ADMIN_PASSWORD_ENV = 'POOLMASTER_E2E_ADMIN_PASSWORD';
@@ -47,17 +47,21 @@ export async function logOut(page: Page): Promise<void> {
   await expect(page.getByTestId('auth-login-identifier')).toBeVisible();
 }
 
-export async function adminSignInReachManageLogOut(
-  page: Page,
-  credentials: AdminCredentials,
-): Promise<void> {
+export async function adminSignIn(page: Page, credentials: AdminCredentials): Promise<void> {
   await page.goto('/');
   await page.getByTestId('auth-login-identifier').fill(credentials.identifier);
   await page.getByTestId('auth-login-password').fill(credentials.password);
   await page.getByTestId('auth-login-submit').click();
-  // Signed in before navigating, so the goto below is a fresh load that has to restore the
+  // Signed in before navigating, so the next goto is a fresh load that has to restore the
   // session from cookies rather than racing the login request.
   await expect(page.getByTestId('account-menu-trigger')).toBeVisible();
+}
+
+export async function adminSignInReachManageLogOut(
+  page: Page,
+  credentials: AdminCredentials,
+): Promise<void> {
+  await adminSignIn(page, credentials);
 
   await page.goto('/manage');
   await expect(page.getByTestId('root-admin-manage-hub-page')).toBeVisible();

@@ -270,10 +270,18 @@ export function RootAdminGolfSeasonListPage() {
               error={form.formState.errors.startDate?.message}
               label="Starts"
             >
-              <Input type="date" {...form.register('startDate')} />
+              <Input
+                data-testid="root-admin-golf-season-list-new-start"
+                type="date"
+                {...form.register('startDate')}
+              />
             </FormField>
             <FormField error={form.formState.errors.endDate?.message} label="Ends">
-              <Input type="date" {...form.register('endDate')} />
+              <Input
+                data-testid="root-admin-golf-season-list-new-end"
+                type="date"
+                {...form.register('endDate')}
+              />
             </FormField>
           </div>
         </form>

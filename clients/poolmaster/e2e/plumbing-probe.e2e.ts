@@ -6,6 +6,7 @@ import {
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { adminApiHeaders, attempt, expectOk, type AuthHeaders, type Log } from './helpers/admin-api';
 import { GENERATED_PASSWORD_PREFIX } from './helpers/constants';
 
 /**
@@ -14,6 +15,10 @@ import { GENERATED_PASSWORD_PREFIX } from './helpers/constants';
  * unique, a brand-new user registering and writing through the UI, a role switch inside one
  * browser session, and API teardown with the admin token. Pre-merge only; it writes domain
  * data, so it is untagged and refuses any base URL that is not a local stack.
+ *
+ * #84 kept it: the journey's act 1 covers its admin sign-in, but not a fresh user registering,
+ * creating a league, or the role switch. Those arrive with the commissioner act (#280), which is
+ * where this file is deleted. Never tag it: the guard above would throw on every post-deploy run.
  */
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1']);
@@ -35,10 +40,11 @@ test.afterAll(async ({ playwright }, testInfo) => {
     return;
   }
 
-  const api = await playwright.request.newContext({
-    baseURL: testInfo.project.use.baseURL,
-  });
+  let api: APIRequestContext | undefined;
   try {
+    api = await playwright.request.newContext({
+      baseURL: testInfo.project.use.baseURL,
+    });
     for (const run of runs) {
       try {
         await removeRunData(api, admin, run);
@@ -48,7 +54,7 @@ test.afterAll(async ({ playwright }, testInfo) => {
       }
     }
   } finally {
-    await api.dispose();
+    await api?.dispose();
   }
 });
 
@@ -122,16 +128,11 @@ async function removeRunData(
 ): Promise<void> {
   const log: Log = (message) => console.log(`[teardown ${created.runId}] ${message}`);
 
-  const login = await api.post('/api/v1/auth/login', {
-    data: { identifier: credentials.identifier, password: credentials.password },
-  });
-  if (!login.ok()) {
-    log(`admin login failed (${login.status()}); could not remove league ${created.leagueCode} or user ${created.username}`);
+  const headers = await adminApiHeaders(api, credentials);
+  if (!headers) {
+    log(`admin login failed; could not remove league ${created.leagueCode} or user ${created.username}`);
     return;
   }
-  const { tokens } = (await login.json()) as { tokens: { accessToken: string } };
-  // A bearer token, not the session cookies, so state-changing calls need no CSRF header.
-  const headers = { Authorization: `Bearer ${tokens.accessToken}` };
 
   // The registered user is the league's commissioner, so the league goes first. Each removal
   // is attempted on its own: a failure is reported and the next one still runs.
@@ -139,19 +140,9 @@ async function removeRunData(
   await attempt(log, `user ${created.username}`, () => removeUser(api, headers, created, log));
 }
 
-type Log = (message: string) => void;
-
-async function attempt(log: Log, what: string, remove: () => Promise<void>): Promise<void> {
-  try {
-    await remove();
-  } catch (error) {
-    log(`could not remove ${what}; it may remain: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
 async function removeLeague(
   api: APIRequestContext,
-  headers: Record<string, string>,
+  headers: AuthHeaders,
   created: RunData,
   log: Log,
 ): Promise<void> {
@@ -178,7 +169,7 @@ async function removeLeague(
 
 async function removeUser(
   api: APIRequestContext,
-  headers: Record<string, string>,
+  headers: AuthHeaders,
   created: RunData,
   log: Log,
 ): Promise<void> {
@@ -201,11 +192,4 @@ async function removeUser(
   log(reread.status() === 404
     ? `user ${created.username} removed (re-read 404)`
     : `user ${created.username} STILL PRESENT after delete (re-read ${reread.status()})`);
-}
-
-async function expectOk(pending: ReturnType<APIRequestContext['get']>, action: string) {
-  const response = await pending;
-  if (!response.ok()) {
-    throw new Error(`${action} failed: ${response.status()} ${await response.text()}`);
-  }
 }

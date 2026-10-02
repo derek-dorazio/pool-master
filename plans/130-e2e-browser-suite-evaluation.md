@@ -552,6 +552,43 @@ is the whole cost of the slice.
   (`plans/137` sanctions `data-testid` for Playwright); text selectors are
   not.
 
+### What act 1 found when it ran (#84)
+
+Answers to the act-1 questions above, executed against the local stack:
+
+- **The tier board's move control is both.** A native `<select>` per card
+  (`root-admin-golf-tier-move-<fieldEntryId>`) moves a golfer across tiers
+  and needs a target (`tier-1` … `tier-6`, the default tier keys); the
+  `-up-`/`-down-` arrows only reorder inside a column. Cards are keyed by the
+  **field entry** id, not the player id, so a spec reads the mapping from
+  the field response the tiers page itself loads.
+- **A freshly added participant starts unassigned** — confirmed; the act
+  asserts it before each move.
+- **The player form requires only a name** — but it cannot submit without
+  a `GOLF` row in `sports`, which no migration creates and only provider
+  ingestion does. A fresh database has none, so the act reads a third
+  pre-existing thing by identity besides the root admin and the contest
+  templates. The pre-merge job seeds that row; QA already has it.
+- **The tournament form also requires release and field-lock times**, not
+  just season, name, start and rounds; the season form requires a year and
+  start and end dates, whose inputs had no testids (added).
+- **Tours and seasons have no delete operation**, like participants. So
+  teardown deletes the tournament (field, rounds and tiers go with it) and
+  inactivates the tour, season and six players. Creating the tournament also
+  creates a `league_events` row with no API to remove it. Every run leaves
+  that residue in QA, all named with its run id.
+- `shared-error-state`, named in the act above, did not exist; it is now
+  the testid of every template page's load-failure state.
+- An unauthenticated visitor to an unknown invite code never sees an
+  invalid-invite state on the invite page — it only offers sign-in. The
+  state appears on the sign-in page the invite hands off to
+  (`auth-invite-preview-error`), which is what `guards.e2e.ts` asserts.
+
+One consequence for #280: tags select tests, not steps, and act 1 is tagged
+while acts 2–4 are not. They cannot be `test.step()`s inside act 1's test
+without running post-deploy too, so the "one test, a step per act" shape
+above does not survive the owner ruling as written.
+
 ### Explicitly out of scope
 
 Email-sending flows (league email invitations, squad-owner invitations),

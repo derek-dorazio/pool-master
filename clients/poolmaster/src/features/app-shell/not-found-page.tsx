@@ -17,7 +17,10 @@ export function NotFoundPage() {
   }, [logger]);
 
   return (
-    <section className="rounded-[2rem] border border-border bg-card p-8 shadow-sm">
+    <section
+      className="rounded-[2rem] border border-border bg-card p-8 shadow-sm"
+      data-testid="not-found-page"
+    >
       <span className="text-xs font-medium uppercase text-muted-foreground">
         Not Found
       </span>

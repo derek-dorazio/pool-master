@@ -410,7 +410,7 @@ export function AuthHomePage() {
           )}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
-            <Alert tone="danger">
+            <Alert data-testid="auth-invite-preview-error" tone="danger">
               We couldn&apos;t load the invitation preview. You can still sign
               in or create an account, then return to the invitation link.
             </Alert>
@@ -435,7 +435,7 @@ export function AuthHomePage() {
           />
 
           {serverError ? (
-            <Alert className="mt-4" tone="danger">
+            <Alert className="mt-4" data-testid="auth-server-error" tone="danger">
               {serverError}
             </Alert>
           ) : null}
