@@ -216,6 +216,7 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 2a | Route authorization | `rules:check:route-authorization` | **blocking** | clean | A route with a path parameter under a by-id mount (a prefix with no path parameter, e.g. `/api/v1/contests`) that declares no `preHandler`/`onRequest` hook and is not on `scripts/route-authorization-opt-outs.mjs` with a reason. Also fails a stale or reasonless opt-out. Added by #193. | `scripts/check-route-authorization.mjs` |
 | 5 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 1 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 6 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
+| — | Plan references | `rules:check:plan-references` | warn-only | clean | A `plans/NN` citation in `docs/`, `rules/`, `requirements/`, `tech-specs/`, `AGENTS.md` or `CLAUDE.md` whose plan is absent from the tree and which has no `git show <sha>^:plans/NN-…` retrieval command within three lines (#147; `workflow-rules.md §0` governing rule 2). Accepted ADRs are exempt. The hint's SHA is not verified — CI's shallow checkout cannot. | `scripts/check-plan-references.mjs` |
 | (PR-only) | review triggers marker | `rules:check:pr-review-triggers` | advisory (warns; **was blocking** until #284) | clean | The PR body should contain the literal HTML comment `<!-- review:triggers -->`. Documents what the slice touched that warrants a closer read. A missing marker emits a warning annotation and the job still passes. Skipped on `push` events (no PR context). | `scripts/check-pr-review-triggers.mjs` |
 
 > **Baselines rot.** The counts above were re-measured on 2026-09-23 and four of the six
@@ -365,6 +366,7 @@ PR_NUMBER=42 node scripts/check-pr-review-triggers.mjs
 | `poolmaster/no-bare-ui-controls` via `npm run lint` (**block**) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
+| `rules:check:plan-references` (warn) | A permanent doc cites a `plans/NN` file that is no longer in the tree, with no retrieval command near it. | Cite the content's permanent home instead; or, if the plan is cited as history, add `git show <sha>^:plans/NN-name.md` within three lines, finding `<sha>` with full history (`git log --all --diff-filter=D -- 'plans/NN-*'`). See `workflow-rules.md §0` governing rule 2. |
 | `rules:check:pr-review-triggers` (warn, PRs only) | The PR body is missing the `<!-- review:triggers -->` marker. | Nothing is blocked (#284) — but edit the PR body to include the marker section anyway. The PR template pre-populates it. See `rules/workflow-rules.md §6` and `rules/review-triggers.md`. |
 
 ## Baseline counts and the ramp to fail-on-new
@@ -563,6 +565,7 @@ eslint-rules/no-disabled-tests.mjs — gate 3 (migrated from scripts/)
 eslint-rules/no-bare-ui-controls.mjs — gate 4 (migrated from scripts/)
 scripts/check-form-query-mirror.mjs  — gate 5
 scripts/check-openapi-fresh.mjs      — gate 6
+scripts/check-plan-references.mjs    — plan references (warn-only, #147)
 scripts/check-pr-review-triggers.mjs    — review triggers gate (PRs only)
 packages/core-api/scripts/export-openapi.ts — Fastify→OpenAPI export
                                               used by api:check and api:refresh
