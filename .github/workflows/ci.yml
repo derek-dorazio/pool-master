@@ -40,7 +40,11 @@ jobs:
         run: npm run api:validate
       - name: all - deploy and migration script tests
         run: npm run test:scripts
-      - name: all - review triggers marker (PRs only)
+      # #284 — advisory, not a gate: the script warns and exits 0 when the marker is missing.
+      # It sits in this job only because this is where the PR context is already set up; it is
+      # deliberately not one of the gates above, and must not grow into one. A presence check
+      # cannot judge disclosure quality, and this job gates all twelve downstream jobs.
+      - name: all - review triggers marker (PRs only, advisory)
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
