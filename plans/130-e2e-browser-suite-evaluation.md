@@ -589,6 +589,41 @@ while acts 2–4 are not. They cannot be `test.step()`s inside act 1's test
 without running post-deploy too, so the "one test, a step per act" shape
 above does not survive the owner ruling as written.
 
+### What acts 2–4 found when they ran (#280)
+
+- **The journey is a serial file, not one test.** Acts 1–3 are `@smoke` and act 4
+  is not, and a test inside a tagged describe cannot drop the tag. So each act is
+  its own `test()` under `test.describe.configure({ mode: 'serial' })`: acts 1–3
+  in a describe tagged `@smoke`, act 4 after it, untagged. Serial mode keeps all
+  four in one worker so act 1's ids reach the rest through module state, and a
+  failure skips the acts after it. A retry re-runs the file in a fresh worker
+  with a fresh run id; each worker's `afterAll` tears down its own attempt.
+- **Act 1's tournament was not contest-eligible.** Its release time was a day in
+  the future, and an unreleased event drops out of the contest picker
+  (`contestEligible` needs released, field loaded, field not locked). Release is
+  now in the past; field lock stays at the start.
+- **Contest templates are not a hard dependency.** They come from migrations, so
+  QA and a fresh local database both have `golf-tiered-pick-6`. The form also
+  submits without one when roster, counted scores and max entries are all set,
+  which the act always does.
+- **The entry builder opens one tier at a time and advances itself** after each
+  saved pick. Toggling a tier by hand races that advance and can close the tier it
+  just opened; the act waits for each golfer to appear instead. Tier group ids
+  are tier UUIDs, not tier keys.
+- **Round-1 scores go in through the bulk-load panel.** The corrections table only
+  lists golfers who already have a score row, so a fresh event shows it empty.
+- **No web page renders a golf score yet.** The board's expanded entry lists picks
+  and status only; the score lives on `GET /contests/:id/golf/leaderboard`. Act 4
+  asserts the board reveals the picks and reads the leaderboard endpoint for a
+  round-1 score on each — presence only.
+- **The `IN_PROGRESS` transition mails the league.** It activates the contest and
+  sends `CONTEST_STARTED_SUMMARY` to every member. Locally the SMTP send fails and
+  is logged; on QA it would go through SES to two `@e2e.invalid` addresses. That
+  is part of why act 4 is untagged pending the owner's call.
+- **Teardown needs no new operation.** League delete removes its contests,
+  entries, squads, memberships and invitations in one transaction, which clears
+  the `EVENT_HAS_CONTESTS` refusal on the tournament delete that follows.
+
 ### Explicitly out of scope
 
 Email-sending flows (league email invitations, squad-owner invitations),

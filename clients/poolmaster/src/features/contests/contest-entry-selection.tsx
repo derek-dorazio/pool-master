@@ -147,7 +147,10 @@ function SelectedParticipantChips({ group }: { group: SelectionGroup }) {
   return (
     <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
       {selectedParticipants.map((participant) => (
-        <Chip key={participant.sportEventParticipantId}>
+        <Chip
+          data-testid={`contest-entry-selected-${participant.sportEventParticipantId}`}
+          key={participant.sportEventParticipantId}
+        >
           {participant.participantName}
         </Chip>
       ))}
