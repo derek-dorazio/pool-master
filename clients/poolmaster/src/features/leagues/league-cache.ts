@@ -76,13 +76,7 @@ export function seedLeagueContext(
   queryClient.setQueryData(QueryKeys.leagues.contextById(context.league.id), context);
 }
 
-export function syncLeagueCaches(
-  queryClient: QueryClient,
-  league: LeagueDto,
-  options: {
-    manageLeagueId?: string | null;
-  } = {},
-) {
+export function syncLeagueCaches(queryClient: QueryClient, league: LeagueDto) {
   queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
     upsertLeague(current, league),
   );
@@ -90,8 +84,4 @@ export function syncLeagueCaches(
     QueryKeys.leagues.detail(league.leagueCode),
     (current) => (current ? { ...current, league } : undefined),
   );
-
-  if (options.manageLeagueId) {
-    queryClient.setQueryData(QueryKeys.leagues.manage(options.manageLeagueId), league);
-  }
 }

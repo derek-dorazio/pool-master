@@ -262,10 +262,6 @@ export function listLeaguesData(
   return { leagues, memberships };
 }
 
-export function getLeagueData(league: LeagueDto): LeagueResponse {
-  return { league };
-}
-
 /**
  * #202 (A8) — the league-context read. It returns the league together with the viewer's own
  * edges in it, once, so nothing downstream repeats them.
