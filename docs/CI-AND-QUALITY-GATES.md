@@ -57,6 +57,7 @@ Rules:
       Require branches to be up to date before merging: on
       Required status checks:
         - all-contract-gates
+        - changes
         - service-lint-typecheck
         - service-unit-tests
         - service-integration-tests
@@ -110,14 +111,14 @@ Expected output for the recommended configuration:
   "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
   "current_user_can_bypass": "always",
   "strict_status_checks": true,
-  "required_status_checks": ["all-contract-gates", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
+  "required_status_checks": ["all-contract-gates", "changes", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
   "allowed_merge_methods": ["squash"]
 }
 ```
 
 If `bypass_actors` is empty and `current_user_can_bypass` is `"never"`, the
 ruleset is configured strictly. If the `required_status_checks` list does
-not include all nine job names, the gates are partially bypassed — fix
+not include all ten job names, the gates are partially bypassed — fix
 before treating the configuration as complete.
 
 ### Why the marker check matters here
@@ -134,7 +135,15 @@ also on the warning being read.
 ```mermaid
 flowchart TD
   T[push to main / PR to main] --> CG[all-contract-gates]
+  T --> CH[changes]
 
+  CH --> LT
+  CH --> SU
+  CH --> SI
+  CH --> SF
+  CH --> PU
+  CH --> PB
+  CH --> EL
   CG --> LT[service-lint-typecheck]
   CG --> SU[service-unit-tests]
   CG --> SI[service-integration-tests]
@@ -166,7 +175,7 @@ flowchart TD
   classDef deploy fill:#e6ffed,stroke:#15803d
   classDef report fill:#f3f4f6,stroke:#6b7280
 
-  class CG,LT gate
+  class CG,LT,CH gate
   class SU,SI,SF,PU,SB,MB,PB,EL test
   class PI,MQ,DQ,E2E deploy
   class DH report
@@ -186,6 +195,44 @@ the unit suite has a coverage threshold (#302). Integration and functional API r
 without coverage. The merged service coverage report is a separate, on-demand
 workflow, `coverage.yml`. See *Merged coverage and the
 coverage.yml workflow* below.
+
+### Path filtering: jobs a change cannot affect are skipped (#300)
+
+`changes` always runs and classifies the pull request's changed files, via
+`scripts/ci-changed-areas.mjs`. The code jobs carry a job-level `if:` on its
+outputs, so a change that cannot affect a suite does not run it. A
+documentation-only PR runs `all-contract-gates` and `changes` and nothing else.
+
+| Output | Gates |
+|---|---|
+| `code` | `service-lint-typecheck`, `poolmaster-build`, `poolmaster-browser-e2e-local` (and so `service-build` / `service-mock-provider-build`, which need lint) |
+| `service` | `service-unit-tests`, `service-integration-tests`, `service-functional-api-tests` |
+| `client` | `poolmaster-unit-tests` |
+
+Three properties hold this together, and each is load-bearing:
+
+**Filtering is pull-request-only.** Every condition is
+`github.event_name != 'pull_request' || …`, so a push to `main` runs the full set
+regardless of paths. main's run gates `deploy-publish-images`; filtering there
+would mean deploying code whose tests never ran.
+
+**It is a job-level `if:`, never `on.pull_request.paths`.** A workflow filtered at
+the trigger level produces no check run, and a required check with no check run
+reports *Expected — waiting for status to be reported* and can never merge. A job
+skipped by `if:` does produce a check run, with conclusion `skipped`, which
+branch protection accepts. This matters here specifically because the suites are
+in the required-status-checks list above.
+
+**The classifier fails toward running.** An unclassified path, a changed
+dependency, a workflow edit, a `scripts/` change, or an unreadable file list all
+run everything. Running a suite needlessly costs minutes; skipping one that was
+needed puts a defect on `main` with a green check beside it.
+
+Known narrowing, recorded rather than left implicit: a change confined to
+`packages/shared/**` sets `service` but not `client`, so the client suites do not
+run even though the client consumes shared through the generated SDK. The
+contract itself is still covered, because `api:check` runs unconditionally in
+`all-contract-gates`.
 
 The deploy track (`deploy-publish-images` → `deploy-migrate-qa` → `deploy-qa`
 → `poolmaster-browser-e2e`) is push-to-main-only and additionally requires all

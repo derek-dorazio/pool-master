@@ -14,6 +14,43 @@ env:
   AWS_REGION: us-east-2
 
 jobs:
+  # #300 — which areas this change can affect, so jobs that cannot be affected are skipped.
+  # Narrative and the reasoning behind every rule: plans/146-ci-path-filtered-jobs.md.
+  #
+  # This job ALWAYS runs, on pull requests and on pushes alike. It must, for two reasons: a job
+  # that `needs:` a skipped job is itself skipped, so skipping this one would cascade into
+  # skipping the suites and then the deploy; and the gating below reads its outputs.
+  #
+  # On anything that is not a pull request it reports every area as changed without looking, so a
+  # push to main runs the full set. main's run is what gates deploy-publish-images, and filtering
+  # there would mean deploying code whose tests never ran -- #281's failure through another door.
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.classify.outputs.code }}
+      service: ${{ steps.classify.outputs.service }}
+      client: ${{ steps.classify.outputs.client }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The merge base needs history on both sides; a shallow clone has neither.
+          fetch-depth: 0
+      - name: List the files this pull request changes
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          # Diff against the merge base, not the base tip: otherwise every commit landing on main
+          # while the PR is open shows up as "changed by this PR".
+          MERGE_BASE=$(git merge-base "$BASE" HEAD)
+          echo "merge base: $MERGE_BASE"
+          git diff --name-only "$MERGE_BASE" HEAD > changed-files.txt
+          wc -l < changed-files.txt
+      - name: Classify the changed areas
+        id: classify
+        run: node scripts/ci-changed-areas.mjs changed-files.txt
+
   # Repo-wide gates: the published contract and the model/rule guards. Scope is the
   # whole repository, so this blocks both service and web work.
   all-contract-gates:
@@ -58,7 +95,9 @@ jobs:
   service-lint-typecheck:
     name: service-lint-typecheck
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    # #300 — see plans/146. A documentation-only change cannot break lint or typecheck.
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -94,7 +133,8 @@ jobs:
   service-unit-tests:
     name: service-unit-tests
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
     env:
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
       # helpers set these too, but CI is explicit so a suite that bootstraps
@@ -120,7 +160,8 @@ jobs:
   service-integration-tests:
     name: service-integration-tests
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
     services:
       postgres:
         image: postgres:16
@@ -160,7 +201,8 @@ jobs:
   service-functional-api-tests:
     name: service-functional-api-tests
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
     services:
       postgres:
         image: postgres:16
@@ -203,7 +245,8 @@ jobs:
   poolmaster-unit-tests:
     name: poolmaster-unit-tests
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.client == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -302,7 +345,8 @@ jobs:
   poolmaster-build:
     name: poolmaster-build
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -327,7 +371,9 @@ jobs:
   poolmaster-browser-e2e-local:
     name: poolmaster-browser-e2e-local
     runs-on: ubuntu-latest
-    needs: all-contract-gates
+    needs: [all-contract-gates, changes]
+    # #300 — see plans/146. Gated on `code`, not `client`: it runs the whole stack, core-api included.
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     services:
       postgres:
         image: postgres:16
