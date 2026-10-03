@@ -264,3 +264,107 @@ assignment or deletion — and that is a decision for the owner, not the impleme
 PoolMaster adds season-long contests. Decision 4 is the load-bearing assumption, and a
 season-long contest is exactly the case where the `(label, start, end)` triple needs an owner
 again.
+
+## Outcome — 2026-10-03, both slices in one PR
+
+Slice 1 (#314) and slice 2 (#315) shipped together, as two commits. What running it found:
+
+### The pre-flight queries
+
+**QA was not reachable from the implementing session** (an RDS instance with no credentials in
+the container), so the queries ran against a local Postgres 16 database migrated to `main` and
+populated **through `main`'s own API** — two tours, four seasons, eleven events, a
+`cloneSeason`, two "set as current" — so every row was shaped by the real write paths. Three
+events then had their series nulled, the shape rows had before plans/124 §4.3a added series.
+
+| Query | Clean database | Dirty fork |
+|---|---|---|
+| (a) as written in this plan | 0 rows | 0 rows — **misses the real duplicate** |
+| (a) as written in #315 | does not run: `event_series_id`, `event_year` do not exist yet | — |
+| (a) corrected (below) | 0 rows | 1 row: the 2025 Masters twice |
+| (b) events with no season | 0 rows | 1 row: The RSM Classic, `mock-contest-feed` |
+| (c) series tour ≠ season tour | 0 rows | 0 rows |
+
+The dirty fork was made with `main`'s code too: a second 2025 Masters through `createEvent`
+(it returned 201 — nothing stopped it), and a provider event through
+`IngestionPersistence.persistEvents`, the `EVENTSCHEDULE` path. **Both hazards are reachable on
+`main` today, so QA very probably holds (b) rows** if the schedule feed has ever run there.
+
+**(a) was wrong in both places.** The constraint sees `(series, season.year)` after the
+backfill, not `(league_event_id, EXTRACT(YEAR FROM start_date))`: grouping by start year both
+misses duplicates that share a season and flags events that cross a year boundary, and it skips
+every event with a null series — which the backfill merges into an existing series by name. The
+query that matches the migration:
+
+```sql
+SELECT COALESCE(es.id::text, s.sport_league_id || '/' || e.name) AS series_key, s.year, COUNT(*)
+FROM sport_events e
+JOIN seasons s ON s.id = e.season_id
+LEFT JOIN league_events es
+  ON es.id = e.league_event_id
+  OR (e.league_event_id IS NULL AND es.sport_league_id = s.sport_league_id AND es.name = e.name)
+GROUP BY 1, 2 HAVING COUNT(*) > 1;
+```
+
+(c) is new: the diamond disagreeing. Dropping the season would silently move such an event to
+its series' tour.
+
+### The migration
+
+One migration for slice 2, in this plan's order, with **every check before the first write**:
+(b), (c), the corrected (a), and a fourth — a tour whose current season belongs to another
+tour. Each `RAISE`s naming the rows. Replayed against the dirty fork it refused on (b), and with
+(b) resolved by hand on that throwaway copy, on (a); forced (c) and (d) rows refused too. After
+every refusal the database was exactly as before — `seasons` present, `season_id` present,
+`event_year` absent — because the checks precede the writes and Postgres runs the file as one
+implicit transaction.
+
+Against the clean database:
+
+| | Before | After |
+|---|---|---|
+| sport_events | 11 | 11, each on the same tour and year as its season gave it |
+| events without a series | 3 | 0 |
+| series | 5 | 7 — the 2026 Masters re-joined the existing Masters series; two one-offs got their own |
+| tours with a current year | 2 (seasons) | 2 (`current_event_year` = the season's year) |
+| seasons | 4 | table dropped |
+
+Slice 1's rename, replayed on the same data: 5 series, 11 events, 8 links before and after, with
+an identical md5 over every `(event, series)` pair.
+
+### `cloneSeason`'s replacement
+
+`POST /api/v1/events/clone-year` (`cloneEventYear`), body `{ sportLeagueId, eventYear,
+targetYear? }`, answered 201 with the created events as a `SportEventListResponse`. It lives
+with events because events are what it creates; it is refused whole — 409
+`EVENT_YEAR_NOT_EMPTY` — when the target year already has events, the analogue of the season
+that already existed. "Set as current" is `updateSportLeague { currentEventYear }`. There is no
+"event year" object or summary DTO: plans/145 rule 5 forbids a derived shape, so the webapp
+groups the event list by `eventYear` and compares it with `sportLeague.currentEventYear`.
+
+### What this plan got wrong
+
+1. **Decision 8's "the write path needs no change" was false.** Provider sync
+   (`IngestionPersistence.persistEventsWithDiagnostics`, the `EVENTSCHEDULE` feed) still
+   *creates* `SportEvent` rows with no season and no series — plans/125, which retires that, has
+   not run. A provider event names no tour, so a required series could only be guessed (e.g.
+   from `matchKeyword`). Sync now **updates the event linked to a provider event and skips the
+   rest**, logged; an admin creates and links events, which is plans/125's direction anyway.
+   This is a behaviour change and the call most worth a second look.
+2. Pre-flight (a), above, in both its versions.
+3. Slice 1's footprint was 26 hand-written files, not 21: the ports
+   (`shared/db/sport-catalog-ports.ts`, `shared/db/index.ts`), both golf functional suites, the
+   integration helpers and the root-admin contract-verification spec all named `LeagueEvent`.
+4. "Generate migrations with the tooling" cannot be met literally. `prisma migrate dev` emits
+   `DROP TABLE league_events` for a model rename and cannot express a backfill; it also refuses
+   to run non-interactively once it has a warning to confirm. Both migrations were scaffolded by
+   the tooling (`migrate dev --create-only`, `migrate diff`) and reordered by hand, and
+   `prisma migrate diff` against the result shows only drift already on `main` (four `id`
+   defaults, two `sport_leagues` column types), left alone.
+5. A backfilled `currentEventYear` can name a year with no events — the old rules allowed a
+   current season with none. It is carried over as it was, not asserted; the new check guards
+   writes from now on.
+6. The verification grep is broader than the model: the mock contest feed provider's own
+   contract (its scenarios, generated SDK, and the `seasonId`/`seasonYear` metadata keys the
+   adapter relays) uses "season" for the simulated provider's calendar. That is an external
+   vocabulary, not this model, and was left.
