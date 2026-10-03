@@ -44,12 +44,12 @@ function league(overrides: Record<string, unknown> = {}) {
     sportId: 'sport-golf',
     name: 'PGA Tour',
     matchKeyword: 'PGA',
-    currentSeasonId: 'season-2026',
+    currentEventYear: 2026,
     isActive: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     affiliationCount: 144,
-    seasonCount: 3,
+    sportEventCount: 3,
     ...overrides,
   };
 }
@@ -73,7 +73,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-qqs renders tours with roster/season counts and a row link to Tour Home', async () => {
+  it('pool-master-qqs, plans/147: renders tours with roster and tournament counts, current year, and a row link to Tour Home', async () => {
     listSportLeaguesMock.mockResolvedValue({
       data: {
         sportLeagues: [
@@ -83,7 +83,8 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
             name: 'LIV Golf',
             isActive: false,
             affiliationCount: 54,
-            seasonCount: 1,
+            sportEventCount: 1,
+            currentEventYear: null,
           }),
         ],
       },
@@ -95,6 +96,7 @@ describe('pool-master-qqs RootAdminGolfLeagueListPage', () => {
     expect(screen.getByText('LIV Golf')).toBeInTheDocument();
     expect(screen.getByText('144')).toBeInTheDocument();
     expect(screen.getByText('54')).toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-league-row-pga')).toBeInTheDocument();
   });

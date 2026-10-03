@@ -7,6 +7,7 @@ import {
   PrismaSportEventParticipantRepository,
 } from '../../../packages/core-api/src/adapters';
 import { Sport } from '@poolmaster/shared/domain';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -60,6 +61,7 @@ describe('Sport event participant repositories', () => {
     });
     const event = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: 'integration-event-participants',
         providerId: 'TEST_PROVIDER',
         sport: Sport.GOLF,

@@ -12,17 +12,15 @@ function setup(sportName: Sport = Sport.GOLF) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
-  const season = store.addSeason(sportLeague.id);
   const service = new SportEventService({
     sportEvents: store.sportEventRepo(),
     eventSeries: store.eventSeriesRepo(),
-    seasons: store.seasonRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo() }),
   });
-  return { store, service, season, sportLeague };
+  return { store, service, sportLeague };
 }
 
 const MANUAL_INPUT = {
@@ -34,9 +32,9 @@ const MANUAL_INPUT = {
 
 describe('SportEventService.createEvent', () => {
   it('creates a golf event with the manual identity, SCHEDULED, no provider data, four rounds and six tiers', async () => {
-    const { store, service, season } = setup();
+    const { store, service, sportLeague } = setup();
 
-    const created = await service.createEvent({ seasonId: season.id, ...MANUAL_INPUT });
+    const created = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
 
     expect(created.event).toMatchObject({
       sport: Sport.GOLF,
@@ -44,7 +42,8 @@ describe('SportEventService.createEvent', () => {
       status: SportEventStatus.SCHEDULED,
       syncScope: 'NONE',
       rounds: 4,
-      seasonId: season.id,
+      sportLeagueId: sportLeague.id,
+      eventYear: 2026,
     });
     expect(created.event.externalId).toMatch(/^manual-/);
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
@@ -52,28 +51,39 @@ describe('SportEventService.createEvent', () => {
     expect(created.tierCount).toBe(6);
   });
 
-  it('resolves the event to its season\'s recurring league event by name, creating it once', async () => {
-    const { store, service, season } = setup();
+  it('resolves the event to its sport league\'s series by name, creating the series once', async () => {
+    const { store, service, sportLeague } = setup();
 
-    const first = await service.createEvent({ seasonId: season.id, ...MANUAL_INPUT });
-    const second = await service.createEvent({ seasonId: season.id, ...MANUAL_INPUT, rounds: 2 });
+    const first = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
+    const second = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2027, ...MANUAL_INPUT, rounds: 2 });
 
     expect(second.event.eventSeriesId).toBe(first.event.eventSeriesId);
     expect(store.eventSeriesRows).toHaveLength(1);
   });
 
-  it('refuses a season whose sport league is not golf with 422, rather than creating a golf event', async () => {
-    const { service, season } = setup(Sport.NBA);
+  // plans/147 decision 5 — one edition of a series per year. The store raises the database's
+  // unique violation; the service turns it into a 409 rather than a 500.
+  it('refuses a second edition of a series in one year with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
+    const { store, service, sportLeague } = setup();
+    await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
 
-    await expect(service.createEvent({ seasonId: season.id, ...MANUAL_INPUT }))
+    await expect(service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT }))
+      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409 });
+    expect(store.events).toHaveLength(1);
+  });
+
+  it('refuses a sport league that is not golf with 422, rather than creating a golf event', async () => {
+    const { service, sportLeague } = setup(Sport.NBA);
+
+    await expect(service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT }))
       .rejects.toMatchObject({ code: 'SPORT_NOT_SUPPORTED', statusCode: 422 });
   });
 
-  it('fails with 404 SEASON_NOT_FOUND for an unknown season', async () => {
+  it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
     const { service } = setup();
 
-    await expect(service.createEvent({ seasonId: 'missing', ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
+    await expect(service.createEvent({ sportLeagueId: 'missing', eventYear: 2026, ...MANUAL_INPUT }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
   });
 });
 
@@ -86,9 +96,9 @@ describe('SportEventService.createEventFromProviderEvent', () => {
   };
 
   it('creates the event linked to its provider for scores, released and locked at its start, with the schedule the provider dates imply', async () => {
-    const { store, service, season } = setup();
+    const { store, service, sportLeague } = setup();
 
-    const created = await service.createEventFromProviderEvent({ seasonId: season.id, providerId: 'feed', externalId: 'ev-1', providerEvent });
+    const created = await service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', providerEvent });
 
     expect(created.event).toMatchObject({
       providerId: 'feed',
@@ -104,20 +114,68 @@ describe('SportEventService.createEventFromProviderEvent', () => {
   });
 
   it('uses sequential days from the start when a round count is given', async () => {
-    const { store, service, season } = setup();
+    const { store, service, sportLeague } = setup();
 
-    const created = await service.createEventFromProviderEvent({ seasonId: season.id, providerId: 'feed', externalId: 'ev-1', rounds: 2, providerEvent });
+    const created = await service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', rounds: 2, providerEvent });
 
     expect(created.event.rounds).toBe(2);
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
   });
 
   it('refuses a provider identity another event already holds with 409 EXTERNAL_EVENT_ALREADY_LINKED', async () => {
-    const { store, service, season } = setup();
+    const { store, service, sportLeague } = setup();
     store.addEvent({ providerId: 'feed', externalId: 'ev-1' });
 
-    await expect(service.createEventFromProviderEvent({ seasonId: season.id, providerId: 'feed', externalId: 'ev-1', providerEvent }))
+    await expect(service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', externalId: 'ev-1', providerEvent }))
       .rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
+  });
+});
+
+// plans/124 §4.2a, reshaped by plans/147: cloning a season became cloning a sport league's
+// event year — the same calendar copy, keyed by (sport league, year) instead of a season row.
+describe('SportEventService.cloneEventYear', () => {
+  it('re-creates each event of the year a year on (leap-year safe), as next year\'s edition of the same series', async () => {
+    const { store, service, sportLeague } = setup();
+    const source = await service.createEvent({
+      sportLeagueId: sportLeague.id, eventYear: 2024, name: 'The Open', venue: 'Royal Liverpool', rounds: 4,
+      startDate: new Date('2024-02-29T00:00:00.000Z'), endDate: new Date('2024-03-03T00:00:00.000Z'),
+      releaseAt: new Date('2024-02-15T00:00:00.000Z'), fieldLocksAt: new Date('2024-02-28T00:00:00.000Z'),
+    });
+
+    const cloned = await service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2024 });
+
+    expect(cloned).toHaveLength(1);
+    expect(cloned[0].event).toMatchObject({
+      name: 'The Open',
+      venue: 'Royal Liverpool',
+      eventYear: 2025,
+      eventSeriesId: source.event.eventSeriesId,
+      // Feb 29 lands on Mar 1 in the non-leap year.
+      startDate: new Date('2025-03-01T00:00:00.000Z'),
+      endDate: new Date('2025-03-03T00:00:00.000Z'),
+    });
+    expect(store.events).toHaveLength(2);
+  });
+
+  it('honours an explicit target year, and refuses one that already has events with 409 before creating anything', async () => {
+    const { store, service, sportLeague } = setup();
+    await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
+
+    await expect(service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, targetYear: 2028 }))
+      .resolves.toEqual([expect.objectContaining({ event: expect.objectContaining({ eventYear: 2028 }) })]);
+
+    await expect(service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, targetYear: 2028 }))
+      .rejects.toMatchObject({ code: 'EVENT_YEAR_NOT_EMPTY', statusCode: 409 });
+    expect(store.events).toHaveLength(2);
+  });
+
+  it('refuses an empty source year with 422 EVENT_YEAR_HAS_NO_EVENTS, and an unknown sport league with 404', async () => {
+    const { service, sportLeague } = setup();
+
+    await expect(service.cloneEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026 }))
+      .rejects.toMatchObject({ code: 'EVENT_YEAR_HAS_NO_EVENTS', statusCode: 422 });
+    await expect(service.cloneEventYear({ sportLeagueId: 'missing', eventYear: 2026 }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
   });
 });
 

@@ -54,7 +54,7 @@ export const swaggerPlugin = fp(async (fastify) => {
         { name: 'Notifications', description: 'User notifications and preferences' },
         { name: 'Social', description: 'Feed, chat, and sharing' },
         { name: 'Admin', description: 'Platform administration' },
-        { name: 'Admin Golf', description: 'Golf tournament authoring — leagues, seasons, and rosters' },
+        { name: 'Admin Golf', description: 'Golf tournament authoring — tours, tournaments, and rosters' },
         { name: 'Admin Sync', description: 'Provider health, sync runs, manual sync triggers, mappings, and catalog browsing' },
         { name: 'Config', description: 'Platform and sports configuration' },
         { name: 'History', description: 'League history, records, and analytics' },

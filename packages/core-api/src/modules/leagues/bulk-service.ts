@@ -1,7 +1,7 @@
 /**
  * BulkService — CSV member import.
  *
- * #202 — `copyLastSeason` and its types are gone with the `copy-season` route.
+ * #202 — the last-season copy and its types are gone with the `copy-season` route.
  */
 
 import type {

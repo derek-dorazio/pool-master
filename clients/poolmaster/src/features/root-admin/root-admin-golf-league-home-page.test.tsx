@@ -9,6 +9,7 @@ import {
   GOLF_SPORT_FIXTURE,
   affiliationFixture,
   participantFixture,
+  sportEventFixture,
   sportLeagueFixture,
 } from './golf-test-fixtures';
 
@@ -27,6 +28,7 @@ const {
   deleteParticipantLeagueAffiliationMock,
   previewParticipantLeagueAffiliationUploadMock,
   applyParticipantLeagueAffiliationUploadMock,
+  listEventsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -49,6 +51,7 @@ const {
     deleteParticipantLeagueAffiliationMock: vi.fn(),
     previewParticipantLeagueAffiliationUploadMock: vi.fn(),
     applyParticipantLeagueAffiliationUploadMock: vi.fn(),
+    listEventsMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -64,6 +67,7 @@ bindApiMocks({
   deleteParticipantLeagueAffiliation: deleteParticipantLeagueAffiliationMock,
   previewParticipantLeagueAffiliationUpload: previewParticipantLeagueAffiliationUploadMock,
   applyParticipantLeagueAffiliationUpload: applyParticipantLeagueAffiliationUploadMock,
+  listEvents: listEventsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -75,9 +79,9 @@ vi.mock('@/lib/logger', () => ({
 function league(overrides: Parameters<typeof sportLeagueFixture>[0] = {}) {
   return sportLeagueFixture({
     id: 'pga',
-    currentSeasonId: 'season-2026',
+    currentEventYear: 2026,
     affiliationCount: 2,
-    seasonCount: 3,
+    sportEventCount: 3,
     ...overrides,
   });
 }
@@ -99,6 +103,9 @@ function rosterEntry({
 function seed() {
   listSportsMock.mockResolvedValue({ data: { sports: [GOLF_SPORT_FIXTURE] } });
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [league()] } });
+  listEventsMock.mockResolvedValue({
+    data: { events: [sportEventFixture({ id: 'masters-2026', eventYear: 2026, sportLeagueId: 'pga' })] },
+  });
   listParticipantLeagueAffiliationsMock.mockResolvedValue({
     data: {
       affiliations: [
@@ -133,15 +140,13 @@ describe('pool-master-qqs RootAdminGolfLeagueHomePage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-qqs renders tour details, the seasons link, and the roster grid', async () => {
+  it('pool-master-qqs, plans/147: renders tour details, its tournament calendar for the current year, and the roster grid', async () => {
     seed();
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'PGA Tour' })).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-league-home-seasons-link')).toHaveAttribute(
-      'href',
-      '/manage/golf/seasons?sportLeagueId=pga',
-    );
+    expect(await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026')).toBeInTheDocument();
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
     expect(screen.getByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });

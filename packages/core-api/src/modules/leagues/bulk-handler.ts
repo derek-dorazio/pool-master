@@ -1,7 +1,7 @@
 /**
  * Bulk operations route handlers — CSV member import.
  *
- * #202 — `copySeason` is gone with its route; it had no frontend caller and the repo owner
+ * #202 — the copy-season handler is gone with its route; it had no frontend caller and the repo owner
  * removed it from scope.
  */
 

@@ -1,6 +1,7 @@
 /**
- * The SportLeague operation set and its two children — the Participant↔SportLeague
- * affiliations and the seasons (#236). Before #236 the same operations were reachable
+ * The SportLeague operation set and its child, the Participant↔SportLeague
+ * affiliations (#236). A sport league's events are reached through the event list,
+ * filtered by sport league and event year (plans/147). Before #236 the same operations were reachable
  * only as `adminGetGolfLeagueRoster` and siblings, golf-named doors onto cross-sport
  * services. Reads need a signed-in user; writes need the root-admin claim (A10).
  */
@@ -31,14 +32,14 @@ const SPORT_LEAGUE_PARAMS = {
 export function sportLeaguesModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
   const services = createSportEventServices(getAppPrisma(fastify), fastify.log);
-  const handler = createSportLeagueHandlers(services.sportLeagues, services.seasons);
+  const handler = createSportLeagueHandlers(services.sportLeagues);
   const write = { onRequest: requireRootAdmin };
 
   fastify.get('/', {
     schema: {
       tags: TAGS,
       summary: 'List sport leagues',
-      description: 'Every sport league, or one sport\'s, each with its affiliation and season counts. The one list that takes a sport: a sport league is where the sport is chosen.',
+      description: 'Every sport league, or one sport\'s, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.',
       operationId: 'listSportLeagues',
       querystring: schemaRef('SportLeagueListQuery'),
       response: { 200: schemaRef('SportLeagueListResponse'), ...errors(404) },
@@ -75,11 +76,12 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
     schema: {
       tags: TAGS,
       summary: 'Update a sport league',
-      description: 'Root admin only.',
+      description: 'Setting currentEventYear is "set as current": one write, so the sport league never has two current years, '
+        + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
       body: schemaRef('UpdateSportLeagueRequest'),
-      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404) },
+      response: { 200: schemaRef('SportLeagueResponse'), ...errors(403, 404, 422) },
     },
     handler: handler.updateSportLeague,
   });
@@ -167,31 +169,5 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
       response: { 200: schemaRef('ParticipantLeagueAffiliationListResponse'), ...errors(403, 404, 422) },
     },
     handler: handler.applyAffiliationUpload,
-  });
-
-  fastify.get('/:sportLeagueId/seasons', {
-    schema: {
-      tags: TAGS,
-      summary: 'List a sport league\'s seasons',
-      operationId: 'listSeasons',
-      params: SPORT_LEAGUE_PARAMS,
-      querystring: schemaRef('SeasonListQuery'),
-      response: { 200: schemaRef('SeasonListResponse'), ...errors(404) },
-    },
-    handler: handler.listSeasons,
-  });
-
-  fastify.post('/:sportLeagueId/seasons', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Create a season',
-      description: 'Root admin only. 409 when the sport league already has a season for the year.',
-      operationId: 'createSeason',
-      params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('CreateSeasonRequest'),
-      response: { 201: schemaRef('SeasonResponse'), ...errors(403, 404, 409) },
-    },
-    handler: handler.createSeason,
   });
 }

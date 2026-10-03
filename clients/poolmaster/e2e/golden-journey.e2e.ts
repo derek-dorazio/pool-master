@@ -103,7 +103,7 @@ function requireJourney(): Required<JourneyState> {
 }
 
 test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
-  test('act 1: the root admin builds a golf catalog — tour, season, six players, a tournament, its field and tiers', async ({ page }) => {
+  test('act 1: the root admin builds a golf catalog — tour, six players, a tournament, its field and tiers', async ({ page }) => {
     test.setTimeout(180_000);
     const credentials = readAdminCredentials();
     admin = credentials;
@@ -114,7 +114,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     const run: JourneyRun = {
       runId,
       tourName: `E2E Tour ${runId}`,
-      seasonName: `E2E Season ${runId}`,
       playerNamePrefix: `E2E Golfer ${runId}`,
       tournamentName: `E2E Open ${runId}`,
       // RFC 2606 reserves .invalid, so nothing sent to these can reach a real mailbox.
@@ -173,27 +172,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       return id;
     });
 
-    const seasonId = await test.step('create a season under the tour', async () => {
-      const today = new Date();
-      await page.goto(`/manage/golf/seasons?sportLeagueId=${tourId}`);
-      await page.getByTestId('root-admin-golf-season-list-new').click();
-      await page.getByTestId('root-admin-golf-season-list-new-tour').selectOption(tourId);
-      await page.getByTestId('root-admin-golf-season-list-new-name').fill(run.seasonName);
-      await page.getByTestId('root-admin-golf-season-list-new-year').fill(String(today.getFullYear()));
-      // Spans the tournament created below, a week out.
-      await page.getByTestId('root-admin-golf-season-list-new-start').fill(dateInput(addDays(today, -30)));
-      await page.getByTestId('root-admin-golf-season-list-new-end').fill(dateInput(addDays(today, 335)));
-      const created = await submitAndRead<{ season: { id: string } }>(
-        page,
-        'root-admin-golf-season-list-new-save',
-        'POST',
-        `/api/v1/sport-leagues/${tourId}/seasons`,
-      );
-      const id = created.season.id;
-      await expect(page.getByTestId(`root-admin-golf-season-row-${id}`)).toBeVisible();
-      return id;
-    });
-
     const playerIds = await test.step(`create ${PLAYER_COUNT} players`, async () => {
       await page.goto('/manage/golf/players');
       const ids: string[] = [];
@@ -215,12 +193,14 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
     journey.playerIds = playerIds;
 
-    const eventId = await test.step('create a tournament in the season', async () => {
+    // plans/147 — a tournament is one year's edition on a tour; there is no season to create.
+    const eventId = await test.step('create a tournament on the tour, in its start year', async () => {
       const now = new Date();
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
       await page.goto('/manage/golf/tournaments/new');
-      await page.getByTestId('root-admin-golf-tournament-create-season').selectOption(seasonId);
+      await page.getByTestId('root-admin-golf-tournament-create-tour').selectOption(tourId);
+      await page.getByTestId('root-admin-golf-tournament-create-event-year').fill(String(start.getFullYear()));
       await page.getByTestId('root-admin-golf-tournament-create-name').fill(run.tournamentName);
       await page.getByTestId('root-admin-golf-tournament-create-start').fill(dateTimeInput(start));
       // Released already and locking at the start: act 2 can only create a contest on an event

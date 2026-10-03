@@ -1,15 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { listParticipants, listSeasons, listSportLeagues, listSports } from '@/lib/api';
-import type { ParticipantDto, SeasonDto, SportLeagueDto } from '@/lib/api';
+import { listEvents, listParticipants, listSportLeagues, listSports } from '@/lib/api';
+import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 /**
- * #236 — the golf screens' reads of the shared sport catalog, in one place. The golf
- * admin list operations these replace answered "every golf tour" and "every golf season"
- * in one call; the shared operations are scoped (sport leagues by sport, seasons by
- * sport league), so the all-seasons read lists the golf sport leagues and then each
- * one's seasons, and golfers are the participants of the golf sport.
+ * #236 — the golf screens' reads of the shared sport catalog, in one place: the golf
+ * tours (sport leagues of the golf sport), one tour's tournaments across every event
+ * year (plans/147 — the event list filtered by sport league), and golfers, the
+ * participants of the golf sport.
  */
 
 async function fetchGolfSportLeagues(): Promise<SportLeagueDto[]> {
@@ -20,14 +19,6 @@ async function fetchGolfSportLeagues(): Promise<SportLeagueDto[]> {
   return response.data.sportLeagues;
 }
 
-async function fetchSeasons(sportLeagueId: string): Promise<SeasonDto[]> {
-  const response = await listSeasons({ path: { sportLeagueId } });
-  if (!response.data?.seasons) {
-    throwApiError(response.error, 'Golf season list response is missing data.');
-  }
-  return response.data.seasons;
-}
-
 export function useGolfSportLeaguesQuery() {
   return useQuery({
     queryKey: QueryKeys.rootAdmin.golf.tours,
@@ -36,22 +27,18 @@ export function useGolfSportLeaguesQuery() {
   });
 }
 
-/**
- * Seasons of one golf sport league, or of every golf sport league when none is given.
- * Active and inactive seasons both come back; a caller that wants only active ones
- * filters, so the two views share one cache entry.
- */
-export function useGolfSeasonsQuery(sportLeagueId?: string) {
+/** One golf tour's tournaments, every event year, earliest start first. */
+export function useGolfTourTournamentsQuery(sportLeagueId: string) {
   return useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.seasons(sportLeagueId),
-    queryFn: async (): Promise<SeasonDto[]> => {
-      if (sportLeagueId) {
-        return fetchSeasons(sportLeagueId);
+    queryKey: QueryKeys.rootAdmin.golf.tourTournaments(sportLeagueId),
+    queryFn: async (): Promise<SportEventDto[]> => {
+      const response = await listEvents({ query: { sportLeagueId } });
+      if (!response.data?.events) {
+        throwApiError(response.error, 'Golf tournament list response is missing data.');
       }
-      const sportLeagues = await fetchGolfSportLeagues();
-      const perLeague = await Promise.all(sportLeagues.map((sportLeague) => fetchSeasons(sportLeague.id)));
-      return perLeague.flat();
+      return response.data.events;
     },
+    enabled: sportLeagueId !== '',
     retry: false,
   });
 }

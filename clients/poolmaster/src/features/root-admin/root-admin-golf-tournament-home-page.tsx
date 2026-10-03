@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { getEvent, getSeason, listEventRounds } from '@/lib/api';
+import { getEvent, listEventRounds } from '@/lib/api';
 import {
   Alert,
   AsyncPage,
@@ -20,10 +20,11 @@ import {
 import { GolfTournamentScoreSourceCard } from './golf-tournament-score-source-card';
 import { GolfTournamentSummaryCard } from './golf-tournament-summary-card';
 import { GolfTournamentWorkflowCard } from './golf-tournament-workflow-card';
+import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
  * plans/124 §6.3 — Tournament Home, the canonical page. Owns the tournament /
- * rounds / season queries and the block layout; each of the four blocks is its
+ * rounds / tour queries and the block layout; each of the four blocks is its
  * own component (Summary, Workflow, Score source, Sections).
  */
 export function RootAdminGolfTournamentHomePage() {
@@ -57,20 +58,9 @@ export function RootAdminGolfTournamentHomePage() {
 
   const tournament = tournamentQuery.data;
 
-  const seasonQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.golf.season(tournament?.seasonId ?? null),
-    queryFn: async () => {
-      const response = await getSeason({
-        path: { seasonId: tournament?.seasonId ?? '' },
-      });
-      if (!response.data?.season) {
-        throwApiError(response.error, 'Golf season response is missing data.');
-      }
-      return response.data.season;
-    },
-    enabled: Boolean(tournament?.seasonId),
-    retry: false,
-  });
+  // The tour's name, from the tour list the golf screens already share.
+  const toursQuery = useGolfSportLeaguesQuery();
+  const tourName = toursQuery.data?.find((tour) => tour.id === tournament?.sportLeagueId)?.name;
 
   useManageBreadcrumbOverride(eventId || undefined, tournament?.name);
 
@@ -126,7 +116,7 @@ export function RootAdminGolfTournamentHomePage() {
           <GolfTournamentSummaryCard
             eventId={eventId}
             readOnly={isReadOnly}
-            seasonName={seasonQuery.data?.name}
+            tourName={tourName}
             tournament={tournament}
           />
 

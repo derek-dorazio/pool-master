@@ -9,7 +9,6 @@ import {
   FormField,
   FormModal,
   Input,
-  LinkButton,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
@@ -40,8 +39,8 @@ async function updateLeague(
 
 /**
  * plans/124 §6.3 Tour Home header — the tour's identity, an inline name /
- * match-keyword edit modal, the active toggle, and the count link into this
- * tour's Season list.
+ * match-keyword edit modal, the active toggle, its tournament count and its current
+ * event year (plans/147; the calendar card below changes it).
  */
 export function GolfLeagueDetailsCard({ league }: { league: SportLeagueDto }) {
   const logger = getLogger().child({
@@ -128,19 +127,11 @@ export function GolfLeagueDetailsCard({ league }: { league: SportLeagueDto }) {
             value: league.matchKeyword || 'Not set',
           },
           { id: 'roster', label: 'Roster size', value: league.affiliationCount },
+          { id: 'tournaments', label: 'Tournaments', value: league.sportEventCount },
           {
-            id: 'seasons',
-            label: 'Seasons',
-            value: (
-              <LinkButton
-                data-testid="root-admin-golf-league-home-seasons-link"
-                size="sm"
-                to={`/manage/golf/seasons?sportLeagueId=${league.id}`}
-                variant="secondary"
-              >
-                View {league.seasonCount} season{league.seasonCount === 1 ? '' : 's'}
-              </LinkButton>
-            ),
+            id: 'current-year',
+            label: 'Current year',
+            value: league.currentEventYear ?? 'Not set',
           },
         ]}
       />

@@ -10,6 +10,7 @@ import {
   type GolfScoreRowInput,
 } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { freshEventEdition } from '../../support/event-edition';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -32,6 +33,7 @@ async function createField(suffix: string) {
   });
   const event = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `golf-round-scores-${suffix}`,
       providerId: 'integration-test',
       sport: 'GOLF',

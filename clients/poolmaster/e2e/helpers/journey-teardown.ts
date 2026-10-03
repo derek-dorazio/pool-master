@@ -9,11 +9,12 @@ import type { AdminCredentials } from './admin-session';
  *   league (its contest, entry, squads, memberships and invite link go with it)
  *   → tournament (its field, rounds and tiers go with it; refused while a contest references it,
  *     which is why the league goes first)
- *   → season → tour → players → commissioner → member.
+ *   → tour → players → commissioner → member.
  *
- * Tours, seasons and participants have no delete operation, so they are inactivated: out of
- * every active picker and identifiable by run id for plans/129's QA reset. That, and the
- * `event_series` row creating a tournament makes, is the expected residue.
+ * Tours and participants have no delete operation, so they are inactivated: out of every
+ * active picker and identifiable by run id for plans/129's QA reset. That, and the
+ * `event_series` row creating a tournament makes, is the expected residue. (plans/147 removed
+ * the season the journey used to create, and with it a step here.)
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so
  * an attempt that failed between a write and reading its response is still found and removed.
@@ -32,7 +33,6 @@ export type JourneyUser = {
 export type JourneyRun = {
   runId: string;
   tourName: string;
-  seasonName: string;
   playerNamePrefix: string;
   tournamentName: string;
   commissioner: JourneyUser;
@@ -52,7 +52,7 @@ export async function removeJourneyRun(
   const headers = await adminApiHeaders(api, credentials);
   if (!headers) {
     log(
-      `admin login failed; nothing removed: league ${run.leagueCode}, tour "${run.tourName}" with its season, `
+      `admin login failed; nothing removed: league ${run.leagueCode}, tour "${run.tourName}" with its `
       + `tournament and players, users ${run.commissioner.username} and ${run.member.username}`,
     );
     return;
@@ -67,10 +67,9 @@ export async function removeJourneyRun(
     return null;
   });
   if (tourId) {
-    await attempt(log, `season "${run.seasonName}"`, () => inactivateSeason(api, headers, tourId, run, log));
     await attempt(log, `tour "${run.tourName}"`, () => inactivateTour(api, headers, tourId, run, log));
   } else {
-    log(`tour "${run.tourName}" not found; no tour or season to inactivate`);
+    log(`tour "${run.tourName}" not found; no tour to inactivate`);
   }
   await attempt(log, `players "${run.playerNamePrefix} *"`, () => inactivatePlayers(api, headers, run, log));
   await attempt(log, `user ${run.commissioner.username}`, () => removeUser(api, headers, run.commissioner, log));
@@ -130,27 +129,6 @@ async function findTourId(api: APIRequestContext, headers: AuthHeaders, run: Jou
   );
   const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
   return sportLeagues.find((candidate) => candidate.name === run.tourName)?.id ?? null;
-}
-
-async function inactivateSeason(
-  api: APIRequestContext,
-  headers: AuthHeaders,
-  tourId: string,
-  run: JourneyRun,
-  log: Log,
-) {
-  const list = await expectOk(api.get(`/api/v1/sport-leagues/${tourId}/seasons`, { headers }), 'list seasons');
-  const { seasons } = (await list.json()) as { seasons: { id: string; name: string }[] };
-  const season = seasons.find((candidate) => candidate.name === run.seasonName);
-  if (!season) {
-    log(`season "${run.seasonName}" was never created; nothing to inactivate`);
-    return;
-  }
-  await expectOk(
-    api.patch(`/api/v1/seasons/${season.id}`, { headers, data: { isActive: false } }),
-    'inactivate season',
-  );
-  log(`season "${run.seasonName}" inactivated (no delete operation exists)`);
 }
 
 async function inactivateTour(

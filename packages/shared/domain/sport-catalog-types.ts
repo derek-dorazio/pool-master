@@ -14,17 +14,11 @@ export interface SportLeague extends DomainEntity {
   name: string;
   /** Substring a provider event name carries when it belongs to this sport league. */
   matchKeyword: string | null;
-  currentSeasonId: string | null;
-  isActive: boolean;
-}
-
-/** A sport league's calendar year. A grouping of events, not a roster boundary. */
-export interface Season extends DomainEntity {
-  sportLeagueId: string;
-  name: string;
-  year: number;
-  startDate: Date;
-  endDate: Date;
+  /**
+   * The event year the sport league is currently on. Not a foreign key: setting it
+   * refuses a year the sport league has no events in (plans/147 decision 6).
+   */
+  currentEventYear: number | null;
   isActive: boolean;
 }
 

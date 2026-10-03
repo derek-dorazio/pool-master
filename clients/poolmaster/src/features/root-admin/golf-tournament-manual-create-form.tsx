@@ -14,8 +14,13 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { SeasonDto } from '@/lib/api';
-import { GolfTournamentSeasonSelect } from './golf-tournament-season-select';
+import type { SportLeagueDto } from '@/lib/api';
+import {
+  GolfTournamentEditionFields,
+  isCompleteEdition,
+  parseEventYear,
+  type GolfTournamentEdition,
+} from './golf-tournament-edition-fields';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 
 
@@ -34,13 +39,13 @@ const manualFormSchema = z.object({
 type ManualFormValues = z.infer<typeof manualFormSchema>;
 
 export function GolfTournamentManualCreateForm({
-  onSeasonChange,
-  seasonId,
-  seasons,
+  edition,
+  onEditionChange,
+  tours,
 }: {
-  onSeasonChange: (seasonId: string) => void;
-  seasonId: string;
-  seasons: readonly SeasonDto[];
+  edition: GolfTournamentEdition;
+  onEditionChange: (edition: GolfTournamentEdition) => void;
+  tours: readonly SportLeagueDto[];
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-create-page',
@@ -77,7 +82,8 @@ export function GolfTournamentManualCreateForm({
           releaseAt: localDateTimeInputToIso(values.releaseAt) ?? values.releaseAt,
           fieldLocksAt:
             localDateTimeInputToIso(values.fieldLocksAt) ?? values.fieldLocksAt,
-          seasonId,
+          sportLeagueId: edition.sportLeagueId,
+          eventYear: parseEventYear(edition.eventYear) as number,
           autoLifecycleEnabled: values.autoLifecycleEnabled,
         },
       });
@@ -167,11 +173,10 @@ export function GolfTournamentManualCreateForm({
               {...form.register('rounds')}
             />
           </FormField>
-          <GolfTournamentSeasonSelect
-            onChange={onSeasonChange}
-            seasons={seasons}
-            value={seasonId}
-          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GolfTournamentEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
         </div>
 
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -189,7 +194,7 @@ export function GolfTournamentManualCreateForm({
         <div className="flex justify-end gap-3">
           <Button
             data-testid="root-admin-golf-tournament-create-submit"
-            disabled={seasonId === '' || createMutation.isPending}
+            disabled={!isCompleteEdition(edition) || createMutation.isPending}
             isLoading={createMutation.isPending}
             type="submit"
           >
@@ -200,6 +205,9 @@ export function GolfTournamentManualCreateForm({
         {createMutation.isError ? (
           <p className="text-sm font-medium text-destructive">
             {extractErrorMessage(createMutation.error, {
+              codeMessages: {
+                EVENT_EDITION_ALREADY_EXISTS: `This tour already has a ${edition.eventYear} edition of this tournament.`,
+              },
               fallback: 'We could not create this tournament.',
             })}
           </p>

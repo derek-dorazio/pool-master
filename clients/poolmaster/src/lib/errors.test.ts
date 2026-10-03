@@ -63,29 +63,29 @@ describe('rule: throwApiError normalizes SDK response.error into a real Error', 
     // thrown Error's `.message` and extractErrorMessage's plain-object
     // duck-typing treats any `.message` string as the real thing.
     try {
-      throwApiError({ code: 'INTERNAL' }, 'Clone season response is missing data.');
+      throwApiError({ code: 'INTERNAL' }, 'Clone year response is missing data.');
       throw new Error('unreachable');
     } catch (err) {
       expect(
-        extractErrorMessage(err, { fallback: 'We could not clone this season.' }),
-      ).toBe('We could not clone this season.');
+        extractErrorMessage(err, { fallback: 'We could not clone this year.' }),
+      ).toBe('We could not clone this year.');
     }
   });
 
   it('still resolves a codeMessages mapping for a payload with a code but no message', () => {
     try {
       throwApiError(
-        { code: 'SEASON_YEAR_ALREADY_EXISTS' },
-        'Clone season response is missing data.',
+        { code: 'EVENT_YEAR_NOT_EMPTY' },
+        'Clone year response is missing data.',
       );
       throw new Error('unreachable');
     } catch (err) {
       expect(
         extractErrorMessage(err, {
-          codeMessages: { SEASON_YEAR_ALREADY_EXISTS: 'This tour already has a 2027 season.' },
-          fallback: 'We could not clone this season.',
+          codeMessages: { EVENT_YEAR_NOT_EMPTY: 'This tour already has tournaments in 2027.' },
+          fallback: 'We could not clone this year.',
         }),
-      ).toBe('This tour already has a 2027 season.');
+      ).toBe('This tour already has tournaments in 2027.');
     }
   });
 });

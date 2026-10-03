@@ -34,6 +34,7 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -247,6 +248,7 @@ describe('Contract verification (web)', () => {
     });
     await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-event-${eventId}`,
@@ -329,6 +331,7 @@ describe('Contract verification (web)', () => {
 
     await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-shallow-event-${eventId}`,
@@ -486,6 +489,7 @@ describe('Contract verification (web)', () => {
 
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
+        ...(await freshEventEdition(getPrisma())),
         externalId: `contract-event-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,

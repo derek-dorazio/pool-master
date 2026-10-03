@@ -1,14 +1,11 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
   CreateParticipantLeagueAffiliationRequest,
-  CreateSeasonRequest,
   CreateSportLeagueRequest,
   ParticipantLeagueAffiliationListResponse,
   ParticipantLeagueAffiliationResponse,
   ParticipantLeagueAffiliationUploadPreviewResponse,
   ParticipantLeagueAffiliationUploadRequest,
-  SeasonListQuery,
-  SeasonListResponse,
   SportLeagueListQuery,
   SportLeagueListResponse,
   SportLeagueResponse,
@@ -19,16 +16,14 @@ import { sendError } from '../../core/error-handler';
 import {
   mapAffiliationToDto,
   mapAffiliationUploadPreviewRowToDto,
-  mapSeasonToDto,
   mapSportLeagueToDto,
 } from '../../mappers';
-import type { SeasonService } from '../sport-catalog/season-service';
 import type { SportLeagueService } from '../sport-catalog/sport-league-service';
 
 type SportLeagueParams = { Params: { sportLeagueId: string } };
 
 /** Service errors carry their own code and status; the global error handler sends them. */
-export function createSportLeagueHandlers(sportLeagues: SportLeagueService, seasons: SeasonService) {
+export function createSportLeagueHandlers(sportLeagues: SportLeagueService) {
   return {
     listSportLeagues: async (request: FastifyRequest<{ Querystring: SportLeagueListQuery }>): Promise<SportLeagueListResponse> => {
       const rows = await sportLeagues.listSportLeagues({ sport: request.query.sport, isActive: request.query.isActive });
@@ -94,23 +89,6 @@ export function createSportLeagueHandlers(sportLeagues: SportLeagueService, seas
     ): Promise<ParticipantLeagueAffiliationListResponse> => {
       const affiliations = await sportLeagues.applyAffiliationUpload(request.params.sportLeagueId, request.body.rows);
       return { affiliations: affiliations.map(mapAffiliationToDto) };
-    },
-
-    listSeasons: async (request: FastifyRequest<SportLeagueParams & { Querystring: SeasonListQuery }>): Promise<SeasonListResponse> => {
-      const rows = await seasons.listSeasons(request.params.sportLeagueId, { isActive: request.query.isActive });
-      return { seasons: rows.map(mapSeasonToDto) };
-    },
-
-    createSeason: async (request: FastifyRequest<SportLeagueParams & { Body: CreateSeasonRequest }>, reply: FastifyReply) => {
-      const created = await seasons.createSeason({
-        sportLeagueId: request.params.sportLeagueId,
-        name: request.body.name,
-        year: request.body.year,
-        startDate: new Date(request.body.startDate),
-        endDate: new Date(request.body.endDate),
-      });
-      const season = await seasons.getSeason(created.id);
-      return reply.status(201).send({ season: mapSeasonToDto(season as NonNullable<typeof season>) });
     },
   };
 }

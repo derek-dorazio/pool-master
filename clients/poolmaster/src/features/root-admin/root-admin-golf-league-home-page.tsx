@@ -10,12 +10,13 @@ import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
 import { GolfLeagueDetailsCard } from './golf-league-details-card';
 import { GolfLeagueRosterGridCard } from './golf-league-roster-grid-card';
 import { GolfLeagueRosterUploadCard } from './golf-league-roster-upload-card';
+import { GolfTourCalendarCard } from './golf-tour-calendar-card';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 /**
  * plans/124 §6.3 — /manage/golf/leagues/:leagueId "Tour Home". Owns the tour +
- * roster queries and the block layout; details editing, the roster grid, and the
- * bulk-upload flow are each their own card (the page would otherwise cross the
+ * roster queries and the block layout; details editing, the tournament calendar by event
+ * year (plans/147), the roster grid, and the bulk-upload flow are each their own card (the page would otherwise cross the
  * 400-line / 5-mutation decomposition threshold).
  */
 export function RootAdminGolfLeagueHomePage() {
@@ -67,6 +68,7 @@ export function RootAdminGolfLeagueHomePage() {
       {league ? (
         <div className="space-y-6">
           <GolfLeagueDetailsCard league={league} />
+          <GolfTourCalendarCard tour={league} />
           <GolfLeagueRosterUploadCard leagueId={league.id} />
           <GolfLeagueRosterGridCard
             entries={rosterQuery.data ?? []}

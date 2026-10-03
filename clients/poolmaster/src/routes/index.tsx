@@ -21,8 +21,6 @@ import { RootAdminGolfLeagueHomePage } from '@/features/root-admin/root-admin-go
 import { RootAdminGolfPlayerHomePage } from '@/features/root-admin/root-admin-golf-player-home-page';
 import { RootAdminGolfPlayerListPage } from '@/features/root-admin/root-admin-golf-player-list-page';
 import { RootAdminGolfLeagueListPage } from '@/features/root-admin/root-admin-golf-league-list-page';
-import { RootAdminGolfSeasonHomePage } from '@/features/root-admin/root-admin-golf-season-home-page';
-import { RootAdminGolfSeasonListPage } from '@/features/root-admin/root-admin-golf-season-list-page';
 import { RootAdminGolfTournamentCreatePage } from '@/features/root-admin/root-admin-golf-tournament-create-page';
 import { RootAdminGolfTournamentFieldPage } from '@/features/root-admin/root-admin-golf-tournament-field-page';
 import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admin-golf-tournament-home-page';
@@ -204,14 +202,6 @@ export const router = createBrowserRouter([
               {
                 path: 'golf/leagues/:leagueId',
                 element: <RootAdminGolfLeagueHomePage />,
-              },
-              {
-                path: 'golf/seasons',
-                element: <RootAdminGolfSeasonListPage />,
-              },
-              {
-                path: 'golf/seasons/:seasonId',
-                element: <RootAdminGolfSeasonHomePage />,
               },
               {
                 path: 'golf/tournaments',

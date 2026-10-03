@@ -1,17 +1,15 @@
 /**
- * Sport catalog mapper (#236) — Sport, SportLeague, the affiliation edge and Season to
- * their canonical DTOs. The affiliation embeds the canonical participant.
+ * Sport catalog mapper (#236) — Sport, SportLeague and the affiliation edge to their
+ * canonical DTOs. The affiliation embeds the canonical participant.
  */
 
 import type { ParticipantLeagueAffiliation, SportConfig } from '@poolmaster/shared/domain';
 import type {
   ParticipantLeagueAffiliationDto,
   ParticipantLeagueAffiliationUploadPreviewRowDto,
-  SeasonDto,
   SportDto,
   SportLeagueDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
-import type { SeasonDetail } from '../modules/sport-catalog/season-service';
 import type { AffiliationUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
 import { mapParticipantToDto } from './participants.mapper';
 
@@ -33,10 +31,10 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     sportId: sportLeague.sportId,
     name: sportLeague.name,
     matchKeyword: sportLeague.matchKeyword,
-    currentSeasonId: sportLeague.currentSeasonId,
+    currentEventYear: sportLeague.currentEventYear,
     isActive: sportLeague.isActive,
     affiliationCount: sportLeague.affiliationCount,
-    seasonCount: sportLeague.seasonCount,
+    sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),
     updatedAt: sportLeague.updatedAt.toISOString(),
   };
@@ -56,20 +54,4 @@ export function mapAffiliationToDto(affiliation: ParticipantLeagueAffiliation): 
 
 export function mapAffiliationUploadPreviewRowToDto(row: AffiliationUploadPreviewRow): ParticipantLeagueAffiliationUploadPreviewRowDto {
   return { row: row.row, resolution: row.resolution, participantId: row.participantId, participantName: row.participantName };
-}
-
-export function mapSeasonToDto(season: SeasonDetail): SeasonDto {
-  return {
-    id: season.id,
-    sportLeagueId: season.sportLeagueId,
-    name: season.name,
-    year: season.year,
-    startDate: season.startDate.toISOString(),
-    endDate: season.endDate.toISOString(),
-    isActive: season.isActive,
-    sportEventCount: season.sportEventCount,
-    isCurrent: season.isCurrent,
-    createdAt: season.createdAt.toISOString(),
-    updatedAt: season.updatedAt.toISOString(),
-  };
 }

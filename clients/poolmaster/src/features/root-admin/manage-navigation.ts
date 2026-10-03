@@ -113,7 +113,6 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   'sport-overrides': 'Sport Ingestion Overrides',
   golf: 'Golf',
   tours: 'Tours',
-  seasons: 'Seasons',
   tournaments: 'Tournaments',
   players: 'Players',
   field: 'Field',

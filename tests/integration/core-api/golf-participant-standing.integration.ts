@@ -6,6 +6,7 @@ import {
 } from '../helpers';
 import { Sport } from '@poolmaster/shared/domain';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -44,6 +45,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     });
     const event = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: 'golf-standing-event-1',
         providerId: 'integration-test',
         sport: 'GOLF',
@@ -157,8 +159,9 @@ describe('Golf live-score persistence', () => {
       create: { name: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const createEvent = (tag: string) => prisma.sportEvent.create({
+    const createEvent = async (tag: string) => prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `golf-live-${suffix}-${tag}`,
         providerId: PROVIDER,
         sport: 'GOLF',

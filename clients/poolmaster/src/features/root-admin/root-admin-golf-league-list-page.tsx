@@ -95,9 +95,13 @@ export function RootAdminGolfLeagueListPage() {
         header: 'Roster size',
         cell: ({ getValue }) => getValue(),
       }),
-      columnHelper.accessor('seasonCount', {
-        header: 'Seasons',
+      columnHelper.accessor('sportEventCount', {
+        header: 'Tournaments',
         cell: ({ getValue }) => getValue(),
+      }),
+      columnHelper.accessor('currentEventYear', {
+        header: 'Current year',
+        cell: ({ getValue }) => getValue() ?? '—',
       }),
       columnHelper.accessor('isActive', {
         header: 'Active',

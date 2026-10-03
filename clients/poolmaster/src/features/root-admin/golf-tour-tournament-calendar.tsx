@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { DataGrid, StatusBadge, Tile, formatDateTimeDisplay } from '@/features/shared/ui';
+import { DataGrid, StatusBadge, formatDateTimeDisplay } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
 import {
   deriveGolfTournamentReadiness,
@@ -55,41 +55,29 @@ const calendarColumns = [
 ];
 
 /**
- * plans/124 §6.3 Season Home — the read-only calendar of one season's own
- * tournaments (earliest first), each linking to its Tournament Home.
+ * plans/124 §6.3, reshaped by plans/147 — the read-only calendar of one tour's tournaments
+ * in one event year (earliest first), each linking to its Tournament Home.
  */
-export function GolfSeasonTournamentCalendar({
+export function GolfTourTournamentCalendar({
   isError,
-  seasonName,
   tournaments,
 }: {
   isError: boolean;
-  seasonName: string;
   tournaments: SportEventDto[];
 }) {
   return (
-    <Tile>
-      <h3 className="text-base font-semibold text-foreground">Tournament calendar</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Every tournament scheduled in {seasonName}, earliest first.
-      </p>
-      <div className="mt-4">
-        <DataGrid
-          columns={calendarColumns}
-          data={tournaments}
-          emptyMessage={
-            isError
-              ? 'We could not load this season’s tournaments right now.'
-              : 'No tournaments have been scheduled in this season yet.'
-          }
-          getRowId={(tournament) => tournament.id}
-          getRowLink={(tournament) => `/manage/golf/tournaments/${tournament.id}`}
-          rowTestId={(tournament) =>
-            `root-admin-golf-season-tournament-row-${tournament.id}`
-          }
-          tableTestId="root-admin-golf-season-home-tournaments-table"
-        />
-      </div>
-    </Tile>
+    <DataGrid
+      columns={calendarColumns}
+      data={tournaments}
+      emptyMessage={
+        isError
+          ? 'We could not load this tour’s tournaments right now.'
+          : 'No tournaments are scheduled in this year yet.'
+      }
+      getRowId={(tournament) => tournament.id}
+      getRowLink={(tournament) => `/manage/golf/tournaments/${tournament.id}`}
+      rowTestId={(tournament) => `root-admin-golf-tour-tournament-row-${tournament.id}`}
+      tableTestId="root-admin-golf-tour-calendar-table"
+    />
   );
 }

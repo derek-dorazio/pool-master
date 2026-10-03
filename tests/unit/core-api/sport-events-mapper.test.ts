@@ -15,6 +15,9 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     fieldLocked: false,
     participantCount: 144,
     metadata: {},
+    eventSeriesId: '22222222-2222-4222-8222-222222222222',
+    eventYear: 2026,
+    sportLeagueId: '33333333-3333-4333-8333-333333333333',
     syncScope: 'FULL',
     autoLifecycleEnabled: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -60,8 +63,16 @@ describe('SportEvent readiness on the wire', () => {
       location: null,
       endDate: null,
       rounds: null,
-      seasonId: null,
-      eventSeriesId: null,
+    });
+  });
+
+  // plans/147 — the series, its year and the sport league reached through the series are
+  // always present: an event has exactly one parent.
+  it('carries the event\'s series, its event year and its sport league', () => {
+    expect(mapSportEventToDto(summary(event(), 1))).toMatchObject({
+      eventSeriesId: '22222222-2222-4222-8222-222222222222',
+      eventYear: 2026,
+      sportLeagueId: '33333333-3333-4333-8333-333333333333',
     });
   });
 });

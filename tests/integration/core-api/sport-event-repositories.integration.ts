@@ -20,6 +20,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -64,6 +65,7 @@ async function golfSportId(): Promise<string> {
 
 async function createEvent(name = 'Repository Open') {
   return repos().events.create({
+    ...(await freshEventEdition(getPrisma())),
     externalId: `repo-${randomUUID()}`,
     providerId: 'integration-test',
     sport: Sport.GOLF,

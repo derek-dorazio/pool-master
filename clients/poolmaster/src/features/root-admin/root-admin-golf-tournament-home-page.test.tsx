@@ -4,13 +4,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentHomePage } from './root-admin-golf-tournament-home-page';
-import { sportEventFixture } from './golf-test-fixtures';
+import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
 // plans/124 §6.3 — Tournament Home: summary + workflow rail + score source + sections
 // (pool-master-3dg).
 
 const {
-  getSeasonMock,
+  listSportLeaguesMock,
   getEventMock,
   listEventRoundsMock,
   linkEventScoreSourceMock,
@@ -32,7 +32,7 @@ const {
   };
   logger.child.mockReturnValue(logger);
   return {
-    getSeasonMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
     getEventMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     linkEventScoreSourceMock: vi.fn(),
@@ -47,7 +47,7 @@ const {
 });
 
 bindApiMocks({
-  getSeason: getSeasonMock,
+  listSportLeagues: listSportLeaguesMock,
   getEvent: getEventMock,
   listEventRounds: listEventRoundsMock,
   linkEventScoreSource: linkEventScoreSourceMock,
@@ -78,8 +78,9 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     releaseAt: '2026-04-23T12:00:00.000Z',
     fieldLocksAt: '2026-05-06T16:00:00.000Z',
     fieldLocked: false,
-    seasonId: 'season-1',
-    eventSeriesId: '',
+    eventSeriesId: 'event-series-1',
+    eventYear: 2026,
+    sportLeagueId: 'league-1',
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
     loadedParticipantCount: 120,
@@ -102,8 +103,8 @@ function seedDefaults() {
       ],
     },
   });
-  getSeasonMock.mockResolvedValue({
-    data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
+  listSportLeaguesMock.mockResolvedValue({
+    data: { sportLeagues: [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })] },
   });
 }
 
@@ -136,7 +137,10 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     renderPage();
 
     expect(await screen.findByText('Rolling Weekend Invitational')).toBeInTheDocument();
-    expect(await screen.findByText('PGA Tour 2026')).toBeInTheDocument();
+    // plans/147 — the tour (linked) and the event year, where the season used to be.
+    expect(await screen.findByTestId('root-admin-golf-tournament-home-tour-link')).toHaveTextContent('PGA Tour');
+    expect(screen.getByTestId('root-admin-golf-tournament-home-tour-link')).toHaveAttribute('href', '/manage/golf/leagues/league-1');
+    expect(screen.getByText('Event year')).toBeInTheDocument();
 
     const rail = screen.getByTestId('root-admin-golf-tournament-workflow-rail');
     expect(within(rail).getByText('Setup')).toBeInTheDocument();
@@ -235,8 +239,8 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       data: { event: tournament({ syncScope: 'FULL' }) },
     });
     listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    getSeasonMock.mockResolvedValue({
-      data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
+    listSportLeaguesMock.mockResolvedValue({
+      data: { sportLeagues: [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })] },
     });
     renderPage();
 
@@ -350,8 +354,8 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       },
     });
     listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    getSeasonMock.mockResolvedValue({
-      data: { season: { id: 'season-1', name: 'PGA Tour 2026' } },
+    listSportLeaguesMock.mockResolvedValue({
+      data: { sportLeagues: [sportLeagueFixture({ id: 'league-1', name: 'PGA Tour' })] },
     });
     unlinkEventScoreSourceMock.mockResolvedValue({
       data: { event: tournament({ syncScope: 'NONE' }) },

@@ -1,6 +1,6 @@
 /**
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
- * Sport, SportLeague, Season, ParticipantLeagueAffiliation, SportEvent, EventSeries,
+ * Sport, SportLeague, ParticipantLeagueAffiliation, SportEvent, EventSeries,
  * SportEventRound, SportEventParticipant, SportEventTier,
  * SportEventParticipantValuation, and the core SportEventParticipantRound / Standing rows.
  *
@@ -14,9 +14,6 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
   PriceAssignment,
-  SeasonFilters,
-  SeasonRepository,
-  SeasonUpdate,
   SportEventCreate,
   SportEventFieldRecordCounts,
   SportEventFilters,
@@ -45,7 +42,6 @@ import type {
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
   ParticipantType,
-  Season,
   Sport,
   SportCategory,
   SportConfig,
@@ -121,68 +117,9 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.matchKeyword !== undefined && { matchKeyword: updates.matchKeyword }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
-        ...(updates.currentSeasonId !== undefined && { currentSeasonId: updates.currentSeasonId }),
+        ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
       },
     }));
-  }
-}
-
-export class PrismaSeasonRepository implements SeasonRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findById(id: string): Promise<Season | null> {
-    const row = await this.prisma.season.findUnique({ where: { id } });
-    return row ? toSeason(row) : null;
-  }
-
-  async findAll(filters: SeasonFilters): Promise<Season[]> {
-    const rows = await this.prisma.season.findMany({
-      where: {
-        ...(filters.sportId !== undefined && { sportLeague: { sportId: filters.sportId } }),
-        ...(filters.sportLeagueId !== undefined && { sportLeagueId: filters.sportLeagueId }),
-        ...(filters.isActive !== undefined && { isActive: filters.isActive }),
-      },
-      orderBy: [{ sportLeagueId: 'asc' }, { year: 'desc' }],
-    });
-    return rows.map(toSeason);
-  }
-
-  async findBySportLeagueAndYear(sportLeagueId: string, year: number): Promise<Season | null> {
-    const row = await this.prisma.season.findUnique({ where: { sportLeagueId_year: { sportLeagueId, year } } });
-    return row ? toSeason(row) : null;
-  }
-
-  async create(input: Pick<Season, 'sportLeagueId' | 'name' | 'year' | 'startDate' | 'endDate'>): Promise<Season> {
-    return toSeason(await this.prisma.season.create({
-      data: {
-        sportLeagueId: input.sportLeagueId,
-        name: input.name,
-        year: input.year,
-        startDate: input.startDate,
-        endDate: input.endDate,
-      },
-    }));
-  }
-
-  async update(id: string, updates: SeasonUpdate): Promise<Season> {
-    return toSeason(await this.prisma.season.update({
-      where: { id },
-      data: {
-        ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.startDate !== undefined && { startDate: updates.startDate }),
-        ...(updates.endDate !== undefined && { endDate: updates.endDate }),
-        ...(updates.isActive !== undefined && { isActive: updates.isActive }),
-      },
-    }));
-  }
-
-  async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.season.groupBy({
-      by: ['sportLeagueId'],
-      where: { sportLeagueId: { in: [...sportLeagueIds] } },
-      _count: { _all: true },
-    });
-    return countMap(sportLeagueIds, groups.map((group) => [group.sportLeagueId, group._count._all]));
   }
 }
 
@@ -248,12 +185,12 @@ export class PrismaSportEventRepository implements SportEventRepository {
   constructor(private readonly prisma: Db) {}
 
   async findById(id: string): Promise<SportEvent | null> {
-    const row = await this.prisma.sportEvent.findUnique({ where: { id } });
+    const row = await this.prisma.sportEvent.findUnique({ where: { id }, include: SPORT_EVENT_INCLUDE });
     return row ? toSportEvent(row) : null;
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
-    const row = await this.prisma.sportEvent.findFirst({ where: { providerId, externalId } });
+    const row = await this.prisma.sportEvent.findFirst({ where: { providerId, externalId }, include: SPORT_EVENT_INCLUDE });
     return row ? toSportEvent(row) : null;
   }
 
@@ -262,9 +199,11 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
         ...(filters.status !== undefined && { status: filters.status }),
-        ...(filters.seasonId !== undefined && { seasonId: filters.seasonId }),
+        ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
+        ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
       },
+      include: SPORT_EVENT_INCLUDE,
       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],
     });
     return rows.map(toSportEvent);
@@ -285,11 +224,12 @@ export class PrismaSportEventRepository implements SportEventRepository {
         rounds: input.rounds ?? null,
         releaseAt: input.releaseAt,
         fieldLocksAt: input.fieldLocksAt,
-        seasonId: input.seasonId ?? null,
-        eventSeriesId: input.eventSeriesId ?? null,
+        eventSeriesId: input.eventSeriesId,
+        eventYear: input.eventYear,
         syncScope: input.syncScope,
         autoLifecycleEnabled: input.autoLifecycleEnabled,
       },
+      include: SPORT_EVENT_INCLUDE,
     }));
   }
 
@@ -311,6 +251,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.externalId !== undefined && { externalId: updates.externalId }),
         ...(updates.syncScope !== undefined && { syncScope: updates.syncScope }),
       },
+      include: SPORT_EVENT_INCLUDE,
     }));
   }
 
@@ -358,13 +299,31 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return countMap(sportEventIds, groups.flatMap((group) => (group.sportEventId ? [[group.sportEventId, group._count._all] as [string, number]] : [])));
   }
 
-  async countBySeasons(seasonIds: readonly string[]): Promise<Map<string, number>> {
+  async countBySportLeagues(
+    sportLeagueIds: readonly string[],
+    filters: { eventYear?: number } = {},
+  ): Promise<Map<string, number>> {
+    // groupBy cannot group through a relation, so the events are counted per series and
+    // the series folded into their sport league.
+    const series = await this.prisma.eventSeries.findMany({
+      where: { sportLeagueId: { in: [...sportLeagueIds] } },
+      select: { id: true, sportLeagueId: true },
+    });
     const groups = await this.prisma.sportEvent.groupBy({
-      by: ['seasonId'],
-      where: { seasonId: { in: [...seasonIds] } },
+      by: ['eventSeriesId'],
+      where: {
+        eventSeriesId: { in: series.map((row) => row.id) },
+        ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
+      },
       _count: { _all: true },
     });
-    return countMap(seasonIds, groups.flatMap((group) => (group.seasonId ? [[group.seasonId, group._count._all] as [string, number]] : [])));
+    const leagueBySeries = new Map(series.map((row) => [row.id, row.sportLeagueId]));
+    const counts = new Map(sportLeagueIds.map((id) => [id, 0]));
+    for (const group of groups) {
+      const sportLeagueId = leagueBySeries.get(group.eventSeriesId);
+      if (sportLeagueId) counts.set(sportLeagueId, (counts.get(sportLeagueId) ?? 0) + group._count._all);
+    }
+    return counts;
   }
 
   async summarizeByProviders(providerIds: readonly string[]): Promise<Map<string, SportEventProviderSummary>> {
@@ -418,6 +377,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         syncScope: { not: SportEventSyncScope.FULL },
         status: { in: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS] },
       },
+      include: SPORT_EVENT_INCLUDE,
     });
     return rows.map(toSportEvent);
   }
@@ -754,21 +714,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     sportId: row.sportId,
     name: row.name,
     matchKeyword: row.matchKeyword,
-    currentSeasonId: row.currentSeasonId,
-    isActive: row.isActive,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toSeason(row: Prisma.SeasonGetPayload<object>): Season {
-  return {
-    id: row.id,
-    sportLeagueId: row.sportLeagueId,
-    name: row.name,
-    year: row.year,
-    startDate: row.startDate,
-    endDate: row.endDate,
+    currentEventYear: row.currentEventYear,
     isActive: row.isActive,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -789,7 +735,10 @@ function toAffiliation(
   };
 }
 
-function toSportEvent(row: Prisma.SportEventGetPayload<object>): SportEvent {
+/** Every SportEvent read carries its series' sport league, the event's one path to it. */
+const SPORT_EVENT_INCLUDE = { eventSeries: { select: { sportLeagueId: true } } } as const;
+
+function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
   return {
     id: row.id,
     externalId: row.externalId,
@@ -807,8 +756,9 @@ function toSportEvent(row: Prisma.SportEventGetPayload<object>): SportEvent {
     releaseAt: row.releaseAt,
     fieldLocksAt: row.fieldLocksAt,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    seasonId: row.seasonId ?? undefined,
-    eventSeriesId: row.eventSeriesId ?? undefined,
+    eventSeriesId: row.eventSeriesId,
+    eventYear: row.eventYear,
+    sportLeagueId: row.eventSeries.sportLeagueId,
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     createdAt: row.createdAt,

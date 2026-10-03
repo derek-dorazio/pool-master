@@ -51,7 +51,7 @@ function createMockInvitationRepo(overrides: Partial<LeagueInvitationRepository>
 }
 
 describe('BulkService', () => {
-  // #202 — the `copyLastSeason` suite is gone with the method (§1D). The route had no frontend
+  // #202 — the last-season copy suite is gone with the method (§1D). The route had no frontend
   // caller and the repo owner removed it from scope.
 
   describe('importMembersFromCsv', () => {

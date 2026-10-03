@@ -10,6 +10,7 @@ import {
   FormField,
   FormModal,
   Input,
+  LinkButton,
   Tile,
   formatDateTimeDisplay,
   toDateTimeLocalValue,
@@ -71,12 +72,12 @@ function toRequestBody(values: EditFormValues): UpdateSportEventRequest {
 export function GolfTournamentSummaryCard({
   eventId,
   readOnly,
-  seasonName,
+  tourName,
   tournament,
 }: {
   eventId: string;
   readOnly: boolean;
-  seasonName: string | undefined;
+  tourName: string | undefined;
   tournament: SportEventDto;
 }) {
   const logger = getLogger().child({
@@ -157,10 +158,20 @@ export function GolfTournamentSummaryCard({
           },
           { id: 'rounds', label: 'Rounds', value: tournament.rounds ?? 'Not set' },
           {
-            id: 'season',
-            label: 'Season',
-            value: seasonName ?? tournament.seasonId ?? 'Not set',
+            id: 'tour',
+            label: 'Tour',
+            value: (
+              <LinkButton
+                data-testid="root-admin-golf-tournament-home-tour-link"
+                size="sm"
+                to={`/manage/golf/leagues/${tournament.sportLeagueId}`}
+                variant="secondary"
+              >
+                {tourName ?? 'Open tour'}
+              </LinkButton>
+            ),
           },
+          { id: 'event-year', label: 'Event year', value: tournament.eventYear },
         ]}
       />
 
@@ -221,7 +232,7 @@ export function GolfTournamentSummaryCard({
           </div>
           <FormField
             error={form.formState.errors.rounds?.message}
-            helperText="The season is fixed at creation and cannot be changed."
+            helperText="The tour and event year are fixed at creation and cannot be changed."
             label="Rounds"
           >
             <Input min={1} type="number" {...form.register('rounds')} />

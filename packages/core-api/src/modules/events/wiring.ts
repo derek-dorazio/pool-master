@@ -15,7 +15,6 @@ import {
   PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
-  PrismaSeasonRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
   PrismaSportEventParticipantRepository,
@@ -32,7 +31,6 @@ import {
 } from '../../adapters';
 import type { MailDeliveryProvider } from '../email';
 import { GolfScoreService } from '../golf/golf-score-service';
-import { SeasonService } from '../sport-catalog/season-service';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
 import { EventLifecycleService, type CompletedSportEventSettlement } from './event-lifecycle-service';
 import { SportEventService } from './service';
@@ -68,7 +66,6 @@ export interface SportEventServices {
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
   sportLeagues: SportLeagueService;
-  seasons: SeasonService;
 }
 
 /** The event's field as every reader sees it — the event admin screens and the contest golf reads alike. */
@@ -77,7 +74,6 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
     sportEvents: new PrismaSportEventRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
-    seasons: new PrismaSeasonRepository(prisma),
     affiliations: new PrismaParticipantLeagueAffiliationRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     standings: new PrismaSportEventParticipantStandingRepository(prisma),
@@ -91,7 +87,6 @@ export function createSportEventParticipantService(prisma: PrismaClient, logger?
 export function createSportEventServices(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventServices {
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
-  const seasons = new PrismaSeasonRepository(prisma);
   const events = new PrismaSportEventRepository(prisma);
   const affiliations = new PrismaParticipantLeagueAffiliationRepository(prisma);
   const participants = new PrismaParticipantRepository(prisma);
@@ -104,7 +99,6 @@ export function createSportEventServices(prisma: PrismaClient, logger?: FastifyB
     sportEvents: new SportEventService({
       sportEvents: events,
       eventSeries: new PrismaEventSeriesRepository(prisma),
-      seasons,
       sportLeagues,
       sports,
       rounds,
@@ -113,8 +107,7 @@ export function createSportEventServices(prisma: PrismaClient, logger?: FastifyB
     }),
     field: createSportEventParticipantService(prisma, logger),
     golfScores: createGolfScoreService(prisma, logger),
-    sportLeagues: new SportLeagueService({ sports, sportLeagues, seasons, affiliations, participants, logger }),
-    seasons: new SeasonService({ sportLeagues, seasons, sportEvents: events, logger }),
+    sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };
 }
 

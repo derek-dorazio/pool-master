@@ -16,8 +16,13 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import type { SeasonDto } from '@/lib/api';
-import { GolfTournamentSeasonSelect } from './golf-tournament-season-select';
+import type { SportLeagueDto } from '@/lib/api';
+import {
+  GolfTournamentEditionFields,
+  isCompleteEdition,
+  parseEventYear,
+  type GolfTournamentEdition,
+} from './golf-tournament-edition-fields';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import {
   useGolfProviderCatalog,
@@ -32,16 +37,15 @@ function defaultWindowValue(offsetDays: number): string {
 }
 
 export function GolfTournamentProviderBrowse({
-  onSeasonChange,
-  scopedSeason,
-  seasonId,
-  seasons,
+  edition,
+  onEditionChange,
+  tours,
 }: {
-  onSeasonChange: (seasonId: string) => void;
-  scopedSeason: SeasonDto | undefined;
-  seasonId: string;
-  seasons: readonly SeasonDto[];
+  edition: GolfTournamentEdition;
+  onEditionChange: (edition: GolfTournamentEdition) => void;
+  tours: readonly SportLeagueDto[];
 }) {
+  const scopedTour = tours.find((tour) => tour.id === edition.sportLeagueId);
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-create-page',
   });
@@ -58,7 +62,7 @@ export function GolfTournamentProviderBrowse({
     enabled: true,
     from: localDateTimeInputToIso(browseFrom),
     to: localDateTimeInputToIso(browseTo),
-    sportLeagueId: scopedSeason?.sportLeagueId,
+    sportLeagueId: scopedTour?.id,
     search: browseSearch,
   });
   const providerId = catalog.providerId;
@@ -71,7 +75,8 @@ export function GolfTournamentProviderBrowse({
       const roundsValue = Number.parseInt(providerRounds, 10);
       const response = await createEventFromProviderEvent({
         body: {
-          seasonId,
+          sportLeagueId: edition.sportLeagueId,
+          eventYear: parseEventYear(edition.eventYear) as number,
           providerId,
           externalId: selectedEvent.externalId,
           ...(Number.isNaN(roundsValue) ? {} : { rounds: roundsValue }),
@@ -132,9 +137,9 @@ export function GolfTournamentProviderBrowse({
             </FormField>
           </div>
 
-          {scopedSeason?.sportLeagueId ? (
+          {scopedTour ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Filtered to {scopedSeason.name}&rsquo;s tour.
+              Filtered to {scopedTour.name}.
             </p>
           ) : null}
 
@@ -206,11 +211,7 @@ export function GolfTournamentProviderBrowse({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <GolfTournamentSeasonSelect
-                onChange={onSeasonChange}
-                seasons={seasons}
-                value={seasonId}
-              />
+              <GolfTournamentEditionFields edition={edition} onChange={onEditionChange} tours={tours} />
               <FormField
                 helperText="The provider contract has no round count; adjust per-round dates later."
                 label="Rounds"
@@ -233,7 +234,7 @@ export function GolfTournamentProviderBrowse({
             <div className="flex justify-end">
               <Button
                 data-testid="root-admin-golf-tournament-create-provider-submit"
-                disabled={seasonId === '' || createMutation.isPending}
+                disabled={!isCompleteEdition(edition) || createMutation.isPending}
                 isLoading={createMutation.isPending}
                 onClick={() => createMutation.mutate()}
                 type="button"
@@ -245,6 +246,9 @@ export function GolfTournamentProviderBrowse({
             {createMutation.isError ? (
               <p className="text-sm font-medium text-destructive">
                 {extractErrorMessage(createMutation.error, {
+                  codeMessages: {
+                    EVENT_EDITION_ALREADY_EXISTS: `This tour already has a ${edition.eventYear} edition of this tournament.`,
+                  },
                   fallback: 'We could not create this tournament.',
                 })}
               </p>

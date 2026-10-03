@@ -8,6 +8,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -37,6 +38,7 @@ describe('events routes', () => {
     await prisma.sportEvent.createMany({
       data: [
         {
+          ...(await freshEventEdition(prisma)),
           id: eligibleEventId,
           providerId: 'integration-test',
           externalId: `events-eligible-${eligibleEventId}`,
@@ -52,6 +54,7 @@ describe('events routes', () => {
           metadata: {},
         },
         {
+          ...(await freshEventEdition(prisma)),
           id: filteredOutEventId,
           providerId: 'integration-test',
           externalId: `events-filtered-${filteredOutEventId}`,
@@ -153,6 +156,7 @@ describe('events routes', () => {
     await prisma.sportEvent.createMany({
       data: [
         {
+          ...(await freshEventEdition(prisma)),
           id: notReleasedEventId,
           providerId: 'integration-test',
           externalId: `events-not-released-${notReleasedEventId}`,
@@ -168,6 +172,7 @@ describe('events routes', () => {
           metadata: {},
         },
         {
+          ...(await freshEventEdition(prisma)),
           id: lockedEventId,
           providerId: 'integration-test',
           externalId: `events-locked-${lockedEventId}`,

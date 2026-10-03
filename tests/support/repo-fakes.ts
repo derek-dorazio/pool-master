@@ -64,7 +64,6 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
-  SeasonRepository,
   SportEventRepository,
   SportLeagueRepository,
   SportRepository,
@@ -226,18 +225,6 @@ export function fakeSportLeagueRepo(overrides: Partial<SportLeagueRepository> = 
   };
 }
 
-export function fakeSeasonRepo(overrides: Partial<SeasonRepository> = {}): SeasonRepository {
-  return {
-    findById: one(),
-    findAll: many(),
-    findBySportLeagueAndYear: one(),
-    create: echoCreate('season'),
-    update: echoUpdate(),
-    countBySportLeagues: noCounts(),
-    ...overrides,
-  };
-}
-
 export function fakeParticipantLeagueAffiliationRepo(
   overrides: Partial<ParticipantLeagueAffiliationRepository> = {},
 ): ParticipantLeagueAffiliationRepository {
@@ -272,7 +259,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     countParticipants: noCounts(),
     countTiers: noCounts(),
     countContests: noCounts(),
-    countBySeasons: noCounts(),
+    countBySportLeagues: noCounts(),
     summarizeByProviders: noCounts(),
     countFieldRecords: noCounts(),
     findAutoLifecycleCandidates: many(),

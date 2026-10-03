@@ -15,7 +15,6 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
-  SeasonRepository,
   SportEventCreate,
   SportEventParticipantCreate,
   SportEventParticipantGolfRoundRepository,
@@ -38,7 +37,6 @@ import type {
   Participant,
   ParticipantLeagueAffiliation,
   ParticipantProviderMapping,
-  Season,
   SportConfig,
   SportEvent,
   SportEventParticipant,
@@ -66,7 +64,6 @@ export class InMemorySportEvents {
   private sequence = 0;
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
-  seasons: Season[] = [];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   affiliationRows: Array<Omit<ParticipantLeagueAffiliation, 'participant'>> = [];
@@ -97,18 +94,9 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, currentSeasonId: null, isActive: true });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, currentEventYear: null, isActive: true });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
-  }
-
-  addSeason(sportLeagueId: string, year = 2026): Season {
-    const season = stamp({
-      id: this.id('season'), sportLeagueId, name: `Season ${year}`, year,
-      startDate: new Date(`${year}-01-01T00:00:00.000Z`), endDate: new Date(`${year}-12-31T00:00:00.000Z`), isActive: true,
-    });
-    this.seasons.push(season);
-    return season;
   }
 
   addParticipant(sportId: string, name: string, overrides: Partial<Participant> = {}): Participant {
@@ -124,9 +112,14 @@ export class InMemorySportEvents {
     this.affiliationRows.push(stamp({ id: this.id('affiliation'), sportLeagueId, participantId, ranking }));
   }
 
+  /**
+   * An event, by default an edition of a series of its own on a placeholder sport league.
+   * Pass `sportLeagueId` (and `eventSeriesId`, `eventYear`) to place it on a real one.
+   */
   addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     const event = stamp({
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', name: 'Open',
+      eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: 'sport-league-unplaced',
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED', fieldLocked: false,
       releaseAt: new Date('2026-05-21T12:00:00.000Z'), fieldLocksAt: new Date('2026-06-03T12:00:00.000Z'),
       metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...overrides,
@@ -164,7 +157,7 @@ export class InMemorySportEvents {
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, currentSeasonId: null, isActive: true });
+        const created = stamp({ id: this.id('sport-league'), ...input, currentEventYear: null, isActive: true });
         this.sportLeagues.push(created);
         return created;
       },
@@ -173,28 +166,6 @@ export class InMemorySportEvents {
         Object.assign(row, Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)));
         return row;
       },
-    };
-  }
-
-  seasonRepo(): SeasonRepository {
-    return {
-      findById: async (id) => this.seasons.find((row) => row.id === id) ?? null,
-      findAll: async (filters) => this.seasons.filter((row) => (
-        (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
-        && (filters.isActive === undefined || row.isActive === filters.isActive)
-      )).sort((left, right) => right.year - left.year),
-      findBySportLeagueAndYear: async (sportLeagueId, year) => this.seasons.find((row) => row.sportLeagueId === sportLeagueId && row.year === year) ?? null,
-      create: async (input) => {
-        const created = stamp({ id: this.id('season'), ...input, isActive: true });
-        this.seasons.push(created);
-        return created;
-      },
-      update: async (id, updates) => {
-        const row = this.seasons.find((candidate) => candidate.id === id) as Season;
-        Object.assign(row, Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)));
-        return row;
-      },
-      countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.seasons.filter((row) => row.sportLeagueId === id).length])),
     };
   }
 
@@ -282,10 +253,21 @@ export class InMemorySportEvents {
       findAll: async (filters) => this.events.filter((row) => (
         (filters.sport === undefined || row.sport === filters.sport)
         && (filters.status === undefined || row.status === filters.status)
-        && (filters.seasonId === undefined || row.seasonId === filters.seasonId)
+        && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
+        && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
       )),
-      create: async (input: SportEventCreate) => this.addEvent({ ...input, metadata: {}, fieldLocked: false }),
+      create: async (input: SportEventCreate) => {
+        // The database's one-edition-per-year constraint, raised the way Prisma raises it.
+        if (this.events.some((row) => row.eventSeriesId === input.eventSeriesId && row.eventYear === input.eventYear)) {
+          throw Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+            meta: { target: ['event_series_id', 'event_year'] },
+          });
+        }
+        const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
+        return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {}, fieldLocked: false });
+      },
       update: async (id, updates: SportEventUpdate) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
         for (const [key, value] of Object.entries(updates)) {
@@ -304,7 +286,9 @@ export class InMemorySportEvents {
       countParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => row.sportEventId === id).length),
       countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
-      countBySeasons: async (ids) => count(ids, (id) => this.events.filter((row) => row.seasonId === id).length),
+      countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
+        row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
+      )).length),
       summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
         const events = this.events.filter((row) => row.providerId === providerId);
         const changed = events.map((row) => row.updatedAt.getTime());

@@ -423,7 +423,7 @@ export function leaguesModule(fastify: FastifyInstance): void {
    */
 
   /*
-   * #202 — `copySeason` is gone. It copied prior contest definitions into a league to bootstrap
+   * #202 — the copy-season operation is gone. It copied prior contest definitions into a league to bootstrap
    * a new season, had no frontend caller, and the repo owner removed it from scope.
    */
 

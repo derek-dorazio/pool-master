@@ -4,6 +4,7 @@ import type {
   AddSportEventParticipantsResponse,
   AutoAssignSportEventPricesRequest,
   AutoAssignSportEventTiersRequest,
+  CloneSportEventYearRequest,
   CreateSportEventFromProviderEventRequest,
   CreateSportEventRequest,
   LinkSportEventScoreSourceRequest,
@@ -113,16 +114,22 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Body: CreateSportEventFromProviderEventRequest }>,
       reply: FastifyReply,
     ) => {
-      const { seasonId, providerId, externalId, rounds: roundCount } = request.body;
+      const { sportLeagueId, eventYear, providerId, externalId, rounds: roundCount } = request.body;
       const providerEvent = await scoreSource.getProviderEventDetail(providerId, externalId);
       const created = await sportEvents.createEventFromProviderEvent({
-        seasonId,
+        sportLeagueId,
+        eventYear,
         providerId,
         externalId,
         rounds: roundCount,
         providerEvent,
       });
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
+    },
+
+    cloneEventYear: async (request: FastifyRequest<{ Body: CloneSportEventYearRequest }>, reply: FastifyReply) => {
+      const cloned = await sportEvents.cloneEventYear(request.body);
+      return reply.status(201).send({ events: cloned.map(mapSportEventToDto) } satisfies SportEventListResponse);
     },
 
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {

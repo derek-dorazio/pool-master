@@ -32,8 +32,34 @@ function buildInProgressEvent(): SportEvent {
   };
 }
 
+/** The sport_events row of an event already linked to the provider event (plans/147: sync only updates these). */
+function linkedRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'sport-event-1',
+    externalId: 'provider-event-1',
+    providerId: 'mock-contest-feed',
+    sport: Sport.GOLF,
+    name: 'Manual Test Golf Tournament',
+    venue: null,
+    location: null,
+    startDate: new Date('2026-05-02T20:00:00.000Z'),
+    endDate: null,
+    status: 'SCHEDULED',
+    rounds: 4,
+    participantCount: null,
+    releaseAt: new Date('2026-05-01T20:00:00.000Z'),
+    fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
+    fieldLocked: false,
+    metadata: {},
+    ...overrides,
+  };
+}
+
 describe('IngestionPersistence', () => {
-  it('pool-master-rop.68.1.4 reports created and updated sport event write diagnostics', async () => {
+  // plans/147 — sync never creates a SportEvent: a provider event names no series or sport
+  // league, so a created row would have to guess its tour. A linked event is updated; an
+  // unlinked one is skipped and logged, and no row is written for it.
+  it('pool-master-rop.68.1.4, plans/147: reports the update of a linked event and skips a provider event no event is linked to', async () => {
     const existingStartDate = new Date('2026-06-04T12:00:00.000Z');
     const existingReleaseAt = new Date('2026-05-21T12:00:00.000Z');
     const existingFieldLocksAt = new Date('2026-06-03T16:00:00.000Z');
@@ -41,6 +67,7 @@ describe('IngestionPersistence', () => {
       sportEvent: {
         findUnique: jest.fn()
           .mockResolvedValueOnce({
+            id: 'sport-event-1',
             externalId: 'golf-weekend-1',
             providerId: 'mock-contest-feed',
             sport: Sport.GOLF,
@@ -62,12 +89,13 @@ describe('IngestionPersistence', () => {
             },
           })
           .mockResolvedValueOnce(null),
-        upsert: jest.fn()
-          .mockResolvedValueOnce({ id: 'sport-event-1' })
-          .mockResolvedValueOnce({ id: 'sport-event-2' }),
+        update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }),
+        create: jest.fn(),
+        upsert: jest.fn(),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const logger = createLogger();
+    const persistence = new IngestionPersistence(prisma as any, logger as any);
     const events: SportEvent[] = [
       {
         externalId: 'golf-weekend-1',
@@ -110,13 +138,13 @@ describe('IngestionPersistence', () => {
     const result = await persistence.persistEventsWithDiagnostics(events);
 
     expect(result).toMatchObject({
-      count: 2,
-      value: 2,
+      count: 1,
+      value: 1,
       writeDiagnostics: {
         summary: {
-          total: 2,
+          total: 1,
           unchanged: 0,
-          created: 1,
+          created: 0,
           updated: 1,
           deleted: 0,
         },
@@ -134,18 +162,18 @@ describe('IngestionPersistence', () => {
               participantCount: 80,
             }),
           }),
-          expect.objectContaining({
-            entityType: 'SportEvent',
-            disposition: 'CREATED',
-            internalId: 'sport-event-2',
-            after: expect.objectContaining({
-              externalId: 'golf-weekend-2',
-              participantCount: 80,
-            }),
-          }),
         ],
       },
     });
+    expect(result.writeDiagnostics?.rows).toHaveLength(1);
+    expect(prisma.sportEvent.update).toHaveBeenCalledTimes(1);
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'sport-event-1' } }));
+    expect(prisma.sportEvent.create).not.toHaveBeenCalled();
+    expect(prisma.sportEvent.upsert).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ externalId: 'golf-weekend-2' }),
+      'Skipped provider event with no linked sport event',
+    );
   });
 
   it('pool-master-rop.68.1.3 persists provider-scoped participant ranking snapshots by provider mapping', async () => {
@@ -323,9 +351,9 @@ describe('IngestionPersistence', () => {
   it('pool-master-rop.68.1.3 hydrates event participants with seed, event-scoped odds, and latest global rank', async () => {
     const prisma = {
       sportEvent: {
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
-          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(linkedRow())
           .mockResolvedValueOnce({ id: 'sport-event-1' }),
       },
       contest: {
@@ -430,7 +458,7 @@ describe('IngestionPersistence', () => {
     };
     const prisma = {
       sportEvent: {
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
           .mockResolvedValueOnce({
             id: 'sport-event-1',
@@ -514,9 +542,9 @@ describe('IngestionPersistence', () => {
   it('pool-master-rop.68.1.3 does not bleed mismatched event odds or absent global ranking onto event participants', async () => {
     const prisma = {
       sportEvent: {
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
-          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(linkedRow())
           .mockResolvedValueOnce({ id: 'sport-event-1' }),
       },
       contest: {
@@ -599,8 +627,8 @@ describe('IngestionPersistence', () => {
   it('pool-master-g1z calls eventLifecycleService.applySportEventStatusTransition for each persisted event', async () => {
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn().mockResolvedValue(linkedRow()),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
     };
     const eventLifecycleService = {
@@ -624,16 +652,15 @@ describe('IngestionPersistence', () => {
   it('pool-master-g1z does not write SportEvent.status directly — EventLifecycleService owns that write', async () => {
     const prisma = {
       sportEvent: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn().mockResolvedValue(linkedRow()),
+        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
     };
     const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
 
     await persistence.persistEvents([buildInProgressEvent()]);
 
-    const [upsertArg] = (prisma.sportEvent.upsert as jest.Mock).mock.calls[0];
-    expect(upsertArg.create).not.toHaveProperty('status');
-    expect(upsertArg.update).not.toHaveProperty('status');
+    const [updateArg] = (prisma.sportEvent.update as jest.Mock).mock.calls[0];
+    expect(updateArg.data).not.toHaveProperty('status');
   });
 });

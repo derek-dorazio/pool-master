@@ -5,7 +5,7 @@ import { RootAdminGolfHubPage } from './root-admin-golf-hub-page';
 
 // plans/124 §6.3 — /manage/golf hub cards (pool-master-3dg).
 describe('RootAdminGolfHubPage', () => {
-  it('pool-master-3dg links each golf surface, including stubbed Tours/Seasons/Players', () => {
+  it('pool-master-3dg links each golf surface; plans/147 folded the seasons card into Tours', () => {
     render(
       <MemoryRouter>
         <RootAdminGolfHubPage />
@@ -21,10 +21,7 @@ describe('RootAdminGolfHubPage', () => {
       'href',
       '/manage/golf/leagues',
     );
-    expect(screen.getByTestId('root-admin-golf-hub-link-seasons')).toHaveAttribute(
-      'href',
-      '/manage/golf/seasons',
-    );
+    expect(screen.queryByTestId('root-admin-golf-hub-link-seasons')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-golf-hub-link-players')).toHaveAttribute(
       'href',
       '/manage/golf/players',
