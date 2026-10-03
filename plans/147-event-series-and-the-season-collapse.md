@@ -352,7 +352,8 @@ groups the event list by `eventYear` and compares it with `sportLeague.currentEv
    rest**, logged; an admin creates and links events, which is plans/125's direction anyway.
    This is a behaviour change and the call most worth a second look.
 2. Pre-flight (a), above, in both its versions.
-3. Slice 1's footprint was 26 hand-written files, not 21: the ports
+3. Slice 1's footprint was 28 hand-written files counted as this plan counted them (schema and
+   migration included), not 21 — 26 beyond those two: the ports
    (`shared/db/sport-catalog-ports.ts`, `shared/db/index.ts`), both golf functional suites, the
    integration helpers and the root-admin contract-verification spec all named `LeagueEvent`.
 4. "Generate migrations with the tooling" cannot be met literally. `prisma migrate dev` emits
