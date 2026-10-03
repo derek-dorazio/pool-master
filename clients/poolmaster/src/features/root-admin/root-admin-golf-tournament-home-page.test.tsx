@@ -79,7 +79,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     fieldLocksAt: '2026-05-06T16:00:00.000Z',
     fieldLocked: false,
     seasonId: 'season-1',
-    leagueEventId: '',
+    eventSeriesId: '',
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
     loadedParticipantCount: 120,

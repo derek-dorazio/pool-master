@@ -545,7 +545,7 @@ model SportLeague {
   currentSeason Season?                        @relation("CurrentSeason", fields: [currentSeasonId], references: [id])
   seasons       Season[]                       @relation("LeagueSeasons")
   affiliations  ParticipantLeagueAffiliation[]
-  leagueEvents  LeagueEvent[]
+  eventSeries   EventSeries[]
 
   @@unique([sportId, name])
   @@map("sport_leagues")
@@ -553,14 +553,17 @@ model SportLeague {
 
 /// A recurring, named tournament that repeats year after year under one
 /// stable identity — "The Masters," "The US Open" — separate from any one
-/// year's SportEvent instance of it. SportEvent rows point here; this never
-/// points to a specific year. Nullable on SportEvent and auto-resolved by
-/// find-or-create on (sportLeagueId, name) at tournament creation — no new
-/// admin decision (plans/124 §4.3a).
-model LeagueEvent {
+/// year's SportEvent edition of it. SportEvent rows point here; this never
+/// points to a specific year. Auto-resolved by find-or-create on
+/// (sportLeagueId, name) at tournament creation — no new admin decision
+/// (plans/124 §4.3a). See plans/147.
+model EventSeries {
   id            String   @id @default(uuid()) @db.Uuid
   sportLeagueId String   @map("sport_league_id") @db.Uuid
   name          String
+  /// A dimension's lifecycle, like SportLeague's: false retires the series
+  /// without touching its past editions (plans/147 decision 9).
+  isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -568,7 +571,7 @@ model LeagueEvent {
   sportEvents SportEvent[]
 
   @@unique([sportLeagueId, name])
-  @@map("league_events")
+  @@map("event_series")
 }
 
 /// Purely a tournament-calendar grouping ("this league's year") — not a
@@ -992,11 +995,11 @@ model SportEvent {
   // admin-authored creation (plans/124 §5.2) is the only creation path and
   // the sync-create path is retired (plans/125) — see plans/124 §4.3.
   seasonId             String?                   @map("season_id") @db.Uuid
-  // Nullable — not every tournament is a recurring one (a one-off exhibition
-  // doesn't need a stable identity). Auto-resolved by find-or-create on
+  // The series this is one edition of. Nullable only until plans/147 slice 2
+  // backfills it from the season. Auto-resolved by find-or-create on
   // (sportLeagueId, name) at tournament creation, never an admin decision
   // (plans/124 §4.3a).
-  leagueEventId        String?                   @map("league_event_id") @db.Uuid
+  eventSeriesId        String?                   @map("event_series_id") @db.Uuid
   // Sync eligibility, separate from providerId/externalId identity — see
   // plans/124 §3.5/§4.4. @default(FULL) keeps every ingestion-created row
   // behaving exactly as it does today; only admin-authored tournaments
@@ -1014,7 +1017,7 @@ model SportEvent {
   tiers                  SportEventTier[]
   roundSchedule          SportEventRound[]
   season                 Season?                 @relation(fields: [seasonId], references: [id])
-  leagueEvent            LeagueEvent?            @relation(fields: [leagueEventId], references: [id])
+  eventSeries            EventSeries?            @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
   @@index([sport, status])

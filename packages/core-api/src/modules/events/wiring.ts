@@ -11,7 +11,7 @@ import {
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
-  PrismaLeagueEventRepository,
+  PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
@@ -103,7 +103,7 @@ export function createSportEventServices(prisma: PrismaClient, logger?: FastifyB
     tiers,
     sportEvents: new SportEventService({
       sportEvents: events,
-      leagueEvents: new PrismaLeagueEventRepository(prisma),
+      eventSeries: new PrismaEventSeriesRepository(prisma),
       seasons,
       sportLeagues,
       sports,

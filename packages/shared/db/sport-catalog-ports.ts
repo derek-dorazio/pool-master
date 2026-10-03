@@ -5,7 +5,7 @@
  */
 
 import type {
-  LeagueEvent,
+  EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
   Season,
@@ -157,9 +157,9 @@ export interface SportEventRepository {
   findAutoLifecycleCandidates(): Promise<SportEvent[]>;
 }
 
-export interface LeagueEventRepository {
+export interface EventSeriesRepository {
   /** The sport league's recurring event of this name, created on first use. */
-  findOrCreate(sportLeagueId: string, name: string): Promise<LeagueEvent>;
+  findOrCreate(sportLeagueId: string, name: string): Promise<EventSeries>;
 }
 
 export interface SportEventRoundSchedule {

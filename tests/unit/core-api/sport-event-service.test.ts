@@ -15,7 +15,7 @@ function setup(sportName: Sport = Sport.GOLF) {
   const season = store.addSeason(sportLeague.id);
   const service = new SportEventService({
     sportEvents: store.sportEventRepo(),
-    leagueEvents: store.leagueEventRepo(),
+    eventSeries: store.eventSeriesRepo(),
     seasons: store.seasonRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
@@ -58,8 +58,8 @@ describe('SportEventService.createEvent', () => {
     const first = await service.createEvent({ seasonId: season.id, ...MANUAL_INPUT });
     const second = await service.createEvent({ seasonId: season.id, ...MANUAL_INPUT, rounds: 2 });
 
-    expect(second.event.leagueEventId).toBe(first.event.leagueEventId);
-    expect(store.leagueEventRows).toHaveLength(1);
+    expect(second.event.eventSeriesId).toBe(first.event.eventSeriesId);
+    expect(store.eventSeriesRows).toHaveLength(1);
   });
 
   it('refuses a season whose sport league is not golf with 422, rather than creating a golf event', async () => {

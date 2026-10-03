@@ -13,7 +13,7 @@ import type { AdminCredentials } from './admin-session';
  *
  * Tours, seasons and participants have no delete operation, so they are inactivated: out of
  * every active picker and identifiable by run id for plans/129's QA reset. That, and the
- * `league_events` row creating a tournament makes, is the expected residue.
+ * `event_series` row creating a tournament makes, is the expected residue.
  *
  * Every lookup is by the attempt's run-unique names rather than ids captured during the test, so
  * an attempt that failed between a write and reading its response is still found and removed.

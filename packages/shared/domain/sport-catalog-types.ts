@@ -74,11 +74,13 @@ export interface SportEventParticipantStanding extends DomainEntity {
 
 /**
  * A recurring, named competition within a sport league — "The Masters" — that each
- * year's SportEvent resolves to. Found or created by (sportLeagueId, name).
+ * year's SportEvent edition resolves to. Found or created by (sportLeagueId, name).
  */
-export interface LeagueEvent extends DomainEntity {
+export interface EventSeries extends DomainEntity {
   sportLeagueId: string;
   name: string;
+  /** False retires the series; its past editions are untouched. */
+  isActive: boolean;
 }
 
 /** A pick tier an event's field is divided into. Cross-sport: nothing here is golf. */

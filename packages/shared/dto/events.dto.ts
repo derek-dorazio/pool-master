@@ -65,7 +65,7 @@ export const SportEventDtoSchema = z.object({
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now.'),
   contestEligible: z.boolean().describe('Whether a contest can be created or configured for the event right now.'),
   seasonId: z.string().uuid().nullable().describe('Season the event belongs to; null for a provider-synced event with no season.'),
-  leagueEventId: z.string().uuid().nullable().describe('Recurring tournament this is one year\'s instance of; null for a one-off event.'),
+  eventSeriesId: z.string().uuid().nullable().describe('The recurring tournament (event series) this is one edition of.'),
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe(`Pick tiers defined for the event. ${ADMIN_ONLY}`),

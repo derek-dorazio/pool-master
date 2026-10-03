@@ -61,7 +61,7 @@ describe('SportEvent readiness on the wire', () => {
       endDate: null,
       rounds: null,
       seasonId: null,
-      leagueEventId: null,
+      eventSeriesId: null,
     });
   });
 });

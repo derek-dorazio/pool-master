@@ -78,8 +78,8 @@ export interface SportEvent extends DomainEntity {
   fieldLocksAt: Date;
   metadata: Record<string, unknown>;
   seasonId?: string;
-  /** The recurring tournament this is one year's instance of. */
-  leagueEventId?: string;
+  /** The event series — the recurring tournament — this is one edition of. */
+  eventSeriesId?: string;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

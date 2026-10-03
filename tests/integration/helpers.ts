@@ -646,7 +646,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
-  await prisma.leagueEvent.deleteMany();
+  await prisma.eventSeries.deleteMany();
   // A sport league points at its current season and every season at its sport league, so
   // the pointer clears before the seasons, and the seasons before the sport leagues.
   await prisma.sportLeague.updateMany({ data: { currentSeasonId: null } });

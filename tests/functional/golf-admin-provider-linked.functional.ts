@@ -197,7 +197,7 @@ async function cleanup(): Promise<void> {
   if (sportLeagueIds.length) {
     const extra = await db.season.findMany({ where: { sportLeagueId: { in: sportLeagueIds } }, select: { id: true } });
     extra.forEach((s) => seasonIds.add(s.id));
-    await db.leagueEvent.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
+    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   }
   if (seasonIds.size) {
     await db.season.deleteMany({ where: { id: { in: [...seasonIds] } } });

@@ -979,9 +979,9 @@ export type SportEventDto = {
      */
     seasonId: string | null;
     /**
-     * Recurring tournament this is one year's instance of; null for a one-off event.
+     * The recurring tournament (event series) this is one edition of.
      */
-    leagueEventId: string | null;
+    eventSeriesId: string | null;
     /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
@@ -1129,9 +1129,9 @@ export type SportEventListResponse = {
          */
         seasonId: string | null;
         /**
-         * Recurring tournament this is one year's instance of; null for a one-off event.
+         * The recurring tournament (event series) this is one edition of.
          */
-        leagueEventId: string | null;
+        eventSeriesId: string | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -1258,9 +1258,9 @@ export type SportEventResponse = {
          */
         seasonId: string | null;
         /**
-         * Recurring tournament this is one year's instance of; null for a one-off event.
+         * The recurring tournament (event series) this is one edition of.
          */
-        leagueEventId: string | null;
+        eventSeriesId: string | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */

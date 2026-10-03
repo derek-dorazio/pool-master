@@ -47,7 +47,7 @@ export type {
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';
 export type {
-  LeagueEventRepository,
+  EventSeriesRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,
   ParticipantRanking,

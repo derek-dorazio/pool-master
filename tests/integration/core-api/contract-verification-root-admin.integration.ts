@@ -1290,7 +1290,7 @@ describe('Contract verification (root admin)', () => {
         });
       }
       if (created.seasonIds.length || created.sportLeagueId) {
-        await prisma.leagueEvent.deleteMany({
+        await prisma.eventSeries.deleteMany({
           where: { sportLeagueId: created.sportLeagueId || undefined },
         });
         await prisma.season.deleteMany({
@@ -1444,7 +1444,7 @@ describe('Contract verification (root admin)', () => {
           where: { id: created.sportLeagueId },
           data: { currentSeasonId: null },
         });
-        await prisma.leagueEvent.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
+        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
       }
       if (created.seasonId || created.sportLeagueId) {
         await prisma.season.deleteMany({

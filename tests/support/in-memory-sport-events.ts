@@ -11,7 +11,7 @@
 import type {
   GolfRoundWrite,
   GolfStandingWrite,
-  LeagueEventRepository,
+  EventSeriesRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
@@ -70,7 +70,7 @@ export class InMemorySportEvents {
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   affiliationRows: Array<Omit<ParticipantLeagueAffiliation, 'participant'>> = [];
-  leagueEventRows: Array<{ id: string; sportLeagueId: string; name: string }> = [];
+  eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
   contestsByEvent = new Map<string, number>();
   picksByEntry = new Map<string, number>();
@@ -261,13 +261,13 @@ export class InMemorySportEvents {
     };
   }
 
-  leagueEventRepo(): LeagueEventRepository {
+  eventSeriesRepo(): EventSeriesRepository {
     return {
       findOrCreate: async (sportLeagueId, name) => {
-        let row = this.leagueEventRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.name === name);
+        let row = this.eventSeriesRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.name === name);
         if (!row) {
-          row = { id: this.id('league-event'), sportLeagueId, name };
-          this.leagueEventRows.push(row);
+          row = { id: this.id('event-series'), sportLeagueId, name, isActive: true };
+          this.eventSeriesRows.push(row);
         }
         return stamp(row);
       },

@@ -1578,13 +1578,13 @@
             "format": "uuid",
             "description": "Season the event belongs to; null for a provider-synced event with no season."
           },
-          "leagueEventId": {
+          "eventSeriesId": {
             "type": [
               "string",
               "null"
             ],
             "format": "uuid",
-            "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+            "description": "The recurring tournament (event series) this is one edition of."
           },
           "syncScope": {
             "type": "string",
@@ -1658,7 +1658,7 @@
           "readinessReasons",
           "contestEligible",
           "seasonId",
-          "leagueEventId",
+          "eventSeriesId",
           "syncScope",
           "autoLifecycleEnabled",
           "tierCount",
@@ -1867,13 +1867,13 @@
                   "format": "uuid",
                   "description": "Season the event belongs to; null for a provider-synced event with no season."
                 },
-                "leagueEventId": {
+                "eventSeriesId": {
                   "type": [
                     "string",
                     "null"
                   ],
                   "format": "uuid",
-                  "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                  "description": "The recurring tournament (event series) this is one edition of."
                 },
                 "syncScope": {
                   "type": "string",
@@ -1947,7 +1947,7 @@
                 "readinessReasons",
                 "contestEligible",
                 "seasonId",
-                "leagueEventId",
+                "eventSeriesId",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -2116,13 +2116,13 @@
                 "format": "uuid",
                 "description": "Season the event belongs to; null for a provider-synced event with no season."
               },
-              "leagueEventId": {
+              "eventSeriesId": {
                 "type": [
                   "string",
                   "null"
                 ],
                 "format": "uuid",
-                "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                "description": "The recurring tournament (event series) this is one edition of."
               },
               "syncScope": {
                 "type": "string",
@@ -2196,7 +2196,7 @@
               "readinessReasons",
               "contestEligible",
               "seasonId",
-              "leagueEventId",
+              "eventSeriesId",
               "syncScope",
               "autoLifecycleEnabled",
               "tierCount",

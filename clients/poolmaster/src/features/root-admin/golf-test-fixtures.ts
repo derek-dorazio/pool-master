@@ -36,7 +36,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     readinessReasons: ['EVENT_NOT_RELEASED'],
     contestEligible: false,
     seasonId: 'season-1',
-    leagueEventId: 'league-event-1',
+    eventSeriesId: 'event-series-1',
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
     tierCount: 6,

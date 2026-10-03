@@ -15,7 +15,7 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  LeagueEventRepository,
+  EventSeriesRepository,
   SeasonRepository,
   SportEventFilters,
   SportEventRepository,
@@ -70,7 +70,7 @@ export interface ProviderEventDetail {
 /** Release and field-lock times for an event of this sport starting then — the contest timing policy. */
 export interface SportEventServiceDeps {
   sportEvents: SportEventRepository;
-  leagueEvents: LeagueEventRepository;
+  eventSeries: EventSeriesRepository;
   seasons: SeasonRepository;
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
@@ -102,7 +102,7 @@ export class SportEventService {
   async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
     const { season, sport } = await this.resolveSeason(input.seasonId);
     const rounds = input.rounds ?? GOLF_DEFAULT_ROUNDS;
-    const leagueEvent = await this.deps.leagueEvents.findOrCreate(season.sportLeagueId, input.name);
+    const eventSeries = await this.deps.eventSeries.findOrCreate(season.sportLeagueId, input.name);
 
     const event = await this.deps.sportEvents.create({
       externalId: `manual-${randomUUID()}`,
@@ -118,14 +118,14 @@ export class SportEventService {
       releaseAt: input.releaseAt,
       fieldLocksAt: input.fieldLocksAt,
       seasonId: season.id,
-      leagueEventId: leagueEvent.id,
+      eventSeriesId: eventSeries.id,
       syncScope: SportEventSyncScope.NONE,
       autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
     });
     await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
     await this.deps.tiers.ensureDefaultTiers(event.id);
 
-    this.deps.logger?.info({ sportEventId: event.id, seasonId: season.id, leagueEventId: leagueEvent.id, rounds }, 'Created sport event');
+    this.deps.logger?.info({ sportEventId: event.id, seasonId: season.id, eventSeriesId: eventSeries.id, rounds }, 'Created sport event');
     return this.requireSummary(event.id);
   }
 
@@ -150,7 +150,7 @@ export class SportEventService {
       );
     }
     const { providerEvent } = input;
-    const leagueEvent = await this.deps.leagueEvents.findOrCreate(season.sportLeagueId, providerEvent.name);
+    const eventSeries = await this.deps.eventSeries.findOrCreate(season.sportLeagueId, providerEvent.name);
     // No metadata is passed, so both times are the provider event's start (#263).
     const timing = resolveEventTiming({ startDate: providerEvent.startDate, metadata: {} });
     // The derived schedule applies only when no round count was given; an explicit count
@@ -171,7 +171,7 @@ export class SportEventService {
       releaseAt: timing.releaseAt,
       fieldLocksAt: timing.fieldLocksAt,
       seasonId: season.id,
-      leagueEventId: leagueEvent.id,
+      eventSeriesId: eventSeries.id,
       syncScope: SportEventSyncScope.SCORES_ONLY,
       autoLifecycleEnabled: true,
     });

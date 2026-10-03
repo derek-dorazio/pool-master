@@ -3021,9 +3021,9 @@ export interface components {
             seasonId: string | null;
             /**
              * Format: uuid
-             * @description Recurring tournament this is one year's instance of; null for a one-off event.
+             * @description The recurring tournament (event series) this is one edition of.
              */
-            leagueEventId: string | null;
+            eventSeriesId: string | null;
             /**
              * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
              * @enum {string}
@@ -3145,9 +3145,9 @@ export interface components {
                 seasonId: string | null;
                 /**
                  * Format: uuid
-                 * @description Recurring tournament this is one year's instance of; null for a one-off event.
+                 * @description The recurring tournament (event series) this is one edition of.
                  */
-                leagueEventId: string | null;
+                eventSeriesId: string | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -3250,9 +3250,9 @@ export interface components {
                 seasonId: string | null;
                 /**
                  * Format: uuid
-                 * @description Recurring tournament this is one year's instance of; null for a one-off event.
+                 * @description The recurring tournament (event series) this is one edition of.
                  */
-                leagueEventId: string | null;
+                eventSeriesId: string | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}

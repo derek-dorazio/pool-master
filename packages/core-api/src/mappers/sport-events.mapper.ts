@@ -44,7 +44,7 @@ export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, c
     readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
     contestEligible: operationalState.contestEligible,
     seasonId: event.seasonId ?? null,
-    leagueEventId: event.leagueEventId ?? null,
+    eventSeriesId: event.eventSeriesId ?? null,
     syncScope: event.syncScope,
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,

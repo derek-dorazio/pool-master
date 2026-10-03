@@ -1,6 +1,6 @@
 /**
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
- * Sport, SportLeague, Season, ParticipantLeagueAffiliation, SportEvent, LeagueEvent,
+ * Sport, SportLeague, Season, ParticipantLeagueAffiliation, SportEvent, EventSeries,
  * SportEventRound, SportEventParticipant, SportEventTier,
  * SportEventParticipantValuation, and the core SportEventParticipantRound / Standing rows.
  *
@@ -10,7 +10,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
-  LeagueEventRepository,
+  EventSeriesRepository,
   ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
   PriceAssignment,
@@ -41,7 +41,7 @@ import type {
   TierAssignment,
 } from '@poolmaster/shared/db';
 import type {
-  LeagueEvent,
+  EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
   ParticipantType,
@@ -286,7 +286,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         releaseAt: input.releaseAt,
         fieldLocksAt: input.fieldLocksAt,
         seasonId: input.seasonId ?? null,
-        leagueEventId: input.leagueEventId ?? null,
+        eventSeriesId: input.eventSeriesId ?? null,
         syncScope: input.syncScope,
         autoLifecycleEnabled: input.autoLifecycleEnabled,
       },
@@ -423,16 +423,23 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 }
 
-export class PrismaLeagueEventRepository implements LeagueEventRepository {
+export class PrismaEventSeriesRepository implements EventSeriesRepository {
   constructor(private readonly prisma: Db) {}
 
-  async findOrCreate(sportLeagueId: string, name: string): Promise<LeagueEvent> {
-    const row = await this.prisma.leagueEvent.upsert({
+  async findOrCreate(sportLeagueId: string, name: string): Promise<EventSeries> {
+    const row = await this.prisma.eventSeries.upsert({
       where: { sportLeagueId_name: { sportLeagueId, name } },
       create: { sportLeagueId, name },
       update: {},
     });
-    return { id: row.id, sportLeagueId: row.sportLeagueId, name: row.name, createdAt: row.createdAt, updatedAt: row.updatedAt };
+    return {
+      id: row.id,
+      sportLeagueId: row.sportLeagueId,
+      name: row.name,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
   }
 }
 
@@ -801,7 +808,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<object>): SportEvent {
     fieldLocksAt: row.fieldLocksAt,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     seasonId: row.seasonId ?? undefined,
-    leagueEventId: row.leagueEventId ?? undefined,
+    eventSeriesId: row.eventSeriesId ?? undefined,
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     createdAt: row.createdAt,
