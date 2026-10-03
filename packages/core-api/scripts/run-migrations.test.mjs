@@ -30,6 +30,21 @@ describe('run-migrations selectScriptedRepair (defect #191)', () => {
     ]);
   });
 
+  // plans/147 slice 2 — the Season collapse refuses on data its backfill would have to
+  // guess about, and a refusal leaves the failed row that makes Prisma answer P3009 to
+  // every later deploy. Without this entry the migrate task would exit 1 on every push,
+  // which is defect #191 again.
+  it('selects the season-collapse repair when the collapse migration is the unresolved failure', () => {
+    const repair = selectScriptedRepair(['20261003180000_collapse_season_into_event_year']);
+
+    assert.equal(repair?.migrationName, '20261003180000_collapse_season_into_event_year');
+    assert.deepEqual(repair?.args, [
+      'scripts/repair-season-collapse-migration.mjs',
+      '--apply',
+      '--confirm-qa-season-collapse-repair',
+    ]);
+  });
+
   it('selects nothing for an unresolved failure no script knows how to repair', () => {
     assert.equal(selectScriptedRepair(['20260926090000_squad_name_unique_per_league_drop_league_created_by']), null);
     assert.equal(selectScriptedRepair([]), null);

@@ -369,3 +369,42 @@ groups the event list by `eventYear` and compares it with `sportLeague.currentEv
    contract (its scenarios, generated SDK, and the `seasonId`/`seasonYear` metadata keys the
    adapter relays) uses "season" for the simulated provider's calendar. That is an external
    vocabulary, not this model, and was left.
+
+### The QA deploy, and the scripted repair that unblocks it
+
+A refusal is not self-healing. Prisma records the failed migration in `_prisma_migrations`,
+and from then on answers **P3009** — *"migrate found failed migrations in the target database,
+new migrations will not be applied"* — to every later `migrate deploy`. Fixing the rows is not
+enough: the failed row has to be resolved too. Verified by hand, on a throwaway copy: the
+offending event deleted, `migrate deploy` re-run, still P3009.
+
+That matters because QA deploys on every `main` push, the migrate task runs before the rollout,
+and the review found that the recovery this plan's migration header pointed at **does not
+exist** — `plans/129` (#83) describes `.github/workflows/qa-reset.yml` and
+`scripts/reset-qa-database.mjs`, and neither is implemented. So a refusal would have stuck
+every QA deploy until someone hand-resolved it against RDS. That is defect #191's shape
+exactly: a repair that existed but nothing invoked.
+
+`run-migrations.mjs` already has the mechanism — a `SCRIPTED_REPAIRS` registry, with two prior
+entries. This slice adds a third:
+`packages/core-api/scripts/repair-season-collapse-migration.mjs`.
+
+It repairs **only** check 0a, the season-less events. Those came from provider sync, which is
+the one write path that could make them, nothing records which tour they belong to, and this
+slice removes the path. The other three checks each need a decision about which row is real, so
+the script refuses them by matching on the failure's own message. It also refuses unless the
+database is still in the pre-migration shape, unless the named rows are still there, and —
+the guard that matters most — unless nothing outside its own cascade references them. That
+last check is read from `information_schema` rather than hardcoded, because
+`contests.sport_event_id` is `ON DELETE SET NULL`: a plain delete would not fail on a live
+contest, it would silently unlink it.
+
+Exercised end to end against four local databases at `main`'s schema, through
+`node scripts/run-migrations.mjs`, which is the path the QA migrate task runs:
+
+| Scenario | Result |
+|---|---|
+| Season-less event, with a round and a tier | Deploy refuses, repair deletes the event and its children, resolves the rollback, re-deploys. **Exit 0.** The other six events keep their series, year and tour; `seasons` dropped |
+| Season-less event carrying a live contest | Repair refuses naming `contests`. **Exit 1.** The event, the contest's link and `seasons` all untouched |
+| Duplicate edition (check 0c) | Repair refuses: a check it may not repair. **Exit 1.** Nothing written |
+| Clean data | Deploy applies, no repair invoked |

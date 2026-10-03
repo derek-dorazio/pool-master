@@ -19,8 +19,13 @@
 --
 -- Step 0 runs before any write, so a refusal leaves the database exactly as it was. Each check
 -- is one of the plan's pre-flight queries, corrected to the key the backfill actually produces
--- (see plans/147, Outcome). Per plans/129 a refused QA migration is recovered by fixing the rows
--- or by the QA reset workflow; a migration that picked a winner silently could not be undone.
+-- (see plans/147, Outcome). A migration that picked a winner silently could not be undone.
+--
+-- A refusal is not self-healing: Prisma records the failure and then answers P3009 to every
+-- later deploy, so fixing the rows is not enough on its own. Check 0a — the one failure whose
+-- rows nobody chose — is repaired automatically by
+-- scripts/repair-season-collapse-migration.mjs, registered in run-migrations.mjs's
+-- SCRIPTED_REPAIRS. The other three name rows an owner has to decide about, and stay manual.
 --
 -- Left out of the scaffold: five ALTERs (id defaults on four tables, two sport_leagues column
 -- types) that are drift already present on main and unrelated to this change.

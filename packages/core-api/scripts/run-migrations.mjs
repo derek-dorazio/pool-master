@@ -24,6 +24,14 @@ const SCRIPTED_REPAIRS = [
       '--confirm-qa-season-repair',
     ],
   },
+  {
+    migrationName: '20261003180000_collapse_season_into_event_year',
+    args: [
+      'scripts/repair-season-collapse-migration.mjs',
+      '--apply',
+      '--confirm-qa-season-collapse-repair',
+    ],
+  },
 ];
 
 export function selectScriptedRepair(unresolvedMigrationNames) {
