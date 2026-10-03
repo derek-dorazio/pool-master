@@ -1,7 +1,8 @@
 # Plan 147 — EventSeries, and collapsing Season into the event
 
-**Tracking issues:** slice 1 is **#314**. Slice 2 has no issue yet, deliberately — it is
-written below but not dispatchable until the pre-flight queries have been run against QA.
+**Tracking issues:** slice 1 is **#314**, slice 2 is **#315**. The owner elected to run both in
+one session rather than sequence them, so that the migration order and the backfill are decided
+by one agent holding the whole picture.
 
 **Supersedes #307.** That issue asked whether `LeagueEvent` deserves a lifecycle; decision 9
 answers it, and slice 1 implements it.
