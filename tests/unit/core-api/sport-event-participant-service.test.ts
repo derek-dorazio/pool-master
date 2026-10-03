@@ -9,13 +9,11 @@ function setup(sportName: Sport = Sport.GOLF) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
-  const season = store.addSeason(sportLeague.id);
-  const event = store.addEvent({ seasonId: season.id, sport: sportName });
+  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName });
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    seasons: store.seasonRepo(),
     affiliations: store.affiliationRepo(),
     valuations: store.valuationRepo(),
     standings: store.standingRepo(),
@@ -58,7 +56,7 @@ describe('SportEventParticipantService.listEventParticipants', () => {
     expect(views.map((view) => [view.participant.name, view.affiliatedWithSportLeague])).toEqual([['Member', true], ['Guest', false]]);
   });
 
-  it('treats an event with no season as having no sport league, and fails with 404 for an unknown event', async () => {
+  it('flags nobody as affiliated on an event of another sport league\'s series, and fails with 404 for an unknown event', async () => {
     const { store, service, sport } = setup();
     const orphan = store.addEvent();
     store.addToField(orphan.id, store.addParticipant(sport.id, 'Solo').id);
@@ -86,11 +84,9 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(store.field.find((entry) => entry.participantId === onField.id)?.seedNumber).toBe(9);
   });
 
-  it('refuses to seed an event with no season (409) and a non-golf event (422)', async () => {
-    const { store, service } = setup();
-    const noSeason = store.addEvent();
-    await expect(service.seedFromSportLeague(noSeason.id)).rejects.toMatchObject({ code: 'EVENT_HAS_NO_SEASON', statusCode: 409 });
-
+  // plans/147 — every event reaches its sport league through its series, so there is no
+  // "event with no sport league" case left to refuse; only the sport is checked.
+  it('refuses to seed a non-golf event (422)', async () => {
     const nba = setup(Sport.NBA);
     await expect(nba.service.seedFromSportLeague(nba.event.id)).rejects.toMatchObject({ code: 'SPORT_NOT_SUPPORTED', statusCode: 422 });
   });

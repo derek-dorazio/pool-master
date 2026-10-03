@@ -2,7 +2,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createEvent,
-  createSeason,
   createSportLeague,
   getEvent,
   linkEventScoreSource,
@@ -71,7 +70,6 @@ const RUN = `cs8-${Date.now()}`;
 
 const created = {
   sportEventIds: new Set<string>(),
-  seasonIds: new Set<string>(),
   sportLeagueIds: new Set<string>(),
   participantIds: new Set<string>(),
   leagueIds: new Set<string>(),
@@ -191,16 +189,7 @@ async function cleanup(): Promise<void> {
 
   const sportLeagueIds = [...created.sportLeagueIds];
   if (sportLeagueIds.length) {
-    await db.sportLeague.updateMany({ where: { id: { in: sportLeagueIds } }, data: { currentSeasonId: null } });
-  }
-  const seasonIds = new Set<string>(created.seasonIds);
-  if (sportLeagueIds.length) {
-    const extra = await db.season.findMany({ where: { sportLeagueId: { in: sportLeagueIds } }, select: { id: true } });
-    extra.forEach((s) => seasonIds.add(s.id));
-    await db.leagueEvent.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
-  }
-  if (seasonIds.size) {
-    await db.season.deleteMany({ where: { id: { in: [...seasonIds] } } });
+    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   }
   if (sportLeagueIds.length) {
     await db.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
@@ -242,7 +231,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     await promoteToRootAdmin(adminCtx);
     const admin: Client = adminCtx.client;
 
-    // --- Tour + season -------------------------------------------------------
+    // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
       body: { sport: 'GOLF', name: `USGA ${RUN}`, matchKeyword: 'U.S. Open' },
@@ -250,20 +239,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(league.response?.status).toBe(201);
     const sportLeagueId = league.data!.sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-
-    const season = await createSeason({
-      client: admin,
-      path: { sportLeagueId },
-      body: {
-        name: `USGA ${RUN} 2026`,
-        year: 2026,
-        startDate: '2026-04-01T00:00:00.000Z',
-        endDate: '2026-07-31T00:00:00.000Z',
-      },
-    });
-    expect(season.response?.status).toBe(201);
-    const seasonId = season.data!.season.id;
-    created.seasonIds.add(seasonId);
 
     // --- Manual-admin tournament (starts unlinked: syncScope NONE). Dates
     // match the provider event so the later details sync is a no-op for the
@@ -279,7 +254,8 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         rounds: 4,
         releaseAt: '2026-05-20T00:00:00.000Z',
         fieldLocksAt: '2026-05-27T16:00:00.000Z',
-        seasonId,
+        sportLeagueId,
+        eventYear: 2026,
         autoLifecycleEnabled: false,
       },
     });
@@ -347,17 +323,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // Failure path: a second manual-admin tournament cannot link the same
     // provider event.
-    const rivalSeason = await createSeason({
-      client: admin,
-      path: { sportLeagueId },
-      body: {
-        name: `USGA ${RUN} rival`,
-        year: 2027,
-        startDate: '2027-04-01T00:00:00.000Z',
-        endDate: '2027-07-31T00:00:00.000Z',
-      },
-    });
-    created.seasonIds.add(rivalSeason.data!.season.id);
     const rival = await createEvent({
       client: admin,
       body: {
@@ -367,7 +332,8 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         rounds: 4,
         releaseAt: '2026-05-20T00:00:00.000Z',
         fieldLocksAt: '2026-05-27T16:00:00.000Z',
-        seasonId: rivalSeason.data!.season.id,
+        sportLeagueId,
+        eventYear: 2027,
         autoLifecycleEnabled: false,
       },
     });

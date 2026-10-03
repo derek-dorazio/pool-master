@@ -4,7 +4,7 @@
  * (plans/124 §3.2/§4.2). Nothing here is golf-shaped; the golf admin routes
  * call it scoped to Sport.GOLF, and another sport reuses it unchanged.
  *
- * Affiliation is sport-league-scoped, not season-scoped — a competitor's
+ * Affiliation is sport-league-scoped, not year-scoped — a competitor's
  * membership and ranking don't reset every year (plans/124 §4.2).
  */
 
@@ -13,7 +13,7 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantRanking,
   ParticipantRepository,
-  SeasonRepository,
+  SportEventRepository,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportRepository,
@@ -30,7 +30,8 @@ import { resolveParticipantRow, type ParticipantRowResolution } from './particip
 /** A sport league with the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
   affiliationCount: number;
-  seasonCount: number;
+  /** Events across every series of the sport league, every year. */
+  sportEventCount: number;
 }
 
 export interface AffiliationUploadRow {
@@ -52,7 +53,7 @@ export interface AffiliationUploadPreviewRow {
 export interface SportLeagueServiceDeps {
   sports: SportRepository;
   sportLeagues: SportLeagueRepository;
-  seasons: SeasonRepository;
+  sportEvents: SportEventRepository;
   affiliations: ParticipantLeagueAffiliationRepository;
   participants: ParticipantRepository;
   logger?: FastifyBaseLogger;
@@ -90,17 +91,40 @@ export class SportLeagueService {
     return (await this.summarize([sportLeague]))[0];
   }
 
-  /** 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
+  /**
+   * 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league.
+   *
+   * Setting `currentEventYear` is "set as current" (plans/147 decision 6). It replaced a
+   * foreign key to a season, which made the database guarantee the target existed; a plain
+   * year column accepts 1823. So the guarantee is kept here instead: 422
+   * EVENT_YEAR_HAS_NO_EVENTS for a year this sport league has no events in. It is one write
+   * on the sport league row, so the sport league never has two current years.
+   */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive'>,
+    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive'> & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
-    await this.requireSportLeague(sportLeagueId);
+    const sportLeague = await this.requireSportLeague(sportLeagueId);
+    if (updates.currentEventYear !== undefined) {
+      const events = (await this.deps.sportEvents.countBySportLeagues([sportLeagueId], { eventYear: updates.currentEventYear }))
+        .get(sportLeagueId) ?? 0;
+      if (events === 0) {
+        throw new SportCatalogError(
+          `${sportLeague.name} has no events in ${updates.currentEventYear}, so it cannot be the current year.`,
+          'EVENT_YEAR_HAS_NO_EVENTS',
+          422,
+        );
+      }
+    }
     const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
       matchKeyword: updates.matchKeyword,
       isActive: updates.isActive,
+      currentEventYear: updates.currentEventYear,
     });
+    if (updates.currentEventYear !== undefined) {
+      this.deps.logger?.info({ sportLeagueId, currentEventYear: updates.currentEventYear }, 'Set current event year');
+    }
     return (await this.summarize([updated]))[0];
   }
 
@@ -196,14 +220,14 @@ export class SportLeagueService {
 
   private async summarize(sportLeagues: SportLeague[]): Promise<SportLeagueSummary[]> {
     const ids = sportLeagues.map((sportLeague) => sportLeague.id);
-    const [affiliationCounts, seasonCounts] = await Promise.all([
+    const [affiliationCounts, eventCounts] = await Promise.all([
       this.deps.affiliations.countBySportLeagues(ids),
-      this.deps.seasons.countBySportLeagues(ids),
+      this.deps.sportEvents.countBySportLeagues(ids),
     ]);
     return sportLeagues.map((sportLeague) => ({
       ...sportLeague,
       affiliationCount: affiliationCounts.get(sportLeague.id) ?? 0,
-      seasonCount: seasonCounts.get(sportLeague.id) ?? 0,
+      sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
     }));
   }
 }

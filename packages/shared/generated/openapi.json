@@ -1570,21 +1570,19 @@
             "type": "boolean",
             "description": "Whether a contest can be created or configured for the event right now."
           },
-          "seasonId": {
-            "type": [
-              "string",
-              "null"
-            ],
+          "eventSeriesId": {
+            "type": "string",
             "format": "uuid",
-            "description": "Season the event belongs to; null for a provider-synced event with no season."
+            "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
           },
-          "leagueEventId": {
-            "type": [
-              "string",
-              "null"
-            ],
+          "eventYear": {
+            "type": "integer",
+            "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+          },
+          "sportLeagueId": {
+            "type": "string",
             "format": "uuid",
-            "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+            "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
           "syncScope": {
             "type": "string",
@@ -1657,8 +1655,9 @@
           "readinessStatus",
           "readinessReasons",
           "contestEligible",
-          "seasonId",
-          "leagueEventId",
+          "eventSeriesId",
+          "eventYear",
+          "sportLeagueId",
           "syncScope",
           "autoLifecycleEnabled",
           "tierCount",
@@ -1705,10 +1704,14 @@
             ],
             "description": "Only events in this lifecycle status."
           },
-          "seasonId": {
+          "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "Only events in this season."
+            "description": "Only events of this sport league's series."
+          },
+          "eventYear": {
+            "type": "integer",
+            "description": "Only editions branded with this year."
           },
           "q": {
             "type": "string",
@@ -1859,21 +1862,19 @@
                   "type": "boolean",
                   "description": "Whether a contest can be created or configured for the event right now."
                 },
-                "seasonId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "eventSeriesId": {
+                  "type": "string",
                   "format": "uuid",
-                  "description": "Season the event belongs to; null for a provider-synced event with no season."
+                  "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
                 },
-                "leagueEventId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                "eventYear": {
+                  "type": "integer",
+                  "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+                },
+                "sportLeagueId": {
+                  "type": "string",
                   "format": "uuid",
-                  "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                  "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "syncScope": {
                   "type": "string",
@@ -1946,8 +1947,9 @@
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
-                "seasonId",
-                "leagueEventId",
+                "eventSeriesId",
+                "eventYear",
+                "sportLeagueId",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -2108,21 +2110,19 @@
                 "type": "boolean",
                 "description": "Whether a contest can be created or configured for the event right now."
               },
-              "seasonId": {
-                "type": [
-                  "string",
-                  "null"
-                ],
+              "eventSeriesId": {
+                "type": "string",
                 "format": "uuid",
-                "description": "Season the event belongs to; null for a provider-synced event with no season."
+                "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
               },
-              "leagueEventId": {
-                "type": [
-                  "string",
-                  "null"
-                ],
+              "eventYear": {
+                "type": "integer",
+                "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+              },
+              "sportLeagueId": {
+                "type": "string",
                 "format": "uuid",
-                "description": "Recurring tournament this is one year's instance of; null for a one-off event."
+                "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
               "syncScope": {
                 "type": "string",
@@ -2195,8 +2195,9 @@
               "readinessStatus",
               "readinessReasons",
               "contestEligible",
-              "seasonId",
-              "leagueEventId",
+              "eventSeriesId",
+              "eventYear",
+              "sportLeagueId",
               "syncScope",
               "autoLifecycleEnabled",
               "tierCount",
@@ -2219,10 +2220,14 @@
       "CreateSportEventRequest": {
         "type": "object",
         "properties": {
-          "seasonId": {
+          "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The season the event belongs to; its sport league decides the sport."
+            "description": "The sport league the event runs on; it decides the sport. The event's series is found or created in it by name."
+          },
+          "eventYear": {
+            "type": "integer",
+            "description": "The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
           },
           "name": {
             "type": "string",
@@ -2264,7 +2269,8 @@
           }
         },
         "required": [
-          "seasonId",
+          "sportLeagueId",
+          "eventYear",
           "name",
           "startDate",
           "releaseAt",
@@ -2276,9 +2282,14 @@
       "CreateSportEventFromProviderEventRequest": {
         "type": "object",
         "properties": {
-          "seasonId": {
+          "sportLeagueId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "The sport league the event runs on; it decides the sport."
+          },
+          "eventYear": {
+            "type": "integer",
+            "description": "The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
           },
           "providerId": {
             "type": "string",
@@ -2296,12 +2307,37 @@
           }
         },
         "required": [
-          "seasonId",
+          "sportLeagueId",
+          "eventYear",
           "providerId",
           "externalId"
         ],
         "additionalProperties": false,
         "description": "An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched."
+      },
+      "CloneSportEventYearRequest": {
+        "type": "object",
+        "properties": {
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The sport league whose calendar is cloned."
+          },
+          "eventYear": {
+            "type": "integer",
+            "description": "The year cloned from. 422 EVENT_YEAR_HAS_NO_EVENTS when the sport league has no events in it."
+          },
+          "targetYear": {
+            "type": "integer",
+            "description": "The year cloned to; defaults to eventYear + 1. 409 EVENT_YEAR_NOT_EMPTY when the sport league already has events in it."
+          }
+        },
+        "required": [
+          "sportLeagueId",
+          "eventYear"
+        ],
+        "additionalProperties": false,
+        "description": "Re-creates each of a sport league's events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change."
       },
       "UpdateSportEventRequest": {
         "type": "object",
@@ -13323,13 +13359,12 @@
             ],
             "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
           },
-          "currentSeasonId": {
+          "currentEventYear": {
             "type": [
-              "string",
+              "integer",
               "null"
             ],
-            "format": "uuid",
-            "description": "The season designated current, if any."
+            "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set."
           },
           "isActive": {
             "type": "boolean",
@@ -13339,9 +13374,9 @@
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
           },
-          "seasonCount": {
+          "sportEventCount": {
             "type": "integer",
-            "description": "Seasons on record for the sport league."
+            "description": "Events on record for the sport league, across every series and year."
           },
           "createdAt": {
             "type": "string",
@@ -13359,10 +13394,10 @@
           "sportId",
           "name",
           "matchKeyword",
-          "currentSeasonId",
+          "currentEventYear",
           "isActive",
           "affiliationCount",
-          "seasonCount",
+          "sportEventCount",
           "createdAt",
           "updatedAt"
         ],
@@ -13429,13 +13464,12 @@
                   ],
                   "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
                 },
-                "currentSeasonId": {
+                "currentEventYear": {
                   "type": [
-                    "string",
+                    "integer",
                     "null"
                   ],
-                  "format": "uuid",
-                  "description": "The season designated current, if any."
+                  "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set."
                 },
                 "isActive": {
                   "type": "boolean",
@@ -13445,9 +13479,9 @@
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
                 },
-                "seasonCount": {
+                "sportEventCount": {
                   "type": "integer",
-                  "description": "Seasons on record for the sport league."
+                  "description": "Events on record for the sport league, across every series and year."
                 },
                 "createdAt": {
                   "type": "string",
@@ -13465,10 +13499,10 @@
                 "sportId",
                 "name",
                 "matchKeyword",
-                "currentSeasonId",
+                "currentEventYear",
                 "isActive",
                 "affiliationCount",
-                "seasonCount",
+                "sportEventCount",
                 "createdAt",
                 "updatedAt"
               ],
@@ -13511,13 +13545,12 @@
                 ],
                 "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
               },
-              "currentSeasonId": {
+              "currentEventYear": {
                 "type": [
-                  "string",
+                  "integer",
                   "null"
                 ],
-                "format": "uuid",
-                "description": "The season designated current, if any."
+                "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set."
               },
               "isActive": {
                 "type": "boolean",
@@ -13527,9 +13560,9 @@
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
               },
-              "seasonCount": {
+              "sportEventCount": {
                 "type": "integer",
-                "description": "Seasons on record for the sport league."
+                "description": "Events on record for the sport league, across every series and year."
               },
               "createdAt": {
                 "type": "string",
@@ -13547,10 +13580,10 @@
               "sportId",
               "name",
               "matchKeyword",
-              "currentSeasonId",
+              "currentEventYear",
               "isActive",
               "affiliationCount",
-              "seasonCount",
+              "sportEventCount",
               "createdAt",
               "updatedAt"
             ],
@@ -13620,6 +13653,10 @@
           },
           "isActive": {
             "type": "boolean"
+          },
+          "currentEventYear": {
+            "type": "integer",
+            "description": "Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in."
           }
         },
         "additionalProperties": false,
@@ -14408,390 +14445,6 @@
         ],
         "additionalProperties": false,
         "description": "A dry run of an affiliation upload. Nothing is written."
-      },
-      "SeasonDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Season identifier."
-          },
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league whose calendar year this is."
-          },
-          "name": {
-            "type": "string"
-          },
-          "year": {
-            "type": "integer"
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "sportEventCount": {
-            "type": "integer",
-            "description": "Events in this season."
-          },
-          "isCurrent": {
-            "type": "boolean",
-            "description": "Whether this is its sport league's current season — derived from the sport league, not stored."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          }
-        },
-        "required": [
-          "id",
-          "sportLeagueId",
-          "name",
-          "year",
-          "startDate",
-          "endDate",
-          "isActive",
-          "sportEventCount",
-          "isCurrent",
-          "createdAt",
-          "updatedAt"
-        ],
-        "additionalProperties": false,
-        "description": "A sport league's calendar year: a grouping of events, not a roster boundary."
-      },
-      "SeasonListQuery": {
-        "type": "object",
-        "properties": {
-          "isActive": {
-            "type": "boolean",
-            "description": "Only active, or only inactive, seasons."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Filters for a sport league's seasons."
-      },
-      "SeasonListResponse": {
-        "type": "object",
-        "properties": {
-          "seasons": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Season identifier."
-                },
-                "sportLeagueId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The sport league whose calendar year this is."
-                },
-                "name": {
-                  "type": "string"
-                },
-                "year": {
-                  "type": "integer"
-                },
-                "startDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "endDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "isActive": {
-                  "type": "boolean"
-                },
-                "sportEventCount": {
-                  "type": "integer",
-                  "description": "Events in this season."
-                },
-                "isCurrent": {
-                  "type": "boolean",
-                  "description": "Whether this is its sport league's current season — derived from the sport league, not stored."
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                },
-                "updatedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 datetime string."
-                }
-              },
-              "required": [
-                "id",
-                "sportLeagueId",
-                "name",
-                "year",
-                "startDate",
-                "endDate",
-                "isActive",
-                "sportEventCount",
-                "isCurrent",
-                "createdAt",
-                "updatedAt"
-              ],
-              "additionalProperties": false,
-              "description": "A sport league's calendar year: a grouping of events, not a roster boundary."
-            },
-            "description": "Newest year first."
-          }
-        },
-        "required": [
-          "seasons"
-        ],
-        "additionalProperties": false,
-        "description": "A sport league's seasons."
-      },
-      "SeasonResponse": {
-        "type": "object",
-        "properties": {
-          "season": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "description": "Season identifier."
-              },
-              "sportLeagueId": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The sport league whose calendar year this is."
-              },
-              "name": {
-                "type": "string"
-              },
-              "year": {
-                "type": "integer"
-              },
-              "startDate": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "endDate": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "isActive": {
-                "type": "boolean"
-              },
-              "sportEventCount": {
-                "type": "integer",
-                "description": "Events in this season."
-              },
-              "isCurrent": {
-                "type": "boolean",
-                "description": "Whether this is its sport league's current season — derived from the sport league, not stored."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              }
-            },
-            "required": [
-              "id",
-              "sportLeagueId",
-              "name",
-              "year",
-              "startDate",
-              "endDate",
-              "isActive",
-              "sportEventCount",
-              "isCurrent",
-              "createdAt",
-              "updatedAt"
-            ],
-            "additionalProperties": false,
-            "description": "A sport league's calendar year: a grouping of events, not a roster boundary."
-          }
-        },
-        "required": [
-          "season"
-        ],
-        "additionalProperties": false,
-        "description": "One season."
-      },
-      "CreateSeasonRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "year": {
-            "type": "integer",
-            "description": "Unique within the sport league."
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          }
-        },
-        "required": [
-          "name",
-          "year",
-          "startDate",
-          "endDate"
-        ],
-        "additionalProperties": false,
-        "description": "A new season for the sport league in the path."
-      },
-      "UpdateSeasonRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "startDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "endDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 datetime string."
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false,
-        "description": "Changes to a season; omitted fields are left alone."
-      },
-      "CloneSeasonRequest": {
-        "type": "object",
-        "properties": {
-          "targetYear": {
-            "type": "integer",
-            "description": "Year for the new season; defaults to the source season's year + 1."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Clones a season's event calendar forward (plans/124 §4.2a)."
-      },
-      "CloneSeasonResponse": {
-        "type": "object",
-        "properties": {
-          "season": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "description": "Season identifier."
-              },
-              "sportLeagueId": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The sport league whose calendar year this is."
-              },
-              "name": {
-                "type": "string"
-              },
-              "year": {
-                "type": "integer"
-              },
-              "startDate": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "endDate": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "isActive": {
-                "type": "boolean"
-              },
-              "sportEventCount": {
-                "type": "integer",
-                "description": "Events in this season."
-              },
-              "isCurrent": {
-                "type": "boolean",
-                "description": "Whether this is its sport league's current season — derived from the sport league, not stored."
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 datetime string."
-              }
-            },
-            "required": [
-              "id",
-              "sportLeagueId",
-              "name",
-              "year",
-              "startDate",
-              "endDate",
-              "isActive",
-              "sportEventCount",
-              "isCurrent",
-              "createdAt",
-              "updatedAt"
-            ],
-            "additionalProperties": false,
-            "description": "The new season."
-          },
-          "clonedEventCount": {
-            "type": "integer",
-            "description": "Source-season events re-created as fresh events in the new season."
-          }
-        },
-        "required": [
-          "season",
-          "clonedEventCount"
-        ],
-        "additionalProperties": false,
-        "description": "The cloned season. Fields, tiers, prices, scores and provider links are never copied; the current season does not change."
       },
       "GolfRoundScoreUploadRequest": {
         "type": "object",
@@ -29443,7 +29096,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The sport-event catalog, narrowed by sport, status, season and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts.",
+        "description": "The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts.",
         "parameters": [
           {
             "schema": {
@@ -29492,9 +29145,18 @@
               "format": "uuid"
             },
             "in": "query",
-            "name": "seasonId",
+            "name": "sportLeagueId",
             "required": false,
-            "description": "Only events in this season."
+            "description": "Only events of this sport league's series."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "eventYear",
+            "required": false,
+            "description": "Only editions branded with this year."
           },
           {
             "schema": {
@@ -29564,7 +29226,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An admin-authored event in a season, SCHEDULED, accepting no provider data, with its default rounds and tiers. The sport comes from the season's sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.",
+        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -29665,6 +29327,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -30232,6 +29933,233 @@
         }
       }
     },
+    "/api/v1/events/clone-year": {
+      "post": {
+        "operationId": "cloneEventYear",
+        "summary": "Clone a sport league's event year forward",
+        "tags": [
+          "Events"
+        ],
+        "description": "Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloneSportEventYearRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sport events matching the filters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/from-provider-event": {
       "post": {
         "operationId": "createEventFromProviderEvent",
@@ -30239,7 +30167,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.",
+        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33914,7 +33842,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Every sport league, or one sport's, each with its affiliation and season counts. The one list that takes a sport: a sport league is where the sport is chosen.",
+        "description": "Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.",
         "parameters": [
           {
             "schema": {
@@ -34227,7 +34155,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Root admin only.",
+        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -34300,6 +34228,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -35004,744 +34971,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/sport-leagues/{sportLeagueId}/seasons": {
-      "get": {
-        "operationId": "listSeasons",
-        "summary": "List a sport league's seasons",
-        "tags": [
-          "Sport leagues"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "boolean"
-            },
-            "in": "query",
-            "name": "isActive",
-            "required": false,
-            "description": "Only active, or only inactive, seasons."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "sportLeagueId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A sport league's seasons.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeasonListResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "operationId": "createSeason",
-        "summary": "Create a season",
-        "tags": [
-          "Sport leagues"
-        ],
-        "description": "Root admin only. 409 when the sport league already has a season for the year.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSeasonRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "sportLeagueId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "One season.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeasonResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/seasons/{seasonId}": {
-      "get": {
-        "operationId": "getSeason",
-        "summary": "Get a season",
-        "tags": [
-          "Seasons"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "seasonId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "One season.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeasonResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "operationId": "updateSeason",
-        "summary": "Update a season",
-        "tags": [
-          "Seasons"
-        ],
-        "description": "Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSeasonRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "seasonId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "One season.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeasonResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/seasons/{seasonId}/set-current": {
-      "post": {
-        "operationId": "setCurrentSeason",
-        "summary": "Make a season its sport league's current season",
-        "tags": [
-          "Seasons"
-        ],
-        "description": "One write on the sport league, so it never has zero or two current seasons. Returns the sport league. Root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "seasonId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "One sport league.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportLeagueResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/seasons/{seasonId}/clone": {
-      "post": {
-        "operationId": "cloneSeason",
-        "summary": "Clone a season's event calendar forward",
-        "tags": [
-          "Seasons"
-        ],
-        "description": "Creates next year's season and re-creates each event in it as a fresh event (plans/124 §4.2a). Fields, tiers, prices, scores and provider links are never copied, and the current season does not change. Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CloneSeasonRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "seasonId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "The cloned season. Fields, tiers, prices, scores and provider links are never copied; the current season does not change.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloneSeasonResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          },
-          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -40395,7 +39624,7 @@
     },
     {
       "name": "Admin Golf",
-      "description": "Golf tournament authoring — leagues, seasons, and rosters"
+      "description": "Golf tournament authoring — tours, tournaments, and rosters"
     },
     {
       "name": "Admin Sync",

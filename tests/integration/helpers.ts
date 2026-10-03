@@ -39,7 +39,6 @@ import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes'
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
-import { seasonsModule } from '../../packages/core-api/src/modules/seasons/routes';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
 import { PollConfigService } from '../../packages/core-api/src/modules/platform/poll-config-service';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -153,7 +152,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
-  testApp.register(seasonsModule, { prefix: '/api/v1/seasons' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(platformModule, { prefix: '/api/v1/platform', pollConfigService, ingestionConfigService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
@@ -646,11 +644,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
-  await prisma.leagueEvent.deleteMany();
-  // A sport league points at its current season and every season at its sport league, so
-  // the pointer clears before the seasons, and the seasons before the sport leagues.
-  await prisma.sportLeague.updateMany({ data: { currentSeasonId: null } });
-  await prisma.season.deleteMany();
+  await prisma.eventSeries.deleteMany();
   await prisma.sportLeague.deleteMany();
   await prisma.sport.deleteMany();
 

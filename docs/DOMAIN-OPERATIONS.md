@@ -312,7 +312,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
+| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -505,12 +505,13 @@ link with `maxUses` / `currentUses`.
 
 ## Slice 2 — Events and participants (the cross-sport core)
 
-Cluster: `Sport`, `SportLeague`, `Season`, `SportEvent`, `SportEventRound`,
+Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `Participant`,
 `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`.
 Core tracked by #235, golf extensions and the admin operations by #236. Decisions: the
-stage-2 comment on #203.
+stage-2 comment on #203. The tree `SportLeague → EventSeries → SportEvent` is plans/147: an
+event is one edition of a series, in one event year, and the series is its only parent.
 
 **Every object in this cluster is global (A11).** No row here belongs to a user, league or
 squad, so A1–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one
@@ -518,7 +519,7 @@ exception is a read that exposes operational detail — it still returns the can
 with the admin-only fields annotated in the DTO rather than stripped (rule 4, §13).
 
 **Sport is established once, then inherited** (stage 2, decision 5). Selecting a
-`SportLeague` fixes the sport; an event, a season, a roster or a participant is reached
+`SportLeague` fixes the sport; a series, an event, a roster or a participant is reached
 through that parent, so none of their operations takes a sport filter. Only the
 sport-league list, and the event list — which is the member's entry point and has no
 parent — take one.
@@ -541,17 +542,18 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 | Operation | Role | Notes |
 |---|---|---|
-| List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and season counts |
+| List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and event counts and its `currentEventYear` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
+| Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (plans/147 decision 6) |
 
-### Season
+### EventSeries
+
+The recurring tournament — "The Masters" — that each year's `SportEvent` is an edition of
+(plans/147). Unique on `(sportLeagueId, name)`; carries `isActive`.
 
 | Operation | Role | Notes |
 |---|---|---|
-| List for a sport league, read one | `authenticated` | `listSeasons` is under its sport league. `isCurrent` is derived from the sport league's `currentSeasonId`, not stored; `sportEventCount` is counted |
-| Create, update | `rootAdmin` | Unique on `(sportLeagueId, year)`; create 404s for an unknown sport league |
-| Set current | `rootAdmin` | Moves the sport league's pointer and returns the sport league; 404 for an unknown season |
-| Clone one year forward | `rootAdmin` | New season plus one event per source event; leaves the current-season pointer alone |
+| Find or create | (internal) | Event creation resolves the series by `(sportLeagueId, name)` and creates it on first use — never an admin decision. No route reaches a series on its own |
 
 ### ParticipantLeagueAffiliation — the Participant↔SportLeague edge
 
@@ -571,9 +573,10 @@ are gone (#236).
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `authenticated` | `listEvents`, filtered by sport, status, season and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, `contestCount`, contest-setup readiness and `allowedTransitions` — to every caller |
+| List | `authenticated` | `listEvents`, filtered by sport, status, sport league (through the series), event year and a name search, unpaged (§16). Returns the canonical `SportEventDto` — the row plus `loadedParticipantCount`, `tierCount`, `contestCount`, contest-setup readiness and `allowedTransitions` — to every caller |
 | Read one | `authenticated` | `getEvent` |
-| Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores). The sport comes from the season's sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers |
+| Create | `rootAdmin` | `createEvent` (manual) or `createEventFromProviderEvent` (linked for scores), on a sport league in an event year. The series is found or created by name; a second edition of a series in one year is 409 `EVENT_EDITION_ALREADY_EXISTS` — the database's `(eventSeriesId, eventYear)` constraint. The sport comes from the sport league; golf only for now, 422 `SPORT_NOT_SUPPORTED` otherwise. Seeds the rounds and the default tiers. Provider sync never creates an event: it updates the one linked to a provider event and skips the rest |
+| Clone an event year | `rootAdmin` | `cloneEventYear` re-creates each of a sport league's events in one year as next year's edition (or `targetYear`'s), dates shifted; never the field, tiers, scores or provider link. 422 `EVENT_YEAR_HAS_NO_EVENTS` for an empty source year, 409 `EVENT_YEAR_NOT_EMPTY` for a target year that has events. Leaves the current event year alone |
 | Update | `rootAdmin` | 409 `EVENT_NOT_ADMIN_MANAGED` once a provider owns the event in full |
 | Delete | `rootAdmin` | 409 `EVENT_HAS_CONTESTS`. Deletes the event's rounds and tiers first — before #236 it failed on the foreign key for any event that had them |
 | Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource` |

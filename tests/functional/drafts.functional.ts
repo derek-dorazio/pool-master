@@ -14,6 +14,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { randomUUID } from 'node:crypto';
+import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 
 const createdSportIds: string[] = [];
 const createdParticipantIds: string[] = [];
@@ -101,6 +102,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
         },
       },
     });
+    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
 
@@ -306,6 +308,7 @@ async function seedBudgetPickFixture() {
 
   const event = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `budget-functional-event-${randomUUID().slice(0, 8)}`,
       providerId: 'integration-test',
       sport: 'GOLF',
@@ -422,6 +425,7 @@ async function seedTieredDraftFixture(options: {
 
   const event = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `tiered-functional-event-${randomUUID().slice(0, 8)}`,
       providerId: 'integration-test',
       sport: 'GOLF',

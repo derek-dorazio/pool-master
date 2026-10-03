@@ -14,6 +14,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -60,6 +61,7 @@ async function createLeagueAndEvent() {
   });
   const event = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `contest-repo-${suffix}`,
       providerId: 'integration-test',
       sport: Sport.GOLF,

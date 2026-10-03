@@ -4,14 +4,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminGolfTournamentCreatePage } from './root-admin-golf-tournament-create-page';
-import { seasonFixture, sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
+import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 
-// plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new (pool-master-3dg).
+// plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new (pool-master-3dg). plans/147: a
+// tournament is created on a tour, in an event year, where it used to be created in a season.
 
 const {
   createEventFromProviderEventMock,
   createEventMock,
-  listSeasonsMock,
   listSportLeaguesMock,
   listProviderCatalogEventsMock,
   listProvidersMock,
@@ -29,7 +29,6 @@ const {
   return {
     createEventFromProviderEventMock: vi.fn(),
     createEventMock: vi.fn(),
-    listSeasonsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listProviderCatalogEventsMock: vi.fn(),
     listProvidersMock: vi.fn(),
@@ -40,7 +39,6 @@ const {
 bindApiMocks({
   createEvent: createEventMock,
   createEventFromProviderEvent: createEventFromProviderEventMock,
-  listSeasons: listSeasonsMock,
   listSportLeagues: listSportLeaguesMock,
   listProviderCatalogEvents: listProviderCatalogEventsMock,
   listProviders: listProvidersMock,
@@ -52,20 +50,11 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-function season(overrides: Parameters<typeof seasonFixture>[0] = {}) {
-  return seasonFixture({
-    id: 'season-1',
-    sportLeagueId: 'league-1',
-    sportEventCount: 3,
-    createdAt: '2025-11-01T00:00:00.000Z',
-    updatedAt: '2025-11-01T00:00:00.000Z',
-    ...overrides,
-  });
-}
-
-function renderPage(entry = '/manage/golf/tournaments/new?seasonId=season-1') {
-  // #236: every golf season is read by listing the golf sport leagues, then each one's seasons.
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: 'league-1' })] } });
+function renderPage(
+  entry = '/manage/golf/tournaments/new?sportLeagueId=league-1&eventYear=2026',
+  tours = [sportLeagueFixture({ id: 'league-1' }), sportLeagueFixture({ id: 'league-2', name: 'LPGA Tour' })],
+) {
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: tours } });
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -91,26 +80,47 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
   afterEach(() => {
     createEventMock.mockReset();
     createEventFromProviderEventMock.mockReset();
-    listSeasonsMock.mockReset();
     listProviderCatalogEventsMock.mockReset();
     listProvidersMock.mockReset();
   });
 
-  it('pool-master-3dg blocks creation with a link to Seasons when no golf season exists', async () => {
-    listSeasonsMock.mockResolvedValue({ data: { seasons: [] } });
-
-    renderPage('/manage/golf/tournaments/new');
+  it('pool-master-3dg, plans/147: blocks creation with a link to Tours when no active golf tour exists', async () => {
+    renderPage('/manage/golf/tournaments/new', [sportLeagueFixture({ id: 'league-1', isActive: false })]);
 
     expect(
-      await screen.findByText('Create a season before creating a tournament'),
+      await screen.findByText('Create a tour before creating a tournament'),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('root-admin-golf-tournament-create-seasons-link'),
-    ).toHaveAttribute('href', '/manage/golf/seasons');
+      screen.getByTestId('root-admin-golf-tournament-create-tours-link'),
+    ).toHaveAttribute('href', '/manage/golf/leagues');
   });
 
-  it('pool-master-3dg submits a manual tournament with the season prefilled from the URL and navigates Home', async () => {
-    listSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
+  it('plans/147: defaults the only active tour and its current year when the URL names neither', async () => {
+    renderPage('/manage/golf/tournaments/new', [sportLeagueFixture({ id: 'league-1', currentEventYear: 2027 })]);
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-golf-tournament-create-tour')).toHaveValue('league-1'));
+    expect(screen.getByTestId('root-admin-golf-tournament-create-event-year')).toHaveValue('2027');
+  });
+
+  it('plans/147: shows a second edition of a series in one year as its own refusal, not a generic failure', async () => {
+    createEventMock.mockResolvedValue({
+      error: { code: 'EVENT_EDITION_ALREADY_EXISTS', message: 'exists' },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-golf-tournament-create-name'), { target: { value: 'The Masters' } });
+    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-start'), { target: { value: '2026-04-09T13:00' } });
+    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-release'), { target: { value: '2026-03-26T13:00' } });
+    fireEvent.change(screen.getByTestId('root-admin-golf-tournament-create-locks'), { target: { value: '2026-04-08T13:00' } });
+    fireEvent.click(screen.getByTestId('root-admin-golf-tournament-create-submit'));
+
+    expect(
+      await screen.findByText('This tour already has a 2026 edition of this tournament.'),
+    ).toBeInTheDocument();
+  });
+
+  it('pool-master-3dg submits a manual tournament with the tour and year prefilled from the URL and navigates Home', async () => {
     createEventMock.mockResolvedValue({
       data: { event: sportEventFixture({ id: 'new-tour' }) },
     });
@@ -136,14 +146,13 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     );
     const body = (createEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body.name).toBe('Spring Classic');
-    expect(body.seasonId).toBe('season-1');
+    expect(body).toMatchObject({ sportLeagueId: 'league-1', eventYear: 2026 });
     expect(body.startDate).toContain('2026-03-12T');
     expect(body.rounds).toBe(4);
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
   });
 
   it('pool-master-3dg browses provider events, selects one, and creates a linked tournament', async () => {
-    listSeasonsMock.mockResolvedValue({ data: { seasons: [season()] } });
     listProvidersMock.mockResolvedValue({
       data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] },
     });
@@ -183,7 +192,8 @@ describe('pool-master-3dg RootAdminGolfTournamentCreatePage', () => {
     );
     const body = (createEventFromProviderEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body;
     expect(body).toMatchObject({
-      seasonId: 'season-1',
+      sportLeagueId: 'league-1',
+      eventYear: 2026,
       providerId: 'mock-contest-feed',
       externalId: 'pga-2026-masters',
     });

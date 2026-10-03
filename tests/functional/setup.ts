@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
+import { cleanupFreshEventEditions } from '../support/event-edition';
 const FUNCTIONAL_TEST_EMAIL_DOMAIN = '@functional.test';
 const FUNCTIONAL_TEST_PROVIDER_IDS = ['functional-test', 'integration-test'] as const;
 const FUNCTIONAL_PROVIDER_PREFIX = 'functional-provider-';
@@ -489,6 +490,7 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     });
   }
+  await cleanupFreshEventEditions(database);
   await database.providerSyncRun.deleteMany({
     where: {
       OR: [

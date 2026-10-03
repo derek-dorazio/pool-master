@@ -20,6 +20,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -73,6 +74,7 @@ describe('RosterPick CRUD integration', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `roster-pick-crud-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,

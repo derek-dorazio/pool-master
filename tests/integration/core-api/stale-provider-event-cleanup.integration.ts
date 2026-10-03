@@ -16,6 +16,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
   beforeAll(async () => {
@@ -300,6 +301,7 @@ async function createCleanupSportEvent(input: {
 }) {
   return getPrisma().sportEvent.create({
     data: {
+      ...(await freshEventEdition(getPrisma())),
       externalId: input.externalId,
       providerId: 'contract-provider',
       sport: input.sport,

@@ -104,7 +104,7 @@ export const AcceptInvitationRequestSchema = z.object({
 }).describe('Authenticated invitation-acceptance payload.');
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationRequestSchema>;
 
-// #202 — `CopySeasonRequestSchema` is gone with the `copy-season` route.
+// #202 — the copy-season request schema is gone with the `copy-season` route.
 
 export const CsvImportRowSchema = z.object({
   email: z.string().describe('Email address for the imported member row.'),

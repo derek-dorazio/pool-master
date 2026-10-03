@@ -64,8 +64,9 @@ export const SportEventDtoSchema = z.object({
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now.'),
   contestEligible: z.boolean().describe('Whether a contest can be created or configured for the event right now.'),
-  seasonId: z.string().uuid().nullable().describe('Season the event belongs to; null for a provider-synced event with no season.'),
-  leagueEventId: z.string().uuid().nullable().describe('Recurring tournament this is one year\'s instance of; null for a one-off event.'),
+  eventSeriesId: z.string().uuid().describe('The recurring tournament (event series) this is one edition of — the event\'s only parent.'),
+  eventYear: z.number().int().describe('The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.'),
+  sportLeagueId: z.string().uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe(`Pick tiers defined for the event. ${ADMIN_ONLY}`),
@@ -81,7 +82,8 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 export const SportEventListQuerySchema = z.object({
   sport: z.nativeEnum(Sport).optional().describe('Only events of this sport.'),
   status: EventStatusDtoSchema.optional().describe('Only events in this lifecycle status.'),
-  seasonId: z.string().uuid().optional().describe('Only events in this season.'),
+  sportLeagueId: z.string().uuid().optional().describe('Only events of this sport league\'s series.'),
+  eventYear: z.number().int().optional().describe('Only editions branded with this year.'),
   q: z.string().optional().describe('Case-insensitive substring of the event name.'),
 }).describe('Filters for the sport-event list.');
 export type SportEventListQuery = z.infer<typeof SportEventListQuerySchema>;
@@ -97,7 +99,8 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 export const CreateSportEventRequestSchema = z.object({
-  seasonId: z.string().uuid().describe('The season the event belongs to; its sport league decides the sport.'),
+  sportLeagueId: z.string().uuid().describe('The sport league the event runs on; it decides the sport. The event\'s series is found or created in it by name.'),
+  eventYear: z.number().int().describe('The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.'),
   name: z.string().min(1),
   venue: z.string().optional(),
   location: z.string().optional(),
@@ -111,12 +114,24 @@ export const CreateSportEventRequestSchema = z.object({
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
 
 export const CreateSportEventFromProviderEventRequestSchema = z.object({
-  seasonId: z.string().uuid(),
+  sportLeagueId: z.string().uuid().describe('The sport league the event runs on; it decides the sport.'),
+  eventYear: z.number().int().describe('The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.'),
   providerId: z.string().min(1),
   externalId: z.string().min(1).describe('From a provider catalog browse (listProviderCatalogEvents).'),
   rounds: z.number().int().min(1).optional().describe('Round count; omitted, the provider schedule decides.'),
 }).describe('An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched.');
 export type CreateSportEventFromProviderEventRequest = z.infer<typeof CreateSportEventFromProviderEventRequestSchema>;
+
+/**
+ * plans/147 — the season clone, without the season: one sport league's calendar for one
+ * event year, copied to another. Answered with the created events.
+ */
+export const CloneSportEventYearRequestSchema = z.object({
+  sportLeagueId: z.string().uuid().describe('The sport league whose calendar is cloned.'),
+  eventYear: z.number().int().describe('The year cloned from. 422 EVENT_YEAR_HAS_NO_EVENTS when the sport league has no events in it.'),
+  targetYear: z.number().int().optional().describe('The year cloned to; defaults to eventYear + 1. 409 EVENT_YEAR_NOT_EMPTY when the sport league already has events in it.'),
+}).describe('Re-creates each of a sport league\'s events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change.');
+export type CloneSportEventYearRequest = z.infer<typeof CloneSportEventYearRequestSchema>;
 
 export const UpdateSportEventRequestSchema = z.object({
   name: z.string().min(1).optional(),
@@ -338,6 +353,7 @@ registerSchema('SportEventListResponse', SportEventListResponseSchema);
 registerSchema('SportEventResponse', SportEventResponseSchema);
 registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
 registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);
+registerSchema('CloneSportEventYearRequest', CloneSportEventYearRequestSchema);
 registerSchema('UpdateSportEventRequest', UpdateSportEventRequestSchema);
 registerSchema('TransitionSportEventRequest', TransitionSportEventRequestSchema);
 registerSchema('LinkSportEventScoreSourceRequest', LinkSportEventScoreSourceRequestSchema);

@@ -4,7 +4,7 @@ import { SportLeagueService } from '../../../packages/core-api/src/modules/sport
 import {
   fakeParticipantLeagueAffiliationRepo,
   fakeParticipantRepo,
-  fakeSeasonRepo,
+  fakeSportEventRepo,
   fakeSportLeagueRepo,
   fakeSportRepo,
 } from '../../support/repo-fakes';
@@ -21,7 +21,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     sportId: 'sport-golf',
     name: 'PGA Tour',
     matchKeyword: 'PGA',
-    currentSeasonId: null,
+    currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -36,14 +36,14 @@ function participant(id: string, name: string): Participant {
 function buildService(overrides: {
   sports?: Parameters<typeof fakeSportRepo>[0];
   sportLeagues?: Parameters<typeof fakeSportLeagueRepo>[0];
-  seasons?: Parameters<typeof fakeSeasonRepo>[0];
+  sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
   affiliations?: Parameters<typeof fakeParticipantLeagueAffiliationRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findByName: jest.fn().mockResolvedValue(GOLF), ...overrides.sports }),
     sportLeagues: fakeSportLeagueRepo({ findById: jest.fn().mockResolvedValue(sportLeague()), ...overrides.sportLeagues }),
-    seasons: fakeSeasonRepo(overrides.seasons),
+    sportEvents: fakeSportEventRepo(overrides.sportEvents),
     affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
     participants: fakeParticipantRepo(overrides.participants),
   };
@@ -51,16 +51,16 @@ function buildService(overrides: {
 }
 
 describe('SportLeagueService — sport leagues', () => {
-  it('lists the sport\'s sport leagues with their affiliation and season counts, zero where there are none', async () => {
+  it('lists the sport\'s sport leagues with their affiliation and event counts, zero where there are none', async () => {
     const { service } = buildService({
       sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
       affiliations: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
-      seasons: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
+      sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
 
     const result = await service.listSportLeagues({ sport: Sport.GOLF, isActive: true });
 
-    expect(result.map((row) => [row.name, row.affiliationCount, row.seasonCount])).toEqual([
+    expect(result.map((row) => [row.name, row.affiliationCount, row.sportEventCount])).toEqual([
       ['PGA Tour', 144, 3],
       ['Champions Tour', 0, 0],
     ]);
@@ -85,6 +85,39 @@ describe('SportLeagueService — sport leagues', () => {
 
     await expect(service.createSportLeague(Sport.GOLF, { name: 'PGA Tour' }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
+  });
+});
+
+// plans/147 decision 6 — "set as current" used to be a foreign key to a season, so the database
+// guaranteed the target existed. currentEventYear is a plain integer; this check is that guarantee.
+describe('SportLeagueService — set as current (plans/147 decision 6)', () => {
+  it('refuses a year the sport league has no events in with 422 EVENT_YEAR_HAS_NO_EVENTS, writing nothing', async () => {
+    const countBySportLeagues = jest.fn().mockResolvedValue(new Map([['sl-pga', 0]]));
+    const { service, deps } = buildService({ sportEvents: { countBySportLeagues } });
+
+    await expect(service.updateSportLeague('sl-pga', { currentEventYear: 1823 }))
+      .rejects.toMatchObject({ code: 'EVENT_YEAR_HAS_NO_EVENTS', statusCode: 422 });
+    expect(countBySportLeagues).toHaveBeenCalledWith(['sl-pga'], { eventYear: 1823 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+  });
+
+  it('sets a year the sport league has events in, in one write on the sport league', async () => {
+    const { service, deps } = buildService({
+      sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 4]])) },
+    });
+
+    await service.updateSportLeague('sl-pga', { currentEventYear: 2026 });
+
+    expect(deps.sportLeagues.update).toHaveBeenCalledWith('sl-pga', expect.objectContaining({ currentEventYear: 2026 }));
+  });
+
+  it('checks nothing when the update does not touch the current year', async () => {
+    const countBySportLeagues = jest.fn().mockResolvedValue(new Map());
+    const { service } = buildService({ sportEvents: { countBySportLeagues } });
+
+    await service.updateSportLeague('sl-pga', { name: 'PGA TOUR' });
+
+    expect(countBySportLeagues).not.toHaveBeenCalledWith(['sl-pga'], expect.objectContaining({ eventYear: expect.anything() }));
   });
 });
 

@@ -5,10 +5,9 @@
  */
 
 import type {
-  LeagueEvent,
+  EventSeries,
   ParticipantInactiveReason,
   ParticipantLeagueAffiliation,
-  Season,
   Sport,
   SportConfig,
   SportEvent,
@@ -35,7 +34,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentSeasonId'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear'>>;
 
 export interface SportLeagueRepository {
   findById(id: string): Promise<SportLeague | null>;
@@ -44,25 +43,6 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
-}
-
-export interface SeasonFilters {
-  sportId?: string;
-  sportLeagueId?: string;
-  isActive?: boolean;
-}
-
-export type SeasonUpdate = Partial<Pick<Season, 'name' | 'startDate' | 'endDate' | 'isActive'>>;
-
-export interface SeasonRepository {
-  findById(id: string): Promise<Season | null>;
-  /** Ordered by sport league, then most recent year first. */
-  findAll(filters: SeasonFilters): Promise<Season[]>;
-  findBySportLeagueAndYear(sportLeagueId: string, year: number): Promise<Season | null>;
-  create(input: Pick<Season, 'sportLeagueId' | 'name' | 'year' | 'startDate' | 'endDate'>): Promise<Season>;
-  update(id: string, updates: SeasonUpdate): Promise<Season>;
-  /** Seasons per sport league, for each id asked about (0 where none). */
-  countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
 }
 
 export interface ParticipantRanking {
@@ -87,12 +67,15 @@ export interface ParticipantLeagueAffiliationRepository {
 export interface SportEventFilters {
   sport?: Sport;
   status?: SportEventStatus;
-  seasonId?: string;
+  /** Only events whose series belongs to this sport league. */
+  sportLeagueId?: string;
+  eventYear?: number;
   /** Case-insensitive substring of the event name. */
   q?: string;
 }
 
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'fieldLocked' | 'metadata' | 'participantCount'>;
+/** The sport league comes from the series, so it is not supplied. */
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'fieldLocked' | 'metadata' | 'participantCount' | 'sportLeagueId'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -128,6 +111,10 @@ export interface SportEventRepository {
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
+  /**
+   * Rejects a second edition of a series in one year: the database's unique constraint on
+   * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).
+   */
   create(input: SportEventCreate): Promise<SportEvent>;
   update(id: string, updates: SportEventUpdate): Promise<SportEvent>;
   /** Deletes the event with its rounds, tiers and field. Refuses nothing: the caller guards contests. */
@@ -138,8 +125,8 @@ export interface SportEventRepository {
   countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
-  /** Events per season, for each id asked about (0 where none). */
-  countBySeasons(seasonIds: readonly string[]): Promise<Map<string, number>>;
+  /** Events per sport league, through their series, for each id asked about (0 where none). */
+  countBySportLeagues(sportLeagueIds: readonly string[], filters?: { eventYear?: number }): Promise<Map<string, number>>;
   /**
    * Per provider asked about: its `SCHEDULED` or `IN_PROGRESS` events, and when any of its
    * events last changed (null where it has none).
@@ -157,9 +144,9 @@ export interface SportEventRepository {
   findAutoLifecycleCandidates(): Promise<SportEvent[]>;
 }
 
-export interface LeagueEventRepository {
-  /** The sport league's recurring event of this name, created on first use. */
-  findOrCreate(sportLeagueId: string, name: string): Promise<LeagueEvent>;
+export interface EventSeriesRepository {
+  /** The sport league's series of this name, created on first use. */
+  findOrCreate(sportLeagueId: string, name: string): Promise<EventSeries>;
 }
 
 export interface SportEventRoundSchedule {

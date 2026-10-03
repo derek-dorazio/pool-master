@@ -20,6 +20,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
+import { linkedProviderEvent } from '../../support/event-edition';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
@@ -164,6 +165,24 @@ async function cleanupMockProviderImportData(): Promise<void> {
 // polls (about 2 s, plus query time) was enough locally, where the slowest run takes ~1 s under
 // coverage, but not on a loaded CI runner — the field sync timed out there on #259 with no code
 // change on that path. A stuck run still fails here, well inside Jest's 30 s test timeout.
+/**
+ * plans/147 — sync updates the events already linked to provider events and never creates
+ * one, so a sync scenario starts where an admin would leave it: every provider golf event in
+ * the window created and linked.
+ */
+async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
+  const events = await new MockContestFeedAdapter(mockProvider.baseUrl).getUpcomingEvents(Sport.GOLF, { from, to });
+  for (const event of events) {
+    await linkedProviderEvent(getPrisma(), {
+      providerId: event.providerId,
+      externalId: event.externalId,
+      name: event.name,
+      startDate: event.startDate,
+    });
+  }
+  return events.length;
+}
+
 const SYNC_RUN_WAIT_MS = 10_000;
 
 async function waitForProviderSyncRuns(ids: string[]) {
@@ -616,6 +635,14 @@ describe('mock contest feed provider event-first verification', () => {
       results: expect.any(Array),
     });
 
+    // plans/147 — sync updates the event linked to this provider event; it never creates one.
+    await linkedProviderEvent(prisma, {
+      providerId: detail!.providerId,
+      externalId: detail!.externalId,
+      name: detail!.name,
+      startDate: detail!.startDate,
+    });
+
     const persistDetailResult = await persistence.persistEventDetail(detail!);
     expect(persistDetailResult.eventsPersisted).toBe(1);
     expect(persistDetailResult.participantsPersisted).toBe(detail?.participants.length);
@@ -711,6 +738,9 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
     });
 
+    const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
+    expect(linked).toBeGreaterThan(0);
+
     const manualSchedule = await providerService.prepareSportSync(
       {
         sport: Sport.GOLF,
@@ -730,11 +760,13 @@ describe('mock contest feed provider event-first verification', () => {
       jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
       writeDiagnostics: expect.objectContaining({
         summary: expect.objectContaining({
-          created: expect.any(Number),
+          updated: expect.any(Number),
         }),
       }),
     }));
-    expectNumberGreaterThan(manualScheduleSummary?.created, 0);
+    // plans/147 — the schedule feed refreshes the linked events and creates none.
+    expectNumberGreaterThan(manualScheduleSummary?.updated, 0);
+    expect(manualScheduleSummary?.created).toBe(0);
 
     const eligibleEventIds = await eventReader.listEventIdsForFeed({
       sport: Sport.GOLF,
@@ -897,6 +929,7 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
     });
 
+    await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     const schedule = await providerService.prepareSportSync(
       {
         sport: Sport.GOLF,
@@ -1146,6 +1179,7 @@ describe('mock contest feed provider event-first verification', () => {
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });
 
+    await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-04-30T23:59:59.999Z'));
     const scheduleJob = await scheduler.syncSport(Sport.GOLF);
     expect(scheduleJob.status).toBe('COMPLETED');
 

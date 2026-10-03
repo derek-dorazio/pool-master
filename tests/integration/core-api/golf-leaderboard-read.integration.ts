@@ -9,6 +9,7 @@ import {
 } from '../helpers';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -71,6 +72,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     });
     const event = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `golf-leaderboard-event-${suffix}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,

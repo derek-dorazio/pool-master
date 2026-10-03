@@ -77,9 +77,12 @@ export interface SportEvent extends DomainEntity {
   releaseAt: Date;
   fieldLocksAt: Date;
   metadata: Record<string, unknown>;
-  seasonId?: string;
-  /** The recurring tournament this is one year's instance of. */
-  leagueEventId?: string;
+  /** The event series — the recurring tournament — this is one edition of. Its only parent. */
+  eventSeriesId: string;
+  /** The year this edition is branded with ("the 2026 Masters"); not always the year it starts. */
+  eventYear: number;
+  /** The series' sport league, read through the series — never stored on the event (plans/147 decision 7). */
+  sportLeagueId: string;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

@@ -142,16 +142,10 @@ export const QueryKeys = {
       // tour's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'league-roster', sportLeagueId] as const,
-      seasons: (sportLeagueId?: QueryKeyId) =>
-        sportLeagueId === undefined
-          ? (['poolmaster', 'root-admin', 'golf', 'seasons'] as const)
-          : (['poolmaster', 'root-admin', 'golf', 'seasons', sportLeagueId] as const),
-      season: (seasonId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'season', seasonId] as const,
       tournaments: ['poolmaster', 'root-admin', 'golf', 'tournaments'] as const,
-      // Under the `tournaments` prefix, so invalidating the list refreshes each season's too.
-      seasonTournaments: (seasonId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tournaments', 'season', seasonId] as const,
+      // Under the `tournaments` prefix, so invalidating the list refreshes each tour's too.
+      tourTournaments: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournaments', 'tour', sportLeagueId] as const,
       tournament: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId] as const,
       rounds: (eventId: QueryKeyId) =>

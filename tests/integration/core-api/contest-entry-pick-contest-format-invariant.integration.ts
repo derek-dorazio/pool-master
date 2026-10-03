@@ -28,6 +28,7 @@ import { ParticipantType, Sport } from '@poolmaster/shared/domain';
 import {
   ContestEntryPickService,
 } from '../../../packages/core-api/src/modules/contest-entry-picks';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -88,6 +89,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `pick-invariant-${suffix}`,
       providerId: 'integration-test',
       sport: Sport.GOLF,

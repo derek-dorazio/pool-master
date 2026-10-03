@@ -30,6 +30,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { randomUUID } from 'node:crypto';
+import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
 
 const createdSportIds: string[] = [];
 const createdParticipantIds: string[] = [];
@@ -104,6 +105,7 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
+    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
 
@@ -151,6 +153,7 @@ async function seedImportedGolfEvent(options: {
 
   const sportEvent = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `managed-contest-event-${randomUUID().slice(0, 8)}`,
       providerId: options.providerId ?? 'functional-test',
       sport: Sport.GOLF,
@@ -934,6 +937,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `entry-detail-event-${randomUUID().slice(0, 8)}`,
         providerId: 'functional-test',
         sport: Sport.GOLF,
@@ -1159,6 +1163,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `functional-contest-event-${randomUUID().slice(0, 8)}`,
         providerId: 'functional-test',
         sport: Sport.GOLF,
@@ -1354,6 +1359,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `visibility-event-${randomUUID().slice(0, 8)}`,
         providerId: 'functional-test',
         sport: Sport.GOLF,
@@ -1534,6 +1540,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `list-visibility-event-${randomUUID().slice(0, 8)}`,
         providerId: 'functional-test',
         sport: Sport.GOLF,

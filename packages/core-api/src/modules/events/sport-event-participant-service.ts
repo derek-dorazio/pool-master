@@ -17,7 +17,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
-  SeasonRepository,
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
@@ -88,7 +87,6 @@ export interface SportEventParticipantServiceDeps {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
-  seasons: SeasonRepository;
   affiliations: ParticipantLeagueAffiliationRepository;
   valuations: SportEventParticipantValuationRepository;
   standings: SportEventParticipantStandingRepository;
@@ -156,14 +154,7 @@ export class SportEventParticipantService {
         422,
       );
     }
-    const sportLeagueId = await this.sportLeagueIdOf(event);
-    if (!sportLeagueId) {
-      throw new SportEventError(
-        `Sport event ${sportEventId} has no season, so it has no sport league to seed from.`,
-        'EVENT_HAS_NO_SEASON',
-        409,
-      );
-    }
+    const { sportLeagueId } = event;
     const affiliations = (await this.deps.affiliations.findBySportLeague(sportLeagueId))
       .filter((affiliation) => affiliation.participant.status === ParticipantStatus.ACTIVE);
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
@@ -258,14 +249,7 @@ export class SportEventParticipantService {
     return event;
   }
 
-  private async sportLeagueIdOf(event: SportEvent): Promise<string | null> {
-    if (!event.seasonId) return null;
-    return (await this.deps.seasons.findById(event.seasonId))?.sportLeagueId ?? null;
-  }
-
   private async affiliatedParticipantIds(event: SportEvent): Promise<Set<string>> {
-    const sportLeagueId = await this.sportLeagueIdOf(event);
-    if (!sportLeagueId) return new Set();
-    return new Set((await this.deps.affiliations.findBySportLeague(sportLeagueId)).map((affiliation) => affiliation.participantId));
+    return new Set((await this.deps.affiliations.findBySportLeague(event.sportLeagueId)).map((affiliation) => affiliation.participantId));
   }
 }

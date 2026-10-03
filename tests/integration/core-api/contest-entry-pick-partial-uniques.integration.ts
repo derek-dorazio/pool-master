@@ -26,6 +26,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -97,6 +98,7 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
+      ...(await freshEventEdition(prisma)),
       externalId: `partial-uniques-${suffix}`,
       providerId: 'integration-test',
       sport: Sport.GOLF,

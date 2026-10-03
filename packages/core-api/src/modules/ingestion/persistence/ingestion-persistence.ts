@@ -46,8 +46,13 @@ export class IngestionPersistence {
   ) {}
 
   /**
-   * Upsert sport events by (providerId, externalId).
-   * Returns the number of events persisted.
+   * Update the sport events already linked to these provider events, by (providerId,
+   * externalId). Returns the number of events persisted.
+   *
+   * Sync never creates a SportEvent (plans/147). An event is an edition of a series in a
+   * sport league, and a provider event names neither, so a row created here would have
+   * to guess its tour. A provider event no event is linked to is skipped and logged; an
+   * admin creates the event (from the provider event, or by hand) and links it.
    */
   async persistEvents(events: SportEvent[]): Promise<number> {
     return (await this.persistEventsWithDiagnostics(events)).count;
@@ -85,42 +90,27 @@ export class IngestionPersistence {
           },
         },
       });
-      const before = existingEvent ? normalizeSportEventRow(existingEvent) : undefined;
+      if (!existingEvent) {
+        this.logger?.info({
+          providerId: event.providerId,
+          externalId: event.externalId,
+          name: event.name,
+        }, 'Skipped provider event with no linked sport event');
+        continue;
+      }
+      const before = normalizeSportEventRow(existingEvent);
       const after = normalizeSportEventInput(event, resolvedTiming);
 
-      const persistedEvent = await this.prisma.sportEvent.upsert({
-        where: {
-          providerId_externalId: {
-            providerId: event.providerId,
-            externalId: event.externalId,
-          },
-        },
-        create: {
-          externalId: event.externalId,
-          providerId: event.providerId,
-          sport: event.sport,
+      const persistedEvent = await this.prisma.sportEvent.update({
+        where: { id: existingEvent.id },
+        data: {
           name: event.name,
           venue: event.venue ?? null,
           location: event.location ?? null,
           startDate: event.startDate,
           endDate: event.endDate ?? null,
-          // status intentionally omitted — takes the SCHEDULED column default here,
-          // then applySportEventStatusTransition below is the one place that ever
-          // writes SportEvent.status (plans/124 §3.3).
-          rounds: event.rounds ?? null,
-          participantCount: event.participantCount ?? null,
-          releaseAt: resolvedTiming.releaseAt,
-          fieldLocksAt: resolvedTiming.fieldLocksAt,
-          fieldLocked: event.fieldLocked,
-          metadata: toPrismaJson(event.metadata),
-        },
-        update: {
-          name: event.name,
-          venue: event.venue ?? null,
-          location: event.location ?? null,
-          startDate: event.startDate,
-          endDate: event.endDate ?? null,
-          // status intentionally omitted — see the create branch above.
+          // status intentionally omitted — applySportEventStatusTransition below is the
+          // one place that ever writes SportEvent.status (plans/124 §3.3).
           rounds: event.rounds ?? null,
           participantCount: event.participantCount ?? null,
           releaseAt: resolvedTiming.releaseAt,
@@ -137,7 +127,7 @@ export class IngestionPersistence {
         externalId: event.externalId,
         internalId: persistedEvent.id,
         name: event.name,
-        ...(before ? { before } : {}),
+        before,
         after,
       });
       await this.eventLifecycleService?.applySportEventStatusTransition({
@@ -303,9 +293,13 @@ export class IngestionPersistence {
       },
     });
     if (!persistedEvent) {
-      throw new Error(
-        `Persisted sport event not found for ${detail.providerId}:${detail.externalId}`,
-      );
+      // No event is linked to this provider event, so there is no field to write
+      // (persistEventsWithDiagnostics above skipped it too).
+      return {
+        count: 0,
+        value: { eventsPersisted, participantsPersisted, sportEventParticipantsPersisted: 0 },
+        writeDiagnostics: summarizeSyncWriteRows(detailRows),
+      };
     }
 
     let sportEventParticipantsPersisted = 0;

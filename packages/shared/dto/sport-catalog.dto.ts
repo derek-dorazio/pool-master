@@ -1,6 +1,6 @@
 /**
- * The cross-sport catalog's contract (#236): Sport, SportLeague, the
- * Participant↔SportLeague affiliation edge, and Season. One DTO per object; the counts
+ * The cross-sport catalog's contract (#236): Sport, SportLeague and the
+ * Participant↔SportLeague affiliation edge. One DTO per object; the counts
  * and derived facts a screen reads are fields of that DTO, never a second shape
  * (plans/145 rules 3 and 5). These replace the golf-named admin DTOs, which were
  * projections of the same rows.
@@ -39,10 +39,10 @@ export const SportLeagueDtoSchema = z.object({
   sportId: z.string().uuid().describe('The sport this sport league belongs to.'),
   name: z.string().describe('Sport league name, e.g. "PGA Tour".'),
   matchKeyword: z.string().nullable().describe('Substring a provider event name carries when it belongs to this sport league; null when none is set.'),
-  currentSeasonId: z.string().uuid().nullable().describe('The season designated current, if any.'),
+  currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
-  seasonCount: z.number().int().describe('Seasons on record for the sport league.'),
+  sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
 }).describe('A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product\'s League.');
@@ -76,6 +76,7 @@ export const UpdateSportLeagueRequestSchema = z.object({
   name: z.string().min(1).optional(),
   matchKeyword: z.string().nullable().optional().describe('null clears it.'),
   isActive: z.boolean().optional(),
+  currentEventYear: z.number().int().optional().describe('Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.'),
 }).describe('Changes to a sport league; omitted fields are left alone.');
 export type UpdateSportLeagueRequest = z.infer<typeof UpdateSportLeagueRequestSchema>;
 
@@ -145,65 +146,6 @@ export const ParticipantLeagueAffiliationUploadPreviewResponseSchema = z.object(
 }).describe('A dry run of an affiliation upload. Nothing is written.');
 export type ParticipantLeagueAffiliationUploadPreviewResponse = z.infer<typeof ParticipantLeagueAffiliationUploadPreviewResponseSchema>;
 
-// --- Season --------------------------------------------------------------------
-
-export const SeasonDtoSchema = z.object({
-  id: z.string().uuid().describe('Season identifier.'),
-  sportLeagueId: z.string().uuid().describe('The sport league whose calendar year this is.'),
-  name: z.string(),
-  year: z.number().int(),
-  startDate: DateTimeSchema,
-  endDate: DateTimeSchema,
-  isActive: z.boolean(),
-  sportEventCount: z.number().int().describe('Events in this season.'),
-  isCurrent: z.boolean().describe('Whether this is its sport league\'s current season — derived from the sport league, not stored.'),
-  createdAt: DateTimeSchema,
-  updatedAt: DateTimeSchema,
-}).describe('A sport league\'s calendar year: a grouping of events, not a roster boundary.');
-export type SeasonDto = z.infer<typeof SeasonDtoSchema>;
-
-export const SeasonListQuerySchema = z.object({
-  isActive: z.boolean().optional().describe('Only active, or only inactive, seasons.'),
-}).describe('Filters for a sport league\'s seasons.');
-export type SeasonListQuery = z.infer<typeof SeasonListQuerySchema>;
-
-export const SeasonListResponseSchema = z.object({
-  seasons: z.array(SeasonDtoSchema).describe('Newest year first.'),
-}).describe('A sport league\'s seasons.');
-export type SeasonListResponse = z.infer<typeof SeasonListResponseSchema>;
-
-export const SeasonResponseSchema = z.object({
-  season: SeasonDtoSchema,
-}).describe('One season.');
-export type SeasonResponse = z.infer<typeof SeasonResponseSchema>;
-
-export const CreateSeasonRequestSchema = z.object({
-  name: z.string().min(1),
-  year: z.number().int().describe('Unique within the sport league.'),
-  startDate: DateTimeSchema,
-  endDate: DateTimeSchema,
-}).describe('A new season for the sport league in the path.');
-export type CreateSeasonRequest = z.infer<typeof CreateSeasonRequestSchema>;
-
-export const UpdateSeasonRequestSchema = z.object({
-  name: z.string().min(1).optional(),
-  startDate: DateTimeSchema.optional(),
-  endDate: DateTimeSchema.optional(),
-  isActive: z.boolean().optional(),
-}).describe('Changes to a season; omitted fields are left alone.');
-export type UpdateSeasonRequest = z.infer<typeof UpdateSeasonRequestSchema>;
-
-export const CloneSeasonRequestSchema = z.object({
-  targetYear: z.number().int().optional().describe('Year for the new season; defaults to the source season\'s year + 1.'),
-}).describe('Clones a season\'s event calendar forward (plans/124 §4.2a).');
-export type CloneSeasonRequest = z.infer<typeof CloneSeasonRequestSchema>;
-
-export const CloneSeasonResponseSchema = z.object({
-  season: SeasonDtoSchema.describe('The new season.'),
-  clonedEventCount: z.number().int().describe('Source-season events re-created as fresh events in the new season.'),
-}).describe('The cloned season. Fields, tiers, prices, scores and provider links are never copied; the current season does not change.');
-export type CloneSeasonResponse = z.infer<typeof CloneSeasonResponseSchema>;
-
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('SportDto', SportDtoSchema);
 registerSchema('SportListResponse', SportListResponseSchema);
@@ -221,11 +163,3 @@ registerSchema('UpdateParticipantLeagueAffiliationRankingsRequest', UpdatePartic
 registerSchema('ParticipantLeagueAffiliationUploadRequest', ParticipantLeagueAffiliationUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);
 registerSchema('ParticipantLeagueAffiliationUploadPreviewResponse', ParticipantLeagueAffiliationUploadPreviewResponseSchema);
-registerSchema('SeasonDto', SeasonDtoSchema);
-registerSchema('SeasonListQuery', SeasonListQuerySchema);
-registerSchema('SeasonListResponse', SeasonListResponseSchema);
-registerSchema('SeasonResponse', SeasonResponseSchema);
-registerSchema('CreateSeasonRequest', CreateSeasonRequestSchema);
-registerSchema('UpdateSeasonRequest', UpdateSeasonRequestSchema);
-registerSchema('CloneSeasonRequest', CloneSeasonRequestSchema);
-registerSchema('CloneSeasonResponse', CloneSeasonResponseSchema);

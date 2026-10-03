@@ -8,6 +8,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -64,6 +65,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     ]);
     const event = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `golf-settlement-event-${suffix}`,
         providerId: 'integration-test',
         sport: Sport.GOLF,

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import {
-  PrismaLeagueEventRepository,
+  PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaSportEventParticipantGolfRoundRepository,
@@ -20,6 +20,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { freshEventEdition } from '../../support/event-edition';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -41,7 +42,7 @@ function repos() {
   const prisma = getPrisma();
   return {
     events: new PrismaSportEventRepository(prisma),
-    leagueEvents: new PrismaLeagueEventRepository(prisma),
+    eventSeries: new PrismaEventSeriesRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
@@ -64,6 +65,7 @@ async function golfSportId(): Promise<string> {
 
 async function createEvent(name = 'Repository Open') {
   return repos().events.create({
+    ...(await freshEventEdition(getPrisma())),
     externalId: `repo-${randomUUID()}`,
     providerId: 'integration-test',
     sport: Sport.GOLF,
@@ -182,17 +184,27 @@ describe('SportEventRepository — writes', () => {
   });
 });
 
-describe('LeagueEventRepository', () => {
+describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
     const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null });
-    const { leagueEvents } = repos();
+    const { eventSeries } = repos();
 
-    const first = await leagueEvents.findOrCreate(sportLeague.id, 'The Masters');
-    const again = await leagueEvents.findOrCreate(sportLeague.id, 'The Masters');
+    const first = await eventSeries.findOrCreate(sportLeague.id, 'The Masters');
+    const again = await eventSeries.findOrCreate(sportLeague.id, 'The Masters');
 
     expect(again.id).toBe(first.id);
-    await expect(getPrisma().leagueEvent.count({ where: { sportLeagueId: sportLeague.id } })).resolves.toBe(1);
+    await expect(getPrisma().eventSeries.count({ where: { sportLeagueId: sportLeague.id } })).resolves.toBe(1);
+  });
+
+  // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
+  it('creates a series active', async () => {
+    const sportId = await golfSportId();
+    const sportLeague = await new PrismaSportLeagueRepository(getPrisma()).create({ sportId, name: 'PGA Tour', matchKeyword: null });
+
+    const series = await repos().eventSeries.findOrCreate(sportLeague.id, 'The Masters');
+
+    expect(series.isActive).toBe(true);
   });
 });
 

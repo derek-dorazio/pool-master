@@ -7,61 +7,62 @@ import {
 } from '@/features/shared/ui';
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
-import { useGolfSeasonsQuery } from './use-golf-catalog';
+import type { GolfTournamentEdition } from './golf-tournament-edition-fields';
+import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 type CreateMode = 'manual' | 'provider';
 
 /**
- * plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new. Owns the create mode
- * toggle and the shared, required Season resolution; the two modes themselves
- * (manual form / provider-event browse) are separate components.
+ * plans/124 §6.3 / §4.4a — /manage/golf/tournaments/new. Owns the create mode toggle and
+ * the shared, required tour and event year (plans/147 — they replaced the season); the
+ * two modes themselves (manual form / provider-event browse) are separate components.
  */
 export function RootAdminGolfTournamentCreatePage() {
   const [searchParams] = useSearchParams();
-  const initialSeasonId = searchParams.get('seasonId') ?? '';
+  const initialTourId = searchParams.get('sportLeagueId') ?? '';
+  const initialYear = searchParams.get('eventYear') ?? '';
 
   const [mode, setMode] = useState<CreateMode>('manual');
-  const [seasonSelection, setSeasonSelection] = useState(initialSeasonId);
+  const [selection, setSelection] = useState<Partial<GolfTournamentEdition>>({});
 
-  const seasonsQuery = useGolfSeasonsQuery();
+  const toursQuery = useGolfSportLeaguesQuery();
 
-  // A tournament is created into an active season only.
-  const seasons = useMemo(
-    () =>
-      (seasonsQuery.data ?? []).filter((season) => season.isActive).sort(
-        (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
-      ),
-    [seasonsQuery.data],
+  // A tournament is created on an active tour only.
+  const tours = useMemo(
+    () => (toursQuery.data ?? []).filter((tour) => tour.isActive),
+    [toursQuery.data],
   );
 
-  // Default season: the ?seasonId= context, else the most recently created active
-  // season. Computed during render (never written into state from a query effect)
-  // so a refetch can't clobber an explicit pick.
-  const defaultSeasonId = initialSeasonId || seasons[0]?.id || '';
-  const seasonId = seasonSelection || defaultSeasonId;
-  const scopedSeason = seasons.find((season) => season.id === seasonId);
+  // Defaults: the ?sportLeagueId= / ?eventYear= context, else the only tour, and that
+  // tour's current year or this calendar year. Computed during render (never written
+  // into state from a query effect) so a refetch can't clobber an explicit pick.
+  const sportLeagueId = selection.sportLeagueId
+    ?? (initialTourId || (tours.length === 1 ? tours[0].id : ''));
+  const tour = tours.find((candidate) => candidate.id === sportLeagueId);
+  const eventYear = selection.eventYear
+    ?? (initialYear || String(tour?.currentEventYear ?? new Date().getFullYear()));
+  const edition: GolfTournamentEdition = { sportLeagueId, eventYear };
 
-  const seasonsLoaded = !seasonsQuery.isLoading && !seasonsQuery.isError;
+  const toursLoaded = !toursQuery.isLoading && !toursQuery.isError;
 
-  if (seasonsLoaded && seasons.length === 0) {
+  if (toursLoaded && tours.length === 0) {
     return (
       <section
         className="space-y-4"
         data-testid="root-admin-golf-tournament-create-page"
       >
         <Callout tone="warning">
-          <p className="font-medium">Create a season before creating a tournament</p>
+          <p className="font-medium">Create a tour before creating a tournament</p>
           <p className="mt-1 text-sm">
-            Every golf tournament belongs to one season of a tour. There are no active
-            golf seasons yet.
+            Every golf tournament runs on a tour. There are no active golf tours yet.
           </p>
           <div className="mt-3">
             <LinkButton
-              data-testid="root-admin-golf-tournament-create-seasons-link"
-              to="/manage/golf/seasons"
+              data-testid="root-admin-golf-tournament-create-tours-link"
+              to="/manage/golf/leagues"
               variant="secondary"
             >
-              Go to Seasons
+              Go to Tours
             </LinkButton>
           </div>
         </Callout>
@@ -85,18 +86,9 @@ export function RootAdminGolfTournamentCreatePage() {
       />
 
       {mode === 'manual' ? (
-        <GolfTournamentManualCreateForm
-          onSeasonChange={setSeasonSelection}
-          seasonId={seasonId}
-          seasons={seasons}
-        />
+        <GolfTournamentManualCreateForm edition={edition} onEditionChange={setSelection} tours={tours} />
       ) : (
-        <GolfTournamentProviderBrowse
-          onSeasonChange={setSeasonSelection}
-          scopedSeason={scopedSeason}
-          seasonId={seasonId}
-          seasons={seasons}
-        />
+        <GolfTournamentProviderBrowse edition={edition} onEditionChange={setSelection} tours={tours} />
       )}
     </section>
   );

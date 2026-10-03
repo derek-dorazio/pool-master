@@ -6,6 +6,7 @@ import {
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { Sport } from '@poolmaster/shared/domain';
+import { linkedProviderEvent } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -70,6 +71,14 @@ describe('IngestionPersistence', () => {
         },
       ],
     };
+
+    // plans/147 — sync updates a linked event; it does not create one.
+    await linkedProviderEvent(prisma, {
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      name: detail.name,
+      startDate: detail.startDate,
+    });
 
     const result = await persistence.persistEventDetail(detail);
 

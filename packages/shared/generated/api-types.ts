@@ -1333,13 +1333,13 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, status, season and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts.
+         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts.
          */
         get: operations["listEvents"];
         put?: never;
         /**
          * Create a sport event
-         * @description An admin-authored event in a season, SCHEDULED, accepting no provider data, with its default rounds and tiers. The sport comes from the season's sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.
+         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league; only golf is supported so far (422 SPORT_NOT_SUPPORTED otherwise). Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -1373,6 +1373,26 @@ export interface paths {
         patch: operations["updateEvent"];
         trace?: never;
     };
+    "/api/v1/events/clone-year": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone a sport league's event year forward
+         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.
+         */
+        post: operations["cloneEventYear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/from-provider-event": {
         parameters: {
             query?: never;
@@ -1384,7 +1404,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event from a provider event
-         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity. Root admin only.
+         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year. Root admin only.
          */
         post: operations["createEventFromProviderEvent"];
         delete?: never;
@@ -1719,7 +1739,7 @@ export interface paths {
         };
         /**
          * List sport leagues
-         * @description Every sport league, or one sport's, each with its affiliation and season counts. The one list that takes a sport: a sport league is where the sport is chosen.
+         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.
          */
         get: operations["listSportLeagues"];
         put?: never;
@@ -1750,7 +1770,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -1837,88 +1857,6 @@ export interface paths {
          * @description Affiliates and ranks every row, all or none; 422 when any row does not resolve. Root admin only.
          */
         post: operations["applyParticipantLeagueAffiliationUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/sport-leagues/{sportLeagueId}/seasons": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List a sport league's seasons */
-        get: operations["listSeasons"];
-        put?: never;
-        /**
-         * Create a season
-         * @description Root admin only. 409 when the sport league already has a season for the year.
-         */
-        post: operations["createSeason"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/seasons/{seasonId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a season */
-        get: operations["getSeason"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update a season
-         * @description Root admin only.
-         */
-        patch: operations["updateSeason"];
-        trace?: never;
-    };
-    "/api/v1/seasons/{seasonId}/set-current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Make a season its sport league's current season
-         * @description One write on the sport league, so it never has zero or two current seasons. Returns the sport league. Root admin only.
-         */
-        post: operations["setCurrentSeason"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/seasons/{seasonId}/clone": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Clone a season's event calendar forward
-         * @description Creates next year's season and re-creates each event in it as a fresh event (plans/124 §4.2a). Fields, tiers, prices, scores and provider links are never copied, and the current season does not change. Root admin only.
-         */
-        post: operations["cloneSeason"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3016,14 +2954,16 @@ export interface components {
             contestEligible: boolean;
             /**
              * Format: uuid
-             * @description Season the event belongs to; null for a provider-synced event with no season.
+             * @description The recurring tournament (event series) this is one edition of — the event's only parent.
              */
-            seasonId: string | null;
+            eventSeriesId: string;
+            /** @description The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year. */
+            eventYear: number;
             /**
              * Format: uuid
-             * @description Recurring tournament this is one year's instance of; null for a one-off event.
+             * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
              */
-            leagueEventId: string | null;
+            sportLeagueId: string;
             /**
              * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
              * @enum {string}
@@ -3066,9 +3006,11 @@ export interface components {
             status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
              * Format: uuid
-             * @description Only events in this season.
+             * @description Only events of this sport league's series.
              */
-            seasonId?: string;
+            sportLeagueId?: string;
+            /** @description Only editions branded with this year. */
+            eventYear?: number;
             /** @description Case-insensitive substring of the event name. */
             q?: string;
         };
@@ -3140,14 +3082,16 @@ export interface components {
                 contestEligible: boolean;
                 /**
                  * Format: uuid
-                 * @description Season the event belongs to; null for a provider-synced event with no season.
+                 * @description The recurring tournament (event series) this is one edition of — the event's only parent.
                  */
-                seasonId: string | null;
+                eventSeriesId: string;
+                /** @description The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year. */
+                eventYear: number;
                 /**
                  * Format: uuid
-                 * @description Recurring tournament this is one year's instance of; null for a one-off event.
+                 * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
                  */
-                leagueEventId: string | null;
+                sportLeagueId: string;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -3245,14 +3189,16 @@ export interface components {
                 contestEligible: boolean;
                 /**
                  * Format: uuid
-                 * @description Season the event belongs to; null for a provider-synced event with no season.
+                 * @description The recurring tournament (event series) this is one edition of — the event's only parent.
                  */
-                seasonId: string | null;
+                eventSeriesId: string;
+                /** @description The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year. */
+                eventYear: number;
                 /**
                  * Format: uuid
-                 * @description Recurring tournament this is one year's instance of; null for a one-off event.
+                 * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
                  */
-                leagueEventId: string | null;
+                sportLeagueId: string;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -3286,9 +3232,11 @@ export interface components {
         CreateSportEventRequest: {
             /**
              * Format: uuid
-             * @description The season the event belongs to; its sport league decides the sport.
+             * @description The sport league the event runs on; it decides the sport. The event's series is found or created in it by name.
              */
-            seasonId: string;
+            sportLeagueId: string;
+            /** @description The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it. */
+            eventYear: number;
             name: string;
             venue?: string;
             location?: string;
@@ -3318,13 +3266,30 @@ export interface components {
         };
         /** @description An event created from a provider event, linked to it for scores (SCORES_ONLY). The field is not touched. */
         CreateSportEventFromProviderEventRequest: {
-            /** Format: uuid */
-            seasonId: string;
+            /**
+             * Format: uuid
+             * @description The sport league the event runs on; it decides the sport.
+             */
+            sportLeagueId: string;
+            /** @description The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it. */
+            eventYear: number;
             providerId: string;
             /** @description From a provider catalog browse (listProviderCatalogEvents). */
             externalId: string;
             /** @description Round count; omitted, the provider schedule decides. */
             rounds?: number;
+        };
+        /** @description Re-creates each of a sport league's events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. */
+        CloneSportEventYearRequest: {
+            /**
+             * Format: uuid
+             * @description The sport league whose calendar is cloned.
+             */
+            sportLeagueId: string;
+            /** @description The year cloned from. 422 EVENT_YEAR_HAS_NO_EVENTS when the sport league has no events in it. */
+            eventYear: number;
+            /** @description The year cloned to; defaults to eventYear + 1. 409 EVENT_YEAR_NOT_EMPTY when the sport league already has events in it. */
+            targetYear?: number;
         };
         /** @description Changes to an admin-managed event; omitted fields are left alone. */
         UpdateSportEventRequest: {
@@ -7243,17 +7208,14 @@ export interface components {
             name: string;
             /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
             matchKeyword: string | null;
-            /**
-             * Format: uuid
-             * @description The season designated current, if any.
-             */
-            currentSeasonId: string | null;
+            /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+            currentEventYear: number | null;
             /** @description Whether the sport league is in use; a read filter, not a write lock. */
             isActive: boolean;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
-            /** @description Seasons on record for the sport league. */
-            seasonCount: number;
+            /** @description Events on record for the sport league, across every series and year. */
+            sportEventCount: number;
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -7293,17 +7255,14 @@ export interface components {
                 name: string;
                 /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
                 matchKeyword: string | null;
-                /**
-                 * Format: uuid
-                 * @description The season designated current, if any.
-                 */
-                currentSeasonId: string | null;
+                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+                currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
-                /** @description Seasons on record for the sport league. */
-                seasonCount: number;
+                /** @description Events on record for the sport league, across every series and year. */
+                sportEventCount: number;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -7334,17 +7293,14 @@ export interface components {
                 name: string;
                 /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
                 matchKeyword: string | null;
-                /**
-                 * Format: uuid
-                 * @description The season designated current, if any.
-                 */
-                currentSeasonId: string | null;
+                /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
+                currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
-                /** @description Seasons on record for the sport league. */
-                seasonCount: number;
+                /** @description Events on record for the sport league, across every series and year. */
+                sportEventCount: number;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -7375,6 +7331,8 @@ export interface components {
             /** @description null clears it. */
             matchKeyword?: string | null;
             isActive?: boolean;
+            /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
+            currentEventYear?: number;
         };
         /** @description A participant's membership of a sport league, and their current rank there. */
         ParticipantLeagueAffiliationDto: {
@@ -7737,218 +7695,6 @@ export interface components {
                 /** @description Set only when MATCHED. */
                 participantName: string | null;
             }[];
-        };
-        /** @description A sport league's calendar year: a grouping of events, not a roster boundary. */
-        SeasonDto: {
-            /**
-             * Format: uuid
-             * @description Season identifier.
-             */
-            id: string;
-            /**
-             * Format: uuid
-             * @description The sport league whose calendar year this is.
-             */
-            sportLeagueId: string;
-            name: string;
-            year: number;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startDate: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            endDate: string;
-            isActive: boolean;
-            /** @description Events in this season. */
-            sportEventCount: number;
-            /** @description Whether this is its sport league's current season — derived from the sport league, not stored. */
-            isCurrent: boolean;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            updatedAt: string;
-        };
-        /** @description Filters for a sport league's seasons. */
-        SeasonListQuery: {
-            /** @description Only active, or only inactive, seasons. */
-            isActive?: boolean;
-        };
-        /** @description A sport league's seasons. */
-        SeasonListResponse: {
-            /** @description Newest year first. */
-            seasons: {
-                /**
-                 * Format: uuid
-                 * @description Season identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport league whose calendar year this is.
-                 */
-                sportLeagueId: string;
-                name: string;
-                year: number;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startDate: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                endDate: string;
-                isActive: boolean;
-                /** @description Events in this season. */
-                sportEventCount: number;
-                /** @description Whether this is its sport league's current season — derived from the sport league, not stored. */
-                isCurrent: boolean;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            }[];
-        };
-        /** @description One season. */
-        SeasonResponse: {
-            /** @description A sport league's calendar year: a grouping of events, not a roster boundary. */
-            season: {
-                /**
-                 * Format: uuid
-                 * @description Season identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport league whose calendar year this is.
-                 */
-                sportLeagueId: string;
-                name: string;
-                year: number;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startDate: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                endDate: string;
-                isActive: boolean;
-                /** @description Events in this season. */
-                sportEventCount: number;
-                /** @description Whether this is its sport league's current season — derived from the sport league, not stored. */
-                isCurrent: boolean;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            };
-        };
-        /** @description A new season for the sport league in the path. */
-        CreateSeasonRequest: {
-            name: string;
-            /** @description Unique within the sport league. */
-            year: number;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startDate: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            endDate: string;
-        };
-        /** @description Changes to a season; omitted fields are left alone. */
-        UpdateSeasonRequest: {
-            name?: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startDate?: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            endDate?: string;
-            isActive?: boolean;
-        };
-        /** @description Clones a season's event calendar forward (plans/124 §4.2a). */
-        CloneSeasonRequest: {
-            /** @description Year for the new season; defaults to the source season's year + 1. */
-            targetYear?: number;
-        };
-        /** @description The cloned season. Fields, tiers, prices, scores and provider links are never copied; the current season does not change. */
-        CloneSeasonResponse: {
-            /** @description The new season. */
-            season: {
-                /**
-                 * Format: uuid
-                 * @description Season identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport league whose calendar year this is.
-                 */
-                sportLeagueId: string;
-                name: string;
-                year: number;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startDate: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                endDate: string;
-                isActive: boolean;
-                /** @description Events in this season. */
-                sportEventCount: number;
-                /** @description Whether this is its sport league's current season — derived from the sport league, not stored. */
-                isCurrent: boolean;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                updatedAt: string;
-            };
-            /** @description Source-season events re-created as fresh events in the new season. */
-            clonedEventCount: number;
         };
         /** @description A round of golf scores. */
         GolfRoundScoreUploadRequest: {
@@ -14937,8 +14683,10 @@ export interface operations {
                 sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 /** @description Only events in this lifecycle status. */
                 status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
-                /** @description Only events in this season. */
-                seasonId?: string;
+                /** @description Only events of this sport league's series. */
+                sportLeagueId?: string;
+                /** @description Only editions branded with this year. */
+                eventYear?: number;
                 /** @description Case-insensitive substring of the event name. */
                 q?: string;
             };
@@ -15040,6 +14788,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15317,6 +15084,125 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    cloneEventYear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloneSportEventYearRequest"];
+            };
+        };
+        responses: {
+            /** @description Sport events matching the filters. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17464,6 +17350,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     listParticipantLeagueAffiliations: {
@@ -17822,400 +17727,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    listSeasons: {
-        parameters: {
-            query?: {
-                /** @description Only active, or only inactive, seasons. */
-                isActive?: boolean;
-            };
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A sport league's seasons. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeasonListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    createSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSeasonRequest"];
-            };
-        };
-        responses: {
-            /** @description One season. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeasonResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                seasonId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description One season. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeasonResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    updateSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                seasonId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateSeasonRequest"];
-            };
-        };
-        responses: {
-            /** @description One season. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeasonResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    setCurrentSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                seasonId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description One sport league. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportLeagueResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    cloneSeason: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                seasonId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CloneSeasonRequest"];
-            };
-        };
-        responses: {
-            /** @description The cloned season. Fields, tiers, prices, scores and provider links are never copied; the current season does not change. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CloneSeasonResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

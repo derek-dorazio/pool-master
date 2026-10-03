@@ -1,7 +1,6 @@
 import type {
   ParticipantDto,
   ParticipantLeagueAffiliationDto,
-  SeasonDto,
   SportEventDto,
   SportEventParticipantDto,
   SportEventRoundDto,
@@ -35,8 +34,9 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED'],
     contestEligible: false,
-    seasonId: 'season-1',
-    leagueEventId: 'league-event-1',
+    eventSeriesId: 'event-series-1',
+    eventYear: 2026,
+    sportLeagueId: 'league-1',
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
     tierCount: 6,
@@ -134,27 +134,10 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     sportId: 'sport-golf',
     name: 'PGA Tour',
     matchKeyword: 'PGA',
-    currentSeasonId: null,
+    currentEventYear: null,
     isActive: true,
     affiliationCount: 0,
-    seasonCount: 0,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-}
-
-export function seasonFixture(overrides: Partial<SeasonDto> = {}): SeasonDto {
-  return {
-    id: 'season-1',
-    sportLeagueId: 'league-1',
-    name: 'PGA Tour 2026',
-    year: 2026,
-    startDate: '2026-01-01T00:00:00.000Z',
-    endDate: '2026-12-31T00:00:00.000Z',
-    isActive: true,
     sportEventCount: 0,
-    isCurrent: false,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,

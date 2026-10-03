@@ -13,6 +13,7 @@ import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
+import { freshEventEdition } from '../../support/event-edition';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -112,6 +113,7 @@ describe('Contest management integration', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
+        ...(await freshEventEdition(prisma)),
         externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
         providerId: 'PGA',
         sport: Sport.GOLF,

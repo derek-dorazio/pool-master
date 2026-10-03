@@ -18,11 +18,8 @@ import {
   SuccessSchema,
   UserResponseSchema,
   UserListResponseSchema,
-  CloneSeasonResponseSchema,
   ParticipantListResponseSchema,
   ParticipantResponseSchema,
-  SeasonListResponseSchema,
-  SeasonResponseSchema,
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
   SportEventResponseSchema,
@@ -66,6 +63,7 @@ import type {
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import { freshEventEdition } from '../../support/event-edition';
 
 function emptyLiveScorePersistenceResult() {
   return {
@@ -630,6 +628,7 @@ describe('Contract verification (root admin)', () => {
         },
       },
       create: {
+        ...(await freshEventEdition(getPrisma())),
         externalId: 'event-1',
         providerId: 'contract-provider',
         sport: 'GOLF',
@@ -1014,11 +1013,11 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('pool-master-z3l: the sport-league, season, participant and event operations golf administration uses match their DTOs on happy paths', async () => {
+  it('pool-master-z3l, plans/147: the sport-league, participant and event operations golf administration uses match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case per operation this epic adds to
-    // the golf admin module. Drives one coherent authoring flow (tour -> season
-    // -> players -> tournament -> field/tiers/rounds reads -> set-current ->
-    // clone) through getApp().inject() and safeParses every response against its
+    // the golf admin module. Drives one coherent authoring flow (tour -> players
+    // -> tournament in an event year -> field/tiers/rounds reads -> set-current
+    // year -> clone the year) through getApp().inject() and safeParses every response against its
     // published schema. Golf admin rows are not covered by cleanupTestData(), so
     // this test tears down everything it creates child-first in a finally block.
     const rootAdmin = await createTestUser({
@@ -1040,7 +1039,6 @@ describe('Contract verification (root admin)', () => {
 
     const created = {
       sportLeagueId: '',
-      seasonIds: [] as string[],
       eventIds: [] as string[],
       participantIds: [] as string[],
     };
@@ -1069,41 +1067,6 @@ describe('Contract verification (root admin)', () => {
       expect(
         leagueListRes.json().sportLeagues.some((l: { id: string }) => l.id === leagueId),
       ).toBe(true);
-
-      // --- createSeason (201: { season }) -------------------------------------
-      const seasonRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/sport-leagues/${leagueId}/seasons`,
-        headers: rootAdmin.headers,
-        payload: {
-          name: `Z3L Contract Season ${stamp} 2081`,
-          year: 2081,
-          startDate: '2081-01-05T00:00:00.000Z',
-          endDate: '2081-11-30T00:00:00.000Z',
-        },
-      });
-      expect(seasonRes.statusCode).toBe(201);
-      expect(SeasonResponseSchema.safeParse(seasonRes.json()).success).toBe(true);
-      const seasonId = seasonRes.json().season.id as string;
-      created.seasonIds.push(seasonId);
-
-      // --- listSeasons (200) ------------------------------------------------
-      const seasonListRes = await getApp().inject({
-        method: 'GET',
-        url: `/api/v1/sport-leagues/${leagueId}/seasons`,
-        headers: rootAdmin.headers,
-      });
-      expect(seasonListRes.statusCode).toBe(200);
-      expect(SeasonListResponseSchema.safeParse(seasonListRes.json()).success).toBe(true);
-
-      // --- getSeason (200: { season }) ---------------------------------------
-      const seasonDetailRes = await getApp().inject({
-        method: 'GET',
-        url: `/api/v1/seasons/${seasonId}`,
-        headers: rootAdmin.headers,
-      });
-      expect(seasonDetailRes.statusCode).toBe(200);
-      expect(seasonDetailRes.json().season.isCurrent).toBe(false);
 
       // --- createParticipant (201) x3 — golf players are participants -------
       const golf = await getPrisma().sport.findUniqueOrThrow({ where: { name: 'GOLF' } });
@@ -1152,7 +1115,8 @@ describe('Contract verification (root admin)', () => {
           rounds: 4,
           releaseAt: '2081-07-01T00:00:00.000Z',
           fieldLocksAt: '2081-07-15T00:00:00.000Z',
-          seasonId,
+          sportLeagueId: leagueId,
+          eventYear: 2081,
           autoLifecycleEnabled: false,
         },
       });
@@ -1160,6 +1124,7 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
       const eventId = tournamentRes.json().event.id as string;
       created.eventIds.push(eventId);
+      expect(tournamentRes.json().event).toMatchObject({ sportLeagueId: leagueId, eventYear: 2081 });
 
       // pool-master-54u — the create response's counts must reflect the default
       // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
@@ -1175,10 +1140,10 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentGetRes.json().event.tierCount).toBe(tournamentRes.json().event.tierCount);
       expect(tournamentGetRes.json().event.loadedParticipantCount).toBe(tournamentRes.json().event.loadedParticipantCount);
 
-      // --- listEvents by season (200) ----------------------------------------
+      // --- listEvents by sport league and event year (200) -------------------
       const tournamentListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/events?seasonId=${seasonId}`,
+        url: `/api/v1/events?sportLeagueId=${leagueId}&eventYear=2081`,
         headers: rootAdmin.headers,
       });
       expect(tournamentListRes.statusCode).toBe(200);
@@ -1212,48 +1177,39 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventRoundListResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
       expect(roundsRes.json().rounds).toHaveLength(4);
 
-      // --- setCurrentSeason (200: { sportLeague }) ----------------------------
+      // --- updateSportLeague: set as current (200: { sportLeague }) ------------
       const setCurrentRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/seasons/${seasonId}/set-current`,
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        method: 'PATCH',
+        url: `/api/v1/sport-leagues/${leagueId}`,
+        headers: rootAdmin.headers,
+        payload: { currentEventYear: 2081 },
       });
       expect(setCurrentRes.statusCode).toBe(200);
       expect(SportLeagueResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
-      expect(setCurrentRes.json().sportLeague.currentSeasonId).toBe(seasonId);
+      expect(setCurrentRes.json().sportLeague.currentEventYear).toBe(2081);
 
-      // --- cloneSeason (201) -----------------------------------------------------
+      // --- cloneEventYear (201: { events }) ------------------------------------
       const cloneRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/seasons/${seasonId}/clone`,
+        url: '/api/v1/events/clone-year',
         headers: rootAdmin.headers,
-        payload: {},
+        payload: { sportLeagueId: leagueId, eventYear: 2081 },
       });
       expect(cloneRes.statusCode).toBe(201);
-      expect(CloneSeasonResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
-      expect(cloneRes.json().clonedEventCount).toBe(1);
-      expect(cloneRes.json().season.year).toBe(2082);
-      expect(cloneRes.json().season.isCurrent).toBe(false);
-      const clonedSeasonId = cloneRes.json().season.id as string;
-      created.seasonIds.push(clonedSeasonId);
+      expect(SportEventListResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
+      const clonedEvents = cloneRes.json().events as Array<{ id: string; eventYear: number; eventSeriesId: string }>;
+      created.eventIds.push(...clonedEvents.map((e) => e.id));
+      expect(clonedEvents).toHaveLength(1);
+      // Next year's edition of the same series.
+      expect(clonedEvents[0]).toMatchObject({ eventYear: 2082, eventSeriesId: tournamentRes.json().event.eventSeriesId });
 
-      // Source season's current flag is unchanged by the clone (§4.2a).
-      const sourceAfterRes = await getApp().inject({
+      // The current event year is unchanged by the clone (§4.2a).
+      const leagueAfterRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/seasons/${seasonId}`,
+        url: `/api/v1/sport-leagues/${leagueId}`,
         headers: rootAdmin.headers,
       });
-      expect(sourceAfterRes.json().season.isCurrent).toBe(true);
-
-      // Capture the cloned event id for teardown.
-      const clonedListRes = await getApp().inject({
-        method: 'GET',
-        url: `/api/v1/events?seasonId=${clonedSeasonId}`,
-        headers: rootAdmin.headers,
-      });
-      for (const e of clonedListRes.json().events as Array<{ id: string }>) {
-        created.eventIds.push(e.id);
-      }
+      expect(leagueAfterRes.json().sportLeague.currentEventYear).toBe(2081);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
@@ -1275,12 +1231,6 @@ describe('Contract verification (root admin)', () => {
         await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
-      if (created.sportLeagueId) {
-        await prisma.sportLeague.updateMany({
-          where: { id: created.sportLeagueId },
-          data: { currentSeasonId: null },
-        });
-      }
       if (created.participantIds.length) {
         await prisma.participantLeagueAffiliation.deleteMany({
           where: { participantId: { in: created.participantIds } },
@@ -1289,18 +1239,8 @@ describe('Contract verification (root admin)', () => {
           where: { participantId: { in: created.participantIds } },
         });
       }
-      if (created.seasonIds.length || created.sportLeagueId) {
-        await prisma.leagueEvent.deleteMany({
-          where: { sportLeagueId: created.sportLeagueId || undefined },
-        });
-        await prisma.season.deleteMany({
-          where: {
-            OR: [
-              { id: { in: created.seasonIds } },
-              created.sportLeagueId ? { sportLeagueId: created.sportLeagueId } : { id: { in: created.seasonIds } },
-            ],
-          },
-        });
+      if (created.sportLeagueId) {
+        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
       }
       if (created.participantIds.length) {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
@@ -1339,7 +1279,6 @@ describe('Contract verification (root admin)', () => {
 
     const created = {
       sportLeagueId: '',
-      seasonId: '',
       eventIds: [] as string[],
     };
 
@@ -1360,7 +1299,7 @@ describe('Contract verification (root admin)', () => {
         venue: 'Contract National',
       }));
 
-      // --- sport league -> season -> admin-authored event (syncScope NONE) ----
+      // --- sport league -> admin-authored event (syncScope NONE) -------------
       const leagueRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/sport-leagues',
@@ -1369,20 +1308,6 @@ describe('Contract verification (root admin)', () => {
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json().sportLeague.id as string;
-
-      const seasonRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/sport-leagues/${created.sportLeagueId}/seasons`,
-        headers: rootAdmin.headers,
-        payload: {
-          name: `CS8 Contract Season ${stamp} 2083`,
-          year: 2083,
-          startDate: '2083-01-05T00:00:00.000Z',
-          endDate: '2083-11-30T00:00:00.000Z',
-        },
-      });
-      expect(seasonRes.statusCode).toBe(201);
-      created.seasonId = seasonRes.json().season.id as string;
 
       const tournamentRes = await getApp().inject({
         method: 'POST',
@@ -1395,7 +1320,8 @@ describe('Contract verification (root admin)', () => {
           rounds: 4,
           releaseAt: '2083-06-01T00:00:00.000Z',
           fieldLocksAt: '2083-06-15T00:00:00.000Z',
-          seasonId: created.seasonId,
+          sportLeagueId: created.sportLeagueId,
+          eventYear: 2083,
           autoLifecycleEnabled: false,
         },
       });
@@ -1440,18 +1366,7 @@ describe('Contract verification (root admin)', () => {
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
       if (created.sportLeagueId) {
-        await prisma.sportLeague.updateMany({
-          where: { id: created.sportLeagueId },
-          data: { currentSeasonId: null },
-        });
-        await prisma.leagueEvent.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
-      }
-      if (created.seasonId || created.sportLeagueId) {
-        await prisma.season.deleteMany({
-          where: created.sportLeagueId ? { sportLeagueId: created.sportLeagueId } : { id: created.seasonId },
-        });
-      }
-      if (created.sportLeagueId) {
+        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
         await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
       }
       await app.close();
