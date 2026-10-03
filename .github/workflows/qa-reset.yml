@@ -1,0 +1,132 @@
+# Wipe QA's database and bring it back to the current image's migrations, with its fixture users.
+#
+# plans/129 (#83) specified this and it was never built, which is how plans/147's Season collapse
+# came to refuse on QA with no recovery path: the migration's own header pointed at this workflow
+# before it existed.
+#
+# workflow_dispatch only — never on push or schedule. Three gates in front of a total wipe:
+# the `qa-reset` environment (set it up with the repo owner as a required reviewer), a typed
+# confirmation phrase, and the script's own --apply --confirm-qa-reset.
+name: Reset QA database
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "reset qa" to confirm destroying every row in the QA database'
+        required: true
+
+env:
+  AWS_REGION: us-east-2
+  CLUSTER: poolmaster-qa-cluster
+  TASK_DEFINITION: poolmaster-qa-migrate
+  CONTAINER_NAME: migrate
+  FIXTURE_PATH: .github/fixtures/qa-test-users.json
+
+jobs:
+  reset:
+    name: reset
+    runs-on: ubuntu-latest
+    environment: qa-reset
+    steps:
+      - name: Check the confirmation phrase
+        if: inputs.confirm != 'reset qa'
+        run: |
+          echo "::error::Confirmation phrase did not match. Nothing was touched."
+          exit 1
+
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Validate fixture file
+        run: |
+          if [ ! -f "$FIXTURE_PATH" ]; then
+            echo "::error::Fixture file not found at $FIXTURE_PATH"
+            exit 1
+          fi
+          jq -e 'type == "array" and length > 0' "$FIXTURE_PATH" > /dev/null \
+            || { echo "::error::Fixture must be a non-empty JSON array"; exit 1; }
+          echo "Fixture contains $(jq 'length' "$FIXTURE_PATH") user(s)."
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # The latest revision, so the reset applies the migrations in the image currently published
+      # rather than whatever an older revision carried.
+      - name: Run the reset ECS task
+        id: run-task
+        run: |
+          SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
+          SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+          if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
+            echo "::error::QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set"
+            exit 1
+          fi
+
+          TASK_DEF_ARN=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEFINITION" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          if [ -z "$TASK_DEF_ARN" ] || [ "$TASK_DEF_ARN" = "None" ]; then
+            echo "::error::Task definition $TASK_DEFINITION not found — run terraform apply first"
+            exit 1
+          fi
+          echo "Resolved QA migrate task definition: $TASK_DEF_ARN"
+
+          FIXTURE_JSON=$(cat "$FIXTURE_PATH")
+          OVERRIDES=$(jq -n \
+            --arg container "$CONTAINER_NAME" \
+            --arg fixture "$FIXTURE_JSON" \
+            '{
+              containerOverrides: [{
+                name: $container,
+                command: ["node", "scripts/reset-qa-database.mjs", "--apply", "--confirm-qa-reset"],
+                environment: [{ name: "FIXTURE_JSON", value: $fixture }]
+              }]
+            }')
+
+          echo "Starting reset task on $CLUSTER..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF_ARN" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --overrides "$OVERRIDES" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "::error::ECS did not start the QA reset task for ${TASK_DEF_ARN}"
+            exit 1
+          fi
+          echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
+          echo "Reset task started: ${TASK_ARN}"
+
+      # The same helper deploy-migrate-qa uses (#191): it waits, prints the container's
+      # CloudWatch logs, and exits with the container's exit code.
+      - name: Wait for the reset to complete
+        run: |
+          node scripts/ecs-task-wait-and-print-logs.mjs \
+            --cluster "$CLUSTER" \
+            --task-arn "${{ steps.run-task.outputs.task_arn }}" \
+            --container "$CONTAINER_NAME" \
+            --timeout-seconds 900
+
+      - name: What to do next
+        if: success()
+        run: |
+          {
+            echo "### QA database reset"
+            echo ""
+            echo "QA is wiped, migrated to this image's migrations, and has its fixture users."
+            echo ""
+            echo "Migrations gate the rollout, so the failing main commit's \`deploy-qa\` was"
+            echo "skipped and QA is still running the previous release. Re-run that run's failed"
+            echo "jobs to roll the new release out."
+          } >> $GITHUB_STEP_SUMMARY
