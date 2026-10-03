@@ -1402,21 +1402,24 @@ jobs:
           echo "- Specs: \`@smoke\` only — unauthenticated guards, admin sign-in smoke (#278), and journey acts 1-3, which create and tear down a run-named golf catalog, league, contest, entry and two users (#84, #280)." >> $GITHUB_STEP_SUMMARY
 
   # Ten failed QA deploys in a row went unnoticed (#191) because a red
-  # deploy job on main surfaces nowhere. Keep one open issue while the deploy
-  # is failing — opened on the first failure, commented on each repeat —
-  # and close it on the next fully green deploy.
+  # deploy job on main surfaces nowhere. Keep one open issue while QA is
+  # unhealthy — opened on the first failure, commented on each repeat —
+  # and close it on the next fully green deploy. poolmaster-browser-e2e is
+  # watched with the three deploy jobs because it is the deploy's verification:
+  # a release that lands and then fails its smoke on QA is not a good deploy.
   #
   # The comment carries each failed job's log tail, so "why" is answerable from the issue
   # alone. That matters most for deploy-migrate-qa, whose real error lives in the migrate
   # container's CloudWatch log: before this, reading it needed AWS credentials and a machine,
   # and plans/147's collapse migration refused on QA with nobody able to see which check
   # tripped. scripts/ci-failure-report.mjs redacts every excerpt first — this repository is
-  # public — and takes no deploy-specific knowledge, so another tracking issue is served by
-  # another step calling it with its own --title and --jobs.
+  # public, and the migrate task's DATABASE_URL is assembled at runtime, so the runner never
+  # masked it — and takes no deploy-specific knowledge, so another tracking issue is served
+  # by another step calling it with its own --title and --jobs.
   deploy-health-issue:
     name: deploy-health-issue
     runs-on: ubuntu-latest
-    needs: [deploy-publish-images, deploy-migrate-qa, deploy-qa]
+    needs: [deploy-publish-images, deploy-migrate-qa, deploy-qa, poolmaster-browser-e2e]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       issues: write
@@ -1433,17 +1436,25 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "QA deploy is failing on main" \
-            --jobs "deploy-publish-images,deploy-migrate-qa,deploy-qa" \
+            --jobs "deploy-publish-images,deploy-migrate-qa,deploy-qa,poolmaster-browser-e2e" \
             --managed-note "This issue is managed by the \`deploy-health-issue\` CI job: it is commented on, with log excerpts, for every further failed deploy and closed automatically by the next successful one."
 
   # The other half of #191: a red *build* job on main surfaces nowhere either. Path filtering is
   # PR-only, so every one of these runs on every main push, which keeps the verdict clean — a
   # skipped job would read as inconclusive and stop the issue ever closing. Deliberately a
   # separate issue from the deploy one: they fail for unrelated reasons and clear independently.
+  #
+  # `changes` is watched here even though it is not a quality gate. It gates every other job,
+  # so when it fails they all skip — and an all-skipped set reads as inconclusive, which would
+  # make the most upstream failure in the workflow the one that reports nothing at all.
+  #
+  # Between the two reporters, every job in this workflow is watched. coverage.yml is a
+  # separate workflow and is not: a failure there still surfaces only on its run page.
   main-ci-health-issue:
     name: main-ci-health-issue
     runs-on: ubuntu-latest
     needs:
+      - changes
       - all-contract-gates
       - service-lint-typecheck
       - service-unit-tests
@@ -1469,5 +1480,5 @@ jobs:
         run: |
           node scripts/ci-failure-report.mjs \
             --title "CI is failing on main" \
-            --jobs "all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --jobs "changes,all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
             --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."
