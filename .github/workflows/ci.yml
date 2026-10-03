@@ -396,10 +396,15 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_e2e
-      # core/config.ts requires these three with no fallback (#134).
+      # core/config.ts requires JWT_SECRET, POOLMASTER_ENVIRONMENT and
+      # POOLMASTER_SERVICE_VERSION, and throws when any is unset (#134). The
+      # version read also accepts RELEASE_VERSION / APP_VERSION / GIT_SHA /
+      # npm_package_version — alias names, not a default. JWT_SECRET is absent
+      # here on purpose: the "Generate this run's JWT secret and admin password"
+      # step below writes a per-run value to $GITHUB_ENV. Nothing here sets
+      # core-api's port — it reads PORT and defaults to the 3000 this job expects.
       POOLMASTER_ENVIRONMENT: ci
       POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
-      CORE_API_PORT: '3000'
       AUTO_START_SCHEDULER: 'false'
       POOLMASTER_E2E_BASE_URL: http://localhost:4175
       POOLMASTER_E2E_ADMIN_IDENTIFIER: e2e-ci-admin
