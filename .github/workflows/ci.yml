@@ -1405,6 +1405,14 @@ jobs:
   # deploy job on main surfaces nowhere. Keep one open issue while the deploy
   # is failing — opened on the first failure, commented on each repeat —
   # and close it on the next fully green deploy.
+  #
+  # The comment carries each failed job's log tail, so "why" is answerable from the issue
+  # alone. That matters most for deploy-migrate-qa, whose real error lives in the migrate
+  # container's CloudWatch log: before this, reading it needed AWS credentials and a machine,
+  # and plans/147's collapse migration refused on QA with nobody able to see which check
+  # tripped. scripts/ci-failure-report.mjs redacts every excerpt first — this repository is
+  # public — and takes no deploy-specific knowledge, so another tracking issue is served by
+  # another step calling it with its own --title and --jobs.
   deploy-health-issue:
     name: deploy-health-issue
     runs-on: ubuntu-latest
@@ -1412,34 +1420,54 @@ jobs:
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       issues: write
+      # Reading the failed jobs' logs through the Actions API.
+      actions: read
     steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
       - name: Open, update, or close the QA deploy failure issue
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          PUBLISH_RESULT: ${{ needs.deploy-publish-images.result }}
-          MIGRATE_RESULT: ${{ needs.deploy-migrate-qa.result }}
-          DEPLOY_RESULT: ${{ needs.deploy-qa.result }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TITLE="QA deploy is failing on main"
-          ISSUE=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
-            --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)
-          RESULTS="publish-images: \`$PUBLISH_RESULT\`, migrate-qa: \`$MIGRATE_RESULT\`, deploy-qa: \`$DEPLOY_RESULT\`"
+          node scripts/ci-failure-report.mjs \
+            --title "QA deploy is failing on main" \
+            --jobs "deploy-publish-images,deploy-migrate-qa,deploy-qa" \
+            --managed-note "This issue is managed by the \`deploy-health-issue\` CI job: it is commented on, with log excerpts, for every further failed deploy and closed automatically by the next successful one."
 
-          if [ "$PUBLISH_RESULT" = "failure" ] || [ "$MIGRATE_RESULT" = "failure" ] || [ "$DEPLOY_RESULT" = "failure" ]; then
-            BODY="The QA deploy failed for \`$SHA\` — $RESULTS. Run: $RUN_URL"
-            if [ -n "$ISSUE" ]; then
-              gh issue comment "$ISSUE" --body "$BODY"
-            else
-              gh issue create --title "$TITLE" --body "$BODY
-
-          This issue is managed by the \`deploy-health-issue\` CI job: it is commented on for every further failed deploy and closed automatically by the next successful one."
-            fi
-            echo "::error::QA deploy failed — $RESULTS"
-          elif [ "$PUBLISH_RESULT" = "success" ] && [ "$MIGRATE_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ] && [ -n "$ISSUE" ]; then
-            gh issue close "$ISSUE" --comment "QA deployed successfully at \`$SHA\`. Run: $RUN_URL"
-          else
-            echo "Nothing to report — $RESULTS"
-          fi
+  # The other half of #191: a red *build* job on main surfaces nowhere either. Path filtering is
+  # PR-only, so every one of these runs on every main push, which keeps the verdict clean — a
+  # skipped job would read as inconclusive and stop the issue ever closing. Deliberately a
+  # separate issue from the deploy one: they fail for unrelated reasons and clear independently.
+  main-ci-health-issue:
+    name: main-ci-health-issue
+    runs-on: ubuntu-latest
+    needs:
+      - all-contract-gates
+      - service-lint-typecheck
+      - service-unit-tests
+      - service-integration-tests
+      - service-functional-api-tests
+      - service-build
+      - service-mock-provider-build
+      - poolmaster-unit-tests
+      - poolmaster-build
+      - poolmaster-browser-e2e-local
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      issues: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Open, update, or close the main build failure issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/ci-failure-report.mjs \
+            --title "CI is failing on main" \
+            --jobs "all-contract-gates,service-lint-typecheck,service-unit-tests,service-integration-tests,service-functional-api-tests,service-build,service-mock-provider-build,poolmaster-unit-tests,poolmaster-build,poolmaster-browser-e2e-local" \
+            --managed-note "This issue is managed by the \`main-ci-health-issue\` CI job: it is commented on, with log excerpts, for every further failed build on main and closed automatically by the next green one."
