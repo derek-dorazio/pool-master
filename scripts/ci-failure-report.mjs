@@ -160,9 +160,12 @@ export function composeReport({ sha, runUrl, jobs, managedNote }) {
   const sections = jobs.map((job) => {
     const steps = failedStepNames(job);
     const where = steps.length > 0 ? ` — failing step: ${steps.map((step) => `\`${step}\``).join(', ')}` : '';
+    // A gap is reported with its cause. "No log text could be read" on its own sends the reader
+    // to the run page, which is the trip this whole script exists to save them.
     const excerpt = job.excerpt?.trim()
       ? `\n\`\`\`\n${job.excerpt}\n\`\`\`\n`
-      : '\nNo log text could be read for this job. The run page has the full log.\n';
+      : `\nNo log text could be read for this job${job.logError ? ` — ${job.logError}` : ''}. `
+        + 'The run page has the full log.\n';
     return `<details>\n<summary><code>${job.name}</code>${where}</summary>\n${excerpt}\n</details>`;
   });
 
@@ -260,13 +263,65 @@ async function readRunJobs(repo, runId, token) {
  * failure here is reported in place of the excerpt rather than failing the report: a missing
  * log is worth less than the rest of the comment.
  */
-async function readJobLog(repo, jobId, token) {
-  try {
-    return await api(`/repos/${repo}/actions/jobs/${jobId}/logs`, { token, accept: 'text/plain' });
-  } catch (error) {
-    console.log(`::warning::Could not read the log for job ${jobId}: ${error.message}`);
-    return '';
+/**
+ * A completed job's log text.
+ *
+ * The redirect has to be followed by hand. The endpoint answers 302 with a pre-signed URL on a
+ * storage host, and `fetch`'s automatic redirect forwards the `Authorization` header to it;
+ * storage rejects a request that carries both its own signature and a bearer token, so the
+ * first attempt at this returned nothing and the report said only "no log text could be read".
+ * The second hop therefore carries no credentials of ours.
+ *
+ * A just-finished job can also 404 while its log is still being finalised, so a 404 is retried
+ * once.
+ */
+async function fetchJobLog(repo, jobId, token) {
+  const response = await fetch(`${API}/repos/${repo}/actions/jobs/${jobId}/logs`, {
+    headers: {
+      accept: 'application/vnd.github+json',
+      authorization: `Bearer ${token}`,
+      'x-github-api-version': '2022-11-28',
+    },
+    redirect: 'manual',
+  });
+
+  if (response.status >= 300 && response.status < 400) {
+    const location = response.headers.get('location');
+    if (!location) {
+      throw new Error(`the logs endpoint answered ${response.status} with no location header`);
+    }
+    const stored = await fetch(location);
+    if (!stored.ok) {
+      throw new Error(`log storage answered ${stored.status}: ${(await stored.text()).slice(0, 300)}`);
+    }
+    return stored.text();
   }
+
+  if (!response.ok) {
+    throw new Error(`the logs endpoint answered ${response.status}: ${(await response.text()).slice(0, 300)}`);
+  }
+  return response.text();
+}
+
+/**
+ * The log, or the reason there isn't one. A missing log is worth less than the rest of the
+ * comment, so this never fails the report — but it says what went wrong in the comment itself,
+ * because a report that cannot explain its own gap is the problem this script exists to fix.
+ */
+async function readJobLog(repo, jobId, token) {
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      return { text: await fetchJobLog(repo, jobId, token) };
+    } catch (error) {
+      const retryable = attempt === 1 && /answered 404/.test(error.message);
+      if (!retryable) {
+        console.log(`::warning::Could not read the log for job ${jobId}: ${error.message}`);
+        return { text: '', error: error.message };
+      }
+      await new Promise((resolve) => { setTimeout(resolve, 5000); });
+    }
+  }
+  return { text: '', error: 'unreachable' };
 }
 
 /**
@@ -335,7 +390,10 @@ async function main() {
 
   const failed = watched.filter((job) => job.conclusion === 'failure' || job.conclusion === 'timed_out');
   for (const job of failed) {
-    job.excerpt = redactLogText(extractFailureTail(await readJobLog(repo, job.id, token), options.maxLines));
+    const { text, error } = await readJobLog(repo, job.id, token);
+    job.excerpt = redactLogText(extractFailureTail(text, options.maxLines));
+    // Redacted too: a storage error can quote the pre-signed URL, signature and all.
+    job.logError = error ? redactLogText(error) : undefined;
   }
 
   const body = truncateBody(composeReport({

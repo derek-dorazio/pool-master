@@ -173,6 +173,17 @@ describe('ci-failure-report body composition', () => {
     assert.match(body, /No log text could be read/);
   });
 
+  // The first run of this feature posted a bare "no log text could be read", which sent the
+  // reader to the run page — the trip the script exists to save. A gap carries its cause now.
+  it('names the reason a log could not be read', () => {
+    const body = composeReport({
+      sha: 'x',
+      runUrl: 'u',
+      jobs: [{ name: 'j', excerpt: '', logError: 'log storage answered 403: InvalidAuthenticationInfo' }],
+    });
+    assert.match(body, /No log text could be read for this job — log storage answered 403/);
+  });
+
   it('drops whole excerpts rather than cutting a code fence open', () => {
     const excerpt = 'x'.repeat(40_000);
     const body = composeReport({
