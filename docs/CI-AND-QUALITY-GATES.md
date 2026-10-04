@@ -535,10 +535,11 @@ hardening epic.
 `deploy-migrate-qa` gates the rollout, so a migration that refuses on QA data stops the
 release and QA keeps serving the previous image. Prisma also records the failure and then
 answers P3009 to every later deploy, so fixing the rows is not enough on its own — which is
-how plans/147's Season collapse stopped QA deploys until the database was reset.
+how the Season collapse migration (#315) stopped QA deploys until the database was reset.
 
-QA holds nothing worth preserving (plans/129), so a reset is usually faster than any
-targeted repair:
+QA holds no data worth preserving — there is no staging or production database, and the
+deployed journey creates and tears down everything it needs on every push — so a reset is
+usually faster than any targeted repair:
 
 1. **Actions -> Reset QA database -> Run workflow**, and type `reset qa` to confirm.
 2. **Approve the deployment** when it pauses on the `qa-reset` environment.
