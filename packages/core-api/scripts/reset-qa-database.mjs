@@ -22,9 +22,9 @@
  * Usage:
  *   node scripts/reset-qa-database.mjs [--apply --confirm-qa-reset]
  *
- * Environment: DATABASE_URL. FIXTURE_JSON is passed through to bootstrap-users.mjs, which runs
- * after the reset so QA comes back usable rather than merely empty; without it the reset still
- * happens and the missing users are reported as a warning.
+ * Environment: DATABASE_URL. FIXTURE_JSON is passed through to bootstrap-users.mjs. Both that
+ * and bootstrap-sports.mjs run after the reset so QA comes back usable rather than merely empty;
+ * without FIXTURE_JSON the reset still happens and the missing users are reported as a warning.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -50,7 +50,8 @@ Default mode is a read-only report: the migration history, and a row count per t
 Apply mode DESTROYS EVERY ROW in the target database:
   1. prisma migrate reset --force --skip-seed  (drops the schema, re-applies every migration)
   2. verifies the recorded history is exactly this image's migrations, all applied
-  3. runs bootstrap-users.mjs with FIXTURE_JSON so QA has its fixture users back
+  3. runs bootstrap-sports.mjs so the golf admin screens can load at all
+  4. runs bootstrap-users.mjs with FIXTURE_JSON so QA has its fixture users back
 
 Required apply flags:
   --apply
@@ -197,6 +198,16 @@ async function main() {
     console.log(`History is clean: ${inImage.length} migration(s) recorded and applied.`);
   } finally {
     await verifier.$disconnect();
+  }
+
+  // Reference data first. The golf admin screens are dead without the GOLF sport row —
+  // `golfSportQueryOptions` throws and every list that renders from it fails — which is how the
+  // first QA reset left the post-deploy journey failing in act 1. "The small amount of data the
+  // app needs to run" (plans/129) is the sports as well as the users.
+  console.log('Restoring the sport catalog ...');
+  const sports = runNode([join('scripts', 'bootstrap-sports.mjs')]);
+  if (sports.status !== 0) {
+    throw new Error('bootstrap-sports.mjs failed. QA is migrated but the golf admin screens will not load.');
   }
 
   if (!process.env.FIXTURE_JSON) {
