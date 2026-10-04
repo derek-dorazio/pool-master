@@ -16,6 +16,15 @@ on:
         description: 'Type "reset qa" to confirm destroying every row in the QA database'
         required: true
 
+# A dispatch that is waiting for its environment approval stays approvable indefinitely, so a
+# second dispatch used to leave the first one armed: approving it later — from a stale
+# notification, or without remembering what it was — would wipe QA again, including whatever had
+# been deployed and verified since. That happened on the first real use. A new dispatch now
+# cancels the older one, so at most one reset is ever approvable.
+concurrency:
+  group: qa-reset
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-2
   CLUSTER: poolmaster-qa-cluster
