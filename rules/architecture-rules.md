@@ -223,7 +223,60 @@ filesystem cannot tell you: the constraints on where things are allowed to go.
 
 ---
 
-## 6. Documentation and Drift Prevention
+## 6. Database Data: Reference, Fixture, Test
+
+Three kinds of row get confused with each other, and the confusion is expensive: the first QA
+reset wiped the `sports` table, nothing restored it, and every golf admin screen went dead —
+`golfSportQueryOptions` throws "The golf sport is not set up." with no GOLF row. The row had
+existed in each environment by a different accident, and in QA by nothing but the assumption
+that it was already there.
+
+| Kind | Test | Where it goes |
+|---|---|---|
+| **Reference data** | The app is *broken* without it. It belongs to the schema's meaning, is identical in every environment, and no user action creates it | **A migration** |
+| **Fixture data** | Makes one environment *usable* by a human. Environment-specific, often holds credentials | **A bootstrap script**, invoked explicitly |
+| **Test data** | Belongs to one test, torn down after | **Test helpers** |
+
+### Reference data goes in a migration
+
+- Insert it with `ON CONFLICT ... DO NOTHING` on its natural key, so the migration is idempotent
+  and does not overwrite a row an environment has corrected by hand.
+- State every column the table requires, including ones that have a column default, when the
+  default is one the schema warns against relying on (`Sport.tournamentFormat`, #236).
+- Change it in a *later* migration, never by editing an applied one: Prisma records applied
+  migrations by checksum, and an edited migration makes the next `migrate deploy` fail.
+- Two examples are in the tree: `contest_config_templates`, seeded by
+  `20260419213000_add_contest_config_templates` and evolved by later migrations, and the GOLF
+  `sports` row, seeded by `20261004140000_seed_golf_sport_reference_row`.
+- A new sport needs code as well as a row, so its row arrives in the migration that adds its
+  support — not in a list of every sport the `Sport` enum names.
+
+**The test for "is this reference data" is whether the app breaks without it, not whether it is
+convenient to have.** A row the app merely starts empty without — `platform_runtime_configs`,
+which has `DEFAULT_INGESTION_CONFIG` in code and creates its row on demand — is not reference
+data and needs no migration.
+
+### Fixture data goes in a bootstrap script
+
+- `packages/core-api/scripts/bootstrap-users.mjs` is the pattern: idempotent upserts, driven by
+  explicit input (`FIXTURE_JSON`), invoked by the workflow that wants it.
+- It must never carry a credential into a migration, and never run against production.
+- Keep the fixture minimal and prove each entry is used. QA's fixture carried a commissioner and
+  a member for an e2e design (storage-state reuse and a shared `QATESTLEAGUE`) that #84/#280
+  replaced with a journey that creates and tears down its own data; both users survived as
+  orphans and came back on every reset until the fixture was trimmed to the root admin, which is
+  needed because the post-deploy journey signs in as it and the owner uses it to reach the site.
+
+### There is deliberately no Prisma seed
+
+No `prisma.seed` is configured, and none should be added without a reason that survives this
+paragraph. A seed runs implicitly on every `prisma migrate dev` and `migrate reset`, for
+everyone, which makes it the least predictable place to put data. With reference data in
+migrations and fixtures in scripts there is nothing left for it to do.
+
+---
+
+## 7. Documentation and Drift Prevention
 
 Architecture rules must describe the codebase that actually exists, not an aspirational future state.
 

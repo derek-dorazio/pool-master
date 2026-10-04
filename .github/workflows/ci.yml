@@ -436,12 +436,6 @@ jobs:
             lastName: "Admin",
             isRootAdmin: true,
           }]))') node packages/core-api/scripts/bootstrap-users.mjs
-      # The golf sport row is platform reference data QA already has, and only provider
-      # ingestion creates it, so no browser flow can. The journey's catalog act reads it by
-      # name (#84); without it the player form cannot submit.
-      - name: Seed the golf sport
-        run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO sports (id, name, participant_type, tournament_format, updated_at) VALUES (gen_random_uuid(), 'GOLF', 'INDIVIDUAL', 'STROKE_PLAY_TOURNAMENT', now()) ON CONFLICT (name) DO NOTHING;"
       # Builds packages/shared before the client. core-api resolves shared
       # through its dist too, and a stale dist fails the API boot with an
       # unregistered-OpenAPI-component error that looks like a product bug.

@@ -4,37 +4,43 @@ This runbook describes the supported cleanup path for QA browser data. Prefer
 these product flows over ad hoc SQL so cleanup also exercises the lifecycle
 features we depend on in production.
 
-## Fixture Data Policy
+## What QA Holds, And Who Puts It There
 
-The deployed browser e2e lane uses durable fixture users and one reusable league:
+Three kinds of data, and only one of them is yours to protect. The classification
+and its reasoning live in [Architecture Rules §6](../rules/architecture-rules.md).
 
-- Root admin: `poolmaster-admin`
-- Commissioner: `qa-commissioner`
-- Member: `qa-member`
-- Shared league code: `QATESTLEAGUE`
-- Shared league display name: `QA-TEST-LEAGUE`
+| Kind | In QA | Restored by |
+|---|---|---|
+| **Reference data** — the app is broken without it | the GOLF `sports` row, the `contest_config_templates` rows | **Migrations.** `prisma migrate deploy`, and a reset, put them back. Nothing to do by hand |
+| **Fixture data** — makes QA usable by a human | one root admin, `poolmaster-admin` | **`bootstrap-users.mjs`**, from `.github/fixtures/qa-test-users.json`, run by the Reset QA database workflow or Create Test Users |
+| **Everything else** | leagues, contests, tours, tournaments, players, other users | Created by whoever made it. All of it is residue once its run is over |
 
-Do not delete these users during normal cleanup. The Playwright setup project
-can recreate `QATESTLEAGUE` if it is missing, but keeping it stable avoids
-unnecessary churn. Use the shared league for repeatable browser smoke coverage,
-and use deterministic contest or entry names for future workflow fixtures.
+**Do not delete `poolmaster-admin`.** The post-deploy browser journey signs in as
+it, and it is the owner's way into the site. Everything else in QA is fair game.
 
-## Reset The Shared QA League
+The fixture used to carry a `qa-commissioner` and a `qa-member` as well, for an
+e2e design that reused signed-in storage state and a shared `QATESTLEAGUE`
+league. #84 and #280 replaced that with the golden journey, which creates a
+run-named tour, tournament, league, contest, entry and two users per attempt and
+tears them down in `afterAll`. The two fixture users became orphans and came back
+on every reset until the fixture was trimmed; `QATESTLEAGUE` no longer exists and
+nothing recreates it.
 
-Use this only when `QATESTLEAGUE` becomes too dirty to inspect or debug.
+## Reset QA Entirely
 
-1. Sign in as the root-admin fixture.
-2. Open `Manage` from the account menu.
-3. Open `Leagues`.
-4. Filter the league code column for `QATESTLEAGUE`.
-5. Open the league.
-6. If the league is active, use `Inactivate league`.
-7. Use `Delete league`, type the exact league code, and confirm.
-8. Run the browser e2e lane again. The setup project will recreate the league
-   and repair commissioner/member access.
+Faster than any of the cleanup below when QA is simply dirty, and the right
+answer when a migration refuses on QA data. QA holds nothing worth preserving
+(plans/129).
 
-League delete is the preferred hard cleanup path because it cascades through
-league-owned contests, teams, memberships, invitations, and related history.
+1. Actions -> **Reset QA database** -> Run workflow, type `reset qa`.
+2. Approve the deployment when it pauses on the `qa-reset` environment.
+3. The job prints the container log: the rows it destroyed, and a verification
+   that the migration history came back clean.
+4. Migrations gate the rollout, so re-run the latest `main` CI run's failed jobs
+   to roll the release out again.
+
+The reset wipes everything, re-applies every migration — which restores the
+reference data — and runs `bootstrap-users.mjs` for the root admin.
 
 ## Clean Up Old Random Browser Leagues
 
@@ -53,6 +59,13 @@ one by one. It removes the data at the ownership boundary and keeps account
 cleanup from being blocked by league-scoped dependencies.
 
 ## Clean Up Teams
+
+> **Stale, not verified.** `Manage -> Teams` does not appear in
+> `manage-navigation.ts`; the product's object is a Squad, reached through its
+> league. The steps below are kept for their reasoning about ownership
+> boundaries, not as a route that exists. Confirm the current surface before
+> following them.
+
 
 Use team cleanup when the league should remain, but a specific team is residue.
 

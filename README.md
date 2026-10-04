@@ -25,7 +25,8 @@ This starts Docker (Postgres and Mailpit), runs migrations, runs the minimal boo
 | **Prisma Studio** | `npm run db:studio` | Browse/edit database |
 | **PostgreSQL** | `localhost:5432` | CLI: `docker exec -it docker-postgres-1 psql -U postgres -d poolmaster` |
 
-See [docs/DEVELOPER-SETUP.md](docs/DEVELOPER-SETUP.md) for full setup instructions.
+`npm run dev:start` is the setup path: it starts the Docker services, applies migrations and
+runs both dev servers. The npm scripts in `package.json` are the command reference.
 
 ## Testing
 
@@ -148,7 +149,6 @@ poolmaster/
 ## Documentation
 
 ### Guides
-- [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
 - [CI and Quality Gates](docs/CI-AND-QUALITY-GATES.md) — GitHub Actions, branch protection, local gate commands
 - [Contest Rules](docs/CONTEST-RULES.md) — Future sport and contest-format ideas
 - [Email Delivery](docs/EMAIL-DELIVERY.md) — Local and deployed email provider configuration

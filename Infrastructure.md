@@ -9,8 +9,6 @@ Current source-of-truth docs:
   Local development quick start, active runtime shape, and deployment overview.
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
   System architecture, active infrastructure dependencies, and runtime design.
-- [docs/DEVELOPER-SETUP.md](./docs/DEVELOPER-SETUP.md)
-  Local developer setup, Docker services, database/test workflow, and commands.
 - [infrastructure/terraform/README.md](./infrastructure/terraform/README.md)
   Shared-environment Terraform workflow and environment-state rules.
 

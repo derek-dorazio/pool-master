@@ -104,7 +104,7 @@ Important:
 
 ## Documentation Expectations
 
-- Update `README.md`, `docs/DEVELOPER-SETUP.md`, package READMEs, and feature READMEs when the change affects architecture, setup, scripts, endpoints, or tests.
+- Update `README.md`, package READMEs, and feature READMEs when the change affects architecture, setup, scripts, endpoints, or tests.
 - Update service/module docs when adding or materially changing backend endpoints.
 - **Doc updates ride with the code change that triggered them.** When a slice changes user-visible behavior, public API, setup, or tests, the matching doc update lands in the *same* PR — not as a follow-up doc-only PR. The issue is not closeable until both are in the same merged commit. See `rules/workflow-rules.md §6` *Docs ride with code (Definition of Done)*.
 
