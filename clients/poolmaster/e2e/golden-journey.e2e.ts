@@ -12,16 +12,17 @@ import { registerFreshUser } from './helpers/user-session';
 /**
  * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite"): the root admin
  * builds a golf catalog (act 1), a brand-new commissioner runs a league and a contest on it
- * (act 2), a brand-new member joins by invite link and enters (act 3), and the root admin scores
- * the event and reads every role's writes back (act 4).
+ * (act 2), a brand-new member joins by invite link and enters (act 3), the root admin scores the
+ * event and reads every role's writes back (act 4), and further rounds of scores move the
+ * contest leaderboard (act 5, #326).
  *
  * Shape: one `test()` per act in a serial file. Tags select tests, not steps (plans/130 §"What
  * act 1 found when it ran"), so acts 1-3, which run post-deploy, sit in a describe tagged
- * `@smoke`, and act 4, which does not, sits outside it — a tag cannot be removed from a test
- * inside a tagged block. Serial mode keeps all four in one worker, in order, so act 1's ids reach
- * the later acts through module state rather than by re-creating the catalog, and a failure skips
- * the acts after it. The HTML report names the failing act in the test title and the failing
- * stage in its steps.
+ * `@smoke`, and acts 4-5, which do not, sit outside it — a tag cannot be removed from a test
+ * inside a tagged block. Serial mode keeps every act in one worker, in order, so act 1's ids
+ * reach the later acts through module state rather than by re-creating the catalog, and a failure
+ * skips the acts after it. The HTML report names the failing act in the test title and the
+ * failing stage in its steps.
  *
  * Acts 1-3 run against QA as well as the local stack (plans/130 §"Owner ruling"), so the file is
  * safe against a shared, persistent database by construction rather than by refusing to run
@@ -603,6 +604,133 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 });
 
+/**
+ * Act 5's round plans: each golfer's score to par for one round, in the order act 1 created the
+ * players (index 0 is `${playerNamePrefix} 1`). Act 4's round 1 runs -2 to +3, so round 2 here
+ * reverses the field outright and round 3 moves it again without re-reversing it, and each one
+ * changes which four of the entry's six picks count.
+ *
+ * The act asserts nothing against these numbers — every assertion compares a leaderboard read
+ * against the read before it — but a plan that left the field's order or the counting set alone
+ * would make those comparisons vacuous, so they are chosen rather than arbitrary.
+ */
+const ACT_5_ROUND_PLANS: ReadonlyArray<{ round: number; scoresToPar: readonly number[] }> = [
+  { round: 2, scoresToPar: [5, 2, -1, -4, -7, -10] },
+  { round: 3, scoresToPar: [-6, -3, 0, -1, -1, -1] },
+];
+
+/** The round act 5 corrects one golfer at a time in: the last one it loaded. */
+const CORRECTED_ROUND = 3;
+
+/** Par for one round, so an uploaded row's strokes and its score to par agree. */
+const PAR_PER_ROUND = 72;
+
+/**
+ * How far a one-golfer correction moves that golfer's round, in strokes. Applied as a penalty to
+ * the entry's worst dropped pick (which stays dropped: it was already last) and as a gain to its
+ * best counting pick (which stays counting: it was already first), so neither correction can
+ * reshuffle the counting set it is meant to hold still.
+ */
+const CORRECTION_STROKES = 5;
+
+// Act 5 is OUTSIDE the tagged describe for the same reason act 4 is: it writes round scores and
+// drives event state, and a tagged act writes to QA on every push to main.
+test('act 5: each round of scores moves the leaderboard, and only a counted pick\'s change moves an entry total', async ({ page }) => {
+  test.setTimeout(240_000);
+  const state = requireJourney();
+  const { run } = state;
+  const credentials = readAdminCredentials();
+
+  await test.step('root admin signs in', async () => {
+    await adminSignIn(page, credentials);
+  });
+
+  const afterRound1 = await test.step('the round-1 leaderboard act 4 left behind is the baseline', async () => {
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    // Best-N-of-M has to be live for the asymmetry this act ends on to mean anything: a contest
+    // that counted every pick could not drop one. Act 2 created it roster 6, counted 4.
+    expect(read.countingRuleCount).toBeLessThan(PLAYER_COUNT);
+    expect(read.entry.countingPickLimit).toBe(read.countingRuleCount);
+    expect(read.entry.scoredPickCount).toBe(PLAYER_COUNT);
+    expectCountingPicksExplainTheTotal(read);
+    return read;
+  });
+
+  let previous = afterRound1;
+  for (const plan of ACT_5_ROUND_PLANS) {
+    const before = previous;
+    previous = await test.step(`round ${plan.round} lands, and the leaderboard is no longer the one before it`, async () => {
+      await uploadRoundScores(
+        page,
+        state.eventId,
+        plan.round,
+        state.fieldEntryIds.map((_, index) => ({
+          playerName: `${run.playerNamePrefix} ${index + 1}`,
+          strokes: PAR_PER_ROUND + plan.scoresToPar[index],
+          scoreToPar: plan.scoresToPar[index],
+        })),
+      );
+      // The corrections grid lists only the golfers with a score in the selected round, so the
+      // six inputs carrying the uploaded strokes are this round's write read back in the UI.
+      for (const [index, fieldEntryId] of state.fieldEntryIds.entries()) {
+        await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
+          .toHaveValue(String(PAR_PER_ROUND + plan.scoresToPar[index]));
+      }
+
+      const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+      expectCountingPicksExplainTheTotal(read);
+      // What a leaderboard that tracks scoring has to change when a round lands, none of it a
+      // number this file chose: the entry's total, the order the field is placed in, and which
+      // of the entry's picks count.
+      expect(read.entry.total).not.toBe(before.entry.total);
+      expect(read.placedOrder).not.toEqual(before.placedOrder);
+      expect([...read.entry.countingIds].sort()).not.toEqual([...before.entry.countingIds].sort());
+      // The entry's own rank has nowhere to move: it is the contest's only entry, so it is
+      // first before and after. The ranks that do move are the field's, asserted through
+      // `placedOrder` above. A second ranked entry needs a second squad and a second draft.
+      expect(read.entry.position).toBe(1);
+      return read;
+    });
+  }
+  const afterRound3 = previous;
+
+  const afterPenalty = await test.step('a penalty on a pick that does not count moves that golfer and not the entry total', async () => {
+    const dropped = worstOf(afterRound3, afterRound3.entry.droppedIds);
+    const scoreBefore = scoreOn(afterRound3, dropped);
+    const delta = await correctOneGolfersRound(page, state.eventId, afterRound3, dropped, CORRECTION_STROKES);
+
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    expectCountingPicksExplainTheTotal(read);
+    // The write landed — the golfer's own event total moved by exactly the round's change …
+    expect(scoreOn(read, dropped)).toBe(scoreBefore + delta);
+    // … the pick it belongs to is still dropped, having only got worse …
+    expect(read.entry.droppedIds).toContain(dropped);
+    // … and the entry's total, and the four picks that make it, did not move at all.
+    expect(read.entry.total).toBe(afterRound3.entry.total);
+    expect(read.entry.countingIds).toEqual(afterRound3.entry.countingIds);
+    expect(read.entry.scoredPickCount).toBe(afterRound3.entry.scoredPickCount);
+    return read;
+  });
+
+  await test.step('the same correction on a pick that counts moves the entry total by exactly its change', async () => {
+    const counting = bestOf(afterPenalty, afterPenalty.entry.countingIds);
+    const scoreBefore = scoreOn(afterPenalty, counting);
+    const delta = await correctOneGolfersRound(page, state.eventId, afterPenalty, counting, -CORRECTION_STROKES);
+
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    expectCountingPicksExplainTheTotal(read);
+    expect(scoreOn(read, counting)).toBe(scoreBefore + delta);
+    expect(read.entry.countingIds).toContain(counting);
+    // The asymmetry this act exists for: the same size of correction, on a pick that counts,
+    // moves the entry's total by its own change and nothing else.
+    expect(read.entry.total).toBe(expectTotal(afterPenalty) + delta);
+  });
+
+  await test.step('root admin logs out', async () => {
+    await logOut(page);
+  });
+});
+
 async function expectListPageLoaded(page: Page, path: string, landmark: string, table: string) {
   await page.goto(path);
   await expect(page.getByTestId(landmark)).toBeVisible();
@@ -660,4 +788,220 @@ function dateInput(date: Date): string {
 
 function dateTimeInput(date: Date): string {
   return `${dateInput(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** What act 5 reads off `getGolfContestLeaderboard`; everything else in the body is unused here. */
+type GolfContestLeaderboardBody = {
+  countingRule: { count: number };
+  participants: Array<{
+    id: string;
+    participant: { name: string };
+    standing: { position: number | null; golf: { eventScoreToPar: number } | null } | null;
+    rounds: Array<{ roundNumber: number; golf: { strokes: number; scoreToPar: number } | null }>;
+  }>;
+  entries: Array<{
+    entryId: string;
+    position: number | null;
+    scoredPickCount: number;
+    countingPickLimit: number;
+    golf: { totalScoreToPar: number | null } | null;
+    picks: Array<{ sportEventParticipantId: string; isCounting: boolean; isDropped: boolean }>;
+  }>;
+};
+
+/** One read of the leaderboard, reduced to what act 5 compares between reads. */
+type LeaderboardRead = {
+  /** N, as the contest's counting rule publishes it. */
+  countingRuleCount: number;
+  /** The entry under test, as the leaderboard ranks it. */
+  entry: {
+    total: number | null;
+    position: number | null;
+    scoredPickCount: number;
+    countingPickLimit: number;
+    /** Field-row ids of the picks that count toward the total, best first. */
+    countingIds: string[];
+    /** Field-row ids of the picks that are scored but dropped, best first. */
+    droppedIds: string[];
+  };
+  /** Every field row the leaderboard published, by field-row id. */
+  golfers: Map<string, {
+    name: string;
+    /** The golfer's event total under the contest's scoring definition; null while unscored. */
+    score: number | null;
+    position: number | null;
+    rounds: Map<number, { strokes: number; scoreToPar: number }>;
+  }>;
+  /** Field-row ids in the order the event places them, best first; an unplaced row is left out. */
+  placedOrder: string[];
+};
+
+/**
+ * Reads one entry's standing and the whole field off the contest leaderboard.
+ *
+ * `page.request`, not a `waitForResponse` handle: a handle does not survive the navigation each
+ * upload step makes, and `.json()` on one that did not then fails with "Protocol error
+ * (Network.getResponseBody)" — act 1's tiers step carries the full account. A GET shares the
+ * browser context's cookies and needs no CSRF header.
+ */
+async function readContestLeaderboard(page: Page, contestId: string, entryId: string): Promise<LeaderboardRead> {
+  const response = await page.request.get(`/api/v1/contests/${contestId}/golf/leaderboard`);
+  expect(response.ok(), `GET the leaderboard answered ${response.status()}`).toBe(true);
+  const body = (await response.json()) as GolfContestLeaderboardBody;
+
+  const standing = body.entries.find((candidate) => candidate.entryId === entryId);
+  if (!standing) {
+    throw new Error(`the leaderboard carries no standing for entry ${entryId}`);
+  }
+  const golfers: LeaderboardRead['golfers'] = new Map(
+    body.participants.map((row) => [row.id, {
+      name: row.participant.name,
+      score: row.standing?.golf?.eventScoreToPar ?? null,
+      position: row.standing?.position ?? null,
+      rounds: new Map(
+        row.rounds.flatMap((round) => (round.golf
+          ? [[round.roundNumber, { strokes: round.golf.strokes, scoreToPar: round.golf.scoreToPar }] as const]
+          : [])),
+      ),
+    }]),
+  );
+
+  return {
+    countingRuleCount: body.countingRule.count,
+    entry: {
+      total: standing.golf?.totalScoreToPar ?? null,
+      position: standing.position,
+      scoredPickCount: standing.scoredPickCount,
+      countingPickLimit: standing.countingPickLimit,
+      // The endpoint returns picks counting first and best first within that, so both lists
+      // come back in merit order without this file re-deriving one.
+      countingIds: standing.picks.filter((pick) => pick.isCounting).map((pick) => pick.sportEventParticipantId),
+      droppedIds: standing.picks.filter((pick) => pick.isDropped).map((pick) => pick.sportEventParticipantId),
+    },
+    golfers,
+    placedOrder: body.participants
+      .filter((row) => row.standing?.position != null)
+      .sort((left, right) => (left.standing?.position ?? 0) - (right.standing?.position ?? 0))
+      .map((row) => row.id),
+  };
+}
+
+/**
+ * The leaderboard's own arithmetic, checked against itself on every read: the entry's total is
+ * the sum of exactly the picks it says are counting, there are N of them, and every one of them
+ * scores better than every pick it dropped.
+ *
+ * The last of those also pins which way "better" runs for GOLF_RELATIVE_TO_PAR_TOTAL — a lower
+ * total — from the endpoint's own answer. Act 5's corrections are built as a penalty and a gain
+ * in those terms, so this is the assertion that keeps that reading honest rather than assumed.
+ */
+function expectCountingPicksExplainTheTotal(read: LeaderboardRead): void {
+  const counting = read.entry.countingIds.map((fieldEntryId) => scoreOn(read, fieldEntryId));
+  const dropped = read.entry.droppedIds.map((fieldEntryId) => scoreOn(read, fieldEntryId));
+  expect(counting).toHaveLength(read.entry.countingPickLimit);
+  expect(dropped.length).toBeGreaterThan(0);
+  expect(counting.reduce((sum, score) => sum + score, 0)).toBe(read.entry.total);
+  expect(Math.max(...counting)).toBeLessThan(Math.min(...dropped));
+}
+
+/** The entry's total, which every act-5 step reads only after proving it is scored. */
+function expectTotal(read: LeaderboardRead): number {
+  const { total } = read.entry;
+  if (total === null) {
+    throw new Error('the entry has no total on the leaderboard');
+  }
+  return total;
+}
+
+function golferOn(read: LeaderboardRead, fieldEntryId: string) {
+  const golfer = read.golfers.get(fieldEntryId);
+  if (!golfer) {
+    throw new Error(`the leaderboard published no field row ${fieldEntryId}`);
+  }
+  return golfer;
+}
+
+function scoreOn(read: LeaderboardRead, fieldEntryId: string): number {
+  const golfer = golferOn(read, fieldEntryId);
+  if (golfer.score === null) {
+    throw new Error(`${golfer.name} has no event total on the leaderboard`);
+  }
+  return golfer.score;
+}
+
+function roundOn(read: LeaderboardRead, fieldEntryId: string, roundNumber: number) {
+  const golfer = golferOn(read, fieldEntryId);
+  const round = golfer.rounds.get(roundNumber);
+  if (!round) {
+    throw new Error(`${golfer.name} has no scored round ${roundNumber} on the leaderboard`);
+  }
+  return round;
+}
+
+/** Of these field rows, the one scoring worst — the highest total, per the direction above. */
+function worstOf(read: LeaderboardRead, fieldEntryIds: readonly string[]): string {
+  return [...fieldEntryIds].sort((left, right) => scoreOn(read, right) - scoreOn(read, left))[0];
+}
+
+/** Of these field rows, the one scoring best — the lowest total, per the direction above. */
+function bestOf(read: LeaderboardRead, fieldEntryIds: readonly string[]): string {
+  return [...fieldEntryIds].sort((left, right) => scoreOn(read, left) - scoreOn(read, right))[0];
+}
+
+/**
+ * Loads one round of scores the way an admin does: pick the round, paste the CSV, preview, apply.
+ *
+ * The round control is a radio group with no test id of its own, so the round is chosen by its
+ * accessible name. The panel is keyed by round, so it is remounted by that click and the paste
+ * has to follow it, never precede it.
+ */
+async function uploadRoundScores(
+  page: Page,
+  eventId: string,
+  round: number,
+  rows: ReadonlyArray<{ playerName: string; strokes: number; scoreToPar: number }>,
+): Promise<void> {
+  await page.goto(`/manage/golf/tournaments/${eventId}/scores`);
+  await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
+  await page
+    .getByRole('radiogroup', { name: 'Round' })
+    .getByRole('radio', { name: new RegExp(`^Round ${round}\\b`) })
+    .click();
+  await page.getByTestId('root-admin-golf-scores-upload-textarea').fill([
+    'externalId,playerName,strokes,scoreToPar,thru,status',
+    // No externalId: these golfers were created in the webapp and have none, so each row
+    // resolves on its run-unique name, as act 4's round-1 upload does.
+    ...rows.map((row) => `,${row.playerName},${row.strokes},${row.scoreToPar},18,COMPLETED`),
+  ].join('\n'));
+  await page.getByTestId('root-admin-golf-scores-upload-preview').click();
+  await expect(page.getByTestId('root-admin-golf-scores-upload-preview-result')).toBeVisible();
+  await submitAndRead(
+    page,
+    'root-admin-golf-scores-upload-apply',
+    'POST',
+    `/api/v1/events/${eventId}/rounds/${round}/golf-scores`,
+  );
+}
+
+/**
+ * Moves one golfer's {@link CORRECTED_ROUND} by `strokes` — through the same upload panel, as a
+ * one-row correction — and returns what that did to their score to par for the round. Both the
+ * row it uploads and the change it reports are derived from the leaderboard read passed in, so
+ * the caller compares the entry's total against a delta the API supplied.
+ */
+async function correctOneGolfersRound(
+  page: Page,
+  eventId: string,
+  read: LeaderboardRead,
+  fieldEntryId: string,
+  strokes: number,
+): Promise<number> {
+  const golfer = golferOn(read, fieldEntryId);
+  const before = roundOn(read, fieldEntryId, CORRECTED_ROUND);
+  const after = { strokes: before.strokes + strokes, scoreToPar: before.scoreToPar + strokes };
+  await uploadRoundScores(page, eventId, CORRECTED_ROUND, [{ playerName: golfer.name, ...after }]);
+  // The round's own grid, re-read after the apply: the correction is in the golfer's row.
+  await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
+    .toHaveValue(String(after.strokes));
+  return after.scoreToPar - before.scoreToPar;
 }
