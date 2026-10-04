@@ -417,6 +417,18 @@ npm run lint
 npm run typecheck
 ```
 
+Local service tests run against the disposable `poolmaster_test` database. When an
+interrupted run leaves residue, recreate it rather than hand-editing rows:
+
+```bash
+# Drop, re-migrate, and reseed the disposable test database.
+npm run db:test:reset
+
+# Or recreate it as part of the run.
+npm run test:service:functional-api:fresh
+npm run test:service:integration:fresh
+```
+
 Each rule scanner accepts a `--warn-only` flag for local debugging when you
 want to see findings without a non-zero exit. CI passes `--warn-only` to the
 six warn-only scanners by default; the two blocking gates do not accept the
@@ -517,6 +529,34 @@ hardening epic.
   results.
 - The `all-contract-gates` job also runs `npm run test:scripts`: the
   `node --test` suites for the deploy and migration scripts.
+
+## Resetting the QA database
+
+`deploy-migrate-qa` gates the rollout, so a migration that refuses on QA data stops the
+release and QA keeps serving the previous image. Prisma also records the failure and then
+answers P3009 to every later deploy, so fixing the rows is not enough on its own — which is
+how plans/147's Season collapse stopped QA deploys until the database was reset.
+
+QA holds nothing worth preserving (plans/129), so a reset is usually faster than any
+targeted repair:
+
+1. **Actions -> Reset QA database -> Run workflow**, and type `reset qa` to confirm.
+2. **Approve the deployment** when it pauses on the `qa-reset` environment.
+3. The job prints the container's log: the rows destroyed, and a verification that the
+   migration history came back clean.
+4. **Re-run the latest `main` run's failed jobs**, so `deploy-qa` rolls the release out.
+
+The reset wipes every row, re-applies every migration — which restores the reference data,
+the GOLF `sports` row and the contest config templates — and runs `bootstrap-users.mjs` for
+the root admin. `rules/architecture-rules.md` §6 says which data lives where and why.
+
+A dispatch waiting for approval stays approvable, so the workflow takes
+`concurrency: cancel-in-progress` — a second dispatch cancels the older one rather than
+leaving a wipe armed behind a stale notification.
+
+Where a failure is *not* QA data, `run-migrations.mjs` holds a registry of scripted repairs
+for specific failed migrations. Each verifies the exact failed state before touching anything
+and refuses otherwise.
 
 ## Test suites
 

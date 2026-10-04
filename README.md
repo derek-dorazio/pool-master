@@ -153,7 +153,6 @@ poolmaster/
 - [Contest Rules](docs/CONTEST-RULES.md) — Future sport and contest-format ideas
 - [Email Delivery](docs/EMAIL-DELIVERY.md) — Local and deployed email provider configuration
 - [Logging Operations](docs/LOGGING-OPERATIONS.md) — Runtime and browser log diagnostics
-- [QA Cleanup Runbook](docs/QA-CLEANUP-RUNBOOK.md) — Supported QA browser-data cleanup workflow
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
