@@ -240,6 +240,17 @@ describe('check-plan-references scope: package and client READMEs (#334)', () =>
     // Read from the tree against the real plans/ directory, so deleting a plan this README
     // cites without adding the retrieval command turns this test red rather than printing a
     // warning nobody reads. #330's `plans/142` and `plans/145` are latent today and pass.
+    //
+    // ONE README, DELIBERATELY. #336 left "bind the other three newly scanned READMEs too" as
+    // the owner's call; the answer is no, for two reasons. The other three
+    // (`clients/poolmaster/README.md`, `clients/poolmaster/src/features/shared/ui/README.md`,
+    // `packages/mock-contest-feed-provider/README.md`) cite no plan at all, so there is nothing
+    // to bind — this case's own `assert.match` would have no citation to assert. And the
+    // one-line form suggested for it, iterating `collectPermanentFiles()`, would bind all 58
+    // scanned files, making every citation in the tree blocking: that is the warn-only posture
+    // change #334 forbade, arriving through the test instead of the exit code. When one of
+    // those READMEs does cite a plan, add its case here; the warn-only scan prints the finding
+    // that prompts it.
     const text = readFileSync('packages/README.md', 'utf8');
     assert.match(text, /plans\/14[25]/);
     const present = presentPlanNumbers();
