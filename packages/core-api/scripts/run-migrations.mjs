@@ -12,8 +12,9 @@ const LEAGUE_CODE_MIGRATION = '20260411173000_add_league_code';
 // With nothing registered, a failed migration this file cannot repair falls
 // through to the error below, which is the intended outcome: the migrate task
 // fails loudly and the database gets reset. The dispatch is kept as the seam a
-// future repair would register through; plans/129 retires it together with the
-// league_code repair logic when the migration squash lands.
+// future repair would register through. #83's plan would have retired it with the
+// migration squash; that squash was declined (#88), so the seam and the league_code
+// repair logic below stay until something else needs them gone.
 const SCRIPTED_REPAIRS = [];
 
 export function selectScriptedRepair(unresolvedMigrationNames) {

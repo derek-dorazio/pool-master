@@ -1,6 +1,6 @@
 # Wipe QA's database and bring it back to the current image's migrations, with its fixture users.
 #
-# plans/129 (#83) specified this and it was never built, which is how plans/147's Season collapse
+# #83 specified this and it was never built, which is how plan 147's Season collapse
 # came to refuse on QA with no recovery path: the migration's own header pointed at this workflow
 # before it existed.
 #
