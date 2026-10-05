@@ -35,7 +35,12 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
   }
 
   async findByContest(contestId: string): Promise<ContestEntry[]> {
-    const rows = await this.prisma.contestEntry.findMany({ where: { contestId } });
+    // Creation order, then id — the order a draft room lists entries in (#324). Previously
+    // unordered, so no caller could have depended on anything else.
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
     return rows.map(mapToEntry);
   }
 

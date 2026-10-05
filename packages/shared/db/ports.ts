@@ -212,6 +212,12 @@ export interface SquadRepository {
 
 export interface SquadMembershipRepository {
   findBySquad(squadId: string, includeInactive?: boolean): Promise<SquadMembership[]>;
+  /**
+   * The memberships of several squads at once, join order then id. One grouped query instead of
+   * one per squad — added in #324 so a draft room can resolve every entry's owner without a
+   * query per entry, the same reason `countActiveByLeagues` exists above.
+   */
+  findBySquads(squadIds: readonly string[], includeInactive?: boolean): Promise<SquadMembership[]>;
   findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null>;
   create(

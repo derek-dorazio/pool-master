@@ -112,4 +112,20 @@ export class ContestEntryPickService {
       return mapContestEntryPickToDto(row);
     });
   }
+
+  /**
+   * Remove a pick. Here rather than on `ContestEntryPickRepository` because that port is
+   * read-only by design (#247): a `create` on it would be a second insert path past the
+   * `contestFormat` resolution above. A delete has no such invariant to maintain, but pick
+   * writes still belong together on one service, so the port stays read-only and both of a
+   * tiered selection's deletes — replacing a pick in a full tier, and toggling one off —
+   * come through here (#324).
+   */
+  async deletePick(pickId: string): Promise<void> {
+    await this.prisma.contestEntryPick.delete({ where: { id: pickId } });
+    this.logger?.info(
+      { action: 'contestEntryPick.delete.success', data: { pickId } },
+      'Deleted contest entry pick',
+    );
+  }
 }

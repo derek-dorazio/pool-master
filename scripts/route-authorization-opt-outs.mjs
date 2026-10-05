@@ -37,7 +37,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
   // --- Drafts ---
   {
     route: 'POST /api/v1/drafts/:contestId/pick',
-    reason: 'Needs the body\'s entryId: the handler requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
+    reason: 'Needs the body\'s entryId: DraftService.submitSelection requires an ACTIVE squad membership on the squad that owns that entry of this contest (DRAFT_ENTRY_ACCESS_DENIED).',
   },
 
   // --- Leagues: the league id is in the route path, so these are league-scoped already ---
