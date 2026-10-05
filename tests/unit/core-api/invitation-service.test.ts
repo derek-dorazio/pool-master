@@ -28,6 +28,7 @@ import {
   fakeSquadRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
@@ -173,7 +174,7 @@ describe('InvitationService', () => {
         }),
         undefined,
         undefined,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
         undefined,
         mailDelivery,
         'https://app.primetimecommissioner.com/',
@@ -215,7 +216,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         undefined,
         undefined,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
         undefined,
         mailDelivery,
         'https://app.primetimecommissioner.com',
@@ -367,7 +368,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         squadRepo,
         squadMembershipRepo,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
       await service.acceptInvitation('valid-code', 'new-user');
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
@@ -407,7 +408,7 @@ describe('InvitationService', () => {
         }),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
         undefined,
         mailDelivery,
         'https://app.primetimecommissioner.com',
@@ -456,7 +457,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         undefined,
         undefined,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
         undefined,
         mailDelivery,
       );
@@ -486,7 +487,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
         undefined,
         mailDelivery,
         'https://app.primetimecommissioner.com',
@@ -549,7 +550,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         squadRepo,
         squadMembershipRepo,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
 
       await service.acceptInvitation('valid-code', 'returning-user');
@@ -631,7 +632,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -679,7 +680,7 @@ describe('InvitationService', () => {
         createMockLeagueRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
 
       await service.acceptInvitation('code', 'user-1');

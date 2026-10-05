@@ -16,6 +16,7 @@ import {
   fakeSquadRepo,
   fakeUserRepo,
 } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
 import type { User } from '../../../packages/shared/domain';
 
 /**
@@ -72,12 +73,13 @@ describe('SquadService', () => {
 
   // What is left on prisma: nothing this suite drives. The service still holds it for the
   // squad-delete transaction, which the delete tests exercise through their own mock.
-  const prisma = {
+  const prismaDouble = {
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
     },
-  } as any;
+  };
+  const prisma = asPrismaClient(prismaDouble);
 
   const userRepo = fakeUserRepo({ findById: jest.fn(), findByLeague: jest.fn() });
   const userFindById = userRepo.findById as jest.Mock;
@@ -435,7 +437,7 @@ describe('SquadService', () => {
       // The whole point of routing through the shared unit after #218 stripped its account
       // cascade: a commissioner removing someone from a team cannot stop them signing in, so the
       // re-invite flow the repo owner described actually works.
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(prismaDouble.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('refuses to remove a co-owner who is the league\'s last active commissioner', async () => {
@@ -808,6 +810,6 @@ describe('SquadService', () => {
     // No account writes: two owners lose their league membership and both keep a usable login.
     // The old cascade read the user row to decide whether to deactivate it; nothing reads it now,
     // and this suite's prisma fixture has no `$transaction` at all, so the absence is structural.
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prismaDouble.user.findUnique).not.toHaveBeenCalled();
   });
 });

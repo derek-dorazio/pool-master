@@ -595,7 +595,7 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'off',
 
       // ---------------------------------------------------------------------
-      // TEMPORARY -- the four rules below are scheduled off, not decided off.
+      // TEMPORARY -- the three rules below are scheduled off, not decided off.
       // Each line names the #345 Phase 2 PR that deletes it. The deletion is
       // the acceptance criterion of that PR, so this list shrinks under CI
       // rather than being tracked in a document, which is why the glob was
@@ -606,16 +606,14 @@ export default tseslint.config(
       // which is at least visible. The fix is to type the double at its source;
       // `rules/testing-rules.md` §1B *Test doubles are typed by the contract they
       // stand in for* has the idioms. Cast counts in `tests/` are baselined in
-      // #345 and checked per PR; after PR 2: `as any` 153, `as unknown as` 30,
-      // `: any` 3.
+      // #345 and checked per PR; after PR 3: `as any` 0, `as unknown as` 30,
+      // `: any` 0.
       //
       // `no-unsafe-call` and `no-unsafe-return` were here until PR 2, which typed
       // the doubles that leaked `any` into them (69 findings) and turned both on.
+      // `no-explicit-any` was here until PR 3, which removed the 153 declared
+      // `any`s the three rules below report downstream of, and turned it on.
       // ---------------------------------------------------------------------
-
-      // Owned by #345 Phase 2 PR 3 (171 findings). These are the declared `any`s
-      // themselves: the sources that the three rules below report downstream of.
-      '@typescript-eslint/no-explicit-any': 'off',
 
       // Owned by #345 Phase 2 PR 4 (323, 279 and 201 findings). One root cause
       // reported many times over: a value typed `any` enters and then flows. The

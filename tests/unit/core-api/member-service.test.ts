@@ -20,6 +20,7 @@ import {
   fakeSquadRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -83,7 +84,7 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      createPrisma() as any,
+      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
     );
@@ -104,7 +105,7 @@ describe('MemberService', () => {
   it('rejects changing the role for a missing member', async () => {
     const service = new MemberService(
       createMembershipRepo(),
-      createPrisma() as any,
+      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
     );
@@ -126,7 +127,7 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      createPrisma() as any,
+      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
     );
@@ -153,7 +154,7 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      createPrisma() as any,
+      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
     );
@@ -210,7 +211,7 @@ describe('MemberService', () => {
     const prisma = createPrisma();
     const service = new MemberService(
       membershipRepo,
-      prisma as any,
+      asPrismaClient(prisma),
       squadRepo,
       squadMembershipRepo,
     );
@@ -246,7 +247,7 @@ describe('MemberService', () => {
     });
     const service = new MemberService(
       membershipRepo,
-      createPrisma() as any,
+      asPrismaClient(createPrisma()),
       createSquadRepo(),
       createSquadMembershipRepo(),
     );

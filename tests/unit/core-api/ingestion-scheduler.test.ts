@@ -8,6 +8,8 @@
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import type { IngestionCallbacks, SportSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { fakeSportDataProvider } from '../../support/fake-sport-data-provider';
+import { fakeLogger } from '../../support/fake-logger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { SyncOrchestratorRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -26,27 +28,6 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDataProvider {
-  return {
-    providerId: 'mock-provider',
-    providerName: 'Mock Provider',
-    sportsCovered: ['GOLF' as Sport],
-    getUpcomingEvents: jest.fn().mockResolvedValue([]),
-    getEventDetails: jest.fn().mockResolvedValue(null),
-    getParticipants: jest.fn().mockResolvedValue([]),
-    getRankings: jest.fn().mockResolvedValue([]),
-    getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
-    getEventResults: jest.fn().mockResolvedValue(null),
-    healthCheck: jest.fn().mockResolvedValue({
-      providerId: 'mock-provider',
-      status: 'HEALTHY',
-      errorRateLastHour: 0,
-      latencyMsP95: 50,
-    }),
-    ...overrides,
-  };
-}
 
 function createMockCallbacks(): IngestionCallbacks {
   return {
@@ -214,7 +195,7 @@ describe('IngestionScheduler', () => {
   let mockCallbacks: IngestionCallbacks;
 
   beforeEach(() => {
-    mockProvider = createMockProvider();
+    mockProvider = fakeSportDataProvider();
     mockCallbacks = createMockCallbacks();
   });
 
@@ -257,7 +238,7 @@ describe('IngestionScheduler', () => {
           metadata: {},
         },
       ];
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue(mockEvents),
       });
       const registry = createMockRegistry(provider);
@@ -349,7 +330,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('returns FAILED job when provider throws an error', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockRejectedValue(new Error('API timeout')),
       });
       const registry = createMockRegistry(provider);
@@ -365,16 +346,11 @@ describe('IngestionScheduler', () => {
     });
 
     it('pool-master-4k2 logs failed ingestion jobs with message fields', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockRejectedValue(new Error('API timeout')),
       });
       const registry = createMockRegistry(provider);
-      const logger = {
-        debug: jest.fn(),
-        error: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
-      } as any;
+      const logger = fakeLogger();
       const scheduler = new IngestionScheduler(registry, mockCallbacks, logger);
 
       await scheduler.syncSport('GOLF' as Sport);
@@ -445,7 +421,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('runs only the requested sport-level feeds', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([
           {
             externalId: 'evt-1',
@@ -502,7 +478,7 @@ describe('IngestionScheduler', () => {
           },
         ],
       };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
       const registry = createMockRegistry(provider);
@@ -556,7 +532,7 @@ describe('IngestionScheduler', () => {
 
     it('succeeds with empty results', async () => {
       const empty: LiveScoreResult = { category: 'GOLF', externalEventId: 'evt-1', rounds: [] };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getLiveScores: jest.fn().mockResolvedValue(empty),
       });
       const registry = createMockRegistry(provider);
@@ -602,7 +578,7 @@ describe('IngestionScheduler', () => {
           },
         ],
       };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getEventDetails: jest.fn().mockResolvedValue(detail),
         getLiveScores: jest.fn().mockResolvedValue({
           category: 'GOLF',
@@ -645,7 +621,7 @@ describe('IngestionScheduler', () => {
         metadata: {},
         participants: [],
       };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         providerId: 'mock-contest-feed',
         getEventDetails: jest.fn().mockResolvedValue(detail),
         getLiveScores: jest.fn().mockResolvedValue({
@@ -666,7 +642,7 @@ describe('IngestionScheduler', () => {
       expect(provider.getEventDetails).toHaveBeenCalledWith('evt-1', { mockEventState: 'live' });
       expect(provider.getLiveScores).toHaveBeenCalledWith('evt-1', { mockEventState: 'live' });
 
-      const unsupportedProvider = createMockProvider({
+      const unsupportedProvider = fakeSportDataProvider({
         providerId: 'real-provider',
       });
       const unsupportedScheduler = new IngestionScheduler(
@@ -690,7 +666,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('pool-master-dxd.28 fails event participant sync when the provider cannot resolve the event id', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getEventDetails: jest.fn().mockResolvedValue(null),
       });
       const registry = createMockRegistry(provider);
@@ -721,7 +697,7 @@ describe('IngestionScheduler', () => {
   describe('scheduled sync orchestrator routing', () => {
     it('pool-master-rop.68.2.2 submits configured sport loops as scheduled system sync requests', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getRankings: jest.fn().mockResolvedValue([]),
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
@@ -780,7 +756,7 @@ describe('IngestionScheduler', () => {
 
     it('pool-master-rop.68.2.4 records configured sport syncs in the provider sync run ledger once per ingestion job', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
       const config = createEnabledScheduleConfig();
@@ -851,7 +827,7 @@ describe('IngestionScheduler', () => {
 
     it('pool-master-rop.68.2.4 records configured event syncs in the provider sync run ledger once per ingestion job', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getLiveScores: jest.fn().mockResolvedValue({
           category: 'GOLF',
           externalEventId: 'live-event',
@@ -941,7 +917,7 @@ describe('IngestionScheduler', () => {
           });
         });
       });
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getLiveScores,
       });
       const config = createEnabledScheduleConfig();
@@ -980,7 +956,7 @@ describe('IngestionScheduler', () => {
 
     it('pool-master-rop.68.2.2 submits configured event loops as scheduled system sync requests', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getEventDetails: jest.fn().mockResolvedValue({
           externalId: 'active-event',
           providerId: 'mock-provider',
@@ -1079,7 +1055,7 @@ describe('IngestionScheduler', () => {
         metadata: {},
         participants: [],
       };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
         getEventDetails: jest.fn(async (eventId: string) => {
           if (eventId === 'field-available-event') return fieldAvailableDetail;
@@ -1156,7 +1132,7 @@ describe('IngestionScheduler', () => {
           },
         ],
       };
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getEventResults: jest.fn().mockResolvedValue(mockResults),
       });
       const registry = createMockRegistry(provider);
@@ -1175,7 +1151,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('returns 0 records when getEventResults returns null', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getEventResults: jest.fn().mockResolvedValue(null),
       });
       const registry = createMockRegistry(provider);
@@ -1213,16 +1189,11 @@ describe('IngestionScheduler', () => {
     });
 
     it('pool-master-rop.68.2.7 preserves provider health check exception context', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         healthCheck: jest.fn().mockRejectedValue(new Error('health endpoint timeout')),
       });
       const registry = createMockRegistry(provider);
-      const logger = {
-        debug: jest.fn(),
-        error: jest.fn(),
-        info: jest.fn(),
-        warn: jest.fn(),
-      } as any;
+      const logger = fakeLogger();
       const scheduler = new IngestionScheduler(registry, mockCallbacks, logger);
 
       await scheduler['runHealthChecks']();
@@ -1245,7 +1216,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('start() begins polling and runs startup schedule, field, and ranking syncs', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([
           {
             externalId: 'evt-1',
@@ -1307,7 +1278,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('pool-master-r04 schedules only sports enabled by ingestion sync config', async () => {
-      const provider = createMockProvider({
+      const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([]),
       });
       const registry = createMockRegistry(provider, [
@@ -1355,7 +1326,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {
-      const provider = createMockProvider();
+      const provider = fakeSportDataProvider();
       const registry = createMockRegistry(provider, ['GOLF' as Sport]);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
@@ -1372,7 +1343,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('stop() clears the polling interval', () => {
-      const provider = createMockProvider();
+      const provider = fakeSportDataProvider();
       const registry = createMockRegistry(provider, ['GOLF' as Sport]);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 

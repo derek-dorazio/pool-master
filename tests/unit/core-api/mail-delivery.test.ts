@@ -5,6 +5,7 @@ import {
   readApplicationBaseUrl,
   readMailDeliveryConfig,
 } from '../../../packages/core-api/src/modules/email';
+import { fakeLogger } from '../../support/fake-logger';
 
 describe('pool-master-7ij mail delivery provider configuration', () => {
   it('selects SMTP for local Mailpit-friendly delivery', () => {
@@ -77,11 +78,7 @@ describe('pool-master-7ij SES mail delivery provider', () => {
         return { MessageId: 'ses-message-1', $metadata: {} };
       }),
     };
-    const logger = {
-      debug: jest.fn(),
-      info: jest.fn(),
-      error: jest.fn(),
-    } as any;
+    const logger = fakeLogger();
     const provider = new SesMailDeliveryProvider(
       {
         provider: 'ses',

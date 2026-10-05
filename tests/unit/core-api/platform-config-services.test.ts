@@ -1,19 +1,10 @@
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/platform/poll-config-service';
-
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
+import { fakeLogger } from '../../support/fake-logger';
 
 describe('platform config services', () => {
     it('updates and resets poll config', async () => {
-      const service = new PollConfigService(createLogger() as any);
+      const service = new PollConfigService(fakeLogger());
 
       await expect(service.updateConfig({ draft: 15000 }, 'admin-1')).resolves.toEqual(
         expect.objectContaining({ draft: 15000 }),
@@ -24,7 +15,7 @@ describe('platform config services', () => {
     });
 
     it('updates ingestion config, resolves per-sport overrides, and resets defaults', async () => {
-      const service = new IngestionConfigService(createLogger() as any);
+      const service = new IngestionConfigService(fakeLogger());
 
       await expect(
         service.updateConfig({

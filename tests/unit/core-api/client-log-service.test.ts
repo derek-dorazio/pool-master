@@ -8,29 +8,20 @@ import {
   ClientLogService,
 } from '../../../packages/core-api/src/modules/client-logs/service';
 import { createClientLogHandlers } from '../../../packages/core-api/src/modules/client-logs/handler';
+import { fakeLogger } from '../../support/fake-logger';
 
 // pool-master-rop.76.1 — auth-guard registers in one of the test cases
 // below; the bootstrap throws if JWT_SECRET is unset.
 process.env.JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
-
 describe('client log service', () => {
   it('re-emits client log entries at their original levels', () => {
-    const logger = createLogger();
-    const service = new ClientLogService({ logger: logger as any });
+    const logger = fakeLogger();
+    const service = new ClientLogService({ logger: logger });
 
     service.ingestBatch({
       ip: '127.0.0.1',
-      requestLogger: logger as any,
+      requestLogger: logger,
       sessionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       userId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       batch: {
@@ -93,16 +84,16 @@ describe('client log service', () => {
   });
 
   it('rejects oversized batches', () => {
-    const logger = createLogger();
+    const logger = fakeLogger();
     const service = new ClientLogService({
-      logger: logger as any,
+      logger: logger,
       maxBatchBytes: 64,
     });
 
     expect(() =>
       service.ingestBatch({
         ip: '127.0.0.1',
-        requestLogger: logger as any,
+        requestLogger: logger,
         sessionId: null,
         userId: null,
         batch: {
@@ -126,9 +117,9 @@ describe('client log service', () => {
   });
 
   it('rate limits repeated batches from the same ip', () => {
-    const logger = createLogger();
+    const logger = fakeLogger();
     const service = new ClientLogService({
-      logger: logger as any,
+      logger: logger,
       rateLimitPerMinute: 1,
       now: (() => {
         let current = 1_000;
@@ -151,7 +142,7 @@ describe('client log service', () => {
 
     service.ingestBatch({
       ip: '127.0.0.1',
-      requestLogger: logger as any,
+      requestLogger: logger,
       sessionId: null,
       userId: null,
       batch,
@@ -160,7 +151,7 @@ describe('client log service', () => {
     expect(() =>
       service.ingestBatch({
         ip: '127.0.0.1',
-        requestLogger: logger as any,
+        requestLogger: logger,
         sessionId: null,
         userId: null,
         batch,
@@ -219,8 +210,8 @@ describe('auth guard optional auth binding for client logs', () => {
   // body below deliberately claims someone else's identity; the emitted log line must
   // carry the JWT's values and ignore the body entirely.
   it('stamps log lines with the JWT identity, not the identity the batch claims', async () => {
-    const logger = createLogger();
-    const service = new ClientLogService({ logger: logger as any });
+    const logger = fakeLogger();
+    const service = new ClientLogService({ logger: logger });
     const handler = createClientLogHandlers(service);
 
     const app = Fastify({ logger: false });
@@ -229,7 +220,7 @@ describe('auth guard optional auth binding for client logs', () => {
     // The service re-emits each entry through the request-scoped logger, so that is
     // what has to be captured here — not the service's own construction logger.
     app.addHook('preHandler', async (request) => {
-      request.contextLogger = logger as any;
+      request.contextLogger = logger;
     });
     // Registered without a body schema on purpose, so the forged fields survive
     // validation and reach the handler. This asserts the handler ignores them, not
@@ -287,15 +278,15 @@ describe('auth guard optional auth binding for client logs', () => {
   });
 
   it('leaves identity null for an anonymous caller', async () => {
-    const logger = createLogger();
-    const service = new ClientLogService({ logger: logger as any });
+    const logger = fakeLogger();
+    const service = new ClientLogService({ logger: logger });
     const handler = createClientLogHandlers(service);
 
     const app = Fastify({ logger: false });
     app.register(authGuard);
     app.register(requestLoggingContext);
     app.addHook('preHandler', async (request) => {
-      request.contextLogger = logger as any;
+      request.contextLogger = logger;
     });
     app.post('/api/v1/client-logs', handler.ingest);
 

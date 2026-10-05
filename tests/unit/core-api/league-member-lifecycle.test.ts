@@ -18,6 +18,7 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -90,7 +91,7 @@ describe('league member lifecycle helpers', () => {
       userId: 'user-1',
       squadRepo,
       squadMembershipRepo,
-      prisma: prisma as any,
+      prisma: asPrismaClient(prisma),
     });
 
     expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -146,7 +147,7 @@ describe('league member lifecycle helpers', () => {
       userId: 'user-1',
       squadRepo,
       squadMembershipRepo,
-      prisma: createPrisma() as any,
+      prisma: asPrismaClient(createPrisma()),
     });
 
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: true });

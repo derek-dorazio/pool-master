@@ -122,7 +122,7 @@ describe('pool-master-m32 — rewriteNullableToOpenApi31', () => {
     };
     rewriteNullableToOpenApi31(tree);
     expect(tree.properties.a).toEqual({ type: ['string', 'null'] });
-    expect((tree.properties.b.items as Record<string, any>).properties.c).toEqual({
+    expect(tree.properties.b.items.properties.c).toEqual({
       type: ['number', 'null'],
     });
   });

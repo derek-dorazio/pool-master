@@ -193,6 +193,14 @@ type-aware rules hold `tests/**` to this.
 - **A partial Prisma double** stays an uncast object literal, so the test reads its delegates
   as `jest.Mock`s rather than `any`, and crosses into `PrismaClient` once at the constructor through
   `asPrismaClient` in `tests/support/prisma-double.ts`.
+- **A logger** is `fakeLogger()` from `tests/support/fake-logger.ts`: a whole
+  `FastifyBaseLogger` of `jest.fn()`s, not a local literal of the methods the test expects.
+- **A sport-data provider** is `fakeSportDataProvider(overrides)`, and a `ProviderRegistry`
+  holding it is `registryWith(provider)`, both in `tests/support/fake-sport-data-provider.ts`.
+- **A collaborator typed as a class** (private fields, so no literal can be one) is
+  `stubInstance(Class, { method: jest.fn() })` from `tests/support/stub-instance.ts`.
+- **A Fastify request or reply** stays an uncast literal and crosses over once at the call
+  through `asFastifyRequest` / `asFastifyReply` in `tests/support/fastify-doubles.ts`.
 - **An HTTP response body** is read as `res.json<ResponseDto>()` with the route's shared DTO
   type, not as a bare `res.json()`.
 - **A private method under test** is reached as `service['method'](...)`, which TypeScript

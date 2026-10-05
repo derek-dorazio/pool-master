@@ -19,16 +19,7 @@
 import type { SportEvent } from '@poolmaster/shared/domain';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
-
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
+import { fakeLogger } from '../../support/fake-logger';
 
 interface Candidate {
   event: Partial<SportEvent>;
@@ -69,7 +60,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -95,7 +86,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn() };
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -115,7 +106,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-01T00:00:01.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -140,7 +131,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -167,7 +158,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -189,7 +180,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     ]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn() };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger(), now);
 
     await scheduler.runSweep();
 
@@ -220,9 +211,9 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
         .mockRejectedValueOnce(new Error('boom'))
         .mockResolvedValueOnce(undefined),
     };
-    const logger = createLogger();
+    const logger = fakeLogger();
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, logger as any, now);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, logger, now);
 
     await scheduler.runSweep();
 
@@ -237,7 +228,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     jest.useFakeTimers();
     const { sportEvents, rounds } = storeWith([]);
     const eventLifecycleService = { applySportEventStatusTransition: jest.fn() };
-    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService as any, createLogger() as any);
+    const scheduler = new EventLifecycleScheduler(sportEvents, rounds, eventLifecycleService, fakeLogger());
 
     scheduler.start();
     scheduler.start();

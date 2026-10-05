@@ -1,6 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { AuthError } from '../../../packages/core-api/src/modules/auth/auth-service';
+import { AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
+import { fakeLogger } from '../../support/fake-logger';
+import { stubInstance } from '../../support/stub-instance';
 
 function createReply(): FastifyReply {
   return {
@@ -10,24 +12,15 @@ function createReply(): FastifyReply {
   } as unknown as FastifyReply;
 }
 
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-}
-
 describe('auth handlers', () => {
   it('returns INVALID_REFRESH_TOKEN when refresh is requested without a body or cookie token', async () => {
-    const authService = {
+    const authService = stubInstance(AuthService, {
       refresh: jest.fn(),
-    } as any;
+    });
 
     const handlers = createAuthHandlers(authService);
     const reply = createReply();
-    const logger = createLogger();
+    const logger = fakeLogger();
     const request = {
       body: {},
       headers: {},
@@ -48,13 +41,13 @@ describe('auth handlers', () => {
   });
 
   it('treats logout without a refresh token as a successful no-op', async () => {
-    const authService = {
+    const authService = stubInstance(AuthService, {
       logout: jest.fn(),
-    } as any;
+    });
 
     const handlers = createAuthHandlers(authService);
     const reply = createReply();
-    const logger = createLogger();
+    const logger = fakeLogger();
     const request = {
       body: {},
       headers: {},
@@ -71,13 +64,13 @@ describe('auth handlers', () => {
 
 
   it('maps AuthError branches from login into the standard error envelope', async () => {
-    const authService = {
+    const authService = stubInstance(AuthService, {
       login: jest.fn().mockRejectedValue(new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS')),
-    } as any;
+    });
 
     const handlers = createAuthHandlers(authService);
     const reply = createReply();
-    const logger = createLogger();
+    const logger = fakeLogger();
     const request = {
       body: {
         identifier: 'user@example.com',

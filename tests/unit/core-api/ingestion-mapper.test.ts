@@ -7,14 +7,16 @@ import {
   toProviderManualSyncSubmissionResponse,
   toProviderSyncRunDto,
 } from '../../../packages/core-api/src/mappers/ingestion.mapper';
+import type { ProviderManualSyncSubmissionResult } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { ProviderSyncRunStatus, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 
-function buildRun(overrides: Record<string, unknown> = {}) {
+function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
     id: 'run-1',
     providerId: 'mock-contest-feed',
-    sport: 'GOLF',
+    sport: Sport.GOLF,
     eventId: 'event-1',
-    status: 'SUBMITTED',
+    status: ProviderSyncRunStatus.SUBMITTED,
     startedAt: null,
     completedAt: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -25,7 +27,7 @@ function buildRun(overrides: Record<string, unknown> = {}) {
 
 describe('toProviderSyncRunDto', () => {
   it('pool-master-5h3 serializes dates to ISO strings and passes null start/completed through', () => {
-    expect(toProviderSyncRunDto(buildRun() as any)).toEqual({
+    expect(toProviderSyncRunDto(buildRun())).toEqual({
       id: 'run-1',
       providerId: 'mock-contest-feed',
       sport: 'GOLF',
@@ -44,7 +46,7 @@ describe('toProviderSyncRunDto', () => {
       completedAt: new Date('2026-01-01T00:02:00Z'),
     });
 
-    const dto = toProviderSyncRunDto(run as any);
+    const dto = toProviderSyncRunDto(run);
 
     expect(dto.startedAt).toBe('2026-01-01T00:01:00.000Z');
     expect(dto.completedAt).toBe('2026-01-01T00:02:00.000Z');
@@ -53,15 +55,15 @@ describe('toProviderSyncRunDto', () => {
 
 describe('toProviderManualSyncSubmissionResponse', () => {
   it('pool-master-5h3 maps the submission result and every run in it', () => {
-    const result = {
-      sport: 'GOLF',
+    const result: ProviderManualSyncSubmissionResult = {
+      sport: Sport.GOLF,
       eventId: 'event-1',
       requestedFeeds: ['EVENTPARTICIPANTS'],
       submittedAt: new Date('2026-01-01T00:00:00Z'),
       syncRuns: [buildRun(), buildRun({ id: 'run-2' })],
     };
 
-    const response = toProviderManualSyncSubmissionResponse(result as any);
+    const response = toProviderManualSyncSubmissionResponse(result);
 
     expect(response.submittedAt).toBe('2026-01-01T00:00:00.000Z');
     expect(response.syncRuns.map((run: { id: string }) => run.id)).toEqual(['run-1', 'run-2']);
