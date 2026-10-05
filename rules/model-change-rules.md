@@ -162,6 +162,36 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 
 ---
 
+## Schema And Migration History Must Agree
+
+`schema.prisma` is treated throughout this repo as the description of the deployed
+database. It only *is* one if something checks. Nothing did until #340, which found 7
+altered columns across 5 tables: the schema declared `@default(uuid())` on columns the
+history had given `DEFAULT gen_random_uuid()`, and declared unbounded `String` for two
+columns the history had built as `varchar(255)`.
+
+- **The check is `npm run db:drift:check`**, and the `schema-migration-drift` CI job runs
+  it. It applies every committed migration to an empty database and diffs the result
+  against the schema. A non-empty diff fails.
+- **Drift is not always the schema's fault, so read the diff before changing anything.**
+  Where the database already has a type or default the schema never declared, the
+  *schema* is what is wrong and the fix adds no migration. Where an intended schema
+  change has no migration yet, the migration is missing.
+- **Generate the migration, never write it by hand.** `prisma migrate diff --from-url
+  <migrated db> --to-schema-datamodel <schema> --script` emits exactly the statements
+  needed and omits the ones already satisfied — which is the point, because a hand-written
+  version will either miss a table or redundantly re-apply one. It uses no shadow
+  database, so it works where `migrate dev` and `migrate reset` are refused.
+- **`@default(uuid())` leaves the column with no database default.** Prisma generates that
+  value application-side. A column that should have a database default needs
+  `@default(dbgenerated("gen_random_uuid()"))`, and every uuid `id` in this schema now
+  declares it (#340). It changes nothing about Prisma's write API: an explicitly supplied
+  id is still accepted.
+- Keeping the two in agreement is what makes a history squash a mechanical, provable
+  change instead of a rewrite nobody can verify.
+
+---
+
 ## No-Data Clean Reworks
 
 When there is no production deployment with real persistent data — and dev /

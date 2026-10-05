@@ -87,6 +87,7 @@ Rules:
         - service-lint-typecheck
         - service-unit-tests
         - service-integration-tests
+        - schema-migration-drift
         - service-functional-api-tests
         - poolmaster-unit-tests
         - service-build
@@ -137,7 +138,7 @@ Expected output for the recommended configuration:
   "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
   "current_user_can_bypass": "always",
   "strict_status_checks": true,
-  "required_status_checks": ["all-contract-gates", "changes", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
+  "required_status_checks": ["all-contract-gates", "changes", "service-lint-typecheck", "service-unit-tests", "service-integration-tests", "service-functional-api-tests", "schema-migration-drift", "poolmaster-unit-tests", "service-build", "service-mock-provider-build", "poolmaster-build"],
   "allowed_merge_methods": ["squash"]
 }
 ```
@@ -170,10 +171,12 @@ flowchart TD
   CH --> PU
   CH --> PB
   CH --> EL
+  CH --> SD
   CG --> LT[service-lint-typecheck]
   CG --> SU[service-unit-tests]
   CG --> SI[service-integration-tests]
   CG --> SF[service-functional-api-tests]
+  CG --> SD[schema-migration-drift]
   CG --> PU[poolmaster-unit-tests]
   CG --> PB[poolmaster-build]
   CG --> EL[poolmaster-browser-e2e-local]
@@ -203,6 +206,7 @@ flowchart TD
 
   class CG,LT,CH gate
   class SU,SI,SF,PU,SB,MB,PB,EL test
+  class SD gate
   class PI,MQ,DQ,E2E deploy
   class DH report
 ```
@@ -215,6 +219,21 @@ Postgres where it needs one, and start as soon as `all-contract-gates` passes �
 they do not wait on `service-lint-typecheck` (#294). Lint and typecheck still
 block the deploy track, because `deploy-publish-images` needs
 `service-lint-typecheck`.
+
+`schema-migration-drift` is a gate rather than a suite, and it is deliberately its
+own job (#340). It builds an empty database, applies the committed migration
+history to it, and diffs the result against `prisma/schema.prisma`. Folded into one
+of the suites, its failure would read as "the integration tests broke" when what it
+actually means is that two committed artifacts disagree about the shape of the
+database — a different problem with a different fix. It reuses the same
+`postgres:16` service the suites use, needs no generated Prisma client, and the
+whole history applies in about three seconds.
+
+It is not in the `deploy-publish-images` dependency list. Drift does not break a
+deploy: QA is built from the migrations, so it gets the real schema either way. What
+drift breaks is anyone who *generates* from `schema.prisma` — above all a history
+squash (#88) — which is why the gate blocks the pull request that would introduce it
+rather than the deploy that would carry it.
 
 Only `service-unit-tests` collects service coverage in this workflow, because only
 the unit suite has a coverage threshold (#302). Integration and functional API run
@@ -232,7 +251,7 @@ documentation-only PR runs `all-contract-gates` and `changes` and nothing else.
 | Output | Gates |
 |---|---|
 | `code` | `service-lint-typecheck`, `poolmaster-build`, `poolmaster-browser-e2e-local` (and so `service-build` / `service-mock-provider-build`, which need lint) |
-| `service` | `service-unit-tests`, `service-integration-tests`, `service-functional-api-tests` |
+| `service` | `service-unit-tests`, `service-integration-tests`, `service-functional-api-tests`, `schema-migration-drift` |
 | `client` | `poolmaster-unit-tests` |
 
 Three properties hold this together, and each is load-bearing:
@@ -527,6 +546,12 @@ npm run api:refresh
 # Run lint and typecheck (the existing gates).
 npm run lint
 npm run typecheck
+
+# Check that schema.prisma still describes what the migrations build (#340).
+# DATABASE_URL names the server only: the check creates and drops its own
+# `poolmaster_schema_drift_check` database and never touches `poolmaster_test`.
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test \
+  npm run db:drift:check
 ```
 
 Local service tests run against the disposable `poolmaster_test` database. When an
@@ -814,6 +839,8 @@ scripts/check-form-query-mirror.mjs  — gate 5
 scripts/check-openapi-fresh.mjs      — gate 6
 scripts/check-plan-references.mjs    — plan references (warn-only, #147)
 scripts/check-pr-review-triggers.mjs    — review triggers gate (PRs only)
+scripts/check-schema-migration-drift.mjs — schema/migration drift gate (#340),
+                                          run by the schema-migration-drift job
 packages/core-api/scripts/export-openapi.ts — Fastify→OpenAPI export
                                               used by api:check and api:refresh
 ```
@@ -825,6 +852,8 @@ cannot invoke `node` directly. The wrappers are interchangeable.
 
 - `rules/architecture-rules.md §2` — contract-first architecture (the basis
   for the `api:check` freshness gate)
+- `rules/model-change-rules.md` — *Schema And Migration History Must Agree*
+  (the basis for the `schema-migration-drift` gate)
 - `rules/service-rules.md §10` — pre-commit self-review (the basis for the
   route-discipline gate)
 - `rules/testing-rules.md §1A` — test self-documentation (the basis for the
