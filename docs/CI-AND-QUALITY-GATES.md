@@ -581,9 +581,11 @@ A dispatch waiting for approval stays approvable, so the workflow takes
 `concurrency: cancel-in-progress` — a second dispatch cancels the older one rather than
 leaving a wipe armed behind a stale notification.
 
-Where a failure is *not* QA data, `run-migrations.mjs` holds a registry of scripted repairs
-for specific failed migrations. Each verifies the exact failed state before touching anything
-and refuses otherwise.
+A reset is the recovery path for every refused migration. `run-migrations.mjs` still carries a
+registry for per-migration repair scripts, but it is empty: the three that existed were deleted
+in #91, once QA could be reset instead of repaired a failure at a time. Nothing is registered,
+so a failure the file cannot repair fails the migrate job loudly, and the reset above is the
+answer.
 
 ## Test suites
 

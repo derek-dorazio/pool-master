@@ -10,8 +10,9 @@
  * nothing worth preserving. This is the tool that acts on that answer, and the one that handles
  * the same situation next time without a bespoke repair.
  *
- * Only the reset half of plans/129 is built here. The migration squash, and the retirement of
- * the repair scripts that follows it, stay unbuilt — they are a separate decision.
+ * Only the reset half of plans/129 is built here. The repair scripts it would have retired are
+ * now gone (#91): this workflow is the recovery path, so they had nothing left to do. The
+ * migration squash is parked — a separate decision, and no longer a precondition for anything.
  *
  * ## This destroys everything in the target database
  *
