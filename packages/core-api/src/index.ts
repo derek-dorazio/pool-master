@@ -47,8 +47,7 @@ import { draftsModule } from './modules/drafts/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
-import type { IngestionCallbacks } from './modules/ingestion/core';
-import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
+import type { IngestionCallbacks, ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';

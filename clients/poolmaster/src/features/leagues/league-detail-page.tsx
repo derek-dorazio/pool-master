@@ -3,7 +3,7 @@ import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { activateLeague, deleteLeague, generateInviteLink, inactivateLeague, leaveLeague, sendLeagueInvitations, updateLeagueDetails, updateLeagueIcon, type LeaveLeagueResponses, type LeagueDto } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
   ActionModal,

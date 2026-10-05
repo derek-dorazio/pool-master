@@ -1,47 +1,13 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { PageHeader } from "@/features/shared/ui";
 import { getManageBreadcrumbLabel } from "./manage-navigation";
+import {
+  ManageBreadcrumbContext,
+  type ManageBreadcrumbContextValue,
+} from "./manage-breadcrumb-context";
 
 type BreadcrumbOverrides = Record<string, string>;
-
-type ManageBreadcrumbContextValue = {
-  setOverride: (segment: string, label: string | null | undefined) => void;
-};
-
-const ManageBreadcrumbContext = createContext<ManageBreadcrumbContextValue | null>(
-  null,
-);
-
-/**
- * plans/124 §6.1 — lets a child route swap a dynamic path segment (a `:eventId` /
- * `:participantId` UUID) for the loaded entity's name in the Manage breadcrumb
- * trail. The layout only knows static labels; the child page knows the name.
- */
-export function useManageBreadcrumbOverride(
-  segment: string | undefined,
-  label: string | null | undefined,
-) {
-  const context = useContext(ManageBreadcrumbContext);
-
-  useEffect(() => {
-    if (!context || !segment) {
-      return;
-    }
-
-    context.setOverride(segment, label);
-
-    return () => {
-      context.setOverride(segment, null);
-    };
-  }, [context, segment, label]);
-}
 
 function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   const segments = pathname.split("/").filter(Boolean);

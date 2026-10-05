@@ -73,7 +73,7 @@ export class MailDeliveryError extends Error {
   constructor(
     message: string,
     readonly provider: MailDeliveryProviderName,
-    readonly cause?: unknown,
+    override readonly cause?: unknown,
   ) {
     super(message);
     this.name = 'MailDeliveryError';

@@ -3,7 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import type { LeagueListCache } from './league-cache';
-import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
+import { CreateLeagueModal } from './create-league-modal';
+import { suggestLeagueCode } from './create-league-form';
 import {
   apiSuccess,
   buildLeague,

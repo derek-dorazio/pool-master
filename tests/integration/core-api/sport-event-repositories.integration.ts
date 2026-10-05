@@ -91,7 +91,7 @@ async function createParticipants(names: string[]) {
 
 /** An event with one scored, standing, valued golfer on its field, two rounds and two tiers. */
 async function createPopulatedEvent() {
-  const { events, rounds, field, tiers, valuations, golfRounds, golfStandings } = repos();
+  const { rounds, field, tiers, valuations, golfRounds, golfStandings } = repos();
   const event = await createEvent();
   const [golfer] = await createParticipants(['Populated Golfer']);
   await rounds.createMany(event.id, [

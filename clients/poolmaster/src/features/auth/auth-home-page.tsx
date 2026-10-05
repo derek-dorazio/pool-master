@@ -8,11 +8,7 @@ import {
   LoginRequestSchema,
   RegisterRequestSchema,
 } from "@poolmaster/shared/dto";
-import {
-  loginUser,
-  registerUser,
-  type UserDto,
-} from "@/lib/api";
+import { loginUser, registerUser } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
   Alert,
@@ -31,10 +27,11 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from "@/features/teams/team-owner-invitation-preview";
 import { parseRouteState } from "@/routes/route-state";
+import { resolvePostAuthDestination } from "./post-auth-destination";
 import { ApiError, extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { setAuthSessionUser } from "./auth-session-cache";
-import { useAuth } from "./auth-provider";
+import { useAuth } from "./auth-context";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -81,21 +78,6 @@ function parseTeamInviteCode(path: string | undefined) {
 
   const match = path.match(/^\/team-invite\/([^/?#]+)/);
   return match?.[1] ?? null;
-}
-
-type PostAuthUser = Pick<UserDto, "isRootAdmin">;
-
-export function resolvePostAuthDestination(
-  user: PostAuthUser,
-  routeState: { from?: string },
-): string {
-  if (routeState.from) {
-    return routeState.from;
-  }
-  if (user.isRootAdmin) {
-    return "/manage";
-  }
-  return "/welcome";
 }
 
 function isUnexpectedAuthError(error: unknown): boolean {

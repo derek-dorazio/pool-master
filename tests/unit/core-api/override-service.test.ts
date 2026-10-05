@@ -1,4 +1,4 @@
-import { OverrideService, OverrideError } from '../../../packages/core-api/src/modules/contests/override-service';
+import { OverrideService } from '../../../packages/core-api/src/modules/contests/override-service';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { buildContest } from '../../factories';

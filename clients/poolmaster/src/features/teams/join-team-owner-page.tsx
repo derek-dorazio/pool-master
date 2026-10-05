@@ -6,7 +6,7 @@ import type { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RegisterWithTeamOwnerInvitationRequestSchema } from '@poolmaster/shared/dto';
 import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import { setAuthSessionUser } from '@/features/auth/auth-session-cache';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import {

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { MyAccountPage } from '@/features/account/my-account-page';
 import { UserPage } from '@/features/account/user-page';
@@ -44,17 +44,11 @@ import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
+import {
+  LegacyJoinInviteRedirect,
+  LegacyLeagueEntriesRedirect,
+} from './legacy-redirects';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
-
-function LegacyJoinInviteRedirect() {
-  const { inviteCode = '' } = useParams<{ inviteCode: string }>();
-  return <Navigate replace to={`/invite/${inviteCode}`} />;
-}
-
-function LegacyLeagueEntriesRedirect() {
-  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  return <Navigate replace to={`/league/${leagueCode}`} />;
-}
 
 export const router = createBrowserRouter([
   {

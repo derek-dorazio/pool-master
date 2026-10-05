@@ -20,7 +20,9 @@ import type {
 
 export function createLeagueHandlers(
   leagueService: LeagueService,
-  membershipRepo: LeagueMembershipRepository,
+  // Positional slot kept: routes.ts:100 passes it, and the other three repos are
+  // read. Underscore rather than deletion so the factory's shape stays stable.
+  _membershipRepo: LeagueMembershipRepository,
   squadMembershipRepo: SquadMembershipRepository,
   userRepo: UserRepository,
 ) {

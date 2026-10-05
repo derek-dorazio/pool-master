@@ -11,10 +11,9 @@ import type {
 import type {
   Participant,
   ParticipantProviderMapping,
-  InjuryStatus,
+  InjuryStatus, ParticipantType
 } from '@poolmaster/shared/domain';
 import { InjuryStatusCode, MappingConfidence, ParticipantStatus } from '@poolmaster/shared/domain';
-import type { ParticipantType } from '@poolmaster/shared/domain';
 
 // --- Input DTOs ---
 

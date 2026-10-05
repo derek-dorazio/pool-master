@@ -13,11 +13,16 @@ import {
   type GolfRoundScoreRow,
   type GolfRoundScoreStatus,
 } from './golf-admin-utils';
+import {
+  buildRoundScorePatch,
+  isNonNegInt,
+  rowHasInvalid,
+  type RowDraft,
+} from './golf-round-score-patch';
 
 type ScoreRow = GolfRoundScoreRow;
 type ScorePatch = UpdateGolfRoundScoreRequest;
 
-type RowDraft = { strokes?: string; thru?: string; status?: GolfRoundScoreStatus };
 type CorrectionsMeta = {
   draft: Record<string, RowDraft>;
   setDraft: Dispatch<SetStateAction<Record<string, RowDraft>>>;
@@ -28,46 +33,6 @@ type CorrectionsMeta = {
 
 const columnHelper = createColumnHelper<ScoreRow>();
 
-function isNonNegInt(raw: string): boolean {
-  return /^\d+$/.test(raw.trim());
-}
-
-/** The changed-fields patch for one correction row, or null when nothing changed. */
-export function buildRoundScorePatch(
-  row: ScoreRow,
-  draft: RowDraft | undefined,
-): ScorePatch | null {
-  if (!draft) {
-    return null;
-  }
-  const patch: ScorePatch = {};
-  if (
-    draft.strokes !== undefined &&
-    isNonNegInt(draft.strokes) &&
-    Number(draft.strokes) !== row.strokes
-  ) {
-    patch.strokes = Number(draft.strokes);
-  }
-  if (
-    draft.thru !== undefined &&
-    isNonNegInt(draft.thru) &&
-    Number(draft.thru) !== row.thru
-  ) {
-    patch.thru = Number(draft.thru);
-  }
-  if (draft.status !== undefined && draft.status !== row.status) {
-    patch.status = draft.status;
-  }
-  return Object.keys(patch).length > 0 ? patch : null;
-}
-
-function rowHasInvalid(draft: RowDraft | undefined): boolean {
-  if (!draft) return false;
-  return (
-    (draft.strokes !== undefined && draft.strokes.trim() !== '' && !isNonNegInt(draft.strokes)) ||
-    (draft.thru !== undefined && draft.thru.trim() !== '' && !isNonNegInt(draft.thru))
-  );
-}
 
 const correctionColumns = [
   columnHelper.accessor('participantName', {

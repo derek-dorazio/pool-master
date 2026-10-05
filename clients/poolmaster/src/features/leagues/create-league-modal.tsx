@@ -14,7 +14,8 @@ import {
   Textarea,
   Tile,
 } from "@/features/shared/ui";
-import { buildLeaguePath, rememberRecentLeagueCode } from "./league-routing";
+import { rememberRecentLeagueCode } from "./league-routing";
+import { suggestLeagueCode } from "./create-league-form";
 import { seedLeagueContext, syncLeagueCaches } from "./league-cache";
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -44,13 +45,6 @@ const createLeagueFormSchema = z.object({
 });
 
 type CreateLeagueFormValues = z.infer<typeof createLeagueFormSchema>;
-
-export function suggestLeagueCode(name: string) {
-  return name
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 16);
-}
 
 function normalizeLeagueCode(value: string) {
   return value
@@ -457,8 +451,4 @@ export function CreateLeagueModal({
       </form>
     </Modal>
   );
-}
-
-export function buildCreateLeagueDestination(leagueCode: string) {
-  return buildLeaguePath(leagueCode);
 }

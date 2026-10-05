@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes } from "react";
 import { cn } from "./class-names";
+import { normalizeDate } from "./date-time-format";
 import { Input } from "./form-field";
 
 type DateDisplayProps = {
@@ -39,42 +40,4 @@ type DateTimeFieldProps = Omit<
 
 export function DateTimeField({ className, ...props }: DateTimeFieldProps) {
   return <Input className={className} type="datetime-local" {...props} />;
-}
-
-export function toDateTimeLocalValue(value: Date | string | null | undefined) {
-  const date = normalizeDate(value);
-
-  if (!date) {
-    return "";
-  }
-
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
-export function formatDateDisplay(
-  value: Date | string | null | undefined,
-  emptyLabel = "Unavailable",
-  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
-) {
-  const date = normalizeDate(value);
-  return date ? date.toLocaleDateString(undefined, options) : emptyLabel;
-}
-
-export function formatDateTimeDisplay(
-  value: Date | string | null | undefined,
-  emptyLabel = "Unavailable",
-  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
-) {
-  const date = normalizeDate(value);
-  return date ? date.toLocaleString(undefined, options) : emptyLabel;
-}
-
-function normalizeDate(value: Date | string | null | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
 }

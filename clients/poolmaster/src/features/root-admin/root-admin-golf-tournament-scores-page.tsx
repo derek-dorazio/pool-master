@@ -12,7 +12,7 @@ import {
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventRoundDto } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import {
   golfRoundScoreRows,
   golfTournamentHasScoreSync,

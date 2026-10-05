@@ -8,7 +8,7 @@ import {
   SplitContentLayout,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import {
   isAdminManagedGolfTournament,
 } from './golf-admin-utils';

@@ -31,7 +31,11 @@ export interface CsvImportResult {
 export class BulkService {
   constructor(
       private readonly leagueRepo: LeagueRepository,
-    private readonly membershipRepo: LeagueMembershipRepository,
+    // Never read. The `private readonly` modifier is dropped rather than the
+    // parameter: callers (routes.ts:94 and three unit tests) pass it positionally.
+    // An underscore alone does NOT satisfy `noUnusedLocals` for a parameter
+    // PROPERTY -- that is TS6138, which the underscore convention does not cover.
+    _membershipRepo: LeagueMembershipRepository,
     private readonly invitationRepo: LeagueInvitationRepository,
   ) {}
 

@@ -3,10 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import {
-  GolfRoundScoreCorrectionsCard,
-  buildRoundScorePatch,
-} from './golf-round-score-corrections-card';
+import { GolfRoundScoreCorrectionsCard } from './golf-round-score-corrections-card';
+import { buildRoundScorePatch } from './golf-round-score-patch';
 import type { GolfRoundScoreRow } from './golf-admin-utils';
 
 // plans/124 §6.3 Round scores section 2 — inline corrections (pool-master-r11).

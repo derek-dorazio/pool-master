@@ -6,7 +6,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { useAuth } from "@/features/auth/auth-provider";
+import { useAuth } from "@/features/auth/auth-context";
 import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
@@ -15,10 +15,8 @@ import {
   AppNavigationMenu,
   type AppNavigationItem,
 } from "@/features/shared/ui";
-import {
-  CreateLeagueModal,
-  buildCreateLeagueDestination,
-} from "@/features/leagues/create-league-modal";
+import { CreateLeagueModal } from "@/features/leagues/create-league-modal";
+import { buildCreateLeagueDestination } from "@/features/leagues/create-league-form";
 import {
   buildLeagueContestCreatePath,
   buildLeagueContestHistoryPath,

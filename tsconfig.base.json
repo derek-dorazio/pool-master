@@ -5,6 +5,29 @@
     "moduleResolution": "Node16",
     "lib": ["ES2022"],
     "strict": true,
+    // #345 Phase 0 -- the five strictness flags measured at or near zero.
+    // `noImplicitReturns` and `noFallthroughCasesInSwitch` were 0 across every
+    // project (#154, re-measured on this branch); `noImplicitOverride` was 6,
+    // `noUnusedLocals` 16 and `noUnusedParameters` 2 (#154, #166, re-measured).
+    //
+    // `noUnusedLocals`/`noUnusedParameters` largely duplicate
+    // `@typescript-eslint/no-unused-vars`, which is already `error` at 0 findings.
+    // They are here for the coverage ESLint does not have: `npm run lint` globs
+    // `packages/**` and `clients/poolmaster/src/**` only, while `tests/` is in
+    // this program via `tests/tsconfig.json` and gated by `npm run typecheck:tests`.
+    // 14 of the 16 `noUnusedLocals` findings were in `tests/` -- i.e. exactly the
+    // files tsc sees and ESLint does not.
+    //
+    // `noUnusedParameters` does NOT honour the ESLint rule's `argsIgnorePattern`;
+    // it keys off a leading underscore as a built-in convention. That happens to
+    // agree with the `argsIgnorePattern: '^_'` that `eslint.config.js` sets on
+    // `@typescript-eslint/no-unused-vars`, so a parameter renamed `_x` satisfies
+    // both tools. Verified on both real findings rather than assumed.
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

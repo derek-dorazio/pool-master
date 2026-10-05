@@ -1,12 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { DateDisplay, DateTimeField } from "./date-time";
 import {
-  DateDisplay,
-  DateTimeField,
   formatDateDisplay,
   formatDateTimeDisplay,
   toDateTimeLocalValue,
-} from "./date-time";
+} from "./date-time-format";
 
 describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", () => {
   it("rule: formats valid dates and uses a fallback for missing dates", () => {

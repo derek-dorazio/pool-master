@@ -18,10 +18,9 @@ import type {
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
-  User,
+  User, DateFormat, ParticipantStatus, Sport, TimeFormat
 } from '../domain';
 
-import type { DateFormat, ParticipantStatus, Sport, TimeFormat } from '../domain';
 import type { ParticipantMatchQuery } from './sport-catalog-ports';
 
 // --- Identity ---

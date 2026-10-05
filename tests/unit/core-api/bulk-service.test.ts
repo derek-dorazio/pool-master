@@ -1,26 +1,15 @@
 import { BulkService } from '../../../packages/core-api/src/modules/leagues/bulk-service';
 import type {
-  ContestRepository,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
   LeagueRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus } from '@poolmaster/shared/domain';
-import { buildContest, buildLeague, buildMembership, buildInvitation } from '../../factories';
+import { buildLeague, buildMembership, buildInvitation } from '../../factories';
 import {
-  fakeContestRepo,
   fakeLeagueInvitationRepo,
   fakeLeagueMembershipRepo,
   fakeLeagueRepo,
 } from '../../support/repo-fakes';
-
-function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
-  return fakeContestRepo({
-    findById: jest.fn().mockResolvedValue(buildContest()),
-    update: jest.fn().mockResolvedValue(buildContest()),
-    ...overrides,
-  });
-}
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({

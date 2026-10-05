@@ -8,7 +8,7 @@ import {
   type LeagueMembershipDto,
   type SquadMembershipDto,
 } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError } from '@/lib/errors';
 import { rememberRecentLeagueCode } from './league-routing';

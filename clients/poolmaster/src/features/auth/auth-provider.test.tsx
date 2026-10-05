@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { AuthProvider, useAuth } from './auth-provider';
+import { AuthProvider } from './auth-provider';
+import { useAuth } from './auth-context';
 import {
   AUTH_ME_QUERY_KEY,
   setAuthSessionUser,

@@ -3,7 +3,7 @@ import { TeamIconKey , LeagueRole} from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { type SquadDto, type TeamOwnerInvitationDto, createLeagueSquad, createSquadOwnerInvitation, deleteLeagueSquad, inactivateLeagueSquad, listLeagueSquads, listSquadOwnerInvitations, replaceSquadOwner, revokeSquadOwnerInvitation, updateLeagueSquad } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import {
   ActionList,
   ActionModal,

@@ -3,8 +3,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+// `./app-shell.tsx?raw` and `./app-shell` are DIFFERENT modules: Vite's `?raw`
+// query yields the file's source as a string, which the assertions below read.
+// import-x's resolver strips the query, sees one module, and `no-duplicates`
+// (#345 Phase 1) wants them merged -- its autofix did merge them, which silently
+// pointed `AppShell` at the raw-text module. Not a style exemption; the rule is
+// wrong here, and it reports on both lines, so the exemption is a block.
+/* eslint-disable import-x/no-duplicates */
 import appShellSource from './app-shell.tsx?raw';
 import { AppShell } from './app-shell';
+/* eslint-enable import-x/no-duplicates */
 
 const {
   listLeaguesMock,
@@ -46,7 +54,7 @@ bindApiMocks({
   listLeagues: listLeaguesMock,
 });
 
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => authState,
 }));
 
@@ -114,7 +122,6 @@ vi.mock('@/features/leagues/create-league-modal', () => ({
       </div>
     ) : null
   ),
-  buildCreateLeagueDestination: (leagueCode: string) => `/league/${leagueCode}`,
 }));
 
 function renderAppShell(initialEntries = ['/league/LEAGUE1']) {

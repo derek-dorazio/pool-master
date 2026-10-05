@@ -57,7 +57,7 @@ bindApiMocks({
   registerUser: registerUserMock,
 });
 
-vi.mock('./auth-provider', () => ({
+vi.mock('./auth-context', () => ({
   useAuth: () => authState,
 }));
 

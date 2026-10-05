@@ -26,7 +26,9 @@ export interface ChangeRoleInput {
 export class MemberService {
   constructor(
     private readonly membershipRepo: LeagueMembershipRepository,
-    private readonly prisma: PrismaClient,
+    // Never read; every query goes through the repositories. Modifier dropped,
+    // slot kept -- routes.ts:80 and six unit tests pass it positionally.
+    _prisma: PrismaClient,
     private readonly squadRepo?: SquadRepository,
     private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly logger?: FastifyBaseLogger,

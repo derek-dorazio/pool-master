@@ -7,7 +7,7 @@ import {
 } from '@/features/shared/ui';
 import { GolfTournamentManualCreateForm } from './golf-tournament-manual-create-form';
 import { GolfTournamentProviderBrowse } from './golf-tournament-provider-browse';
-import type { GolfTournamentEdition } from './golf-tournament-edition-fields';
+import type { GolfTournamentEdition } from './golf-tournament-edition';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
 
 type CreateMode = 'manual' | 'provider';
