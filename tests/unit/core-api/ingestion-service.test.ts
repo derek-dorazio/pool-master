@@ -93,7 +93,7 @@ describe('IngestionService manual sync submission', () => {
         return 0 as unknown as NodeJS.Immediate;
       });
     const providerSyncRunCreate = echoSyncRunCreate();
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
     const registry = {
       getProvider: jest.fn().mockReturnValue({
         providerId: 'mock-contest-feed',
@@ -203,7 +203,7 @@ describe('IngestionService manual sync submission', () => {
         return 0 as unknown as NodeJS.Immediate;
       });
     const providerSyncRunCreate = echoSyncRunCreate();
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
     const registry = {
       getProvider: jest.fn().mockReturnValue({
         providerId: 'mock-contest-feed',

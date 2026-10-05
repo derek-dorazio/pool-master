@@ -593,7 +593,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(listRes.statusCode).toBe(200);
     expect(LeagueListResponseSchema.safeParse(listRes.json()).success).toBe(true);
-    expect(listRes.json<LeagueListResponse>().leagues.some((item: { id: string }) => item.id === league.id)).toBe(true);
+    expect(listRes.json<LeagueListResponse>().leagues.some((item) => item.id === league.id)).toBe(true);
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
@@ -736,7 +736,7 @@ describe('Contract verification (root admin)', () => {
       expect(syncRunsRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(
         syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.some(
-          (item: { eventId: string | null; payload: { detail?: string } }) =>
+          (item) =>
             item.eventId === 'event-1'
             && item.payload.detail === 'Imported event and participant field.',
         ),
@@ -1000,7 +1000,7 @@ describe('Contract verification (root admin)', () => {
       expect(afterRes.statusCode).toBe(200);
       expect(
         afterRes.json<UnmappedProviderParticipantListResponse>().participants.some(
-          (row: { providerId: string; externalId: string }) =>
+          (row) =>
             row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
         ),
       ).toBe(false);
@@ -1072,7 +1072,7 @@ describe('Contract verification (root admin)', () => {
       expect(leagueListRes.statusCode).toBe(200);
       expect(SportLeagueListResponseSchema.safeParse(leagueListRes.json()).success).toBe(true);
       expect(
-        leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l: { id: string }) => l.id === leagueId),
+        leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l) => l.id === leagueId),
       ).toBe(true);
 
       // --- createParticipant (201) x3 — golf players are participants -------
@@ -1155,7 +1155,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(tournamentListRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
-      expect(tournamentListRes.json<SportEventListResponse>().events.map((e: { id: string }) => e.id)).toEqual([eventId]);
+      expect(tournamentListRes.json<SportEventListResponse>().events.map((e) => e.id)).toEqual([eventId]);
 
       // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({

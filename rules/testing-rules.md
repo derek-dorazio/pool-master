@@ -172,6 +172,12 @@ The conclusion is **never** "modify the production code to make the test pass."
 
 Mocks, fakes, builders, fixtures, MSW handlers, and `nock` interceptors live in **test code** (`tests/**`, `*.test.ts`, `*.spec.ts`, `clients/**/test/**`, MSW handler modules). They never live in `packages/`, `clients/poolmaster/src/`, or any other production source path.
 
+### Repository surface
+
+If you find yourself adding any of the patterns above to make a slice pass, **stop**. Surface the conflict to the user before proceeding. This is a hard rule — any instance is a blocking review finding.
+
+See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof Rule*) for the failing-test-before-fix discipline that prevents the most common path into these patterns.
+
 ### Test doubles are typed by the contract they stand in for
 
 A double typed `any` keeps passing when the interface it replaces changes, so the suite stays
@@ -184,8 +190,8 @@ type-aware rules hold `tests/**` to this.
   `tests/support/mock-fn.ts`, so its parameters and return are checked against the port.
   `jest.fn().mockImplementation(...)` is `jest.Mock<any, any>` and checks nothing. A fixed
   value needs only `jest.fn().mockResolvedValue(x)`.
-- **A partial Prisma double** stays an uncast object literal, so the test reads its mocks
-  through their real types, and crosses into `PrismaClient` once at the constructor through
+- **A partial Prisma double** stays an uncast object literal, so the test reads its delegates
+  as `jest.Mock`s rather than `any`, and crosses into `PrismaClient` once at the constructor through
   `asPrismaClient` in `tests/support/prisma-double.ts`.
 - **An HTTP response body** is read as `res.json<ResponseDto>()` with the route's shared DTO
   type, not as a bare `res.json()`.
@@ -193,12 +199,6 @@ type-aware rules hold `tests/**` to this.
   types, not as `(service as any).method(...)`.
 - Never clear a type error or lint finding with `as X` or `as unknown as T` on a double. That
   makes the double lie about the contract, which is worse than `any` because it is invisible.
-
-### Repository surface
-
-If you find yourself adding any of the patterns above to make a slice pass, **stop**. Surface the conflict to the user before proceeding. This is a hard rule — any instance is a blocking review finding.
-
-See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof Rule*) for the failing-test-before-fix discipline that prevents the most common path into these patterns.
 
 ---
 

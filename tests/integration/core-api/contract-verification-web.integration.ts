@@ -543,7 +543,7 @@ describe('Contract verification (web)', () => {
     ).toBe(true);
 
     const defaultTemplate = templateRes.json<ContestConfigTemplateListResponse>().templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+      (template) => template.isDefault,
     );
     if (!defaultTemplate) throw new Error('No default contest template is seeded');
 

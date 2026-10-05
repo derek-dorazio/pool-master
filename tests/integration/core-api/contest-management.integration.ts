@@ -315,7 +315,7 @@ describe('Contest management integration', () => {
     expect(templates[0].selectionType).toBe('TIERED');
 
     const defaultTemplate = templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+      (template) => template.isDefault,
     );
     if (!defaultTemplate) throw new Error('No default contest template is seeded');
 
@@ -414,7 +414,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
     });
     const defaultTemplate = templatesRes.json<ContestConfigTemplateListResponse>().templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+      (template) => template.isDefault,
     );
     if (!defaultTemplate) throw new Error('No default contest template is seeded');
 

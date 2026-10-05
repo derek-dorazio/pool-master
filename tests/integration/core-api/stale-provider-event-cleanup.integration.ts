@@ -237,10 +237,10 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       ]),
     );
     expect(
-      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row: { externalId: string }) => row.externalId === futureGolfEvent.externalId),
+      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row) => row.externalId === futureGolfEvent.externalId),
     ).toBe(false);
     expect(
-      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row: { externalId: string }) => row.externalId === inProgressGolfEvent.externalId),
+      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row) => row.externalId === inProgressGolfEvent.externalId),
     ).toBe(false);
 
     const executeResponse = await getApp().inject({
