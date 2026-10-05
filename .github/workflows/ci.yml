@@ -113,7 +113,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
     # #300 — see plans/146. A documentation-only change cannot break lint or typecheck.
-    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -156,7 +165,16 @@ jobs:
     name: service-unit-tests
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
     env:
       # Required at bootstrap with no fallback (#134, core/config.ts). The test
       # helpers set these too, but CI is explicit so a suite that bootstraps
@@ -183,7 +201,16 @@ jobs:
     name: service-integration-tests
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
     services:
       postgres:
         image: postgres:16
@@ -234,7 +261,16 @@ jobs:
     name: schema-migration-drift
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
     services:
       postgres:
         image: postgres:16
@@ -268,7 +304,16 @@ jobs:
     name: service-functional-api-tests
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.service == 'true') }}
     services:
       postgres:
         image: postgres:16
@@ -312,7 +357,16 @@ jobs:
     name: poolmaster-unit-tests
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.client == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.client == 'true') }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -412,7 +466,16 @@ jobs:
     name: poolmaster-build
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
-    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -439,7 +502,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [all-contract-gates, changes]
     # #300 — see plans/146. Gated on `code`, not `client`: it runs the whole stack, core-api included.
-    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
+    # `!cancelled()` is load-bearing, not decoration (#350). A job whose `needs:` did not
+    # succeed is skipped by default unless its `if` uses a status function, and `changes`
+    # is a job that can be cancelled before it starts: twice on 2026-10-05 it waited 15
+    # minutes without being assigned a runner while siblings in the same run got one
+    # instantly. That skipped all eight gated jobs and, transitively, the whole deploy
+    # chain -- the run reported failure having tested nothing and deployed nothing. On a
+    # push to main the path filter is not consulted at all, so gating on it there was
+    # pure liability. `all-contract-gates` stays a real gate.
+    if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
+        && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true') }}
     services:
       postgres:
         image: postgres:16
