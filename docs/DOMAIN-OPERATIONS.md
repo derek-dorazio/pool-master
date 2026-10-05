@@ -670,7 +670,8 @@ replaced `adminMapParticipant`, which took both ids in the body under `/admin/pr
 
 Cluster: `ContestConfigTemplate`, `Contest`, `ContestConfiguration`, `ContestEntry`,
 `ContestEntryPick` and the scoring and prize rules under a configuration. Tracked by #244–#248
-under #201; decisions: the stage-2 outcome in plans/145.
+under #201; decisions: the stage-2 outcome in plans/145, retrieved via
+`git show 020de6bf:plans/145-one-object-one-operation-set.md`.
 
 **`ContestConfigTemplate` is global (A11); everything else here is tenant-scoped** — it
 belongs to a league through its contest.
@@ -722,7 +723,8 @@ and move to #198's `SelectionEngine`.
 ## Slice 4 — Platform and operations
 
 Cluster: `ProviderSyncRun`, `PlatformRuntimeConfig`, and the provider registry they serve.
-Tracked by #205 under #201; decisions: the slice 4 outcomes in plans/145.
+Tracked by #205 under #201; decisions: the slice 4 outcomes in plans/145, retrieved via
+`git show 020de6bf:plans/145-one-object-one-operation-set.md`.
 
 **Every operation here is `rootAdmin`, reads included.** Neither object passes A11: a sync run
 can exist because a root admin submitted it (condition 3), and a runtime-config row names the

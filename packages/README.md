@@ -31,7 +31,9 @@ rows were wrong**: `admin`, `config` and `history` named modules that no longer 
 `contest-management`, `squads` and `config` named a prefix other than the one registered. **12
 modules were missing entirely** — `client-logs`, `contest-config-templates`,
 `contest-entry-picks`, `email`, `golf`, `platform`, `sport-catalog`, `sport-leagues`, `sports`,
-`team-invitations`, `version`, and `users`, the object `plans/145` slice 1 was entirely about.
+`team-invitations`, `version`, and `users`, the object `plans/145` slice 1 was entirely about
+(that plan was deleted with its epic #201; retrieve via
+`git show 020de6bf:plans/145-one-object-one-operation-set.md`).
 Per `plans/142`, *an empty or generic README is worse than no README, because it looks like
 documentation*; a wrong one is worse still.
 
@@ -53,7 +55,9 @@ One file: `routes.ts`. It publishes two operations, `getDraftState` and
 `submitContestSelection`, and holds everything behind them — route plumbing, actor and
 commissioner resolution, 13 direct `prisma.` calls, the selection rules and the response
 mapping. There is no service, handler, mapper or port layer here; this is the one module
-`plans/145` slice 3 did not reach. **#324** tracks the extraction, and
+`plans/145` slice 3 did not reach (plan deleted with epic #201; retrieve via
+`git show 020de6bf:plans/145-one-object-one-operation-set.md`).
+**#198** tracks the extraction — #324 was closed as a duplicate of it — and
 `docs/LAYERS.md` §2.4 states the file set it should end up with.
 
 This section previously described two "pure-function engines", `TieredPickEngine` and
