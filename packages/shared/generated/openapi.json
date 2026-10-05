@@ -5338,13 +5338,6 @@
             ],
             "description": "Optional roster slot from the pick row."
           },
-          "tier": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Optional tier from the pick row."
-          },
           "isCounting": {
             "type": "boolean",
             "description": "Whether this pick currently counts toward the entry's total under the counting rule."
@@ -5359,7 +5352,6 @@
           "sportEventParticipantId",
           "pickedAt",
           "slot",
-          "tier",
           "isCounting",
           "isDropped"
         ],
@@ -5484,13 +5476,6 @@
                   ],
                   "description": "Optional roster slot from the pick row."
                 },
-                "tier": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Optional tier from the pick row."
-                },
                 "isCounting": {
                   "type": "boolean",
                   "description": "Whether this pick currently counts toward the entry's total under the counting rule."
@@ -5505,7 +5490,6 @@
                 "sportEventParticipantId",
                 "pickedAt",
                 "slot",
-                "tier",
                 "isCounting",
                 "isDropped"
               ],
@@ -6168,13 +6152,6 @@
                         ],
                         "description": "Optional roster slot from the pick row."
                       },
-                      "tier": {
-                        "type": [
-                          "string",
-                          "null"
-                        ],
-                        "description": "Optional tier from the pick row."
-                      },
                       "isCounting": {
                         "type": "boolean",
                         "description": "Whether this pick currently counts toward the entry's total under the counting rule."
@@ -6189,7 +6166,6 @@
                       "sportEventParticipantId",
                       "pickedAt",
                       "slot",
-                      "tier",
                       "isCounting",
                       "isDropped"
                     ],

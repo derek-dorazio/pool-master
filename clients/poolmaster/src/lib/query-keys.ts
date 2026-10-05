@@ -51,6 +51,8 @@ export const QueryKeys = {
     detail: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId] as const,
     myEntries: (leagueId: QueryKeyId, contestIds: readonly string[]) =>
       ['poolmaster', 'league-contests', leagueId, 'my-entries', contestIds] as const,
+    leaderboard: (contestId: QueryKeyId) =>
+      ['poolmaster', 'contest', contestId, 'leaderboard'] as const,
     standings: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'standings'] as const,
   },
   managedContests: {

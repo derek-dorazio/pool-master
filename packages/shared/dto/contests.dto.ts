@@ -231,7 +231,6 @@ export const ScoredContestEntryPickDtoSchema = z.object({
   sportEventParticipantId: z.string().describe('The picked field row. Its scores are the matching entry of `participants`; a pick is a pointer, not a copy.'),
   pickedAt: z.string().datetime().describe('When this participant was picked.'),
   slot: z.number().int().nullable().describe('Optional roster slot from the pick row.'),
-  tier: z.string().nullable().describe('Optional tier from the pick row.'),
   isCounting: z.boolean().describe('Whether this pick currently counts toward the entry\'s total under the counting rule.'),
   isDropped: z.boolean().describe('Whether this scored pick is currently dropped because better picks fill the counting places.'),
 }).describe('One pick on a contest entry, with whether it counts.');

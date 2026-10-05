@@ -2780,10 +2780,6 @@ export type ScoredContestEntryPickDto = {
      */
     slot: number | null;
     /**
-     * Optional tier from the pick row.
-     */
-    tier: string | null;
-    /**
      * Whether this pick currently counts toward the entry's total under the counting rule.
      */
     isCounting: boolean;
@@ -2876,10 +2872,6 @@ export type ContestEntryStandingDto = {
          * Optional roster slot from the pick row.
          */
         slot: number | null;
-        /**
-         * Optional tier from the pick row.
-         */
-        tier: string | null;
         /**
          * Whether this pick currently counts toward the entry's total under the counting rule.
          */
@@ -3222,10 +3214,6 @@ export type ContestLeaderboardResponse = {
              * Optional roster slot from the pick row.
              */
             slot: number | null;
-            /**
-             * Optional tier from the pick row.
-             */
-            tier: string | null;
             /**
              * Whether this pick currently counts toward the entry's total under the counting rule.
              */

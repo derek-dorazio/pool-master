@@ -8,6 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
   buildLeagueContestEntryPath,
+  buildLeagueContestLeaderboardPath,
   buildLeagueContestManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -23,7 +24,6 @@ import {
   EmptyState,
   ErrorState,
   FormField,
-  formatDateTimeDisplay,
   Input,
   LinkButton,
   LoadingState,
@@ -38,8 +38,8 @@ type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[numb
 
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
   // pool-master-eux.5 removed the legacy score blob that previously implied
-  // finish order here. Keep this generic contest detail view alphabetical; the
-  // Golf-specific leaderboard API owns score/rank ordering.
+  // finish order here. Keep this generic contest detail view alphabetical; #110's
+  // leaderboard page owns score/rank ordering.
   return [...participants].sort((left, right) =>
     left.participantName.localeCompare(right.participantName),
   );
@@ -76,7 +76,7 @@ function ParticipantsTable({
           return (
             <div
               className="grid grid-cols-[minmax(0,1.5fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)] gap-2 px-4 py-3 text-sm"
-              data-testid={`contest-leaderboard-participant-${entryId}-${participant.participantId}`}
+              data-testid={`contest-entry-pick-${entryId}-${participant.participantId}`}
               key={participant.pickId}
             >
               <div className="min-w-0">
@@ -271,9 +271,6 @@ export function ContestDetailPage() {
   const myCount = myEntries.length;
   const visibleEntries = myOnly ? myEntries : entries;
   const isOpen = contest.status === 'OPEN';
-  // #246: a settled contest's standings are frozen at settlement, but pick scores stay live, so
-  // a late score correction can make the two disagree. Say so rather than let it read as a bug.
-  const isSettled = contest.status === 'COMPLETED';
   const canCreateEntry = isOpen && Boolean(myTeamId);
 
   const backToLeaguePath = hintedLeagueCode
@@ -283,6 +280,11 @@ export function ContestDetailPage() {
     hintedLeagueCode && contest.status === 'DRAFT'
       ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
       : null;
+  // #111 — the leaderboard is its own route, and it is only worth offering once the endpoint
+  // behind it will answer: it is gated on picks being revealed.
+  const leaderboardPath = hintedLeagueCode && picksRevealed
+    ? buildLeagueContestLeaderboardPath(hintedLeagueCode, contestId)
+    : null;
 
   function startRenameEntry(entry: ContestEntryDto) {
     setRenameEntryId(entry.id);
@@ -329,6 +331,11 @@ export function ContestDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            {leaderboardPath ? (
+              <LinkButton data-testid="contest-leaderboard-link" to={leaderboardPath}>
+                View leaderboard
+              </LinkButton>
+            ) : null}
             {manageContestPath ? (
               <LinkButton
                 data-testid="contest-manage-link"
@@ -352,19 +359,12 @@ export function ContestDetailPage() {
       <Tile>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-xl font-semibold">
-              {picksRevealed ? 'Leaderboard' : 'Entries'}
-            </h3>
+            <h3 className="text-xl font-semibold">Entries</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               {picksRevealed
-                ? 'Picks are visible. Expand a row to see each entry’s lineup and live scoring.'
+                ? 'Picks are visible. Expand a row to see each entry’s lineup. Scores live on the leaderboard.'
                 : 'Picks are hidden until the contest moves past OPEN. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
             </p>
-            {isSettled ? (
-              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-settled-note">
-                {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Standings are frozen at settlement; pick scores show current event data and can differ after a late score correction.`}
-              </p>
-            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">

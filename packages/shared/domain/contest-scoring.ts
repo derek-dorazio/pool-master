@@ -45,6 +45,15 @@ export interface ParticipantRoundScore {
 /** A round row's terminal-and-counted states: every hole played. */
 const COMPLETED_ROUND_STATUSES: ReadonlySet<string> = new Set(['COMPLETED', 'COMPLETE']);
 
+/**
+ * Whether a round row is finished. The round's own `status` is a free string and
+ * `completedAt` is provider-supplied and often null, so this set is the only signal — which
+ * is why it is asked here rather than re-spelled by each surface that needs it. `formatRound`
+ * below is one caller; a client deriving which round a leaderboard is currently on is another.
+ */
+export const isRoundComplete = (round: Pick<ParticipantRoundScore, 'status'>): boolean =>
+  COMPLETED_ROUND_STATUSES.has(round.status);
+
 const formatStrokesToPar = (value: number): string =>
   value === 0 ? 'E' : value > 0 ? `+${value}` : String(value);
 
@@ -58,7 +67,7 @@ export const PARTICIPANT_SCORING_DEFINITIONS: Record<
     format: formatStrokesToPar,
     // Strokes once a round is complete, to par while it is still being played (or ended short:
     // a withdrawal or a missed cut shows where the golfer stood against par).
-    formatRound: (round) => (COMPLETED_ROUND_STATUSES.has(round.status)
+    formatRound: (round) => (isRoundComplete(round)
       ? String(round.strokes)
       : formatStrokesToPar(round.scoreToPar)),
   },

@@ -49,7 +49,6 @@ export interface ContestLeaderboardEntryInput {
     sportEventParticipantId: string;
     pickedAt: Date;
     slot: number | null;
-    tier: string | null;
   }>;
 }
 
@@ -147,7 +146,6 @@ export function buildContestEntryStanding(
         sportEventParticipantId: pick.sportEventParticipantId,
         pickedAt: pick.pickedAt,
         slot: pick.slot,
-        tier: pick.tier,
         isCounting,
         isDropped: participant.score !== null && !isCounting,
         participant,

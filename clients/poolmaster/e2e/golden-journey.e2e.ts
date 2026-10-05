@@ -573,11 +573,12 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await page.getByTestId(`contest-board-toggle-${state.entryId}`).click();
     for (const playerId of state.playerIds) {
       await expect(
-        page.getByTestId(`contest-leaderboard-participant-${state.entryId}-${playerId}`),
+        page.getByTestId(`contest-entry-pick-${state.entryId}-${playerId}`),
       ).toBeVisible();
     }
-    // The web app renders no score on the board yet; the golf leaderboard endpoint is where a
-    // scored pick first appears. Presence only — no arithmetic.
+    // The board shows picks and never scores (#111); #110's leaderboard page is where a scored
+    // pick is rendered, and this act still reads the endpoint rather than that page — a UI act
+    // over the leaderboard is deliberately not in #110's slice. Presence only — no arithmetic.
     const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/golf/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
     const { participants } = (await leaderboard.json()) as {
