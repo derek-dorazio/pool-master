@@ -323,7 +323,7 @@ enum PrismaContestFormat {
 // =============================================================================
 
 model User {
-  id           String            @id @default(uuid()) @db.Uuid
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String            @unique
   username     String            @unique @db.VarChar(100)
   passwordHash String?           @map("password_hash")
@@ -354,7 +354,7 @@ model User {
 }
 
 model RefreshToken {
-  id        String    @id @default(uuid()) @db.Uuid
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   token     String    @unique
   sessionId String    @default(uuid()) @map("session_id") @db.Uuid
   userId    String    @map("user_id") @db.Uuid
@@ -374,7 +374,7 @@ model RefreshToken {
 // =============================================================================
 
 model League {
-  id          String                 @id @default(uuid()) @db.Uuid
+  id          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueCode  String                 @unique @map("league_code") @db.VarChar(16)
   name        String
   description String?
@@ -395,7 +395,7 @@ model League {
 }
 
 model LeagueMembership {
-  id        String                       @id @default(uuid()) @db.Uuid
+  id        String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId  String                       @map("league_id") @db.Uuid
   userId    String                       @map("user_id") @db.Uuid
   role      PrismaLeagueRole             @default(MEMBER)
@@ -413,7 +413,7 @@ model LeagueMembership {
 }
 
 model Squad {
-  id        String             @id @default(uuid()) @db.Uuid
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId  String             @map("league_id") @db.Uuid
   createdBy String             @map("created_by") @db.Uuid
   name      String
@@ -434,7 +434,7 @@ model Squad {
 }
 
 model SquadMembership {
-  id        String                      @id @default(uuid()) @db.Uuid
+  id        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   squadId   String                      @map("squad_id") @db.Uuid
   leagueId  String                      @map("league_id") @db.Uuid
   userId    String                      @map("user_id") @db.Uuid
@@ -454,7 +454,7 @@ model SquadMembership {
 }
 
 model LeagueInvitation {
-  id          String                       @id @default(uuid()) @db.Uuid
+  id          String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId    String                       @map("league_id") @db.Uuid
   email       String?                      @db.VarChar(255)
   inviteCode  String                       @unique @map("invite_code") @db.VarChar(100)
@@ -478,7 +478,7 @@ model LeagueInvitation {
 }
 
 model SquadOwnerInvitation {
-  id                   String                           @id @default(uuid()) @db.Uuid
+  id                   String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId             String                           @map("league_id") @db.Uuid
   squadId              String                           @map("squad_id") @db.Uuid
   email                String                           @db.VarChar(255)
@@ -507,7 +507,7 @@ model SquadOwnerInvitation {
 // =============================================================================
 
 model Sport {
-  id               String                 @id @default(uuid()) @db.Uuid
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name             String                 @unique
   participantType  PrismaParticipantType  @map("participant_type")
   category         PrismaSportCategory    @default(GOLF)
@@ -532,10 +532,10 @@ model Sport {
 /// because League is already the PoolMaster office-pool model. See plans/124
 /// §4.2 design note.
 model SportLeague {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportId          String   @map("sport_id") @db.Uuid
-  name             String
-  matchKeyword     String?  @map("match_keyword")
+  name             String   @db.VarChar(255)
+  matchKeyword     String?  @map("match_keyword") @db.VarChar(255)
   /// The event year the tour is currently on — a business pointer, not a foreign
   /// key: "set as current" refuses a year with no events for this tour, which is the
   /// integrity the season FK used to give (plans/147 decision 6).
@@ -559,7 +559,7 @@ model SportLeague {
 /// (sportLeagueId, name) at tournament creation — no new admin decision
 /// (plans/124 §4.3a). See plans/147.
 model EventSeries {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportLeagueId String   @map("sport_league_id") @db.Uuid
   name          String
   /// A dimension's lifecycle, like SportLeague's: false retires the series
@@ -580,7 +580,7 @@ model EventSeries {
 /// competitor's membership and ranking don't reset every year. Current value
 /// only, no history. See plans/124 §4.2.
 model ParticipantLeagueAffiliation {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   participantId String   @map("participant_id") @db.Uuid
   sportLeagueId String   @map("sport_league_id") @db.Uuid
   /// The competitor's current rank in this sport league (1 is best).
@@ -597,7 +597,7 @@ model ParticipantLeagueAffiliation {
 }
 
 model Participant {
-  id              String                @id @default(uuid()) @db.Uuid
+  id              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportId         String                @map("sport_id") @db.Uuid
   name            String
   participantType PrismaParticipantType @map("participant_type")
@@ -631,7 +631,7 @@ model Participant {
 }
 
 model ParticipantProviderMapping {
-  id            String                             @id @default(uuid()) @db.Uuid
+  id            String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   participantId String                             @map("participant_id") @db.Uuid
   providerId    String                             @map("provider_id") @db.VarChar(100)
   externalId    String                             @map("external_id") @db.VarChar(255)
@@ -648,7 +648,7 @@ model ParticipantProviderMapping {
 }
 
 model ParticipantRankingSnapshot {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   participantId String   @map("participant_id") @db.Uuid
   providerId    String   @map("provider_id") @db.VarChar(100)
   rankingType   String   @map("ranking_type") @db.VarChar(50)
@@ -671,7 +671,7 @@ model ParticipantRankingSnapshot {
 // =============================================================================
 
 model Contest {
-  id                        String              @id @default(uuid()) @db.Uuid
+  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId                  String              @map("league_id") @db.Uuid
   sportEventId              String?             @map("sport_event_id") @db.Uuid
   name                      String
@@ -701,7 +701,7 @@ model Contest {
 }
 
 model ContestConfiguration {
-  id                   String    @id @default(uuid()) @db.Uuid
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestId            String    @unique @map("contest_id") @db.Uuid
   templateId           String?   @map("template_id") @db.Uuid
   templateVersion      Int?      @map("template_version")
@@ -734,7 +734,7 @@ model ContestConfiguration {
 }
 
 model ContestConfigTemplate {
-  id            String   @id @db.Uuid
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sport         String   @db.VarChar(50)
   eventType     String?  @map("event_type") @db.VarChar(100)
   contestFormat String   @map("contest_type") @db.VarChar(50)
@@ -759,7 +759,7 @@ model ContestConfigTemplate {
 }
 
 model ParticipantContestScoringRule {
-  id                             String   @id @default(uuid()) @db.Uuid
+  id                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestConfigurationId         String   @map("contest_configuration_id") @db.Uuid
   participantScoringDefinitionId String   @map("participant_scoring_definition_id") @db.VarChar(100)
   sortOrder                      Int      @map("sort_order")
@@ -776,7 +776,7 @@ model ParticipantContestScoringRule {
 }
 
 model ContestPrizeDefinition {
-  id                     String   @id @default(uuid()) @db.Uuid
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestConfigurationId String   @map("contest_configuration_id") @db.Uuid
   prizeDefinitionId      String   @map("prize_definition_id") @db.VarChar(100)
   displayName            String   @map("display_name") @db.VarChar(100)
@@ -801,7 +801,7 @@ model ContestPrizeDefinition {
 // =============================================================================
 
 model ContestEntry {
-  id              String   @id @default(uuid()) @db.Uuid
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestId       String   @map("contest_id") @db.Uuid
   squadId         String   @map("squad_id") @db.Uuid
   entryNumber     Int      @default(1) @map("entry_number")
@@ -838,7 +838,7 @@ model ContestEntry {
 /// access path, so it gets a covering index instead of a join. Settlement's upsert is its
 /// single writer.
 model ContestEntryStanding {
-  id                String    @id @default(uuid()) @db.Uuid
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestId         String    @map("contest_id") @db.Uuid
   contestEntryId    String    @unique @map("contest_entry_id") @db.Uuid
   position          Int?
@@ -861,7 +861,7 @@ model ContestEntryStanding {
 /// Golf extension of ContestEntryStanding: the entry total its position was ranked from.
 /// Keyed 1:1 to the core standing row.
 model ContestEntryGolfStanding {
-  id                     String   @id @default(uuid()) @db.Uuid
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestEntryStandingId String   @unique @map("contest_entry_standing_id") @db.Uuid
   totalScoreToPar        Int?     @map("total_score_to_par")
   createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -878,7 +878,7 @@ model ContestEntryGolfStanding {
 /// denormalized from the parent Contest to enable per-format partial
 /// unique indexes (see plans/117 §7.1).
 model ContestEntryPick {
-  id                      String              @id @default(uuid()) @db.Uuid
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   entryId                 String              @map("entry_id") @db.Uuid
   sportEventParticipantId String              @map("sport_event_participant_id") @db.Uuid
   contestFormat           PrismaContestFormat @map("contest_format")
@@ -906,7 +906,7 @@ model ContestEntryPick {
 // =============================================================================
 
 model DraftSession {
-  id                   String    @id @default(uuid()) @db.Uuid
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestId            String    @unique @map("contest_id") @db.Uuid
   status               String    @default("PENDING")
   currentPickNumber    Int       @default(0) @map("current_pick_number")
@@ -923,7 +923,7 @@ model DraftSession {
 }
 
 model DraftPickHistory {
-  id             String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   draftSessionId String   @map("draft_session_id") @db.Uuid
   pickId         String   @map("pick_id") @db.Uuid
   entryId        String   @map("entry_id") @db.Uuid
@@ -953,7 +953,7 @@ model DraftPickHistory {
 // =============================================================================
 
 model SportEvent {
-  id                   String                    @id @default(uuid()) @db.Uuid
+  id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   externalId           String                    @map("external_id") @db.VarChar(255)
   providerId           String                    @map("provider_id") @db.VarChar(100)
   sport                String                    @db.VarChar(50)
@@ -1005,7 +1005,7 @@ model SportEvent {
 }
 
 model SportEventParticipant {
-  id             String                     @id @default(uuid()) @db.Uuid
+  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId   String                     @map("sport_event_id") @db.Uuid
   participantId  String                     @map("participant_id") @db.Uuid
   isActive       Boolean                    @default(true) @map("is_active")
@@ -1039,7 +1039,7 @@ model SportEventParticipant {
 /// this holds the round's own schedule, independent of any participant; that
 /// one joins one participant to one round.
 model SportEventRound {
-  id             String    @id @default(uuid()) @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId   String    @map("sport_event_id") @db.Uuid
   roundNumber    Int       @map("round_number")
   scheduledDate  DateTime  @map("scheduled_date") @db.Timestamptz
@@ -1061,7 +1061,7 @@ model SportEventRound {
 /// bare `round: Int` (plans/124 §4.10): a round number that doesn't exist for
 /// the event fails at insert with a foreign-key violation.
 model SportEventParticipantRound {
-  id                      String    @id @default(uuid()) @db.Uuid
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventParticipantId String    @map("sport_event_participant_id") @db.Uuid
   sportEventRoundId       String    @map("sport_event_round_id") @db.Uuid
   /// Provider-normalized progress of this participant's round.
@@ -1082,7 +1082,7 @@ model SportEventParticipantRound {
 /// Golf extension of SportEventParticipantRound: what one golfer scored in one
 /// round. Keyed 1:1 to the core round row.
 model SportEventParticipantGolfRound {
-  id                 String   @id @default(uuid()) @db.Uuid
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   participantRoundId String   @unique @map("participant_round_id") @db.Uuid
   strokes            Int
   scoreToPar         Int      @map("score_to_par")
@@ -1105,7 +1105,7 @@ model SportEventParticipantGolfRound {
 /// better. Score direction is consulted at exactly one point: wherever
 /// `position` is computed from a raw score.
 model SportEventParticipantStanding {
-  id                      String                    @id @default(uuid()) @db.Uuid
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventParticipantId String                    @unique @map("sport_event_participant_id") @db.Uuid
   position                Int?
   displayPosition         String?                   @map("display_position") @db.VarChar(20)
@@ -1126,7 +1126,7 @@ model SportEventParticipantStanding {
 /// Golf extension of SportEventParticipantStanding: the running event totals
 /// one golfer's position was ranked from. Keyed 1:1 to the core standing row.
 model SportEventParticipantGolfStanding {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   standingId       String   @unique @map("standing_id") @db.Uuid
   eventScoreToPar  Int      @map("event_score_to_par")
   eventStrokes     Int      @map("event_strokes")
@@ -1143,7 +1143,7 @@ model SportEventParticipantGolfStanding {
 /// override (plans/124 §4.6). Tier count is however many rows exist for the
 /// event, not a separate parameter (§4.5a).
 model SportEventTier {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventId     String   @map("sport_event_id") @db.Uuid
   tierKey          String   @map("tier_key") @db.VarChar(50)
   label            String   @db.VarChar(100)
@@ -1164,7 +1164,7 @@ model SportEventTier {
 /// row per SportEventParticipant, the same 1:1 shape as ranking/oddsToWin/
 /// seedNumber living there (plans/124 §4.5/§4.6b).
 model SportEventParticipantValuation {
-  id                      String           @id @default(uuid()) @db.Uuid
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportEventParticipantId String           @unique @map("sport_event_participant_id") @db.Uuid
   sportEventTierId        String?          @map("sport_event_tier_id") @db.Uuid
   tierOrderIndex          Int?             @map("tier_order_index")
@@ -1182,7 +1182,7 @@ model SportEventParticipantValuation {
 }
 
 model ProviderSyncRun {
-  id          String    @id @default(uuid()) @db.Uuid
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   providerId  String    @map("provider_id") @db.VarChar(100)
   sport       String    @db.VarChar(50)
   eventId     String?   @map("event_id") @db.VarChar(255)
@@ -1204,7 +1204,7 @@ model ProviderSyncRun {
 // =============================================================================
 
 model PlatformRuntimeConfig {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   configKey   String   @unique @map("config_key") @db.VarChar(100)
   configJson  Json     @map("config_json")
   updatedById String?  @map("updated_by_id") @db.Uuid
