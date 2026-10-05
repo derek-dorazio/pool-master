@@ -1,4 +1,4 @@
-import { SendEmailCommand } from '@aws-sdk/client-ses';
+import { type SendEmailCommand } from '@aws-sdk/client-ses';
 import {
   MailDeliveryConfigError,
   SesMailDeliveryProvider,

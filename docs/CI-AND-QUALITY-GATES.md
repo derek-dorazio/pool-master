@@ -45,6 +45,28 @@ The deploy stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
 `poolmaster-browser-e2e`, `deploy-health-issue`) are gated to push events on
 `main` only — they do not run for pull requests.
 
+### Why the gated jobs carry `!cancelled()`
+
+A path-filter job called `changes` classifies which areas a pull request touches,
+and eight jobs read its outputs. Their conditions all begin with `!cancelled() &&
+needs.all-contract-gates.result == 'success'`, which looks redundant and is not
+(#350).
+
+GitHub skips a job whose `needs:` did not succeed **unless** its `if` uses a
+status check function. `changes` can be cancelled before it starts — twice on
+2026-10-05 it waited 15 minutes without being assigned a runner while siblings in
+the same run got one immediately — and without a status function that skipped all
+eight gated jobs and, transitively, the entire deploy chain. The run reported
+`failure` having tested nothing and deployed nothing, which reads like a test
+failure rather than a pipeline that did not run.
+
+On a push to `main` the path filter is never consulted: every condition
+short-circuits on `github.event_name != 'pull_request'`, and
+`ci-changed-areas.mjs` with no file list reports *"no file list; running
+everything"*. So gating main on `changes` bought nothing. The explicit
+`needs.all-contract-gates.result == 'success'` keeps the contract gates blocking,
+so this is deliberately **not** `always()`.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going
@@ -321,7 +343,7 @@ flowchart LR
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | Two sub-checks are blocking; four are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
 | 3 | review triggers marker | <1s (single API call to GitHub) | No — warns only (PRs only) |
-| 4 | `npm run lint` | ~17s for `lint:service` in CI; the webapp's own `lint:webapp` is ~33s in `poolmaster-build` | Yes |
+| 4 | `npm run lint` | ~17s for `lint:service` in CI before `tests/` entered its glob; the webapp's own `lint:webapp` is ~33s in `poolmaster-build` | Yes |
 | 5 | `npm run typecheck` | ~9s (`typecheck:service`) + ~8s (`typecheck:tests`) + ~1s (`typecheck:e2e`) in CI | Yes |
 
 Costs re-measured 2026-10-05 from CI run 1228 rather than estimated. Lint is
@@ -329,6 +351,18 @@ type-aware, so it is dominated by building the TypeScript program, not by the
 number of rules: #345 Phase 0 added eleven more type-aware rules, the
 `react-refresh` plugin and four more `import-x` rules without a measurable
 change in wall clock, because the program was already being built.
+
+Adding **files** is a different matter, and #345 Phase 2 PR 1 added 120 of them.
+Measured locally, same machine, back to back: `npm run lint` went from **82.1s**
+(mean of 2 runs) to **92.6s** (mean of 3), **+10.5s / +13%**. The whole of that
+lands on `lint:service`, which is where `tests/**` was added; `lint:webapp` is
+untouched. The cost is on the critical path: four jobs declare
+`service-lint-typecheck` in `needs:` — `service-build`,
+`service-mock-provider-build`, `deploy-publish-images` and
+`main-ci-health-issue` — counted from `ci.yml` rather than carried over from
+#345, which cites five on #160's older measurement. It is the price of the test
+tree being linted at all; #345 Phase 0 records the incremental-program options
+considered for clawing it back.
 
 Note that `npm run lint` and `npm run typecheck` each build that program, in
 separate processes. This is not deduplicable: ESLint's `projectService` builds
@@ -340,29 +374,63 @@ and declined.
 
 ### Scope
 
-`npm run lint` globs `packages/**/*.ts` and `clients/poolmaster/src/**/*.{ts,tsx}`
-(517 files as of 2026-10-05), then runs `scripts/check-feature-theme-tokens.mjs`.
-`lint:service` and `lint:webapp` are the two halves, run by different CI jobs.
+`npm run lint` globs `packages/**/*.ts`, `tests/**/*.{ts,tsx}` and
+`clients/poolmaster/src/**/*.{ts,tsx}` (637 files as of 2026-10-05), then runs
+`scripts/check-feature-theme-tokens.mjs`. `lint:service` (which carries
+`packages/` **and** `tests/`) and `lint:webapp` are the two halves, run by
+different CI jobs — `npm run lint` itself is a local convenience and is not what
+CI invokes, so a glob added to one and not the other is linted locally and not
+in CI.
 
-**`tests/` is deliberately outside that glob.** It is linted instead by
-`eslint.tests.config.mjs`, a second flat config running the single
-`poolmaster/no-disabled-tests` rule with a parser but no type information, wired
-as `rules:check:test-disable`. That second config is a known smell, and removing
-it is tracked as Phase 2 of #345.
+**There is one ESLint config.** `tests/` joined the glob in #345 Phase 2 PR 1,
+and `eslint.tests.config.mjs` — a second flat config that ran the single
+`poolmaster/no-disabled-tests` rule over `tests/` with a parser but no type
+information, wired as `rules:check:test-disable` — was deleted with it. That
+rule now reaches `tests/` through `eslint.config.js` like every other rule, with
+type information it never had, so the separate `rules:check` entry would have
+run a second ESLint over the same files to re-check what `lint` already blocks
+on; it was dropped from the chain rather than kept as a duplicate.
 
-The reason it has not been removed is the measurement, not inertia: the
-type-aware rule family that reports **0 findings** over the 517-file scope above
-reports **2773** inside `tests/`. They are the same rules over different file
-sets. Widening the glob before the zero-finding rule set is in place turns the
-cheapest win in the programme into its largest backlog, which is why #345
-sequences the two and why this file records the order.
+The ordering mattered and is worth recording. The same rule set that reports
+**0 findings** over the production scope reports **1476** across 64 of the 120
+files in `tests/` — the same rules over different file sets. #345 adopted the zero-finding rule set first
+(Phases 0 and 1, #348) so the cheapest win in the programme did not arrive
+carrying the test tree's backlog, and only then widened the glob.
+
+Widening it on day one is what makes the rest enforceable: the remaining backlog
+lives as an **explicit exemption list** in `eslint.config.js`, scoped to
+`tests/**`, and each later PR in #345 Phase 2 is defined by the lines it deletes
+from that list. CI holds the line in between. The alternative — holding the glob
+shut until the backlog cleared, or landing the rules at `warn` — would have
+tracked the same debt in a document instead of in the build.
+
+The list is one permanent carve-out and seven scheduled ones:
+
+| Rule | Findings | Status |
+|---|---:|---|
+| `@typescript-eslint/unbound-method` | 185 | **Permanent.** `expect(obj.method).toHaveBeenCalled()` is an assertion idiom; the rule is about losing `this` in production code, and the method is never invoked unbound |
+| `@typescript-eslint/require-await` | 181 | Temporary — #345 Phase 2 PR 2 |
+| `@typescript-eslint/no-unsafe-call` | 27 | Temporary — #345 Phase 2 PR 2 |
+| `@typescript-eslint/no-unsafe-return` | 43 | Temporary — #345 Phase 2 PR 2 |
+| `@typescript-eslint/no-explicit-any` | 171 | Temporary — #345 Phase 2 PR 3 |
+| `@typescript-eslint/no-unsafe-assignment` | 323 | Temporary — #345 Phase 2 PR 4 |
+| `@typescript-eslint/no-unsafe-member-access` | 279 | Temporary — #345 Phase 2 PR 4 |
+| `@typescript-eslint/no-unsafe-argument` | 201 | Temporary — #345 Phase 2 PR 4 |
+
+Each entry in `eslint.config.js` names its owning PR; the reasoning for the
+permanent one, and for `require-await` being scheduled rather than fixed in
+PR 1, is written at the exemption itself rather than here.
 
 Five files sit in no tsconfig `include` and throw
 `Parsing error: … was not found by the project service` if linted:
 `clients/poolmaster/{vite,vitest,playwright,tailwind}.config.ts` and
-`packages/shared/openapi-ts.config.ts`. None is inside the current glob
+`packages/shared/openapi-ts.config.ts`. None is inside the glob
 (`openapi-ts.config.ts` is additionally in `eslint.config.js`'s `ignores`), so
-they cost nothing today. They become Phase 2's problem when the glob widens.
+they cost nothing. They sit outside it because the client half of the glob is
+`clients/poolmaster/src/**`, not because of anything `tests/` did: widening the
+glob to `tests/**` did not reach them, and `tests/tsconfig.json` resolved all
+120 test files through `projectService` with no parse error. Bringing those five
+in is its own decision, unrelated to #345 Phase 2.
 
 ### Type-aware rules
 
@@ -472,7 +540,11 @@ commit the regenerated artifacts.
 ## Detail: the test-disable gate
 
 Migrated to `poolmaster/no-disabled-tests` (`eslint-rules/no-disabled-tests.mjs`)
-and **changed in policy** at the same time. The old scanner did not ban skipped
+and **changed in policy** at the same time. It blocks through `npm run lint`
+over the whole of `tests/`, `packages/` and `clients/poolmaster/src/`. Until
+#345 Phase 2 PR 1 the `tests/` third of that reached it only through a separate
+config and a separate `rules:check:test-disable` entry, because `tests/` was not
+in the lint glob; both are gone and the coverage is unchanged. The old scanner did not ban skipped
 tests; it banned undocumented ones, letting any skip through if a `SKIP: #NN`
 comment sat within two lines above it.
 

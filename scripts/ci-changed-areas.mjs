@@ -51,7 +51,6 @@ const EVERYTHING_FILES = [
   'tsconfig.json',
   'tsconfig.base.json',
   'eslint.config.js',
-  'eslint.tests.config.mjs',
 ];
 
 const SERVICE_PREFIXES = [

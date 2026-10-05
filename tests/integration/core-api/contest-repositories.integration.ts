@@ -415,7 +415,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     ]);
     expect(started).toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: event.startDate }));
     expect(untouched?.status).toBe(ContestStatus.DRAFT);
-    expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
+    expect(send.mock.calls.map(([message]) => String(message.to)).sort()).toEqual([owner.user.email, member.user.email].sort());
     expect(send.mock.calls[0][0].text).toContain('- Alpha Entry: Alpha');
 
     // The provider re-sending IN_PROGRESS finds nothing left to start, so nobody is told twice.

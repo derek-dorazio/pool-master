@@ -47,7 +47,7 @@ function handleSmtpSinkConnection(socket: Socket): void {
   let readingData = false;
 
   socket.on('data', (chunk) => {
-    buffer += chunk;
+    buffer += chunk.toString();
 
     for (;;) {
       const newlineIndex = buffer.indexOf('\n');

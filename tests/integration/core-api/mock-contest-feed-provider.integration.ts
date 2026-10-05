@@ -852,11 +852,11 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
     const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));
-    expect(scheduledRuns.map((run) => run.eventId).filter(Boolean).sort()).toEqual([
+    expect(scheduledRuns.map((run) => run.eventId).filter((id): id is string => Boolean(id)).sort()).toEqual([
       'golf-genesis-scottish-open-2026',
       'golf-relative-weekend-20260604',
     ].sort());
-    expect(scheduledRunPayloads.map((payload) => payload?.requestedFeed).sort()).toEqual([
+    expect(scheduledRunPayloads.map((payload) => String(payload?.requestedFeed)).sort()).toEqual([
       'EVENTSCHEDULE',
       'EVENTPARTICIPANTS',
       'EVENTPARTICIPANTS',

@@ -381,7 +381,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     );
 
     const leagueEvents = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(leagueEvents.data!.events.map((event) => event.eventYear).sort()).toEqual([2026, 2027]);
+    expect(leagueEvents.data!.events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   }, 60_000);
 
   // plans/147 decision 5 — @@unique([eventSeriesId, eventYear]): there is one 2026 edition of
@@ -420,7 +420,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(nextYear.data!.event.eventSeriesId).toBe(first.data!.event.eventSeriesId);
 
     const editions = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(editions.data!.events.map((event) => event.eventYear).sort()).toEqual([2026, 2027]);
+    expect(editions.data!.events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   });
 
   it('BR-GOLF-ADMIN-AUTHZ: every golf administration write rejects a non-root-admin caller with 403, before validating its input', async () => {

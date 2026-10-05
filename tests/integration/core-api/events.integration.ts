@@ -218,9 +218,9 @@ describe('events routes', () => {
       });
 
       expect(res.statusCode).toBe(200);
-      const payload = res.json() as {
+      const payload = res.json<{
         events: Array<{ id: string; readinessStatus: string; readinessReasons: string[] }>;
-      };
+      }>();
 
       expect(payload.events.find((event) => event.id === notReleasedEventId)).toMatchObject({
         readinessStatus: 'NOT_RELEASED',

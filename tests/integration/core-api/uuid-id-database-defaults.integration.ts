@@ -133,7 +133,7 @@ describe('#340 database-generated uuid ids', () => {
       select: { id: true },
     });
     expect(rows).toHaveLength(2);
-    expect(rows[0]!.id).not.toBe(rows[1]!.id);
+    expect(rows[0].id).not.toBe(rows[1].id);
   });
 });
 
