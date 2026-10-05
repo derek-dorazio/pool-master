@@ -237,7 +237,7 @@ describe('LeagueService', () => {
         options.membershipRepo ?? createMockMembershipRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        (options.prisma ?? createCountingPrisma()) as any,
+        options.prisma ?? createCountingPrisma(),
       );
     }
 
