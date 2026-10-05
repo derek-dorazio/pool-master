@@ -123,6 +123,17 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start-environment.mjs\"",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
