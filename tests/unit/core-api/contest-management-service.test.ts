@@ -1,6 +1,7 @@
 import {
   ContestFormat,
   ContestStatus,
+  SelectionType,
   Sport,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
@@ -24,6 +25,7 @@ import {
   fakeContestRepo,
   fakeParticipantContestScoringRuleRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
@@ -41,8 +43,10 @@ function createContestRepo(): ContestRepository {
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
-    create: jest.fn().mockImplementation(async (contest) => ({
+    create: mockFn<ContestRepository['create']>(async (contest) => ({
       id: 'contest-1',
+      isExclusive: false,
+      scoringStopsOnElimination: false,
       ...contest,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -107,9 +111,9 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
-    sport: 'GOLF',
-    contestFormat: 'ROSTER',
-    selectionType: 'TIERED',
+    sport: Sport.GOLF,
+    contestFormat: ContestFormat.ROSTER,
+    selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
     description: 'Default golf tiered template',
@@ -130,7 +134,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   return {
     findById: jest.fn().mockResolvedValue(template),
     list: jest.fn().mockResolvedValue([template]),
-    update: jest.fn().mockImplementation(async (_id, updates) => ({
+    update: mockFn<ContestConfigTemplateRepository['update']>(async (_id, updates) => ({
       ...template,
       ...updates,
       updatedAt: new Date('2026-04-07T12:00:01.000Z'),
@@ -152,7 +156,7 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
         updatedAt: new Date(),
       },
     ]),
-    create: jest.fn().mockImplementation(async (rule) => ({
+    create: mockFn<ParticipantContestScoringRuleRepository['create']>(async (rule) => ({
       id: `rule-${rule.sortOrder}`,
       ...rule,
       createdAt: new Date('2026-04-07T12:00:02.000Z'),

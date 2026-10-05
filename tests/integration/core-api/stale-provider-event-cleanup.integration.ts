@@ -7,6 +7,7 @@ import {
 import {
   ProviderEventCleanupResponseSchema,
 } from '@poolmaster/shared/dto';
+import type { ProviderEventCleanupResponse } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   cleanupTestData,
@@ -236,10 +237,10 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       ]),
     );
     expect(
-      dryRunResponse.json().events.some((row: { externalId: string }) => row.externalId === futureGolfEvent.externalId),
+      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row: { externalId: string }) => row.externalId === futureGolfEvent.externalId),
     ).toBe(false);
     expect(
-      dryRunResponse.json().events.some((row: { externalId: string }) => row.externalId === inProgressGolfEvent.externalId),
+      dryRunResponse.json<ProviderEventCleanupResponse>().events.some((row: { externalId: string }) => row.externalId === inProgressGolfEvent.externalId),
     ).toBe(false);
 
     const executeResponse = await getApp().inject({

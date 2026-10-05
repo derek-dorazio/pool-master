@@ -1,10 +1,13 @@
 import {
   IngestionService,
+  type IngestionServiceDependencies,
   SportEventSyncScopeError,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { Sport } from '../../../packages/shared/domain';
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createLogger() {
   return {
@@ -22,13 +25,24 @@ async function flushMicrotasks(times = 5): Promise<void> {
   }
 }
 
-function ports(overrides: Record<string, unknown> = {}) {
+type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns'>;
+
+function ports(overrides: Partial<IngestionPorts> = {}): IngestionPorts {
   return {
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
     syncRuns: { create: jest.fn(), update: jest.fn(), findAll: jest.fn() },
     ...overrides,
-  } as any;
+  };
+}
+
+/** Echoes a sync-run create back as the stored run, which is what the ledger reads. */
+function echoSyncRunCreate() {
+  return mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
+    id: 'sync-run-1',
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...input,
+  }));
 }
 
 describe('IngestionService manual sync submission', () => {
@@ -78,7 +92,7 @@ describe('IngestionService manual sync submission', () => {
         deferredSync = callback;
         return 0 as unknown as NodeJS.Immediate;
       });
-    const providerSyncRunCreate = jest.fn().mockImplementation(async (input) => ({ id: 'sync-run-1', ...input }));
+    const providerSyncRunCreate = echoSyncRunCreate();
     const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
     const registry = {
       getProvider: jest.fn().mockReturnValue({
@@ -188,7 +202,7 @@ describe('IngestionService manual sync submission', () => {
         deferredSync = callback;
         return 0 as unknown as NodeJS.Immediate;
       });
-    const providerSyncRunCreate = jest.fn().mockImplementation(async (input) => ({ id: 'sync-run-1', ...input }));
+    const providerSyncRunCreate = echoSyncRunCreate();
     const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
     const registry = {
       getProvider: jest.fn().mockReturnValue({
@@ -300,8 +314,8 @@ describe('IngestionService manual sync submission', () => {
         ...ports({
           sportEvents: fakeSportEventRepo({ findByProviderRef }),
           syncRuns: {
-            create: jest.fn(async (input) => ({ id: 'sync-run-1', ...input })),
-            update: jest.fn(async (id, input) => ({ id, ...input })),
+            create: echoSyncRunCreate(),
+            update: jest.fn().mockResolvedValue(undefined),
             findAll: jest.fn(),
           },
         }),
