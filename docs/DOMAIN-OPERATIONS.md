@@ -510,7 +510,8 @@ Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventTier`, `SportEventParticipantValuation`, `Participant`,
 `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`.
 Core tracked by #235, golf extensions and the admin operations by #236. Decisions: the
-stage-2 comment on #203. The tree `SportLeague → EventSeries → SportEvent` is plans/147: an
+stage-2 comment on #203. The tree `SportLeague → EventSeries → SportEvent` is plans/147 — deleted with its
+epic, retrieve via `git show 7e892f52:plans/147-event-series-and-the-season-collapse.md`: an
 event is one edition of a series, in one event year, and the series is its only parent.
 
 **Every object in this cluster is global (A11).** No row here belongs to a user, league or
@@ -544,12 +545,12 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 |---|---|---|
 | List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and event counts and its `currentEventYear` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
-| Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (plans/147 decision 6) |
+| Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
 
 ### EventSeries
 
 The recurring tournament — "The Masters" — that each year's `SportEvent` is an edition of
-(plans/147). Unique on `(sportLeagueId, name)`; carries `isActive`.
+(#314). Unique on `(sportLeagueId, name)`; carries `isActive`.
 
 | Operation | Role | Notes |
 |---|---|---|
