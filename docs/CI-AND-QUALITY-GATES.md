@@ -45,6 +45,28 @@ The deploy stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
 `poolmaster-browser-e2e`, `deploy-health-issue`) are gated to push events on
 `main` only — they do not run for pull requests.
 
+### Why the gated jobs carry `!cancelled()`
+
+A path-filter job called `changes` classifies which areas a pull request touches,
+and eight jobs read its outputs. Their conditions all begin with `!cancelled() &&
+needs.all-contract-gates.result == 'success'`, which looks redundant and is not
+(#350).
+
+GitHub skips a job whose `needs:` did not succeed **unless** its `if` uses a
+status check function. `changes` can be cancelled before it starts — twice on
+2026-10-05 it waited 15 minutes without being assigned a runner while siblings in
+the same run got one immediately — and without a status function that skipped all
+eight gated jobs and, transitively, the entire deploy chain. The run reported
+`failure` having tested nothing and deployed nothing, which reads like a test
+failure rather than a pipeline that did not run.
+
+On a push to `main` the path filter is never consulted: every condition
+short-circuits on `github.event_name != 'pull_request'`, and
+`ci-changed-areas.mjs` with no file list reports *"no file list; running
+everything"*. So gating main on `changes` bought nothing. The explicit
+`needs.all-contract-gates.result == 'success'` keeps the contract gates blocking,
+so this is deliberately **not** `always()`.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going
