@@ -17,6 +17,17 @@
  * WHAT IT DOES NOT CHECK. That the hint's revision resolves. CI checks out shallow, so a real
  * SHA and an invented one look the same there; that is a reviewer's job, done with full history.
  *
+ * WHAT IS SCANNED. Two root sets, because the two halves of the tree need different scoping.
+ * `PERMANENT_ROOTS` are directories (and two files) whose every `.md` is a permanent document, so
+ * they are walked wholesale. `README_ROOTS` — `packages/` and `clients/` — hold source, not
+ * documents: the permanent documents in them are the READMEs (#334), which `AGENTS.md`
+ * *Documentation Expectations* requires kept current alongside the code. Those roots are therefore
+ * scoped by file name rather than by blacklisting build output: `walkFiles` already skips
+ * `node_modules`, `dist`, `coverage`, `generated`, `.turbo` and `test-results`, but that list is a
+ * moving target (a `build/`, `.next/` or `playwright-report/` added tomorrow would silently enter
+ * scope), and nothing under those roots that is *not* a README is a document anyone maintains.
+ * Matching `README.md` is a positive allowlist, so new generated output cannot widen the scan.
+ *
  * WHY WARN-ONLY. "Is the plan missing" is exact; "is there a hint nearby" is a proximity
  * heuristic. `rules:check` runs inside all-contract-gates, which every other CI job needs, so a
  * false positive here would withhold the whole pipeline. It runs with `--warn-only`: findings are
@@ -32,6 +43,8 @@ import { pathToFileURL } from 'node:url';
 import { parseRuleCheckArgs, readTextFile, reportFindings, walkFiles } from './rule-check-utils.mjs';
 
 export const PERMANENT_ROOTS = ['docs', 'rules', 'requirements', 'tech-specs', 'AGENTS.md', 'CLAUDE.md'];
+/** Roots scanned for READMEs only — see *WHAT IS SCANNED* above. */
+export const README_ROOTS = ['packages', 'clients'];
 const EXEMPT_PREFIXES = ['docs/adr/'];
 export const HINT_WINDOW = 3;
 
@@ -68,6 +81,23 @@ export function findDanglingPlanReferences({ files, planExists }) {
   return findings;
 }
 
+/** Whether a path is a README — the scoping rule for `README_ROOTS`. Absolute or relative. */
+export function isReadmePath(filePath) {
+  return filePath.split('/').at(-1) === 'README.md';
+}
+
+/** Every permanent document the check reads, as `{ path, text }` with repo-relative paths. */
+export function collectPermanentFiles() {
+  const paths = [
+    ...walkFiles(PERMANENT_ROOTS, { extensions: ['md'] }),
+    ...walkFiles(README_ROOTS, { extensions: ['md'], include: isReadmePath }),
+  ];
+  return paths.map((filePath) => ({
+    path: relative(process.cwd(), filePath),
+    text: readTextFile(filePath),
+  }));
+}
+
 /** Plan numbers present under `plans/`, keyed by the number before the first dash. */
 export function presentPlanNumbers(plansDir = 'plans') {
   if (!existsSync(plansDir)) return new Set();
@@ -81,10 +111,7 @@ export function presentPlanNumbers(plansDir = 'plans') {
 function main() {
   const { warnOnly } = parseRuleCheckArgs();
   const present = presentPlanNumbers();
-  const files = walkFiles(PERMANENT_ROOTS, { extensions: ['md'] }).map((filePath) => ({
-    path: relative(process.cwd(), filePath),
-    text: readTextFile(filePath),
-  }));
+  const files = collectPermanentFiles();
   const findings = findDanglingPlanReferences({ files, planExists: (number) => present.has(number) });
 
   reportFindings({
