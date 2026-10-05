@@ -204,6 +204,50 @@ jobs:
       - name: Run service integration tests
         run: npm run test:service:integration
 
+  # #340 -- schema.prisma must describe what the committed migrations actually build.
+  #
+  # It is its own job on purpose. Folded into a suite, a failure here would read as "the
+  # integration tests broke", when what it means is that two committed artifacts disagree -- a
+  # different problem with a different fix, and one no test failure would name. It reuses the
+  # postgres:16 service the suites already run rather than standing up anything new, needs no
+  # generated client, and all 80-odd migrations apply in about three seconds.
+  #
+  # This is also what makes a history squash (#88) a provable change rather than a leap of faith:
+  # squash, gate stays green, done.
+  schema-migration-drift:
+    name: schema-migration-drift
+    runs-on: ubuntu-latest
+    needs: [all-contract-gates, changes]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.service == 'true'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: poolmaster
+          POSTGRES_PASSWORD: poolmaster
+          POSTGRES_DB: poolmaster_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Names the server, not the database under test. The check creates and drops its own
+      # `poolmaster_schema_drift_check` database, so its verdict reflects the committed migration
+      # history and nothing a previous step happened to leave behind.
+      DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Check schema.prisma against the migration history
+        run: npm run db:drift:check
+
   service-functional-api-tests:
     name: service-functional-api-tests
     runs-on: ubuntu-latest
@@ -1454,6 +1498,7 @@ jobs:
       - service-unit-tests
       - service-integration-tests
       - service-functional-api-tests
+      - schema-migration-drift
       - service-build
       - service-mock-provider-build
       - poolmaster-unit-tests

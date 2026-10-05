@@ -243,6 +243,10 @@ that it was already there.
   and does not overwrite a row an environment has corrected by hand.
 - State every column the table requires, including ones that have a column default, when the
   default is one the schema warns against relying on (`Sport.tournamentFormat`, #236).
+- An `id` no longer has to be supplied: every uuid `id` carries `DEFAULT gen_random_uuid()` as
+  of #340. `20261004140000_seed_golf_sport_reference_row` calls `gen_random_uuid()` by hand
+  because `sports.id` had no default when it was written; it stays exactly as it is, because it
+  is applied, but a new reference-data migration can simply omit the column.
 - Change it in a *later* migration, never by editing an applied one: Prisma records applied
   migrations by checksum, and an edited migration makes the next `migrate deploy` fail.
 - Two examples are in the tree: `contest_config_templates`, seeded by

@@ -21,6 +21,7 @@
     "db:test:migrate": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx prisma migrate deploy --schema prisma/schema.prisma",
     "db:test:reset": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx prisma migrate reset --force --skip-seed --schema prisma/schema.prisma",
     "db:test:recreate": "npm run db:test:reset",
+    "db:drift:check": "node scripts/check-schema-migration-drift.mjs",
     "db:repair:substrate-migration": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs",
     "db:repair:substrate-migration:apply": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs --apply --confirm-qa-substrate-repair",
     "db:repair:season-migration": "cd packages/core-api && node scripts/repair-sport-league-season-migration.mjs",
