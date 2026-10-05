@@ -919,8 +919,8 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       code: 'PARTICIPANT_ALREADY_TAKEN',
     });
 
-    // The holder re-submitting its own pick is a toggle-off, not a contested take: it runs
-    // before the exclusivity check and puts the participant back in the pool.
+    // The holder re-submitting its own pick is a tiered toggle-off, which deletes the pick and
+    // puts the participant back in the pool.
     const toggleOffResponse = await submitContestSelection({
       client: fixture.commissioner.client,
       path: { contestId: fixture.contestId },
