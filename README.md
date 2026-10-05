@@ -155,7 +155,7 @@ poolmaster/
 - [Logging Operations](docs/LOGGING-OPERATIONS.md) — Runtime and browser log diagnostics
 
 ### Code READMEs
-- [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines
+- [Backend Services](packages/README.md) — Monolith modules, shared package, API routes
 - [PoolMaster Web App](clients/poolmaster/README.md) — Active React app features, pages, and architecture
 
 ### Rules

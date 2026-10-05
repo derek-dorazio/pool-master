@@ -25,19 +25,27 @@ Modular monolith — all backend modules run in a single Fastify process on port
 
 ### Domain Modules
 
-| Module | Prefix | Responsibility |
-|--------|--------|----------------|
-| **auth** | `/api/v1/auth` | Register, login, refresh, logout, OAuth |
-| **leagues** | `/api/v1/leagues` | League creation, summaries, member directories, activity state, invite ownership |
-| **invitations** | `/api/v1/invitations` | Invitation preview and invite acceptance flows |
-| **contests** | `/api/v1/contests` | Contest CRUD, contest summaries, entries, picks, and sport-specific leaderboard reads |
-| **contest-management** | `/api/v1/contests/:contestId/manage` | Commissioner-owned contest configuration and management workflows |
-| **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
-| **history** | `/api/v1/` | Historical contest reads and roster history; final Golf settlement results land through the Golf-specific scoring model |
-| **events** | `/api/v1/events` | Provider event records, schedules, statuses, and event lookup APIs |
-| **admin** | `/api/v1/admin` | Platform admin operations for health, provider ingestion, migrations, audit, and contest administration |
-| **config** | `/api/v1/config` | Public configuration and poll-interval guidance |
-| **squads** | `/api/v1/squads` | Squad roster and contest-entry support services |
+**Deliberately not listed here.** A hand-maintained table of modules, prefixes and
+responsibilities went stale faster than anyone updated it. When it was removed, **5 of its 11
+rows were wrong**: `admin`, `config` and `history` named modules that no longer exist, and
+`contest-management`, `squads` and `config` named a prefix other than the one registered. **12
+modules were missing entirely** — `client-logs`, `contest-config-templates`,
+`contest-entry-picks`, `email`, `golf`, `platform`, `sport-catalog`, `sport-leagues`, `sports`,
+`team-invitations`, `version`, and `users`, the object `plans/145` slice 1 was entirely about.
+Per `plans/142`, *an empty or generic README is worse than no README, because it looks like
+documentation*; a wrong one is worse still.
+
+Where to look instead, in order of authority:
+
+- **`docs/LAYERS.md`** — what each layer of a module holds, which files belong in
+  `modules/<object>/`, and where the boundaries are still soft. Current and maintained.
+- **The Fastify route registrations** — the only real truth about prefixes.
+  `packages/shared/generated/openapi.json` is generated from them and `npm run api:check`
+  fails if it drifts.
+- **`ls packages/core-api/src/modules/`** — the module list, which cannot be stale.
+
+#140 decides whether `core-api` gets a real package README; `plans/142` notes it has none
+today, and did not count this file as one.
 
 ### Draft Module (`modules/drafts/`)
 
