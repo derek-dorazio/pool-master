@@ -498,7 +498,7 @@ jobs:
           echo "### PoolMaster Browser E2E (local stack)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Target: production build via \`vite preview\`, \`/api\` proxied to core-api on a throwaway Postgres" >> $GITHUB_STEP_SUMMARY
-          echo "- Specs: all (guards, smoke, golden journey acts 1-5) — #278, #84, #280, #326" >> $GITHUB_STEP_SUMMARY
+          echo "- Specs: all (guards, smoke, golden journey acts 1-6) — #278, #84, #280, #326, #327" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA deploy: publish images -> migrate -> roll out -> browser e2e.

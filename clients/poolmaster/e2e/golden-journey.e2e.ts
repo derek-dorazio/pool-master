@@ -697,7 +697,7 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
   const afterPenalty = await test.step('a penalty on a pick that does not count moves that golfer and not the entry total', async () => {
     const dropped = worstOf(afterRound3, afterRound3.entry.droppedIds);
     const scoreBefore = scoreOn(afterRound3, dropped);
-    const delta = await correctOneGolfersRound(page, state.eventId, afterRound3, dropped, CORRECTION_STROKES);
+    const delta = await correctOneGolfersRound(page, state.eventId, CORRECTED_ROUND, afterRound3, dropped, CORRECTION_STROKES);
 
     const read = await readContestLeaderboard(page, state.contestId, state.entryId);
     expectCountingPicksExplainTheTotal(read);
@@ -715,7 +715,7 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
   await test.step('the same correction on a pick that counts moves the entry total by exactly its change', async () => {
     const counting = bestOf(afterPenalty, afterPenalty.entry.countingIds);
     const scoreBefore = scoreOn(afterPenalty, counting);
-    const delta = await correctOneGolfersRound(page, state.eventId, afterPenalty, counting, -CORRECTION_STROKES);
+    const delta = await correctOneGolfersRound(page, state.eventId, CORRECTED_ROUND, afterPenalty, counting, -CORRECTION_STROKES);
 
     const read = await readContestLeaderboard(page, state.contestId, state.entryId);
     expectCountingPicksExplainTheTotal(read);
@@ -724,6 +724,169 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
     // The asymmetry this act exists for: the same size of correction, on a pick that counts,
     // moves the entry's total by its own change and nothing else.
     expect(read.entry.total).toBe(expectTotal(afterPenalty) + delta);
+  });
+
+  await test.step('root admin logs out', async () => {
+    await logOut(page);
+  });
+});
+
+/**
+ * The round that completes the card. Act 4 loaded round 1 and act 5 rounds 2 and 3, so on the
+ * four-round tournament act 1 creates this is the one left — which act 6 reads off the event's
+ * own schedule rather than trusting, and holds to exactly this round.
+ */
+const ACT_6_FINAL_ROUND = 4;
+
+/**
+ * Round 4's scores to par, in act 1's player order. Chosen so the final round changes which four
+ * of the six picks count once more: the last live reading settlement freezes is then one this
+ * act moved, not the one act 5 happened to leave behind, so "the frozen standing is the live
+ * one" cannot pass by coincidence. No assertion is made against these numbers.
+ */
+const ACT_6_FINAL_ROUND_SCORES_TO_PAR = [2, -7, -8, 1, 0, 0];
+
+// Act 6 is OUTSIDE the tagged describe for the reason acts 4 and 5 are, and further: it drives
+// the event to a terminal status, which settles the contest and freezes its result for good.
+test('act 6: completing the event settles the contest and freezes its standing at the last live reading', async ({ page }) => {
+  test.setTimeout(240_000);
+  const state = requireJourney();
+  const { run } = state;
+  const credentials = readAdminCredentials();
+
+  await test.step('root admin signs in', async () => {
+    await adminSignIn(page, credentials);
+  });
+
+  await test.step(`the card is short exactly round ${ACT_6_FINAL_ROUND}`, async () => {
+    // Which rounds are outstanding comes from the event's own schedule, not from a count this
+    // file knows — and is then held to the single round this act has a plan for. If act 5 ever
+    // stops leaving exactly one round unscored, this fails here rather than quietly going on to
+    // "complete" a card that is still short.
+    const scheduled = await readScheduledRoundNumbers(page, state.eventId);
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    const unscored = scheduled.filter((roundNumber) => state.fieldEntryIds.some(
+      (fieldEntryId) => !golferOn(read, fieldEntryId).rounds.has(roundNumber),
+    ));
+    expect(unscored).toEqual([ACT_6_FINAL_ROUND]);
+  });
+
+  await test.step(`load round ${ACT_6_FINAL_ROUND}, and every golfer has a score in every scheduled round`, async () => {
+    await uploadRoundScores(
+      page,
+      state.eventId,
+      ACT_6_FINAL_ROUND,
+      state.fieldEntryIds.map((_, index) => ({
+        playerName: `${run.playerNamePrefix} ${index + 1}`,
+        strokes: PAR_PER_ROUND + ACT_6_FINAL_ROUND_SCORES_TO_PAR[index],
+        scoreToPar: ACT_6_FINAL_ROUND_SCORES_TO_PAR[index],
+      })),
+    );
+    for (const [index, fieldEntryId] of state.fieldEntryIds.entries()) {
+      await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
+        .toHaveValue(String(PAR_PER_ROUND + ACT_6_FINAL_ROUND_SCORES_TO_PAR[index]));
+    }
+
+    // A complete card, stated as the event states it: every scheduled round scored for every
+    // golfer in the field.
+    const scheduled = await readScheduledRoundNumbers(page, state.eventId);
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    for (const fieldEntryId of state.fieldEntryIds) {
+      const golfer = golferOn(read, fieldEntryId);
+      expect(
+        [...golfer.rounds.keys()].sort((left, right) => left - right),
+        `${golfer.name} has no score in every scheduled round`,
+      ).toEqual(scheduled);
+    }
+  });
+
+  const finalLive = await test.step('the configuration still takes an edit, and this is the last live leaderboard before completion', async () => {
+    // The control for the freeze this act ends on: the very same request, byte for byte, is
+    // accepted here and refused once the contest settles, so the refusal can only be settlement's
+    // doing and not the request's. It writes the configuration back unchanged, so it moves no
+    // score and no standing.
+    const accepted = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
+    expect(accepted.status, `PUT the contest configuration answered ${accepted.status}`).toBe(200);
+
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    expectCountingPicksExplainTheTotal(read);
+    return read;
+  });
+
+  await test.step('move the tournament to completed, which is what settles its contests', async () => {
+    // There is no settle operation to call: settlement is a consequence of the event reaching
+    // COMPLETED (EventLifecycleService), so the admin's transition is the whole trigger.
+    await page.goto(`/manage/golf/tournaments/${state.eventId}`);
+    await page.getByTestId('root-admin-golf-tournament-transition-COMPLETED').click();
+    const moved = await submitAndRead<{ event: { status: string } }>(
+      page,
+      'root-admin-golf-tournament-transition-confirm',
+      'POST',
+      `/api/v1/events/${state.eventId}/transition`,
+    );
+    expect(moved.event.status).toBe('COMPLETED');
+  });
+
+  const settled = await test.step('the contest is settled, and its frozen standing is that last live reading', async () => {
+    const managed = await readManagedContest(page, state.leagueId, state.contestId);
+    expect(managed.contest.status).toBe('COMPLETED');
+
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    // Settlement ranks with the same calculator over the same scores, so the standing it froze
+    // has to be the live one it replaced — every field of it, not the total alone. None of these
+    // is a number this file chose: each is the reading taken before the transition.
+    //
+    // On their own these would also pass if settlement had silently written nothing, because the
+    // leaderboard falls back to computing live for an entry with no frozen standing. Two things
+    // rule that out: the contest reaching COMPLETED above, which settlement only does after
+    // upserting the standings, and the late correction in the last step, which a live entry's
+    // total would follow. Those two steps are this one's control.
+    expect(read.entry.total).toBe(finalLive.entry.total);
+    expect(read.entry.position).toBe(finalLive.entry.position);
+    expect(read.entry.displayPosition).toBe(finalLive.entry.displayPosition);
+    expect(read.entry.countingPickLimit).toBe(finalLive.entry.countingPickLimit);
+    expect(read.entry.scoredPickCount).toBe(finalLive.entry.scoredPickCount);
+    // Finalized: the entry carries a position rather than sitting unranked, and the picks still
+    // explain the frozen total, because no score has moved since settlement read them.
+    expect(read.entry.position).not.toBeNull();
+    expect(read.entry.displayPosition).not.toBeNull();
+    expectCountingPicksExplainTheTotal(read);
+    return read;
+  });
+
+  await test.step('the settled contest refuses the configuration edit it accepted a moment ago', async () => {
+    const refused = await putContestConfigurationUnchanged(page, state.leagueId, state.contestId);
+    expect(refused.status, `PUT the contest configuration answered ${refused.status}`).toBe(409);
+    // The documented code for a settled configuration, not a generic failure. The sentence that
+    // comes with it is deliberately not asserted: the code is the contract, the prose is not.
+    expect(refused.errorCode).toBe('CONTEST_CONFIGURATION_SETTLED');
+  });
+
+  await test.step('a late score correction moves the golfer and leaves the settled standing alone', async () => {
+    const counting = bestOf(settled, settled.entry.countingIds);
+    const scoreBefore = scoreOn(settled, counting);
+    const delta = await correctOneGolfersRound(
+      page,
+      state.eventId,
+      ACT_6_FINAL_ROUND,
+      settled,
+      counting,
+      -CORRECTION_STROKES,
+    );
+
+    const read = await readContestLeaderboard(page, state.contestId, state.entryId);
+    // Act 5 proved this correction, on a counting pick, moves a live entry's total by its own
+    // change. The golfer's event total moves here too, so the write plainly landed …
+    expect(scoreOn(read, counting)).toBe(scoreBefore + delta);
+    // … and the settled entry does not move at all. That is the freeze: a provider correction
+    // arriving after the result was called cannot rewrite who won.
+    expect(read.entry.total).toBe(settled.entry.total);
+    expect(read.entry.position).toBe(settled.entry.position);
+    expect(read.entry.displayPosition).toBe(settled.entry.displayPosition);
+    // `expectCountingPicksExplainTheTotal` is deliberately NOT re-applied here. The per-pick rows
+    // stay the live read's, so the live counting picks now sum to something the frozen total no
+    // longer matches — that divergence is the freeze working, and asserting the invariant would
+    // assert the freeze had failed.
   });
 
   await test.step('root admin logs out', async () => {
@@ -802,6 +965,7 @@ type GolfContestLeaderboardBody = {
   entries: Array<{
     entryId: string;
     position: number | null;
+    displayPosition: string | null;
     scoredPickCount: number;
     countingPickLimit: number;
     golf: { totalScoreToPar: number | null } | null;
@@ -817,6 +981,7 @@ type LeaderboardRead = {
   entry: {
     total: number | null;
     position: number | null;
+    displayPosition: string | null;
     scoredPickCount: number;
     countingPickLimit: number;
     /** Field-row ids of the picks that count toward the total, best first. */
@@ -871,6 +1036,7 @@ async function readContestLeaderboard(page: Page, contestId: string, entryId: st
     entry: {
       total: standing.golf?.totalScoreToPar ?? null,
       position: standing.position,
+      displayPosition: standing.displayPosition,
       scoredPickCount: standing.scoredPickCount,
       countingPickLimit: standing.countingPickLimit,
       // The endpoint returns picks counting first and best first within that, so both lists
@@ -984,24 +1150,100 @@ async function uploadRoundScores(
 }
 
 /**
- * Moves one golfer's {@link CORRECTED_ROUND} by `strokes` — through the same upload panel, as a
- * one-row correction — and returns what that did to their score to par for the round. Both the
- * row it uploads and the change it reports are derived from the leaderboard read passed in, so
- * the caller compares the entry's total against a delta the API supplied.
+ * Moves one golfer's `roundNumber` by `strokes` — through the same upload panel, as a one-row
+ * correction — and returns what that did to their score to par for the round. Both the row it
+ * uploads and the change it reports are derived from the leaderboard read passed in, so the
+ * caller compares the entry's total against a delta the API supplied.
  */
 async function correctOneGolfersRound(
   page: Page,
   eventId: string,
+  roundNumber: number,
   read: LeaderboardRead,
   fieldEntryId: string,
   strokes: number,
 ): Promise<number> {
   const golfer = golferOn(read, fieldEntryId);
-  const before = roundOn(read, fieldEntryId, CORRECTED_ROUND);
+  const before = roundOn(read, fieldEntryId, roundNumber);
   const after = { strokes: before.strokes + strokes, scoreToPar: before.scoreToPar + strokes };
-  await uploadRoundScores(page, eventId, CORRECTED_ROUND, [{ playerName: golfer.name, ...after }]);
+  await uploadRoundScores(page, eventId, roundNumber, [{ playerName: golfer.name, ...after }]);
   // The round's own grid, re-read after the apply: the correction is in the golfer's row.
   await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
     .toHaveValue(String(after.strokes));
   return after.scoreToPar - before.scoreToPar;
+}
+
+/** The event's scheduled round numbers, ascending: what a complete card has to cover. */
+async function readScheduledRoundNumbers(page: Page, eventId: string): Promise<number[]> {
+  const response = await page.request.get(`/api/v1/events/${eventId}/rounds`);
+  expect(response.ok(), `GET the event's rounds answered ${response.status()}`).toBe(true);
+  const { rounds } = (await response.json()) as { rounds: { roundNumber: number }[] };
+  return rounds.map((round) => round.roundNumber).sort((left, right) => left - right);
+}
+
+/** The commissioner-managed view of a contest: its status and the configuration editor's values. */
+async function readManagedContest(page: Page, leagueId: string, contestId: string): Promise<ManagedContestRead> {
+  const response = await page.request.get(
+    `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
+  );
+  expect(response.ok(), `GET the managed contest answered ${response.status()}`).toBe(true);
+  return (await response.json()) as ManagedContestRead;
+}
+
+type ManagedContestRead = {
+  contest: {
+    status: string;
+    configuration: {
+      locksAt?: string | null;
+      maxEntriesPerSquad?: number | null;
+      rosterSize: number;
+      countedScores: number;
+    };
+  };
+};
+
+/**
+ * Writes the contest's configuration back exactly as it already is, and reports how the API
+ * answered.
+ *
+ * Unchanged on purpose. The act sends it twice — before settlement and after — and a request
+ * that alters nothing makes the second answer attributable to the contest's status alone; it
+ * also cannot disturb the standing the act is about to compare. The body carries only the four
+ * fields the request schema defines, so the configuration's own `id` and `contestId` are
+ * dropped rather than sent back as unexpected properties.
+ *
+ * The write goes through `page.request`, which shares the browser context's cookies, so it
+ * needs the CSRF header the cookie session pairs with — a GET does not (see act 1's tiers step).
+ */
+async function putContestConfigurationUnchanged(
+  page: Page,
+  leagueId: string,
+  contestId: string,
+): Promise<{ status: number; errorCode: string | null }> {
+  const { contest } = await readManagedContest(page, leagueId, contestId);
+  const { locksAt, maxEntriesPerSquad, rosterSize, countedScores } = contest.configuration;
+  const response = await page.request.put(
+    `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
+    {
+      headers: { 'x-csrf-token': await readCsrfToken(page) },
+      data: {
+        ...(locksAt === undefined ? {} : { locksAt }),
+        ...(maxEntriesPerSquad === undefined ? {} : { maxEntriesPerSquad }),
+        rosterSize,
+        countedScores,
+      },
+    },
+  );
+  const body = (await response.json()) as { error?: { code?: string } };
+  return { status: response.status(), errorCode: body.error?.code ?? null };
+}
+
+/** The CSRF token the session issued, which a state-changing request has to echo in a header. */
+async function readCsrfToken(page: Page): Promise<string> {
+  const cookies = await page.context().cookies();
+  const csrf = cookies.find((cookie) => cookie.name === 'poolmaster_csrf');
+  if (!csrf) {
+    throw new Error('the session carries no poolmaster_csrf cookie, so no write can be signed');
+  }
+  return csrf.value;
 }
