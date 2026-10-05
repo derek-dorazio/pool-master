@@ -991,7 +991,9 @@ export class ContestService {
   }
 
   private async requireSquadForEntry(
-    leagueId: string,
+    // Retained for the call-site's readability at service.ts:464, where the id is
+    // the obvious thing to pass; the body narrowed to needing only the membership.
+    _leagueId: string,
     existingSquadMembership: Awaited<ReturnType<SquadMembershipRepository['findByLeagueAndUser']>>,
   ) {
     if (existingSquadMembership?.status === SquadMembershipStatus.ACTIVE) {

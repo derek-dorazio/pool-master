@@ -13,8 +13,6 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/leagues.dto';
 import { ErrorEnvelopeSchema, zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
-} from '@poolmaster/shared/dto/leagues.dto';
-import {
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,

@@ -14,8 +14,7 @@ import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto'
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import { resolveRankingType } from './ranking-types';
-import { SyncOrchestrator } from './sync-orchestrator';
-import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
+import { SyncOrchestrator, resolveSportSyncWindowPolicy } from './sync-orchestrator';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { syncWriteStats } from './sync-write-diagnostics';
 import type {

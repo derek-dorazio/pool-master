@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
+import { MutationActionToast } from "./mutation-action-toast";
 import {
-  MutationActionToast,
   useMutationActionWorkflow,
   type MutationActionWorkflowOptions,
 } from "./mutation-action-workflow";

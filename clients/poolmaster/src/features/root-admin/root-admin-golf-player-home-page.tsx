@@ -21,7 +21,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantDto, ParticipantProviderMappingDto, UpdateParticipantData } from '@/lib/api';
-import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { GOLF_PLAYER_STATUSES, golfPlayerStatusTone } from './golf-admin-utils';
 
 const editSchema = z.object({

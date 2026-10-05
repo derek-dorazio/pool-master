@@ -71,7 +71,7 @@ bindApiMocks({
 // #202 — the league-context hook reads `isRootAdmin` from the cached session user, so this
 // page now touches auth. In the app it always renders inside `AuthProvider`; this test renders
 // the page bare, so the hook is given a session directly.
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     isLoading: false,

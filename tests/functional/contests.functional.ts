@@ -995,7 +995,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entryId = entryResponse.data?.entry.id;
     expect(entryId).toBeTruthy();
 
-    const pick = await prisma.contestEntryPick.create({
+    await prisma.contestEntryPick.create({
       data: {
         entryId: entryId as string,
         sportEventParticipantId: sportEventParticipant.id,

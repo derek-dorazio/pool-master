@@ -203,8 +203,8 @@ class OperationalContractProvider implements SportDataProvider {
 }
 
 class EmptyDiagnosticsProvider extends OperationalContractProvider implements ProviderPayloadDiagnostics {
-  providerId = 'empty-diagnostics-provider';
-  providerName = 'Empty Diagnostics Provider';
+  override providerId = 'empty-diagnostics-provider';
+  override providerName = 'Empty Diagnostics Provider';
   private payloads: ProviderPayloadCapture[] = [];
 
   clearProviderPayloads(): void {

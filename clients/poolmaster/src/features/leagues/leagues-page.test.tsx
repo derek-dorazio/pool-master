@@ -25,7 +25,7 @@ const {
   },
 }));
 
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => authState,
 }));
 

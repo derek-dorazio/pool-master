@@ -175,7 +175,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-g1z applies an undeclared transition anyway for a PROVIDER actor, only logging it', async () => {
     const logger = createLogger();
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
     const service = new EventLifecycleService(contests, sportEvents, logger as any);
 
@@ -193,7 +193,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-g1z treats a same-status call as a no-op, never rejecting it', async () => {
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED, endDate: new Date('2026-05-31T22:00:00.000Z') });
     const contests = contestDeps();
     const golfContestSettlement = { settleCompletedSportEvent: jest.fn().mockResolvedValue(undefined) };
     const service = new EventLifecycleService(
@@ -287,7 +287,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
     };
     const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: eventEndDate });
     const contests = contestDeps();
     const service = new EventLifecycleService(
       contests,
@@ -311,7 +311,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
   it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
       providerName: 'smtp' as const,
@@ -362,7 +362,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-9ya does not resend contest-started email when the contest is already active', async () => {
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true, transitioned: false });
     const mailDelivery = {
       providerName: 'smtp' as const,
@@ -386,7 +386,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
   it('pool-master-9ya keeps the transition successful when contest-started email delivery fails', async () => {
     const logger = createLogger();
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
       providerName: 'ses' as const,

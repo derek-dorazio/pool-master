@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { AnchorHTMLAttributes } from "react";
-import type { ReactNode } from "react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { ActionList, ActionTile } from "./action-list";
 import { Button, type ButtonProps } from "./button";
 import { cn } from "./class-names";

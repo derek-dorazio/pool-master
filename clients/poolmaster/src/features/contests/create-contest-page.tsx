@@ -19,7 +19,7 @@ import {
   getValidContestFormatsForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { createContest, deleteContest, getContestConfiguration, listContestConfigTemplates, listEvents, updateContest, updateContestConfiguration } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {

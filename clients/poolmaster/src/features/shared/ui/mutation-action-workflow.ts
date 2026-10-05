@@ -1,6 +1,5 @@
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useCallback, useState, type ReactNode } from "react";
-import { Toast, ToastProvider, ToastViewport } from "./toast";
 
 export type MutationActionToast = {
   description?: ReactNode;
@@ -167,33 +166,4 @@ export function useMutationActionWorkflow<TData, TVariables = void>({
     run: run as MutationActionRun<TVariables, TData>,
     toast,
   };
-}
-
-export function MutationActionToast({
-  onDismiss,
-  toast,
-}: {
-  onDismiss: () => void;
-  toast: MutationActionToast | null;
-}) {
-  if (!toast) {
-    return null;
-  }
-
-  return (
-    <ToastProvider>
-      <Toast
-        description={toast.description}
-        onOpenChange={(open) => {
-          if (!open) {
-            onDismiss();
-          }
-        }}
-        open
-        title={toast.title}
-        tone={toast.tone}
-      />
-      <ToastViewport />
-    </ToastProvider>
-  );
 }

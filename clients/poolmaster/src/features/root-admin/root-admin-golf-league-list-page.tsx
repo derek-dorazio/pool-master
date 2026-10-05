@@ -18,7 +18,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueDto } from '@/lib/api';
 import { useGolfSportLeaguesQuery } from './use-golf-catalog';
-import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 
 const columnHelper = createColumnHelper<SportLeagueDto>();
 

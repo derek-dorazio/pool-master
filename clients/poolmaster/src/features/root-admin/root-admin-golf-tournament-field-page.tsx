@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, AsyncPage, Button, LinkButton } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import {
   golfTournamentHasScoreSync,
   isAdminManagedGolfTournament,

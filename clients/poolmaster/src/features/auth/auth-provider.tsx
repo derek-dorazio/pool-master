@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser, logoutUser, refreshToken } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
@@ -9,16 +9,7 @@ import {
   setAuthSessionUser,
   type AuthSessionData,
 } from './auth-session-cache';
-
-type AuthContextValue = {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  isRootAdmin: boolean;
-  user: AuthSessionData;
-  clearSession: () => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext, type AuthContextValue } from './auth-context';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const logger = getLogger().child({
@@ -220,12 +211,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const value = useContext(AuthContext);
-  if (!value) {
-    throw new Error('useAuth must be used inside AuthProvider.');
-  }
-  return value;
 }

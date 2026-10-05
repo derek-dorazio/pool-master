@@ -2,7 +2,7 @@ import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import {
   ContestService,
   ContestNotFoundError,
-  ContestOperationError,
+
   type ContestServiceDeps,
 } from '../../../packages/core-api/src/modules/contests/service';
 import type {
@@ -16,8 +16,8 @@ import type {
 import {
   ContestStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
-  SelectionType,
-  ScoringEngine,
+
+
   ContestFormat,
   LeagueMembershipStatus,
   Sport,

@@ -7,6 +7,7 @@ import jest from 'eslint-plugin-jest';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 import vitest from 'eslint-plugin-vitest';
 import poolmaster from './eslint-rules/index.mjs';
 
@@ -120,6 +121,37 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+
+      // #345 Phase 0 (from #160's survey of all 61 type-aware rules) — the eleven
+      // type-aware rules that are outside `recommendedTypeChecked` and measured at
+      // 0 findings over this lint scope at DEFAULT options.
+      //
+      // #160 named twenty-one such rules; ten of them turned out to be inside
+      // `recommendedTypeChecked`, which this config already spreads, so they have
+      // been enforced since #308 and are not restated here. Verified with
+      // `--print-config`, not inferred: `await-thenable`, `no-array-delete`,
+      // `no-duplicate-type-constituents`, `no-for-in-array`, `no-implied-eval`,
+      // `no-unsafe-enum-comparison`, `no-unsafe-unary-minus`,
+      // `prefer-promise-reject-errors`, `restrict-plus-operands` and
+      // `no-misused-promises` are already on.
+      //
+      // Default options are load-bearing on two of these. Do NOT inherit
+      // `strictTypeChecked`'s options wholesale if that preset is ever adopted
+      // (#345 Phase 4): #160 measured `restrict-template-expressions` at 2 findings
+      // on defaults and 151 under strict's options. These eleven are listed
+      // individually rather than spread from a preset so a typescript-eslint
+      // upgrade cannot add a rule here unreviewed.
+      '@typescript-eslint/no-mixed-enums': 'error',
+      '@typescript-eslint/no-unnecessary-qualifier': 'error',
+      '@typescript-eslint/no-unnecessary-template-expression': 'error',
+      '@typescript-eslint/no-useless-default-assignment': 'error',
+      '@typescript-eslint/prefer-find': 'error',
+      '@typescript-eslint/prefer-includes': 'error',
+      '@typescript-eslint/prefer-reduce-type-parameter': 'error',
+      '@typescript-eslint/prefer-return-this-type': 'error',
+      '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+      '@typescript-eslint/related-getter-setter-pairs': 'error',
+      '@typescript-eslint/require-array-sort-compare': 'error',
 
       // #162 — a type-only import that is not marked `import type` is emitted as a real
       // import by the transpiler. Under `isolatedModules` that is how a build ends up with a
@@ -325,6 +357,26 @@ export default tseslint.config(
     rules: { 'react-hooks/rules-of-hooks': 'error' },
   },
   {
+    // #345 Phase 0 (from #167). A module that exports both a React component and a
+    // non-component value breaks Fast Refresh: editing the component triggers a
+    // full page reload instead of a hot update, silently losing component state.
+    // Nothing else in the toolchain reports that.
+    //
+    // 14 findings across 10 files on this branch (#167 measured 12 across 8 on
+    // 2026-09-23). Every one was resolved by moving the non-component export to
+    // its own module -- extraction, not suppression, per #167's acceptance.
+    //
+    // `allowConstantExport` is not set because it would buy nothing: measured at
+    // 14 findings with the option on, the same 14 as without it. None of these is
+    // a bare `export const FOO = 'literal'` -- they are hooks, helpers, variant
+    // maps and two HOCs. The option is documented as the cheap escape hatch for
+    // this rule, so the measurement is recorded here to save the next reader
+    // reaching for it.
+    files: WEBAPP_FILES,
+    plugins: { 'react-refresh': reactRefresh },
+    rules: { 'react-refresh/only-export-components': 'error' },
+  },
+  {
     files: WEBAPP_FILES,
     plugins: { react },
     settings: { react: { version: 'detect' } },
@@ -379,6 +431,63 @@ export default tseslint.config(
       // same name from another hands consumers the type of one definition and the
       // value of the other. tsc does not report that; this does.
       'import-x/export': 'error',
+
+      // -----------------------------------------------------------------------
+      // #345 Phase 1 (from #168) — the rest of `flatConfigs.recommended`.
+      //
+      // Listed rule by rule rather than spread from the preset, because the preset
+      // does not survive contact with this codebase: of its eight rules, five are
+      // at zero and three are pure CommonJS-interop noise. Adopting it wholesale
+      // would add 21 permanent findings that are all correct code, and the usual
+      // answer to that -- a per-site disable comment -- would spread 21 of them
+      // through files that have nothing wrong with them.
+      //
+      // So each rule's disposition is recorded HERE, where the next reader who
+      // wonders why the preset is not simply spread will actually look.
+      // -----------------------------------------------------------------------
+
+      // ADOPTED at zero. Measured on this branch, not inherited from #168.
+      'import-x/namespace': 'error',
+      'import-x/no-named-as-default': 'error',
+
+      // ADOPTED with fixes: 16 findings across 8 files, all `import type` + value
+      // import from the same module, merged into one statement each.
+      //
+      // Pairs with `consistent-type-imports` above and must keep agreeing with it:
+      // that rule wants type imports marked, this one wants them merged with the
+      // value import from the same module. `fixStyle: 'inline-type-imports'` is
+      // what makes both satisfiable at once (`import { a, type B } from 'm'`); the
+      // default separate-import style would have the two rules undo each other.
+      'import-x/no-duplicates': 'error',
+
+      // OFF -- the three CommonJS-interop rules. `tsconfig.base.json` sets
+      // `esModuleInterop: true`, which makes `import X from 'cjs-module'` correct
+      // and idiomatic; these rules predate that being the norm and report it as
+      // suspicious. Disabled explicitly, with the count each one would contribute,
+      // rather than left on and suppressed per site.
+
+      // 8 findings: `import bcrypt from 'bcryptjs'`, `import jwt from
+      // 'jsonwebtoken'`, `import ReactDOM from 'react-dom/client'` and similar.
+      // A CJS module has no ESM default export to find; `esModuleInterop`
+      // synthesises one, which is the whole point of the flag.
+      'import-x/default': 'off',
+
+      // 12 findings, every one of the form "`bcrypt` also has a named export
+      // `hash`". That is true and intended: the namespace-as-default import is
+      // how these libraries are meant to be consumed under `esModuleInterop`.
+      'import-x/no-named-as-default-member': 'off',
+
+      // 1 finding, and it is a resolver false positive rather than interop:
+      // `v4 not found in 'uuid'` at modules/auth/auth-service.ts. uuid@10 does
+      // export `v4` -- confirmed at runtime, and tsc resolves it -- but its
+      // `exports` map reaches the Node ESM build through a `wrapper.mjs`
+      // indirection that import-x's static analysis cannot follow. Leaving this
+      // rule on would mean one permanent false error, or a disable comment on a
+      // correct import.
+      //
+      // Narrower than the other two: this is the only finding in the tree, so if
+      // the resolver or uuid's packaging improves, this is a one-line revert.
+      'import-x/named': 'off',
     },
   },
   {

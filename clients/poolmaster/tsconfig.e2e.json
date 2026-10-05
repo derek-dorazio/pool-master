@@ -8,6 +8,14 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    // #345 Phase 0. This tsconfig does not extend `tsconfig.base.json`, so the
+    // strictness flags adopted there have to be repeated here or the webapp
+    // silently opts out of them.
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

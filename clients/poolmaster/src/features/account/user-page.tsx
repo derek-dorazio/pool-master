@@ -15,7 +15,7 @@ import {
   UserUsernameUpdateRequestSchema,
 } from '@poolmaster/shared/dto';
 import { changeUserPassword, deleteUser, disableUser, enableUser, updateUserPreferences, updateUserProfile, updateUserUsername } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import {
   AUTH_ME_QUERY_KEY,
   setAuthSessionUser,

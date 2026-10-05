@@ -55,7 +55,7 @@ const VIEWER_USER = {
   createdAt: '2026-04-15T00:00:00.000Z',
 } as const;
 
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     isLoading: false,

@@ -1,5 +1,5 @@
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import { formatUserName } from '@/features/account/user-name';
 import { Button } from '@/features/shared/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/features/shared/ui/state';

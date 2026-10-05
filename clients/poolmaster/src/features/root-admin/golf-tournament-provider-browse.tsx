@@ -17,12 +17,12 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueDto } from '@/lib/api';
+import { GolfTournamentEditionFields } from './golf-tournament-edition-fields';
 import {
-  GolfTournamentEditionFields,
   isCompleteEdition,
   parseEventYear,
   type GolfTournamentEdition,
-} from './golf-tournament-edition-fields';
+} from './golf-tournament-edition';
 import { localDateTimeInputToIso } from './golf-admin-utils';
 import {
   useGolfProviderCatalog,

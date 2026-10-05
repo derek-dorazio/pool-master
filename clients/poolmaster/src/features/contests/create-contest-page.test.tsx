@@ -51,7 +51,7 @@ bindApiMocks({
   updateContestConfiguration: updateContestConfigurationMock,
 });
 
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     isLoading: false,

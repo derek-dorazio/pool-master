@@ -302,8 +302,94 @@ flowchart LR
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | Two sub-checks are blocking; four are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
 | 3 | review triggers marker | <1s (single API call to GitHub) | No — warns only (PRs only) |
-| 4 | `npm run lint` | ~10-20s | Yes |
-| 5 | `npm run typecheck` | ~30-60s | Yes |
+| 4 | `npm run lint` | ~17s for `lint:service` in CI; the webapp's own `lint:webapp` is ~33s in `poolmaster-build` | Yes |
+| 5 | `npm run typecheck` | ~9s (`typecheck:service`) + ~8s (`typecheck:tests`) + ~1s (`typecheck:e2e`) in CI | Yes |
+
+Costs re-measured 2026-10-05 from CI run 1228 rather than estimated. Lint is
+type-aware, so it is dominated by building the TypeScript program, not by the
+number of rules: #345 Phase 0 added eleven more type-aware rules, the
+`react-refresh` plugin and four more `import-x` rules without a measurable
+change in wall clock, because the program was already being built.
+
+Note that `npm run lint` and `npm run typecheck` each build that program, in
+separate processes. This is not deduplicable: ESLint's `projectService` builds
+its program inside the ESLint process, and there is no way to hand it to a
+separate `tsc`. See *What `npm run lint` enforces* below for what was measured
+and declined.
+
+## What `npm run lint` enforces, and over what
+
+### Scope
+
+`npm run lint` globs `packages/**/*.ts` and `clients/poolmaster/src/**/*.{ts,tsx}`
+(517 files as of 2026-10-05), then runs `scripts/check-feature-theme-tokens.mjs`.
+`lint:service` and `lint:webapp` are the two halves, run by different CI jobs.
+
+**`tests/` is deliberately outside that glob.** It is linted instead by
+`eslint.tests.config.mjs`, a second flat config running the single
+`poolmaster/no-disabled-tests` rule with a parser but no type information, wired
+as `rules:check:test-disable`. That second config is a known smell, and removing
+it is tracked as Phase 2 of #345.
+
+The reason it has not been removed is the measurement, not inertia: the
+type-aware rule family that reports **0 findings** over the 517-file scope above
+reports **2773** inside `tests/`. They are the same rules over different file
+sets. Widening the glob before the zero-finding rule set is in place turns the
+cheapest win in the programme into its largest backlog, which is why #345
+sequences the two and why this file records the order.
+
+Five files sit in no tsconfig `include` and throw
+`Parsing error: … was not found by the project service` if linted:
+`clients/poolmaster/{vite,vitest,playwright,tailwind}.config.ts` and
+`packages/shared/openapi-ts.config.ts`. None is inside the current glob
+(`openapi-ts.config.ts` is additionally in `eslint.config.js`'s `ignores`), so
+they cost nothing today. They become Phase 2's problem when the glob widens.
+
+### Type-aware rules
+
+The parser is wired with `projectService: true` and
+`tsconfigRootDir: import.meta.dirname`, which requires Node ≥ 20.11 for
+`import.meta.dirname`. CI's `node-version: '20'` resolved to **v20.20.2** in run
+1228; the floating `'20'` only ever moves up within the major, so it satisfies
+the requirement without an explicit pin.
+
+On top of `typescript-eslint`'s `recommendedTypeChecked`, #345 Phase 0 adopted
+the eleven type-aware rules outside that preset which measure 0 findings at
+**default** options. Default options are load-bearing: `strictTypeChecked`'s
+options take `restrict-template-expressions` from 2 findings to 151, so that
+preset's options must not be inherited wholesale if it is ever adopted
+(#345 Phase 4).
+
+### tsconfig strictness
+
+`tsconfig.base.json` sets `noImplicitReturns`, `noFallthroughCasesInSwitch`,
+`noImplicitOverride`, `noUnusedLocals` and `noUnusedParameters` alongside
+`strict`. `clients/poolmaster/tsconfig.json` and `tsconfig.e2e.json` do **not**
+extend the base, so they repeat the five.
+
+`noUnusedLocals`/`noUnusedParameters` largely duplicate
+`@typescript-eslint/no-unused-vars`. Their value is reaching `tests/`, which tsc
+sees via `tests/tsconfig.json` and ESLint does not: 14 of the 16
+`noUnusedLocals` findings were there.
+
+Two traps worth keeping recorded:
+
+- `noUnusedParameters` does not honour the ESLint rule's `argsIgnorePattern`. It
+  keys off a leading underscore as a built-in convention, which happens to agree
+  with the configured `^_`.
+- That underscore convention does **not** cover an unused constructor *parameter
+  property* (`private readonly x`), which is TS6138 under `noUnusedLocals`.
+  Dropping the modifier is the fix; renaming is not.
+
+### Prettier is configured but is not a gate
+
+`.prettierrc` and `.prettierignore` exist so that Prettier runs with this repo's
+options rather than built-in defaults, and so that generated output is never
+hand-formatted. Prettier does **not** run in CI, and `npm run format` has not
+been run: it would rewrite 663 files under the committed config (791 with no
+config at all, re-measured 2026-10-05 against #163's 1087). Whether to take that
+sweep, and whether to add a `format:check` gate, are open decisions in #345
+Phase 1 — not side effects of committing the config.
 
 ## The 8 gates
 

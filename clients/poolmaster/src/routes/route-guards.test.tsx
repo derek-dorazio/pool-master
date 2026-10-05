@@ -22,7 +22,7 @@ const { authState, mockLogger } = vi.hoisted(() => {
   return { authState, mockLogger };
 });
 
-vi.mock('@/features/auth/auth-provider', () => ({
+vi.mock('@/features/auth/auth-context', () => ({
   useAuth: () => authState,
 }));
 

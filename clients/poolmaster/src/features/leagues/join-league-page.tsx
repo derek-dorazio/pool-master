@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import {
   Button,

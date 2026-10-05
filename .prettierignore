@@ -1,0 +1,31 @@
+# Prettier's scope. See #345 Phase 1 (consolidating #163).
+#
+# Until #163's formatting sweep is decided, `npm run format` is NOT run in this
+# repo and Prettier is not a CI gate -- this file and `.prettierrc` exist so that
+# WHEN it runs, it runs on the right files with the repo's own options rather
+# than on built-in defaults.
+
+# --- Generated output: never hand-format -------------------------------------
+# Regenerated wholesale by `npm run api:refresh`, so a formatting pass here is
+# undone by the next codegen run and shows up as diff noise in between. Measured
+# 2026-10-05: exactly 35 files under these two trees differ from Prettier's
+# output, which is the set #163 required this file to cover regardless of what
+# else was decided.
+**/generated/
+**/dist/
+
+# --- Build and tooling artefacts ---------------------------------------------
+node_modules/
+coverage/
+.turbo/
+*.tsbuildinfo
+clients/poolmaster/test-results/
+clients/poolmaster/playwright-report/
+
+# --- Lockfiles: owned by their tools -----------------------------------------
+package-lock.json
+
+# --- Snapshots and recorded fixtures -----------------------------------------
+# Byte-for-byte comparisons against recorded output. Reformatting them rewrites
+# the thing under test.
+**/__snapshots__/

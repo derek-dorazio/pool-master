@@ -4,8 +4,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ParticipantMatchQuery, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { Participant, InjuryStatus, ParticipantType } from '@poolmaster/shared/domain';
-import type { ParticipantStatus } from '@poolmaster/shared/domain';
+import type { Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
   constructor(private readonly prisma: PrismaClient) {}
