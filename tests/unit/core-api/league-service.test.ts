@@ -13,16 +13,18 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
+import { mockFn } from '../../support/mock-fn';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueRepository['create']>(async (input) => ({
       ...input,
       id: 'new-league-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<LeagueRepository['update']>(async (id, updates) => ({
       ...buildLeague({ id }),
       ...updates,
     })),
@@ -34,7 +36,7 @@ function createMockMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return fakeLeagueMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'new-membership-id',
       createdAt: new Date(),
@@ -47,13 +49,13 @@ function createMockMembershipRepo(
 
 function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return fakeSquadRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadRepository['create']>(async (input) => ({
       ...input,
       id: 'new-squad-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadRepository['update']>(async (id, updates) => ({
       id,
       leagueId: 'new-league-id',
       createdBy: 'user-1',
@@ -72,13 +74,13 @@ function createMockSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
   return fakeSquadMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'new-squad-membership-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadMembershipRepository['update']>(async (id, updates) => ({
       id,
       squadId: 'new-squad-id',
       leagueId: 'new-league-id',
@@ -142,7 +144,7 @@ describe('LeagueService', () => {
         membershipRepo,
         squadRepo,
         squadMembershipRepo,
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
       const result = await service.createLeague({
         createdBy: 'user-1',
@@ -169,7 +171,7 @@ describe('LeagueService', () => {
         membershipRepo,
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
       await service.createLeague({
         createdBy: 'user-1',
@@ -191,7 +193,7 @@ describe('LeagueService', () => {
         membershipRepo,
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        createMockProvisioningPrisma() as any,
+        asPrismaClient(createMockProvisioningPrisma()),
       );
 
       await expect(
@@ -224,20 +226,20 @@ describe('LeagueService', () => {
     ) {
       return {
         contest: { groupBy: jest.fn().mockResolvedValue(contestRows) },
-      } as any;
+      };
     }
 
     function createService(options: {
       leagueRepo?: LeagueRepository;
       membershipRepo?: LeagueMembershipRepository;
-      prisma?: unknown;
+      prisma?: object;
     } = {}) {
       return new LeagueService(
         options.leagueRepo ?? createMockLeagueRepo(),
         options.membershipRepo ?? createMockMembershipRepo(),
         createMockSquadRepo(),
         createMockSquadMembershipRepo(),
-        options.prisma ?? createCountingPrisma(),
+        asPrismaClient(options.prisma ?? createCountingPrisma()),
       );
     }
 

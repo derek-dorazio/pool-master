@@ -178,6 +178,28 @@ If you find yourself adding any of the patterns above to make a slice pass, **st
 
 See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof Rule*) for the failing-test-before-fix discipline that prevents the most common path into these patterns.
 
+### Test doubles are typed by the contract they stand in for
+
+A double typed `any` keeps passing when the interface it replaces changes, so the suite stays
+green while the contract underneath it moves. Type every double at its source; ESLint's
+type-aware rules hold `tests/**` to this.
+
+- **Ports** use the whole-interface fakes in `tests/support/repo-fakes.ts`, overriding only
+  what the test cares about.
+- **An override that computes its result** uses `mockFn<Port['method']>(impl)` from
+  `tests/support/mock-fn.ts`, so its parameters and return are checked against the port.
+  `jest.fn().mockImplementation(...)` is `jest.Mock<any, any>` and checks nothing. A fixed
+  value needs only `jest.fn().mockResolvedValue(x)`.
+- **A partial Prisma double** stays an uncast object literal, so the test reads its delegates
+  as `jest.Mock`s rather than `any`, and crosses into `PrismaClient` once at the constructor through
+  `asPrismaClient` in `tests/support/prisma-double.ts`.
+- **An HTTP response body** is read as `res.json<ResponseDto>()` with the route's shared DTO
+  type, not as a bare `res.json()`.
+- **A private method under test** is reached as `service['method'](...)`, which TypeScript
+  types, not as `(service as any).method(...)`.
+- Never clear a type error or lint finding with `as X` or `as unknown as T` on a double. That
+  makes the double lie about the contract, which is worse than `any` because it is invisible.
+
 ---
 
 ## 1C. Test-Disable Discipline

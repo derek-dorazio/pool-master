@@ -22,18 +22,20 @@ import {
   fakeSquadRepo,
   fakeUserRepo,
 } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
+import { mockFn } from '../../support/mock-fn';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return fakeLeagueMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'membership-new',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<LeagueMembershipRepository['update']>(async (id, updates) => ({
       id,
       leagueId: 'league-1',
       userId: 'user-2',
@@ -78,13 +80,13 @@ function createSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
   return fakeSquadMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'squad-membership-new',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadMembershipRepository['update']>(async (id, updates) => ({
       id,
       squadId: 'squad-1',
       leagueId: 'league-1',
@@ -103,13 +105,13 @@ function createInvitationRepo(
   overrides: Partial<SquadOwnerInvitationRepository> = {},
 ): SquadOwnerInvitationRepository {
   return fakeSquadOwnerInvitationRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadOwnerInvitationRepository['create']>(async (input) => ({
       ...input,
       id: 'invite-1',
       createdAt: new Date('2026-04-16T00:00:00Z'),
       updatedAt: new Date('2026-04-16T00:00:00Z'),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadOwnerInvitationRepository['update']>(async (id, updates) => ({
       id,
       leagueId: 'league-1',
       squadId: 'squad-1',
@@ -138,7 +140,7 @@ function createPrisma(overrides: Record<string, unknown> = {}) {
       }),
     },
     ...overrides,
-  } as any;
+  };
 }
 
 describe('SquadOwnerInvitationService', () => {
@@ -185,7 +187,7 @@ describe('SquadOwnerInvitationService', () => {
       createSquadRepo(),
       createSquadMembershipRepo(),
       users,
-      prisma,
+      asPrismaClient(prisma),
     );
 
     await expect(service.inviteOwner({
@@ -227,7 +229,7 @@ describe('SquadOwnerInvitationService', () => {
       createSquadRepo(),
       squadMembershipRepo,
       users,
-      prisma,
+      asPrismaClient(prisma),
     );
 
     const result = await service.inviteOwner({
@@ -299,7 +301,7 @@ describe('SquadOwnerInvitationService', () => {
           createSquadRepo(),
           createSquadMembershipRepo(),
           fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
-          createPrisma(),
+          asPrismaClient(createPrisma()),
         ),
       };
     }
@@ -399,7 +401,7 @@ describe('SquadOwnerInvitationService', () => {
       createSquadRepo(),
       createSquadMembershipRepo(),
       fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      createPrisma(),
+      asPrismaClient(createPrisma()),
     );
 
     const result = await service.listInvitationsForViewer('league-1', 'root-admin-1', true);
@@ -461,7 +463,7 @@ describe('SquadOwnerInvitationService', () => {
         ]),
       }),
       fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      createPrisma(),
+      asPrismaClient(createPrisma()),
     );
 
     await expect(service.replaceOwner({
@@ -517,7 +519,7 @@ describe('SquadOwnerInvitationService', () => {
         ]),
       }),
       fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
-      createPrisma(),
+      asPrismaClient(createPrisma()),
     );
 
     await expect(service.replaceOwner({

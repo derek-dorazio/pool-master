@@ -17,6 +17,7 @@
 import bcrypt from 'bcryptjs';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
 import { DateFormat, TimeFormat, type User } from '../../../packages/shared/domain';
 
 function buildUser(overrides: Partial<User> = {}): User {
@@ -62,7 +63,7 @@ function createPrismaMock(passwordHash: string | null = null) {
     squadMembership: { count: jest.fn().mockResolvedValue(0) },
     squad: { count: jest.fn().mockResolvedValue(0) },
     $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) => callback(tx)),
-  } as any;
+  };
 
   return { prisma, tx };
 }
@@ -78,7 +79,7 @@ function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0]
     ...extra,
   });
   const { prisma, tx } = createPrismaMock();
-  return { users, prisma, tx, service: new UserService(users, prisma, undefined) };
+  return { users, prisma, tx, service: new UserService(users, asPrismaClient(prisma), undefined) };
 }
 
 beforeEach(() => {
@@ -234,7 +235,7 @@ describe('passwords', () => {
   it('keeps the calling session alive and revokes every other one', async () => {
     const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
     const { prisma, tx } = createPrismaMock(await bcrypt.hash('CurrentPass123!', 10));
-    const service = new UserService(users, prisma);
+    const service = new UserService(users, asPrismaClient(prisma));
 
     await service.changeOwnPassword(self, 'user-1', {
       currentPassword: 'CurrentPass123!',
@@ -256,7 +257,7 @@ describe('passwords', () => {
     // A6 separates the two by SUBJECT: changing your own requires the current password,
     // resetting another's does not. They are two operations, and this is the self one.
     const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
-    const service = new UserService(users, createPrismaMock('hash').prisma);
+    const service = new UserService(users, asPrismaClient(createPrismaMock('hash').prisma));
 
     await expect(service.changeOwnPassword(rootAdmin, 'user-1', {
       currentPassword: 'CurrentPass123!',
@@ -269,21 +270,21 @@ describe('passwords', () => {
     const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
     const hashed = await bcrypt.hash('CurrentPass123!', 10);
 
-    await expect(new UserService(users, createPrismaMock(hashed).prisma)
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma))
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'WrongPass123!',
         newPassword: 'NewPass456!',
         confirmNewPassword: 'NewPass456!',
       })).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD', statusCode: 400 });
 
-    await expect(new UserService(users, createPrismaMock(hashed).prisma)
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma))
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'CurrentPass123!',
         newPassword: 'NewPass456!',
         confirmNewPassword: 'Different789!',
       })).rejects.toMatchObject({ code: 'PASSWORD_CONFIRMATION_MISMATCH', statusCode: 400 });
 
-    await expect(new UserService(users, createPrismaMock(null).prisma)
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(null).prisma))
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'AnyPass123!',
         newPassword: 'NewPass456!',

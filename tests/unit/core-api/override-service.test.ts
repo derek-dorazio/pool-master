@@ -3,11 +3,12 @@ import type { ContestRepository } from '@poolmaster/shared/db';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import { buildContest } from '../../factories';
 import { fakeContestRepo } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
     findById: jest.fn().mockResolvedValue(buildContest({ status: ContestStatus.ACTIVE })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({ ...buildContest({ id }), ...updates })),
+    update: mockFn<ContestRepository['update']>(async (id, updates) => ({ ...buildContest({ id }), ...updates })),
     ...overrides,
   });
 }

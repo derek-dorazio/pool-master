@@ -232,9 +232,21 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         startDate: new Date('2026-04-24T12:00:00.000Z'),
       },
     ];
+    /** The slice of `sportEvent.findMany`'s argument this stand-in evaluates. */
+    interface ReleasedFieldQuery {
+      where: {
+        sport: string;
+        providerId: string;
+        status: string;
+        releaseAt: { lte: Date };
+        fieldLocked: boolean;
+        fieldLocksAt: { gt: Date };
+        startDate: { gte: Date; lte: Date };
+      };
+    }
     const prisma = {
       sportEvent: {
-        findMany: jest.fn(async ({ where }) => rows
+        findMany: jest.fn(async ({ where }: ReleasedFieldQuery) => rows
           .filter((row) => {
             return (
               row.sport === where.sport

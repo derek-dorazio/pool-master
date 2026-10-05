@@ -39,10 +39,11 @@ import {
   fakeSquadRepo,
   fakeUserRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<ContestRepository['update']>(async (id, updates) => ({
       ...buildContest({ id }),
       ...updates,
     })),
@@ -54,13 +55,20 @@ function createMockContestConfigurationRepo(
   overrides: Partial<ContestConfigurationRepository> = {},
 ): ContestConfigurationRepository {
   return fakeContestConfigurationRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<ContestConfigurationRepository['create']>(async (input) => ({
       ...input,
       id: 'new-config-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({ id, ...updates })),
+    update: mockFn<ContestConfigurationRepository['update']>(async (id, updates) => ({
+      id,
+      contestId: 'c-1',
+      selectionType: SharedDomainEnums.SelectionType.TIERED,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...updates,
+    })),
     ...overrides,
   });
 }
@@ -93,13 +101,13 @@ function createMockEntryRepo(overrides: Partial<ContestEntryRepository> = {}): C
   return fakeContestEntryRepo({
     findByIdWithSquad: jest.fn().mockResolvedValue(DEFAULT_ENTRY_WITH_SQUAD),
     findByContestWithSquad: jest.fn().mockResolvedValue([DEFAULT_ENTRY_WITH_SQUAD]),
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<ContestEntryRepository['create']>(async (input) => ({
       ...input,
       id: 'entry-1',
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<ContestEntryRepository['update']>(async (id, updates) => ({
       id,
       contestId: 'contest-1',
       squadId: 'squad-1',
