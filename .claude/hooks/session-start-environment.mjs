@@ -32,9 +32,12 @@
  * consent, and `reset` is the wrong verb for a database that was just created
  * anyway. `deploy` is non-destructive and needs no consent.
  *
- * Not built here: @poolmaster/shared. typecheck's turbo task already depends on
- * ^build, and the gates were verified passing from a cold container without a
- * separate shared build, so adding one would only cost time on every cold start.
+ * Not built here: @poolmaster/shared. Its `types` point at source, so lint and
+ * both unit suites never need dist/; the turbo typecheck task builds it through
+ * ^build; and scripts/run-service-functional-api.mjs builds it before the
+ * functional and merged-coverage runs. Verified from a cold container: lint and
+ * both unit suites passed with no packages/shared/dist present. A build here
+ * would only add time to every cold start.
  *
  * CLOUD ONLY. Everything below assumes the cloud image -- root, a Debian
  * pg_ctlcluster, peer auth for the postgres OS user. On a developer machine the
