@@ -522,9 +522,9 @@ export default tseslint.config(
     },
   },
   {
-    // The Jest suites live under tests/, which `npm run lint` does not pass to
-    // ESLint today (see eslint.tests.config.mjs for why). These rules are in
-    // place for when it does; until then they reach no file in that run.
+    // The Jest suites under tests/ entered the lint glob in #345 Phase 2 PR 1,
+    // so these two rules now reach them. See the exemption block below for what
+    // that widening is standing on.
     files: ['tests/**/*.{ts,tsx}'],
     plugins: { jest },
     // The two rules below do not read it, but any version-aware jest rule added
@@ -534,6 +534,109 @@ export default tseslint.config(
     rules: {
       'jest/no-focused-tests': 'error',
       'jest/no-commented-out-tests': 'error',
+    },
+  },
+
+  {
+    // -------------------------------------------------------------------------
+    // #345 Phase 2 PR 1 — `tests/**` joined the lint glob in this PR, and
+    // `eslint.tests.config.mjs` (a second flat config running exactly one rule
+    // over `tests/` with no type information) was deleted with it. Every
+    // syntactic rule and all eleven of Phase 0's type-aware rules now reach the
+    // 120-file test tree, and `poolmaster/no-disabled-tests` reaches it through
+    // the main config with type information it never had before.
+    //
+    // This block is what lets the glob be live today. #345 records the owner's
+    // ruling that switching the type-aware family off in `tests/` as POLICY is
+    // declined -- a mock typed `any` does not break when the production
+    // interface changes, so the suite keeps passing while the contract
+    // underneath it moves. So exactly one rule below is a carve-out and the
+    // other six are debt with a schedule and a named owner.
+    //
+    // Measured on this branch, 2026-10-05, with the full config (not just
+    // `recommendedTypeChecked`): 1476 findings across 64 of 120 files. PR 1
+    // fixes 66 of them and exempts the rest under the schedule below.
+    // -------------------------------------------------------------------------
+    files: ['tests/**/*.{ts,tsx}'],
+    rules: {
+      // PERMANENT. 185 findings, and not one of them is the bug the rule is for.
+      //
+      // `unbound-method` exists because `const f = obj.method; f()` loses `this`
+      // in production code. In a test the same expression is an assertion
+      // idiom -- `expect(obj.method).toHaveBeenCalledWith(...)` passes the
+      // reference to Jest, which reads the mock's call record off it and never
+      // invokes it. There is no `this` to lose because there is no call.
+      //
+      // The alternatives were weighed and are worse: `ignoreStatic` does not
+      // apply (these are instance methods on mocks), and
+      // `expect(jest.mocked(obj).method)` would add 185 wrappers that change
+      // nothing about what is asserted. typescript-eslint's own docs name the
+      // Jest assertion as the canonical false positive for this rule.
+      //
+      // This is the one exemption #345's end state keeps.
+      '@typescript-eslint/unbound-method': 'off',
+
+      // ---------------------------------------------------------------------
+      // TEMPORARY -- the six rules below are scheduled off, not decided off.
+      // Each line names the #345 Phase 2 PR that deletes it. The deletion is
+      // the acceptance criterion of that PR, so this list shrinks under CI
+      // rather than being tracked in a document, which is why the glob was
+      // widened in PR 1 instead of PR 4.
+      //
+      // DO NOT clear any of these by writing `as X` or `as unknown as T`. That
+      // satisfies the rule and makes the mock LIE -- strictly worse than `any`,
+      // which is at least visible. The fix is to type the double at its source.
+      // `tests/` holds 21 uses of `jest.Mocked` / `satisfies` already; that is
+      // the idiom. Cast counts in `tests/` are baselined in #345 and checked
+      // per PR: `as any` 170, `as unknown as` 30, `: any` 3.
+      // ---------------------------------------------------------------------
+
+      // Owned by #345 Phase 2 PR 2 (27 and 43 findings). PR 2 builds the typed
+      // test-double layer -- which does not exist yet, because mocks are built
+      // inline per test file rather than in `tests/support/` -- and proves it on
+      // these two smallest rules first.
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+
+      // Owned by #345 Phase 2 PR 2 (181 findings). #345's table lists this as a
+      // mechanical fix -- "delete a pointless `async`". Measured on this branch,
+      // it is not, and the measurement is why it is here rather than fixed:
+      //
+      //   * 115 of the 181 are arrow functions implementing a typed port whose
+      //     method returns `Promise<T>` (`tests/support/in-memory-sport-events.ts`
+      //     alone holds 79). Deleting `async` there is a TYPE ERROR -- doing it
+      //     to all 181 produced 105 `tsc` errors across 8 files. The only fix the
+      //     rule accepts is wrapping every body in `Promise.resolve(...)`, which
+      //     buys no correctness and makes a fake read worse than `async` does.
+      //
+      //   * The other 66 are `jest.fn().mockImplementation(async (x) => ({...}))`.
+      //     Deleting `async` there compiles -- but ONLY because `jest.fn()` is
+      //     `jest.Mock<any, any>`, which is assignable to anything. The double
+      //     then returns `T` where the port returns `Promise<T>`: a mock that no
+      //     longer matches the contract it stands in for, invisible to `tsc`
+      //     precisely because of the `any` that PRs 3 and 4 exist to remove.
+      //     That is the same class of error as `as unknown as` -- the cheap fix
+      //     that makes the double lie -- reached by a different route.
+      //
+      // So both halves of this rule's backlog are the typed test-double layer's
+      // work, not PR 1's. PR 2 owns that layer and owns this decision: with the
+      // doubles typed, either the port fakes become `Promise.resolve(...)`, or
+      // this rule joins `unbound-method` above as a second permanent carve-out
+      // on the same reasoning -- a double's `async` is its contract, not an
+      // oversight. Deliberately not pre-judged here.
+      '@typescript-eslint/require-await': 'off',
+
+      // Owned by #345 Phase 2 PR 3 (171 findings). These are the declared `any`s
+      // themselves: the sources that the three rules below report downstream of.
+      '@typescript-eslint/no-explicit-any': 'off',
+
+      // Owned by #345 Phase 2 PR 4 (323, 279 and 201 findings). One root cause
+      // reported many times over: a value typed `any` enters and then flows. The
+      // count is expected to collapse largely on its own once PR 3 removes the
+      // sources, so PR 4 re-measures rather than trusting 803.
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   },
 );

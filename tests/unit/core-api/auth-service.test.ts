@@ -11,7 +11,7 @@
  * the token pair, and the guards.
  */
 import bcrypt from 'bcryptjs';
-import { AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
+import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 

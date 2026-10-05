@@ -541,7 +541,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const detailResponse = await getContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -556,7 +556,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const updateResponse = await updateContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
       body: {
         name: 'Functional Contest Updated',
@@ -572,7 +572,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const deleteResponse = await deleteContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -581,7 +581,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const deletedContest = await getContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -606,7 +606,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const enterResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -618,7 +618,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const secondEnterResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -630,7 +630,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const myEntryResponse = await getMyContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -641,7 +641,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entriesResponse = await listContestEntries({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -662,7 +662,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const leaveResponse = await leaveContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -673,7 +673,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const afterLeaveMyEntry = await getMyContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -684,7 +684,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const afterLeaveEntries = await listContestEntries({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -702,7 +702,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const reenterResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -714,7 +714,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const cleanupDeleteResponse = await deleteContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -723,7 +723,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const deletedContest = await getContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -750,7 +750,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
       where: {
-        id: contestId as string,
+        id: contestId,
       },
       data: {
         status: ContestStatus.OPEN,
@@ -760,7 +760,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const enterResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -768,7 +768,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const secondEntry = await prisma.contestEntry.create({
       data: {
-        contestId: contestId as string,
+        contestId,
         squadId: enterResponse.data?.entry.squadId as string,
         entryNumber: 2,
         name: 'Rename Functional League Entry 2',
@@ -780,7 +780,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const renameResponse = await updateContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: enterResponse.data?.entry.id as string,
       },
       body: {
@@ -795,7 +795,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entriesResponse = await listContestEntries({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -805,7 +805,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const duplicateRenameResponse = await updateContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: secondEntry.id,
       },
       body: {
@@ -836,7 +836,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
       where: {
-        id: contestId as string,
+        id: contestId,
       },
       data: {
         status: ContestStatus.OPEN,
@@ -846,7 +846,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entryResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -856,7 +856,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const updateResponse = await updateContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: entryResponse.data?.entry.id as string,
       },
       body: {
@@ -870,7 +870,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const refreshedEntryResponse = await getMyContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -907,7 +907,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
       where: {
-        id: contestId as string,
+        id: contestId,
       },
       data: {
         status: ContestStatus.OPEN,
@@ -961,7 +961,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     await prisma.contest.update({
       where: {
-        id: contestId as string,
+        id: contestId,
       },
       data: {
         sportEventId: sportEvent.id,
@@ -970,7 +970,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     await prisma.contestConfiguration.update({
       where: {
-        contestId: contestId as string,
+        contestId,
       },
       data: {
         tierConfig: [
@@ -988,7 +988,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entryResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -1007,7 +1007,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const detailResponse = await getContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: entryId as string,
       },
     });
@@ -1042,7 +1042,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const enterResponse = await enterContest({
       client: outsider.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -1055,7 +1055,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const cleanupDeleteResponse = await deleteContest({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
       },
     });
 
@@ -1133,7 +1133,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
       where: {
-        id: lockedContestId as string,
+        id: lockedContestId,
       },
       data: {
         status: ContestStatus.LOCKED,
@@ -1211,7 +1211,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     await prisma.contest.update({
       where: {
-        id: selectableContestId as string,
+        id: selectableContestId,
       },
       data: {
         sportEventId: sportEvent.id,
@@ -1220,7 +1220,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     await prisma.contestConfiguration.update({
       where: {
-        contestId: selectableContestId as string,
+        contestId: selectableContestId,
       },
       data: {
         tierConfig: [
@@ -1238,7 +1238,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const lockedEntryResponse = await enterContest({
       client: member.client,
       path: {
-        contestId: lockedContestId as string,
+        contestId: lockedContestId,
       },
     });
 
@@ -1250,7 +1250,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const entryResponse = await enterContest({
       client: commissioner.client,
       path: {
-        contestId: selectableContestId as string,
+        contestId: selectableContestId,
       },
     });
 
@@ -1259,7 +1259,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const selectionResponse = await submitContestSelection({
       client: commissioner.client,
       path: {
-        contestId: selectableContestId as string,
+        contestId: selectableContestId,
       },
       body: {
         entryId: entryResponse.data?.entry.id as string,
@@ -1272,7 +1272,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const leaveAfterSelectionResponse = await leaveContest({
       client: commissioner.client,
       path: {
-        contestId: selectableContestId as string,
+        contestId: selectableContestId,
       },
     });
 
@@ -1332,7 +1332,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { status: ContestStatus.OPEN },
     });
 
@@ -1382,12 +1382,12 @@ describe('SDK Functional: Contests and Entries', () => {
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { sportEventId: sportEvent.id },
     });
 
     await prisma.contestConfiguration.update({
-      where: { contestId: contestId as string },
+      where: { contestId },
       data: {
         tierConfig: [
           {
@@ -1404,7 +1404,7 @@ describe('SDK Functional: Contests and Entries', () => {
     // Member enters and adds a roster pick.
     const memberEntryResponse = await enterContest({
       client: member.client,
-      path: { contestId: contestId as string },
+      path: { contestId },
     });
     const memberEntryId = memberEntryResponse.data?.entry.id;
     expect(memberEntryId).toBeTruthy();
@@ -1424,7 +1424,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const preEventNonOwnerResponse = await getContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: memberEntryId as string,
       },
     });
@@ -1437,7 +1437,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const preEventOwnerResponse = await getContestEntry({
       client: member.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: memberEntryId as string,
       },
     });
@@ -1448,13 +1448,13 @@ describe('SDK Functional: Contests and Entries', () => {
 
     // 3) Move contest past OPEN, then non-owner viewing must see picks.
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { status: ContestStatus.LOCKED },
     });
     const postEventNonOwnerResponse = await getContestEntry({
       client: commissioner.client,
       path: {
-        contestId: contestId as string,
+        contestId,
         entryId: memberEntryId as string,
       },
     });
@@ -1513,7 +1513,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const prisma = getFunctionalPrisma();
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { status: ContestStatus.OPEN },
     });
 
@@ -1563,11 +1563,11 @@ describe('SDK Functional: Contests and Entries', () => {
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { sportEventId: sportEvent.id },
     });
     await prisma.contestConfiguration.update({
-      where: { contestId: contestId as string },
+      where: { contestId },
       data: {
         tierConfig: [
           {
@@ -1584,11 +1584,11 @@ describe('SDK Functional: Contests and Entries', () => {
     // Both squads enter and pick.
     const commissionerEntryResponse = await enterContest({
       client: commissioner.client,
-      path: { contestId: contestId as string },
+      path: { contestId },
     });
     const memberEntryResponse = await enterContest({
       client: member.client,
-      path: { contestId: contestId as string },
+      path: { contestId },
     });
     const commissionerEntryId = commissionerEntryResponse.data?.entry.id as string;
     const memberEntryId = memberEntryResponse.data?.entry.id as string;
@@ -1616,7 +1616,7 @@ describe('SDK Functional: Contests and Entries', () => {
     // - the commissioner's entry has picksCount but no participants[].
     const preEventListResponse = await listContestEntriesOp({
       client: member.client,
-      path: { contestId: contestId as string },
+      path: { contestId },
     });
     expect(preEventListResponse.data?.picksRevealed).toBe(false);
     const preEntries = preEventListResponse.data?.entries ?? [];
@@ -1629,12 +1629,12 @@ describe('SDK Functional: Contests and Entries', () => {
 
     // Move contest past OPEN. Now member's perspective sees both squads' picks.
     await prisma.contest.update({
-      where: { id: contestId as string },
+      where: { id: contestId },
       data: { status: ContestStatus.LOCKED },
     });
     const postEventListResponse = await listContestEntriesOp({
       client: member.client,
-      path: { contestId: contestId as string },
+      path: { contestId },
     });
     expect(postEventListResponse.data?.picksRevealed).toBe(true);
     const postEntries = postEventListResponse.data?.entries ?? [];

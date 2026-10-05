@@ -660,7 +660,7 @@ describe('IngestionPersistence', () => {
 
     await persistence.persistEvents([buildInProgressEvent()]);
 
-    const [updateArg] = (prisma.sportEvent.update as jest.Mock).mock.calls[0];
+    const [updateArg] = prisma.sportEvent.update.mock.calls[0];
     expect(updateArg.data).not.toHaveProperty('status');
   });
 });

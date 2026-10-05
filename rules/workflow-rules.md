@@ -489,11 +489,15 @@ three failure modes that all look like success. Each of these was learned by com
   in one pass. Grepping only for the scanner currently in hand is how this recurred **four
   times** — the fourth after the lesson was already written down, because the audit was
   scoped to the wrong set.
-- **The replacement is narrower than what it replaced, silently.** `npm run lint` globs
-  `packages/` and `clients/`, not `tests/`. A rule migrated into `eslint.config.js` alone
-  is listed, passes, and checks nothing wherever the lint command does not reach. Compare
-  the replacement's actual file set against the scanner's walk roots, not against its
-  intent.
+- **The replacement is narrower than what it replaced, silently.** A rule migrated into
+  `eslint.config.js` is listed, passes, and checks nothing wherever the lint command does
+  not reach. Compare the replacement's actual file set against the scanner's walk roots,
+  not against its intent. This cost a second config once: `npm run lint` globbed
+  `packages/` and `clients/` but not `tests/`, so `poolmaster/no-disabled-tests` needed
+  `eslint.tests.config.mjs` to reach the test tree at all. #345 Phase 2 PR 1 put
+  `tests/**` in the glob and deleted that config, so the three roots now match — but check
+  the glob, and check **both halves** of it (`lint:service` and `lint:webapp` are what CI
+  runs, not `lint`), rather than assuming it.
 - **A green gate over zero findings proves nothing.** When both the old scanner and the new
   rule sit at zero, "it passes" is compatible with the rule matching nothing at all. Verify
   with **planted violations and line-level diffs** between old and new. Every migration that

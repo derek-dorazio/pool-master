@@ -70,7 +70,7 @@ async function buildContestWithMemberAndOutsider() {
     scoringEngine: ScoringEngine.POSITION,
   });
 
-  return { commissioner, member, outsider, league, contestId: contestId as string };
+  return { commissioner, member, outsider, league, contestId };
 }
 
 async function expectContestUnchanged(commissioner: RegisteredUserContext, contestId: string) {
