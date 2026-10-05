@@ -4,35 +4,18 @@ import { PrismaClient } from '@prisma/client';
 
 const LEAGUE_CODE_MIGRATION = '20260411173000_add_league_code';
 
-// One-off QA repairs, each owned by a guarded script that verifies the exact
-// failed state before touching anything. Checked in order against the
-// unresolved failed migrations.
-const SCRIPTED_REPAIRS = [
-  {
-    migrationName: '20260506211309_substrate_redesign_phase4_foundation',
-    args: [
-      'scripts/repair-substrate-foundation-migration.mjs',
-      '--apply',
-      '--confirm-qa-substrate-repair',
-    ],
-  },
-  {
-    migrationName: '20260902110000_add_sport_league_season_roster',
-    args: [
-      'scripts/repair-sport-league-season-migration.mjs',
-      '--apply',
-      '--confirm-qa-season-repair',
-    ],
-  },
-  {
-    migrationName: '20261003180000_collapse_season_into_event_year',
-    args: [
-      'scripts/repair-season-collapse-migration.mjs',
-      '--apply',
-      '--confirm-qa-season-collapse-repair',
-    ],
-  },
-];
+// Empty since #91. This held one entry per bespoke per-migration repair script
+// (substrate foundation, sport-league season, Season collapse); those scripts are
+// deleted, because QA was wiped and re-migrated from scratch on 2026-10-04 and a
+// stuck migration is now recovered with the Reset QA database workflow
+// (scripts/reset-qa-database.mjs) rather than a script written per failure.
+// With nothing registered, a failed migration this file cannot repair falls
+// through to the error below, which is the intended outcome: the migrate task
+// fails loudly and the database gets reset. The dispatch is kept as the seam a
+// future repair would register through. #83's plan would have retired it with the
+// migration squash; that squash was declined (#88), so the seam and the league_code
+// repair logic below stay until something else needs them gone.
+const SCRIPTED_REPAIRS = [];
 
 export function selectScriptedRepair(unresolvedMigrationNames) {
   return SCRIPTED_REPAIRS.find(

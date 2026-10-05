@@ -9,7 +9,7 @@ import {
 } from './reset-qa-database.mjs';
 
 /**
- * plans/129 (#83) — the guards in front of destroying every row in a database.
+ * #83 — the guards in front of destroying every row in a database.
  *
  * `compareMigrationState` is the other half: it decides whether a finished reset actually left
  * the history this image expects. A reset that reported success while leaving a failed or

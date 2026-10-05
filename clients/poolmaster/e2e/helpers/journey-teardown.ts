@@ -12,7 +12,7 @@ import type { AdminCredentials } from './admin-session';
  *   → tour → players → commissioner → member.
  *
  * Tours and participants have no delete operation, so they are inactivated: out of every
- * active picker and identifiable by run id for plans/129's QA reset. That, and the
+ * active picker and identifiable by run id for the QA reset (#83). That, and the
  * `event_series` row creating a tournament makes, is the expected residue. (plans/147 removed
  * the season the journey used to create, and with it a step here.)
  *

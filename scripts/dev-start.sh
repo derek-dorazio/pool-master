@@ -25,6 +25,19 @@ echo ""
 if [ ! -f "$PROJECT_ROOT/.env" ]; then
   echo -e "${CYAN}[1/4]${RESET} Creating .env from .env.example..."
   cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
+  # JWT_SECRET ships blank: .env.example is committed and a signing key must
+  # never be. Blank is not a usable default either — the auth guard calls
+  # readJwtSecret() at plugin registration, so core-api refuses to boot until
+  # the copy carries a real value. Generate one here, which is the only point
+  # where the file is created. .env is gitignored (see .gitignore "Environment"),
+  # so the value stays on this machine.
+  generated_jwt_secret="$(node -e "console.log(require('crypto').randomBytes(48).toString('base64'))")"
+  # Base64 never contains | or &, so neither the sed delimiter nor the
+  # replacement needs escaping. -i.bak then rm is portable across GNU and BSD
+  # sed, which disagree about -i with no argument.
+  sed -i.bak "s|^JWT_SECRET=$|JWT_SECRET=${generated_jwt_secret}|" "$PROJECT_ROOT/.env"
+  rm -f "$PROJECT_ROOT/.env.bak"
+  echo -e "       Generated a local JWT_SECRET ${DIM}(48 random bytes)${RESET}"
 else
   echo -e "${CYAN}[1/4]${RESET} .env exists ${DIM}(skipping)${RESET}"
 fi

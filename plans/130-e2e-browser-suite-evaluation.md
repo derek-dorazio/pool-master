@@ -371,7 +371,7 @@ never fails the test.
 Residue is expected and accepted: participants have no delete operation
 (only `updateParticipant`), so the six players are inactivated rather than
 removed, and a retried journey leaves a second set behind. Both are
-identifiable by `runId`, and `plans/129`'s QA reset is the backstop.
+identifiable by `runId`, and #83's QA reset is the backstop.
 
 ### Where the suite runs: pre-merge against a local stack, post-deploy as a smoke
 

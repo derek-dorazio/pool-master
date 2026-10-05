@@ -22,10 +22,6 @@
     "db:test:reset": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx prisma migrate reset --force --skip-seed --schema prisma/schema.prisma",
     "db:test:recreate": "npm run db:test:reset",
     "db:drift:check": "node scripts/check-schema-migration-drift.mjs",
-    "db:repair:substrate-migration": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs",
-    "db:repair:substrate-migration:apply": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs --apply --confirm-qa-substrate-repair",
-    "db:repair:season-migration": "cd packages/core-api && node scripts/repair-sport-league-season-migration.mjs",
-    "db:repair:season-migration:apply": "cd packages/core-api && node scripts/repair-sport-league-season-migration.mjs --apply --confirm-qa-season-repair",
     "db:reset:qa": "cd packages/core-api && node scripts/reset-qa-database.mjs",
     "db:reset:qa:apply": "cd packages/core-api && node scripts/reset-qa-database.mjs --apply --confirm-qa-reset",
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
@@ -109,6 +105,6 @@
   },
   "packageManager": "npm@11.3.0",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.12.0"
   }
 }

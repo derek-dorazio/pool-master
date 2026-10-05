@@ -3,15 +3,20 @@
 /**
  * Wipe QA's database and bring it back to this image's migrations, with its fixture users.
  *
- * plans/129 (#83) specified this and it was never built, which is why a refused migration had
+ * #83 specified this and it was never built, which is why a refused migration had
  * no recovery: the migration's own header pointed at a workflow that did not exist. plans/147's
  * Season collapse then refused on QA — season-less sport_events with 11 contests on them, rows
  * the scripted repair rightly would not decide about — and the owner's answer was that QA holds
  * nothing worth preserving. This is the tool that acts on that answer, and the one that handles
  * the same situation next time without a bespoke repair.
  *
- * Only the reset half of plans/129 is built here. The migration squash, and the retirement of
- * the repair scripts that follows it, stay unbuilt — they are a separate decision.
+ * #83's reset half is what is built here. The repair scripts it would have retired are now
+ * gone (#91): this workflow is the recovery path, so they had nothing left to do. The migration
+ * squash was declined outright (#88), so nothing downstream is waiting on it.
+ *
+ * #83's narrative plan was deleted with the closed epic, per ADR-0002. It carried the squash
+ * script design and the "when this stops being free" analysis; retrieve it with
+ * `git show 575513c6:plans/129-qa-database-reset-and-migration-squash.md`.
  *
  * ## This destroys everything in the target database
  *
