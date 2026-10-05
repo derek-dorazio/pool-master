@@ -35,8 +35,8 @@ import {
 // of this service exists to keep expressible.
 //
 // What these tests assert is the returned value, the typed error's code and statusCode, and
-// the presence or absence of a pick write — per `docs/LAYERS.md` §2.4, not which repository
-// method was called with what.
+// the presence or absence of a pick write — per `rules/architecture-rules.md` §5 *Traps in the
+// service layers*, not which repository method was called with what.
 
 const CONTEST_ID = 'contest-1';
 const LEAGUE_ID = 'league-1';

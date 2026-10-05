@@ -35,12 +35,16 @@ These rules govern backend services in `packages/*/src`, especially Fastify modu
 
 ## 2. No Mock Data in Application Code
 
-This applies to all backend services and handlers.
+The prohibition itself is stated once, in
+[`architecture-rules.md`](architecture-rules.md) §3 *No Mock Data in Application Code*, and
+it covers every runtime: no mock data, fake data, stub responses or hardcoded sample records
+in application code, and no development-only fallback payloads. Where test doubles are
+allowed to live is [`testing-rules.md`](testing-rules.md) §1B *Forbidden Application-Code
+Patterns*. Both apply here in full; the presence of mock data under `packages/*/src/` is a
+defect.
 
-- Never include mock data, fake data, stub responses, or hardcoded sample records in backend application code.
-- Handlers must return real service results backed by real repositories/data access.
-- If a dependency is missing, implement it or surface a real error. Do not fake the response.
-- The presence of mock data under `packages/*/src/` is a defect.
+What follows is the backend-specific shape of the same rule — the two ways a service fakes
+data without ever writing a `MOCK_` constant.
 
 ### No Synthetic Lookups
 

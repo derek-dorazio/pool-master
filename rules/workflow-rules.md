@@ -11,6 +11,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 | Tier | Artifact | Lifetime | Purpose |
 |---|---|---|---|
 | Permanent | `rules/*.md`, `.claude/skills/**/SKILL.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
+| Permanent, derived | `CLAUDE.md`, `.claude/rules/*.md` | Life of the rules they cite | Loading mechanics for Claude Code only. `CLAUDE.md` imports `AGENTS.md`; each `.claude/rules/` file is a short path-scoped summary that cites `rules/` and owns no policy — see §2 *Task Skills* |
 | Permanent, local | Code comments at the implementation site | Life of the code | Why *this* code is shaped this way — hidden constraints, non-obvious invariants, mechanisms that would surprise a reader |
 | Permanent | Top-level `requirements/product-requirements/*.md` — `domain-concepts.md`, `roles-and-actors.md`, `navigation-and-entry-points.md`, `glossary.md` | Months–years | What is *true* about the product: domain invariants, actors, information architecture. Durable despite the directory name — a relocation to a home named for what they are is tracked, not yet done |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
@@ -599,24 +600,30 @@ multiple React apps. The full statement is `architecture-rules.md` §1 *One web 
 ### Task Skills
 
 Guidance is organised by the **task being performed**, not by a role performing it. The
-distinction matters: a role tells an agent what it is not allowed to know, and a task tells
-it what order to do things in. Role scaffolding was a reasonable answer to models that
-drifted off-task and cargo-culted implementation details across boundaries; it costs more
-than it protects now, because partitioning knowledge across roles prevents a model from
-noticing the contradiction between two layers it can see at once.
+rationale, and the skill table, are in `AGENTS.md` *Task Skills*; the decision and the
+alternatives it rejected are ADR-0008. What this section adds is the constraints on the
+files themselves.
 
 - Task skills live in `.claude/skills/<name>/SKILL.md` — one copy, no wrappers. There is no
   `personas/` tree, no `.agents/`, and no `.codex/`; the multi-runtime thin-pointer layout
   was retired along with the personas it carried.
 - A skill sequences work and names the traps. It cites policy as
   `rules/<file>.md §N *Section Name*` rather than restating it, so there is one canonical
-  home per rule. See §2 *Skills cite rules, and nothing that can disappear*.
+  home per rule. See *Skills cite rules, and nothing that can disappear* above.
 - `AGENTS.md` and `rules/` remain canonical. A skill that contradicts a rule is a bug in the
   skill.
+- **`CLAUDE.md` imports `AGENTS.md` with `@AGENTS.md`; it does not paraphrase it.** Claude
+  Code reads `CLAUDE.md` *instead of* `AGENTS.md` when both exist, so a prose pointer ("read
+  AGENTS.md") depends on the model choosing to follow it, while the import loads it.
+- **`.claude/rules/*.md` are short path-scoped summaries, never a home for policy.** Claude
+  Code injects one automatically when it opens a file matching its `paths:` frontmatter, so
+  each costs context on every matching read. Keep them to the Non-Negotiables of their area,
+  a line each, with every line citing the rule it summarises. A file without `paths:` loads
+  into every session — do not add one. Large rule files stay in `rules/`, reached by the
+  routing table in `AGENTS.md`: auto-loading tens of kilobytes on each file read would cost
+  more attention than it buys.
 
-Review is one pass with up to three lenses, applied only when the diff has the matching
-surface: `/code-review` for correctness, and `rules/review-triggers.md` §5, §6 and §7 for
-performance, security and architectural fit. Skipping a lens is the common case.
+Review lenses and when to apply them are in `AGENTS.md` *Reviewing*.
 
 Cross-cutting workflow requirements remain mandatory regardless of which skill is in play:
 
@@ -626,9 +633,7 @@ Cross-cutting workflow requirements remain mandatory regardless of which skill i
 - updating docs and rules when the change affects them
 
 Plan shaping, slice sequencing, and progress reconciliation are shared between the agent and
-the user. The tracker owns live task state; plans own narrative. Nothing owns "project
-management" as a discrete role — that responsibility is fully subsumed by the tracker and by
-the narrative-only plan convention, which leaves no task tables to reconcile.
+the user. The tracker owns live task state; plans own narrative.
 
 ### Layer Handoff Within a Slice
 
@@ -669,6 +674,14 @@ made in the slice, not a handoff.
 
 ## 3. Required Local Validation Before Push
 
+**This is the one canonical gate list.** It was previously restated in
+`testing-rules.md` §3, `AGENTS.md`, the `release-check` skill and the PR template, and the
+five copies had drifted apart — two disagreed on whether `api:validate` was conditional, and
+the shortest carried five of the ten — no `rules:check`, `api:check`, `api:validate` or
+coverage. All four now
+point here. A copied command list goes
+stale silently, which is exactly how a gate ends up believed-to-run and not running.
+
 Before pushing code that could trigger CI, agents must run the full local quality gate set first unless the user explicitly approves skipping a gate for a narrow reason.
 
 Required local pre-push commands:
@@ -683,6 +696,9 @@ Required local pre-push commands:
 8. `npm run rules:check`
 9. `npm run api:check`
 10. `npm run api:validate`
+
+`npm run api:refresh` is not on the list: it is the *fix* for a stale generated SDK, not a
+gate. Run it when `api:check` fails, then commit what it regenerates.
 
 Rules:
 

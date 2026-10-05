@@ -11,7 +11,7 @@ All plan documents and implementation work must conform to these rules. This is 
 - **[Android Rules](android-rules.md)** — Android Kotlin + Jetpack Compose rules
 - **[Testing Rules](testing-rules.md)** — unit, integration, contract, smoke, and browser E2E rules
 - **[Workflow Rules](workflow-rules.md)** — action-plan tracking and rule/documentation update requirements
-- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle naming, `status` vs `isActive`, and shared domain-model consistency defaults
+- **[Domain Model Conventions Rules](domain-model-conventions-rules.md)** — lifecycle, enums, one canonical DTO per entity, schema design, league/squad vocabulary, and operation access roles
 
 ---
 
@@ -162,7 +162,8 @@ All backend services are TypeScript services with explicit module boundaries.
 - Keep domain modules isolated behind services and mappers.
 - Route handlers do not return raw Prisma models.
 - Database access stays behind service/repository boundaries.
-- Cross-service/module communication uses shared events and typed contracts.
+- Cross-module communication is a typed service call, wired in the calling module's
+  `wiring.ts`. There is no event bus — see *No event bus — modules call each other* below.
 - League isolation must remain explicit in request context and persistence boundaries.
 - **Dependency direction is one-way: `packages/shared` must never import from
   `packages/core-api`.** Shared is the contract layer that both the service and the clients
@@ -208,11 +209,12 @@ for subscribers that never existed; they are in git history if that day comes.
 
 ---
 
-## 5. Project Structure
+## 5. Project Structure and Layer Boundaries
 
 **The layout is not documented here** — the filesystem is the source of truth, and a tree
 in a rules file rots on the first directory that moves. What follows is the part the
-filesystem cannot tell you: the constraints on where things are allowed to go.
+filesystem cannot tell you: the constraints on where things are allowed to go, and what each
+layer is forbidden to know.
 
 ### Structural Rules
 
@@ -220,6 +222,122 @@ filesystem cannot tell you: the constraints on where things are allowed to go.
 - Generated API artifacts live under `packages/shared/generated/`.
 - The PoolMaster web app consumes the shared generated API package.
 - Do not create parallel handwritten clients when the shared generated client can be extended with thin app-specific configuration.
+
+### The two rules that hold the layering together
+
+Everything below is a consequence of these.
+
+- **Arrows into `domain/` only ever point inward.** `packages/shared/domain` imports
+  nothing — not Prisma, not Zod, not Fastify. Ports are written in terms of domain types,
+  DTOs in terms of domain enums, adapters translate rows into domain objects. Nothing
+  translates the other way. The package-level half of this is in §4 *Service Topology*:
+  `packages/shared` must never import from `packages/core-api`.
+- **The contract is generated, in one direction.** Routes declare Zod schemas, `api:export`
+  boots the app and writes `openapi.json`, `api:generate` writes the SDK and the TypeScript
+  types, and the webapp imports those. The webapp never hand-writes a request shape, and the
+  service never hand-writes a client. The chain is in §2 *Contract-First API Architecture*.
+
+### The service, layer by layer
+
+Each layer is stated as what it owns, what it is forbidden to hold, and the suite that
+proves it — a layer whose tests live somewhere unrelated is a layer whose boundary nobody
+can see. The suites themselves are governed by `testing-rules.md` §2 *Test Layers*.
+
+| Layer | Owns | Must not hold | Proved by |
+|---|---|---|---|
+| `shared/domain` | The fields an entity has; the values its enums may take | Storage (`passwordHash` is deliberately absent from `User`), transport, authorization. **No imports** | Unit tests over the vocabulary itself — that the enum a DTO validates against and the enum an adapter maps to are the same enum. Prisma surfaces enum *member names* (`TWELVE_HOUR`) while the domain holds *values* (`12H`), so this is a real check, not a tautology |
+| `shared/db/ports.ts` | One interface per aggregate, written entirely in domain terms; queries named for the question they answer | Paging (`domain-model-conventions-rules.md` §16 *No Paging In The API*), Prisma types, secrets | Nothing of their own. They are interfaces; their tests are their adapters' |
+| `core-api/src/adapters` | `where`, `select`, `orderBy`, row→domain mapping, the null/undefined boundary. The only place that knows a Prisma row, and the only place enum mapping happens | Business rules, authorization, anything spanning aggregates | Integration tests against **real Postgres, no mocks**. This is the one layer where a mock proves nothing |
+| `core-api/src/modules/<object>` | The operations: guards and their order, idempotence, what shares a transaction, which side effects follow a write, which typed error each failure raises | HTTP. A service never sees a `request`, never sets a cookie, never picks a status code | Unit tests per service, with port fakes |
+| `core-api/src/mappers` | One projection per object: field selection and `Date → ISO string` | Anything conditional on the caller | The contract-verification suites, which parse real responses against the DTO schema — a stronger check than asserting a mapper's return against a literal |
+| `shared/dto` | Zod schemas, their inferred types, and the `registerSchema` call that publishes each as a named OpenAPI component | Viewer context (below); per-caller variants | Unit tests over the generated artifacts: that every registered component is published, and that the generator emits `| null` where the schema says nullable |
+| `<object>/routes.ts` | Path, method, schema refs — and the module's composition root, the only place that knows both an interface and its implementation | Logic. A route wires and declares; it does not decide | Contract-verification integration (does the response still match its schema) and functional suites driven through the **generated SDK** (does the published contract and the client still agree) |
+| `plugins/` and `core/` | Cross-cutting Fastify plugins; process-level helpers with no domain content | Domain content. Root-admin operations live in the module of what they administer — `admin` is a permission, not a place | The suites of whatever they cut across |
+
+### Traps in the service layers
+
+Each of these was a real defect, and each reads as plausible code.
+
+- **A port with no implementation is worse than a missing port.** `UserRepository` was
+  declared and exported for months with zero adapters and zero consumers, so every user
+  query went straight to `prisma.user` and from there to its own result shape — two services
+  accumulated 36 and 26 raw calls. The port looked like the convention was being followed.
+- **A mapper's declared return type is the check.** `mapLeagueMembershipToDto` had none for
+  months, which left `LeagueMembershipDto` a registered OpenAPI component with nothing
+  type-checked against it: a field added to the schema or dropped from the mapper compiled
+  either way, and the shape held together only because Fastify's serializer dropped unknown
+  keys.
+- **Exhaustive `Record`s, not switches, for enum mapping** — so adding an enum member fails
+  the build in the adapter instead of falling through to `undefined` at runtime. The
+  worked example: mapping a `null` through an enum `Record` returns `undefined`, which
+  Prisma reads as *no change*, so "clear my preference" silently did nothing.
+- **A service test may not assert which repository method was called with what.** That pins
+  the call graph, breaks on refactors that change nothing, and the thing it stands in for —
+  does the query return the right rows — belongs to the adapter's integration test. What it
+  may assert: the returned value, the typed error (`code`, `statusCode`), the **absence** of
+  a write (the only way idempotence and a short-circuiting guard are visible), that two
+  writes shared one `$transaction`, the content of a side effect handed to a port, and that
+  **both callers reach the same operation**.
+- **Positional constructor parameters with trailing optionals are the reason some reads are
+  still on raw Prisma.** Services taking twelve, nine and seven of them cannot absorb a new
+  dependency safely: converting them landed a Prisma mock in a logger slot and a repository
+  in a base-URL slot, and was reverted. Replace the parameter list with an options object
+  before adding to it.
+- **No live read sits in front of a table nothing writes.** Two did, and both went with the
+  features that never wrote to them. An endpoint whose data can only arrive by someone
+  inserting rows by hand is not an endpoint.
+
+### DTOs and routes
+
+**One canonical DTO per entity and per edge — not per caller, view or access level — and no
+viewer context on an entity DTO.** Both are stated once:
+[`domain-model-conventions-rules.md`](domain-model-conventions-rules.md) §8
+*Typed-End-to-End DTO Conventions* for the shape, and access rule A8 in
+[`docs/DOMAIN-OPERATIONS.md`](../docs/DOMAIN-OPERATIONS.md) for how the viewer's
+relationship travels instead (once per league, as the canonical edges). The layer
+consequence: a mapper takes the entity and nothing about who asked.
+
+**One route per operation, with the subject as a parameter.** `/users/:userId/disable`,
+where `me` resolves to the caller, rather than one route per kind of caller. Two routes for
+one operation drift silently and did: only one half carried the last-root-admin guard, only
+one refused to write an inactive account, only one answered with the updated entity. None of
+those differences were decisions — they are what happens when "who is asking" is encoded in
+*which file you are in* instead of in a parameter. The general form of this rule is in §4
+*Service Topology*, **One code path per piece of business logic**.
+
+### The webapp's layers
+
+`react-ui-rules.md` governs the frontend in detail; these are the boundary constraints.
+
+- **`lib/api.ts` is the only place that configures the generated client** — base URL, cookie
+  credentials, the CSRF header on state-changing methods, the client trace id, and the
+  401-triggered refresh-and-retry. Everything else imports operations *through* it.
+- **`lib/query-keys.ts` is a single factory.** Every key is built there, so invalidation
+  after a mutation names the same key the read used. The failure it prevents is a page that
+  mutates successfully and then shows stale data because two call sites spelled a key
+  differently.
+- **TanStack Query is the state store, deliberately, and there is no second copy of server
+  state.** The server response *is* the state; a mirror of it is a shadow. See
+  `react-ui-rules.md` §4 *TanStack Query Rules* and §5 *State, Effect, Form*.
+- **Types come from the generated SDK, never re-derived.** `type RootAdminUser = UserDto`,
+  not an index into a response map. The second form couples a component to the shape of an
+  *envelope*, so the component has to change when the envelope does even though the entity
+  did not.
+- **A feature folder holds its pages, modals, cards, query hooks, routing helpers and its
+  tests, colocated** — whereas backend tests live centrally. That asymmetry follows the
+  runner, not a preference: the webapp's tests need the Vite module graph and jsdom, which is
+  vitest's environment and not the root jest project's. The consequence to know is that the
+  backend unit script does **not** include the webapp.
+- **Registration order in the MSW request harness is load-bearing**, because MSW matches
+  handlers in order and the full operation set contains paths that shadow each other —
+  `GET /leagues/{id}/squads/{squadId}` would answer a request for
+  `GET /leagues/{id}/squads/owner-invitations`. Handlers are sorted most-specific-first: a
+  literal segment beats a parameter at the first position two paths differ.
+- **Neither route map is hand-written.** `packages/shared/api-routes.ts` is generated from
+  the spec and the MSW map derives from the committed spec at test-setup time. Both were
+  hand-maintained once and both had drifted — ten paths missing a trailing slash, four
+  pointing at deleted routes, and `/account/*` entries outliving the routes themselves. The
+  rule and its one narrow exception are in §2 *Route Source of Truth*.
 
 ---
 
@@ -282,9 +400,15 @@ migrations and fixtures in scripts there is nothing left for it to do.
 
 ## 7. Documentation and Drift Prevention
 
-Architecture rules must describe the codebase that actually exists, not an aspirational future state.
+Architecture rules must describe the codebase that actually exists, not an aspirational
+future state. If a rule conflicts with the codebase after a refactor, update the rule in
+that same change rather than leaving stale guidance behind.
 
-- When API-contract flow changes, update these architecture rules and the service/react/testing rules in the same change.
-- When testing patterns change materially, update [Testing Rules](testing-rules.md).
-- When generated-client usage changes materially, update [React UI Rules](react-ui-rules.md), [Service Rules](service-rules.md), and [Model Change Rules](model-change-rules.md).
-- If a rule conflicts with the codebase after a refactor, update the rule immediately instead of leaving stale guidance behind.
+**The policy for keeping rules and docs in sync lives once, in
+[`workflow-rules.md`](workflow-rules.md) §2 *Rule and Documentation Maintenance*** — what
+belongs in a rule, what rots, and the sorting principle for deciding between a code comment,
+a rule, product truth and an ADR (§0 governing rule 7). Read it before editing any rule
+file. The one addition specific to this file: a change to the API-contract flow lands in
+these architecture rules and in [Service Rules](service-rules.md),
+[React UI Rules](react-ui-rules.md) and [Testing Rules](testing-rules.md) together, because
+the contract chain spans all four.

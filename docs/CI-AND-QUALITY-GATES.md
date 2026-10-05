@@ -529,7 +529,7 @@ that branch protection enforces.
 Every CI gate runs locally with the same command CI uses. The common loops:
 
 ```bash
-# Run all 7 rule scanners.
+# Run every rule scanner (the list is the rules:check script in package.json).
 npm run rules:check
 
 # Run a single scanner in isolation.
@@ -558,18 +558,23 @@ Local service tests run against the disposable `poolmaster_test` database. When 
 interrupted run leaves residue, recreate it rather than hand-editing rows:
 
 ```bash
-# Drop, re-migrate, and reseed the disposable test database.
+# Drop, re-migrate, and reseed the disposable test database (human shell only).
 npm run db:test:reset
 
-# Or recreate it as part of the run.
+# Or recreate it as part of the run (human shell only).
 npm run test:service:functional-api:fresh
 npm run test:service:integration:fresh
+
+# In an agent session: Prisma refuses `migrate reset` non-interactively,
+# so apply pending migrations instead.
+npm run db:test:migrate
 ```
 
-Each rule scanner accepts a `--warn-only` flag for local debugging when you
-want to see findings without a non-zero exit. CI passes `--warn-only` to the
-six warn-only scanners by default; the two blocking gates do not accept the
-flag.
+Some scanners accept a `--warn-only` flag for local debugging when you want to
+see findings without a non-zero exit. Whether a scanner is warn-only in CI is
+decided by its `rules:check:*` script in `package.json` — the script passes
+`--warn-only` or it does not — so read it there rather than from a count here,
+which drifted twice.
 
 The shell wrappers under `scripts/check-*.sh` exist for environments that
 cannot call `node` directly. They forward arguments to the corresponding

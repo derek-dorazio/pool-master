@@ -379,23 +379,13 @@ Do not set a count as a goal in either direction. Let it fall out, then explain 
 
 ## 3. Required Local Quality Gates
 
-These are the default required checks before commit:
+**The gate list itself lives once, in
+[`workflow-rules.md`](workflow-rules.md) §3 *Required Local Validation Before Push*.** This
+section used to carry a second copy; the two had drifted — this one treated `api:validate`
+as conditional on an OpenAPI change, which is wrong, because `api:check` boots the app to
+export the spec and so fails on any change to application bootstrap. Run the list there.
 
-1. `npm run rules:check`
-2. `npm run api:check`
-3. `npx turbo typecheck --force`
-4. `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
-5. `npx jest --config tests/jest.config.js --forceExit`
-6. `npm run test:service:functional-api`
-7. `npm run test:poolmaster:unit`
-8. `npm run test:coverage:service:merged`
-
-Contract-verification-specific commands:
-
-9. `npm run api:refresh` when API schemas change
-10. `npm run api:validate` when OpenAPI output changes
-
-Notes:
+What belongs here is what a gate failure means for a *test*:
 
 - The precursor to the CI-baseline rule is local truthfulness: if the relevant
   required local suites for a slice are failing, the slice is not finished.
@@ -419,6 +409,11 @@ Notes:
   - if `poolmaster_test` still looks dirty, use `npm run db:test:reset` or the
     matching `:fresh` script (`test:service:integration:fresh`,
     `test:service:functional-api:fresh`, `test:coverage:service:fresh`)
+  - **an agent session cannot use any of those.** They all run `prisma migrate reset`,
+    which Prisma refuses in a non-interactive agent environment, and the `:fresh`
+    scripts therefore fail before reaching the suite they wrap. Use
+    `npm run db:test:migrate` (`migrate deploy`) instead, and reach for a real reset
+    only in a human shell.
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.
@@ -1042,11 +1037,11 @@ when you need a clean migrated schema.
 
 ## 12. Documentation Drift Rules
 
-If test strategy changes materially, update this file in the same work.
+The policy for keeping rules and docs in sync is stated once, in
+[`workflow-rules.md`](workflow-rules.md) §2 *Rule and Documentation Maintenance*. Applied to
+this file: a material change to test strategy updates it in the same work — a move between
+mocking approaches, a change to where a suite lives or what command runs it, or a change to
+what contract verification is expected to prove.
 
-Examples:
-
-- moving from manual client mocks to MSW
-- changing smoke test locations or commands
-- changing required local quality gates
-- changing contract-validation expectations
+The gate list is not in this file; it is `workflow-rules.md` §3. Changing it means editing
+that section, not adding a copy here.
