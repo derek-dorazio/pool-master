@@ -41,14 +41,25 @@ Modular monolith — all backend modules run in a single Fastify process on port
 
 ### Draft Module (`modules/drafts/`)
 
-Pure-function engines that take state + input and return new state (immutable).
+One file: `routes.ts`. It publishes two operations, `getDraftState` and
+`submitContestSelection`, and holds everything behind them — route plumbing, actor and
+commissioner resolution, 13 direct `prisma.` calls, the selection rules and the response
+mapping. There is no service, handler, mapper or port layer here; this is the one module
+`plans/145` slice 3 did not reach. **#324** tracks the extraction, and
+`docs/LAYERS.md` §2.4 states the file set it should end up with.
 
-| Engine | Description | Contest Types |
-|--------|-------------|---------------|
-| `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Golf majors, NHL playoffs |
-| `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | F1 season-long, DFS |
-| `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Tiered roster contests |
-| `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | Budget roster contests |
+This section previously described two "pure-function engines", `TieredPickEngine` and
+`BudgetPickEngine` (listed twice each). Neither was ever imported by `packages/core-api/src`,
+and both were deleted in #323: the live rules in `routes.ts` are a superset of what they
+checked, return typed error codes rather than free-text reasons, and need no pre-assembled
+in-memory snapshot of every tier, entry and pick. Do not reintroduce that shape — pure rule
+functions belong as helpers inside the service #324 creates.
+
+Which selection types the draft room serves is decided in `routes.ts` itself: `TIERED` and
+`BUDGET_PICK` reach the roster-selection path; everything else falls through to the
+unsupported branch below. `BUDGET_PICK` reaches it with no budget enforced — the spend is
+never computed and submission is never gated, so the format is live and ignores its own
+defining rule. See #93.
 
 Turn-based selection (snake draft) has no implementation: it was removed in #200 and its
 rebuild is deferred to #199. `SelectionType.SNAKE_DRAFT` remains a valid enum value, and a
