@@ -21,6 +21,10 @@
  *
  * Each step checks first and skips when already done, so a warm container costs
  * a few file reads plus three short psql/pg_isready calls -- well under a second.
+ * Every check asks whether the artifact matches *this branch*, not merely whether
+ * it exists, because "exists" is what produces a confident report over a stale
+ * tree. The dependency check compares npm's record of the installed tree against
+ * the root package-lock.json, so a branch that changes dependencies reinstalls.
  * The client check compares the schema Prisma copied into the generated client
  * against the checked-in schema, so a branch that changes schema.prisma also
  * regenerates. The migration check compares applied rows in _prisma_migrations
@@ -58,6 +62,12 @@
  *     touch the database, and typecheck, lint and both unit suites run fine
  *     without it; only integration, functional and merged-coverage need it.
  *
+ * IT FAILS INSIDE ITS OWN TIMEOUT. The subprocess timeouts are one budget that
+ * has to stay under the `"timeout": 600` in .claude/settings.json, because a
+ * hook killed at that limit never reaches report() and the agent gets nothing at
+ * all. See the budget comment above the constants for the numbers and the rule
+ * for changing them.
+ *
  * IT DOES NOT SWALLOW ERRORS. Every step reports its outcome -- done, already
  * ready, or failed with the command's own error output. A hook that reported
  * success while `prisma generate` failed would recreate the exact false-error
@@ -65,7 +75,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -77,17 +87,57 @@ const TEST_DB_URL = `postgresql://postgres:postgres@localhost:5432/${TEST_DB}`;
 // Connects as the documented role over TCP, so it also proves the password is set.
 const PG_ENV = { ...process.env, PGPASSWORD: 'postgres', PGCONNECT_TIMEOUT: '3' };
 
+// TIMEOUT BUDGET. These are not independent limits, they are one budget, and
+// the number they have to stay under lives in another file: .claude/settings.json
+// gives this hook `"timeout": 600`. A hook killed at that limit never reaches
+// report(), so the agent gets no message at all -- the same silence the hook
+// exists to prevent, and worse than a loud failure, because the agent then meets
+// the lint output with nothing telling it why. The three long steps therefore
+// sum under 600 rather than over it:
+//
+//     npm ci                 300s
+//     prisma generate        120s
+//     prisma migrate deploy  150s
+//     ----------------------------
+//     sum                    570s, leaving 30s for node startup and report()
+//
+// Lower a step rather than raise the hook's timeout: on this image a cold start
+// measures ~39s end to end, so a step that runs for five minutes is a problem
+// worth reporting as a FAILED line, not worth waiting out.
+//
+// Everything else the hook runs (pg_isready, psql, createdb, pg_ctlcluster) is
+// local and should answer in under a second, so DEFAULT_TIMEOUT_MS is a guard
+// against a stuck process, not a budget line. Several of them hanging at once
+// would still push the total past 570, so run() also clamps every command to
+// what is left of DEADLINE. That is what makes the budget an invariant instead
+// of an arithmetic hope: the subprocesses cannot outlast it, whichever path
+// through the hook runs, and an overrun arrives as a FAILED or WARNING line
+// naming the step rather than as a killed hook.
+//
+// If you change one of these numbers, you are changing the budget. Keep the sum
+// of the three steps below the timeout in .claude/settings.json.
+const BUDGET_MS = 570_000;
+const DEADLINE = Date.now() + BUDGET_MS;
+const DEFAULT_TIMEOUT_MS = 30_000;
+const NPM_CI_TIMEOUT_MS = 300_000;
+const PRISMA_GENERATE_TIMEOUT_MS = 120_000;
+const MIGRATE_DEPLOY_TIMEOUT_MS = 150_000;
+
 const done = [];     // things this run changed
 const ready = [];    // things that were already in place
 const failed = [];   // toolchain failures: typecheck/lint output is untrustworthy
 const warnings = []; // database failures: only DB-backed gates are affected
 
-function run(cmd, args, { env = process.env, cwd = ROOT, timeoutMs = 60_000 } = {}) {
+function run(cmd, args, { env = process.env, cwd = ROOT, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   const result = spawnSync(cmd, args, {
     cwd,
     env,
     encoding: 'utf8',
-    timeout: timeoutMs,
+    // Whichever comes first: this step's own limit, or what is left of the
+    // budget. Past the deadline the floor of 1ms makes the command fail
+    // immediately as "timed out", which still reaches the reader -- being
+    // killed by the hook timeout would not.
+    timeout: Math.max(1, Math.min(timeoutMs, DEADLINE - Date.now())),
     maxBuffer: 64 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -112,17 +162,47 @@ function readOrNull(path) {
   }
 }
 
+function mtimeMsOrNull(path) {
+  try {
+    return statSync(path).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
 function ensureDependencies() {
-  if (existsSync(join(ROOT, 'node_modules/.package-lock.json'))) {
+  // npm rewrites node_modules/.package-lock.json on every install, so its mtime
+  // is npm's record of when the installed tree was last made to match the root
+  // lockfile. Checking that the record is no older than the lockfile is the
+  // dependency equivalent of the schema comparison in ensurePrismaClient below:
+  // a branch that changes package-lock.json reinstalls instead of running
+  // against a stale tree. Presence alone would report "Already ready:
+  // node_modules" over a tree missing the branch's new dependency, and the
+  // TS2307 that follows reads exactly like broken code -- the false-confidence
+  // failure this hook exists to prevent, told in the hook's own voice.
+  //
+  // mtime, not a hash: a checkout rewrites package-lock.json's mtime whether or
+  // not its bytes changed, so this errs toward an unnecessary npm ci and never
+  // toward missing a real change. Two stats keep the warm path's 0.2s intact;
+  // hashing the lockfile on every session start would buy a strictness that the
+  // one direction of error that matters here does not need.
+  const lockMtime = mtimeMsOrNull(join(ROOT, 'package-lock.json'));
+  const installedMtime = mtimeMsOrNull(join(ROOT, 'node_modules/.package-lock.json'));
+  const stale = installedMtime === null || (lockMtime !== null && installedMtime < lockMtime);
+  if (!stale) {
     ready.push('node_modules');
     return true;
   }
-  const r = run('npm', ['ci', '--no-audit', '--no-fund'], { timeoutMs: 480_000 });
+  const r = run('npm', ['ci', '--no-audit', '--no-fund'], { timeoutMs: NPM_CI_TIMEOUT_MS });
   if (!r.ok) {
     failed.push(`npm ci failed: ${r.detail}`);
     return false;
   }
-  done.push('installed dependencies (npm ci)');
+  // Say which of the two it was: "reinstalled" tells a reader who did not expect
+  // an install that the branch moved package-lock.json under them.
+  done.push(installedMtime === null
+    ? 'installed dependencies (npm ci)'
+    : 'reinstalled dependencies (npm ci; package-lock.json is newer than node_modules)');
   return true;
 }
 
@@ -134,7 +214,7 @@ function ensurePrismaClient() {
     ready.push('Prisma client');
     return;
   }
-  const r = run(PRISMA_BIN, ['generate', `--schema=${SCHEMA}`], { timeoutMs: 180_000 });
+  const r = run(PRISMA_BIN, ['generate', `--schema=${SCHEMA}`], { timeoutMs: PRISMA_GENERATE_TIMEOUT_MS });
   if (!r.ok) {
     failed.push(`prisma generate failed: ${r.detail}`);
     return;
@@ -228,7 +308,7 @@ function ensureMigrations(prismaAvailable) {
   const r = run(PRISMA_BIN, ['migrate', 'deploy', '--schema', 'prisma/schema.prisma'], {
     cwd: join(ROOT, 'packages/core-api'),
     env: { ...process.env, DATABASE_URL: TEST_DB_URL },
-    timeoutMs: 300_000,
+    timeoutMs: MIGRATE_DEPLOY_TIMEOUT_MS,
   });
   if (!r.ok) {
     warnings.push(`prisma migrate deploy against ${TEST_DB} failed: ${r.detail}`);
