@@ -14,8 +14,34 @@ The workflow runs on:
 - `push` to `main`
 - `pull_request` targeting `main`
 
-A concurrency group cancels superseded runs on the same ref. The deploy
-stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
+The concurrency group is `ci-${{ github.ref }}`, so runs on the same ref never
+overlap: at most one run per group is in progress, and a newer run on the same
+ref waits as `pending` until the in-flight one finishes.
+
+**Cancellation of the superseded run is asymmetric, and deliberately so** —
+`cancel-in-progress` is `${{ github.event_name == 'pull_request' }}`, so it is
+on for pull requests and off for `main` (#328). On a pull request a new push
+supersedes the old run and nobody is waiting on the old run's artifacts, so
+cancelling saves a cycle. On `main` every run is a release: it publishes images,
+migrates QA and rolls the release out. Cancelling that chain does not stop the
+ECS task it was waiting on — it only stops watching — so what gets destroyed is
+the deploy's own record of what happened, and `deploy-qa` cancelled after
+`deploy-migrate-qa` is the one window where QA's schema is new and its running
+image is old. So `main` runs queue instead, and its deploys serialise in merge
+order rather than the newer merge killing the older one's rollout.
+
+One run per group can be `pending`, so a third merge arriving while the first is
+still deploying replaces the queued second one rather than lining up behind it.
+Nothing in flight is lost and the replaced commit still ships in the run that
+does go out — only that commit's own `main` verdict does not happen.
+
+`qa-reset.yml` keeps an unconditional `cancel-in-progress: true`, which is
+correct for the opposite reason: there, nothing in flight needs protecting. A
+dispatch waiting on its environment approval has done no work yet, and the
+hazard is that it stays approvable indefinitely, so a second dispatch must
+disarm the first. See *Resetting the QA database* below.
+
+The deploy stages (`deploy-publish-images`, `deploy-migrate-qa`, `deploy-qa`,
 `poolmaster-browser-e2e`, `deploy-health-issue`) are gated to push events on
 `main` only — they do not run for pull requests.
 

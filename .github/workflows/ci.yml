@@ -6,9 +6,25 @@ on:
   pull_request:
     branches: [main]
 
+# #328 — cancellation is scoped to pull requests, and the asymmetry is the point.
+#
+# On a pull request a new push supersedes the old run and nobody is waiting on the old run's
+# artifacts, so cancelling it saves a cycle. On main every run is a release: the deploy stages
+# below publish images, migrate QA and roll the release out. Cancelling one of those does not
+# stop the ECS task it was waiting on — it only stops watching — so what gets destroyed is the
+# deploy's own record of what happened, and `deploy-qa` cancelled after `deploy-migrate-qa` is
+# the one window where QA's schema is new and its running image is old. Two merges minutes
+# apart hit exactly that, twice.
+#
+# With cancellation off, at most one run per group is in progress and a second main run stays
+# `pending` until the first finishes, so main's deploy chains serialise rather than racing each
+# other to QA. One run per group can be `pending`, so a third merge arriving while the first is
+# still deploying replaces the queued second one instead of lining up behind it — nothing in
+# flight is lost and the replaced commit still ships in the run that goes out, it just does not
+# get its own main verdict.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   AWS_REGION: us-east-2
