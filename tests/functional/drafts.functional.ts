@@ -207,7 +207,11 @@ async function seedUnsupportedSelectionTypeFixture() {
   };
 }
 
-async function seedBudgetPickFixture() {
+/**
+ * A budget-pick room with two entries and two priced golfers. Exclusive by default; pass
+ * `isExclusive: false` for the room where both entries may hold the same golfer.
+ */
+async function seedBudgetPickFixture(options: { isExclusive?: boolean } = {}) {
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Budget Commissioner',
     leagueName: 'Budget Functional League',
@@ -248,7 +252,7 @@ async function seedBudgetPickFixture() {
     configuration: {
       rosterSize: 1,
       budget: 8000,
-      isExclusive: true,
+      isExclusive: options.isExclusive ?? true,
     },
   });
 
@@ -373,9 +377,16 @@ async function seedBudgetPickFixture() {
   };
 }
 
+/**
+ * A tiered room with one tier. Non-exclusive by default, with only the commissioner entered;
+ * `isExclusive: true` with `withChallenger: true` is the room where a second entry contends
+ * for the same golfers.
+ */
 async function seedTieredDraftFixture(options: {
   participantCount?: number;
   picksFromTier?: number;
+  isExclusive?: boolean;
+  withChallenger?: boolean;
 } = {}) {
   const participantCount = options.participantCount ?? 1;
   const picksFromTier = options.picksFromTier ?? 1;
@@ -383,6 +394,28 @@ async function seedTieredDraftFixture(options: {
     displayName: 'Tiered Draft Commissioner',
     leagueName: 'Tiered Draft Functional League',
   });
+  const challenger = options.withChallenger
+    ? await buildRegisteredUser({ displayName: 'Tiered Draft Challenger' })
+    : null;
+
+  if (challenger) {
+    const inviteResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { maxUses: 1 },
+    });
+    if (!inviteResponse.data) {
+      throw new Error('Builder: generateInviteLink failed for tiered draft fixture');
+    }
+
+    const acceptResponse = await acceptInvitation({
+      client: challenger.client,
+      body: { inviteCode: inviteResponse.data.invitation.inviteCode },
+    });
+    if (!acceptResponse.data) {
+      throw new Error('Builder: acceptInvitation failed for tiered draft fixture');
+    }
+  }
 
   const { contestId } = await seedContestFixture(league.id, {
     name: 'Tiered Draft Functional Contest',
@@ -390,6 +423,7 @@ async function seedTieredDraftFixture(options: {
     scoringEngine: ScoringEngine.STROKE_PLAY,
     configuration: {
       rounds: 1,
+      isExclusive: options.isExclusive ?? false,
       tierConfig: [
         {
           tierId: 'tier-1',
@@ -411,6 +445,13 @@ async function seedTieredDraftFixture(options: {
 
   if (!entryResponse.data) {
     throw new Error('Builder: enterContest failed for tiered draft fixture');
+  }
+
+  const challengerEntryResponse = challenger
+    ? await enterContest({ client: challenger.client, path: { contestId } })
+    : null;
+  if (challengerEntryResponse && !challengerEntryResponse.data) {
+    throw new Error('Builder: enterContest failed for challenger tiered draft fixture');
   }
 
   const prisma = getFunctionalPrisma();
@@ -518,7 +559,9 @@ async function seedTieredDraftFixture(options: {
   return {
     contestId,
     commissioner,
+    challenger,
     entryId: entryResponse.data.entry.id,
+    challengerEntryId: challengerEntryResponse?.data?.entry.id ?? null,
     sportEventParticipantId: eventParticipantIds[0],
     sportEventParticipantIds: eventParticipantIds,
   };
@@ -805,5 +848,101 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       replacementParticipantId,
     ]);
     expect(unselectResponse.data?.draftPickHistories).toHaveLength(1);
+  });
+
+  it('#198 lets two entries in a non-exclusive budget-pick room hold the same participant', async () => {
+    const fixture = await seedBudgetPickFixture({ isExclusive: false });
+
+    const firstPickResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.commissionerEntryId, participantId: fixture.firstEventParticipantId },
+    });
+
+    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.availableParticipantIds).toEqual(
+      expect.arrayContaining([fixture.firstEventParticipantId, fixture.secondEventParticipantId]),
+    );
+
+    const samePickResponse = await submitContestSelection({
+      client: fixture.challenger.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.challengerEntryId, participantId: fixture.firstEventParticipantId },
+    });
+
+    expect(samePickResponse.data?.draftPickHistories).toHaveLength(2);
+    expect(samePickResponse.data?.draftPickHistories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entryId: fixture.commissionerEntryId,
+          participantId: fixture.firstEventParticipantId,
+        }),
+        expect.objectContaining({
+          entryId: fixture.challengerEntryId,
+          participantId: fixture.firstEventParticipantId,
+        }),
+      ]),
+    );
+    expect(samePickResponse.data?.availableParticipantIds).toContain(fixture.firstEventParticipantId);
+    expect(samePickResponse.data?.isComplete).toBe(true);
+  });
+
+  it('#198 rejects a participant another entry holds in an exclusive tiered room, and frees it on toggle-off', async () => {
+    const fixture = await seedTieredDraftFixture({
+      participantCount: 2,
+      isExclusive: true,
+      withChallenger: true,
+    });
+    const challenger = fixture.challenger;
+    const challengerEntryId = fixture.challengerEntryId;
+    if (!challenger || !challengerEntryId) throw new Error('fixture: challenger missing');
+    const [takenParticipantId, otherParticipantId] = fixture.sportEventParticipantIds;
+
+    const firstPickResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: takenParticipantId },
+    });
+
+    expect(firstPickResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(firstPickResponse.data?.availableParticipantIds).not.toContain(takenParticipantId);
+    expect(firstPickResponse.data?.availableParticipantIds).toContain(otherParticipantId);
+
+    const takenPickResponse = await submitContestSelection({
+      client: challenger.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: challengerEntryId, participantId: takenParticipantId },
+    });
+
+    expectFunctionalError(takenPickResponse, {
+      status: 400,
+      code: 'PARTICIPANT_ALREADY_TAKEN',
+    });
+
+    // The holder re-submitting its own pick is a toggle-off, not a contested take: it runs
+    // before the exclusivity check and puts the participant back in the pool.
+    const toggleOffResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: takenParticipantId },
+    });
+
+    expect(toggleOffResponse.data?.draftPickHistories).toHaveLength(0);
+    expect(toggleOffResponse.data?.availableParticipantIds).toContain(takenParticipantId);
+
+    const freedPickResponse = await submitContestSelection({
+      client: challenger.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: challengerEntryId, participantId: takenParticipantId },
+    });
+
+    expect(freedPickResponse.data?.draftPickHistories).toEqual([
+      expect.objectContaining({
+        entryId: challengerEntryId,
+        participantId: takenParticipantId,
+        tierId: 'tier-1',
+      }),
+    ]);
+    expect(freedPickResponse.data?.availableParticipantIds).not.toContain(takenParticipantId);
   });
 });
