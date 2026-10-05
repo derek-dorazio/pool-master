@@ -87,7 +87,6 @@ export async function loadContestLeaderboardEntries(
       sportEventParticipantId: pick.sportEventParticipantId,
       pickedAt: pick.pickedAt,
       slot: pick.slot ?? null,
-      tier: pick.tier ?? null,
     });
     picksByEntry.set(pick.entryId, list);
   }

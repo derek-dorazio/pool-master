@@ -5,6 +5,7 @@ export * from './providers';
 export * from './sport-catalog-types';
 export {
   compareScores,
+  isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantScoringDefinitionIdSchema,
   rankSortedScores,

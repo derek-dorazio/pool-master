@@ -104,6 +104,10 @@ function renderContestBoard() {
             element={<div data-testid="contest-entry-page" />}
             path="/contests/:contestId/entries/:entryId"
           />
+          <Route
+            element={<div data-testid="contest-leaderboard-page" />}
+            path="/league/:leagueCode/contests/:contestId/leaderboard"
+          />
           <Route element={<div data-testid="league-page" />} path="/league/:leagueCode" />
         </Routes>
       </MemoryRouter>
@@ -323,7 +327,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(await screen.findByTestId('contest-board-picks-hidden-entry-3')).toHaveTextContent(
       '5 picks made',
     );
-    expect(screen.queryByTestId(/contest-leaderboard-participant-entry-3-/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(/contest-entry-pick-entry-3-/)).not.toBeInTheDocument();
   });
 
   // pool-master-dxd.13 — pre-event-start + owner: expand reveals owner's own picks.
@@ -354,7 +358,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-1'));
 
     expect(
-      await screen.findByTestId('contest-leaderboard-participant-entry-1-participant-1'),
+      await screen.findByTestId('contest-entry-pick-entry-1-participant-1'),
     ).toHaveTextContent('Tiger Woods');
     expect(screen.queryByTestId('contest-board-picks-hidden-entry-1')).not.toBeInTheDocument();
   });
@@ -389,7 +393,7 @@ describe('ContestDetailPage (Contest Board)', () => {
     fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-3'));
 
     expect(
-      await screen.findByTestId('contest-leaderboard-participant-entry-3-participant-3'),
+      await screen.findByTestId('contest-entry-pick-entry-3-participant-3'),
     ).toHaveTextContent('Phil Mickelson');
     expect(screen.queryByTestId('contest-board-picks-hidden-entry-3')).not.toBeInTheDocument();
   });
@@ -436,19 +440,49 @@ describe('ContestDetailPage (Contest Board)', () => {
     );
   });
 
-  // #246 — a settled contest's standings are frozen, pick scores stay live; the page says so.
-  it('explains the frozen result on a COMPLETED contest and not on a live one', async () => {
-    primeMocks({ contestStatus: 'COMPLETED', entries: [] });
+  // #111 — this page never shows a score, revealed picks or not, so it never calls itself a
+  // leaderboard. It links out to the page that does, once the endpoint behind it will answer.
+  it('keeps one entry-focused heading whether or not picks are revealed', async () => {
+    primeMocks({ contestStatus: 'OPEN', picksRevealed: false, entries: [] });
 
     const { unmount } = renderContestBoard();
 
-    expect(await screen.findByTestId('contest-settled-note')).toHaveTextContent(
-      'Standings are frozen at settlement; pick scores show current event data',
-    );
+    expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Leaderboard' })).not.toBeInTheDocument();
     unmount();
 
-    primeMocks({ contestStatus: 'ACTIVE', entries: [] });
+    primeMocks({ contestStatus: 'ACTIVE', picksRevealed: true, entries: [] });
     renderContestBoard();
+
+    expect(await screen.findByRole('heading', { name: 'Entries' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Leaderboard' })).not.toBeInTheDocument();
+  });
+
+  it('offers the leaderboard only once picks are revealed', async () => {
+    primeMocks({ contestStatus: 'OPEN', picksRevealed: false, entries: [] });
+
+    const { unmount } = renderContestBoard();
+
+    await screen.findByTestId('contest-board-total-count');
+    expect(screen.queryByTestId('contest-leaderboard-link')).not.toBeInTheDocument();
+    unmount();
+
+    primeMocks({ contestStatus: 'ACTIVE', picksRevealed: true, entries: [] });
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-leaderboard-link')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/contest-1/leaderboard',
+    );
+  });
+
+  // #246's note about standings frozen at settlement alongside live golfer scores moved to the
+  // leaderboard page with the scores it describes; this page shows neither.
+  it('does not claim anything about frozen standings, having none to show', async () => {
+    primeMocks({ contestStatus: 'COMPLETED', entries: [] });
+
+    renderContestBoard();
+
     await screen.findByTestId('contest-board-total-count');
     expect(screen.queryByTestId('contest-settled-note')).not.toBeInTheDocument();
   });

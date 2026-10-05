@@ -78,7 +78,6 @@ export interface ScoredContestEntryPickRow {
   sportEventParticipantId: string;
   pickedAt: Date;
   slot: number | null;
-  tier: string | null;
   isCounting: boolean;
   isDropped: boolean;
   participant: ParticipantScore;
@@ -305,7 +304,6 @@ export function toContestLeaderboardResponse(
         sportEventParticipantId: pick.sportEventParticipantId,
         pickedAt: pick.pickedAt.toISOString(),
         slot: pick.slot,
-        tier: pick.tier,
         isCounting: pick.isCounting,
         isDropped: pick.isDropped,
       })),

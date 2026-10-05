@@ -4378,8 +4378,6 @@ export interface components {
             pickedAt: string;
             /** @description Optional roster slot from the pick row. */
             slot: number | null;
-            /** @description Optional tier from the pick row. */
-            tier: string | null;
             /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
             isCounting: boolean;
             /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
@@ -4433,8 +4431,6 @@ export interface components {
                 pickedAt: string;
                 /** @description Optional roster slot from the pick row. */
                 slot: number | null;
-                /** @description Optional tier from the pick row. */
-                tier: string | null;
                 /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
                 isCounting: boolean;
                 /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
@@ -4692,8 +4688,6 @@ export interface components {
                     pickedAt: string;
                     /** @description Optional roster slot from the pick row. */
                     slot: number | null;
-                    /** @description Optional tier from the pick row. */
-                    tier: string | null;
                     /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
                     isCounting: boolean;
                     /** @description Whether this scored pick is currently dropped because better picks fill the counting places. */
