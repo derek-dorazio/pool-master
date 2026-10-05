@@ -17,6 +17,18 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
     return rows.map(mapToSquadMembership);
   }
 
+  async findBySquads(squadIds: readonly string[], includeInactive = false): Promise<SquadMembership[]> {
+    if (squadIds.length === 0) return [];
+    const rows = await this.prisma.squadMembership.findMany({
+      where: {
+        squadId: { in: [...squadIds] },
+        ...(includeInactive ? {} : { status: SharedSquadMembershipStatus.ACTIVE }),
+      },
+      orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapToSquadMembership);
+  }
+
   async findBySquadAndUser(squadId: string, userId: string): Promise<SquadMembership | null> {
     const row = await this.prisma.squadMembership.findUnique({
       where: { squadId_userId: { squadId, userId } },

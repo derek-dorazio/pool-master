@@ -64,6 +64,7 @@ import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantProviderMappingRepository,
   ParticipantRepository,
+  SportEventParticipantRepository,
   SportEventRepository,
   SportLeagueRepository,
   SportRepository,
@@ -161,6 +162,7 @@ export function fakeSquadMembershipRepo(
 ): SquadMembershipRepository {
   return {
     findBySquad: many(),
+    findBySquads: many(),
     findBySquadAndUser: one(),
     findByLeagueAndUser: one(),
     create: echoCreate('squad-membership'),
@@ -267,6 +269,23 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
   };
 }
 
+export function fakeSportEventParticipantRepo(
+  overrides: Partial<SportEventParticipantRepository> = {},
+): SportEventParticipantRepository {
+  return {
+    findById: one(),
+    findBySportEvent: many(),
+    create: echoCreate('sport-event-participant'),
+    update: echoUpdate(),
+    createMany: nothing(),
+    upsertMany: nothing(),
+    updateMany: nothing(),
+    delete: nothing(),
+    countPicks: jest.fn().mockResolvedValue(0),
+    ...overrides,
+  };
+}
+
 export function fakeParticipantRepo(
   overrides: Partial<ParticipantRepository> = {},
 ): ParticipantRepository {
@@ -350,6 +369,8 @@ export function fakeContestEntryPickRepo(
     findByEntries: many(),
     findByEntriesWithParticipant: many(),
     countByEntries: jest.fn().mockResolvedValue(new Map()),
+    findByContestAndParticipant: many(),
+    countByContest: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }

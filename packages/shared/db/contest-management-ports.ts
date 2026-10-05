@@ -94,6 +94,18 @@ export interface ContestEntryPickRepository {
   findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]>;
   /** Picks per entry; an entry with none is absent from the map. */
   countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
+  /**
+   * Every pick of this field row across the contest's entries — the read behind an exclusive
+   * contest's "already taken" rule (#324). Contest-scoped rather than entry-scoped because the
+   * question spans entries; which entries disqualify a selection is the caller's rule, not this
+   * read's.
+   */
+  findByContestAndParticipant(
+    contestId: string,
+    sportEventParticipantId: string,
+  ): Promise<ContestEntryPick[]>;
+  /** How many picks the whole contest holds — the source of a pick's contest-wide pick number. */
+  countByContest(contestId: string): Promise<number>;
 }
 
 /** A settled entry standing: the core row and its golf extension, when it has one. */
