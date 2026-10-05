@@ -55,9 +55,9 @@ today, and did not count this file as one.
 It publishes two operations, `getDraftState` and `submitContestSelection`. It was the last
 module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules
 and response mapping in a single `routes.ts`; #346 extracted the service layer, so the
-module now carries the ordinary file set — `routes.ts`, `handler.ts`, `service.ts`,
-`draft-rules.ts`, `draft-errors.ts`, `wiring.ts`. The file set each module should end up
-with is `rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*.
+module now carries the ordinary layering. The file set each module should end up with is
+`rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*; `ls` the module
+for what it has today.
 
 This section previously described two "pure-function engines", `TieredPickEngine` and
 `BudgetPickEngine` (listed twice each). Neither was ever imported by `packages/core-api/src`,

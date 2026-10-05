@@ -9,6 +9,9 @@ contest-format validity matrices in code say.
 
 ## Getting started
 
+Prerequisites: Node.js (the version in `package.json` `engines`) and Docker, which
+`dev:start` needs running before it starts.
+
 ```bash
 npm install
 npm run dev:start
@@ -38,7 +41,7 @@ the one people read.
 | Sport and contest-format ideas (future, not built) | [`docs/CONTEST-RULES.md`](docs/CONTEST-RULES.md) |
 | The backend modules | [`packages/README.md`](packages/README.md) |
 | The web app | [`clients/poolmaster/README.md`](clients/poolmaster/README.md) |
-| Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md) |
+| Deploying, and Terraform state hygiene | [`infrastructure/terraform/README.md`](infrastructure/terraform/README.md). The promotion model: QA deploys on every push to `main`; staging and prod are a manual `workflow_dispatch` of `deploy.yml` promoting an immutable QA image tag |
 | The live API | `/apidoc` on any running backend |
 
 ## License

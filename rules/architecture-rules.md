@@ -248,10 +248,10 @@ can see. The suites themselves are governed by `testing-rules.md` §2 *Test Laye
 | `shared/domain` | The fields an entity has; the values its enums may take | Storage (`passwordHash` is deliberately absent from `User`), transport, authorization. **No imports** | Unit tests over the vocabulary itself — that the enum a DTO validates against and the enum an adapter maps to are the same enum. Prisma surfaces enum *member names* (`TWELVE_HOUR`) while the domain holds *values* (`12H`), so this is a real check, not a tautology |
 | `shared/db/ports.ts` | One interface per aggregate, written entirely in domain terms; queries named for the question they answer | Paging (`domain-model-conventions-rules.md` §16 *No Paging In The API*), Prisma types, secrets | Nothing of their own. They are interfaces; their tests are their adapters' |
 | `core-api/src/adapters` | `where`, `select`, `orderBy`, row→domain mapping, the null/undefined boundary. The only place that knows a Prisma row, and the only place enum mapping happens | Business rules, authorization, anything spanning aggregates | Integration tests against **real Postgres, no mocks**. This is the one layer where a mock proves nothing |
-| `core-api/src/modules/<object>` | The operations: guards and their order, idempotence, what shares a transaction, which side effects follow a write, which typed error each failure raises | HTTP. A service never sees a `request`, never sets a cookie, never picks a status code | Unit tests per service, with port fakes |
+| `core-api/src/modules/<object>` | The operations: guards and their order, idempotence, what shares a transaction, which side effects follow a write, which typed error each failure raises | HTTP — a service never sees a `request`, never sets a cookie, never picks a status code. A single-aggregate read that bypasses its port: the only exceptions are `$transaction`, the cross-table cascade, the refresh-token revoke and the `passwordHash` read the port deliberately never serves, each commented at the call site | Unit tests per service, with port fakes |
 | `core-api/src/mappers` | One projection per object: field selection and `Date → ISO string` | Anything conditional on the caller | The contract-verification suites, which parse real responses against the DTO schema — a stronger check than asserting a mapper's return against a literal |
 | `shared/dto` | Zod schemas, their inferred types, and the `registerSchema` call that publishes each as a named OpenAPI component | Viewer context (below); per-caller variants | Unit tests over the generated artifacts: that every registered component is published, and that the generator emits `| null` where the schema says nullable |
-| `<object>/routes.ts` | Path, method, schema refs — and the module's composition root, the only place that knows both an interface and its implementation | Logic. A route wires and declares; it does not decide | Contract-verification integration (does the response still match its schema) and functional suites driven through the **generated SDK** (does the published contract and the client still agree) |
+| `<object>/routes.ts` | Path, method, schema refs — and, with the module's `wiring.ts` where one exists, its composition root: the only place that knows both an interface and its implementation | Logic. A route wires and declares; it does not decide | Contract-verification integration (does the response still match its schema) and functional suites driven through the **generated SDK** (does the published contract and the client still agree) |
 | `plugins/` and `core/` | Cross-cutting Fastify plugins; process-level helpers with no domain content | Domain content. Root-admin operations live in the module of what they administer — `admin` is a permission, not a place | The suites of whatever they cut across |
 
 ### Traps in the service layers
@@ -277,7 +277,9 @@ Each of these was a real defect, and each reads as plausible code.
   may assert: the returned value, the typed error (`code`, `statusCode`), the **absence** of
   a write (the only way idempotence and a short-circuiting guard are visible), that two
   writes shared one `$transaction`, the content of a side effect handed to a port, and that
-  **both callers reach the same operation**.
+  **both callers reach the same operation**. The one exception: a service that holds no state
+  and issues no query, where the update it hands the port *is* its output — and the test file
+  that relies on it says so.
 - **Positional constructor parameters with trailing optionals are the reason some reads are
   still on raw Prisma.** Services taking twelve, nine and seven of them cannot absorb a new
   dependency safely: converting them landed a Prisma mock in a logger slot and a repository
@@ -410,5 +412,6 @@ belongs in a rule, what rots, and the sorting principle for deciding between a c
 a rule, product truth and an ADR (§0 governing rule 7). Read it before editing any rule
 file. The one addition specific to this file: a change to the API-contract flow lands in
 these architecture rules and in [Service Rules](service-rules.md),
-[React UI Rules](react-ui-rules.md) and [Testing Rules](testing-rules.md) together, because
-the contract chain spans all four.
+[React UI Rules](react-ui-rules.md), [Testing Rules](testing-rules.md) and
+[Model Change Rules](model-change-rules.md) together, because the contract chain and the
+generated-client regeneration it sequences span all five.
