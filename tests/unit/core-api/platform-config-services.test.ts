@@ -15,6 +15,18 @@ describe('platform config services', () => {
       );
     });
 
+    it('ingestion config defaults the scheduled field sync to off and keeps live scores on', async () => {
+      const service = new IngestionConfigService(fakeLogger());
+
+      const config = await service.getConfig();
+
+      expect(config.eventParticipants.enabled).toBe(false);
+      expect(config.eventLiveScores.enabled).toBe(true);
+      await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
+        eventParticipants: expect.objectContaining({ enabled: false }),
+      }));
+    });
+
     it('updates ingestion config, resolves per-sport overrides, and resets defaults', async () => {
       const service = new IngestionConfigService(fakeLogger());
 
