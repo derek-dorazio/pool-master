@@ -284,15 +284,17 @@ describe('Golf round scores — admin correction surface', () => {
   });
 
   it.each([
-    ['0 strokes', { strokes: 0 }],
-    ['a thru above 18', { thru: 19 }],
-  ])('an upload row with %s is refused with 400 and writes nothing', async (_label, overrides) => {
-    const { event, rory } = await createField(`upload-bounds-${Object.keys(overrides)[0]}`);
+    ['upload', '0 strokes', { strokes: 0 }, ''],
+    ['upload', 'a thru above 18', { thru: 19 }, ''],
+    ['preview', '0 strokes', { strokes: 0 }, '/preview'],
+    ['preview', 'a thru above 18', { thru: 19 }, '/preview'],
+  ])('%s: a row with %s is refused with 400 and writes nothing', async (operation, _label, overrides, suffix) => {
+    const { event, rory } = await createField(`${operation}-bounds-${Object.keys(overrides)[0]}`);
     const admin = await createTestUser({ isRootAdmin: true });
 
     const res = await getApp().inject({
       method: 'POST',
-      url: `/api/v1/events/${event.id}/rounds/1/golf-scores`,
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores${suffix}`,
       headers: admin.headers,
       payload: { rows: [row(rory.participant.id, overrides)] },
     });
