@@ -1393,6 +1393,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/import-year-from-provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import a tour's event year from a provider
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD. Root admin only.
+         */
+        post: operations["importEventYearFromProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/from-provider-event": {
         parameters: {
             query?: never;
@@ -3314,6 +3334,140 @@ export interface components {
             eventYear: number;
             /** @description The year cloned to; defaults to eventYear + 1. 409 EVENT_YEAR_NOT_EMPTY when the sport league already has events in it. */
             targetYear?: number;
+        };
+        /** @description Creates each of the provider's events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded. */
+        ImportSportEventYearFromProviderRequest: {
+            /**
+             * Format: uuid
+             * @description The tour. Its matchKeyword must equal the provider's tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.
+             */
+            sportLeagueId: string;
+            /** @description Provider events starting in this calendar year (UTC) are imported, as editions branded with it. */
+            eventYear: number;
+            providerId: string;
+        };
+        /**
+         * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+         * @enum {string}
+         */
+        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "EDITION_EXISTS";
+        /** @description What an event-year import created and skipped. Running it again creates nothing new. */
+        ImportSportEventYearFromProviderResponse: {
+            /** @description The events created, in provider order. */
+            created: {
+                /**
+                 * Format: uuid
+                 * @description Sport-event identifier.
+                 */
+                id: string;
+                /** @description Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.) */
+                externalId: string;
+                /** @description Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.) */
+                providerId: string;
+                /**
+                 * @description Sport the event belongs to.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Event name shown in contest and event selectors. */
+                name: string;
+                /** @description Venue name when known; null otherwise. */
+                venue: string | null;
+                /** @description Human-readable location when known; null otherwise. */
+                location: string | null;
+                /**
+                 * @description Event lifecycle status.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /**
+                 * Format: date-time
+                 * @description Scheduled or actual start time.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled or actual end time when known; null otherwise.
+                 */
+                endDate: string | null;
+                /** @description Number of rounds when the format has them; null otherwise. */
+                rounds: number | null;
+                /** @description Field size the provider reports, when it reports one; null otherwise. */
+                participantCount: number | null;
+                /** @description Number of event participants currently persisted for the event. */
+                loadedParticipantCount: number;
+                /**
+                 * Format: date-time
+                 * @description When the event becomes available for contest setup.
+                 */
+                releaseAt: string;
+                /**
+                 * Format: date-time
+                 * @description After this time, field changes are no longer honored for new contest setup.
+                 */
+                fieldLocksAt: string;
+                /** @description Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed. */
+                fieldLocked: boolean;
+                /**
+                 * @description Contest-setup readiness right now.
+                 * @enum {string}
+                 */
+                readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+                /** @description Why the event is or is not contest-eligible right now. */
+                readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+                /** @description Whether a contest can be created or configured for the event right now. */
+                contestEligible: boolean;
+                /**
+                 * Format: uuid
+                 * @description The recurring tournament (event series) this is one edition of — the event's only parent.
+                 */
+                eventSeriesId: string;
+                /** @description The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year. */
+                eventYear: number;
+                /**
+                 * Format: uuid
+                 * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
+                 */
+                sportLeagueId: string;
+                /**
+                 * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+                 * @enum {string}
+                 */
+                syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
+                autoLifecycleEnabled: boolean;
+                /** @description Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.) */
+                tierCount: number;
+                /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
+                contestCount: number;
+                /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
+                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                /** @description Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.) */
+                metadata: {
+                    [key: string]: unknown;
+                };
+                /**
+                 * Format: date-time
+                 * @description When the event row was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the event row was last updated.
+                 */
+                updatedAt: string;
+            }[];
+            /** @description Provider events left alone because PoolMaster already has them. */
+            skipped: {
+                /** @description The provider event id. */
+                externalId: string;
+                name: string;
+                /**
+                 * @description ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+                 * @enum {string}
+                 */
+                reason: "ALREADY_LINKED" | "EDITION_EXISTS";
+            }[];
         };
         /** @description Changes to an admin-managed event; omitted fields are left alone. */
         UpdateSportEventRequest: {
@@ -7252,7 +7406,7 @@ export interface components {
             sportId: string;
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
-            /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
+            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
             matchKeyword: string | null;
             /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
             currentEventYear: number | null;
@@ -7299,7 +7453,7 @@ export interface components {
                 sportId: string;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
@@ -7337,7 +7491,7 @@ export interface components {
                 sportId: string;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description Substring a provider event name carries when it belongs to this sport league; null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
@@ -7368,7 +7522,7 @@ export interface components {
             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
             /** @description Unique within the sport. */
             name: string;
-            /** @description Provider event-name keyword for this sport league. */
+            /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
             matchKeyword?: string;
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
@@ -8647,7 +8801,7 @@ export interface components {
         ProviderCatalogEventListQuery: {
             /** @enum {string} */
             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+            /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
             sportLeagueId?: string;
             /**
              * Format: date-time
@@ -15278,6 +15432,106 @@ export interface operations {
             };
         };
     };
+    importEventYearFromProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportSportEventYearFromProviderRequest"];
+            };
+        };
+        responses: {
+            /** @description What an event-year import created and skipped. Running it again creates nothing new. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSportEventYearFromProviderResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     createEventFromProviderEvent: {
         parameters: {
             query?: never;
@@ -19419,7 +19673,7 @@ export interface operations {
         parameters: {
             query: {
                 sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+                /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
                 from?: string;

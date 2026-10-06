@@ -312,7 +312,7 @@ export type ProviderEventDto = z.infer<typeof ProviderEventDtoSchema>;
 
 export const ProviderCatalogEventListQuerySchema = z.object({
   sport: SportDtoSchema,
-  sportLeagueId: z.string().optional().describe('Resolves to that league\'s matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter.'),
+  sportLeagueId: z.string().optional().describe('Resolves to that league\'s matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.'),
   from: DateTimeSchema.optional().describe('Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.'),
   to: DateTimeSchema.optional().describe('Only events starting at or before this.'),
   search: z.string().optional(),

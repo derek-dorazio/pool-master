@@ -25,6 +25,7 @@ import {
   SportEventParticipantListResponseSchema,
   SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
+  ImportSportEventYearFromProviderResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
@@ -269,6 +270,32 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
  * operations run against a provider the test controls. The auth guard is registered as the
  * application registers it: the sync handlers read the signed-in root admin from it.
  */
+/** A contract provider whose slate carries a tour name, as the mock's tour seeds do (#385). */
+class TourSlateContractProvider extends OperationalContractProvider {
+  constructor(private readonly tour: string) {
+    super();
+  }
+
+  override async getUpcomingEvents(): Promise<SportEvent[]> {
+    const event = (externalId: string, name: string, tour: string, day: string): SportEvent => ({
+      externalId,
+      providerId: this.providerId,
+      sport: 'GOLF',
+      name,
+      startDate: new Date(`${day}T12:00:00.000Z`),
+      endDate: new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`),
+      status: 'SCHEDULED',
+      fieldLocked: false,
+      metadata: { tour },
+    });
+    return [
+      event(`${this.tour}-alpha`, `${this.tour} Alpha Open`, this.tour, '2085-03-05'),
+      event(`${this.tour}-bravo`, `${this.tour} Bravo Classic`, this.tour, '2085-04-09'),
+      event(`${this.tour}-other`, `${this.tour} Other Tour Event`, 'Some Other Tour', '2085-05-07'),
+    ];
+  }
+}
+
 /** A contract provider that, like the QA mock feed, can simulate live scoring (#382). */
 class SimulatingContractProvider extends OperationalContractProvider {
   private readonly running = new Map<string, number>();
@@ -1551,6 +1578,83 @@ describe('Contract verification (root admin)', () => {
         await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
         await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
       }
+      await app.close();
+    }
+  });
+  it('importEventYearFromProvider creates the tour\'s missing events and reports the rest as skipped, and refuses a league without a match keyword with 422', async () => {
+    const stamp = Date.now().toString().slice(-8);
+    const tour = `CTOUR${stamp}`;
+    const app = await buildIngestionApp(new TourSlateContractProvider(tour));
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin Import Year Contract User', isRootAdmin: true });
+    await getPrisma().sport.upsert({
+      where: { name: 'GOLF' },
+      create: { name: 'GOLF', participantType: 'INDIVIDUAL', category: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const created = { sportLeagueIds: [] as string[] };
+
+    try {
+      const leagueRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/sport-leagues',
+        headers: rootAdmin.headers,
+        payload: { sport: 'GOLF', name: `Import Contract Tour ${stamp}`, matchKeyword: tour.toLowerCase() },
+      });
+      expect(leagueRes.statusCode).toBe(201);
+      const sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
+      created.sportLeagueIds.push(sportLeagueId);
+
+      // --- importEventYearFromProvider (201: { created, skipped }) ---------------
+      const importYear = () => app.inject({
+        method: 'POST',
+        url: '/api/v1/events/import-year-from-provider',
+        headers: rootAdmin.headers,
+        payload: { sportLeagueId, eventYear: 2085, providerId: 'contract-provider' },
+      });
+      const firstRes = await importYear();
+      expect(firstRes.statusCode).toBe(201);
+      const first = ImportSportEventYearFromProviderResponseSchema.safeParse(firstRes.json());
+      expect(first.success).toBe(true);
+      expect(first.data!.created.map((event) => event.externalId)).toEqual([`${tour}-alpha`, `${tour}-bravo`]);
+      expect(first.data!.created.every((event) => event.syncScope === 'SCORES_ONLY')).toBe(true);
+      expect(first.data!.skipped).toEqual([]);
+
+      const againRes = await importYear();
+      expect(againRes.statusCode).toBe(201);
+      expect(ImportSportEventYearFromProviderResponseSchema.safeParse(againRes.json()).success).toBe(true);
+      expect(againRes.json()).toEqual({
+        created: [],
+        skipped: [
+          { externalId: `${tour}-alpha`, name: `${tour} Alpha Open`, reason: 'ALREADY_LINKED' },
+          { externalId: `${tour}-bravo`, name: `${tour} Bravo Classic`, reason: 'ALREADY_LINKED' },
+        ],
+      });
+
+      // --- 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD ---------------------------------
+      const bareRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/sport-leagues',
+        headers: rootAdmin.headers,
+        payload: { sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
+      });
+      created.sportLeagueIds.push(bareRes.json<SportLeagueResponse>().sportLeague.id);
+      const noKeywordRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/events/import-year-from-provider',
+        headers: rootAdmin.headers,
+        payload: { sportLeagueId: bareRes.json<SportLeagueResponse>().sportLeague.id, eventYear: 2085, providerId: 'contract-provider' },
+      });
+      expect(noKeywordRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(noKeywordRes.json()).success).toBe(true);
+    } finally {
+      const prisma = getPrisma();
+      const eventIds = (await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: { in: created.sportLeagueIds } } }, select: { id: true } }))
+        .map((event) => event.id);
+      await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
+      await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: created.sportLeagueIds } } });
+      await prisma.sportLeague.deleteMany({ where: { id: { in: created.sportLeagueIds } } });
       await app.close();
     }
   });

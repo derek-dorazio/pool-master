@@ -2339,6 +2339,322 @@
         "additionalProperties": false,
         "description": "Re-creates each of a sport league's events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change."
       },
+      "ImportSportEventYearFromProviderRequest": {
+        "type": "object",
+        "properties": {
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The tour. Its matchKeyword must equal the provider's tour name for an event (case-insensitive), e.g. \"PGA TOUR\"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none."
+          },
+          "eventYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Provider events starting in this calendar year (UTC) are imported, as editions branded with it."
+          },
+          "providerId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "sportLeagueId",
+          "eventYear",
+          "providerId"
+        ],
+        "additionalProperties": false,
+        "description": "Creates each of the provider's events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded."
+      },
+      "ImportSportEventSkipReasonDto": {
+        "type": "string",
+        "enum": [
+          "ALREADY_LINKED",
+          "EDITION_EXISTS"
+        ],
+        "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
+      },
+      "ImportSportEventYearFromProviderResponse": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Sport-event identifier."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerId": {
+                  "type": "string",
+                  "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                },
+                "sport": {
+                  "type": "string",
+                  "enum": [
+                    "GOLF",
+                    "NFL",
+                    "NBA",
+                    "F1",
+                    "NASCAR",
+                    "NCAA_BASKETBALL",
+                    "NCAA_HOCKEY",
+                    "NCAA_FOOTBALL",
+                    "TENNIS",
+                    "HORSE_RACING",
+                    "SOCCER",
+                    "NHL",
+                    "MLB",
+                    "UFC"
+                  ],
+                  "description": "Sport the event belongs to."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Event name shown in contest and event selectors."
+                },
+                "venue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Venue name when known; null otherwise."
+                },
+                "location": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Human-readable location when known; null otherwise."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED",
+                    "POSTPONED"
+                  ],
+                  "description": "Event lifecycle status."
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Scheduled or actual start time."
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "Scheduled or actual end time when known; null otherwise."
+                },
+                "rounds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Number of rounds when the format has them; null otherwise."
+                },
+                "participantCount": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Field size the provider reports, when it reports one; null otherwise."
+                },
+                "loadedParticipantCount": {
+                  "type": "integer",
+                  "description": "Number of event participants currently persisted for the event."
+                },
+                "releaseAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event becomes available for contest setup."
+                },
+                "fieldLocksAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "After this time, field changes are no longer honored for new contest setup."
+                },
+                "fieldLocked": {
+                  "type": "boolean",
+                  "description": "Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed."
+                },
+                "readinessStatus": {
+                  "type": "string",
+                  "enum": [
+                    "NOT_RELEASED",
+                    "PENDING_FIELD",
+                    "CONTEST_ELIGIBLE",
+                    "FIELD_LOCKED"
+                  ],
+                  "description": "Contest-setup readiness right now."
+                },
+                "readinessReasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "EVENT_NOT_RELEASED",
+                      "FIELD_NOT_LOADED",
+                      "FIELD_LOCKED"
+                    ]
+                  },
+                  "description": "Why the event is or is not contest-eligible right now."
+                },
+                "contestEligible": {
+                  "type": "boolean",
+                  "description": "Whether a contest can be created or configured for the event right now."
+                },
+                "eventSeriesId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
+                },
+                "eventYear": {
+                  "type": "integer",
+                  "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+                },
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
+                },
+                "syncScope": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "SCORES_ONLY",
+                    "FULL"
+                  ],
+                  "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
+                },
+                "autoLifecycleEnabled": {
+                  "type": "boolean",
+                  "description": "Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)"
+                },
+                "tierCount": {
+                  "type": "integer",
+                  "description": "Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)"
+                },
+                "contestCount": {
+                  "type": "integer",
+                  "description": "Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)"
+                },
+                "allowedTransitions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "SCHEDULED",
+                      "IN_PROGRESS",
+                      "COMPLETED",
+                      "CANCELLED",
+                      "POSTPONED"
+                    ]
+                  },
+                  "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "description": "Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event row was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the event row was last updated."
+                }
+              },
+              "required": [
+                "id",
+                "externalId",
+                "providerId",
+                "sport",
+                "name",
+                "venue",
+                "location",
+                "status",
+                "startDate",
+                "endDate",
+                "rounds",
+                "participantCount",
+                "loadedParticipantCount",
+                "releaseAt",
+                "fieldLocksAt",
+                "fieldLocked",
+                "readinessStatus",
+                "readinessReasons",
+                "contestEligible",
+                "eventSeriesId",
+                "eventYear",
+                "sportLeagueId",
+                "syncScope",
+                "autoLifecycleEnabled",
+                "tierCount",
+                "contestCount",
+                "allowedTransitions",
+                "metadata",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A real-world event a contest can be run on — a golf tournament, a race, a match."
+            },
+            "description": "The events created, in provider order."
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "externalId": {
+                  "type": "string",
+                  "description": "The provider event id."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "ALREADY_LINKED",
+                    "EDITION_EXISTS"
+                  ],
+                  "description": "ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
+                }
+              },
+              "required": [
+                "externalId",
+                "name",
+                "reason"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Provider events left alone because PoolMaster already has them."
+          }
+        },
+        "required": [
+          "created",
+          "skipped"
+        ],
+        "additionalProperties": false,
+        "description": "What an event-year import created and skipped. Running it again creates nothing new."
+      },
       "UpdateSportEventRequest": {
         "type": "object",
         "properties": {
@@ -13396,7 +13712,7 @@
               "string",
               "null"
             ],
-            "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
+            "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set."
           },
           "currentEventYear": {
             "type": [
@@ -13501,7 +13817,7 @@
                     "string",
                     "null"
                   ],
-                  "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
+                  "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set."
                 },
                 "currentEventYear": {
                   "type": [
@@ -13582,7 +13898,7 @@
                   "string",
                   "null"
                 ],
-                "description": "Substring a provider event name carries when it belongs to this sport league; null when none is set."
+                "description": "The provider's tour name for this sport league (e.g. \"PGA TOUR\"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set."
               },
               "currentEventYear": {
                 "type": [
@@ -13666,7 +13982,7 @@
           },
           "matchKeyword": {
             "type": "string",
-            "description": "Provider event-name keyword for this sport league."
+            "description": "Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. \"PGA TOUR\") to use the event-year import."
           }
         },
         "required": [
@@ -17113,7 +17429,7 @@
           },
           "sportLeagueId": {
             "type": "string",
-            "description": "Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter."
+            "description": "Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter."
           },
           "from": {
             "type": "string",
@@ -30223,6 +30539,194 @@
         }
       }
     },
+    "/api/v1/events/import-year-from-provider": {
+      "post": {
+        "operationId": "importEventYearFromProvider",
+        "summary": "Import a tour's event year from a provider",
+        "tags": [
+          "Events"
+        ],
+        "description": "Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, and series that already have an edition that year, are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportSportEventYearFromProviderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What an event-year import created and skipped. Running it again creates nothing new.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSportEventYearFromProviderResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/events/from-provider-event": {
       "post": {
         "operationId": "createEventFromProviderEvent",
@@ -38243,7 +38747,7 @@
             "in": "query",
             "name": "sportLeagueId",
             "required": false,
-            "description": "Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter."
+            "description": "Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter."
           },
           {
             "schema": {

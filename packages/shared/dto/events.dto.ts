@@ -133,6 +133,31 @@ export const CloneSportEventYearRequestSchema = z.object({
 }).describe('Re-creates each of a sport league\'s events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change.');
 export type CloneSportEventYearRequest = z.infer<typeof CloneSportEventYearRequestSchema>;
 
+/**
+ * #385 — a tour's event year created in one action from the provider's slate, each event
+ * linked for scores. Answered with what was created and what was skipped.
+ */
+export const ImportSportEventYearFromProviderRequestSchema = z.object({
+  sportLeagueId: z.string().uuid().describe('The tour. Its matchKeyword must equal the provider\'s tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.'),
+  eventYear: z.number().int().min(2000).max(2100).describe('Provider events starting in this calendar year (UTC) are imported, as editions branded with it.'),
+  providerId: z.string().min(1),
+}).describe('Creates each of the provider\'s events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded.');
+export type ImportSportEventYearFromProviderRequest = z.infer<typeof ImportSportEventYearFromProviderRequestSchema>;
+
+export const ImportSportEventSkipReasonDtoSchema = z.enum(['ALREADY_LINKED', 'EDITION_EXISTS'])
+  .describe('ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).');
+export type ImportSportEventSkipReasonDto = z.infer<typeof ImportSportEventSkipReasonDtoSchema>;
+
+export const ImportSportEventYearFromProviderResponseSchema = z.object({
+  created: z.array(SportEventDtoSchema).describe('The events created, in provider order.'),
+  skipped: z.array(z.object({
+    externalId: z.string().describe('The provider event id.'),
+    name: z.string(),
+    reason: ImportSportEventSkipReasonDtoSchema,
+  })).describe('Provider events left alone because PoolMaster already has them.'),
+}).describe('What an event-year import created and skipped. Running it again creates nothing new.');
+export type ImportSportEventYearFromProviderResponse = z.infer<typeof ImportSportEventYearFromProviderResponseSchema>;
+
 export const UpdateSportEventRequestSchema = z.object({
   name: z.string().min(1).optional(),
   venue: z.string().nullable().optional().describe('null clears it.'),
@@ -373,6 +398,9 @@ registerSchema('SportEventResponse', SportEventResponseSchema);
 registerSchema('CreateSportEventRequest', CreateSportEventRequestSchema);
 registerSchema('CreateSportEventFromProviderEventRequest', CreateSportEventFromProviderEventRequestSchema);
 registerSchema('CloneSportEventYearRequest', CloneSportEventYearRequestSchema);
+registerSchema('ImportSportEventYearFromProviderRequest', ImportSportEventYearFromProviderRequestSchema);
+registerSchema('ImportSportEventSkipReasonDto', ImportSportEventSkipReasonDtoSchema);
+registerSchema('ImportSportEventYearFromProviderResponse', ImportSportEventYearFromProviderResponseSchema);
 registerSchema('UpdateSportEventRequest', UpdateSportEventRequestSchema);
 registerSchema('TransitionSportEventRequest', TransitionSportEventRequestSchema);
 registerSchema('LinkSportEventScoreSourceRequest', LinkSportEventScoreSourceRequestSchema);

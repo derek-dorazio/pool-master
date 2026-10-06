@@ -52,6 +52,16 @@ export interface ProviderEventDetailSummary {
 const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
+/**
+ * #385 — whether a provider event belongs to the tour a sport league's matchKeyword names:
+ * its `metadata.tour` equals the keyword, ignoring case and surrounding space. Exact, so
+ * "PGA TOUR" never matches "LPGA Tour".
+ */
+function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
+  const tour = event.metadata.tour;
+  return typeof tour === 'string' && tour.trim().toLowerCase() === keyword.trim().toLowerCase();
+}
+
 export class EventScoreSourceService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -88,9 +98,58 @@ export class EventScoreSourceService {
       : null;
     const search = options.search?.trim().toLowerCase() || null;
 
+    // #385 — a league's keyword is either the provider's tour name or a name substring.
     return events
-      .filter((event) => !matchKeyword || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
+      .filter((event) => !matchKeyword
+        || isTourEvent(event, matchKeyword)
+        || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
+  }
+
+  /**
+   * #385 — a tour's slate for one year, for the bulk import. A provider event belongs to the
+   * tour when its `metadata.tour` equals the sport league's matchKeyword, ignoring case, so
+   * "PGA TOUR" never picks up "LPGA Tour" the way a name substring would. The year is the
+   * event's UTC start date.
+   */
+  async listTourEventsForYear(
+    providerId: string,
+    sportLeagueId: string,
+    eventYear: number,
+  ): Promise<Array<ProviderEventDetailSummary & { externalId: string }>> {
+    const provider = this.providerRegistry.getProviderById(providerId);
+    if (!provider) {
+      throw new EventScoreSourceError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+    const sportLeague = await this.prisma.sportLeague.findUnique({
+      where: { id: sportLeagueId },
+      include: { sport: true },
+    });
+    if (!sportLeague) {
+      throw new EventScoreSourceError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    }
+    const tour = sportLeague.matchKeyword?.trim();
+    if (!tour) {
+      throw new EventScoreSourceError(
+        `${sportLeague.name} has no match keyword, so no provider tour can be matched to it.`,
+        'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD',
+        422,
+      );
+    }
+
+    const events = await provider.getUpcomingEvents(sportLeague.sport.name as Sport, {
+      from: new Date(Date.UTC(eventYear, 0, 1)),
+      to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
+    });
+    return events
+      .filter((event) => isTourEvent(event, tour))
+      .map((event) => ({
+        externalId: event.externalId,
+        name: event.name,
+        venue: event.venue ?? null,
+        startDate: event.startDate,
+        endDate: event.endDate ?? null,
+      }));
   }
 
   /**
