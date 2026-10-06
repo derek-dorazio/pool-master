@@ -11,16 +11,18 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
  *     await handler(asFastifyRequest<Request>({ params, query }), asFastifyReply(reply));
  *     expect(reply.send).toHaveBeenCalledWith(...);
  *
- * The parameter types reject a double none of whose keys is a request/reply member, but not
- * a single misspelt key alongside correct ones. This replaces `as any`; it is not a licence
- * to cast anything else.
+ * The parameters are `Partial<R>` / `Partial<FastifyReply>`, so a field the double does set
+ * is checked against its declared type (`params: { providerId: 123 }` fails). What this does
+ * NOT check: a bare `jest.fn()` method is `jest.Mock<any, any>` and fits any signature, and
+ * the members left out are simply absent at run time. This replaces `as any`; it is not a
+ * licence to cast anything else.
  */
 export function asFastifyRequest<R extends FastifyRequest = FastifyRequest>(
-  double: { [K in keyof R]?: unknown },
+  double: Partial<R>,
 ): R {
   return double as R;
 }
 
-export function asFastifyReply(double: { [K in keyof FastifyReply]?: unknown }): FastifyReply {
+export function asFastifyReply(double: Partial<FastifyReply>): FastifyReply {
   return double as FastifyReply;
 }
