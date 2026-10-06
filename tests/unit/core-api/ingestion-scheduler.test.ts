@@ -6,6 +6,7 @@
  */
 
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import type { IngestionCallbacks, SportSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { SyncOrchestratorRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -74,13 +75,20 @@ function emptyLiveScorePersistenceResult() {
   };
 }
 
-function createMockRegistry(provider: SportDataProvider | null, supportedSports: Sport[] = []) {
-  return {
-    getProvider: jest.fn().mockReturnValue(provider),
-    getSupportedSports: jest.fn().mockReturnValue(supportedSports),
-    getAllProviders: jest.fn().mockReturnValue(provider ? [provider] : []),
-    updateHealth: jest.fn(),
-  } as any;
+/**
+ * A real `ProviderRegistry` with the four methods the scheduler reads stubbed, so the double
+ * is the scheduler's actual parameter type rather than an `any`-cast literal of it.
+ */
+function createMockRegistry(
+  provider: SportDataProvider | null,
+  supportedSports: Sport[] = [],
+): ProviderRegistry {
+  const registry = new ProviderRegistry();
+  jest.spyOn(registry, 'getProvider').mockReturnValue(provider);
+  jest.spyOn(registry, 'getSupportedSports').mockReturnValue(supportedSports);
+  jest.spyOn(registry, 'getAllProviders').mockReturnValue(provider ? [provider] : []);
+  jest.spyOn(registry, 'updateHealth').mockImplementation(() => undefined);
+  return registry;
 }
 
 function createEnabledScheduleConfig() {
@@ -739,8 +747,8 @@ describe('IngestionScheduler', () => {
         'runConfiguredSportScheduleSync',
       ) as (sport: Sport) => Promise<void>;
       await runConfiguredSportScheduleSync.call(scheduler, 'GOLF' as Sport);
-      await (scheduler as any).runConfiguredSportFieldSync('GOLF' as Sport);
-      await (scheduler as any).runConfiguredSportRankingSync('GOLF' as Sport);
+      await scheduler['runConfiguredSportFieldSync']('GOLF' as Sport);
+      await scheduler['runConfiguredSportRankingSync']('GOLF' as Sport);
 
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
         source: 'SCHEDULED',
@@ -1017,9 +1025,9 @@ describe('IngestionScheduler', () => {
         },
       );
 
-      await (scheduler as any).runConfiguredSportFieldSync('GOLF' as Sport);
-      await (scheduler as any).runConfiguredEventSyncSweep('GOLF' as Sport, 'EVENTLIVESCORES');
-      await (scheduler as any).runConfiguredEventSyncSweep('GOLF' as Sport, 'EVENTRESULTS');
+      await scheduler['runConfiguredSportFieldSync']('GOLF' as Sport);
+      await scheduler['runConfiguredEventSyncSweep']('GOLF' as Sport, 'EVENTLIVESCORES');
+      await scheduler['runConfiguredEventSyncSweep']('GOLF' as Sport, 'EVENTRESULTS');
 
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
         source: 'SCHEDULED',
@@ -1110,7 +1118,7 @@ describe('IngestionScheduler', () => {
         now: () => now,
       });
 
-      await (scheduler as any).runConfiguredSportFieldSync('GOLF' as Sport);
+      await scheduler['runConfiguredSportFieldSync']('GOLF' as Sport);
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
       expect(eventReader.listEventIdsForFeed).toHaveBeenCalledWith({
@@ -1217,7 +1225,7 @@ describe('IngestionScheduler', () => {
       } as any;
       const scheduler = new IngestionScheduler(registry, mockCallbacks, logger);
 
-      await (scheduler as any).runHealthChecks();
+      await scheduler['runHealthChecks']();
 
       expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', {
         providerId: 'mock-provider',
@@ -1340,7 +1348,7 @@ describe('IngestionScheduler', () => {
       await jest.runOnlyPendingTimersAsync();
 
       expect(provider.getUpcomingEvents).toHaveBeenCalled();
-      const requestedSports = (provider.getUpcomingEvents as jest.Mock).mock.calls.map((call) => call[0]);
+      const requestedSports = jest.mocked(provider.getUpcomingEvents).mock.calls.map(([sport]) => sport);
       expect(requestedSports).toContain('GOLF');
       expect(requestedSports).not.toContain('TENNIS');
       expect(requestedSports).not.toContain('NCAA_BASKETBALL');

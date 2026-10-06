@@ -13,6 +13,7 @@
 import bcrypt from 'bcryptjs';
 import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
+import { asPrismaClient } from '../../support/prisma-double';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 
 function buildUser(overrides: Partial<User> = {}): User {
@@ -40,7 +41,7 @@ function createPrismaMock(passwordHash: string | null = null) {
       update: jest.fn().mockResolvedValue(undefined),
       findUnique: jest.fn(),
     },
-  } as any;
+  };
 }
 
 describe('AuthService', () => {
@@ -61,7 +62,7 @@ describe('AuthService', () => {
         create: jest.fn().mockImplementation(async (input: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) =>
           buildUser({ ...input })),
       });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       const result = await service.register(' NewUser ', ' New@Example.com ', 'Password123!', 'New', 'User');
 
@@ -84,7 +85,7 @@ describe('AuthService', () => {
           return buildUser({ ...input });
         }),
       });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       await service.register('newuser', 'new@example.com', 'Password123!', 'New', 'User');
 
@@ -97,7 +98,7 @@ describe('AuthService', () => {
       const users = fakeUserRepo({
         findByIdentifier: jest.fn().mockResolvedValue(buildUser()),
       });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       await expect(
         service.register('NewUser', 'user@example.com', 'Password123!', 'New', 'User'),
@@ -115,7 +116,7 @@ describe('AuthService', () => {
           .mockResolvedValueOnce(null)
           .mockResolvedValueOnce(buildUser()),
       });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       await expect(
         service.register('TakenUser', 'new@example.com', 'Password123!', 'New', 'User'),
@@ -131,7 +132,7 @@ describe('AuthService', () => {
     it('accepts either the email or the username, through one lookup', async () => {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       const users = fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(buildUser()) });
-      const service = new AuthService(users, createPrismaMock(passwordHash));
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
 
       await expect(service.login(' User@Example.com ', 'Password123!'))
         .resolves.toMatchObject({ user: { id: 'user-1' } });
@@ -146,7 +147,7 @@ describe('AuthService', () => {
       const users = fakeUserRepo({
         findByIdentifier: jest.fn().mockResolvedValue(buildUser({ isActive: false })),
       });
-      const service = new AuthService(users, createPrismaMock(passwordHash));
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
 
       await expect(service.login('user@example.com', 'Password123!')).rejects.toMatchObject({
         code: 'ACCOUNT_INACTIVE',
@@ -157,7 +158,7 @@ describe('AuthService', () => {
     it('rejects a wrong password', async () => {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       const users = fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(buildUser()) });
-      const service = new AuthService(users, createPrismaMock(passwordHash));
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(passwordHash)));
 
       await expect(service.login('userone', 'WrongPassword123!')).rejects.toMatchObject({
         code: 'INVALID_CREDENTIALS',
@@ -167,7 +168,7 @@ describe('AuthService', () => {
 
     it('rejects a passwordless account without revealing that it exists', async () => {
       const users = fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(buildUser()) });
-      const service = new AuthService(users, createPrismaMock(null));
+      const service = new AuthService(users, asPrismaClient(createPrismaMock(null)));
 
       await expect(service.login('userone', 'Password123!')).rejects.toMatchObject({
         code: 'INVALID_CREDENTIALS',
@@ -187,7 +188,7 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
       });
-      const service = new AuthService(fakeUserRepo(), prisma);
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
 
       const result = await service.refresh('refresh-token');
 
@@ -211,7 +212,7 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: false },
       });
-      const service = new AuthService(fakeUserRepo(), prisma);
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
 
       await expect(service.refresh('refresh-token')).rejects.toMatchObject({
         code: 'ACCOUNT_INACTIVE',
@@ -231,7 +232,7 @@ describe('AuthService', () => {
           expiresAt: new Date(Date.now() - 60_000),
           user: { id: 'user-1', email: 'user@example.com', isRootAdmin: false, isActive: true },
         });
-      const service = new AuthService(fakeUserRepo(), prisma);
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(prisma));
 
       await expect(service.refresh('missing-token')).rejects.toMatchObject({
         code: 'INVALID_REFRESH_TOKEN',
@@ -251,7 +252,7 @@ describe('AuthService', () => {
           .mockResolvedValueOnce(buildUser())
           .mockResolvedValueOnce(buildUser({ isActive: false })),
       });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       await expect(service.issueSessionForUser('user-1')).resolves.toEqual(
         expect.objectContaining({
@@ -266,7 +267,7 @@ describe('AuthService', () => {
     });
 
     it('refuses to issue a session or read a profile for a user who does not exist', async () => {
-      const service = new AuthService(fakeUserRepo(), createPrismaMock());
+      const service = new AuthService(fakeUserRepo(), asPrismaClient(createPrismaMock()));
 
       await expect(service.issueSessionForUser('missing-user')).rejects.toMatchObject({
         code: 'USER_NOT_FOUND',
@@ -280,7 +281,7 @@ describe('AuthService', () => {
 
     it('returns the canonical User from getProfile, with no password hash on it', async () => {
       const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
-      const service = new AuthService(users, createPrismaMock());
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
 
       const profile = await service.getProfile('user-1');
 
@@ -290,8 +291,8 @@ describe('AuthService', () => {
   });
 
   it('verifies a valid access token and rejects a forged one', async () => {
-    const service = new AuthService(fakeUserRepo(), createPrismaMock());
-    const tokens = await (service as any).issueTokens('user-1', 'user@example.com', false, 'session-1');
+    const service = new AuthService(fakeUserRepo(), asPrismaClient(createPrismaMock()));
+    const tokens = await service['issueTokens']('user-1', 'user@example.com', false, 'session-1');
 
     expect(service.verifyAccessToken(tokens.accessToken)).toEqual(
       expect.objectContaining({

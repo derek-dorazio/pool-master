@@ -11,6 +11,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import type { ContestConfigTemplateListResponse } from '@poolmaster/shared/dto';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { freshEventEdition } from '../../support/event-edition';
@@ -309,14 +310,14 @@ describe('Contest management integration', () => {
     });
 
     expect(templateRes.statusCode).toBe(200);
-    const templates = templateRes.json().templates;
+    const templates = templateRes.json<ContestConfigTemplateListResponse>().templates;
     expect(templates.length).toBeGreaterThan(0);
     expect(templates[0].selectionType).toBe('TIERED');
 
     const defaultTemplate = templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+      (template) => template.isDefault,
     );
-    expect(defaultTemplate).toBeDefined();
+    if (!defaultTemplate) throw new Error('No default contest template is seeded');
 
     const createRes = await getApp().inject({
       method: 'POST',
@@ -412,9 +413,10 @@ describe('Contest management integration', () => {
       url: `${CONTEST_CONFIG_TEMPLATES_URL}?sport=GOLF&contestFormat=ROSTER&active=true`,
       headers: ownerHeaders,
     });
-    const defaultTemplate = templatesRes.json().templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+    const defaultTemplate = templatesRes.json<ContestConfigTemplateListResponse>().templates.find(
+      (template) => template.isDefault,
     );
+    if (!defaultTemplate) throw new Error('No default contest template is seeded');
 
     const createRes = await getApp().inject({
       method: 'POST',

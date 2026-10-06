@@ -19,12 +19,13 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return fakeLeagueMembershipRepo({
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<LeagueMembershipRepository['update']>(async (id, updates) => ({
       ...buildMembership({ id }),
       ...updates,
     })),

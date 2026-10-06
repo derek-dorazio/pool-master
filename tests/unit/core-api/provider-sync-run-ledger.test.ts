@@ -2,6 +2,8 @@ import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
+import { mockFn } from '../../support/mock-fn';
 
 function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -89,7 +91,10 @@ describe('ProviderSyncRunLedger', () => {
         windowPolicy: { defaultLookaheadDays: 30 },
       },
     });
-    const providerSyncRunCreate = jest.fn().mockImplementation(async (input) => ({ id: 'sync-run-1', ...input }));
+    const providerSyncRunCreate = mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
+      ...createSyncRun(),
+      ...input,
+    }));
     const ledger = new ProviderSyncRunLedger({ create: providerSyncRunCreate, update: jest.fn(), findAll: jest.fn() });
 
     const runs = await ledger.createSubmissions({

@@ -27,18 +27,19 @@ import {
   fakeSquadMembershipRepo,
   fakeSquadRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
 ): LeagueInvitationRepository {
   return fakeLeagueInvitationRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueInvitationRepository['create']>(async (input) => ({
       ...input,
       id: 'new-invite-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<LeagueInvitationRepository['update']>(async (id, updates) => ({
       ...buildInvitation({ id }),
       ...updates,
     })),
@@ -50,7 +51,7 @@ function createMockMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return fakeLeagueMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'new-membership-id',
       createdAt: new Date(),
@@ -72,13 +73,13 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
 
 function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
   return fakeSquadRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadRepository['create']>(async (input) => ({
       ...input,
       id: 'new-squad-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadRepository['update']>(async (id, updates) => ({
       id,
       leagueId: 'league-1',
       createdBy: 'user-1',
@@ -97,13 +98,13 @@ function createMockSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
   return fakeSquadMembershipRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<SquadMembershipRepository['create']>(async (input) => ({
       ...input,
       id: 'new-squad-membership-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
-    update: jest.fn().mockImplementation(async (id, updates) => ({
+    update: mockFn<SquadMembershipRepository['update']>(async (id, updates) => ({
       id,
       squadId: 'new-squad-id',
       leagueId: 'league-1',

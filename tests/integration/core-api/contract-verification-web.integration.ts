@@ -27,6 +27,7 @@ import {
   SuccessSchema,
   TokenRefreshResponseSchema,
 } from '@poolmaster/shared/dto';
+import type { ContestConfigTemplateListResponse } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   ScoringEngine,
@@ -541,10 +542,10 @@ describe('Contract verification (web)', () => {
       ContestConfigTemplateListResponseSchema.safeParse(templateRes.json()).success,
     ).toBe(true);
 
-    const defaultTemplate = templateRes.json().templates.find(
-      (template: { isDefault: boolean }) => template.isDefault,
+    const defaultTemplate = templateRes.json<ContestConfigTemplateListResponse>().templates.find(
+      (template) => template.isDefault,
     );
-    expect(defaultTemplate).toBeDefined();
+    if (!defaultTemplate) throw new Error('No default contest template is seeded');
 
     const res = await getApp().inject({
       method: 'POST',

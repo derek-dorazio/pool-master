@@ -10,6 +10,7 @@ import {
   fakeLeagueMembershipRepo,
   fakeLeagueRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
   return fakeLeagueRepo({
@@ -31,7 +32,7 @@ function createMockMembershipRepo(overrides: Partial<LeagueMembershipRepository>
 
 function createMockInvitationRepo(overrides: Partial<LeagueInvitationRepository> = {}): LeagueInvitationRepository {
   return fakeLeagueInvitationRepo({
-    create: jest.fn().mockImplementation(async (input) => ({
+    create: mockFn<LeagueInvitationRepository['create']>(async (input) => ({
       ...input, id: 'new-invite', createdAt: new Date(), updatedAt: new Date(),
     })),
     update: jest.fn().mockResolvedValue(buildInvitation()),
