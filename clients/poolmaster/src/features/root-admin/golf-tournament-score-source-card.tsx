@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
-import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
+import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
   ConfirmationModal,
@@ -25,6 +26,14 @@ import {
 import type { SportEventDto } from '@/lib/api';
 
 type PickerCatalogEvent = GolfProviderCatalogEvent & { id: string };
+
+/**
+ * #402 — a provider that can simulate live scoring (the QA mock feed) answers any event id
+ * with this prefix as a golf event of its own, so a made-up tournament links to
+ * `sandbox-<its id>` and never needs a real tournament's dates or id. The mock's
+ * scenario-store.ts and core-api's mock adapter hold the same prefix.
+ */
+const simulatedEventIdPrefix = 'sandbox-';
 
 /**
  * plans/124 §6.3 block 3 — the score-source link status plus the link picker and
@@ -57,14 +66,30 @@ export function GolfTournamentScoreSourceCard({
     [catalog.events],
   );
 
+  const providersQuery = useQuery({
+    enabled: tournament.syncScope === SportEventSyncScope.NONE,
+    queryKey: QueryKeys.rootAdmin.providers,
+    queryFn: async () => {
+      const response = await listProviders();
+      if (!response.data?.providers) {
+        throwApiError(response.error, 'Provider list response is missing data.');
+      }
+      return response.data.providers;
+    },
+    retry: false,
+  });
+  const simulatingProviderId = (providersQuery.data ?? []).find(
+    (provider) => provider.sportsCovered.includes('GOLF') && provider.supportsLiveSimulation,
+  )?.providerId ?? null;
+
   const linkMutation = useInvalidatingMutation({
-    mutationFn: async (externalId: string) => {
-      if (!providerId) {
+    mutationFn: async (link: { providerId: string | null; externalId: string }) => {
+      if (!link.providerId) {
         throw new Error('No golf provider is configured.');
       }
       const response = await linkEventScoreSource({
         path: { eventId },
-        body: { providerId, externalId },
+        body: { providerId: link.providerId, externalId: link.externalId },
       });
       if (!response.data?.event) {
         throwApiError(response.error, 'Score-source link response is missing data.');
@@ -123,15 +148,31 @@ export function GolfTournamentScoreSourceCard({
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {tournament.syncScope === SportEventSyncScope.NONE ? (
-          <Button
-            data-testid="root-admin-golf-tournament-link-open"
-            onClick={() => setLinkOpen(true)}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            Link to provider event
-          </Button>
+          <>
+            <Button
+              data-testid="root-admin-golf-tournament-link-open"
+              onClick={() => setLinkOpen(true)}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              Link to provider event
+            </Button>
+            {simulatingProviderId ? (
+              <Button
+                data-testid="root-admin-golf-tournament-link-simulated"
+                disabled={linkMutation.isPending}
+                onClick={() =>
+                  linkMutation.mutate({ providerId: simulatingProviderId, externalId: `${simulatedEventIdPrefix}${eventId}` })
+                }
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                Link to a new simulated event
+              </Button>
+            ) : null}
+          </>
         ) : (
           <Button
             data-testid="root-admin-golf-tournament-unlink-open"
@@ -144,6 +185,17 @@ export function GolfTournamentScoreSourceCard({
           </Button>
         )}
       </div>
+      {simulatingProviderId && tournament.syncScope === SportEventSyncScope.NONE ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          A simulated event works on any dates. After linking, load the participant field from it, then start the
+          live simulation.
+        </p>
+      ) : null}
+      {linkMutation.isError && !linkOpen ? (
+        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-link-error" role="alert">
+          {extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })}
+        </p>
+      ) : null}
       {tournament.syncScope === SportEventSyncScope.NONE ? null : (
         <GolfTournamentLiveSimulation tournament={tournament} />
       )}
@@ -162,7 +214,7 @@ export function GolfTournamentScoreSourceCard({
         isPending={linkMutation.isPending}
         items={pickerItems}
         itemTestIdPrefix="root-admin-golf-tournament-link-option"
-        onApply={() => selectedCatalogId && linkMutation.mutate(selectedCatalogId)}
+        onApply={() => selectedCatalogId && linkMutation.mutate({ providerId, externalId: selectedCatalogId })}
         onCancel={() => {
           setLinkOpen(false);
           setSelectedCatalogId(null);

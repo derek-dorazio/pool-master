@@ -343,6 +343,38 @@ describe('MockContestFeedAdapter', () => {
     await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toBeNull();
   });
 
+  it('finds an unlisted sandbox- event in the mock\'s sandbox scenario without listing any events, and nowhere when the mock has no sandbox', async () => {
+    let scenarios = [...scenarioResponse.scenarios, { scenarioId: 'golf-sandbox', sport: 'GOLF' }];
+    const fetchSpy = jest.fn(async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson({ scenarios });
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-sandbox/events')) return okJson({ scenarioId: 'golf-sandbox', events: [] });
+      if (url.endsWith('/v1/scenarios/golf-sandbox/events/sandbox-tour-1/replay') && init?.method === 'PUT') {
+        return okJson({
+          scenarioId: 'golf-sandbox',
+          eventId: 'sandbox-tour-1',
+          startsAt: '2026-10-06T12:00:00.000Z',
+          endsAt: '2026-10-06T13:20:00.000Z',
+          minutesPerRound: 20,
+          minutesBetweenRounds: 0,
+          phase: 'in_progress',
+          currentRound: 1,
+        });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    await expect(new MockContestFeedAdapter('http://mock.internal').startLiveSimulation('sandbox-tour-1', {}))
+      .resolves.toMatchObject({ phase: 'IN_PROGRESS', currentRound: 1 });
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith('/events'))).toBe(false);
+
+    scenarios = [...scenarioResponse.scenarios];
+    await expect(new MockContestFeedAdapter('http://mock.internal').startLiveSimulation('sandbox-tour-2', {}))
+      .resolves.toBeNull();
+  });
+
   it('returns null rather than starting anything when the mock has no event with that id', async () => {
     const fetchSpy = jest.fn(async (input: string | URL) => {
       const url = String(input);

@@ -1442,6 +1442,81 @@ function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
   return normalizeScenario(validateScenario(JSON.parse(contents) as unknown));
 }
 
+/**
+ * #402 — any event id with this prefix, in the sandbox scenario, is a golf event built on
+ * request from the shared player pool. PoolMaster links an admin-created tournament to
+ * `sandbox-<its own event id>`, so every made-up tournament gets its own mock event without
+ * a JSON entry and without its dates having to match anything.
+ */
+// Copies: core-api's mock-contest-feed-adapter.ts (both constants) and the web app's
+// golf-tournament-score-source-card.tsx (the prefix). Rename all three together.
+export const sandboxGolfScenarioId = 'golf-sandbox';
+export const sandboxEventIdPrefix = 'sandbox-';
+
+/**
+ * Sandbox events carry a fixed placeholder schedule: nothing here is compared with today,
+ * and PoolMaster keeps its own tournament's dates. Scores only move once a live replay is
+ * started for the event.
+ */
+const sandboxPlaceholderStartsAt = '2026-01-01T12:00:00.000Z';
+const sandboxPlaceholderEndsAt = '2026-01-04T22:00:00.000Z';
+const sandboxPlaceholderReleaseAt = '2025-12-25T12:00:00.000Z';
+const sandboxPlaceholderFieldLocksAt = '2025-12-31T12:00:00.000Z';
+
+export function isSandboxEventId(eventId: string): boolean {
+  return eventId.startsWith(sandboxEventIdPrefix) && eventId.length > sandboxEventIdPrefix.length;
+}
+
+function buildSandboxGolfScenario(): ContestFeedScenarioRecord {
+  return {
+    scenarioId: sandboxGolfScenarioId,
+    sport: 'GOLF',
+    provider: mockFeedProviderId,
+    description: `Answers any ${sandboxEventIdPrefix}<id> event id with a golf event built from the shared player pool; none are listed.`,
+    season: {
+      seasonId: sandboxGolfScenarioId,
+      name: 'Sandbox golf events',
+      year: 2026,
+    },
+    events: [],
+  };
+}
+
+function buildSandboxGolfEvent(eventId: string): ContestFeedEventRecord {
+  return normalizeGolfEvent({
+    eventId,
+    name: `Simulated golf event ${eventId.slice(sandboxEventIdPrefix.length)}`,
+    status: 'scheduled',
+    schedule: {
+      startsAt: sandboxPlaceholderStartsAt,
+      endsAt: sandboxPlaceholderEndsAt,
+      releaseAt: sandboxPlaceholderReleaseAt,
+      fieldLocksAt: sandboxPlaceholderFieldLocksAt,
+    },
+    venue: {
+      name: 'PoolMaster Sandbox Links',
+      city: 'Cincinnati',
+      region: 'OH',
+      countryCode: 'US',
+      timeZone: 'America/New_York',
+    },
+    metadata: {
+      officialName: eventId,
+      eventType: 'sandbox',
+      tour: 'PoolMaster Sandbox',
+      externalEventId: eventId,
+      notes: ['Built on request for a PoolMaster-created tournament; start a live replay to make its scores move.'],
+    },
+    field: {
+      asOf: sandboxPlaceholderReleaseAt,
+      status: 'announced',
+      contestants: [],
+    },
+    feeds: emptyFeeds(sandboxPlaceholderReleaseAt),
+    updates: [],
+  });
+}
+
 export interface ScenarioStoreOptions {
   readonly now?: () => Date;
   readonly includeRelativeTodayGolfScenario?: boolean;
@@ -1492,14 +1567,15 @@ export class ScenarioStore {
       options.includeRelativeTodayGolfScenario === false
         ? []
         : [this.buildRelativeTodayGolfScenario()];
-    const allScenarios = [...entries, ...generatedScenarios];
+    const allScenarios = [...entries, buildSandboxGolfScenario(), ...generatedScenarios];
 
     ensureUniqueIds(
       allScenarios.map((scenario) => scenario.scenarioId),
       'scenarioId',
     );
 
-    this.staticScenarios = entries.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
+    this.staticScenarios = [...entries, buildSandboxGolfScenario()]
+      .sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
     this.logger?.info(
       {
         action: 'mockScenarioStore.load.success',
@@ -1627,6 +1703,7 @@ export class ScenarioStore {
   ): ContestFeedEventRecord {
     const scenario = this.getScenario(scenarioId);
     const baseEvent = scenario.events.find((item) => item.eventId === eventId)
+      ?? (scenario.scenarioId === sandboxGolfScenarioId && isSandboxEventId(eventId) ? buildSandboxGolfEvent(eventId) : null)
       ?? this.buildHistoricalManualTestEvent(scenario, eventId);
     if (!baseEvent) {
       this.logger?.warn(

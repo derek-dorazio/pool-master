@@ -17118,12 +17118,12 @@
           "from": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO 8601 datetime string."
+            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today."
           },
           "to": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO 8601 datetime string."
+            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today."
           },
           "search": {
             "type": "string"
@@ -38253,7 +38253,7 @@
             "in": "query",
             "name": "from",
             "required": false,
-            "description": "ISO 8601 datetime string."
+            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today."
           },
           {
             "schema": {
@@ -38263,7 +38263,7 @@
             "in": "query",
             "name": "to",
             "required": false,
-            "description": "ISO 8601 datetime string."
+            "description": "Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today."
           },
           {
             "schema": {

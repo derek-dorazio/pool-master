@@ -442,6 +442,38 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
       expect(startEventLiveSimulationMock).not.toHaveBeenCalled();
     });
 
+    it('links an unlinked tournament to its own simulated event, sandbox-<event id>, in one click', async () => {
+      seedDefaults();
+      listProvidersMock.mockResolvedValue({
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation: true }] },
+      });
+      linkEventScoreSourceMock.mockResolvedValue({
+        data: { event: tournament({ syncScope: 'SCORES_ONLY', providerId: 'mock-contest-feed', externalId: 'sandbox-tour-1' }) },
+      });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-link-simulated'));
+
+      await waitFor(() =>
+        expect(linkEventScoreSourceMock).toHaveBeenCalledWith({
+          path: { eventId: 'tour-1' },
+          body: { providerId: 'mock-contest-feed', externalId: 'sandbox-tour-1' },
+        }),
+      );
+    });
+
+    it('offers no simulated-event link when no golf provider can simulate', async () => {
+      seedDefaults();
+      listProvidersMock.mockResolvedValue({
+        data: { providers: [{ providerId: 'real-golf', sportsCovered: ['GOLF'], supportsLiveSimulation: false }] },
+      });
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-golf-tournament-link-open')).toBeInTheDocument();
+      await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
+      expect(screen.queryByTestId('root-admin-golf-tournament-link-simulated')).not.toBeInTheDocument();
+    });
+
     it('offers no live simulation when the linked provider cannot simulate', async () => {
       seedLinked(false);
       renderPage();
