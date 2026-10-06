@@ -1,0 +1,598 @@
+{
+  "tour": "LPGA Tour",
+  "tourId": "lpga-tour",
+  "season": 2027,
+  "published": "not published",
+  "notes": "As of 2026-10-06 the full 2027 LPGA schedule had not been found as released (reports in early Oct 2026 said it was expected 'this week'). Individual 2027 events/dates have been announced and are listed under confirmedEvents. Hong Kong event reportedly replaces a China stop. Unannounced events are the 2026 ones moved to the same week of 2027.",
+  "events": [
+    {
+      "eventId": "lpga-tour-2027-hilton-grand-vacations-tournament-of-champions",
+      "name": "Hilton Grand Vacations Tournament of Champions",
+      "startDate": "2027-01-28",
+      "endDate": "2027-01-31",
+      "rounds": 4,
+      "venue": {
+        "name": "Lake Nona Golf & Country Club",
+        "city": "Orlando",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-honda-lpga-thailand",
+      "name": "Honda LPGA Thailand",
+      "startDate": "2027-02-18",
+      "endDate": "2027-02-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Siam Country Club (Old Course)",
+        "city": "Pattaya",
+        "region": "Chonburi",
+        "countryCode": "TH",
+        "timeZone": "Asia/Bangkok"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-hsbc-women-s-world-championship",
+      "name": "HSBC Women's World Championship",
+      "startDate": "2027-02-25",
+      "endDate": "2027-02-28",
+      "rounds": 4,
+      "venue": {
+        "name": "Sentosa Golf Club (Tanjong Course)",
+        "city": "Singapore",
+        "region": "Singapore",
+        "countryCode": "SG",
+        "timeZone": "Asia/Singapore"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-blue-bay-lpga",
+      "name": "Blue Bay LPGA",
+      "startDate": "2027-03-04",
+      "endDate": "2027-03-07",
+      "rounds": 4,
+      "venue": {
+        "name": "Jian Lake Blue Bay Golf Course",
+        "city": "Wanning",
+        "region": "Hainan",
+        "countryCode": "CN",
+        "timeZone": "Asia/Shanghai"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-nanea-cup",
+      "name": "Nanea Cup",
+      "startDate": "2027-03-11",
+      "endDate": "2027-03-14",
+      "rounds": 4,
+      "venue": {
+        "name": "Nanea Golf Club",
+        "city": "Kailua-Kona",
+        "region": "HI",
+        "countryCode": "US",
+        "timeZone": "Pacific/Honolulu"
+      },
+      "purse": 4000000,
+      "notes": [
+        "New; 95 LPGA players plus collegiate teams",
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-fortinet-founders-cup",
+      "name": "Fortinet Founders Cup",
+      "startDate": "2027-03-18",
+      "endDate": "2027-03-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Sharon Heights Golf & Country Club",
+        "city": "Menlo Park",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-lotte-championship",
+      "name": "LOTTE Championship",
+      "startDate": "2027-03-18",
+      "endDate": "2027-03-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Kapalua (Plantation Course)",
+        "city": "Kapalua",
+        "region": "HI",
+        "countryCode": "US",
+        "timeZone": "Pacific/Honolulu"
+      },
+      "purse": 3000000,
+      "notes": [
+        "Moves from October/Oahu to March/Maui",
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-ford-championship-presented-by-wild-horse-pass",
+      "name": "Ford Championship presented by Wild Horse Pass",
+      "startDate": "2027-03-25",
+      "endDate": "2027-03-28",
+      "rounds": 4,
+      "venue": {
+        "name": "Whirlwind Golf Club",
+        "city": "Chandler",
+        "region": "AZ",
+        "countryCode": "US",
+        "timeZone": "America/Phoenix"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-aramco-championship",
+      "name": "Aramco Championship",
+      "startDate": "2027-04-01",
+      "endDate": "2027-04-04",
+      "rounds": 4,
+      "venue": {
+        "name": "Shadow Creek Golf Course",
+        "city": "North Las Vegas",
+        "region": "NV",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-jm-eagle-la-championship",
+      "name": "JM Eagle LA Championship",
+      "startDate": "2027-04-15",
+      "endDate": "2027-04-18",
+      "rounds": 4,
+      "venue": {
+        "name": "El Caballero Country Club",
+        "city": "Tarzana (Los Angeles)",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-chevron-championship",
+      "name": "The Chevron Championship",
+      "startDate": "2027-04-22",
+      "endDate": "2027-04-25",
+      "rounds": 4,
+      "venue": {
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "major",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-mexico-riviera-maya-open-at-mayakoba",
+      "name": "Mexico Riviera Maya Open at Mayakoba",
+      "startDate": "2027-04-29",
+      "endDate": "2027-05-02",
+      "rounds": 4,
+      "venue": {
+        "name": "El Camaleon Golf Course, Mayakoba",
+        "city": "Playa del Carmen",
+        "region": "Quintana Roo",
+        "countryCode": "MX",
+        "timeZone": "America/Cancun"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-mizuho-americas-open",
+      "name": "Mizuho Americas Open",
+      "startDate": "2027-05-06",
+      "endDate": "2027-05-09",
+      "rounds": 4,
+      "venue": {
+        "name": "Mountain Ridge Country Club",
+        "city": "West Caldwell",
+        "region": "NJ",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-kroger-queen-city-championship-presented-by-p-g",
+      "name": "Kroger Queen City Championship presented by P&G",
+      "startDate": "2027-05-13",
+      "endDate": "2027-05-16",
+      "rounds": 4,
+      "venue": {
+        "name": "Maketewah Country Club",
+        "city": "Cincinnati",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-classic-corning",
+      "name": "The Classic (Corning)",
+      "startDate": "2027-05-27",
+      "endDate": "2027-05-30",
+      "rounds": 4,
+      "venue": {
+        "name": "Corning Country Club",
+        "city": "Corning",
+        "region": "NY",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 5000000,
+      "notes": [
+        "Returns after 18 years",
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-shoprite-lpga-classic",
+      "name": "ShopRite LPGA Classic",
+      "startDate": "2027-05-28",
+      "endDate": "2027-05-30",
+      "rounds": 3,
+      "venue": {
+        "name": "Seaview, A Dolce Hotel (Bay Course)",
+        "city": "Galloway",
+        "region": "NJ",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-u-s-women-s-open",
+      "name": "U.S. Women's Open",
+      "startDate": "2027-06-03",
+      "endDate": "2027-06-06",
+      "rounds": 4,
+      "venue": {
+        "name": "Inverness Club",
+        "city": "Toledo",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "major",
+      "notes": [
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-meijer-lpga-classic-for-simply-give",
+      "name": "Meijer LPGA Classic for Simply Give",
+      "startDate": "2027-06-17",
+      "endDate": "2027-06-20",
+      "rounds": 4,
+      "venue": {
+        "name": "Blythefield Country Club",
+        "city": "Belmont (Grand Rapids)",
+        "region": "MI",
+        "countryCode": "US",
+        "timeZone": "America/Detroit"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-kpmg-women-s-pga-championship",
+      "name": "KPMG Women's PGA Championship",
+      "startDate": "2027-06-24",
+      "endDate": "2027-06-27",
+      "rounds": 4,
+      "venue": {
+        "name": "Congressional Country Club",
+        "city": "Bethesda",
+        "region": "MD",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "major",
+      "notes": [
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-amundi-evian-championship",
+      "name": "The Amundi Evian Championship",
+      "startDate": "2027-07-08",
+      "endDate": "2027-07-11",
+      "rounds": 4,
+      "venue": {
+        "name": "Evian Resort Golf Club",
+        "city": "Evian-les-Bains",
+        "region": "Haute-Savoie",
+        "countryCode": "FR",
+        "timeZone": "Europe/Paris"
+      },
+      "eventType": "major",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-isps-handa-women-s-scottish-open",
+      "name": "ISPS Handa Women's Scottish Open",
+      "startDate": "2027-07-22",
+      "endDate": "2027-07-25",
+      "rounds": 4,
+      "venue": {
+        "name": "Dundonald Links",
+        "city": "Irvine",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-championship-uk",
+      "name": "The Championship (UK)",
+      "startDate": "2027-07-22",
+      "endDate": "2027-07-25",
+      "rounds": 4,
+      "venue": {
+        "city": "London",
+        "region": "England",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "purse": 4000000,
+      "notes": [
+        "LPGA/LET co-sanctioned, Golf Saudi backed; reported as 'July 19-25' week — round dates assumed Thu-Sun",
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-aig-women-s-open",
+      "name": "AIG Women's Open",
+      "startDate": "2027-07-29",
+      "endDate": "2027-08-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Royal Lytham & St Annes Golf Club",
+        "city": "Lytham St Annes",
+        "region": "England",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "eventType": "major",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-standard-portland-classic",
+      "name": "The Standard Portland Classic",
+      "startDate": "2027-08-12",
+      "endDate": "2027-08-15",
+      "rounds": 4,
+      "venue": {
+        "name": "Columbia Edgewater Country Club",
+        "city": "Portland",
+        "region": "OR",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-cpkc-women-s-open",
+      "name": "CPKC Women's Open",
+      "startDate": "2027-08-19",
+      "endDate": "2027-08-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Royal Mayfair Golf Club",
+        "city": "Edmonton",
+        "region": "AB",
+        "countryCode": "CA",
+        "timeZone": "America/Edmonton"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-fm-championship",
+      "name": "FM Championship",
+      "startDate": "2027-08-26",
+      "endDate": "2027-08-29",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Boston",
+        "city": "Norton",
+        "region": "MA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-walmart-nw-arkansas-championship-presented-by-p-g",
+      "name": "Walmart NW Arkansas Championship presented by P&G",
+      "startDate": "2027-09-24",
+      "endDate": "2027-09-26",
+      "rounds": 3,
+      "venue": {
+        "name": "Pinnacle Country Club",
+        "city": "Rogers",
+        "region": "AR",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-dow-championship",
+      "name": "Dow Championship",
+      "startDate": "2027-09-30",
+      "endDate": "2027-10-03",
+      "rounds": 4,
+      "venue": {
+        "name": "Midland Country Club",
+        "city": "Midland",
+        "region": "MI",
+        "countryCode": "US",
+        "timeZone": "America/Detroit"
+      },
+      "notes": [
+        "Reported as tournament week Sep 27-Oct 3; round dates assumed Thu-Sun",
+        "Announced for 2027."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-buick-lpga-shanghai",
+      "name": "Buick LPGA Shanghai",
+      "startDate": "2027-10-14",
+      "endDate": "2027-10-17",
+      "rounds": 4,
+      "venue": {
+        "name": "Shanghai Qizhong Garden Golf Club",
+        "city": "Shanghai",
+        "region": "Shanghai",
+        "countryCode": "CN",
+        "timeZone": "Asia/Shanghai"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-bmw-ladies-championship",
+      "name": "BMW Ladies Championship",
+      "startDate": "2027-10-21",
+      "endDate": "2027-10-24",
+      "rounds": 4,
+      "venue": {
+        "countryCode": "KR",
+        "timeZone": "Asia/Seoul"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-maybank-championship",
+      "name": "Maybank Championship",
+      "startDate": "2027-10-28",
+      "endDate": "2027-10-31",
+      "rounds": 4,
+      "venue": {
+        "name": "Kuala Lumpur Golf & Country Club",
+        "city": "Kuala Lumpur",
+        "region": "Kuala Lumpur",
+        "countryCode": "MY",
+        "timeZone": "Asia/Kuala_Lumpur"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-toto-japan-classic",
+      "name": "TOTO Japan Classic",
+      "startDate": "2027-11-04",
+      "endDate": "2027-11-07",
+      "rounds": 4,
+      "venue": {
+        "name": "Seta Golf Course",
+        "city": "Otsu",
+        "region": "Shiga",
+        "countryCode": "JP",
+        "timeZone": "Asia/Tokyo"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-the-annika-driven-by-gainbridge-at-pelican",
+      "name": "The ANNIKA driven by Gainbridge at Pelican",
+      "startDate": "2027-11-11",
+      "endDate": "2027-11-14",
+      "rounds": 4,
+      "venue": {
+        "name": "Pelican Golf Club",
+        "city": "Belleair",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2027-cme-group-tour-championship",
+      "name": "CME Group Tour Championship",
+      "startDate": "2027-11-18",
+      "endDate": "2027-11-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Tiburon Golf Club (Gold Course)",
+        "city": "Naples",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "finale",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    }
+  ]
+}

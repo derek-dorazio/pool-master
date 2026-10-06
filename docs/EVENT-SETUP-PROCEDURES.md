@@ -55,7 +55,9 @@ mock builds on request with its 80-golfer field. The card then says "Linked to
 mock-contest-feed event sandbox-…" and the badge reads *Scores synced*.
 
 *Link to provider event* is still there for linking to one of the mock's listed events
-instead; that list shows only events that start inside the tournament's own dates.
+instead; that list shows only events that start inside the tournament's own dates. The
+mock lists the 2026 and 2027 PGA TOUR and LPGA Tour schedules, and their fields are each
+tour's ranked players (about 150), not the 80-golfer field used below.
 
 ## 3. Check the rounds
 

@@ -1,0 +1,510 @@
+{
+  "tour": "LPGA Tour",
+  "tourId": "lpga-tour",
+  "season": 2026,
+  "published": "published",
+  "notes": "31 official-money events. Excluded unofficial: Solheim Cup (Sep 11-13, Bernardus Golf, Netherlands) and Grant Thornton Invitational (Dec 11-13, Tiburon, mixed team).",
+  "events": [
+    {
+      "eventId": "lpga-tour-2026-hilton-grand-vacations-tournament-of-champions",
+      "name": "Hilton Grand Vacations Tournament of Champions",
+      "startDate": "2026-01-29",
+      "endDate": "2026-02-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Lake Nona Golf & Country Club",
+        "city": "Orlando",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 2100000.0,
+      "notes": [
+        "Winners-only field with celebrity division"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-honda-lpga-thailand",
+      "name": "Honda LPGA Thailand",
+      "startDate": "2026-02-19",
+      "endDate": "2026-02-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Siam Country Club (Old Course)",
+        "city": "Pattaya",
+        "region": "Chonburi",
+        "countryCode": "TH",
+        "timeZone": "Asia/Bangkok"
+      },
+      "purse": 1800000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-hsbc-women-s-world-championship",
+      "name": "HSBC Women's World Championship",
+      "startDate": "2026-02-26",
+      "endDate": "2026-03-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Sentosa Golf Club (Tanjong Course)",
+        "city": "Singapore",
+        "region": "Singapore",
+        "countryCode": "SG",
+        "timeZone": "Asia/Singapore"
+      },
+      "purse": 3000000
+    },
+    {
+      "eventId": "lpga-tour-2026-blue-bay-lpga",
+      "name": "Blue Bay LPGA",
+      "startDate": "2026-03-05",
+      "endDate": "2026-03-08",
+      "rounds": 4,
+      "venue": {
+        "name": "Jian Lake Blue Bay Golf Course",
+        "city": "Wanning",
+        "region": "Hainan",
+        "countryCode": "CN",
+        "timeZone": "Asia/Shanghai"
+      },
+      "purse": 2600000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-fortinet-founders-cup",
+      "name": "Fortinet Founders Cup",
+      "startDate": "2026-03-19",
+      "endDate": "2026-03-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Sharon Heights Golf & Country Club",
+        "city": "Menlo Park",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 3000000
+    },
+    {
+      "eventId": "lpga-tour-2026-ford-championship-presented-by-wild-horse-pass",
+      "name": "Ford Championship presented by Wild Horse Pass",
+      "startDate": "2026-03-26",
+      "endDate": "2026-03-29",
+      "rounds": 4,
+      "venue": {
+        "name": "Whirlwind Golf Club",
+        "city": "Chandler",
+        "region": "AZ",
+        "countryCode": "US",
+        "timeZone": "America/Phoenix"
+      },
+      "purse": 2250000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-aramco-championship",
+      "name": "Aramco Championship",
+      "startDate": "2026-04-02",
+      "endDate": "2026-04-05",
+      "rounds": 4,
+      "venue": {
+        "name": "Shadow Creek Golf Course",
+        "city": "North Las Vegas",
+        "region": "NV",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Won by Lauren Coughlin; appears to occupy the former T-Mobile Match Play slot/venue. Purse not confirmed."
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-jm-eagle-la-championship",
+      "name": "JM Eagle LA Championship",
+      "startDate": "2026-04-16",
+      "endDate": "2026-04-19",
+      "rounds": 4,
+      "venue": {
+        "name": "El Caballero Country Club",
+        "city": "Tarzana (Los Angeles)",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 3750000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-the-chevron-championship",
+      "name": "The Chevron Championship",
+      "startDate": "2026-04-23",
+      "endDate": "2026-04-26",
+      "rounds": 4,
+      "venue": {
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "purse": 8000000,
+      "eventType": "major"
+    },
+    {
+      "eventId": "lpga-tour-2026-mexico-riviera-maya-open-at-mayakoba",
+      "name": "Mexico Riviera Maya Open at Mayakoba",
+      "startDate": "2026-04-30",
+      "endDate": "2026-05-03",
+      "rounds": 4,
+      "venue": {
+        "name": "El Camaleon Golf Course, Mayakoba",
+        "city": "Playa del Carmen",
+        "region": "Quintana Roo",
+        "countryCode": "MX",
+        "timeZone": "America/Cancun"
+      },
+      "purse": 2500000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-mizuho-americas-open",
+      "name": "Mizuho Americas Open",
+      "startDate": "2026-05-07",
+      "endDate": "2026-05-10",
+      "rounds": 4,
+      "venue": {
+        "name": "Mountain Ridge Country Club",
+        "city": "West Caldwell",
+        "region": "NJ",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 3250000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-kroger-queen-city-championship-presented-by-p-g",
+      "name": "Kroger Queen City Championship presented by P&G",
+      "startDate": "2026-05-14",
+      "endDate": "2026-05-17",
+      "rounds": 4,
+      "venue": {
+        "name": "Maketewah Country Club",
+        "city": "Cincinnati",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 2000000
+    },
+    {
+      "eventId": "lpga-tour-2026-shoprite-lpga-classic",
+      "name": "ShopRite LPGA Classic",
+      "startDate": "2026-05-29",
+      "endDate": "2026-05-31",
+      "rounds": 3,
+      "venue": {
+        "name": "Seaview, A Dolce Hotel (Bay Course)",
+        "city": "Galloway",
+        "region": "NJ",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 2000000
+    },
+    {
+      "eventId": "lpga-tour-2026-u-s-women-s-open",
+      "name": "U.S. Women's Open",
+      "startDate": "2026-06-04",
+      "endDate": "2026-06-07",
+      "rounds": 4,
+      "venue": {
+        "name": "The Riviera Country Club",
+        "city": "Pacific Palisades",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 12000000,
+      "eventType": "major"
+    },
+    {
+      "eventId": "lpga-tour-2026-dow-championship",
+      "name": "Dow Championship",
+      "startDate": "2026-06-11",
+      "endDate": "2026-06-14",
+      "rounds": 4,
+      "venue": {
+        "name": "Midland Country Club",
+        "city": "Midland",
+        "region": "MI",
+        "countryCode": "US",
+        "timeZone": "America/Detroit"
+      },
+      "purse": 3300000.0,
+      "eventType": "team",
+      "notes": [
+        "Two-player team event; won by Gina Kim / Yana Wilson"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-meijer-lpga-classic-for-simply-give",
+      "name": "Meijer LPGA Classic for Simply Give",
+      "startDate": "2026-06-18",
+      "endDate": "2026-06-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Blythefield Country Club",
+        "city": "Belmont (Grand Rapids)",
+        "region": "MI",
+        "countryCode": "US",
+        "timeZone": "America/Detroit"
+      },
+      "purse": 3250000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-kpmg-women-s-pga-championship",
+      "name": "KPMG Women's PGA Championship",
+      "startDate": "2026-06-25",
+      "endDate": "2026-06-28",
+      "rounds": 4,
+      "venue": {
+        "name": "Hazeltine National Golf Club",
+        "city": "Chaska",
+        "region": "MN",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "purse": 12000000,
+      "eventType": "major"
+    },
+    {
+      "eventId": "lpga-tour-2026-the-amundi-evian-championship",
+      "name": "The Amundi Evian Championship",
+      "startDate": "2026-07-09",
+      "endDate": "2026-07-12",
+      "rounds": 4,
+      "venue": {
+        "name": "Evian Resort Golf Club",
+        "city": "Evian-les-Bains",
+        "region": "Haute-Savoie",
+        "countryCode": "FR",
+        "timeZone": "Europe/Paris"
+      },
+      "purse": 8000000,
+      "eventType": "major"
+    },
+    {
+      "eventId": "lpga-tour-2026-isps-handa-women-s-scottish-open",
+      "name": "ISPS Handa Women's Scottish Open",
+      "startDate": "2026-07-23",
+      "endDate": "2026-07-26",
+      "rounds": 4,
+      "venue": {
+        "name": "Dundonald Links",
+        "city": "Irvine",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "purse": 2000000,
+      "notes": [
+        "Co-sanctioned with LET"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-aig-women-s-open",
+      "name": "AIG Women's Open",
+      "startDate": "2026-07-30",
+      "endDate": "2026-08-02",
+      "rounds": 4,
+      "venue": {
+        "name": "Royal Lytham & St Annes Golf Club",
+        "city": "Lytham St Annes",
+        "region": "England",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "purse": 9750000.0,
+      "eventType": "major",
+      "notes": [
+        "Purse reported as $9.75M in one source, $10M in another"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-the-standard-portland-classic",
+      "name": "The Standard Portland Classic",
+      "startDate": "2026-08-13",
+      "endDate": "2026-08-16",
+      "rounds": 4,
+      "venue": {
+        "name": "Columbia Edgewater Country Club",
+        "city": "Portland",
+        "region": "OR",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 2000000
+    },
+    {
+      "eventId": "lpga-tour-2026-cpkc-women-s-open",
+      "name": "CPKC Women's Open",
+      "startDate": "2026-08-20",
+      "endDate": "2026-08-23",
+      "rounds": 4,
+      "venue": {
+        "name": "Royal Mayfair Golf Club",
+        "city": "Edmonton",
+        "region": "AB",
+        "countryCode": "CA",
+        "timeZone": "America/Edmonton"
+      },
+      "purse": 2750000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-fm-championship",
+      "name": "FM Championship",
+      "startDate": "2026-08-27",
+      "endDate": "2026-08-30",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Boston",
+        "city": "Norton",
+        "region": "MA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 4400000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-walmart-nw-arkansas-championship-presented-by-p-g",
+      "name": "Walmart NW Arkansas Championship presented by P&G",
+      "startDate": "2026-09-25",
+      "endDate": "2026-09-27",
+      "rounds": 3,
+      "venue": {
+        "name": "Pinnacle Country Club",
+        "city": "Rogers",
+        "region": "AR",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "purse": 3000000,
+      "notes": [
+        "54 holes; won by Yuna Nishimura"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-lotte-championship-presented-by-hoakalei",
+      "name": "LOTTE Championship presented by Hoakalei",
+      "startDate": "2026-10-01",
+      "endDate": "2026-10-04",
+      "rounds": 4,
+      "venue": {
+        "name": "Hoakalei Country Club",
+        "city": "Ewa Beach",
+        "region": "HI",
+        "countryCode": "US",
+        "timeZone": "Pacific/Honolulu"
+      },
+      "purse": 3000000,
+      "notes": [
+        "Won by Jeeno Thitikul"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-buick-lpga-shanghai",
+      "name": "Buick LPGA Shanghai",
+      "startDate": "2026-10-15",
+      "endDate": "2026-10-18",
+      "rounds": 4,
+      "venue": {
+        "name": "Shanghai Qizhong Garden Golf Club",
+        "city": "Shanghai",
+        "region": "Shanghai",
+        "countryCode": "CN",
+        "timeZone": "Asia/Shanghai"
+      },
+      "purse": 3200000.0,
+      "notes": [
+        "Venue assumed from prior years; not verified for 2026"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-bmw-ladies-championship",
+      "name": "BMW Ladies Championship",
+      "startDate": "2026-10-22",
+      "endDate": "2026-10-25",
+      "rounds": 4,
+      "venue": {
+        "countryCode": "KR",
+        "timeZone": "Asia/Seoul"
+      },
+      "purse": 2350000.0,
+      "notes": [
+        "2026 venue not verified"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-maybank-championship",
+      "name": "Maybank Championship",
+      "startDate": "2026-10-29",
+      "endDate": "2026-11-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Kuala Lumpur Golf & Country Club",
+        "city": "Kuala Lumpur",
+        "region": "Kuala Lumpur",
+        "countryCode": "MY",
+        "timeZone": "Asia/Kuala_Lumpur"
+      },
+      "purse": 3000000,
+      "notes": [
+        "Venue assumed from prior years"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-toto-japan-classic",
+      "name": "TOTO Japan Classic",
+      "startDate": "2026-11-05",
+      "endDate": "2026-11-08",
+      "rounds": 4,
+      "venue": {
+        "name": "Seta Golf Course",
+        "city": "Otsu",
+        "region": "Shiga",
+        "countryCode": "JP",
+        "timeZone": "Asia/Tokyo"
+      },
+      "purse": 2100000.0,
+      "notes": [
+        "Co-sanctioned with JLPGA; venue assumed from prior years"
+      ]
+    },
+    {
+      "eventId": "lpga-tour-2026-the-annika-driven-by-gainbridge-at-pelican",
+      "name": "The ANNIKA driven by Gainbridge at Pelican",
+      "startDate": "2026-11-12",
+      "endDate": "2026-11-15",
+      "rounds": 4,
+      "venue": {
+        "name": "Pelican Golf Club",
+        "city": "Belleair",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 3250000.0
+    },
+    {
+      "eventId": "lpga-tour-2026-cme-group-tour-championship",
+      "name": "CME Group Tour Championship",
+      "startDate": "2026-11-19",
+      "endDate": "2026-11-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Tiburon Golf Club (Gold Course)",
+        "city": "Naples",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 11000000,
+      "eventType": "finale"
+    }
+  ]
+}
