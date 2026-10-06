@@ -464,7 +464,7 @@ export default tseslint.config(
       // default separate-import style would have the two rules undo each other.
       'import-x/no-duplicates': 'error',
 
-      // OFF -- the three CommonJS-interop rules. `tsconfig.base.json` sets
+      // OFF -- the two CommonJS-interop rules. `tsconfig.base.json` sets
       // `esModuleInterop: true`, which makes `import X from 'cjs-module'` correct
       // and idiomatic; these rules predate that being the norm and report it as
       // suspicious. Disabled explicitly, with the count each one would contribute,
@@ -481,17 +481,11 @@ export default tseslint.config(
       // how these libraries are meant to be consumed under `esModuleInterop`.
       'import-x/no-named-as-default-member': 'off',
 
-      // 1 finding, and it is a resolver false positive rather than interop:
-      // `v4 not found in 'uuid'` at modules/auth/auth-service.ts. uuid@10 does
-      // export `v4` -- confirmed at runtime, and tsc resolves it -- but its
-      // `exports` map reaches the Node ESM build through a `wrapper.mjs`
-      // indirection that import-x's static analysis cannot follow. Leaving this
-      // rule on would mean one permanent false error, or a disable comment on a
-      // correct import.
-      //
-      // Narrower than the other two: this is the only finding in the tree, so if
-      // the resolver or uuid's packaging improves, this is a one-line revert.
-      'import-x/named': 'off',
+      // ADOPTED at zero since #421. Its one finding was a resolver false positive
+      // on `import { v4 } from 'uuid'` in modules/auth/auth-service.ts; that
+      // import is gone (crypto.randomUUID replaced the package), and the rule
+      // reports nothing repo-wide.
+      'import-x/named': 'error',
     },
   },
   {
