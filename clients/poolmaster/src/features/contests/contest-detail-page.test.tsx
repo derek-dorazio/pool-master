@@ -243,6 +243,18 @@ describe('ContestDetailPage (Contest Board)', () => {
     mockLogger.child.mockClear();
   });
 
+  it('shows a live contest as "Live" in the live colour, and its Status row reads "Live", never the raw enum', async () => {
+    primeMocks({ contestStatus: 'ACTIVE' });
+
+    renderContestBoard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    const liveLabels = screen.getAllByText('Live');
+    expect(liveLabels).toHaveLength(2);
+    expect(liveLabels.some((label) => label.className.includes('--shadow-red-pulse'))).toBe(true);
+    expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
+  });
+
   // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').
   it('renders header counts for my entries and total entries', async () => {
     primeMocks({

@@ -24,7 +24,7 @@ import {
   PageHeader,
   Tile,
 } from '@/features/shared/ui';
-import { isHistoricalContest } from './contest-status';
+import { contestStatusLabel, isHistoricalContest } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { throwApiError } from '@/lib/errors';
@@ -210,7 +210,7 @@ export function ManageContestsPage() {
                       </>
                     }
                     data-testid={`manage-contests-row-${contest.id}`}
-                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contest.status}`}
+                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contestStatusLabel(contest.status)}`}
                     key={contest.id}
                     title={contest.name}
                     trailing={
@@ -262,7 +262,7 @@ export function ManageContestsPage() {
                       </>
                     }
                     data-testid={`manage-contests-row-${contest.id}`}
-                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contest.status}`}
+                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contestStatusLabel(contest.status)}`}
                     key={contest.id}
                     title={contest.name}
                     trailing={

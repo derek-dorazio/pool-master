@@ -27,12 +27,13 @@ import {
   Input,
   LinkButton,
   LoadingState,
-  StatusBadge,
   Tile,
 } from '@/features/shared/ui';
+import { ContestStatusBadge } from './contest-status-badge';
 import {
   CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
+  contestStatusLabel,
   refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
@@ -316,9 +317,7 @@ export function ContestDetailPage() {
       <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <StatusBadge tone={isOpen ? 'active' : 'neutral'}>
-              {contest.status}
-            </StatusBadge>
+            <ContestStatusBadge status={contest.status} />
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-detail-heading">
                 {contest.name}
@@ -579,7 +578,7 @@ export function ContestDetailPage() {
             { id: 'contest-format', label: 'Contest format', value: contest.contestFormat },
             { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
             { id: 'scoring-engine', label: 'Scoring engine', value: contest.scoringEngine },
-            { id: 'status', label: 'Status', value: contest.status },
+            { id: 'status', label: 'Status', value: contestStatusLabel(contest.status) },
           ]}
         />
       </Tile>

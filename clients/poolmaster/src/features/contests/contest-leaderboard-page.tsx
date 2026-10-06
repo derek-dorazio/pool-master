@@ -28,6 +28,7 @@ import {
   refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
+import { ContestStatusBadge } from './contest-status-badge';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
 
 /**
@@ -251,6 +252,7 @@ export function ContestLeaderboardPage() {
       <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
+            <ContestStatusBadge status={contest.status} />
             <h2
               className="text-3xl font-semibold tracking-tight"
               data-testid="contest-leaderboard-heading"

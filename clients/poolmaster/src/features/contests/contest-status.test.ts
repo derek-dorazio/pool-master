@@ -1,7 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
+import { ContestStatus } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import {
   CONTEST_POLL_INTERVAL_MS,
+  CONTEST_STATUS_LABELS,
+  CONTEST_STATUS_TONES,
+  contestStatusLabel,
   contestRefetchInterval,
   isHistoricalContest,
   refreshOnContestStatusChange,
@@ -9,6 +13,28 @@ import {
 } from './contest-status';
 
 describe('contest status helpers', () => {
+  it('gives every contest status a readable label and a badge colour, so a new status without one fails', () => {
+    const statuses = Object.values(ContestStatus).sort();
+    expect(Object.keys(CONTEST_STATUS_LABELS).sort()).toEqual(statuses);
+    expect(Object.keys(CONTEST_STATUS_TONES).sort()).toEqual(statuses);
+    const unreadable = statuses.filter(
+      (status) => !CONTEST_STATUS_LABELS[status] || CONTEST_STATUS_LABELS[status] === status,
+    );
+    expect(unreadable).toEqual([]);
+  });
+
+  it('labels open contests "Open for entries", live ones "Live" and settled ones "Final"', () => {
+    expect(contestStatusLabel('OPEN')).toBe('Open for entries');
+    expect(contestStatusLabel('ACTIVE')).toBe('Live');
+    expect(contestStatusLabel('COMPLETED')).toBe('Final');
+  });
+
+  it('gives Live and Final their own colours, distinct from every other status', () => {
+    const tones = Object.values(CONTEST_STATUS_TONES);
+    expect(tones.filter((tone) => tone === CONTEST_STATUS_TONES.ACTIVE)).toHaveLength(1);
+    expect(tones.filter((tone) => tone === CONTEST_STATUS_TONES.COMPLETED)).toHaveLength(1);
+  });
+
   it('pool-master-dxd.13.3 classifies completed and cancelled contests as historical', () => {
     expect(isHistoricalContest('COMPLETED')).toBe(true);
     expect(isHistoricalContest('CANCELLED')).toBe(true);

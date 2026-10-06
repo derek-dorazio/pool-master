@@ -382,6 +382,25 @@ describe('ContestLeaderboardPage', () => {
     );
   });
 
+  it('labels a live contest "Live" in the live colour beside its name', async () => {
+    primeMocks({ contestStatus: 'ACTIVE' });
+
+    renderLeaderboard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    expect(screen.getByText('Live').className).toContain('--shadow-red-pulse');
+    expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
+  });
+
+  it('labels a settled contest "Final" in the completed colour beside its name', async () => {
+    primeMocks({ contestStatus: 'COMPLETED' });
+
+    renderLeaderboard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    expect(screen.getByText('Final').className).toContain('--status-completed-text');
+  });
+
   it('does not note a frozen result while the contest is live', async () => {
     primeMocks({ contestStatus: 'ACTIVE' });
 

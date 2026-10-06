@@ -1,5 +1,6 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
+import type { StatusBadgeProps } from '@/features/shared/ui';
 
 /**
  * How often a contest page re-reads what can change under it while the contest is live or
@@ -7,6 +8,35 @@ import type { ContestStatus } from '@poolmaster/shared/domain';
  * only re-read the same data.
  */
 export const CONTEST_POLL_INTERVAL_MS = 30_000;
+
+/**
+ * What members read for each contest status. A `Record` over the enum, so adding a status without
+ * a label fails the typecheck.
+ */
+export const CONTEST_STATUS_LABELS: Record<ContestStatus, string> = {
+  DRAFT: 'Draft',
+  OPEN: 'Open for entries',
+  DRAFTING: 'Drafting',
+  LOCKED: 'Locked',
+  ACTIVE: 'Live',
+  COMPLETED: 'Final',
+  CANCELLED: 'Cancelled',
+};
+
+/** The badge colour for each contest status; Live and Final get their own. */
+export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadgeProps['tone']>> = {
+  DRAFT: 'neutral',
+  OPEN: 'active',
+  DRAFTING: 'info',
+  LOCKED: 'locked',
+  ACTIVE: 'live',
+  COMPLETED: 'completed',
+  CANCELLED: 'inactive',
+};
+
+export function contestStatusLabel(status: ContestStatus) {
+  return CONTEST_STATUS_LABELS[status];
+}
 
 export function isHistoricalContest(status: ContestStatus) {
   return status === 'COMPLETED' || status === 'CANCELLED';
