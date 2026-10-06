@@ -76,8 +76,9 @@ export async function removeJourneyRun(
   await attempt(log, `user ${run.member.username}`, () => removeUser(api, headers, run.member, log));
 }
 
-// Lifted from the #278 plumbing probe, which first proved it.
-async function removeLeague(api: APIRequestContext, headers: AuthHeaders, leagueCode: string, log: Log) {
+// Lifted from the #278 plumbing probe, which first proved it. Shared with the squad-management
+// teardown (#363).
+export async function removeLeague(api: APIRequestContext, headers: AuthHeaders, leagueCode: string, log: Log) {
   const leagueByCode = `/api/v1/leagues/code/${leagueCode}`;
   const league = await api.get(leagueByCode, { headers });
   if (league.status() === 404) {
@@ -168,8 +169,9 @@ async function inactivatePlayers(api: APIRequestContext, headers: AuthHeaders, r
   }
 }
 
-// Lifted from the #278 plumbing probe, which first proved it.
-async function removeUser(api: APIRequestContext, headers: AuthHeaders, created: JourneyUser, log: Log) {
+// Lifted from the #278 plumbing probe, which first proved it. Shared with the squad-management
+// teardown (#363).
+export async function removeUser(api: APIRequestContext, headers: AuthHeaders, created: JourneyUser, log: Log) {
   const search = await api.get('/api/v1/users/', { headers, params: { search: created.username } });
   if (!search.ok()) {
     throw new Error(`search failed: ${search.status()}`);
