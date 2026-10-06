@@ -316,6 +316,112 @@ describe('EventScoreSourceService.unlinkScoreSource', () => {
   });
 });
 
+describe('EventScoreSourceService.startLiveSimulation', () => {
+  const linkedEvent = { id: 'event-1', sport: 'GOLF', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
+  const simulationStatus = {
+    startsAt: new Date('2026-10-06T12:00:00.000Z'),
+    endsAt: new Date('2026-10-06T13:20:00.000Z'),
+    minutesPerRound: 20,
+    phase: 'IN_PROGRESS' as const,
+    currentRound: 1,
+  };
+
+  function prismaWith(event: Record<string, unknown> | null) {
+    return asPrismaClient({ sportEvent: { findUnique: jest.fn().mockResolvedValue(event) } });
+  }
+
+  it('starts the linked provider event\'s simulation and returns its status', async () => {
+    const startLiveSimulation = jest.fn().mockResolvedValue(simulationStatus);
+    const provider = Object.assign(buildProvider(), { startLiveSimulation, getLiveSimulation: jest.fn() });
+    const service = new EventScoreSourceService(prismaWith(linkedEvent), registryWith(provider));
+
+    await expect(service.startLiveSimulation('event-1', { minutesPerRound: 20 })).resolves.toEqual(simulationStatus);
+    expect(startLiveSimulation).toHaveBeenCalledWith('ext-1', { minutesPerRound: 20 });
+  });
+
+  it('refuses an unlinked event with 409 EVENT_NOT_LINKED and never calls a provider', async () => {
+    const startLiveSimulation = jest.fn();
+    const provider = Object.assign(buildProvider(), { startLiveSimulation, getLiveSimulation: jest.fn() });
+    const service = new EventScoreSourceService(
+      prismaWith({ ...linkedEvent, providerId: 'manual-admin', syncScope: 'NONE' }),
+      registryWith(provider),
+    );
+
+    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({ code: 'EVENT_NOT_LINKED', statusCode: 409 });
+    expect(startLiveSimulation).not.toHaveBeenCalled();
+  });
+
+  it('refuses a provider that cannot simulate with 422 LIVE_SIMULATION_UNSUPPORTED', async () => {
+    const service = new EventScoreSourceService(prismaWith(linkedEvent), registryWith(buildProvider()));
+
+    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({
+      code: 'LIVE_SIMULATION_UNSUPPORTED',
+      statusCode: 422,
+    });
+  });
+
+  it('refuses a non-golf event linked to a simulating provider with 422 LIVE_SIMULATION_UNSUPPORTED and never calls it', async () => {
+    const startLiveSimulation = jest.fn();
+    const provider = Object.assign(buildProvider(), { startLiveSimulation, getLiveSimulation: jest.fn() });
+    const service = new EventScoreSourceService(prismaWith({ ...linkedEvent, sport: 'TENNIS' }), registryWith(provider));
+
+    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({
+      code: 'LIVE_SIMULATION_UNSUPPORTED',
+      statusCode: 422,
+    });
+    expect(startLiveSimulation).not.toHaveBeenCalled();
+  });
+
+  it('404s PROVIDER_EVENT_NOT_FOUND when the provider no longer has the linked event', async () => {
+    const provider = Object.assign(buildProvider(), { startLiveSimulation: jest.fn().mockResolvedValue(null), getLiveSimulation: jest.fn() });
+    const service = new EventScoreSourceService(prismaWith(linkedEvent), registryWith(provider));
+
+    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({
+      code: 'PROVIDER_EVENT_NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
+    const service = new EventScoreSourceService(prismaWith(null), registryWith(buildProvider()));
+
+    await expect(service.startLiveSimulation('missing', {})).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('EventScoreSourceService.getLiveSimulation', () => {
+  const linkedEvent = { id: 'event-1', sport: 'GOLF', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
+
+  function serviceWith(getLiveSimulation: jest.Mock) {
+    const provider = Object.assign(buildProvider(), { startLiveSimulation: jest.fn(), getLiveSimulation });
+    return new EventScoreSourceService(
+      asPrismaClient({ sportEvent: { findUnique: jest.fn().mockResolvedValue(linkedEvent) } }),
+      registryWith(provider),
+    );
+  }
+
+  it('returns the running simulation for the linked provider event, with its current round', async () => {
+    const status = {
+      startsAt: new Date('2026-10-06T12:00:00.000Z'),
+      endsAt: new Date('2026-10-06T13:20:00.000Z'),
+      minutesPerRound: 20,
+      phase: 'IN_PROGRESS' as const,
+      currentRound: 3,
+    };
+    const getLiveSimulation = jest.fn().mockResolvedValue(status);
+
+    await expect(serviceWith(getLiveSimulation).getLiveSimulation('event-1')).resolves.toEqual(status);
+    expect(getLiveSimulation).toHaveBeenCalledWith('ext-1');
+  });
+
+  it('404s LIVE_SIMULATION_NOT_RUNNING when the provider has no simulation running', async () => {
+    await expect(serviceWith(jest.fn().mockResolvedValue(null)).getLiveSimulation('event-1')).rejects.toMatchObject({
+      code: 'LIVE_SIMULATION_NOT_RUNNING',
+      statusCode: 404,
+    });
+  });
+});
+
 describe('EventScoreSourceError', () => {
   it('pool-master-753 carries message/code/statusCode', () => {
     const error = new EventScoreSourceError('boom', 'SOME_CODE', 422);

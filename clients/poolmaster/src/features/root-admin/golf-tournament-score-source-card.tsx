@@ -17,6 +17,7 @@ import {
   golfSyncScopeLabel,
   golfSyncScopeTone,
 } from './golf-admin-utils';
+import { GolfTournamentLiveSimulation } from './golf-tournament-live-simulation';
 import {
   useGolfProviderCatalog,
   type GolfProviderCatalogEvent,
@@ -143,6 +144,9 @@ export function GolfTournamentScoreSourceCard({
           </Button>
         )}
       </div>
+      {tournament.syncScope === SportEventSyncScope.NONE ? null : (
+        <GolfTournamentLiveSimulation tournament={tournament} />
+      )}
 
       <PickerModal<PickerCatalogEvent>
         canApply={selectedCatalogId !== null && !linkMutation.isPending}

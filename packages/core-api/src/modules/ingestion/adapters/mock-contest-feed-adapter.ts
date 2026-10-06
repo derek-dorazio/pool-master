@@ -3,7 +3,11 @@ import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
   DateRange,
+  LiveSimulationOptions,
+  LiveSimulationPhase,
+  LiveSimulationStatus,
   ProviderEventSyncOptions,
+  ProviderLiveSimulationControls,
   ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
@@ -27,6 +31,8 @@ import type {
   GetMockContestFeedScenarioEventDetailResponse,
   GetMockContestFeedScoresSnapshotResponse,
   GetMockContestFeedResultsSnapshotResponse,
+  GetMockContestFeedLiveReplayResponse,
+  StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
 
 type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
@@ -34,6 +40,7 @@ type EventListResponse = ListMockContestFeedScenarioEventsResponse;
 type EventDetailResponse = GetMockContestFeedScenarioEventDetailResponse;
 type ScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponse;
 type ResultsSnapshotResponse = GetMockContestFeedResultsSnapshotResponse;
+type LiveReplayResponse = StartMockContestFeedLiveReplayResponse;
 
 type SupportedMockSport = ScenarioSummaryResponse['scenarios'][number]['sport'];
 type ContestantRecord = NonNullable<
@@ -46,7 +53,7 @@ type ContestantDelta = NonNullable<
   EventDetailResponse['event']['feeds']['odds']['contestants']
 >[number];
 
-export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
+export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics, ProviderLiveSimulationControls {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
@@ -168,6 +175,52 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   // requirements/product-requirements/features/contest-event-feed-integration/overview.md
   // — an earlier attempt put per-state scoring logic here and got it
   // backwards.
+  /**
+   * Starts the mock's time-driven live replay for one golf event (#382): from now on, its
+   * `/scores` moves hole by hole on the replay clock.
+   */
+  async startLiveSimulation(
+    eventId: string,
+    options: LiveSimulationOptions,
+  ): Promise<LiveSimulationStatus | null> {
+    const match = await this.findEventById(eventId);
+    if (!match) {
+      return null;
+    }
+
+    const replay = await this.sendJson<LiveReplayResponse>(
+      'PUT',
+      `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`,
+      options.minutesPerRound === undefined ? {} : { minutesPerRound: options.minutesPerRound },
+    );
+    return toLiveSimulationStatus(replay);
+  }
+
+  /** The mock answers 404 when no replay is running for the event; that maps to null. */
+  async getLiveSimulation(eventId: string): Promise<LiveSimulationStatus | null> {
+    const match = await this.findEventById(eventId);
+    if (!match) {
+      return null;
+    }
+
+    const path = `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`;
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}${path}`);
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
+    }
+    const replay = (await response.json()) as GetMockContestFeedLiveReplayResponse;
+    this.recordProviderPayload({
+      operation: 'mock-contest-feed.request',
+      path,
+      capturedAt: new Date().toISOString(),
+      raw: replay,
+    });
+    return toLiveSimulationStatus(replay);
+  }
+
   async getLiveScores(
     eventId: string,
     options?: ProviderEventSyncOptions,
@@ -349,6 +402,26 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     return null;
+  }
+
+  private async sendJson<T>(method: 'PUT', path: string, body: unknown): Promise<T> {
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}${path}`, {
+      method,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const raw = (await response.json()) as T;
+    this.recordProviderPayload({
+      operation: 'mock-contest-feed.request',
+      path,
+      capturedAt: new Date().toISOString(),
+      raw,
+    });
+    return raw;
   }
 
   private async fetchJson<T>(path: string): Promise<T> {
@@ -605,4 +678,25 @@ function mergeContestantView(
   }
 
   return Array.from(merged.values());
+}
+
+function toLiveSimulationStatus(replay: LiveReplayResponse): LiveSimulationStatus {
+  return {
+    startsAt: new Date(replay.startsAt),
+    endsAt: new Date(replay.endsAt),
+    minutesPerRound: replay.minutesPerRound,
+    phase: toLiveSimulationPhase(replay.phase),
+    currentRound: replay.currentRound,
+  };
+}
+
+function toLiveSimulationPhase(phase: LiveReplayResponse['phase']): LiveSimulationPhase {
+  switch (phase) {
+    case 'scheduled':
+      return 'SCHEDULED';
+    case 'in_progress':
+      return 'IN_PROGRESS';
+    case 'completed':
+      return 'COMPLETED';
+  }
 }

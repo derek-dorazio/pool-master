@@ -34,6 +34,7 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     lastEventAt: provider.lastEventAt?.toISOString() ?? null,
     sportsCovered: provider.sportsCovered,
     activeEventCount: provider.activeEventCount,
+    supportsLiveSimulation: provider.supportsLiveSimulation,
   };
 }
 

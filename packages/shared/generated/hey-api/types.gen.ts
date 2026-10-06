@@ -1448,6 +1448,40 @@ export type LinkSportEventScoreSourceRequest = {
 };
 
 /**
+ * Starts, or restarts from round 1, the score source's simulated live scoring for a linked event.
+ */
+export type StartSportEventLiveSimulationRequest = {
+    /**
+     * How long each of the four simulated rounds lasts. Defaults to the provider's own default (20 on the mock feed).
+     */
+    minutesPerRound?: number;
+};
+
+/**
+ * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
+ */
+export type SportEventLiveSimulationResponse = {
+    sportEventId: string;
+    /**
+     * When simulated round 1 started.
+     */
+    startsAt: string;
+    /**
+     * When simulated round 4 finishes; scores stop changing after this.
+     */
+    endsAt: string;
+    minutesPerRound: number;
+    /**
+     * Where the simulation is on its own clock.
+     */
+    phase: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+    /**
+     * The round being played now; null before the start and after the finish.
+     */
+    currentRound: number | null;
+};
+
+/**
  * A scheduled round of an event — its own date, independent of any result in it.
  */
 export type SportEventRoundDto = {
@@ -7302,6 +7336,10 @@ export type ProviderSummaryDto = {
      * The provider's events that are scheduled or in progress.
      */
     activeEventCount: number;
+    /**
+     * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
+     */
+    supportsLiveSimulation: boolean;
 };
 
 /**
@@ -7341,6 +7379,10 @@ export type ProviderListResponse = {
          * The provider's events that are scheduled or in progress.
          */
         activeEventCount: number;
+        /**
+         * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
+         */
+        supportsLiveSimulation: boolean;
     }>;
 };
 
@@ -16260,6 +16302,294 @@ export type LinkEventScoreSourceResponses = {
 };
 
 export type LinkEventScoreSourceResponse = LinkEventScoreSourceResponses[keyof LinkEventScoreSourceResponses];
+
+export type GetEventLiveSimulationData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/live-simulation';
+};
+
+export type GetEventLiveSimulationErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type GetEventLiveSimulationError = GetEventLiveSimulationErrors[keyof GetEventLiveSimulationErrors];
+
+export type GetEventLiveSimulationResponses = {
+    /**
+     * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
+     */
+    200: SportEventLiveSimulationResponse;
+};
+
+export type GetEventLiveSimulationResponse = GetEventLiveSimulationResponses[keyof GetEventLiveSimulationResponses];
+
+export type StartEventLiveSimulationData = {
+    body: StartSportEventLiveSimulationRequest;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/live-simulation';
+};
+
+export type StartEventLiveSimulationErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type StartEventLiveSimulationError = StartEventLiveSimulationErrors[keyof StartEventLiveSimulationErrors];
+
+export type StartEventLiveSimulationResponses = {
+    /**
+     * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
+     */
+    200: SportEventLiveSimulationResponse;
+};
+
+export type StartEventLiveSimulationResponse = StartEventLiveSimulationResponses[keyof StartEventLiveSimulationResponses];
 
 export type ListEventRoundsData = {
     body?: never;

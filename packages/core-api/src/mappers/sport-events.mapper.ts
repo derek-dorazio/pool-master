@@ -9,9 +9,11 @@ import type {
   EventReadinessReasonDto,
   EventReadinessStatusDto,
   SportEventDto,
+  SportEventLiveSimulationResponse,
   SportEventRoundDto,
   SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
+import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import type { SportEventSummary } from '../modules/events/service';
 
@@ -75,5 +77,19 @@ export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto 
     label: tier.label,
     tierNumber: tier.tierNumber,
     defaultPickCount: tier.defaultPickCount,
+  };
+}
+
+export function mapLiveSimulationToResponse(
+  sportEventId: string,
+  status: LiveSimulationStatus,
+): SportEventLiveSimulationResponse {
+  return {
+    sportEventId,
+    startsAt: status.startsAt.toISOString(),
+    endsAt: status.endsAt.toISOString(),
+    minutesPerRound: status.minutesPerRound,
+    phase: status.phase,
+    currentRound: status.currentRound,
   };
 }
