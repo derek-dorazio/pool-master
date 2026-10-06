@@ -1,0 +1,660 @@
+{
+  "tour": "PGA TOUR",
+  "tourId": "pga-tour",
+  "season": 2027,
+  "published": "partly published",
+  "notes": "PGA TOUR announced its 2027 schedule through the TOUR Championship on 2026-08-26 (reported as 36 events). FedExCup Fall 2027 not yet announced. This list has 34 of the reported events; 2 were not identified from search snippets (possibly Farmers Insurance Open and an opposite-field event). No Hawaii events in 2027; Puerto Rico Open dropped (moves to a 2028 'Challenger' slot). Rocket Classic not found on 2027 schedule. Venues/time zones mostly inferred from long-time hosts. FedExCup Fall events are the 2026 ones moved to the same week of 2027.",
+  "events": [
+    {
+      "eventId": "pga-tour-2027-the-american-express",
+      "name": "The American Express",
+      "startDate": "2027-01-21",
+      "endDate": "2027-01-24",
+      "rounds": 4,
+      "venue": {
+        "name": "PGA West (Nicklaus Tournament) / La Quinta CC",
+        "city": "La Quinta",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "Season opener"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-the-sentry",
+      "name": "The Sentry",
+      "startDate": "2027-01-28",
+      "endDate": "2027-01-31",
+      "rounds": 4,
+      "venue": {
+        "name": "Torrey Pines Golf Course (North Course)",
+        "city": "San Diego",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "eventType": "signature",
+      "notes": [
+        "Relocated from Kapalua; one source said Jan 28-30 — end date unverified"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-at-t-pebble-beach-pro-am",
+      "name": "AT&T Pebble Beach Pro-Am",
+      "startDate": "2027-02-04",
+      "endDate": "2027-02-07",
+      "rounds": 4,
+      "venue": {
+        "name": "Pebble Beach Golf Links / Spyglass Hill",
+        "city": "Pebble Beach",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-wm-phoenix-open",
+      "name": "WM Phoenix Open",
+      "startDate": "2027-02-11",
+      "endDate": "2027-02-14",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Scottsdale (Stadium Course)",
+        "city": "Scottsdale",
+        "region": "AZ",
+        "countryCode": "US",
+        "timeZone": "America/Phoenix"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-the-genesis-invitational",
+      "name": "The Genesis Invitational",
+      "startDate": "2027-02-18",
+      "endDate": "2027-02-21",
+      "rounds": 4,
+      "venue": {
+        "name": "The Riviera Country Club",
+        "city": "Pacific Palisades",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-cognizant-classic-in-the-palm-beaches",
+      "name": "Cognizant Classic in The Palm Beaches",
+      "startDate": "2027-02-25",
+      "endDate": "2027-02-28",
+      "rounds": 4,
+      "venue": {
+        "name": "PGA National Resort (Champion Course)",
+        "city": "Palm Beach Gardens",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-cadillac-championship",
+      "name": "Cadillac Championship",
+      "startDate": "2027-03-04",
+      "endDate": "2027-03-07",
+      "rounds": 4,
+      "venue": {
+        "name": "Trump National Doral (Blue Monster)",
+        "city": "Doral",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-the-players-championship",
+      "name": "THE PLAYERS Championship",
+      "startDate": "2027-03-11",
+      "endDate": "2027-03-14",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Sawgrass (Stadium Course)",
+        "city": "Ponte Vedra Beach",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "flagship"
+    },
+    {
+      "eventId": "pga-tour-2027-arnold-palmer-invitational",
+      "name": "Arnold Palmer Invitational",
+      "startDate": "2027-03-18",
+      "endDate": "2027-03-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Bay Hill Club & Lodge",
+        "city": "Orlando",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-texas-children-s-houston-open",
+      "name": "Texas Children's Houston Open",
+      "startDate": "2027-03-25",
+      "endDate": "2027-03-28",
+      "rounds": 4,
+      "venue": {
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-valero-texas-open",
+      "name": "Valero Texas Open",
+      "startDate": "2027-04-01",
+      "endDate": "2027-04-04",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC San Antonio (Oaks Course)",
+        "city": "San Antonio",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-masters-tournament",
+      "name": "Masters Tournament",
+      "startDate": "2027-04-08",
+      "endDate": "2027-04-11",
+      "rounds": 4,
+      "venue": {
+        "name": "Augusta National Golf Club",
+        "city": "Augusta",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2027-rbc-heritage",
+      "name": "RBC Heritage",
+      "startDate": "2027-04-15",
+      "endDate": "2027-04-18",
+      "rounds": 4,
+      "venue": {
+        "name": "Harbour Town Golf Links",
+        "city": "Hilton Head Island",
+        "region": "SC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-zurich-classic-of-new-orleans",
+      "name": "Zurich Classic of New Orleans",
+      "startDate": "2027-04-22",
+      "endDate": "2027-04-25",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Louisiana",
+        "city": "Avondale",
+        "region": "LA",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "team"
+    },
+    {
+      "eventId": "pga-tour-2027-the-cj-cup-byron-nelson",
+      "name": "THE CJ CUP Byron Nelson",
+      "startDate": "2027-04-29",
+      "endDate": "2027-05-02",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Craig Ranch",
+        "city": "McKinney",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-valspar-championship",
+      "name": "Valspar Championship",
+      "startDate": "2027-05-06",
+      "endDate": "2027-05-09",
+      "rounds": 4,
+      "venue": {
+        "name": "Innisbrook Resort (Copperhead Course)",
+        "city": "Palm Harbor",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-myrtle-beach-classic",
+      "name": "Myrtle Beach Classic",
+      "startDate": "2027-05-13",
+      "endDate": "2027-05-16",
+      "rounds": 4,
+      "venue": {
+        "name": "The Dunes Golf & Beach Club",
+        "city": "Myrtle Beach",
+        "region": "SC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "opposite-field"
+    },
+    {
+      "eventId": "pga-tour-2027-truist-championship",
+      "name": "Truist Championship",
+      "startDate": "2027-05-13",
+      "endDate": "2027-05-16",
+      "rounds": 4,
+      "venue": {
+        "name": "Quail Hollow Club",
+        "city": "Charlotte",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-pga-championship",
+      "name": "PGA Championship",
+      "startDate": "2027-05-20",
+      "endDate": "2027-05-23",
+      "rounds": 4,
+      "venue": {
+        "name": "PGA Frisco (Fields Ranch East)",
+        "city": "Frisco",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2027-charles-schwab-challenge",
+      "name": "Charles Schwab Challenge",
+      "startDate": "2027-05-27",
+      "endDate": "2027-05-30",
+      "rounds": 4,
+      "venue": {
+        "name": "Colonial Country Club",
+        "city": "Fort Worth",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-the-memorial-tournament-presented-by-workday",
+      "name": "the Memorial Tournament presented by Workday",
+      "startDate": "2027-06-03",
+      "endDate": "2027-06-06",
+      "rounds": 4,
+      "venue": {
+        "name": "Muirfield Village Golf Club",
+        "city": "Dublin",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-rbc-canadian-open",
+      "name": "RBC Canadian Open",
+      "startDate": "2027-06-10",
+      "endDate": "2027-06-13",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Toronto at Osprey Valley",
+        "city": "Caledon",
+        "region": "ON",
+        "countryCode": "CA",
+        "timeZone": "America/Toronto"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-u-s-open",
+      "name": "U.S. Open",
+      "startDate": "2027-06-17",
+      "endDate": "2027-06-20",
+      "rounds": 4,
+      "venue": {
+        "name": "Pebble Beach Golf Links",
+        "city": "Pebble Beach",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2027-travelers-championship",
+      "name": "Travelers Championship",
+      "startDate": "2027-06-24",
+      "endDate": "2027-06-27",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC River Highlands",
+        "city": "Cromwell",
+        "region": "CT",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2027-john-deere-classic",
+      "name": "John Deere Classic",
+      "startDate": "2027-07-01",
+      "endDate": "2027-07-04",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Deere Run",
+        "city": "Silvis",
+        "region": "IL",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-genesis-scottish-open",
+      "name": "Genesis Scottish Open",
+      "startDate": "2027-07-08",
+      "endDate": "2027-07-11",
+      "rounds": 4,
+      "venue": {
+        "name": "The Renaissance Club",
+        "city": "North Berwick",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-isco-championship",
+      "name": "ISCO Championship",
+      "startDate": "2027-07-08",
+      "endDate": "2027-07-11",
+      "rounds": 4,
+      "venue": {
+        "name": "Hurstbourne Country Club",
+        "city": "Louisville",
+        "region": "KY",
+        "countryCode": "US",
+        "timeZone": "America/Kentucky/Louisville"
+      },
+      "eventType": "opposite-field"
+    },
+    {
+      "eventId": "pga-tour-2027-the-open-championship",
+      "name": "The Open Championship",
+      "startDate": "2027-07-15",
+      "endDate": "2027-07-18",
+      "rounds": 4,
+      "venue": {
+        "name": "Old Course at St Andrews",
+        "city": "St Andrews",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2027-3m-open",
+      "name": "3M Open",
+      "startDate": "2027-07-22",
+      "endDate": "2027-07-25",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Twin Cities",
+        "city": "Blaine",
+        "region": "MN",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2027-sompo-championship",
+      "name": "Sompo Championship",
+      "startDate": "2027-07-29",
+      "endDate": "2027-08-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Silverado Resort (North Course)",
+        "city": "Napa",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "notes": [
+        "New event"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-go-by-raymond-james",
+      "name": "GO by Raymond James",
+      "startDate": "2027-08-05",
+      "endDate": "2027-08-08",
+      "rounds": 4,
+      "venue": {
+        "name": "Sedgefield Country Club",
+        "city": "Greensboro",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Renamed Wyndham Championship; regular-season finale"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-fedex-st-jude-championship",
+      "name": "FedEx St. Jude Championship",
+      "startDate": "2027-08-12",
+      "endDate": "2027-08-15",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Southwind",
+        "city": "Memphis",
+        "region": "TN",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "playoff"
+    },
+    {
+      "eventId": "pga-tour-2027-bmw-championship",
+      "name": "BMW Championship",
+      "startDate": "2027-08-19",
+      "endDate": "2027-08-22",
+      "rounds": 4,
+      "venue": {
+        "countryCode": "US"
+      },
+      "eventType": "playoff",
+      "notes": [
+        "2027 venue not verified"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-tour-championship",
+      "name": "TOUR Championship",
+      "startDate": "2027-08-26",
+      "endDate": "2027-08-29",
+      "rounds": 4,
+      "venue": {
+        "name": "East Lake Golf Club",
+        "city": "Atlanta",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "playoff"
+    },
+    {
+      "eventId": "pga-tour-2027-biltmore-championship-asheville",
+      "name": "Biltmore Championship Asheville",
+      "startDate": "2027-09-16",
+      "endDate": "2027-09-19",
+      "rounds": 4,
+      "venue": {
+        "name": "The Cliffs at Walnut Cove",
+        "city": "Arden (Asheville)",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-bank-of-utah-championship",
+      "name": "Bank of Utah Championship",
+      "startDate": "2027-09-30",
+      "endDate": "2027-10-03",
+      "rounds": 4,
+      "venue": {
+        "name": "Black Desert Resort",
+        "city": "Ivins",
+        "region": "UT",
+        "countryCode": "US",
+        "timeZone": "America/Denver"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-baycurrent-classic",
+      "name": "Baycurrent Classic",
+      "startDate": "2027-10-07",
+      "endDate": "2027-10-10",
+      "rounds": 4,
+      "venue": {
+        "name": "Yokohama Country Club",
+        "city": "Yokohama",
+        "region": "Kanagawa",
+        "countryCode": "JP",
+        "timeZone": "Asia/Tokyo"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-butterfield-bermuda-championship",
+      "name": "Butterfield Bermuda Championship",
+      "startDate": "2027-10-21",
+      "endDate": "2027-10-24",
+      "rounds": 4,
+      "venue": {
+        "name": "Port Royal Golf Course",
+        "city": "Southampton",
+        "region": "Southampton Parish",
+        "countryCode": "BM",
+        "timeZone": "Atlantic/Bermuda"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-vidantaworld-mexico-open",
+      "name": "VidantaWorld Mexico Open",
+      "startDate": "2027-10-28",
+      "endDate": "2027-10-31",
+      "rounds": 4,
+      "venue": {
+        "name": "Vidanta Vallarta",
+        "city": "Nuevo Vallarta",
+        "region": "Nayarit",
+        "countryCode": "MX",
+        "timeZone": "America/Bahia_Banderas"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-world-wide-technology-championship",
+      "name": "World Wide Technology Championship",
+      "startDate": "2027-11-04",
+      "endDate": "2027-11-07",
+      "rounds": 4,
+      "venue": {
+        "name": "El Cardonal at Diamante",
+        "city": "Cabo San Lucas",
+        "region": "Baja California Sur",
+        "countryCode": "MX",
+        "timeZone": "America/Mazatlan"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-good-good-championship",
+      "name": "Good Good Championship",
+      "startDate": "2027-11-11",
+      "endDate": "2027-11-14",
+      "rounds": 4,
+      "venue": {
+        "name": "Omni Barton Creek Resort & Spa",
+        "city": "Austin",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    },
+    {
+      "eventId": "pga-tour-2027-the-rsm-classic",
+      "name": "The RSM Classic",
+      "startDate": "2027-11-18",
+      "endDate": "2027-11-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Sea Island Golf Club (Seaside / Plantation)",
+        "city": "St. Simons Island",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Not yet announced for 2027: 2026 event moved to the same week."
+      ]
+    }
+  ]
+}

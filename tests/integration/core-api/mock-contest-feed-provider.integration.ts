@@ -480,6 +480,9 @@ beforeAll(async () => {
     routes: {
       scenarioStoreOptions: {
         now: () => syncVerificationNow,
+        // These cases verify the legacy sync jobs against golf-major-2026's shared 80-player
+        // pool; the tour seeds (#383) have their own coverage in the mock package.
+        includeTourSeeds: false,
       },
     },
   });

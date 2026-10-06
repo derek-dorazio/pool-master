@@ -142,6 +142,24 @@ The current baseline scenarios cover:
 
 These files are intended to grow as future ingestion and manual-testing cases are added.
 
+## Tour Seeds
+
+[`contest-feed-scenarios/tours/`](./contest-feed-scenarios/tours) holds hand-maintained
+golf slates, loaded as one scenario per tour and season: `pga-tour-2026`,
+`pga-tour-2027`, `lpga-tour-2026` and `lpga-tour-2027`. List a slate with
+`GET /v1/scenarios/<tour>-<season>/events`.
+
+- `<tour>-players.json` is the tour's ranked player list. Every event's field is the
+  whole list, seeded by ranking, so tiers and prices follow rank order.
+- `<tour>-<season>.json` is the season's events, each with a stable `eventId` that is
+  the linking id PoolMaster stores, plus name, dates, venue and rounds.
+- Nothing is fetched at runtime, and nothing is compared with today: every event
+  reports `scheduled`, and scores move only when a live replay is started.
+- 2027 is only partly published. Events carried over from 2026 say so in their notes.
+  [`SOURCES.md`](./contest-feed-scenarios/tours/SOURCES.md) lists where the data came
+  from and what is estimated, including rankings below the top 50 (PGA TOUR) and top 33
+  (LPGA).
+
 ## Scenario Contract Notes
 
 The scenario model is intentionally event-first and database-free:

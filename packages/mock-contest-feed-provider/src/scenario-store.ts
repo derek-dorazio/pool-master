@@ -35,6 +35,7 @@ import {
   buildMockGolfFieldContestants,
   buildMockGolfOddsContestants,
   buildMockGolfRankingContestants,
+  type GolfPoolPlayerRecord,
 } from './golf-player-pool';
 import {
   golfLiveTimelineEndsAt,
@@ -43,6 +44,7 @@ import {
   simulateGolfLiveScores,
   type GolfLiveTimeline,
 } from './golf-live-simulation';
+import { loadTourSeedScenarios } from './tour-seeds';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -495,12 +497,15 @@ export function validateScenario(record: unknown): ContestFeedScenarioRecord {
   };
 }
 
-function normalizeScenario(record: ContestFeedScenarioRecord): ContestFeedScenarioRecord {
+function normalizeScenario(
+  record: ContestFeedScenarioRecord,
+  pool?: readonly GolfPoolPlayerRecord[],
+): ContestFeedScenarioRecord {
   if (record.sport !== 'GOLF') {
     return record;
   }
 
-  const normalizedEvents = record.events.map((event) => normalizeGolfEvent(event));
+  const normalizedEvents = record.events.map((event) => normalizeGolfEvent(event, pool));
 
   return {
     ...record,
@@ -513,10 +518,17 @@ function normalizeScenario(record: ContestFeedScenarioRecord): ContestFeedScenar
   };
 }
 
-function normalizeGolfEvent(event: ContestFeedEventRecord): ContestFeedEventRecord {
-  const fieldContestants = buildMockGolfFieldContestants();
-  const oddsContestants = buildMockGolfOddsContestants(event.eventId);
-  const rankingContestants = buildMockGolfRankingContestants();
+/**
+ * Fills a golf event's field, odds, rankings and results from a player pool: the shared
+ * 80-player pool by default, or a tour's own ranked players for the tour seeds (#383).
+ */
+export function normalizeGolfEvent(
+  event: ContestFeedEventRecord,
+  pool?: readonly GolfPoolPlayerRecord[],
+): ContestFeedEventRecord {
+  const fieldContestants = buildMockGolfFieldContestants(pool);
+  const oddsContestants = buildMockGolfOddsContestants(event.eventId, pool);
+  const rankingContestants = buildMockGolfRankingContestants(pool);
   const usesExplicitRoundScores = event.feeds.results.contestants.some(
     (contestant) => typeof contestant.strokes === 'number',
   );
@@ -1520,6 +1532,8 @@ function buildSandboxGolfEvent(eventId: string): ContestFeedEventRecord {
 export interface ScenarioStoreOptions {
   readonly now?: () => Date;
   readonly includeRelativeTodayGolfScenario?: boolean;
+  /** Load the PGA TOUR and LPGA season slates from `tours/` (#383). On unless set to false. */
+  readonly includeTourSeeds?: boolean;
 }
 
 const minuteMs = 60 * 1000;
@@ -1560,9 +1574,13 @@ export class ScenarioStore {
     private readonly logger?: FastifyBaseLogger,
     private readonly options: ScenarioStoreOptions = {},
   ) {
-    const entries = readdirSync(scenarioDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-      .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
+    const entries = [
+      ...readdirSync(scenarioDir, { withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+        .map((entry) => loadJsonFile(join(scenarioDir, entry.name))),
+      ...(options.includeTourSeeds === false ? [] : loadTourSeedScenarios(scenarioDir))
+        .map(({ scenario, pool }) => normalizeScenario(scenario, pool)),
+    ];
     const generatedScenarios =
       options.includeRelativeTodayGolfScenario === false
         ? []
