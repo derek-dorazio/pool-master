@@ -3,7 +3,8 @@
  *
  * Two writers, one storage path. `persistRoundUpdatesForSportEvent` is the provider sync
  * (score-publisher.ts): participantExternalId → provider mapping → the event's field row,
- * with a missing round auto-created, then the standings refreshed. The admin correction
+ * with a missing round auto-created on a provider-owned (FULL) event and skipped on an
+ * admin-owned one (#118), then the standings refreshed. The admin correction
  * surface — preview, apply, single-cell update — resolves each uploaded row against the
  * event's field with the shared participant-row resolver, the same precedence a sport
  * league's affiliation upload uses (#236; each had its own copy before).
@@ -28,6 +29,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
   rankSortedScores,
+  SportEventSyncScope,
   type GolfRoundResult,
   type GolfStandingResult,
 } from '@poolmaster/shared/domain';
@@ -115,17 +117,20 @@ export class GolfScoreService {
     sportEventId: string,
     rounds: readonly GolfRoundUpdate[],
     providerId: string,
+    syncScope: SportEventSyncScope,
   ): Promise<GolfRoundPersistenceResult> {
     if (rounds.length === 0) {
       return { updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0, writeDiagnostics: emptySyncWriteDiagnostics() };
     }
     const { logger } = this.deps;
 
-    // A provider-synced event that never went through admin creation may have no round
-    // rows yet, so a score for a round the event lacks creates it rather than being dropped.
+    // A provider-owned (FULL) event has no admin schedule, so a score for a round the event
+    // lacks creates it rather than being dropped. An admin-owned event (SCORES_ONLY, NONE)
+    // keeps the rounds its admin scheduled: a round number beyond them is skipped (#118).
+    // Golf playoff holes are not a round and never count toward a score.
     const roundIdByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round.id]));
     const missingRoundNumbers = [...new Set(rounds.map((round) => round.round))].filter((roundNumber) => !roundIdByNumber.has(roundNumber));
-    if (missingRoundNumbers.length > 0) {
+    if (missingRoundNumbers.length > 0 && syncScope === SportEventSyncScope.FULL) {
       const created = await Promise.all(missingRoundNumbers.map((roundNumber) => this.deps.rounds.findOrCreate(sportEventId, roundNumber)));
       for (const round of created) {
         roundIdByNumber.set(round.roundNumber, round.id);
@@ -133,6 +138,11 @@ export class GolfScoreService {
       logger?.warn(
         { action: 'liveScore.golf.autoCreatedRoundSchedule', data: { sportEventId, roundNumbers: missingRoundNumbers } },
         'Auto-created missing SportEventRound row(s) for a provider-synced event with no admin-created round schedule',
+      );
+    } else if (missingRoundNumbers.length > 0) {
+      logger?.warn(
+        { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId, roundNumbers: missingRoundNumbers } },
+        'Skipping golf round update(s) for round(s) the admin did not schedule on this event',
       );
     }
 
@@ -175,6 +185,11 @@ export class GolfScoreService {
       }
       const sportEventRoundId = roundIdByNumber.get(round.round);
       if (!sportEventRoundId) {
+        if (missingRoundNumbers.includes(round.round)) {
+          // Logged once above, with every unscheduled round number.
+          skipped += 1;
+          continue;
+        }
         logger?.warn(
           { action: 'liveScore.golf.unresolvedRoundNumber', data: { sportEventId, round: round.round, externalId: round.participantExternalId } },
           'Skipping golf round update — no SportEventRound exists for this event/roundNumber',

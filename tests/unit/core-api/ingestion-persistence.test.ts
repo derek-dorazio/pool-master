@@ -45,6 +45,7 @@ function linkedRow(overrides: Record<string, unknown> = {}) {
     fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
     fieldLocked: false,
     metadata: {},
+    syncScope: 'FULL',
     ...overrides,
   };
 }
@@ -81,6 +82,7 @@ describe('IngestionPersistence', () => {
               fieldLocksAt: existingFieldLocksAt.toISOString(),
               eventType: 'stroke_play',
             },
+            syncScope: 'FULL',
           })
           .mockResolvedValueOnce(null),
         update: jest.fn().mockResolvedValueOnce({ id: 'sport-event-1' }),
@@ -641,6 +643,49 @@ describe('IngestionPersistence', () => {
       toStatus: 'IN_PROGRESS',
       actor: { type: 'PROVIDER' },
     });
+  });
+
+  // #118 — an admin owns the header, rounds and status of an event it linked to a provider
+  // for scores only (SCORES_ONLY) or not at all (NONE). Sync may refresh the field size, and
+  // nothing else.
+  it.each(['SCORES_ONLY', 'NONE'])('leaves a %s event\'s admin-owned header unchanged, writes only participantCount, and runs no provider status transition', async (syncScope) => {
+    const prisma = {
+      sportEvent: {
+        findUnique: jest.fn().mockResolvedValue(linkedRow({ syncScope, name: 'Admin Open', rounds: 4, participantCount: 60 })),
+        update: jest.fn<Promise<{ id: string }>, [Prisma.SportEventUpdateArgs]>().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+    };
+    const eventLifecycleService = {
+      applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), eventLifecycleService);
+
+    const result = await persistence.persistEventsWithDiagnostics([
+      { ...buildInProgressEvent(), name: 'Provider Open', rounds: 5, participantCount: 80, startDate: new Date('2026-07-01T12:00:00.000Z') },
+    ]);
+
+    expect(prisma.sportEvent.update).toHaveBeenCalledWith({ where: { id: 'sport-event-1' }, data: { participantCount: 80 } });
+    expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
+    expect(result.writeDiagnostics.rows[0]).toMatchObject({
+      disposition: 'UPDATED',
+      before: expect.objectContaining({ name: 'Admin Open', rounds: 4, participantCount: 60 }),
+      after: expect.objectContaining({ name: 'Admin Open', rounds: 4, participantCount: 80 }),
+    });
+  });
+
+  it('still overwrites a FULL event\'s header from the provider', async () => {
+    const prisma = {
+      sportEvent: {
+        findUnique: jest.fn().mockResolvedValue(linkedRow({ name: 'Old Name' })),
+        update: jest.fn<Promise<{ id: string }>, [Prisma.SportEventUpdateArgs]>().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+
+    await persistence.persistEvents([{ ...buildInProgressEvent(), name: 'Provider Open', rounds: 4 }]);
+
+    const [updateArg] = prisma.sportEvent.update.mock.calls[0];
+    expect(updateArg.data).toMatchObject({ name: 'Provider Open', rounds: 4 });
   });
 
   it('pool-master-g1z does not write SportEvent.status directly — EventLifecycleService owns that write', async () => {
