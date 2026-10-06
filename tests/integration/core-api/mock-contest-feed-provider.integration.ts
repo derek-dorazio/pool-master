@@ -839,7 +839,6 @@ describe('mock contest feed provider event-first verification', () => {
     });
     expect(eligibleEventIds).toEqual([
       'golf-genesis-scottish-open-2026',
-      'golf-relative-weekend-20260604',
     ]);
 
     const manualField = await providerService.syncEventData(
@@ -893,7 +892,7 @@ describe('mock contest feed provider event-first verification', () => {
     scheduler.start();
     let scheduledRuns: Awaited<ReturnType<typeof waitForScheduledProviderSyncRuns>>;
     try {
-      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 4);
+      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 3);
     } finally {
       scheduler.stop();
     }
@@ -914,13 +913,11 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
     const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));
-    expect(scheduledRuns.map((run) => run.eventId).filter((id): id is string => Boolean(id)).sort()).toEqual([
+    expect(scheduledRuns.map((run) => run.eventId).filter((id): id is string => Boolean(id))).toEqual([
       'golf-genesis-scottish-open-2026',
-      'golf-relative-weekend-20260604',
-    ].sort());
+    ]);
     expect(scheduledRunPayloads.map((payload) => String(payload?.requestedFeed)).sort()).toEqual([
       'EVENTSCHEDULE',
-      'EVENTPARTICIPANTS',
       'EVENTPARTICIPANTS',
       'PARTICIPANTRANKINGS',
     ].sort());
@@ -932,10 +929,7 @@ describe('mock contest feed provider event-first verification', () => {
       '/v1/scenarios/golf-major-2026/events',
       '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
       '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
-      '/v1/scenarios/golf-relative-today/events/golf-relative-weekend-20260604/detail',
     ]));
-    expect(scheduledPayloadPaths).not.toContain('/v1/scenarios/tennis-grand-slam-2026/events');
-    expect(scheduledPayloadPaths).not.toContain('/v1/scenarios/ncaa-team-tournament-2026/events');
 
     const persistedProviderSports = await prisma.sportEvent.findMany({
       where: { providerId },
@@ -1292,13 +1286,7 @@ describe('mock contest feed provider event-first verification', () => {
 
   it('pool-master-33l.8.8: adapter applies explicit mock event states through detail live and results feeds', async () => {
     const anchor = new Date('2026-04-26T21:00:00.000Z');
-    const lifecycleProvider = await startMockContestFeedProvider({
-      routes: {
-        scenarioStoreOptions: {
-          now: () => anchor,
-        },
-      },
-    });
+    const lifecycleProvider = await startMockContestFeedProvider();
 
     try {
       const adapter = new MockContestFeedAdapter(lifecycleProvider.baseUrl);
@@ -1306,9 +1294,7 @@ describe('mock contest feed provider event-first verification', () => {
       const to = new Date(anchor.getTime() + 14 * 24 * 60 * 60 * 1000);
 
       const openEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
-      const event = openEvents.find((item) =>
-        item.externalId.startsWith('golf-relative-weekend-'),
-      );
+      const event = openEvents.find((item) => item.externalId === 'golf-masters-2026');
       expect(event).toBeDefined();
       expect(event?.status).toBe('SCHEDULED');
       expect(event?.fieldLocked).toBe(false);

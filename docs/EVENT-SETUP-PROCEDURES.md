@@ -147,8 +147,3 @@ Final standings are built from the scores PoolMaster has already received.
 - **Unlink only listed events.** A finished tournament linked from the provider list keeps
   that mock event, which blocks the next tournament from using it. *Unlink score source*
   frees it. Simulated events are one per tournament and never need this.
-
-## Planned changes
-
-- #386: removes the mock's generated *Rolling QA Weekend* events. Simulated events
-  (step 2) are unaffected.

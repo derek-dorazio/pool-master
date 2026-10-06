@@ -9,9 +9,7 @@ import { startMockContestFeedProvider, type RunningMockContestFeedProvider } fro
 let mockProvider: RunningMockContestFeedProvider;
 
 beforeAll(async () => {
-  mockProvider = await startMockContestFeedProvider({
-    routes: { scenarioStoreOptions: { includeRelativeTodayGolfScenario: false } },
-  });
+  mockProvider = await startMockContestFeedProvider();
 });
 
 afterAll(async () => {

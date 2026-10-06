@@ -69,7 +69,7 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
         events: [
           {
             id: '11111111-1111-4111-8111-111111111111',
-            externalId: 'golf-relative-weekend-20260507',
+            externalId: 'golf-major-2026-weekend',
             providerId: 'mock-contest-feed',
             sport: 'GOLF',
             name: 'Rolling Weekend Invitational',
@@ -115,7 +115,7 @@ describe('pool-master-33l.12: RootAdminEventsPage', () => {
         events: [
           {
             id: eventId,
-            externalId: 'golf-relative-weekend-20260507',
+            externalId: 'golf-major-2026-weekend',
             providerId: 'mock-contest-feed',
             sport: 'GOLF',
             name: 'Rolling Weekend Invitational',

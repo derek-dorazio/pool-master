@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { resolve } from 'node:path';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { buildApp } from './app';
 import type { ContestantRecord, LiveGolfContestantRecord, LiveReplayResponse, LiveScoresSnapshotResponse } from './contracts';
@@ -30,6 +32,45 @@ function simulateAt(minute: number): readonly LiveGolfContestantRecord[] {
 
 function total(contestant: LiveGolfContestantRecord, throughRound = 4): number {
   return contestant.rounds.filter((round) => round.round <= throughRound).reduce((sum, round) => sum + round.scoreToPar, 0);
+}
+
+/**
+ * The shipped scenarios are all golf, but the contract still accepts other sports, so the
+ * replay guard is exercised against a one-event tennis scenario written to a temp folder.
+ */
+function withNonGolfScenarioDir(run: (dir: string) => Promise<void> | void): Promise<void> | void {
+  const dir = mkdtempSync(join(tmpdir(), 'mock-feed-non-golf-'));
+  const asOf = '2026-05-28T12:00:00.000Z';
+  writeFileSync(join(dir, 'tennis.json'), JSON.stringify({
+    scenarioId: 'tennis-only',
+    sport: 'TENNIS',
+    provider: 'mock-contest-feed',
+    season: { seasonId: 'tennis-2026', name: 'Tennis 2026', year: 2026 },
+    events: [{
+      eventId: 'tennis-open',
+      name: 'Tennis Open',
+      status: 'scheduled',
+      schedule: { startsAt: '2026-06-01T16:00:00.000Z' },
+      field: { asOf, status: 'announced', contestants: [{ contestantId: 'player-01', name: 'Player One' }] },
+      feeds: {
+        odds: { asOf, contestants: [] },
+        rankings: { asOf, contestants: [] },
+        results: { asOf, contestants: [] },
+      },
+    }],
+  }));
+  const cleanup = () => rmSync(dir, { recursive: true, force: true });
+  try {
+    const result = run(dir);
+    if (result instanceof Promise) {
+      return result.finally(cleanup);
+    }
+    cleanup();
+    return result;
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
 }
 
 function storeAt(now: () => Date): ScenarioStore {
@@ -132,16 +173,31 @@ test('stopping a replay returns /scores to its previous fixed behaviour', () => 
   assert.throws(() => store.getLiveReplay(scenarioId, eventId), /No live replay is running/);
 });
 
-test('a replay can only be started for a golf scenario', () => {
-  const store = storeAt(() => minutes(0));
-  const tennis = store.listScenarios().find((scenario) => scenario.sport === 'TENNIS');
-  assert.ok(tennis);
-  const tennisEvent = store.listEvents(tennis.scenarioId)[0];
+test('a replay can only be started for a golf scenario', () => withNonGolfScenarioDir((dir) => {
+  const store = new ScenarioStore(dir, undefined, { now: () => minutes(0) });
 
-  assert.throws(() => store.startLiveReplay(tennis.scenarioId, tennisEvent.eventId, {}), /only supported for GOLF/);
-});
+  assert.throws(() => store.startLiveReplay('tennis-only', 'tennis-open', {}), /only supported for GOLF/);
+}));
 
-test('replay routes start, report and stop a replay, /scores follows it, a non-golf replay is refused with 409, and a stopped replay reports 404', async () => {
+test('PUT replay on a non-golf scenario is refused with 409', () => withNonGolfScenarioDir(async (dir) => {
+  const previousScenarioDir = process.env.SCENARIO_DIR;
+  process.env.SCENARIO_DIR = dir;
+  const app = buildApp();
+
+  try {
+    const nonGolf = await app.inject({ method: 'PUT', url: '/v1/scenarios/tennis-only/events/tennis-open/replay', payload: {} });
+    assert.equal(nonGolf.statusCode, 409);
+  } finally {
+    await app.close();
+    if (previousScenarioDir === undefined) {
+      delete process.env.SCENARIO_DIR;
+    } else {
+      process.env.SCENARIO_DIR = previousScenarioDir;
+    }
+  }
+}));
+
+test('replay routes start, report and stop a replay, /scores follows it, and a stopped replay reports 404', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
   const app = buildApp();
@@ -169,19 +225,6 @@ test('replay routes start, report and stop a replay, /scores follows it, a non-g
 
     const invalid = await app.inject({ method: 'PUT', url: replayUrl, payload: { minutesPerRound: 0 } });
     assert.equal(invalid.statusCode, 400);
-
-    const tennis = await app.inject({ method: 'GET', url: '/v1/scenarios' });
-    const tennisScenario = tennis.json<{ scenarios: Array<{ scenarioId: string; sport: string }> }>().scenarios
-      .find((scenario) => scenario.sport === 'TENNIS');
-    assert.ok(tennisScenario);
-    const tennisEvents = await app.inject({ method: 'GET', url: `/v1/scenarios/${tennisScenario.scenarioId}/events` });
-    const tennisEventId = tennisEvents.json<{ events: Array<{ eventId: string }> }>().events[0].eventId;
-    const nonGolf = await app.inject({
-      method: 'PUT',
-      url: `/v1/scenarios/${tennisScenario.scenarioId}/events/${tennisEventId}/replay`,
-      payload: {},
-    });
-    assert.equal(nonGolf.statusCode, 409);
 
     const stopped = await app.inject({ method: 'DELETE', url: replayUrl });
     assert.equal(stopped.statusCode, 204);

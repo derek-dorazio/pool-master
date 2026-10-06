@@ -14,7 +14,7 @@ const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 const minuteMs = 60 * 1000;
 
 function storeAt(now: Date): ScenarioStore {
-  return new ScenarioStore(scenarioDir, undefined, { now: () => now, includeRelativeTodayGolfScenario: false });
+  return new ScenarioStore(scenarioDir, undefined, { now: () => now });
 }
 
 test('the mock lists each tour season as its own golf scenario: PGA TOUR and LPGA Tour for 2026 and 2027', () => {
@@ -81,7 +81,7 @@ test('seeded events read the same whatever today is', () => {
 test('a live replay on a seeded LPGA event scores that event\'s LPGA field and moves between polls', () => {
   const start = new Date('2026-10-06T12:00:00.000Z');
   let now = start;
-  const store = new ScenarioStore(scenarioDir, undefined, { now: () => now, includeRelativeTodayGolfScenario: false });
+  const store = new ScenarioStore(scenarioDir, undefined, { now: () => now });
   const eventId = 'lpga-tour-2026-the-chevron-championship';
 
   store.startLiveReplay('lpga-tour-2026', eventId, {});

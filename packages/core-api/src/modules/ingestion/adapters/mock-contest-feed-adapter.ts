@@ -416,10 +416,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       return { scenarioId: sandboxScenarioId };
     }
 
-    const relativeTodayScenario = scenarios.scenarios.find(
-      (scenario) => scenario.scenarioId === 'golf-relative-today',
-    );
-
     for (const scenario of scenarios.scenarios) {
       const events = await this.fetchJson<EventListResponse>(
         `/v1/scenarios/${scenario.scenarioId}/events`,
@@ -428,10 +424,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       if (events.events.some((event) => event.eventId === eventId)) {
         return { scenarioId: scenario.scenarioId };
       }
-    }
-
-    if (relativeTodayScenario && isRelativeManualTestEventId(eventId)) {
-      return { scenarioId: relativeTodayScenario.scenarioId };
     }
 
     return null;
@@ -499,10 +491,6 @@ function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolea
 const sandboxScenarioId = 'golf-sandbox';
 const sandboxEventIdPrefix = 'sandbox-';
 
-function isRelativeManualTestEventId(eventId: string): boolean {
-  return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);
-}
-
 function withMockEventState(path: string, options?: ProviderEventSyncOptions): string {
   if (!options?.mockEventState) {
     return path;
@@ -515,13 +503,14 @@ function withMockEventState(path: string, options?: ProviderEventSyncOptions): s
 /**
  * Maps a mock-feed sport literal to its domain `Sport`. Returns `null`
  * for sports the adapter intentionally does not surface — currently
- * the generic `'TEAM_TOURNAMENT'` showcase scenarios. Pre-rop.78.13 the
+ * the generic `'TEAM_TOURNAMENT'` sport. The mock ships only golf
+ * scenarios now, but its contract still names these sports. Pre-rop.78.13 the
  * adapter's local `SupportedMockSport` union didn't include
  * `'TEAM_TOURNAMENT'` at all, so the runtime fallthrough silently
  * filtered those scenarios out. The generated SDK now exposes
  * `'TEAM_TOURNAMENT'`, so the filter has to be explicit — defaulting
  * the value to a real `Sport` would cross-contaminate (e.g. routing
- * the `correction-and-tie-2026` showcase event into NCAA basketball).
+ * a team-tournament event into NCAA basketball).
  */
 function toDomainSport(sport: SupportedMockSport): Sport | null {
   switch (sport) {
