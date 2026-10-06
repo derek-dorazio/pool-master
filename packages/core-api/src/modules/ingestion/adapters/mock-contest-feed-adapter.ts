@@ -31,6 +31,7 @@ import type {
   GetMockContestFeedScenarioEventDetailResponse,
   GetMockContestFeedScoresSnapshotResponse,
   GetMockContestFeedResultsSnapshotResponse,
+  GetMockContestFeedLiveReplayResponse,
   StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
 
@@ -192,13 +193,32 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`,
       options.minutesPerRound === undefined ? {} : { minutesPerRound: options.minutesPerRound },
     );
-    return {
-      startsAt: new Date(replay.startsAt),
-      endsAt: new Date(replay.endsAt),
-      minutesPerRound: replay.minutesPerRound,
-      phase: toLiveSimulationPhase(replay.phase),
-      currentRound: replay.currentRound,
-    };
+    return toLiveSimulationStatus(replay);
+  }
+
+  /** The mock answers 404 when no replay is running for the event; that maps to null. */
+  async getLiveSimulation(eventId: string): Promise<LiveSimulationStatus | null> {
+    const match = await this.findEventById(eventId);
+    if (!match) {
+      return null;
+    }
+
+    const path = `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`;
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}${path}`);
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
+    }
+    const replay = (await response.json()) as GetMockContestFeedLiveReplayResponse;
+    this.recordProviderPayload({
+      operation: 'mock-contest-feed.request',
+      path,
+      capturedAt: new Date().toISOString(),
+      raw: replay,
+    });
+    return toLiveSimulationStatus(replay);
   }
 
   async getLiveScores(
@@ -658,6 +678,16 @@ function mergeContestantView(
   }
 
   return Array.from(merged.values());
+}
+
+function toLiveSimulationStatus(replay: LiveReplayResponse): LiveSimulationStatus {
+  return {
+    startsAt: new Date(replay.startsAt),
+    endsAt: new Date(replay.endsAt),
+    minutesPerRound: replay.minutesPerRound,
+    phase: toLiveSimulationPhase(replay.phase),
+    currentRound: replay.currentRound,
+  };
 }
 
 function toLiveSimulationPhase(phase: LiveReplayResponse['phase']): LiveSimulationPhase {

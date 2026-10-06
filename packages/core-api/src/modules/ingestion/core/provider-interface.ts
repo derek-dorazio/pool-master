@@ -110,12 +110,19 @@ export interface LiveSimulationStatus {
 export interface ProviderLiveSimulationControls {
   /** Resolves null when the provider has no event with that id. */
   startLiveSimulation(externalEventId: string, options: LiveSimulationOptions): Promise<LiveSimulationStatus | null>;
+  /** The simulation running for the event, or null when none is running (or the event is unknown). */
+  getLiveSimulation(externalEventId: string): Promise<LiveSimulationStatus | null>;
 }
 
 export function supportsLiveSimulation(
   provider: SportDataProvider,
 ): provider is SportDataProvider & ProviderLiveSimulationControls {
-  return 'startLiveSimulation' in provider && typeof provider.startLiveSimulation === 'function';
+  return (
+    'startLiveSimulation' in provider
+    && typeof provider.startLiveSimulation === 'function'
+    && 'getLiveSimulation' in provider
+    && typeof provider.getLiveSimulation === 'function'
+  );
 }
 
 /**

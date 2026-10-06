@@ -271,12 +271,21 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
  */
 /** A contract provider that, like the QA mock feed, can simulate live scoring (#382). */
 class SimulatingContractProvider extends OperationalContractProvider {
+  private readonly running = new Map<string, number>();
+
   async startLiveSimulation(externalEventId: string, options: { minutesPerRound?: number }) {
     if (!externalEventId.startsWith('live-sim-')) return null;
+    this.running.set(externalEventId, options.minutesPerRound ?? 20);
+    return this.getLiveSimulation(externalEventId);
+  }
+
+  async getLiveSimulation(externalEventId: string) {
+    const minutesPerRound = this.running.get(externalEventId);
+    if (minutesPerRound === undefined) return null;
     return {
       startsAt: new Date('2026-04-05T12:00:00.000Z'),
       endsAt: new Date('2026-04-05T12:00:00.000Z'),
-      minutesPerRound: options.minutesPerRound ?? 20,
+      minutesPerRound,
       phase: 'IN_PROGRESS' as const,
       currentRound: 1,
     };
@@ -1420,7 +1429,7 @@ describe('Contract verification (root admin)', () => {
       await app.close();
     }
   });
-  it('startEventLiveSimulation returns the simulation status for a linked event, and the provider list says which providers can simulate', async () => {
+  it('startEventLiveSimulation and getEventLiveSimulation return the simulation status for a linked event, and the provider list says which providers can simulate', async () => {
     const app = await buildIngestionApp(new SimulatingContractProvider());
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Live Simulation Contract User',
@@ -1493,6 +1502,15 @@ describe('Contract verification (root admin)', () => {
       });
       expect(linkRes.statusCode).toBe(200);
 
+      // --- getEventLiveSimulation (404) before any simulation is started ----------
+      const notRunningRes = await app.inject({
+        method: 'GET',
+        url: `/api/v1/events/${eventId}/live-simulation`,
+        headers: rootAdmin.headers,
+      });
+      expect(notRunningRes.statusCode).toBe(404);
+      expect(notRunningRes.json()).toMatchObject({ error: { code: 'LIVE_SIMULATION_NOT_RUNNING' } });
+
       // --- startEventLiveSimulation (200) ------------------------------------------
       const simulationRes = await app.inject({
         method: 'POST',
@@ -1503,6 +1521,16 @@ describe('Contract verification (root admin)', () => {
       expect(simulationRes.statusCode).toBe(200);
       expect(SportEventLiveSimulationResponseSchema.safeParse(simulationRes.json()).success).toBe(true);
       expect(simulationRes.json()).toMatchObject({ sportEventId: eventId, minutesPerRound: 15, phase: 'IN_PROGRESS', currentRound: 1 });
+
+      // --- getEventLiveSimulation (200) once running ------------------------------
+      const runningRes = await app.inject({
+        method: 'GET',
+        url: `/api/v1/events/${eventId}/live-simulation`,
+        headers: rootAdmin.headers,
+      });
+      expect(runningRes.statusCode).toBe(200);
+      expect(SportEventLiveSimulationResponseSchema.safeParse(runningRes.json()).success).toBe(true);
+      expect(runningRes.json()).toMatchObject({ sportEventId: eventId, minutesPerRound: 15 });
 
       // --- startEventLiveSimulation (400) on an out-of-range round length ----------
       const invalidRes = await app.inject({

@@ -66,7 +66,9 @@ event without a `mockEventState` token is computed from the replay clock
 
 In QA the mock is internal-only, so start a replay from PoolMaster instead: link the
 tournament to a mock event, then press **Start live simulation** on its score-source card
-(`startEventLiveSimulation`), and move the tournament to Live so the live-score sync polls it.
+(`startEventLiveSimulation`), and only then move the tournament to Live so the live-score sync
+polls it. Moving it to Live first stores the mock's fixed scores before the replay takes over.
+The card re-reads the replay's round every 30 seconds (`getEventLiveSimulation`).
 
 Restarting a replay part-way through starts again from round 1, but PoolMaster keeps every
 round it has already stored. Rounds the new replay has not reached yet stay at their old

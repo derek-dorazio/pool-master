@@ -182,6 +182,11 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return mapLiveSimulationToResponse(request.params.eventId, status);
     },
 
+    getLiveSimulation: async (request: FastifyRequest<EventParams>): Promise<SportEventLiveSimulationResponse> => {
+      const status = await scoreSource.getLiveSimulation(request.params.eventId);
+      return mapLiveSimulationToResponse(request.params.eventId, status);
+    },
+
     /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const { event } = await sportEvents.requireSummary(request.params.eventId);

@@ -313,6 +313,36 @@ describe('MockContestFeedAdapter', () => {
     );
   });
 
+  it('reads the running mock replay, and reports none when the mock answers 404', async () => {
+    let replayRunning = true;
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/replay')) {
+        return replayRunning
+          ? okJson({
+            scenarioId: 'golf-major-2026',
+            eventId: 'golf-masters-2026',
+            startsAt: '2026-10-06T12:00:00.000Z',
+            endsAt: '2026-10-06T13:20:00.000Z',
+            minutesPerRound: 20,
+            minutesBetweenRounds: 0,
+            phase: 'completed',
+            currentRound: null,
+          })
+          : new Response(JSON.stringify({ message: 'No live replay is running' }), { status: 404 });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toMatchObject({ phase: 'COMPLETED', currentRound: null });
+    replayRunning = false;
+    await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toBeNull();
+  });
+
   it('returns null rather than starting anything when the mock has no event with that id', async () => {
     const fetchSpy = jest.fn(async (input: string | URL) => {
       const url = String(input);

@@ -205,6 +205,19 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.unlinkScoreSource,
   });
 
+  fastify.get('/:eventId/live-simulation', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'Get the simulated live scoring running for an event',
+      description: 'Root admin only. The simulation started by startEventLiveSimulation, with its current round; poll it to watch the simulation advance. 404 LIVE_SIMULATION_NOT_RUNNING when none is running: never started, or the provider restarted and forgot it.',
+      operationId: 'getEventLiveSimulation',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SportEventLiveSimulationResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.getLiveSimulation,
+  });
+
   fastify.post('/:eventId/live-simulation', {
     ...write,
     schema: {

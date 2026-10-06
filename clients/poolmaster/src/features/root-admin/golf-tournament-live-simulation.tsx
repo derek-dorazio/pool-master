@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listProviders, startEventLiveSimulation } from '@/lib/api';
+import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
 import { Button, formatDateTimeDisplay } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -15,6 +15,9 @@ function describeSimulation(simulation: SportEventLiveSimulationResponse): strin
   const round = simulation.currentRound ? `Round ${simulation.currentRound} of 4 is under way` : 'Simulation starts shortly';
   return `${round}, ${simulation.minutesPerRound} minutes per round; it finishes at ${finish}. Scores sync while the tournament is Live.`;
 }
+
+/** How often the open card re-reads the simulation, so its round keeps up with the clock. */
+const statusRefreshMs = 30_000;
 
 /**
  * #382 — starts the linked score source's simulated live scoring, so a live contest's
@@ -38,6 +41,24 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
   const supported = (providersQuery.data ?? []).some(
     (provider) => provider.providerId === tournament.providerId && provider.supportsLiveSimulation,
   );
+
+  const statusQuery = useQuery({
+    queryKey: QueryKeys.rootAdmin.golf.liveSimulation(tournament.id),
+    queryFn: async () => {
+      const response = await getEventLiveSimulation({ path: { eventId: tournament.id } });
+      if (response.error?.error.code === 'LIVE_SIMULATION_NOT_RUNNING') {
+        return null;
+      }
+      if (!response.data) {
+        throwApiError(response.error, 'Live simulation status response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: supported,
+    refetchInterval: (query) => (query.state.data?.phase === 'COMPLETED' ? false : statusRefreshMs),
+    retry: false,
+  });
+  const simulation = statusQuery.data ?? null;
 
   const startMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -64,7 +85,8 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
     <div className="mt-4 border-t border-border pt-4" data-testid="root-admin-golf-tournament-live-simulation">
       <p className="text-sm text-muted-foreground">
         This score source can simulate live scoring: four rounds played hole by hole on its own clock.
-        Starting again restarts from round 1.
+        Start the simulation before moving the tournament to Live; otherwise the first sync stores the
+        score source&apos;s fixed scores. Starting again restarts from round 1.
       </p>
       <div className="mt-3">
         <Button
@@ -78,9 +100,14 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
           {startMutation.isPending ? 'Starting…' : 'Start live simulation'}
         </Button>
       </div>
-      {startMutation.isSuccess ? (
+      {simulation ? (
         <p className="mt-2 text-sm text-foreground" data-testid="root-admin-golf-tournament-live-simulation-status">
-          {describeSimulation(startMutation.data)}
+          {describeSimulation(simulation)}
+        </p>
+      ) : null}
+      {statusQuery.isError ? (
+        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-golf-tournament-live-simulation-status-error" role="alert">
+          {extractErrorMessage(statusQuery.error, { fallback: 'The live simulation status could not be read.' })}
         </p>
       ) : null}
       {startMutation.isError ? (
