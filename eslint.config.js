@@ -354,9 +354,11 @@ export default tseslint.config(
   {
     files: WEBAPP_FILES,
     plugins: { 'react-hooks': reactHooks },
-    // `exhaustive-deps` is deliberately not adopted; it conflicts with written
-    // repo rules and is tracked separately (#157).
-    rules: { 'react-hooks/rules-of-hooks': 'error' },
+    // `exhaustive-deps` is on; deliberate exceptions cite rules/react-ui-rules.md §5 inline.
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+    },
   },
   {
     // #345 Phase 0 (from #167). A module that exports both a React component and a

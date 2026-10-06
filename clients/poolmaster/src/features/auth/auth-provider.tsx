@@ -158,6 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+    // Keyed on meQuery.error and the two refetch functions on purpose: depending on the
+    // whole queries would re-run the session refresh on every query state change
+    // (rules/react-ui-rules.md §5).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meQuery.error, meQuery.refetch, queryClient, refreshQuery.refetch]);
 
   const user = meQuery.data ?? null;
