@@ -423,7 +423,7 @@ jobs:
 
       - name: Upload PoolMaster unit coverage artifact
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-poolmaster-unit
           path: |
@@ -615,7 +615,7 @@ jobs:
         run: cp "$RUNNER_TEMP/core-api.log" "$RUNNER_TEMP/preview.log" clients/poolmaster/ || true
       - name: Upload PoolMaster browser E2E artifacts
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: poolmaster-browser-e2e-local
           path: |
@@ -1511,7 +1511,7 @@ jobs:
         run: npm run test:poolmaster:browser-e2e:smoke
       - name: Upload PoolMaster browser E2E artifacts
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: poolmaster-browser-e2e
           path: |
