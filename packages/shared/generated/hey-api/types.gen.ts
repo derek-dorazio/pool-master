@@ -8431,11 +8431,11 @@ export type ProviderCatalogEventListQuery = {
      */
     sportLeagueId?: string;
     /**
-     * ISO 8601 datetime string.
+     * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
      */
     from?: string;
     /**
-     * ISO 8601 datetime string.
+     * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
      */
     to?: string;
     search?: string;
@@ -20390,11 +20390,11 @@ export type ListProviderCatalogEventsData = {
          */
         sportLeagueId?: string;
         /**
-         * ISO 8601 datetime string.
+         * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
          */
         from?: string;
         /**
-         * ISO 8601 datetime string.
+         * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
          */
         to?: string;
         search?: string;

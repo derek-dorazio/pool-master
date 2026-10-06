@@ -23,8 +23,12 @@ export interface SportDataProvider {
   /** Which sports this provider covers. */
   sportsCovered: Sport[];
 
-  /** Fetch upcoming events/schedule for a sport. */
-  getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]>;
+  /**
+   * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
+   * without one, every event the provider has for the sport (#402: the catalog browse no
+   * longer defaults to a window around today).
+   */
+  getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
   getEventDetails(eventId: string, options?: ProviderEventSyncOptions): Promise<SportEventDetail | null>;

@@ -87,18 +87,14 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     };
   }
 
-  async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
+  async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
     const entries = await this.listScenarioEvents(sport, dateRange);
     return entries
       .map(({ scenarioId, detail }) => {
         const fieldContestants = resolveParticipants(detail);
         return toSportEvent(this.providerId, detail, fieldContestants.length, scenarioId);
       })
-      .filter(
-        (event) =>
-          event.startDate.getTime() >= dateRange.from.getTime()
-          && event.startDate.getTime() <= dateRange.to.getTime(),
-      );
+      .filter((event) => isEventWithinDateRange(event.startDate.toISOString(), dateRange));
   }
 
   async getEventDetails(
@@ -401,6 +397,14 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       return { scenarioId: relativeTodayScenario.scenarioId };
     }
 
+    // #402 — the mock answers any `sandbox-<id>` in its sandbox scenario without listing it.
+    if (
+      eventId.startsWith(sandboxEventIdPrefix)
+      && scenarios.scenarios.some((scenario) => scenario.scenarioId === sandboxScenarioId)
+    ) {
+      return { scenarioId: sandboxScenarioId };
+    }
+
     return null;
   }
 
@@ -459,6 +463,10 @@ function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolea
   const startTime = new Date(startsAt).getTime();
   return startTime >= dateRange.from.getTime() && startTime <= dateRange.to.getTime();
 }
+
+/** The mock's sandbox scenario and event-id prefix (#402); mirrored from its scenario store. */
+const sandboxScenarioId = 'golf-sandbox';
+const sandboxEventIdPrefix = 'sandbox-';
 
 function isRelativeManualTestEventId(eventId: string): boolean {
   return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);

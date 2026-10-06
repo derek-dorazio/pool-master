@@ -742,6 +742,22 @@ describe('mock contest feed provider event-first verification', () => {
       .resolves.toBe(detail!.participants.length);
   });
 
+  it('gives a made-up tournament its own sandbox event from the real mock: an 80-golfer field and a simulation it can start and read', async () => {
+    const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
+    const sandboxId = `sandbox-${randomUUID()}`;
+
+    const detail = await adapter.getEventDetails(sandboxId);
+    expect(detail).not.toBeNull();
+    expect(detail!.externalId).toBe(sandboxId);
+    expect(detail!.participants).toHaveLength(80);
+
+    await expect(adapter.getLiveSimulation(sandboxId)).resolves.toBeNull();
+    const started = await adapter.startLiveSimulation(sandboxId, { minutesPerRound: 15 });
+    expect(started).toMatchObject({ minutesPerRound: 15 });
+    await expect(adapter.getLiveSimulation(sandboxId)).resolves.toMatchObject({ minutesPerRound: 15 });
+    await expect(adapter.getEventDetails('not-a-sandbox-id')).resolves.toBeNull();
+  });
+
   it('pool-master-rop.68.1.7 verifies manual and scheduled Golf sync workflow with scoped payload diagnostics', async () => {
     const prisma = getPrisma();
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);

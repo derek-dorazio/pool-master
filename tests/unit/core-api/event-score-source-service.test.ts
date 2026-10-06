@@ -47,8 +47,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     });
   });
 
-  it('pool-master-753 calls provider.getUpcomingEvents with a default now-3d..now+90d window when from/to are omitted', async () => {
-    jest.useFakeTimers().setSystemTime(new Date('2027-01-01T00:00:00.000Z'));
+  it('asks the provider for every event, with no window around today, when from and to are omitted', async () => {
     const provider = buildProvider();
     const providerRegistry = registryWith(provider);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
@@ -56,10 +55,21 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
     await service.listCandidateEvents('mock-golf', Sport.GOLF);
 
-    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
-      from: new Date('2026-12-29T00:00:00.000Z'),
-      to: new Date('2027-04-01T00:00:00.000Z'),
-    });
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', undefined);
+  });
+
+  it('leaves the other end of the window open when only one of from or to is given', async () => {
+    const provider = buildProvider();
+    const providerRegistry = registryWith(provider);
+    const prisma = { sportLeague: { findUnique: jest.fn() } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
+    const from = new Date('2027-04-05T00:00:00.000Z');
+
+    await service.listCandidateEvents('mock-golf', Sport.GOLF, { from });
+
+    const [, range] = (provider.getUpcomingEvents as jest.Mock).mock.calls[0] as [string, { from: Date; to: Date }];
+    expect(range.from).toEqual(from);
+    expect(range.to.getTime()).toBeGreaterThan(new Date('9999-01-01T00:00:00.000Z').getTime());
   });
 
   it('pool-master-753 passes explicit from/to through unchanged', async () => {

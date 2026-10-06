@@ -48,8 +48,9 @@ export interface ProviderEventDetailSummary {
   endDate: Date | null;
 }
 
-const DEFAULT_LOOKBACK_DAYS = 3;
-const DEFAULT_LOOKAHEAD_DAYS = 90;
+/** Open ends for a browse given only one bound. */
+const EARLIEST_DATE = new Date(-8.64e15);
+const LATEST_DATE = new Date(8.64e15);
 
 export class EventScoreSourceService {
   constructor(
@@ -74,11 +75,11 @@ export class EventScoreSourceService {
       throw new EventScoreSourceError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
     }
 
-    const now = new Date();
-    const dateRange: DateRange = {
-      from: options.from ?? new Date(now.getTime() - DEFAULT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000),
-      to: options.to ?? new Date(now.getTime() + DEFAULT_LOOKAHEAD_DAYS * 24 * 60 * 60 * 1000),
-    };
+    // #402 — no window around today: without from/to the browse covers every event the
+    // provider has, filtered below by league and search only.
+    const dateRange: DateRange | undefined = options.from || options.to
+      ? { from: options.from ?? EARLIEST_DATE, to: options.to ?? LATEST_DATE }
+      : undefined;
 
     const events = await provider.getUpcomingEvents(sport, dateRange);
 

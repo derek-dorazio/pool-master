@@ -79,6 +79,18 @@ For a clean run, use a fresh PoolMaster event, or delete its stored scores first
 `mockEventState` token still pins its fixed state while a replay runs. Replays are held in
 memory and do not survive a restart.
 
+## Sandbox Golf Events
+
+The `golf-sandbox` scenario lists no events, but answers any event id that starts with
+`sandbox-` as a golf event with the shared 80-golfer field: detail, field, scores and
+replay all work. Its schedule is a fixed placeholder and nothing about it is compared with
+today, so a made-up PoolMaster tournament on any dates can have its own mock event.
+
+In PoolMaster, press **Link to a new simulated event** on an unlinked tournament's
+score-source card. That links it to `sandbox-<PoolMaster event id>`, which is unique per
+tournament. Then load the participant field, set ranks and tiers, and start the live
+simulation. Until a replay runs, a sandbox event's scores show nobody on the course.
+
 ## Run Locally
 
 ```bash
