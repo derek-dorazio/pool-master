@@ -276,6 +276,86 @@ describe('MockContestFeedAdapter', () => {
     expect(getLiveScoresSource).not.toMatch(/case ['"](golf-|open|locked|live|completed)/);
   });
 
+  it('starts the mock replay for a linked event with a PUT and maps its status for core-api', async () => {
+    const fetchSpy = jest.fn(async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/replay') && init?.method === 'PUT') {
+        return okJson({
+          scenarioId: 'golf-major-2026',
+          eventId: 'golf-masters-2026',
+          startsAt: '2026-10-06T12:00:00.000Z',
+          endsAt: '2026-10-06T13:00:00.000Z',
+          minutesPerRound: 15,
+          minutesBetweenRounds: 0,
+          phase: 'in_progress',
+          currentRound: 2,
+        });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    const status = await adapter.startLiveSimulation('golf-masters-2026', { minutesPerRound: 15 });
+
+    expect(status).toEqual({
+      startsAt: new Date('2026-10-06T12:00:00.000Z'),
+      endsAt: new Date('2026-10-06T13:00:00.000Z'),
+      minutesPerRound: 15,
+      phase: 'IN_PROGRESS',
+      currentRound: 2,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://mock-contest-feed-provider.qa.poolmaster.internal:3105/v1/scenarios/golf-major-2026/events/golf-masters-2026/replay',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ minutesPerRound: 15 }) }),
+    );
+  });
+
+  it('reads the running mock replay, and reports none when the mock answers 404', async () => {
+    let replayRunning = true;
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/replay')) {
+        return replayRunning
+          ? okJson({
+            scenarioId: 'golf-major-2026',
+            eventId: 'golf-masters-2026',
+            startsAt: '2026-10-06T12:00:00.000Z',
+            endsAt: '2026-10-06T13:20:00.000Z',
+            minutesPerRound: 20,
+            minutesBetweenRounds: 0,
+            phase: 'completed',
+            currentRound: null,
+          })
+          : new Response(JSON.stringify({ message: 'No live replay is running' }), { status: 404 });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toMatchObject({ phase: 'COMPLETED', currentRound: null });
+    replayRunning = false;
+    await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toBeNull();
+  });
+
+  it('returns null rather than starting anything when the mock has no event with that id', async () => {
+    const fetchSpy = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson({ scenarios: [] });
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    await expect(adapter.startLiveSimulation('missing-event', {})).resolves.toBeNull();
+  });
+
   it('pool-master-eux.7: fails malformed mock live-score payloads instead of applying field fallbacks', async () => {
     global.fetch = jest.fn(async (input: string | URL) => {
       const url = String(input);

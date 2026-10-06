@@ -157,6 +157,25 @@ export const LinkSportEventScoreSourceRequestSchema = z.object({
 }).describe('Links an event to a provider event for scores.');
 export type LinkSportEventScoreSourceRequest = z.infer<typeof LinkSportEventScoreSourceRequestSchema>;
 
+export const StartSportEventLiveSimulationRequestSchema = z.object({
+  minutesPerRound: z.number().int().min(1).max(1440).optional()
+    .describe('How long each of the four simulated rounds lasts. Defaults to the provider\'s own default (20 on the mock feed).'),
+}).describe('Starts, or restarts from round 1, the score source\'s simulated live scoring for a linked event.');
+export type StartSportEventLiveSimulationRequest = z.infer<typeof StartSportEventLiveSimulationRequestSchema>;
+
+export const SportEventLiveSimulationPhaseSchema = z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'])
+  .describe('Where the simulation is on its own clock.');
+
+export const SportEventLiveSimulationResponseSchema = z.object({
+  sportEventId: z.string().uuid(),
+  startsAt: DateTimeSchema.describe('When simulated round 1 started.'),
+  endsAt: DateTimeSchema.describe('When simulated round 4 finishes; scores stop changing after this.'),
+  minutesPerRound: z.number().int(),
+  phase: SportEventLiveSimulationPhaseSchema,
+  currentRound: z.number().int().min(1).max(4).nullable().describe('The round being played now; null before the start and after the finish.'),
+}).describe('A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.');
+export type SportEventLiveSimulationResponse = z.infer<typeof SportEventLiveSimulationResponseSchema>;
+
 // --- SportEventRound -------------------------------------------------------------
 
 export const SportEventRoundDtoSchema = z.object({
@@ -357,6 +376,8 @@ registerSchema('CloneSportEventYearRequest', CloneSportEventYearRequestSchema);
 registerSchema('UpdateSportEventRequest', UpdateSportEventRequestSchema);
 registerSchema('TransitionSportEventRequest', TransitionSportEventRequestSchema);
 registerSchema('LinkSportEventScoreSourceRequest', LinkSportEventScoreSourceRequestSchema);
+registerSchema('StartSportEventLiveSimulationRequest', StartSportEventLiveSimulationRequestSchema);
+registerSchema('SportEventLiveSimulationResponse', SportEventLiveSimulationResponseSchema);
 registerSchema('SportEventRoundDto', SportEventRoundDtoSchema);
 registerSchema('SportEventRoundListResponse', SportEventRoundListResponseSchema);
 registerSchema('UpdateSportEventRoundsRequest', UpdateSportEventRoundsRequestSchema);
