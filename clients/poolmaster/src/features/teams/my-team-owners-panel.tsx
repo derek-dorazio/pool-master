@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
@@ -7,9 +8,7 @@ import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import type { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
-import { MyTeamLifecycleNotices } from './my-team-lifecycle';
 import { type TeamMember, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
-import type { MyTeamLifecycle } from './use-my-team-lifecycle';
 import type { MyTeamOwners } from './use-my-team-owners';
 
 type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersByUserId'];
@@ -17,7 +16,7 @@ type LeagueMembersByUserId = ReturnType<typeof useLeagueMembersQuery>['membersBy
 /** Co-owner invites, the active owner list, pending invites, and replace owner. */
 export function MyTeamOwnersPanel({
   owners,
-  lifecycle,
+  notices,
   selectedTeam,
   isTeamsLoading,
   isTeamsError,
@@ -34,7 +33,8 @@ export function MyTeamOwnersPanel({
   canManageSelectedTeam,
 }: {
   owners: MyTeamOwners;
-  lifecycle: MyTeamLifecycle;
+  /** The lifecycle outcomes, shown under the owner controls. */
+  notices: ReactNode;
   selectedTeam: SquadDto | null;
   isTeamsLoading: boolean;
   isTeamsError: boolean;
@@ -252,7 +252,7 @@ export function MyTeamOwnersPanel({
       {revokeOwnerInvitationMutation.isError ? (
         <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
-      <MyTeamLifecycleNotices lifecycle={lifecycle} />
+      {notices}
     </div>
   );
 }

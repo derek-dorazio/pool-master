@@ -309,7 +309,7 @@ export function MyTeamPage() {
             leagueCode={leagueCode}
             leagueId={leagueId}
             leagueMembersByUserId={leagueMembersByUserId}
-            lifecycle={lifecycle}
+            notices={<MyTeamLifecycleNotices lifecycle={lifecycle} />}
             owners={owners}
             selectedTeam={selectedTeam}
             teamOwnerInvitations={teamOwnerInvitations}
