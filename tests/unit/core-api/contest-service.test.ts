@@ -40,6 +40,7 @@ import {
   fakeUserRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -994,7 +995,7 @@ describe('ContestService', () => {
             updatedAt: new Date('2026-01-01'),
           },
         ]),
-        update: jest.fn().mockImplementation(async (id, updates) => ({
+        update: mockFn<ContestEntryRepository['update']>(async (id, updates) => ({
           id,
           contestId: 'contest-1',
           squadId: 'squad-1',
@@ -1199,7 +1200,7 @@ describe('ContestService', () => {
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const mailDelivery = {
         providerName: 'smtp' as const,
-        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
@@ -1291,7 +1292,7 @@ describe('ContestService', () => {
       };
       const mailDelivery = {
         providerName: 'smtp' as const,
-        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),

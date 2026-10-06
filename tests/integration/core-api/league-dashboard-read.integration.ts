@@ -23,6 +23,11 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import type {
+  LeagueContextResponse,
+  LeagueDashboardResponse,
+  SendLeagueInvitationsResponse,
+} from '@poolmaster/shared/dto';
 import { randomUUID } from 'node:crypto';
 
 beforeAll(() => setupIntegrationTests());
@@ -55,7 +60,7 @@ describe('League Dashboard Read Integration', () => {
     });
 
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json().league.id;
+    leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const pendingInviteRes = await getApp().inject({
       method: 'POST',
@@ -66,7 +71,7 @@ describe('League Dashboard Read Integration', () => {
       },
     });
     expect(pendingInviteRes.statusCode).toBe(201);
-    expect(pendingInviteRes.json().sent).toHaveLength(1);
+    expect(pendingInviteRes.json<SendLeagueInvitationsResponse>().sent).toHaveLength(1);
 
     const emailInviteRes = await getApp().inject({
       method: 'POST',
@@ -83,7 +88,7 @@ describe('League Dashboard Read Integration', () => {
       url: API_ROUTES.invitations.accept,
       headers: invitedHeaders,
       payload: {
-        inviteCode: emailInviteRes.json().sent[0].inviteCode,
+        inviteCode: emailInviteRes.json<SendLeagueInvitationsResponse>().sent[0].inviteCode,
       },
     });
     expect(acceptRes.statusCode).toBe(201);
@@ -121,7 +126,7 @@ describe('League Dashboard Read Integration', () => {
     });
 
     expect(dashboardRes.statusCode).toBe(200);
-    const dashboard = dashboardRes.json();
+    const dashboard = dashboardRes.json<LeagueDashboardResponse>();
     expect(dashboard.league.id).toBe(leagueId);
     expect(dashboard.memberCount).toBe(2);
     expect(dashboard.pendingInvites).toBe(1);

@@ -14,6 +14,8 @@
  * adapter and are covered against real Postgres in
  * `tests/integration/core-api/identity-repositories.integration.ts`.
  */
+import type { Prisma } from '@prisma/client';
+import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -43,7 +45,7 @@ const stranger = { userId: 'other-1', isRootAdmin: false };
 function createPrismaMock(passwordHash: string | null = null) {
   const tx = {
     user: {
-      update: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn<Promise<undefined>, [Prisma.UserUpdateArgs]>().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
     },
     refreshToken: {
@@ -249,7 +251,8 @@ describe('passwords', () => {
       where: { userId: 'user-1', revokedAt: null, NOT: { token: 'keep-me' } },
       data: { revokedAt: expect.any(Date) },
     });
-    const nextHash = tx.user.update.mock.calls[0]?.[0]?.data?.passwordHash;
+    const nextHash = tx.user.update.mock.calls[0][0].data.passwordHash;
+    if (typeof nextHash !== 'string') throw new Error('expected a hashed password string to be written');
     await expect(bcrypt.compare('NewPass456!', nextHash)).resolves.toBe(true);
   });
 
@@ -300,7 +303,8 @@ describe('passwords', () => {
 
     expect(result.temporaryPassword).toMatch(/^Pm-/);
     // The returned credential must be the one actually stored, hashed.
-    const nextHash = tx.user.update.mock.calls[0]?.[0]?.data?.passwordHash;
+    const nextHash = tx.user.update.mock.calls[0][0].data.passwordHash;
+    if (typeof nextHash !== 'string') throw new Error('expected a hashed password string to be written');
     await expect(bcrypt.compare(result.temporaryPassword, nextHash)).resolves.toBe(true);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.refreshToken.updateMany).toHaveBeenCalled();

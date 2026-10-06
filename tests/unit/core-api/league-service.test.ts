@@ -153,9 +153,10 @@ describe('LeagueService', () => {
       });
       expect(leagueRepo.create).toHaveBeenCalledTimes(1);
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
-      const membershipInput = (membershipRepo.create as jest.Mock).mock.calls[0][0];
-      expect(membershipInput.role).toBe(LeagueRole.COMMISSIONER);
-      expect(membershipInput.userId).toBe('user-1');
+      expect(membershipRepo.create).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ role: LeagueRole.COMMISSIONER, userId: 'user-1' }),
+      );
       expect(squadRepo.create).toHaveBeenCalledTimes(1);
       expect(squadMembershipRepo.create).toHaveBeenCalledTimes(1);
       expect(result.league.id).toBe('new-league-id');
@@ -178,9 +179,10 @@ describe('LeagueService', () => {
         name: 'My League',
         leagueCode: 'MYLEAGUE',
       });
-      const createArg = (leagueRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.isActive).toBe(true);
-      expect(createArg.joinPolicy).toBe(JoinPolicy.COMMISSIONER_ONLY);
+      expect(leagueRepo.create).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ isActive: true, joinPolicy: JoinPolicy.COMMISSIONER_ONLY }),
+      );
     });
 
     it('rejects duplicate league codes', async () => {

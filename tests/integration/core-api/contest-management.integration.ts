@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import {
   buildContestEligibleEventTiming,
   buildCreateLeaguePayload,
@@ -11,7 +12,15 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import type { ContestConfigTemplateListResponse } from '@poolmaster/shared/dto';
+import type {
+  ContestConfigTemplateListResponse,
+  ContestEntryResponse,
+  ContestManagementResponse,
+  ContestResponse,
+  DraftStateResponse,
+  ErrorEnvelope,
+  LeagueContextResponse,
+} from '@poolmaster/shared/dto';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { freshEventEdition } from '../../support/event-edition';
@@ -80,7 +89,7 @@ describe('Contest management integration', () => {
     });
 
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json().league.id;
+    leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
     const sport = await prisma.sport.create({
@@ -197,12 +206,12 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(201);
-    const createdContest = createRes.json().contest;
+    const createdContest = createRes.json<ContestResponse>().contest;
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.OPEN);
     expect(createdContest.sportEventId).toBe(sportEventId);
     // #245 — create answers with the canonical contest read, as every contest route does.
-    expect(createRes.json().contestConfiguration.countedScores).toBe(4);
+    expect(createRes.json<ContestResponse>().contestConfiguration?.countedScores).toBe(4);
 
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
@@ -219,9 +228,10 @@ describe('Contest management integration', () => {
     });
 
     expect(getRes.statusCode).toBe(200);
-    expect(getRes.json().contest.id).toBe(contestId);
-    expect(getRes.json().contest.configuration.rosterSize).toBe(6);
-    expect(getRes.json().contest.configuration.countedScores).toBe(4);
+    const managedContest = getRes.json<ContestManagementResponse>().contest;
+    expect(managedContest.id).toBe(contestId);
+    expect(managedContest.configuration.rosterSize).toBe(6);
+    expect(managedContest.configuration.countedScores).toBe(4);
 
     const entryRes = await getApp().inject({
       method: 'POST',
@@ -229,7 +239,7 @@ describe('Contest management integration', () => {
       headers: withoutJsonBodyHeaders(ownerHeaders),
     });
     expect([200, 201]).toContain(entryRes.statusCode);
-    const entryId = entryRes.json().entry.id;
+    const entryId = entryRes.json<ContestEntryResponse>().entry.id;
 
     const draftStateRes = await getApp().inject({
       method: 'GET',
@@ -237,7 +247,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
     });
     expect(draftStateRes.statusCode).toBe(200);
-    expect(draftStateRes.json().selectionGroups[0].participants).toEqual([
+    expect(draftStateRes.json<DraftStateResponse>().selectionGroups?.[0].participants).toEqual([
       expect.objectContaining({
         participantId: topParticipantId,
         orderIndex: 1,
@@ -265,7 +275,7 @@ describe('Contest management integration', () => {
     });
 
     expect(updateRes.statusCode).toBe(200);
-    const updatedContest = updateRes.json().contest;
+    const updatedContest = updateRes.json<ContestManagementResponse>().contest;
     expect(updatedContest.configuration.rosterSize).toBe(6);
     expect(updatedContest.configuration.countedScores).toBe(5);
     expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
@@ -294,7 +304,7 @@ describe('Contest management integration', () => {
     });
     expect(settledUpdateRes.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.safeParse(settledUpdateRes.json()).success).toBe(true);
-    expect(settledUpdateRes.json().error.code).toBe('CONTEST_CONFIGURATION_SETTLED');
+    expect(settledUpdateRes.json<ErrorEnvelope>().error.code).toBe('CONTEST_CONFIGURATION_SETTLED');
     await expect(getPrisma().contestConfiguration.findUniqueOrThrow({ where: { contestId } }))
       .resolves.toMatchObject({ configJson: expect.objectContaining({ countedScores: 5 }) });
   });
@@ -333,9 +343,9 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(201);
-    const createdContest = createRes.json().contest;
+    const createdContest = createRes.json<ContestResponse>().contest;
     expect(createdContest.status).toBe(ContestStatus.OPEN);
-    expect(createRes.json().contestConfiguration.rosterSize).toBe(
+    expect(createRes.json<ContestResponse>().contestConfiguration?.rosterSize).toBe(
       defaultTemplate.configuration.rosterSize,
     );
 
@@ -363,7 +373,7 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(400);
-    const body = createRes.json();
+    const body = createRes.json<unknown>();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
   });
   // #245 — the empty state is a documented 400, not a generic validation failure.
@@ -381,7 +391,7 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(400);
-    const body = createRes.json();
+    const body = createRes.json<ErrorEnvelope>();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
     expect(body.error.code).toBe('CONTEST_CONFIGURATION_REQUIRED');
   });
@@ -438,7 +448,7 @@ describe('Contest management integration', () => {
 
     expect(createRes.statusCode).toBe(201);
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
-      where: { contestId: createRes.json().contest.id },
+      where: { contestId: createRes.json<ContestResponse>().contest.id },
     });
     expect(configuration.templateId).toBe(defaultTemplate.id);
     expect(configuration.configJson).toEqual({
@@ -458,7 +468,7 @@ describe('Contest management integration', () => {
       headers: outsider.headers,
     });
     expect(readRes.statusCode).toBe(200);
-    expect(readRes.json().templates.length).toBeGreaterThan(0);
+    expect(readRes.json<ContestConfigTemplateListResponse>().templates.length).toBeGreaterThan(0);
 
     const anonymousRes = await getApp().inject({
       method: 'GET',

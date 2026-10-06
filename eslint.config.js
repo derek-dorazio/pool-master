@@ -595,33 +595,19 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'off',
 
       // ---------------------------------------------------------------------
-      // TEMPORARY -- the three rules below are scheduled off, not decided off.
-      // Each line names the #345 Phase 2 PR that deletes it. The deletion is
-      // the acceptance criterion of that PR, so this list shrinks under CI
-      // rather than being tracked in a document, which is why the glob was
-      // widened in PR 1 instead of PR 4.
+      // #345 Phase 2 is complete: every other type-aware rule is on for tests/.
+      // PR 2 turned on `no-unsafe-call` / `-return`, PR 3 `no-explicit-any`, and
+      // PR 4 `no-unsafe-assignment` / `-member-access` / `-argument`.
       //
-      // DO NOT clear any of these by writing `as X` or `as unknown as T`. That
-      // satisfies the rule and makes the mock LIE -- strictly worse than `any`,
-      // which is at least visible. The fix is to type the double at its source;
+      // DO NOT clear a finding by writing `as X` or `as unknown as T`. That
+      // satisfies the rule and makes the double LIE -- strictly worse than `any`,
+      // which is at least visible. Type the double at its source;
       // `rules/testing-rules.md` §1B *Test doubles are typed by the contract they
-      // stand in for* has the idioms. Cast counts in `tests/` are baselined in
-      // #345 and checked per PR; after PR 3: `as any` 0, `as unknown as` 30,
-      // `: any` 0.
-      //
-      // `no-unsafe-call` and `no-unsafe-return` were here until PR 2, which typed
-      // the doubles that leaked `any` into them (69 findings) and turned both on.
-      // `no-explicit-any` was here until PR 3, which removed the 153 declared
-      // `any`s the three rules below report downstream of, and turned it on.
+      // stand in for* has the idioms, including importing `expect` from
+      // `@jest/globals` where an asymmetric matcher sits in an object literal
+      // (`@types/jest` types every matcher as `any`). Cast counts in `tests/`
+      // after PR 4: `as any` 0, `as unknown as` 30, `: any` 0.
       // ---------------------------------------------------------------------
-
-      // Owned by #345 Phase 2 PR 4 (323, 279 and 201 findings). One root cause
-      // reported many times over: a value typed `any` enters and then flows. The
-      // count is expected to collapse largely on its own once PR 3 removes the
-      // sources, so PR 4 re-measures rather than trusting 803.
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   },
 );

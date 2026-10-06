@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import {
