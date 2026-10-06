@@ -838,7 +838,7 @@ release.
 
 - **Runner:** Vitest with `@vitejs/plugin-react`.
 - **Config:** [`clients/poolmaster/vitest.config.ts`](../clients/poolmaster/vitest.config.ts).
-- **Environment:** jsdom. React Testing Library renders components; tests assert behavior via DOM queries and `data-testid` selectors.
+- **Environment:** jsdom. React Testing Library renders components; tests find elements by role and label (see `rules/testing-rules.md` §6 *React Testing Library Selector Rule*).
 - **Test count today:** ~92 files / ~283 tests.
 - **Setup file:** `src/test-setup.ts` (jsdom polyfills, MSW setup if/when adopted, etc.).
 - **Local commands:**
