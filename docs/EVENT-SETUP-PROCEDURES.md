@@ -70,7 +70,8 @@ row are skipped, so add any that are missing with *Edit schedule*.
 the mock's 80 golfers and records each one's mock id, which is what the score sync matches
 on. Then:
 
-- set rankings or odds in the field grid as you like;
+- each golfer arrives with the mock's ranking, so tiers can be auto-assigned straight away;
+  change rankings or odds in the field grid if you like;
 - do not use *Add more participants* or *Seed field from league roster*: the golfers they
   add have no mock id and will never score.
 
