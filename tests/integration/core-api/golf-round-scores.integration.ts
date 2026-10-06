@@ -285,7 +285,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     }, { prisma, providerId: 'integration-test' });
 
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
-    const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort();
+    const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
     expect(roundNumbers).toEqual([1, 2, 3, 4]);
     expect(await prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: jordan.sep.id } })).toBe(0);
     const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({
