@@ -7,6 +7,14 @@ import { IngestionPersistence } from '../../../packages/core-api/src/modules/ing
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
+import { resolveRankingType } from '../../../packages/core-api/src/modules/ingestion/core/ranking-types';
+
+const rankedEventIds = [
+  'integration-ingestion-event',
+  'integration-ranked-field',
+  'integration-ranked-refresh',
+  'integration-ranked-snapshot',
+];
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -29,17 +37,24 @@ afterAll(async () => {
   });
   await prisma.sportEventParticipant.deleteMany({
     where: {
-      sportEvent: { externalId: { in: ['integration-ingestion-event', 'integration-ranked-field'] } },
+      sportEvent: { externalId: { in: rankedEventIds } },
     },
   });
   await prisma.sportEvent.deleteMany({
-    where: { externalId: { in: ['integration-ingestion-event', 'integration-ranked-field'] } },
+    where: { externalId: { in: rankedEventIds } },
+  });
+  await prisma.participantRankingSnapshot.deleteMany({
+    where: { providerId: 'TEST_PROVIDER' },
   });
   await prisma.participantProviderMapping.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
   await prisma.participant.deleteMany({
-    where: { externalId: { in: ['ingestion-player-1', 'ingestion-ranked-1', 'ingestion-ranked-2'] } },
+    where: {
+      externalId: {
+        in: ['ingestion-player-1', 'ingestion-ranked-1', 'ingestion-ranked-2', 'ingestion-ranked-3', 'ingestion-ranked-4'],
+      },
+    },
   });
   await teardownIntegrationTests();
 });
@@ -160,6 +175,85 @@ describe('IngestionPersistence', () => {
       'ingestion-ranked-1': 7,
       'ingestion-ranked-2': null,
     });
+  });
+
+  function rankedGolfer(externalId: string, ranking?: number) {
+    return {
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Golfer ${externalId}`,
+      active: true,
+      ...(ranking === undefined ? {} : { ranking }),
+      metadata: {},
+    };
+  }
+
+  function rankedFieldDetail(externalId: string, participants: SportEventDetail['participants']): SportEventDetail {
+    return {
+      externalId,
+      providerId: 'TEST_PROVIDER',
+      sport: Sport.GOLF,
+      name: `Integration ${externalId}`,
+      startDate: new Date('2026-04-29T12:00:00.000Z'),
+      status: 'SCHEDULED',
+      fieldLocked: false,
+      metadata: {},
+      participants,
+    };
+  }
+
+  it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking and no snapshot exists', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const first = rankedFieldDetail('integration-ranked-refresh', [rankedGolfer('ingestion-ranked-3', 12)]);
+    const event = await linkedProviderEvent(prisma, {
+      providerId: first.providerId,
+      externalId: first.externalId,
+      name: first.name,
+      startDate: first.startDate,
+    });
+    await persistence.persistEventDetail(first);
+
+    await persistence.persistEventDetail(
+      rankedFieldDetail('integration-ranked-refresh', [rankedGolfer('ingestion-ranked-3')]),
+    );
+
+    const row = await prisma.sportEventParticipant.findFirstOrThrow({
+      where: { sportEventId: event.id, participant: { externalId: 'ingestion-ranked-3' } },
+    });
+    expect(row.ranking).toBe(12);
+  });
+
+  it('writes the field\'s ranking over an older ranking snapshot that disagrees with it', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const detail = rankedFieldDetail('integration-ranked-snapshot', [rankedGolfer('ingestion-ranked-4', 5)]);
+    const event = await linkedProviderEvent(prisma, {
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      name: detail.name,
+      startDate: detail.startDate,
+    });
+    // The first load creates the participant and its provider mapping, so a snapshot can name it.
+    await persistence.persistEventDetail(detail);
+    const participant = await prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-ranked-4' } });
+    await prisma.participantRankingSnapshot.create({
+      data: {
+        participantId: participant.id,
+        providerId: 'TEST_PROVIDER',
+        rankingType: resolveRankingType(Sport.GOLF),
+        rank: 40,
+        asOfDate: new Date('2026-04-20T00:00:00.000Z'),
+      },
+    });
+
+    await persistence.persistEventDetail(detail);
+
+    const row = await prisma.sportEventParticipant.findFirstOrThrow({
+      where: { sportEventId: event.id, participantId: participant.id },
+    });
+    expect(row.ranking).toBe(5);
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the

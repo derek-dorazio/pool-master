@@ -326,12 +326,6 @@ export class IngestionPersistence {
         continue;
       }
 
-      // #384 — the field's own ranking wins; the sport-level snapshot is only a fallback.
-      const ranking = participant.ranking ?? await this.findLatestRankingForEventParticipant({
-        providerId: participant.providerId,
-        participantId: mapping.participantId,
-        sport: detail.sport,
-      });
       const oddsToWin = readEventScopedOddsToWin(participant, detail.externalId);
       const seedNumber = readIntegerMetadata(participant.metadata, 'seed');
       const existingEventParticipant = await this.prisma.sportEventParticipant.findUnique({
@@ -342,6 +336,16 @@ export class IngestionPersistence {
           },
         },
       });
+      // #384 — the field's own ranking wins and the sport-level snapshot is only a fallback.
+      // When neither gives one, the rank already on the row stays rather than being blanked.
+      const ranking = participant.ranking
+        ?? await this.findLatestRankingForEventParticipant({
+          providerId: participant.providerId,
+          participantId: mapping.participantId,
+          sport: detail.sport,
+        })
+        ?? existingEventParticipant?.ranking
+        ?? null;
       const before = existingEventParticipant
         ? normalizeSportEventParticipantRow(existingEventParticipant)
         : undefined;
