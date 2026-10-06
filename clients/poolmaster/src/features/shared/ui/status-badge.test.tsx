@@ -6,8 +6,8 @@ describe("pool-master-3lo.5: shared StatusBadge and Chip primitives", () => {
   it("rule: renders lifecycle statuses through semantic tones", () => {
     render(<StatusBadge tone="active">Active</StatusBadge>);
 
-    expect(screen.getByText("Active").className).toContain(
-      "--status-active-text",
+    expect(screen.getByText("Active")).toHaveClass(
+      "[color:var(--status-active-text)]",
     );
   });
 

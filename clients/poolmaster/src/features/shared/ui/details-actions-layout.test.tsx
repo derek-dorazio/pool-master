@@ -29,6 +29,6 @@ describe("pool-master-dn4.3: shared DetailsActionsLayout", () => {
     );
 
     expect(screen.getByTestId("league-actions")).toHaveTextContent("League operations");
-    expect(screen.getByTestId("league-actions").querySelector(".custom-action-spacing")).not.toBeNull();
+    expect(screen.getByTestId("league-actions-list")).toHaveClass("custom-action-spacing");
   });
 });

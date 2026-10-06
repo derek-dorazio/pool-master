@@ -180,7 +180,7 @@ describe('pool-master-rfy RootAdminGolfPlayerHomePage', () => {
 
     await userEvent.click(await screen.findByTestId('root-admin-golf-player-home-edit'));
     const modal = screen.getByTestId('root-admin-golf-player-home-edit-modal');
-    const nameInput = modal.querySelector('input') as HTMLInputElement;
+    const nameInput = within(modal).getByRole('textbox', { name: 'Name' });
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'Rory M.');
 

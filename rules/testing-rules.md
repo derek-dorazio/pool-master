@@ -935,6 +935,9 @@ handler). `getByTestId` passes through all of those.
     `getByTestId`. Note it in the PR's review triggers.
 - Do not reach into the DOM (`querySelector`, `.closest`, `.parentElement`, `.children`
   and the like). Query by role, label or text, scoping with `within()` when needed.
+- These are enforced in `clients/poolmaster` by the `testing-library` and `jest-dom` lint
+  rules (`no-node-access`, `no-container`, `prefer-screen-queries` among them), so a
+  reach-in fails `npm run lint` rather than review.
 - Existing tests are not swept. The rule applies to new tests and to the queries a change
   adds or edits; touching a test does not oblige converting its other lookups.
 

@@ -133,7 +133,7 @@ describe('RootAdminRunEventSyncPage', () => {
       target: { value: 'golf-masters-2026' },
     });
 
-    expect(screen.getByTestId('root-admin-event-sync-now')).not.toBeDisabled();
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
 
     await waitFor(() => {
@@ -175,7 +175,7 @@ describe('RootAdminRunEventSyncPage', () => {
       target: { value: 'golf-masters-2026' },
     });
 
-    expect(screen.getByTestId('root-admin-event-sync-now')).not.toBeDisabled();
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
     fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
 
     await waitFor(() => {

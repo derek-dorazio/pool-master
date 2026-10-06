@@ -81,7 +81,7 @@ function renderLeagueDetailPage() {
     },
   });
 
-  const renderResult = render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
@@ -109,7 +109,7 @@ function renderLeagueDetailPage() {
   );
 
   return {
-    ...renderResult,
+    ...view,
     queryClient,
   };
 }
