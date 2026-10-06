@@ -20,17 +20,23 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 
 ## Before you start
 
-1. **Live-score sync is on, every 60 seconds.** Open *Sync config → Ingestion schedule*
-   (`/manage/sync-config/ingestion-schedule`). For Golf, check the live-scores feed is
-   enabled and set its interval to `60` seconds. The default is 300. The setting is
-   per sport and applies to every linked golf tournament in the environment.
+1. **Live-score sync is on, every 60 seconds.** Open *Sync Configuration → Global
+   Ingestion Schedule* (`/manage/sync-config/ingestion-schedule`). On the **Event live
+   scores** row, tick *Enabled* and set *Seconds* to `60`. The default is 300. This one
+   setting applies to every sport and every linked tournament in the environment. Then on
+   *Sport Ingestion Overrides* (`/manage/sync-config/sport-overrides`), check that Event
+   live scores is not switched off for Golf. A new interval starts only after the current
+   wait runs out, so the first poll after the change can take up to the old 300 seconds.
 2. **Know which mock event you will link to.** Today the link dialog lists only mock events
    that start inside your tournament's own start and end dates, and each mock event can be
    linked to one PoolMaster tournament at a time. Near any given date the mock offers two
    generated events: *Rolling QA Weekend 1* (the most recent Thursday to Sunday) and
-   *Rolling QA Weekend 2* (the following Thursday to Sunday). Pick dates in step 1 that span
-   one of them, normally the coming Thursday. If another tournament already uses it,
-   unlink that one first (*Unlink score source* on its score-source card).
+   *Rolling QA Weekend 2* (the following Thursday to Sunday). Both start Thursday at
+   12:00 UTC. The mock rebuilds them from the current date on every request, so each one
+   disappears at 12:00 UTC on the Thursday after it starts. After that, polls and the
+   simulation for a tournament linked to it fail with event-not-found. **Pick *Weekend 2*
+   and finish the run within the week.** If another tournament already uses it, unlink that
+   one first (*Unlink score source* on its score-source card).
 
 ## 1. Create the tournament
 
@@ -39,7 +45,7 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 | Field | Set it to |
 |---|---|
 | Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts | On or before the Thursday of the mock event you picked |
+| Starts | No later than the mock event's start: Thursday 12:00 UTC, which is 8:00 AM Eastern in summer. The Wednesday before is safest. *Starts* is in your own time zone, and a tournament starting even an hour after the mock event drops it from the link list |
 | Ends | After that Thursday (the Sunday is fine) |
 | Field release | Any time in the past. Contests cannot be created before it |
 | Field locks | Far enough ahead to finish creating contests and entries. Contests cannot be created after it |
@@ -72,16 +78,18 @@ the mock's 80 golfers and records each one's mock id, which is what the score sy
 on. Then:
 
 - set rankings or odds in the field grid as you like;
-- do not add golfers from the roster with *Add golfers*: they have no mock id and will
-  never score.
+- do not use *Add more participants* or *Seed field from league roster*: the golfers they
+  add have no mock id and will never score.
 
 The field load matches players by mock id only. If the roster already holds a hand-made
 player with the same name as a mock golfer, you will see both.
 
 ## 5. Build tiers
 
-*Tiers* (`/manage/golf/tournaments/:id/tiers`), then *Auto-assign tiers from ranking*. This
-builds tiers from ranking order, ten golfers per tier by default.
+*Tiers* (`/manage/golf/tournaments/:id/tiers`), then *Auto-assign tiers from ranking*. A golf
+event starts with six tiers. Auto-assign fills them in ranking order, ten golfers at a time,
+and the last tier takes everyone left. The mock's 80 golfers therefore come out as
+10/10/10/10/10/30. A tier-pick contest's configuration is checked against this tier count.
 
 ## 6. Create contests and entries
 
@@ -93,14 +101,19 @@ As a commissioner of a test league (root admin is not needed):
 
 ## 7. Go live
 
-1. On the Workflow card, *Move to In Progress*. Open and locked contests on the tournament
-   become active, and the live-score sync starts polling it.
-2. On the score-source card, *Start live simulation*. The card shows the round under way
-   and when the simulation finishes. By default each round takes 20 minutes, so a full
-   tournament takes 80 minutes.
+Do these two in this order.
 
-The order of these two does not matter. Scores only reach PoolMaster while the tournament
-is In progress, and the simulation runs on its own clock from the moment it is started.
+1. On the score-source card, *Start live simulation*. Right after you press it, the card
+   shows the round under way and the simulation's finish time. **Note the finish time.**
+   The card does not refresh it, and it is gone once you leave or reload the page. By
+   default each round takes 20 minutes, so a full tournament takes 80 minutes.
+2. On the Workflow card, *Move to In Progress*. Open and locked contests on the tournament
+   become active, and the live-score sync starts polling it.
+
+Start the simulation first. Until a simulation is running, the mock answers with fixed
+scores taken from its own event status, which follows the real calendar. That can be a
+full 72-hole final for an event whose weekend is over. A poll before the simulation starts
+stores those scores, and they then mix with the simulated ones.
 
 Golfers tee off across the first third of each round, so the first poll or two may bring
 no scores.
@@ -116,7 +129,7 @@ no scores.
 
 ## 9. Finish
 
-When the card shows the simulation has finished, *Move to Completed* on the Workflow card.
+After the finish time you noted in step 7, *Move to Completed* on the Workflow card.
 Final standings are built from the scores PoolMaster has already received.
 
 ## Running it again
