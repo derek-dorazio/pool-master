@@ -4,16 +4,19 @@
     "rootDir": "..",
     "outDir": "../dist-tests",
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    // TypeScript 6 deprecates `node10` resolution and `baseUrl`; `paths` resolve
+    // relative to this file instead.
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
-    "baseUrl": "..",
     // The generated hey-api fetch client is DOM-typed (BodyInit, RequestInit).
     // Tests import through it, so the tests program needs the DOM lib.
     "lib": ["ES2022", "DOM"],
+    // The functional suites use Jest's globals; TypeScript 6 loads only listed @types.
+    "types": ["node", "jest"],
     "paths": {
-      "@poolmaster/shared/*": ["packages/shared/*"],
+      "@poolmaster/shared/*": ["../packages/shared/*"],
       "@poolmaster/mock-contest-feed-provider/generated/hey-api/types": [
-        "packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts"
+        "../packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts"
       ]
     }
   },
