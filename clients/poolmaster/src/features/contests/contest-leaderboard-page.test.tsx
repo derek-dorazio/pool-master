@@ -129,7 +129,7 @@ function participant(overrides: {
   };
 }
 
-type ContestStatusFixture = 'ACTIVE' | 'COMPLETED' | 'LOCKED';
+type ContestStatusFixture = 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'LOCKED';
 
 function contestResponse(status: ContestStatusFixture) {
   return {
@@ -427,6 +427,30 @@ describe('ContestLeaderboardPage', () => {
 
       await vi.advanceTimersByTimeAsync(30_000);
       expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsOnceLive);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('replaces the picks-hidden message with the live leaderboard without a reload when play starts', async () => {
+    // #362 — a page opened while the contest is still open is refused by the leaderboard read.
+    // Once the contest read sees it go live, the leaderboard poll retries and the entries render.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'ACTIVE' });
+      getContestMock.mockResolvedValueOnce(contestResponse('OPEN'));
+      getGolfContestLeaderboardMock.mockResolvedValueOnce({
+        error: {
+          error: { code: 'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN', message: 'Picks are hidden.' },
+        },
+        response: { status: 400 },
+      });
+      renderLeaderboard();
+      expect(await screen.findByText(/Scores appear once picks are revealed/)).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+      expect(screen.queryByText(/Scores appear once picks are revealed/)).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

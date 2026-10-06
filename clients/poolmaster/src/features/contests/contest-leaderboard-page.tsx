@@ -115,7 +115,10 @@ function EntryBlock({
               >
                 {pick.participantName}
               </span>
-              <span className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}>
+              <span
+                className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}
+                data-testid={`contest-leaderboard-pick-total-${entry.entryId}-${pick.pickId}`}
+              >
                 {pick.total ?? NO_SCORE}
               </span>
               {pick.rounds.map((round, index) => (
@@ -269,7 +272,11 @@ export function ContestLeaderboardPage() {
           <span>Golfer</span>
           <span className="text-right">Total</span>
           {view.roundNumbers.map((roundNumber) => (
-            <span className="text-right" key={roundNumber}>
+            <span
+              className="text-right"
+              data-testid={`contest-leaderboard-round-header-${roundNumber}`}
+              key={roundNumber}
+            >
               R{roundNumber}
             </span>
           ))}
