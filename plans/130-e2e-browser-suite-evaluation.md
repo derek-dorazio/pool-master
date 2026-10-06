@@ -549,7 +549,7 @@ is the whole cost of the slice.
   fixes the teardown order.
 - Act 4's score-entry surface has thinner testid coverage than the rest.
   Adding the two or three testids it needs is in scope and is the right fix
-  (`plans/137` sanctions `data-testid` for Playwright); text selectors are
+  (`rules/testing-rules.md` §6 *Browser E2E Tests (Playwright)* sanctions `data-testid`); text selectors are
   not.
 
 ### What act 1 found when it ran (#84)
