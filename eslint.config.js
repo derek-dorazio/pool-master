@@ -579,7 +579,7 @@ export default tseslint.config(
     // The two rules below do not read it, but any version-aware jest rule added
     // later would otherwise detect Jest from the cwd and throw "Unable to detect
     // Jest version" rather than report anything.
-    settings: { jest: { version: 29 } },
+    settings: { jest: { version: 30 } },
     rules: {
       'jest/no-focused-tests': 'error',
       'jest/no-commented-out-tests': 'error',
