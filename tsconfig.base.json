@@ -4,6 +4,8 @@
     "module": "Node16",
     "moduleResolution": "Node16",
     "lib": ["ES2022"],
+    // TypeScript 6 no longer loads every @types package by default; name the ones used.
+    "types": ["node"],
     "strict": true,
     // #345 Phase 0 -- the five strictness flags measured at or near zero.
     // `noImplicitReturns` and `noFallthroughCasesInSwitch` were 0 across every
