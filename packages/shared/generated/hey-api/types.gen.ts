@@ -7178,9 +7178,9 @@ export type GolfRoundScorePreviewResponse = {
         sportEventParticipantId: string | null;
         participantName: string | null;
         /**
-         * What applying the row would do to the golfer's stored round.
+         * What applying the row would do to the golfer's stored round. SKIPPED: the row has no strokes, so applying stores nothing for it.
          */
-        change: 'CREATE' | 'UPDATE' | 'UNCHANGED';
+        change: 'CREATE' | 'UPDATE' | 'UNCHANGED' | 'SKIPPED';
         /**
          * What is stored now; null when nothing is.
          */
@@ -7212,14 +7212,17 @@ export type GolfRoundScorePreviewResponse = {
 };
 
 /**
- * A correction to one golfer's round; omitted values keep what is stored.
+ * A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.
  */
 export type UpdateGolfRoundScoreRequest = {
     strokes?: number;
     scoreToPar?: number;
     thru?: number;
     status?: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
-    completedAt?: string;
+    /**
+     * Null clears it.
+     */
+    completedAt?: string | null;
 };
 
 /**

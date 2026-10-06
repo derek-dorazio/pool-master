@@ -1705,7 +1705,7 @@ export interface paths {
         head?: never;
         /**
          * Correct one golfer's round
-         * @description Omitted values keep what is stored. Refreshes the golfer's standing. Root admin only.
+         * @description Stores each value exactly as sent and derives none from another; omitted values keep what is stored. Refreshes standings. Root admin only.
          */
         patch: operations["updateEventParticipantGolfRoundScore"];
         trace?: never;
@@ -7736,10 +7736,10 @@ export interface components {
                 sportEventParticipantId: string | null;
                 participantName: string | null;
                 /**
-                 * @description What applying the row would do to the golfer's stored round.
+                 * @description What applying the row would do to the golfer's stored round. SKIPPED: the row has no strokes, so applying stores nothing for it.
                  * @enum {string}
                  */
-                change: "CREATE" | "UPDATE" | "UNCHANGED";
+                change: "CREATE" | "UPDATE" | "UNCHANGED" | "SKIPPED";
                 /** @description What is stored now; null when nothing is. */
                 before: {
                     strokes: number | null;
@@ -7763,15 +7763,18 @@ export interface components {
                 ambiguous: number;
             };
         };
-        /** @description A correction to one golfer's round; omitted values keep what is stored. */
+        /** @description A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored. */
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
             thru?: number;
             /** @enum {string} */
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
-            /** Format: date-time */
-            completedAt?: string;
+            /**
+             * Format: date-time
+             * @description Null clears it.
+             */
+            completedAt?: string | null;
         };
         /** @description Feed-aware sport sync request. */
         SportSyncRequest: {

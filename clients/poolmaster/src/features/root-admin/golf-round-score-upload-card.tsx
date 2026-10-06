@@ -20,10 +20,18 @@ const RESOLUTION_TONE: Record<PreviewRow['resolution'], 'active' | 'warning' | '
   UNRESOLVED: 'danger',
 };
 
-const CHANGE_TONE: Record<PreviewRow['change'], 'info' | 'success' | 'neutral'> = {
+const CHANGE_TONE: Record<PreviewRow['change'], 'info' | 'success' | 'neutral' | 'warning'> = {
   CREATE: 'success',
   UPDATE: 'info',
   UNCHANGED: 'neutral',
+  SKIPPED: 'warning',
+};
+
+const CHANGE_LABEL: Record<PreviewRow['change'], string> = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  UNCHANGED: 'UNCHANGED',
+  SKIPPED: 'Not stored (no strokes)',
 };
 
 function describeRow(row: PreviewRow['row']): string {
@@ -168,7 +176,7 @@ export function GolfRoundScoreUploadCard({
                       </td>
                       <td className="px-4 py-2">
                         <StatusBadge tone={CHANGE_TONE[entry.change]}>
-                          {entry.change}
+                          {CHANGE_LABEL[entry.change]}
                         </StatusBadge>
                       </td>
                     </tr>
