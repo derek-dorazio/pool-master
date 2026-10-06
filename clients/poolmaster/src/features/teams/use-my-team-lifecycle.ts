@@ -1,0 +1,107 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { type SquadDto, deleteLeagueSquad, inactivateLeagueSquad } from '@/lib/api';
+import { throwApiError } from '@/lib/errors';
+import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { QueryKeys } from '@/lib/query-keys';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import type { ActiveTeamDialog } from './my-team-shared';
+
+/**
+ * Inactivate and delete for the My Team page, with the notices they leave behind. The notices
+ * belong to the selected team and clear when the selection changes.
+ */
+export function useMyTeamLifecycle({
+  leagueId,
+  leagueCode,
+  selectedTeam,
+  setActiveDialog,
+  resetOwnerForms,
+}: {
+  leagueId: string;
+  leagueCode: string;
+  selectedTeam: SquadDto | null;
+  setActiveDialog: (dialog: ActiveTeamDialog) => void;
+  resetOwnerForms: () => void;
+}) {
+  const navigate = useNavigate();
+  const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
+  const [teamDeletionNotice, setTeamDeletionNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTeamInactivationNotice(null);
+    setTeamDeletionNotice(null);
+  }, [selectedTeam?.id]);
+
+  const inactivateTeamMutation = useInvalidatingMutation({
+    mutationFn: async () => {
+      const squadId = selectedTeam?.id;
+      if (!squadId) {
+        throw new Error('A team must exist before it can be inactivated.');
+      }
+
+      const response = await inactivateLeagueSquad({
+        path: { id: leagueId, squadId },
+      });
+
+      if (!response.data?.squad) {
+        throwApiError(response.error, 'Team inactivation response is missing data.');
+      }
+
+      return response.data.squad;
+    },
+    onSuccess: (team) => {
+      setActiveDialog(null);
+      setTeamInactivationNotice(
+        `${team.name} is now inactive. Its owners were removed from this league. Their accounts and their other leagues are untouched, and inviting them back restores this team.`,
+      );
+      resetOwnerForms();
+    },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
+  });
+
+  const deleteTeamMutation = useInvalidatingMutation({
+    mutationFn: async () => {
+      const squadId = selectedTeam?.id;
+      if (!squadId) {
+        throw new Error('A team must exist before it can be deleted.');
+      }
+
+      const response = await deleteLeagueSquad({
+        path: { id: leagueId, squadId },
+      });
+
+      if (!response.data?.success) {
+        throwApiError(response.error, 'Team deletion response is missing data.');
+      }
+
+      return selectedTeam.name;
+    },
+    onSuccess: (teamNameDeleted) => {
+      setActiveDialog(null);
+      setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
+      setTeamInactivationNotice(null);
+      resetOwnerForms();
+      // #202 step 3.4 — the root-admin cross-league teams console is gone (A8: one league
+      // at a time). Deleting your own squad returns you to the league it was in.
+      navigate(buildLeaguePath(leagueCode));
+    },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
+  });
+
+  return {
+    teamInactivationNotice,
+    teamDeletionNotice,
+    inactivateTeamMutation,
+    deleteTeamMutation,
+    isPending: inactivateTeamMutation.isPending || deleteTeamMutation.isPending,
+  };
+}
+
+export type MyTeamLifecycle = ReturnType<typeof useMyTeamLifecycle>;
