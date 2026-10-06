@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';

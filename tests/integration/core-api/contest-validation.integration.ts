@@ -8,6 +8,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import type { ContestListResponse, LeagueResponse } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   SelectionType,
@@ -36,7 +37,7 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json().league.id;
+    leagueId = leagueRes.json<LeagueResponse>().league.id;
   });
 
   // #245 — the one create validates its configuration against the typed tiered shape; an
@@ -58,7 +59,7 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(createRes.statusCode).toBe(400);
-    const body = createRes.json();
+    const body = createRes.json<unknown>();
     expect(ErrorEnvelopeSchema.safeParse(body).success).toBe(true);
     expect(JSON.stringify(body)).toContain('rosterSize');
 
@@ -69,7 +70,7 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(listRes.statusCode).toBe(200);
-    expect(listRes.json().contests).toEqual(
+    expect(listRes.json<ContestListResponse>().contests).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({ name: 'Broken Tiered Contest' }),
       ]),
@@ -104,7 +105,7 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(listRes.statusCode).toBe(200);
-    expect(listRes.json().contests).toEqual(
+    expect(listRes.json<ContestListResponse>().contests).toEqual(
       expect.not.arrayContaining([
         expect.objectContaining({ name: `Deferred ${selectionType}` }),
       ]),

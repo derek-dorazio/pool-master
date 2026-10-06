@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { MappingConfidence, ParticipantStatus, InjuryStatusCode } from '@poolmaster/shared/domain';
 import { createParticipantHandlers } from '../../../packages/core-api/src/modules/participants/handler';
 import {
@@ -32,7 +33,7 @@ function buildParticipant(overrides: Record<string, unknown> = {}) {
 describe('participant service and handler', () => {
   it('creates participants with default active and healthy state', async () => {
     const participantRepo = {
-      create: jest.fn().mockImplementation(async (input) => buildParticipant(input)),
+      create: jest.fn().mockImplementation(async (input: Record<string, unknown>) => buildParticipant(input)),
     };
 
     const service = new ParticipantService(

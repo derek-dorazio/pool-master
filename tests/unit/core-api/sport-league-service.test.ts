@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
 import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';

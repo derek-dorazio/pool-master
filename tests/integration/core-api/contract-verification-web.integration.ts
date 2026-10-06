@@ -27,7 +27,12 @@ import {
   SuccessSchema,
   TokenRefreshResponseSchema,
 } from '@poolmaster/shared/dto';
-import type { ContestConfigTemplateListResponse } from '@poolmaster/shared/dto';
+import type {
+  ContestConfigTemplateListResponse,
+  ErrorEnvelope,
+  LeagueResponse,
+  SquadListResponse,
+} from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   ScoringEngine,
@@ -139,7 +144,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Dashboard League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     const invitationRes = await getApp().inject({
       method: 'POST',
@@ -188,8 +193,8 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Lifecycle League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
-    const leagueCode = leagueRes.json().league.leagueCode as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueCode = leagueRes.json<LeagueResponse>().league.leagueCode;
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
@@ -380,7 +385,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Editable League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     const updateRes = await getApp().inject({
       method: 'PUT',
@@ -405,7 +410,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Icon League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     const updateRes = await getApp().inject({
       method: 'PUT',
@@ -429,7 +434,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Team League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     const listRes = await getApp().inject({
       method: 'GET',
@@ -440,7 +445,7 @@ describe('Contract verification (web)', () => {
     expect(listRes.statusCode).toBe(200);
     expect(SquadListResponseSchema.safeParse(listRes.json()).success).toBe(true);
 
-    const squadId = listRes.json().squads[0].id as string;
+    const squadId = listRes.json<SquadListResponse>().squads[0].id;
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
@@ -462,7 +467,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Contest League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
     await getPrisma().sport.upsert({
       where: {
         name: Sport.GOLF,
@@ -666,7 +671,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Draft League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     // #245 retired the event-less legacy create this contract once went through; the draft-state
     // contract does not depend on how the contest was made, so the row is a fixture.
@@ -721,7 +726,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Error League'),
     });
-    const leagueId = leagueRes.json().league.id as string;
+    const leagueId = leagueRes.json<LeagueResponse>().league.id;
 
     const missingInviteRes = await getApp().inject({
       method: 'DELETE',
@@ -730,6 +735,6 @@ describe('Contract verification (web)', () => {
     });
     expect(missingInviteRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingInviteRes.json()).success).toBe(true);
-    expect(missingInviteRes.json().error.code).toBe('LEAGUE_INVITATION_NOT_FOUND');
+    expect(missingInviteRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_INVITATION_NOT_FOUND');
   });
 });

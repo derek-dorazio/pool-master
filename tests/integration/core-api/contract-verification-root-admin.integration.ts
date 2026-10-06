@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
@@ -29,11 +30,30 @@ import {
   SportLeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
+  ContestConfigTemplateListResponse,
+  ContestConfigTemplateResponse,
+  ErrorEnvelope,
+  IngestionScheduleConfig,
   LeagueListResponse,
+  LeagueResponse,
+  ParticipantListResponse,
+  ParticipantProviderMappingResponse,
+  PollIntervalConfig,
+  ProviderCatalogEventListResponse,
+  ProviderEventCleanupResponse,
+  ProviderListResponse,
+  ProviderManualSyncSubmissionResponse,
   ProviderSyncRunListResponse,
   SportEventListResponse,
+  SportEventResponse,
+  SportEventRoundListResponse,
+  SportEventTierListResponse,
   SportLeagueListResponse,
+  SportLeagueResponse,
+  SuccessResponse,
   UnmappedProviderParticipantListResponse,
+  UserResetPasswordResponse,
+  UserResponse,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
@@ -71,6 +91,10 @@ import type {
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
+import type { z } from 'zod';
+
+// The shared package exports the participant response schema but not its inferred type.
+type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
 
 function emptyLiveScorePersistenceResult() {
   return {
@@ -318,7 +342,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(anonymous.statusCode).toBe(401);
     expect(ErrorEnvelopeSchema.safeParse(anonymous.json()).success).toBe(true);
-    expect(anonymous.json().error.code).toBe('AUTH_SESSION_REQUIRED');
+    expect(anonymous.json<ErrorEnvelope>().error.code).toBe('AUTH_SESSION_REQUIRED');
 
     const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin User' });
     const forbidden = await getApp().inject({
@@ -328,7 +352,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(forbidden.statusCode).toBe(403);
     expect(ErrorEnvelopeSchema.safeParse(forbidden.json()).success).toBe(true);
-    expect(forbidden.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(forbidden.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
   });
 
   it('root-admin user reads match their DTOs on happy paths', async () => {
@@ -390,7 +414,7 @@ describe('Contract verification (root admin)', () => {
     expect(UserResponseSchema.safeParse(detailRes.json()).success).toBe(true);
     // #202 step 3.4 — `{ user }`, and no `viewerAuthority` block (A8). Of its three flags two
     // were constants on a root-admin-only route, and `self` is `user.id === me.id`.
-    expect(detailRes.json().user.id).toBe(rootAdmin.user.id);
+    expect(detailRes.json<UserResponse>().user.id).toBe(rootAdmin.user.id);
     expect(detailRes.json()).not.toHaveProperty('viewerAuthority');
 
     const setRootAdminRes = await getApp().inject({
@@ -415,7 +439,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(resetPasswordRes.statusCode).toBe(200);
     expect(UserResetPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
-    expect(typeof resetPasswordRes.json().temporaryPassword).toBe('string');
+    expect(typeof resetPasswordRes.json<UserResetPasswordResponse>().temporaryPassword).toBe('string');
 
     await getPrisma().user.update({
       where: { id: targetUser.user.id },
@@ -443,9 +467,9 @@ describe('Contract verification (root admin)', () => {
     expect(syncRunsRes.statusCode).toBe(200);
     expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
     // #205 — both rows were submitted just now, inside the default 6-hour window.
-    expect(syncRunsRes.json().syncRuns).toHaveLength(2);
-    expect(syncRunsRes.json().syncRuns[0].providerId).toBe('integration-test');
-    expect(syncRunsRes.json().syncRuns[0].payload.runType).toBeDefined();
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns).toHaveLength(2);
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].providerId).toBe('integration-test');
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].payload.runType).toBeDefined();
 
     // A window that ends before they were submitted excludes them.
     const earlierRes = await getApp().inject({
@@ -454,7 +478,7 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
     });
     expect(earlierRes.statusCode).toBe(200);
-    expect(earlierRes.json().syncRuns).toEqual([]);
+    expect(earlierRes.json<ProviderSyncRunListResponse>().syncRuns).toEqual([]);
   });
 
   it('root-admin platform-config and contest-template routes match their DTOs on happy paths', async () => {
@@ -481,7 +505,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(pollUpdateRes.statusCode).toBe(200);
     expect(PollIntervalConfigSchema.safeParse(pollUpdateRes.json()).success).toBe(true);
-    expect(pollUpdateRes.json().standings).toBe(15000);
+    expect(pollUpdateRes.json<PollIntervalConfig>().standings).toBe(15000);
 
     const ingestionReadRes = await getApp().inject({
       method: 'GET',
@@ -490,7 +514,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionReadRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
-    expect(ingestionReadRes.json().scheduledSports).toEqual(['GOLF']);
+    expect(ingestionReadRes.json<IngestionScheduleConfig>().scheduledSports).toEqual(['GOLF']);
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
@@ -505,8 +529,8 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json().scheduledSports).toEqual(['GOLF', 'TENNIS']);
-    expect(ingestionUpdateRes.json().eventLiveScores.intervalSeconds).toBe(45);
+    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().scheduledSports).toEqual(['GOLF', 'TENNIS']);
+    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().eventLiveScores.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',
@@ -515,7 +539,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(templateListRes.statusCode).toBe(200);
     expect(ContestConfigTemplateListResponseSchema.safeParse(templateListRes.json()).success).toBe(true);
-    const template = templateListRes.json().templates[0];
+    const template = templateListRes.json<ContestConfigTemplateListResponse>().templates[0];
     const templateId = template?.id;
     expect(templateId).toBeDefined();
     if (!templateId || !template) {
@@ -531,7 +555,7 @@ describe('Contract verification (root admin)', () => {
       payload: { description: 'Must not land.' },
     });
     expect(forbiddenRes.statusCode).toBe(403);
-    expect(forbiddenRes.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(forbiddenRes.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
 
     try {
       const templateUpdateRes = await getApp().inject({
@@ -544,7 +568,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(templateUpdateRes.statusCode).toBe(200);
       expect(ContestConfigTemplateResponseSchema.safeParse(templateUpdateRes.json()).success).toBe(true);
-      expect(templateUpdateRes.json().template.description).toBe('Updated through contract verification.');
+      expect(templateUpdateRes.json<ContestConfigTemplateResponse>().template.description).toBe('Updated through contract verification.');
     } finally {
       await getPrisma().contestConfigTemplate.update({
         where: { id: templateId },
@@ -604,8 +628,8 @@ describe('Contract verification (root admin)', () => {
     });
     expect(inactivateRes.statusCode).toBe(200);
     expect(LeagueResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
-    expect(inactivateRes.json().league.id).toBe(league.id);
-    expect(inactivateRes.json().league.isActive).toBe(false);
+    expect(inactivateRes.json<LeagueResponse>().league.id).toBe(league.id);
+    expect(inactivateRes.json<LeagueResponse>().league.isActive).toBe(false);
 
     const deleteRes = await getApp().inject({
       method: 'DELETE',
@@ -616,7 +640,7 @@ describe('Contract verification (root admin)', () => {
       },
     });
     expect(deleteRes.statusCode).toBe(200);
-    expect(deleteRes.json().success).toBe(true);
+    expect(deleteRes.json<SuccessResponse>().success).toBe(true);
     expect(await getPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
   });
 
@@ -720,7 +744,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(providersRes.statusCode).toBe(200);
       expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
-      expect(providersRes.json().providers[0]).toMatchObject({
+      expect(providersRes.json<ProviderListResponse>().providers[0]).toMatchObject({
         providerId: 'contract-provider',
         status: 'HEALTHY',
         activeEventCount: 1,
@@ -733,7 +757,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(syncRunsRes.statusCode).toBe(200);
       expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
-      expect(syncRunsRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
+      expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(
         syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.some(
           (item) =>
@@ -751,11 +775,11 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
-      expect(prepareSyncRes.json().sport).toBe('GOLF');
-      expect(prepareSyncRes.json().requestedFeeds).toEqual(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS']);
-      expect(typeof prepareSyncRes.json().submittedAt).toBe('string');
-      expect(prepareSyncRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
-      expect(prepareSyncRes.json().syncRuns[0]?.status).toBe('SUBMITTED');
+      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
+      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS']);
+      expect(typeof prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
+      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
+      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
 
       const cleanupDryRunRes = await app.inject({
         method: 'POST',
@@ -765,8 +789,8 @@ describe('Contract verification (root admin)', () => {
       });
       expect(cleanupDryRunRes.statusCode).toBe(200);
       expect(ProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
-      expect(cleanupDryRunRes.json().mode).toBe('DRY_RUN');
-      expect(cleanupDryRunRes.json().executed).toBe(false);
+      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().mode).toBe('DRY_RUN');
+      expect(cleanupDryRunRes.json<ProviderEventCleanupResponse>().executed).toBe(false);
     } finally {
       await app.close();
     }
@@ -793,7 +817,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(prepareSyncRes.statusCode).toBe(202);
       expect(ProviderManualSyncSubmissionResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
-      const syncRunId = prepareSyncRes.json().syncRuns[0]?.id as string;
+      const syncRunId = prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.id;
 
       const completedRun = await waitForProviderSyncRun(syncRunId);
       expect(completedRun.status).toBe('COMPLETED');
@@ -845,7 +869,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(userRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(userRes.json()).success).toBe(true);
-    expect(userRes.json().error.code).toBe('USER_NOT_FOUND');
+    expect(userRes.json<ErrorEnvelope>().error.code).toBe('USER_NOT_FOUND');
 
     const missingRoleChangeRes = await getApp().inject({
       method: 'POST',
@@ -857,7 +881,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(missingRoleChangeRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingRoleChangeRes.json()).success).toBe(true);
-    expect(missingRoleChangeRes.json().error.code).toBe('USER_NOT_FOUND');
+    expect(missingRoleChangeRes.json<ErrorEnvelope>().error.code).toBe('USER_NOT_FOUND');
 
     const missingResetPasswordRes = await getApp().inject({
       method: 'POST',
@@ -867,7 +891,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(missingResetPasswordRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingResetPasswordRes.json()).success).toBe(true);
-    expect(missingResetPasswordRes.json().error.code).toBe('USER_NOT_FOUND');
+    expect(missingResetPasswordRes.json<ErrorEnvelope>().error.code).toBe('USER_NOT_FOUND');
 
     const missingDeleteUserRes = await getApp().inject({
       method: 'DELETE',
@@ -879,7 +903,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(missingDeleteUserRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingDeleteUserRes.json()).success).toBe(true);
-    expect(missingDeleteUserRes.json().error.code).toBe('USER_NOT_FOUND');
+    expect(missingDeleteUserRes.json<ErrorEnvelope>().error.code).toBe('USER_NOT_FOUND');
 
     const app = await buildIngestionApp(new OperationalContractProvider());
 
@@ -891,7 +915,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(missingProviderCatalogRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(missingProviderCatalogRes.json()).success).toBe(true);
-      expect(missingProviderCatalogRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+      expect(missingProviderCatalogRes.json<ErrorEnvelope>().error.code).toBe('PROVIDER_NOT_FOUND');
 
       const missingSportProviderRes = await app.inject({
         method: 'POST',
@@ -903,7 +927,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(missingSportProviderRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
-      expect(missingSportProviderRes.json().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
+      expect(missingSportProviderRes.json<ErrorEnvelope>().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
@@ -912,7 +936,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(inactivateMissingLeagueRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(inactivateMissingLeagueRes.json()).success).toBe(true);
-      expect(inactivateMissingLeagueRes.json().error.code).toBe('LEAGUE_NOT_FOUND');
+      expect(inactivateMissingLeagueRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_NOT_FOUND');
 
       const deleteMissingLeagueRes = await getApp().inject({
         method: 'DELETE',
@@ -924,7 +948,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(deleteMissingLeagueRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(deleteMissingLeagueRes.json()).success).toBe(true);
-      expect(deleteMissingLeagueRes.json().error.code).toBe('LEAGUE_NOT_FOUND');
+      expect(deleteMissingLeagueRes.json<ErrorEnvelope>().error.code).toBe('LEAGUE_NOT_FOUND');
     } finally {
       await app.close();
     }
@@ -969,7 +993,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(beforeRes.statusCode).toBe(200);
       expect(UnmappedProviderParticipantListResponseSchema.safeParse(beforeRes.json()).success).toBe(true);
-      expect(beforeRes.json().participants).toContainEqual({
+      expect(beforeRes.json<UnmappedProviderParticipantListResponse>().participants).toContainEqual({
         providerId: 'contract-provider',
         providerName: 'Contract Provider',
         externalId: 'golfer-1',
@@ -985,7 +1009,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(bindRes.statusCode).toBe(200);
       expect(ParticipantProviderMappingResponseSchema.safeParse(bindRes.json()).success).toBe(true);
-      expect(bindRes.json().providerMapping).toMatchObject({
+      expect(bindRes.json<ParticipantProviderMappingResponse>().providerMapping).toMatchObject({
         participantId: participant.id,
         providerId: 'contract-provider',
         externalId: 'golfer-1',
@@ -1012,7 +1036,7 @@ describe('Contract verification (root admin)', () => {
         payload: { providerId: 'missing-provider', externalId: 'golfer-1' },
       });
       expect(unknownProviderRes.statusCode).toBe(404);
-      expect(unknownProviderRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+      expect(unknownProviderRes.json<ErrorEnvelope>().error.code).toBe('PROVIDER_NOT_FOUND');
     } finally {
       await app.close();
       await prisma.participantProviderMapping.deleteMany({ where: { participantId: participant.id } });
@@ -1060,7 +1084,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
-      const leagueId = leagueRes.json().sportLeague.id as string;
+      const leagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
       created.sportLeagueId = leagueId;
 
       // --- listSportLeagues (200) --------------------------------------------
@@ -1095,7 +1119,7 @@ describe('Contract verification (root admin)', () => {
         if (i === 0) {
           expect(ParticipantResponseSchema.safeParse(playerRes.json()).success).toBe(true);
         }
-        created.participantIds.push(playerRes.json().participant.id as string);
+        created.participantIds.push(playerRes.json<ParticipantResponse>().participant.id);
       }
 
       // --- listParticipants, the golf player list (200) ----------------------
@@ -1106,7 +1130,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(playerListRes.statusCode).toBe(200);
       expect(ParticipantListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
-      expect(playerListRes.json().participants).toHaveLength(3);
+      expect(playerListRes.json<ParticipantListResponse>().participants).toHaveLength(3);
 
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({
@@ -1129,23 +1153,23 @@ describe('Contract verification (root admin)', () => {
       });
       expect(tournamentRes.statusCode).toBe(201);
       expect(SportEventResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
-      const eventId = tournamentRes.json().event.id as string;
+      const eventId = tournamentRes.json<SportEventResponse>().event.id;
       created.eventIds.push(eventId);
-      expect(tournamentRes.json().event).toMatchObject({ sportLeagueId: leagueId, eventYear: 2081 });
+      expect(tournamentRes.json<SportEventResponse>().event).toMatchObject({ sportLeagueId: leagueId, eventYear: 2081 });
 
       // pool-master-54u — the create response's counts must reflect the default
       // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
       // and must match what a subsequent GET returns.
-      expect(tournamentRes.json().event.tierCount).toBe(6);
-      expect(tournamentRes.json().event.loadedParticipantCount).toBe(0);
+      expect(tournamentRes.json<SportEventResponse>().event.tierCount).toBe(6);
+      expect(tournamentRes.json<SportEventResponse>().event.loadedParticipantCount).toBe(0);
       const tournamentGetRes = await getApp().inject({
         method: 'GET',
         url: `/api/v1/events/${eventId}`,
         headers: rootAdmin.headers,
       });
       expect(tournamentGetRes.statusCode).toBe(200);
-      expect(tournamentGetRes.json().event.tierCount).toBe(tournamentRes.json().event.tierCount);
-      expect(tournamentGetRes.json().event.loadedParticipantCount).toBe(tournamentRes.json().event.loadedParticipantCount);
+      expect(tournamentGetRes.json<SportEventResponse>().event.tierCount).toBe(tournamentRes.json<SportEventResponse>().event.tierCount);
+      expect(tournamentGetRes.json<SportEventResponse>().event.loadedParticipantCount).toBe(tournamentRes.json<SportEventResponse>().event.loadedParticipantCount);
 
       // --- listEvents by sport league and event year (200) -------------------
       const tournamentListRes = await getApp().inject({
@@ -1173,7 +1197,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(tiersRes.statusCode).toBe(200);
       expect(SportEventTierListResponseSchema.safeParse(tiersRes.json()).success).toBe(true);
-      expect(tiersRes.json().tiers).toHaveLength(6);
+      expect(tiersRes.json<SportEventTierListResponse>().tiers).toHaveLength(6);
 
       const roundsRes = await getApp().inject({
         method: 'GET',
@@ -1182,7 +1206,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(roundsRes.statusCode).toBe(200);
       expect(SportEventRoundListResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
-      expect(roundsRes.json().rounds).toHaveLength(4);
+      expect(roundsRes.json<SportEventRoundListResponse>().rounds).toHaveLength(4);
 
       // --- updateSportLeague: set as current (200: { sportLeague }) ------------
       const setCurrentRes = await getApp().inject({
@@ -1193,7 +1217,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(setCurrentRes.statusCode).toBe(200);
       expect(SportLeagueResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
-      expect(setCurrentRes.json().sportLeague.currentEventYear).toBe(2081);
+      expect(setCurrentRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
 
       // --- cloneEventYear (201: { events }) ------------------------------------
       const cloneRes = await getApp().inject({
@@ -1204,11 +1228,11 @@ describe('Contract verification (root admin)', () => {
       });
       expect(cloneRes.statusCode).toBe(201);
       expect(SportEventListResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
-      const clonedEvents = cloneRes.json().events as Array<{ id: string; eventYear: number; eventSeriesId: string }>;
+      const clonedEvents = cloneRes.json<SportEventListResponse>().events;
       created.eventIds.push(...clonedEvents.map((e) => e.id));
       expect(clonedEvents).toHaveLength(1);
       // Next year's edition of the same series.
-      expect(clonedEvents[0]).toMatchObject({ eventYear: 2082, eventSeriesId: tournamentRes.json().event.eventSeriesId });
+      expect(clonedEvents[0]).toMatchObject({ eventYear: 2082, eventSeriesId: tournamentRes.json<SportEventResponse>().event.eventSeriesId });
 
       // The current event year is unchanged by the clone (§4.2a).
       const leagueAfterRes = await getApp().inject({
@@ -1216,7 +1240,7 @@ describe('Contract verification (root admin)', () => {
         url: `/api/v1/sport-leagues/${leagueId}`,
         headers: rootAdmin.headers,
       });
-      expect(leagueAfterRes.json().sportLeague.currentEventYear).toBe(2081);
+      expect(leagueAfterRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
@@ -1299,7 +1323,7 @@ describe('Contract verification (root admin)', () => {
       expect(catalogRes.statusCode).toBe(200);
       expect(ProviderCatalogEventListResponseSchema.safeParse(catalogRes.json()).success).toBe(true);
       // #205 — each result is a provider event, provider and sport included.
-      expect(catalogRes.json().events).toContainEqual(expect.objectContaining({
+      expect(catalogRes.json<ProviderCatalogEventListResponse>().events).toContainEqual(expect.objectContaining({
         externalId: 'event-1',
         providerId: 'contract-provider',
         sport: 'GOLF',
@@ -1314,7 +1338,7 @@ describe('Contract verification (root admin)', () => {
         payload: { sport: 'GOLF', name: `CS8 Contract Tour ${stamp}`, matchKeyword: `CS8${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
-      created.sportLeagueId = leagueRes.json().sportLeague.id as string;
+      created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
 
       const tournamentRes = await getApp().inject({
         method: 'POST',
@@ -1333,9 +1357,9 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(tournamentRes.statusCode).toBe(201);
-      const eventId = tournamentRes.json().event.id as string;
+      const eventId = tournamentRes.json<SportEventResponse>().event.id;
       created.eventIds.push(eventId);
-      expect(tournamentRes.json().event.syncScope).toBe('NONE');
+      expect(tournamentRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
 
       // --- linkEventScoreSource (200) ------------------------------------------
       // A shape test: linkScoreSource only guards against an externalId already
@@ -1349,7 +1373,7 @@ describe('Contract verification (root admin)', () => {
       });
       expect(linkRes.statusCode).toBe(200);
       expect(SportEventResponseSchema.safeParse(linkRes.json()).success).toBe(true);
-      expect(linkRes.json().event).toMatchObject({
+      expect(linkRes.json<SportEventResponse>().event).toMatchObject({
         syncScope: 'SCORES_ONLY',
         providerId: 'contract-provider',
         externalId: `contract-cs8-${stamp}`,
@@ -1363,8 +1387,8 @@ describe('Contract verification (root admin)', () => {
       });
       expect(unlinkRes.statusCode).toBe(200);
       expect(SportEventResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
-      expect(unlinkRes.json().event.syncScope).toBe('NONE');
-      expect(unlinkRes.json().event.providerId).toBe('manual-admin');
+      expect(unlinkRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
+      expect(unlinkRes.json<SportEventResponse>().event.providerId).toBe('manual-admin');
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {

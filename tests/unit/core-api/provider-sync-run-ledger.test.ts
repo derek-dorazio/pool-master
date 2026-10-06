@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -145,7 +146,7 @@ describe('ProviderSyncRunLedger', () => {
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run completed after a successful ingestion job', async () => {
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
     const syncRun = createSyncRun();
     const job = createJob();
@@ -199,7 +200,7 @@ describe('ProviderSyncRunLedger', () => {
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed when the ingestion job returns FAILED', async () => {
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
     const syncRun = createSyncRun();
     const failedJob = createJob({
@@ -230,7 +231,7 @@ describe('ProviderSyncRunLedger', () => {
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed and rethrows when execution throws', async () => {
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
     const syncRun = createSyncRun();
     const executionError = new Error('provider exploded');
@@ -263,7 +264,7 @@ describe('ProviderSyncRunLedger', () => {
   });
 
   it('pool-master-rop.68.2.4 can mark a submitted run failed without executing a job', async () => {
-    const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+    const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn() });
     const syncRun = createSyncRun();
 

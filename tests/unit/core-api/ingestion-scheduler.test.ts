@@ -5,6 +5,7 @@
  * Covers syncSport, pollLiveScores, fetchEventResults, start/stop lifecycle.
  */
 
+import { expect } from '@jest/globals';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import type { IngestionCallbacks, SportSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';

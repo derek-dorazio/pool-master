@@ -1,5 +1,6 @@
+import { expect } from '@jest/globals';
 import Fastify from 'fastify';
-import { ServiceVersionResponseSchema } from '../../../packages/shared/dto';
+import { ServiceVersionResponseSchema, type ServiceVersionResponse } from '../../../packages/shared/dto';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import { versionModule } from '../../../packages/core-api/src/modules/version/routes';
 
@@ -38,7 +39,7 @@ describe('pool-master-htw service version metadata', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json();
+    const body = response.json<ServiceVersionResponse>();
     expect(ServiceVersionResponseSchema.safeParse(body).success).toBe(true);
     expect(body).toEqual({
       schemaVersion: 1,
@@ -72,7 +73,7 @@ describe('pool-master-htw service version metadata', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json().service.version).toBe('2026.04.27+abcdef');
+    expect(response.json<ServiceVersionResponse>().service.version).toBe('2026.04.27+abcdef');
 
     await app.close();
   });
