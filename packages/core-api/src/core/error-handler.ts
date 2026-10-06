@@ -1,8 +1,12 @@
-import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
 import { buildRequestLogBindings } from './logger';
 
-type ErrorLike = Error & {
+/**
+ * What the handler receives: Fastify's own errors carry `code`, `statusCode` and `validation`, but
+ * domain errors such as `LeagueNotFoundError` are plain `Error`s with none of them.
+ */
+export type ErrorLike = Error & {
   code?: string;
   statusCode?: number;
   validation?: unknown;
@@ -97,7 +101,7 @@ export function sendError(
 }
 
 export function globalErrorHandler(
-  error: FastifyError,
+  error: ErrorLike,
   request: FastifyRequest,
   reply: FastifyReply,
 ): void {
