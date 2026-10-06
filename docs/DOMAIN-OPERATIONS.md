@@ -582,6 +582,7 @@ are gone (#236).
 | Transition, link / unlink the score source | `rootAdmin` | `transitionEvent`, `linkEventScoreSource`, `unlinkEventScoreSource` |
 | Start simulated live scoring | `rootAdmin` | `startEventLiveSimulation` asks the linked provider to play the event's four rounds forward on its own clock, so a live contest's leaderboard can be tested; calling again restarts from round 1. Scores still arrive through the live-score sync, which polls only while the event is `IN_PROGRESS`. 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` unless the event is golf and the provider reports `supportsLiveSimulation` (only the QA mock feed does), 404 `PROVIDER_EVENT_NOT_FOUND` when the provider no longer has the linked event |
 | Read simulated live scoring | `rootAdmin` | `getEventLiveSimulation` reports the running simulation's clock and current round, so the score-source card can keep it current; 409 `EVENT_NOT_LINKED` when unlinked, 422 `LIVE_SIMULATION_UNSUPPORTED` as for start, and 404 `LIVE_SIMULATION_NOT_RUNNING` when none has been started, the provider restarted, or the provider no longer has the linked event |
+| Link to a simulated event | `rootAdmin` | Tournament Home's **Link to a new simulated event** calls `linkEventScoreSource` with `externalId` `sandbox-<event id>` on the golf provider that reports `supportsLiveSimulation`. The QA mock answers any `sandbox-` id with a golf event of its own, so a made-up tournament on any dates gets a field and a simulation (#402) |
 
 ### SportEventRound, SportEventTier
 
@@ -754,7 +755,7 @@ Two runtime-tunable documents: the client poll intervals and the ingestion sched
 | Submit a sport sync, an event sync | `rootAdmin` | `submitSportSync`, `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
 | Clean up stale provider events | `rootAdmin` | `cleanupStaleProviderEvents` — `DRY_RUN` inventories, `EXECUTE` deletes the unblocked; an event a contest references is never deleted |
-| Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto` |
+| Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |
 
 Deleted in #205, all unbuilt or unused: the health and error-log surface (service health,
 infrastructure and business metrics, error search and detail, alert rules and their mute),

@@ -27,16 +27,8 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
    *Sport Ingestion Overrides* (`/manage/sync-config/sport-overrides`), check that Event
    live scores is not switched off for Golf. A new interval starts only after the current
    wait runs out, so the first poll after the change can take up to the old 300 seconds.
-2. **Know which mock event you will link to.** Today the link dialog lists only mock events
-   that start inside your tournament's own start and end dates, and each mock event can be
-   linked to one PoolMaster tournament at a time. Near any given date the mock offers two
-   generated events: *Rolling QA Weekend 1* (the most recent Thursday to Sunday) and
-   *Rolling QA Weekend 2* (the following Thursday to Sunday). Both start Thursday at
-   12:00 UTC. The mock rebuilds them from the current date on every request, so each one
-   disappears at 12:00 UTC on the Thursday after it starts. After that, polls and the
-   simulation for a tournament linked to it fail with event-not-found. **Pick *Weekend 2*
-   and finish the run within the week.** If another tournament already uses it, unlink that
-   one first (*Unlink score source* on its score-source card).
+2. **No mock event to pick in advance.** Each tournament gets its own simulated event when
+   you link it (step 2), so its dates do not have to match anything in the mock.
 
 ## 1. Create the tournament
 
@@ -45,8 +37,7 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 | Field | Set it to |
 |---|---|
 | Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts | No later than the mock event's start: Thursday 12:00 UTC, which is 8:00 AM Eastern in summer. The Wednesday before is safest. *Starts* is in your own time zone, and a tournament starting even an hour after the mock event drops it from the link list |
-| Ends | After that Thursday (the Sunday is fine) |
+| Starts, Ends | Any dates you like. Nothing compares them with today or with the mock |
 | Field release | Any time in the past. Contests cannot be created before it |
 | Field locks | Far enough ahead to finish creating contests and entries. Contests cannot be created after it |
 | Rounds | 4 |
@@ -58,13 +49,13 @@ You can turn it off later with *Manage lifecycle manually* on the Workflow card.
 
 ## 2. Link it to the mock provider
 
-On the tournament's home page, open the score-source card and choose *Link to provider event*. Pick the
-*Rolling QA Weekend* event you chose. The card then says "Linked to mock-contest-feed event
-…". The tournament now takes live scores from the mock and its badge reads
-*Scores synced*.
+On the tournament's home page, choose *Link to a new simulated event* on the score-source
+card. That links the tournament to its own mock event, `sandbox-<tournament id>`, which the
+mock builds on request with its 80-golfer field. The card then says "Linked to
+mock-contest-feed event sandbox-…" and the badge reads *Scores synced*.
 
-If the list says no provider events fall in the tournament's date window, its dates do not span a mock event. Edit them and try
-again.
+*Link to provider event* is still there for linking to one of the mock's listed events
+instead; that list shows only events that start inside the tournament's own dates.
 
 ## 3. Check the rounds
 
@@ -110,10 +101,10 @@ Do these two in this order.
 2. On the Workflow card, *Move to In Progress*. Open and locked contests on the tournament
    become active, and the live-score sync starts polling it.
 
-Start the simulation first. Until a simulation is running, the mock answers with fixed
-scores taken from its own event status, which follows the real calendar. That can be a
-full 72-hole final for an event whose weekend is over. A poll before the simulation starts
-stores those scores, and they then mix with the simulated ones.
+Start the simulation first anyway. A simulated event has no scores until its simulation
+starts, so polls before then bring nothing in. An event linked from the provider list
+instead answers with fixed scores until a simulation runs, and a poll that stores those
+mixes them with the simulated ones.
 
 Golfers tee off across the first third of each round, so the first poll or two may bring
 no scores.
@@ -140,12 +131,14 @@ Final standings are built from the scores PoolMaster has already received.
   mixes the two runs until the new one overwrites them.
 - **Restart after a mock restart.** The simulation is held in the mock's memory. If the
   mock restarts (a QA deploy does this), press *Start live simulation* again.
-- **Unlink finished tournaments.** A completed tournament keeps its link, which blocks the
-  next tournament from using the same mock event. Use *Unlink score source* on its score-source card.
+- **Don't re-link a tournament to reuse it.** The mock remembers a simulation by event id,
+  and a tournament always gets the same `sandbox-<id>`, so unlinking and linking it again
+  picks up the old simulation's scores at once. A fresh tournament gets a fresh event.
+- **Unlink only listed events.** A finished tournament linked from the provider list keeps
+  that mock event, which blocks the next tournament from using it. *Unlink score source*
+  frees it. Simulated events are one per tournament and never need this.
 
 ## Planned changes
 
-- #402: link any tournament to its own simulated mock event, whatever its dates. This
-  replaces the date-matching in "Before you start" and step 2.
-- #386: removes the *Rolling QA Weekend* events. Until #402 lands, link to a seeded event
-  (#383) whose week your dates span.
+- #386: removes the mock's generated *Rolling QA Weekend* events. Simulated events
+  (step 2) are unaffected.
