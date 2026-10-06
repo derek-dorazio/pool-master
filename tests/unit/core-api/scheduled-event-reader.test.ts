@@ -7,7 +7,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
     return {
       sportEvent: {
         findMany: jest.fn().mockResolvedValue([
-          { externalId: 'golf-relative-live-now' },
+          { externalId: 'golf-masters-2026-live' },
         ]),
       },
     };
@@ -42,7 +42,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         externalId: true,
       },
     });
-    expect(eventIds).toEqual(['golf-relative-live-now']);
+    expect(eventIds).toEqual(['golf-masters-2026-live']);
   });
 
   it('pool-master-eux.3 requires hydrated event participants before scheduled live-score polling', async () => {
