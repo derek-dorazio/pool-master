@@ -323,9 +323,7 @@ describe('pool-master-za4 RootAdminGolfTournamentFieldPage', () => {
     );
 
     // Rory is already in the field -> excluded from the browse grid.
-    await waitFor(() =>
-      expect(screen.getByTestId('root-admin-golf-field-add-roster-row-p-jon')).toBeInTheDocument(),
-    );
+    expect(await screen.findByTestId('root-admin-golf-field-add-roster-row-p-jon')).toBeInTheDocument();
     expect(
       screen.queryByTestId('root-admin-golf-field-add-roster-row-p-rory'),
     ).not.toBeInTheDocument();

@@ -75,7 +75,7 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
     },
   });
 
-  const renderResult = render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -98,7 +98,7 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
   );
 
   return {
-    ...renderResult,
+    ...view,
     queryClient,
   };
 }

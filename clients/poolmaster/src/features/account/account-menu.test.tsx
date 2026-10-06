@@ -22,13 +22,13 @@ describe('AccountMenu', () => {
   it('hides the Manage link by default', () => {
     renderMenu();
     fireEvent.click(screen.getByTestId('account-menu-trigger'));
-    expect(screen.queryByTestId('account-menu-manage')).toBeNull();
+    expect(screen.queryByTestId('account-menu-manage')).not.toBeInTheDocument();
   });
 
   it('hides the Manage link when the user is not a root admin', () => {
     renderMenu({ isRootAdmin: false });
     fireEvent.click(screen.getByTestId('account-menu-trigger'));
-    expect(screen.queryByTestId('account-menu-manage')).toBeNull();
+    expect(screen.queryByTestId('account-menu-manage')).not.toBeInTheDocument();
   });
 
   it('shows a Manage link pointing at /manage when the user is a root admin', () => {
@@ -44,7 +44,7 @@ describe('AccountMenu', () => {
     fireEvent.click(screen.getByTestId('account-menu-trigger'));
     expect(screen.getByTestId('account-menu-panel')).toBeVisible();
     fireEvent.click(screen.getByTestId('account-menu-manage'));
-    expect(screen.queryByTestId('account-menu-panel')).toBeNull();
+    expect(screen.queryByTestId('account-menu-panel')).not.toBeInTheDocument();
   });
 
   it('links Profile to the canonical user route', () => {

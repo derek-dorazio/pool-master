@@ -4,10 +4,12 @@ import tanstackQuery from '@tanstack/eslint-plugin-query';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import importX from 'eslint-plugin-import-x';
 import jest from 'eslint-plugin-jest';
+import jestDom from 'eslint-plugin-jest-dom';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import testingLibrary from 'eslint-plugin-testing-library';
 import vitest from 'eslint-plugin-vitest';
 import poolmaster from './eslint-rules/index.mjs';
 
@@ -519,6 +521,51 @@ export default tseslint.config(
       ...asErrors(vitest.configs.recommended.rules),
       'vitest/no-focused-tests': 'error',
       'vitest/no-commented-out-tests': 'error',
+    },
+  },
+  {
+    // Component tests query the way a user does: rules/testing-rules.md §6
+    // *React Testing Library Selector Rule*. `no-node-access` and `prefer-find-by`
+    // are that rule enforced; the rest are the plugins' recommended sets.
+    // Listed rather than spread so a plugin upgrade cannot add a rule here
+    // unreviewed. `no-debugging-utils` is `warn` in the preset; it is `error`
+    // here because `--max-warnings 0` would fail on it anyway.
+    files: ['clients/poolmaster/src/**/*.{test,spec}.{ts,tsx}'],
+    plugins: { 'testing-library': testingLibrary, 'jest-dom': jestDom },
+    rules: {
+      'testing-library/await-async-events': ['error', { eventModule: 'userEvent' }],
+      'testing-library/await-async-queries': 'error',
+      'testing-library/await-async-utils': 'error',
+      'testing-library/no-await-sync-events': ['error', { eventModules: ['fire-event'] }],
+      'testing-library/no-await-sync-queries': 'error',
+      'testing-library/no-container': 'error',
+      'testing-library/no-debugging-utils': 'error',
+      'testing-library/no-dom-import': ['error', 'react'],
+      'testing-library/no-global-regexp-flag-in-query': 'error',
+      'testing-library/no-manual-cleanup': 'error',
+      'testing-library/no-node-access': 'error',
+      'testing-library/no-promise-in-fire-event': 'error',
+      'testing-library/no-render-in-lifecycle': 'error',
+      'testing-library/no-unnecessary-act': 'error',
+      'testing-library/no-wait-for-multiple-assertions': 'error',
+      'testing-library/no-wait-for-side-effects': 'error',
+      'testing-library/no-wait-for-snapshot': 'error',
+      'testing-library/prefer-find-by': 'error',
+      'testing-library/prefer-presence-queries': 'error',
+      'testing-library/prefer-query-by-disappearance': 'error',
+      'testing-library/prefer-screen-queries': 'error',
+      'testing-library/render-result-naming-convention': 'error',
+      'jest-dom/prefer-checked': 'error',
+      'jest-dom/prefer-empty': 'error',
+      'jest-dom/prefer-enabled-disabled': 'error',
+      'jest-dom/prefer-focus': 'error',
+      'jest-dom/prefer-in-document': 'error',
+      'jest-dom/prefer-required': 'error',
+      'jest-dom/prefer-to-have-attribute': 'error',
+      'jest-dom/prefer-to-have-class': 'error',
+      'jest-dom/prefer-to-have-style': 'error',
+      'jest-dom/prefer-to-have-text-content': 'error',
+      'jest-dom/prefer-to-have-value': 'error',
     },
   },
   {

@@ -97,7 +97,7 @@ describe("pool-master-dn4.4: shared IconPickerModal", () => {
     expect(screen.getByTestId("icon-option-alpha")).toHaveAttribute("aria-pressed", "false");
 
     await user.tab();
-    expect(document.activeElement).toBeInstanceOf(HTMLElement);
+    expect(screen.getByTestId("icon-option-alpha")).toHaveFocus();
 
     await user.keyboard("{Escape}");
     expect(handleCancel).toHaveBeenCalledTimes(1);

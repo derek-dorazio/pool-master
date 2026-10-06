@@ -123,7 +123,7 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     expect(screen.getByTestId('root-admin-unmapped-participant-map-save')).toBeDisabled();
 
     const picker = screen.getByTestId('root-admin-unmapped-participant-map-participant');
-    await waitFor(() => expect(picker).not.toBeDisabled());
+    await waitFor(() => expect(picker).toBeEnabled());
     fireEvent.change(picker, { target: { value: 'participant-1' } });
     fireEvent.click(screen.getByTestId('root-admin-unmapped-participant-map-save'));
 

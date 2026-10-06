@@ -200,9 +200,7 @@ describe('JoinTeamOwnerPage', () => {
     );
 
     // One step: registered, joined, and taken to the team rather than back to sign-in.
-    await waitFor(() =>
-      expect(screen.getByTestId('team-destination')).toBeInTheDocument(),
-    );
+    expect(await screen.findByTestId('team-destination')).toBeInTheDocument();
   });
 
   it('accepts a team-owner invitation for an authenticated user', async () => {
