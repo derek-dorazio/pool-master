@@ -7,15 +7,16 @@ import { fakeLogger } from '../../support/fake-logger';
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
 // path's writes against Postgres are in golf-round-scores.integration.
 
-function setup() {
+function setup(eventOverrides: { rounds?: number } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
-  const event = store.addEvent({ providerId: 'feed' });
+  const event = store.addEvent({ providerId: 'feed', ...eventOverrides });
   const ana = store.addParticipant(sport.id, 'Ana Park', { externalId: 'ext-ana' });
   const ben = store.addParticipant(sport.id, 'Ben Cole');
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
   const service = new GolfScoreService({
+    events: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
@@ -142,6 +143,52 @@ describe('GolfScoreService — single-cell correction', () => {
   });
 });
 
+// #375 — nothing is scored after the 18th hole of the event's last scheduled round. An admin
+// cannot create a round the event does not have; an event with no round count keeps today's
+// behaviour.
+describe('GolfScoreService — admin rounds are bounded by the event schedule', () => {
+  it('refuses to apply scores for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
+    const { store, service, event } = setup({ rounds: 4 });
+
+    await expect(service.applyRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]))
+      .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
+    expect(store.roundRows).toEqual([]);
+    expect(store.golfRoundRows).toEqual([]);
+  });
+
+  it('refuses a single-cell correction for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
+    const { store, service, event, anaEntry } = setup({ rounds: 4 });
+
+    await expect(service.updateRoundScore(event.id, 5, anaEntry.id, { strokes: 70 }))
+      .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
+    expect(store.roundRows).toEqual([]);
+    expect(store.golfRoundRows).toEqual([]);
+  });
+
+  it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
+    const { service, event } = setup({ rounds: 4 });
+
+    await expect(service.previewRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]))
+      .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
+  });
+
+  it('still accepts the event\'s last scheduled round', async () => {
+    const { store, service, event } = setup({ rounds: 4 });
+
+    await service.applyRoundScores(event.id, 4, [{ playerName: 'Ana Park', ...row() }]);
+
+    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([4]);
+  });
+
+  it('creates any round when the event has no scheduled round count', async () => {
+    const { store, service, event } = setup();
+
+    await service.applyRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]);
+
+    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([5]);
+  });
+});
+
 // #246 — event-side position: the provider supplies no live rank, so every score write
 // re-ranks the whole event from eventScoreToPar, once, instead of each reader deriving it.
 describe('GolfScoreService — event-side position', () => {
@@ -209,6 +256,7 @@ describe('GolfScoreService — provider sync', () => {
     await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ben', participantId: ben.id, confidence: 'EXACT', mappedAt });
     const logger = fakeLogger();
     const service = new GolfScoreService({
+      events: store.sportEventRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
@@ -233,6 +281,7 @@ describe('GolfScoreService — provider sync', () => {
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
       'feed',
       'SCORES_ONLY',
+      null,
     );
 
     expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
@@ -248,7 +297,7 @@ describe('GolfScoreService — provider sync', () => {
   it('still creates a round the feed reports on a FULL event, which has no admin schedule', async () => {
     const { store, service, event } = await syncSetup('FULL');
 
-    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 'FULL');
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 'FULL', null);
 
     expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1]);
@@ -261,9 +310,49 @@ describe('GolfScoreService — provider sync', () => {
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
       update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
-    ], 'feed', 'SCORES_ONLY');
+    ], 'feed', 'SCORES_ONLY', null);
 
     const standings = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id, benEntry.id]);
     expect(standings.map((result) => [result.golf.eventScoreToPar, result.standing.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
+  });
+
+  it('skips and logs a round beyond the event\'s scheduled rounds even on a FULL event, so a playoff never becomes round 5', async () => {
+    const { store, service, event, anaEntry, logger } = await syncSetup('FULL');
+
+    const result = await service.persistRoundUpdatesForSportEvent(
+      event.id,
+      [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
+      'feed',
+      'FULL',
+      4,
+    );
+
+    expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
+    expect(store.roundRows.filter((round) => round.sportEventId === event.id).map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
+    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(standing.golf.eventScoreToPar).toBe(-8);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'liveScore.golf.roundBeyondScheduleSkipped', data: { sportEventId: event.id, scheduledRounds: 4, roundNumbers: [5] } },
+      expect.any(String),
+    );
+  });
+
+  it('skips and logs an update past the 18th hole, so playoff holes never reach a round score', async () => {
+    const { store, service, event, logger } = await syncSetup('FULL');
+
+    const result = await service.persistRoundUpdatesForSportEvent(
+      event.id,
+      [update('ext-ana', 4, -2), { ...update('ext-ben', 4, -3), thru: 19 }],
+      'feed',
+      'FULL',
+      4,
+    );
+
+    expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
+    expect(store.golfRoundRows).toHaveLength(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'liveScore.golf.holeBeyondEighteenSkipped', data: { sportEventId: event.id, externalId: 'ext-ben', round: 4, thru: 19 } },
+      expect.any(String),
+    );
   });
 });

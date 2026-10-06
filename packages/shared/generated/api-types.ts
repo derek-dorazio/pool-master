@@ -7699,6 +7699,7 @@ export interface components {
                 /** @description Null when only the score to par is known; such a row is not stored. */
                 strokes: number | null;
                 scoreToPar: number;
+                /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
                 thru?: number;
                 /** @enum {string} */
                 status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -7718,6 +7719,7 @@ export interface components {
                     /** @description Null when only the score to par is known; such a row is not stored. */
                     strokes: number | null;
                     scoreToPar: number;
+                    /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
                     thru?: number;
                     /** @enum {string} */
                     status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -7767,6 +7769,7 @@ export interface components {
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
+            /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
             thru?: number;
             /** @enum {string} */
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";

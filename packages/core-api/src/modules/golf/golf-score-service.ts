@@ -9,6 +9,10 @@
  * event's field with the shared participant-row resolver, the same precedence a sport
  * league's affiliation upload uses (#236; each had its own copy before).
  *
+ * Nothing is scored after the 18th hole of the event's last scheduled round (#375): a round
+ * above `SportEvent.rounds` is skipped by sync and refused to an admin, and a sync update
+ * past hole 18 is skipped. Golf playoff holes are not a round and never count toward a score.
+ *
  * Every write goes through the golf extension ports, which write a core row and its golf
  * row together (#235 split them). This service keeps its golf name: it writes golf rows.
  */
@@ -22,6 +26,7 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantRepository,
+  SportEventRepository,
   SportEventRoundRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -47,6 +52,9 @@ export class GolfScoreError extends Error {
     this.name = 'GolfScoreError';
   }
 }
+
+/** A golf round is 18 holes; anything past it is a playoff, which is never scored (#118, #375). */
+export const GOLF_HOLES_PER_ROUND = 18;
 
 export interface GolfRoundPersistenceResult {
   updatesReturned: number;
@@ -97,6 +105,7 @@ export interface GolfRoundScorePatch {
 }
 
 export interface GolfScoreServiceDeps {
+  events: Pick<SportEventRepository, 'findById'>;
   rounds: SportEventRoundRepository;
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
@@ -118,18 +127,28 @@ export class GolfScoreService {
     rounds: readonly GolfRoundUpdate[],
     providerId: string,
     syncScope: SportEventSyncScope,
+    scheduledRounds: number | null,
   ): Promise<GolfRoundPersistenceResult> {
     if (rounds.length === 0) {
       return { updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0, writeDiagnostics: emptySyncWriteDiagnostics() };
     }
     const { logger } = this.deps;
 
-    // A provider-owned (FULL) event has no admin schedule, so a score for a round the event
-    // lacks creates it rather than being dropped. An admin-owned event (SCORES_ONLY, NONE)
+    // Nothing past the event's last scheduled round is scored, whatever the sync scope (#375).
+    // Within it, a provider-owned (FULL) event has no admin schedule, so a score for a round the
+    // event lacks creates it rather than being dropped. An admin-owned event (SCORES_ONLY, NONE)
     // keeps the rounds its admin scheduled: a round number beyond them is skipped (#118).
-    // Golf playoff holes are not a round and never count toward a score.
+    // `scheduledRounds` is the event's `SportEvent.rounds`, read by the caller with the event.
+    const reportedRoundNumbers = [...new Set(rounds.map((round) => round.round))];
+    const beyondScheduleRoundNumbers = reportedRoundNumbers.filter((roundNumber) => scheduledRounds !== null && roundNumber > scheduledRounds);
+    if (beyondScheduleRoundNumbers.length > 0) {
+      logger?.warn(
+        { action: 'liveScore.golf.roundBeyondScheduleSkipped', data: { sportEventId, scheduledRounds, roundNumbers: beyondScheduleRoundNumbers } },
+        'Skipping golf round update(s) for round(s) beyond the event\'s scheduled rounds',
+      );
+    }
     const roundIdByNumber = new Map((await this.deps.rounds.findBySportEvent(sportEventId)).map((round) => [round.roundNumber, round.id]));
-    const missingRoundNumbers = [...new Set(rounds.map((round) => round.round))].filter((roundNumber) => !roundIdByNumber.has(roundNumber));
+    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundIdByNumber.has(roundNumber));
     if (missingRoundNumbers.length > 0 && syncScope === SportEventSyncScope.FULL) {
       const created = await Promise.all(missingRoundNumbers.map((roundNumber) => this.deps.rounds.findOrCreate(sportEventId, roundNumber)));
       for (const round of created) {
@@ -157,6 +176,20 @@ export class GolfScoreService {
     let skipped = 0;
     const persistable: Array<{ round: GolfRoundUpdate & { strokes: number }; sportEventParticipantId: string; sportEventRoundId: string }> = [];
     for (const round of rounds) {
+      if (beyondScheduleRoundNumbers.includes(round.round)) {
+        // Logged once above, with every round number beyond the schedule.
+        skipped += 1;
+        continue;
+      }
+      if (round.thru !== undefined && round.thru > GOLF_HOLES_PER_ROUND) {
+        // Its to-par may include playoff holes, so no part of it is stored.
+        logger?.warn(
+          { action: 'liveScore.golf.holeBeyondEighteenSkipped', data: { sportEventId, externalId: round.participantExternalId, round: round.round, thru: round.thru } },
+          'Skipping golf round update — it reports holes past the 18th, which are a playoff and never scored',
+        );
+        skipped += 1;
+        continue;
+      }
       if (round.strokes === null) {
         logger?.debug?.(
           { action: 'liveScore.golf.nullStrokesSkipped', data: { providerId, externalId: round.participantExternalId, round: round.round } },
@@ -350,6 +383,7 @@ export class GolfScoreService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
+    await this.requireScheduledRound(sportEventId, roundNumber);
     const [field, eventRounds] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
       this.deps.rounds.findBySportEvent(sportEventId),
@@ -434,6 +468,7 @@ export class GolfScoreService {
         404,
       );
     }
+    await this.requireScheduledRound(sportEventId, roundNumber);
     const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
     const existing = (await this.deps.golfRounds.findBySportEventParticipants([sportEventParticipantId]))
       .find((result) => result.participantRound.sportEventRoundId === round.id);
@@ -450,6 +485,18 @@ export class GolfScoreService {
       thru: patch.thru !== undefined ? patch.thru : existing?.golf.thru ?? null,
     });
     await this.refreshGolfStandings(sportEventId, [sportEventParticipantId], new Date());
+  }
+
+  /** Refuses an admin score for a round the event does not have (#375). An event with no round count accepts any. */
+  private async requireScheduledRound(sportEventId: string, roundNumber: number): Promise<void> {
+    const scheduledRounds = (await this.deps.events.findById(sportEventId))?.rounds ?? null;
+    if (scheduledRounds !== null && roundNumber > scheduledRounds) {
+      throw new GolfScoreError(
+        `Round ${roundNumber} is beyond sport event ${sportEventId}'s ${scheduledRounds} scheduled rounds.`,
+        'ROUND_BEYOND_SCHEDULE',
+        422,
+      );
+    }
   }
 }
 

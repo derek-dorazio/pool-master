@@ -14451,7 +14451,9 @@
                 },
                 "thru": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 18,
+                  "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored."
                 },
                 "status": {
                   "type": "string",
@@ -14518,7 +14520,9 @@
                     },
                     "thru": {
                       "type": "integer",
-                      "minimum": 0
+                      "minimum": 0,
+                      "maximum": 18,
+                      "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored."
                     },
                     "status": {
                       "type": "string",
@@ -14703,7 +14707,9 @@
           },
           "thru": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 18,
+            "description": "Holes completed in the round. A round is 18 holes; playoff holes are never scored."
           },
           "status": {
             "type": "string",
