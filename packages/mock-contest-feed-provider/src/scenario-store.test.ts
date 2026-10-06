@@ -322,11 +322,11 @@ test('golf playoffs are never a round 5: every golf state stops at round 4 with 
 
   for (const token of ['golf-playoff', 'golf-completed'] as const) {
     const [leader, runnerUp] = store.getLiveScores(scenarioId, eventId, undefined, token).contestants;
-    assert.equal(leader?.rounds.length, 4);
-    assert.equal(runnerUp?.rounds.length, 4);
-    assert.equal(total(runnerUp!), total(leader!), `${token}: the top two are tied after 72 holes`);
-    const runnerUpRound4 = runnerUp!.rounds.find((round) => round.round === 4)!;
-    assert.equal(runnerUpRound4.strokes, 72 + runnerUpRound4.scoreToPar);
+    assert.equal(leader.rounds.length, 4);
+    assert.equal(runnerUp.rounds.length, 4);
+    assert.equal(total(runnerUp), total(leader), `${token}: the top two are tied after 72 holes`);
+    const runnerUpRound4 = runnerUp.rounds.find((round) => round.round === 4);
+    assert.equal(runnerUpRound4?.strokes, 72 + (runnerUpRound4?.scoreToPar ?? Number.NaN));
   }
 });
 
