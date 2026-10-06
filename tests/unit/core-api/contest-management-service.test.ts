@@ -586,15 +586,19 @@ describe('ContestManagementService', () => {
       countedScores: 5,
     });
 
+    // configJson stores the whole request, so it carries locksAt and maxEntriesPerSquad
+    // beyond GolfContestConfig's two fields. A variable, not an inline literal, lets the
+    // exact stored value through Jest 30's typed toHaveBeenCalledWith.
+    const storedConfigJson = {
+      countedScores: 5,
+      locksAt: '2026-04-11T12:00:00.000Z',
+      maxEntriesPerSquad: 2,
+      rosterSize: 8,
+    };
     // #245 — an update never rewrites selectionType: it is fixed at create, and the
     // mapSelectionType echo that re-derived it on every save is gone.
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
-      configJson: {
-        countedScores: 5,
-        locksAt: '2026-04-11T12:00:00.000Z',
-        maxEntriesPerSquad: 2,
-        rosterSize: 8,
-      },
+      configJson: storedConfigJson,
       locksAt: new Date('2026-04-11T12:00:00.000Z'),
       maxEntriesPerSquad: 2,
       pickCount: 8,
