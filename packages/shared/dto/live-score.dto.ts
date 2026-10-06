@@ -42,7 +42,7 @@ export const GolfRoundUpdateSchema = z.object({
   ),
   scoreToPar: z.number().int(),
   thru: z.number().int().min(0).optional().describe(
-    'Number of completed holes in this round when the provider reports an in-progress round; can exceed 18 for playoff/extra-hole movement.',
+    'Number of completed holes in this round when the provider reports an in-progress round. Playoff holes are not part of any round (#118).',
   ),
   status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ', 'MISSED_CUT']),
   completedAt: z.string().datetime().optional(),

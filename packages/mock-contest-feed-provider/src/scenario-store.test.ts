@@ -274,13 +274,8 @@ test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-r
   assert.ok(r4PendingFinal.contestants.some((contestant) => contestant.rounds.at(-1)?.status === 'DSQ'));
 
   const playoff = store.getLiveScores(scenarioId, eventId, undefined, 'golf-playoff');
-  const playoffContestants = playoff.contestants.filter((contestant) =>
-    contestant.rounds.some((round) => round.round === 5),
-  );
-  assert.equal(playoffContestants.length, 2);
-  assert.ok(playoffContestants.some((contestant) =>
-    contestant.rounds.some((round) => round.round === 5 && round.status === 'IN_PROGRESS' && (round.thru ?? 0) > 18),
-  ));
+  assert.equal(store.getEventResponse(scenarioId, eventId, 'golf-playoff').event.status, 'in_progress');
+  assert.ok(playoff.contestants.every((contestant) => contestant.rounds.every((round) => round.status !== 'IN_PROGRESS')));
 
   const completed = store.getLiveScores(scenarioId, eventId, undefined, 'golf-completed');
   assert.equal(store.getEventResponse(scenarioId, eventId, 'golf-completed').event.status, 'completed');
@@ -293,6 +288,46 @@ test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-r
     lateGolfer01?.rounds.find((round) => round.round === 4)?.scoreToPar,
     (completedGolfer01?.rounds.find((round) => round.round === 4)?.scoreToPar ?? 0) - 2,
   );
+});
+
+test('golf playoffs are never a round 5: every golf state stops at round 4 with 18-hole rounds, and the playoff states end with the top two genuinely tied', () => {
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+  );
+  const scenarioId = 'golf-relative-today';
+  const eventId = 'golf-relative-weekend-20260430';
+  const total = (contestant: LiveScoresSnapshotResponse['contestants'][number]) =>
+    contestant.rounds.reduce((sum, round) => sum + round.scoreToPar, 0);
+
+  for (const token of [
+    'golf-r1-in-progress',
+    'golf-r1-complete',
+    'golf-r2-complete',
+    'golf-correction',
+    'golf-r4-complete-pending-final',
+    'golf-playoff',
+    'golf-completed',
+    'golf-late-correction',
+  ] as const) {
+    const snapshot = store.getLiveScores(scenarioId, eventId, undefined, token);
+    for (const contestant of snapshot.contestants) {
+      for (const round of contestant.rounds) {
+        assert.ok(round.round <= 4, `${token}: ${contestant.contestantId} has round ${round.round}`);
+        assert.ok((round.thru ?? 0) <= 18, `${token}: ${contestant.contestantId} round ${round.round} thru ${round.thru}`);
+      }
+    }
+  }
+
+  for (const token of ['golf-playoff', 'golf-completed'] as const) {
+    const [leader, runnerUp] = store.getLiveScores(scenarioId, eventId, undefined, token).contestants;
+    assert.equal(leader?.rounds.length, 4);
+    assert.equal(runnerUp?.rounds.length, 4);
+    assert.equal(total(runnerUp!), total(leader!), `${token}: the top two are tied after 72 holes`);
+    const runnerUpRound4 = runnerUp!.rounds.find((round) => round.round === 4)!;
+    assert.equal(runnerUpRound4.strokes, 72 + runnerUpRound4.scoreToPar);
+  }
 });
 
 test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {

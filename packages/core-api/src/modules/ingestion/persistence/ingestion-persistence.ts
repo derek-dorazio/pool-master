@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, SportEventSyncScope, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   ProviderRanking,
   SportEvent,
@@ -99,25 +99,32 @@ export class IngestionPersistence {
         continue;
       }
       const before = normalizeSportEventRow(existingEvent);
-      const after = normalizeSportEventInput(event, resolvedTiming);
+      // An admin owns the header, rounds and status of an event it linked for scores only
+      // (SCORES_ONLY) or not at all (NONE); sync refreshes the field size and nothing else (#118).
+      const providerOwned = existingEvent.syncScope === SportEventSyncScope.FULL;
+      const after = providerOwned
+        ? normalizeSportEventInput(event, resolvedTiming)
+        : { ...before, participantCount: event.participantCount ?? before.participantCount };
 
       const persistedEvent = await this.prisma.sportEvent.update({
         where: { id: existingEvent.id },
-        data: {
-          name: event.name,
-          venue: event.venue ?? null,
-          location: event.location ?? null,
-          startDate: event.startDate,
-          endDate: event.endDate ?? null,
-          // status intentionally omitted — applySportEventStatusTransition below is the
-          // one place that ever writes SportEvent.status (plans/124 §3.3).
-          rounds: event.rounds ?? null,
-          participantCount: event.participantCount ?? null,
-          releaseAt: resolvedTiming.releaseAt,
-          fieldLocksAt: resolvedTiming.fieldLocksAt,
-          fieldLocked: event.fieldLocked,
-          metadata: toPrismaJson(event.metadata),
-        },
+        data: providerOwned
+          ? {
+            name: event.name,
+            venue: event.venue ?? null,
+            location: event.location ?? null,
+            startDate: event.startDate,
+            endDate: event.endDate ?? null,
+            // status intentionally omitted — applySportEventStatusTransition below is the
+            // one place that ever writes SportEvent.status (plans/124 §3.3).
+            rounds: event.rounds ?? null,
+            participantCount: event.participantCount ?? null,
+            releaseAt: resolvedTiming.releaseAt,
+            fieldLocksAt: resolvedTiming.fieldLocksAt,
+            fieldLocked: event.fieldLocked,
+            metadata: toPrismaJson(event.metadata),
+          }
+          : { participantCount: event.participantCount ?? existingEvent.participantCount },
       });
       detailRows.push({
         id: `sport-event:${event.providerId}:${event.externalId}`,
@@ -130,11 +137,13 @@ export class IngestionPersistence {
         before,
         after,
       });
-      await this.eventLifecycleService?.applySportEventStatusTransition({
-        sportEventId: persistedEvent.id,
-        toStatus: event.status,
-        actor: { type: 'PROVIDER' },
-      });
+      if (providerOwned) {
+        await this.eventLifecycleService?.applySportEventStatusTransition({
+          sportEventId: persistedEvent.id,
+          toStatus: event.status,
+          actor: { type: 'PROVIDER' },
+        });
+      }
       count++;
       this.logger?.debug({
         providerId: event.providerId,

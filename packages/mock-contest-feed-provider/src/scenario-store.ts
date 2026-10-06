@@ -753,7 +753,7 @@ function completedGolfRound(
     round,
     strokes: 72 + scoreToPar,
     scoreToPar,
-    thru: round > 4 ? 19 : 18,
+    thru: 18,
     status,
     completedAt: completedAtForRound(event, round),
   };
@@ -788,7 +788,7 @@ function shouldApplyR2Correction(state: GolfLiveState, contestant: ContestantRec
   return state === 'correction' && (contestant.contestantId === 'golfer-01' || index === 0);
 }
 
-function shouldApplyLateCorrection(state: GolfLiveState, contestant: ContestantRecord, index: number): boolean {
+function shouldApplyLateCorrection(state: GolfLiveState, contestant: Pick<ContestantRecord, 'contestantId'>, index: number): boolean {
   return state === 'late-correction' && (contestant.contestantId === 'golfer-01' || index === 0);
 }
 
@@ -838,7 +838,7 @@ function liveRoundsForContestant(
         return rounds;
       }
       addCompleted(3);
-      addCompleted(4, shouldApplyLateCorrection(context.state, contestant, index) ? -2 : 0);
+      addCompleted(4);
       return rounds;
   }
 }
@@ -847,33 +847,47 @@ function scoreLiveGolfContestant(contestant: LiveGolfContestantRecord): number {
   return contestant.rounds.reduce((sum, round) => sum + round.scoreToPar, 0);
 }
 
-function withPlayoffRounds(context: GolfLiveBuildContext, contestants: readonly LiveGolfContestantRecord[]): readonly LiveGolfContestantRecord[] {
+/**
+ * A playoff is not a round (#118): players tied after 72 holes play extra holes that decide
+ * only who finishes first and never count toward anyone's score. So the states at and after a
+ * playoff carry four 18-hole rounds, and the runner-up's round 4 is set so the top two are
+ * genuinely tied, the way a real feed looks when a playoff was needed.
+ */
+function withTiedLeaders(context: GolfLiveBuildContext, contestants: readonly LiveGolfContestantRecord[]): readonly LiveGolfContestantRecord[] {
   if (context.state !== 'playoff' && context.state !== 'completed' && context.state !== 'late-correction') {
     return contestants;
   }
 
-  const eligible = contestants
+  const [leader, runnerUp] = contestants
     .filter((contestant) => contestant.rounds.length === 4 && contestant.rounds.every((round) => round.status === 'COMPLETED'))
-    .sort((left, right) => scoreLiveGolfContestant(left) - scoreLiveGolfContestant(right) || left.name.localeCompare(right.name))
-    .slice(0, 2);
-  const playoffParticipantIds = new Set(eligible.map((contestant) => contestant.contestantId));
+    .sort((left, right) => scoreLiveGolfContestant(left) - scoreLiveGolfContestant(right) || left.name.localeCompare(right.name));
+  if (!leader || !runnerUp) {
+    return contestants;
+  }
 
-  return contestants.map((contestant) => {
-    if (!playoffParticipantIds.has(contestant.contestantId)) {
-      return contestant;
-    }
+  const gap = scoreLiveGolfContestant(runnerUp) - scoreLiveGolfContestant(leader);
+  return contestants.map((contestant) => (
+    contestant.contestantId === runnerUp.contestantId
+      ? { ...contestant, rounds: contestant.rounds.map((round) => (round.round === 4 ? adjustRoundScore(round, -gap) : round)) }
+      : contestant
+  ));
+}
 
-    const playoffIndex = eligible.findIndex((eligibleContestant) => eligibleContestant.contestantId === contestant.contestantId);
-    const playoffRound =
-      context.state === 'playoff' && playoffIndex === 1
-        ? { ...completedGolfRound(context.event, contestant, 5, 1), status: 'IN_PROGRESS' as const, thru: 19, completedAt: undefined }
-        : completedGolfRound(context.event, contestant, 5, playoffIndex === 0 ? -1 : 1);
+/**
+ * The late correction lands after the event is final (and after the tie above), so it can
+ * break the tie, as a real post-event correction would.
+ */
+function withLateCorrection(context: GolfLiveBuildContext, contestants: readonly LiveGolfContestantRecord[]): readonly LiveGolfContestantRecord[] {
+  return contestants.map((contestant, index) => (
+    shouldApplyLateCorrection(context.state, contestant, index)
+      ? { ...contestant, rounds: contestant.rounds.map((round) => (round.round === 4 ? adjustRoundScore(round, -2) : round)) }
+      : contestant
+  ));
+}
 
-    return {
-      ...contestant,
-      rounds: [...contestant.rounds, playoffRound],
-    };
-  });
+function adjustRoundScore(round: LiveGolfRoundRecord, delta: number): LiveGolfRoundRecord {
+  const scoreToPar = round.scoreToPar + delta;
+  return { ...round, scoreToPar, strokes: 72 + scoreToPar };
 }
 
 function participantStatusForLiveRounds(
@@ -941,10 +955,10 @@ function buildLiveGolfContestants(
       rounds,
     };
   });
-  const withPlayoff = withPlayoffRounds(context, liveContestants);
-  validateLiveGolfContestants(withPlayoff, new Set(contestants.map((contestant) => contestant.contestantId)));
+  const scored = withLateCorrection(context, withTiedLeaders(context, liveContestants));
+  validateLiveGolfContestants(scored, new Set(contestants.map((contestant) => contestant.contestantId)));
 
-  return withPlayoff
+  return scored
     .filter((contestant) => contestant.rounds.length > 0)
     .sort((left, right) => {
       const leftScore = scoreLiveGolfContestant(left);

@@ -1,6 +1,7 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { fakeLogger } from '../../support/fake-logger';
 
 // The golf score-correction rules against an in-memory store: what a preview reports, that
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
@@ -145,5 +146,82 @@ describe('GolfScoreService — event-side position', () => {
       [anaEntry.id]: [1, '1'],
       [benEntry.id]: [null, null],
     });
+  });
+});
+
+// #118 — a playoff is not a round. Provider sync writes only the rounds an admin scheduled on
+// an admin-owned (SCORES_ONLY or NONE) event, so a stray round 5 from a feed never becomes a
+// fifth round row or moves anyone's 72-hole score. A provider-owned (FULL) event has no admin
+// schedule, so its rounds are still created from the feed.
+describe('GolfScoreService — provider sync', () => {
+  async function syncSetup(syncScope: 'FULL' | 'SCORES_ONLY') {
+    const store = new InMemorySportEvents();
+    const sport = store.addSport(Sport.GOLF);
+    const event = store.addEvent({ providerId: 'feed', syncScope });
+    const ana = store.addParticipant(sport.id, 'Ana Park');
+    const ben = store.addParticipant(sport.id, 'Ben Cole');
+    const anaEntry = store.addToField(event.id, ana.id);
+    const benEntry = store.addToField(event.id, ben.id);
+    const mappedAt = new Date('2026-06-01T12:00:00.000Z');
+    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ana', participantId: ana.id, confidence: 'EXACT', mappedAt });
+    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ben', participantId: ben.id, confidence: 'EXACT', mappedAt });
+    const logger = fakeLogger();
+    const service = new GolfScoreService({
+      rounds: store.roundRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      mappings: store.mappingRepo(),
+      golfRounds: store.golfRoundRepo(),
+      golfStandings: store.golfStandingRepo(),
+      logger,
+    });
+    return { store, service, event, anaEntry, benEntry, logger };
+  }
+
+  const update = (participantExternalId: string, round: number, scoreToPar: number) => ({
+    participantExternalId, round, strokes: 72 + scoreToPar, scoreToPar, thru: 18, status: 'COMPLETED' as const,
+  });
+
+  it('skips and logs a round an admin did not schedule on a SCORES_ONLY event, so the golfer keeps their 72-hole score', async () => {
+    const { store, service, event, anaEntry, logger } = await syncSetup('SCORES_ONLY');
+    await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+
+    const result = await service.persistRoundUpdatesForSportEvent(
+      event.id,
+      [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
+      'feed',
+      'SCORES_ONLY',
+    );
+
+    expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
+    expect(store.roundRows.filter((round) => round.sportEventId === event.id).map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
+    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(standing.golf.eventScoreToPar).toBe(-8);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId: event.id, roundNumbers: [5] } },
+      expect.any(String),
+    );
+  });
+
+  it('still creates a round the feed reports on a FULL event, which has no admin schedule', async () => {
+    const { store, service, event } = await syncSetup('FULL');
+
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 'FULL');
+
+    expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
+    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1]);
+  });
+
+  it('gives two golfers tied after 72 holes the same event score and both "T1"', async () => {
+    const { store, service, event, anaEntry, benEntry } = await syncSetup('SCORES_ONLY');
+    await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+
+    await service.persistRoundUpdatesForSportEvent(event.id, [
+      update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
+      update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
+    ], 'feed', 'SCORES_ONLY');
+
+    const standings = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id, benEntry.id]);
+    expect(standings.map((result) => [result.golf.eventScoreToPar, result.standing.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
   });
 });

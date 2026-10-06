@@ -702,6 +702,46 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
   });
 
+  // #118 — an admin who links a tournament for scores only keeps its name, schedule, rounds and
+  // status: the provider's field-detail sync loads the field and refreshes the field size only.
+  it('loads the provider field into a SCORES_ONLY event without overwriting its admin-authored header, schedule or status', async () => {
+    const prisma = getPrisma();
+    const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
+    const persistence = new IngestionPersistence(prisma, undefined, createEventLifecycleService(prisma));
+    const detail = await adapter.getEventDetails(eventExternalId);
+    expect(detail).not.toBeNull();
+
+    const adminStart = new Date('2026-04-08T13:30:00.000Z');
+    const linked = await linkedProviderEvent(prisma, {
+      providerId,
+      externalId: eventExternalId,
+      name: 'Admin Spring Classic',
+      startDate: adminStart,
+    });
+    await prisma.sportEvent.update({
+      where: { id: linked.id },
+      data: { syncScope: 'SCORES_ONLY', rounds: 4, venue: 'Admin Links' },
+    });
+    expect(detail!.startDate.toISOString()).not.toBe(adminStart.toISOString());
+    expect(detail!.name).not.toBe('Admin Spring Classic');
+
+    const result = await persistence.persistEventDetail(detail!);
+
+    expect(result.sportEventParticipantsPersisted).toBe(detail!.participants.length);
+    const after = await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } });
+    expect(after).toMatchObject({
+      name: 'Admin Spring Classic',
+      venue: 'Admin Links',
+      startDate: adminStart,
+      rounds: 4,
+      status: linked.status,
+      syncScope: 'SCORES_ONLY',
+      participantCount: detail!.participants.length,
+    });
+    await expect(prisma.sportEventParticipant.count({ where: { sportEventId: linked.id } }))
+      .resolves.toBe(detail!.participants.length);
+  });
+
   it('pool-master-rop.68.1.7 verifies manual and scheduled Golf sync workflow with scoped payload diagnostics', async () => {
     const prisma = getPrisma();
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
