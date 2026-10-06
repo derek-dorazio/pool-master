@@ -16,7 +16,7 @@ export const GolfRoundScoreRowSchema = z.object({
   participantId: z.string().optional(),
   externalId: z.string().optional(),
   playerName: z.string().optional(),
-  strokes: z.number().int().nullable().describe('Null when only the score to par is known; such a row is not stored.'),
+  strokes: z.number().int().min(1).nullable().describe('Null when only the score to par is known; such a row is not stored.'),
   scoreToPar: z.number().int(),
   thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored.'),
   status: GolfRoundStatusDtoSchema,
@@ -62,7 +62,7 @@ export const GolfRoundScorePreviewResponseSchema = z.object({
 export type GolfRoundScorePreviewResponse = z.infer<typeof GolfRoundScorePreviewResponseSchema>;
 
 export const UpdateGolfRoundScoreRequestSchema = z.object({
-  strokes: z.number().int().optional(),
+  strokes: z.number().int().min(1).optional(),
   scoreToPar: z.number().int().optional(),
   thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored.'),
   status: GolfRoundStatusDtoSchema.optional(),

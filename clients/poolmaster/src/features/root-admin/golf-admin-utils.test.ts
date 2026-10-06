@@ -334,6 +334,15 @@ describe('pool-master-r11 golf-admin-utils: parseGolfRoundScoreUpload', () => {
     ).toThrow(/Row 1 \(thru\)/);
   });
 
+  it('rejects a row with 0 strokes, since a stored round has at least one stroke', () => {
+    expect(() =>
+      parseGolfRoundScoreUpload(
+        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,0,-2,18,COMPLETED',
+        'CSV',
+      ),
+    ).toThrow(/Row 1 \(strokes\)/);
+  });
+
   it('pool-master-r11 skips template rows left with no score, keeping only the scored ones', () => {
     const rows = parseGolfRoundScoreUpload(
       'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,,,,\n,Scottie Scheffler,68,-4,18,COMPLETED\n,Jon Rahm,,,,',

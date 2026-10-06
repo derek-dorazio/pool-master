@@ -259,6 +259,50 @@ describe('Golf round scores — admin correction surface', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json<SportEventParticipantResponse>().participant.rounds[0]).toMatchObject({ completedAt: null, status: 'COMPLETED' });
   });
+
+  it.each([
+    ['0 strokes', { strokes: 0 }],
+    ['negative strokes', { strokes: -1 }],
+    ['a thru above 18', { thru: 19 }],
+  ])('a PATCH with %s is refused with 400 and leaves the stored round as it was', async (_label, payload) => {
+    const { event, rory } = await createField(`patch-bounds-${Object.keys(payload)[0]}-${Object.values(payload)[0]}`);
+    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const res = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores/${rory.sep.id}`,
+      headers: admin.headers,
+      payload,
+    });
+
+    expect(res.statusCode).toBe(400);
+    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(round.golf).toMatchObject({ strokes: 68, thru: 18 });
+  });
+
+  it.each([
+    ['upload', '0 strokes', { strokes: 0 }, ''],
+    ['upload', 'a thru above 18', { thru: 19 }, ''],
+    ['preview', '0 strokes', { strokes: 0 }, '/preview'],
+    ['preview', 'a thru above 18', { thru: 19 }, '/preview'],
+  ])('%s: a row with %s is refused with 400 and writes nothing', async (operation, _label, overrides, suffix) => {
+    const { event, rory } = await createField(`${operation}-bounds-${Object.keys(overrides)[0]}`);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const res = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores${suffix}`,
+      headers: admin.headers,
+      payload: { rows: [row(rory.participant.id, overrides)] },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+  });
 });
 
 // #375 — nothing is scored after the 18th hole of the event's last scheduled round, whatever

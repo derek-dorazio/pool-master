@@ -463,7 +463,7 @@ const golfRoundScoreUploadRowSchema = z
     participantId: z.string().trim().min(1).optional(),
     externalId: z.string().trim().min(1).optional(),
     playerName: z.string().trim().min(1).optional(),
-    strokes: z.coerce.number().int().nonnegative(),
+    strokes: z.coerce.number().int().min(1),
     scoreToPar: z.coerce.number().int(),
     thru: z.coerce.number().int().min(0).max(18).optional(),
     status: z
