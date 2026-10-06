@@ -326,7 +326,8 @@ export class IngestionPersistence {
         continue;
       }
 
-      const ranking = await this.findLatestRankingForEventParticipant({
+      // #384 — the field's own ranking wins; the sport-level snapshot is only a fallback.
+      const ranking = participant.ranking ?? await this.findLatestRankingForEventParticipant({
         providerId: participant.providerId,
         participantId: mapping.participantId,
         sport: detail.sport,

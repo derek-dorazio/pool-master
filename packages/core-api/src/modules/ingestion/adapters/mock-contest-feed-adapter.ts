@@ -562,6 +562,7 @@ function toProviderParticipant(
       contestant.participantStatus ?? '',
     ),
     inactiveReason: toParticipantInactiveReason(contestant.participantStatus),
+    ranking: typeof contestant.ranking === 'number' ? contestant.ranking : undefined,
     metadata: {
       seed: contestant.seed,
       participantStatus: contestant.participantStatus,
