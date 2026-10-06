@@ -249,9 +249,10 @@ describe('ContestDetailPage (Contest Board)', () => {
     renderContestBoard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
-    const liveLabels = screen.getAllByText('Live');
-    expect(liveLabels).toHaveLength(2);
-    expect(liveLabels.some((label) => label.className.includes('--shadow-red-pulse'))).toBe(true);
+    // The header badge comes first in the page, then the Status row in the rules section.
+    const [badge, statusRow] = screen.getAllByText('Live');
+    expect(badge).toHaveClass('shadow-[var(--shadow-red-pulse)]');
+    expect(statusRow).toBeInTheDocument();
     expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
   });
 

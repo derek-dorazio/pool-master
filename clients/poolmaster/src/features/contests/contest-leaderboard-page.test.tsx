@@ -388,7 +388,7 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
-    expect(screen.getByText('Live').className).toContain('--shadow-red-pulse');
+    expect(screen.getByText('Live')).toHaveClass('shadow-[var(--shadow-red-pulse)]');
     expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
   });
 
@@ -398,7 +398,7 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
-    expect(screen.getByText('Final').className).toContain('--status-completed-text');
+    expect(screen.getByText('Final')).toHaveClass('[color:var(--status-completed-text)]');
   });
 
   it('does not note a frozen result while the contest is live', async () => {

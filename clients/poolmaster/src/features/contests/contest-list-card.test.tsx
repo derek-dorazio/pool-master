@@ -32,6 +32,6 @@ describe('ContestListCard', () => {
     const card = screen.getByRole('link', { name: /Masters Pick 6/ });
     expect(card).toHaveTextContent('Open for entries');
     expect(card).not.toHaveTextContent('OPEN');
-    expect(screen.getByText('Open for entries').className).toContain('--status-active-text');
+    expect(screen.getByText('Open for entries')).toHaveClass('[color:var(--status-active-text)]');
   });
 });
