@@ -1285,7 +1285,7 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
         lookaheadDays: 365,
       },
     eventParticipants: {
-        enabled: true,
+        enabled: false,
         intervalMinutes: 360,
         lookaheadDays: 14,
       },

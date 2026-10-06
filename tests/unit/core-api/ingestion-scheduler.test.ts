@@ -1247,7 +1247,7 @@ describe('IngestionScheduler', () => {
       );
     });
 
-    it('start() begins polling and runs startup schedule, field, and ranking syncs', async () => {
+    it('start() with the field sync enabled in config runs startup schedule, field, and ranking syncs', async () => {
       const provider = fakeSportDataProvider({
         getUpcomingEvents: jest.fn().mockResolvedValue([
           {
@@ -1286,7 +1286,11 @@ describe('IngestionScheduler', () => {
       const eventReader = {
         listEventIdsForFeed: jest.fn().mockResolvedValue(['evt-1']),
       };
-      const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, { eventReader });
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()),
+        getPerSportConfig: jest.fn().mockResolvedValue(createEnabledScheduleConfig()),
+      };
+      const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, { eventReader, configReader });
 
       scheduler.start();
 
@@ -1307,6 +1311,30 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onEvents).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).toHaveBeenCalled();
       expect(mockCallbacks.onRankings).toHaveBeenCalled();
+    });
+
+    it('start() with the default config runs no scheduled field sync: fields load only when an admin asks', async () => {
+      const provider = fakeSportDataProvider({
+        getUpcomingEvents: jest.fn().mockResolvedValue([]),
+      });
+      const registry = createMockRegistry(provider, ['GOLF' as Sport]);
+      const eventReader = {
+        listEventIdsForFeed: jest.fn().mockResolvedValue(['evt-1']),
+      };
+      const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, { eventReader });
+
+      scheduler.start();
+
+      await Promise.resolve();
+      await Promise.resolve();
+      await jest.runOnlyPendingTimersAsync();
+
+      expect(provider.getUpcomingEvents).toHaveBeenCalled();
+      expect(eventReader.listEventIdsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({
+        feed: 'EVENTPARTICIPANTS',
+      }));
+      expect(provider.getEventDetails).not.toHaveBeenCalled();
+      expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
     });
 
     it('pool-master-r04 schedules only sports enabled by ingestion sync config', async () => {
