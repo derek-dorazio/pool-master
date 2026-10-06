@@ -248,6 +248,7 @@ describe('ContestLeaderboardPage', () => {
 
     const counting = screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1');
     expect(within(counting).getByText('Rory McIlroy')).not.toHaveClass('line-through');
+    expect(within(counting).getByText('-5')).not.toHaveClass('line-through');
   });
 
   it('never renders entry-selection metadata, even though the payload carries it', async () => {
