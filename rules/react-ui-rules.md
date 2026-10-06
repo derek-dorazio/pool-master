@@ -507,14 +507,14 @@ UI surfaces that participate in automation must expose stable machine-oriented s
 ### Testing Rules
 
 - Browser smoke/E2E should prefer `getByTestId()` or stable input `id` selectors over visible-copy selectors.
-- React Testing Library tests should also prefer stable selectors for automation-critical UI paths.
-- Only assert visible text when the test is explicitly about copy, localization, accessibility wording, or user-facing content.
-- Do not use headings, button text, or link text as the primary selector for automation-critical navigation if a stable machine selector can be provided.
+- React Testing Library tests do not follow the selector strategy above: they query by role and label. See `rules/testing-rules.md` §6 *React Testing Library Selector Rule*.
+- In browser E2E, only assert visible text when the test is explicitly about copy, localization, accessibility wording, or user-facing content.
+- In browser E2E, do not use headings, button text, or link text as the primary selector for automation-critical navigation if a stable machine selector can be provided.
 - Treat stable selectors as part of the UI contract for the active PoolMaster web app.
 
 ### Exceptions
 
-It is acceptable to assert visible copy when:
+In browser E2E, it is acceptable to assert visible copy when:
 
 - verifying the actual content shown to the user is correct
 - verifying accessibility names intentionally
