@@ -237,6 +237,26 @@ export interface LiveScoresSnapshotResponse {
   readonly contestants: readonly LiveGolfContestantRecord[];
 }
 
+export interface LiveReplayRequest {
+  readonly startsAt?: string;
+  readonly minutesPerRound?: number;
+  readonly minutesBetweenRounds?: number;
+}
+
+export const liveReplayPhaseKinds = ['scheduled', 'in_progress', 'completed'] as const;
+export type LiveReplayPhaseKind = (typeof liveReplayPhaseKinds)[number];
+
+export interface LiveReplayResponse {
+  readonly scenarioId: string;
+  readonly eventId: string;
+  readonly startsAt: string;
+  readonly endsAt: string;
+  readonly minutesPerRound: number;
+  readonly minutesBetweenRounds: number;
+  readonly phase: LiveReplayPhaseKind;
+  readonly currentRound: number | null;
+}
+
 export interface ContestFeedEventResponse {
   readonly scenarioId: string;
   readonly sport: SupportedSport;
@@ -531,6 +551,41 @@ export const liveScoresSnapshotResponseSchema = {
     asOf: { type: 'string', format: 'date-time' },
     note: { type: 'string' },
     contestants: { type: 'array', items: liveGolfContestantRecordSchema },
+  },
+} as const;
+
+export const liveReplayRequestSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    startsAt: { type: 'string', format: 'date-time' },
+    minutesPerRound: { type: 'integer', minimum: 1, maximum: 1440 },
+    minutesBetweenRounds: { type: 'integer', minimum: 0, maximum: 1440 },
+  },
+} as const;
+
+export const liveReplayResponseSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'scenarioId',
+    'eventId',
+    'startsAt',
+    'endsAt',
+    'minutesPerRound',
+    'minutesBetweenRounds',
+    'phase',
+    'currentRound',
+  ],
+  properties: {
+    scenarioId: { type: 'string' },
+    eventId: { type: 'string' },
+    startsAt: { type: 'string', format: 'date-time' },
+    endsAt: { type: 'string', format: 'date-time' },
+    minutesPerRound: { type: 'integer' },
+    minutesBetweenRounds: { type: 'integer' },
+    phase: { type: 'string', enum: [...liveReplayPhaseKinds] },
+    currentRound: { type: ['integer', 'null'], minimum: 1, maximum: 4 },
   },
 } as const;
 
