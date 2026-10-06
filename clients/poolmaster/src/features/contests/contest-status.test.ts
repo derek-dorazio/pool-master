@@ -29,12 +29,6 @@ describe('contest status helpers', () => {
     expect(contestStatusLabel('COMPLETED')).toBe('Final');
   });
 
-  it('gives Live and Final their own colours, distinct from every other status', () => {
-    const tones = Object.values(CONTEST_STATUS_TONES);
-    expect(tones.filter((tone) => tone === CONTEST_STATUS_TONES.ACTIVE)).toHaveLength(1);
-    expect(tones.filter((tone) => tone === CONTEST_STATUS_TONES.COMPLETED)).toHaveLength(1);
-  });
-
   it('pool-master-dxd.13.3 classifies completed and cancelled contests as historical', () => {
     expect(isHistoricalContest('COMPLETED')).toBe(true);
     expect(isHistoricalContest('CANCELLED')).toBe(true);

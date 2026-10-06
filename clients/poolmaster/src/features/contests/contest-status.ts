@@ -30,7 +30,7 @@ export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadge
   DRAFTING: 'info',
   LOCKED: 'locked',
   ACTIVE: 'live',
-  COMPLETED: 'completed',
+  COMPLETED: 'final',
   CANCELLED: 'inactive',
 };
 

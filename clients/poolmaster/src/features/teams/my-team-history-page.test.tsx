@@ -270,7 +270,7 @@ describe('MyTeamHistoryPage', () => {
     );
   });
 
-  it('renders historical contest entries on the dedicated history route', async () => {
+  it('renders historical contest entries, each contest labelled with its readable status, on the dedicated history route', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -395,7 +395,9 @@ describe('MyTeamHistoryPage', () => {
     renderMyTeamHistoryPage();
 
     expect(await screen.findByTestId('my-team-history-page')).toBeInTheDocument();
-    expect(await screen.findByTestId('my-team-history-contest-contest-complete')).toBeInTheDocument();
+    expect(await screen.findByTestId('my-team-history-contest-contest-complete')).toHaveTextContent(
+      'TIERED · STROKE_PLAY · Final',
+    );
     expect(screen.getByTestId('my-team-history-entry-entry-2')).toHaveTextContent(
       'Original Team Entry 2',
     );

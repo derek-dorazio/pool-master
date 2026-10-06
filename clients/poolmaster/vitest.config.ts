@@ -38,6 +38,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Vitest hands every stylesheet import back empty unless included here. The theme file is,
+    // so a test can read real token values through `?raw` (jsdom resolves no CSS variables).
+    css: { include: [/globals\.css/] },
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
     coverage: {

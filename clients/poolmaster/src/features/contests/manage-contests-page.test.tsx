@@ -126,7 +126,7 @@ describe('ManageContestsPage', () => {
     refreshTokenMock.mockReset();
   });
 
-  it('shows active and historical contests with manage links for commissioners', async () => {
+  it('shows active and historical contests, each with its readable status, and manage links for commissioners', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({
       data: {
@@ -164,8 +164,12 @@ describe('ManageContestsPage', () => {
       'href',
       '/league/BIGDAWGS/contests/new',
     );
-    expect(await screen.findByTestId('manage-contests-row-contest-1')).toBeInTheDocument();
-    expect(screen.getByTestId('manage-contests-row-contest-2')).toBeInTheDocument();
+    expect(await screen.findByTestId('manage-contests-row-contest-1')).toHaveTextContent(
+      'TIERED · STROKE_PLAY · Open for entries',
+    );
+    expect(screen.getByTestId('manage-contests-row-contest-2')).toHaveTextContent(
+      'TIERED · STROKE_PLAY · Final',
+    );
     expect(screen.getByTestId('manage-contests-open-contest-1')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',
