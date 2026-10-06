@@ -22,6 +22,13 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import type {
+  ErrorEnvelope,
+  LeagueContextResponse,
+  SendLeagueInvitationsResponse,
+  SquadListResponse,
+  TeamOwnerInvitationResponse,
+} from '@poolmaster/shared/dto';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -91,7 +98,7 @@ describe('League/squad membership invariant', () => {
       payload: buildCreateLeaguePayload('Invariant League'),
     });
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json().league.id;
+    leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const squadsRes = await getApp().inject({
       method: 'GET',
@@ -99,7 +106,7 @@ describe('League/squad membership invariant', () => {
       headers: commissionerHeaders,
     });
     expect(squadsRes.statusCode).toBe(200);
-    commissionerSquadId = squadsRes.json().squads[0].id;
+    commissionerSquadId = squadsRes.json<SquadListResponse>().squads[0].id;
   });
 
   it('holds after league creation provisions the creator a squad', async () => {
@@ -122,7 +129,7 @@ describe('League/squad membership invariant', () => {
       method: 'POST',
       url: API_ROUTES.invitations.accept,
       headers: memberHeaders,
-      payload: { inviteCode: inviteRes.json().sent[0].inviteCode },
+      payload: { inviteCode: inviteRes.json<SendLeagueInvitationsResponse>().sent[0].inviteCode },
     });
     expect(acceptRes.statusCode).toBe(201);
 
@@ -141,7 +148,7 @@ describe('League/squad membership invariant', () => {
       payload: { userId: memberUserId },
     });
     expect(addRes.statusCode).toBe(400);
-    expect(addRes.json().error.code).toBe('SQUAD_MEMBERSHIP_CONFLICT');
+    expect(addRes.json<ErrorEnvelope>().error.code).toBe('SQUAD_MEMBERSHIP_CONFLICT');
 
     await expect(findInvariantViolations(leagueId)).resolves.toEqual([]);
   });
@@ -163,7 +170,7 @@ describe('League/squad membership invariant', () => {
       payload: { email: coOwnerEmail },
     });
     expect(ownerInviteRes.statusCode).toBe(201);
-    expect(ownerInviteRes.json().invitation.status).toBe('ACCEPTED');
+    expect(ownerInviteRes.json<TeamOwnerInvitationResponse>().invitation.status).toBe('ACCEPTED');
     await expect(findInvariantViolations(leagueId)).resolves.toEqual([]);
 
     const removeRes = await getApp().inject({
@@ -213,7 +220,7 @@ describe('League/squad membership invariant', () => {
       method: 'POST',
       url: API_ROUTES.invitations.accept,
       headers: coOwnerHeaders,
-      payload: { inviteCode: inviteRes.json().sent[0].inviteCode },
+      payload: { inviteCode: inviteRes.json<SendLeagueInvitationsResponse>().sent[0].inviteCode },
     });
     expect(acceptRes.statusCode).toBe(201);
 

@@ -10,6 +10,7 @@
  * plans/145 "Test layering". What survives is behaviour: the normalization, the typed errors,
  * the token pair, and the guards.
  */
+import { expect } from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import { type AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { fakeUserRepo } from '../../support/repo-fakes';

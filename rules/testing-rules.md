@@ -203,6 +203,12 @@ type-aware rules hold `tests/**` to this.
   through `asFastifyRequest` / `asFastifyReply` in `tests/support/fastify-doubles.ts`.
 - **An HTTP response body** is read as `res.json<ResponseDto>()` with the route's shared DTO
   type, not as a bare `res.json()`.
+- **An asymmetric matcher inside an object literal** (`{ id: expect.any(String) }`) needs
+  `import { expect } from '@jest/globals'` at the top of the file: `@types/jest` types every
+  matcher as `any`, and the `@jest/globals` copy types it as an `AsymmetricMatcher`.
+- **A mock whose calls the test reads back** (`.mock.calls[0][0]`) is typed at its source, with
+  `mockFn<Port['method']>(impl)` or `jest.fn<Return, Args>()`, or the read becomes
+  `toHaveBeenNthCalledWith(1, expect.objectContaining({ ... }))`.
 - **A private method under test** is reached as `service['method'](...)`, which TypeScript
   types, not as `(service as any).method(...)`.
 - Never clear a type error or lint finding with `as X` or `as unknown as T` on a double. That

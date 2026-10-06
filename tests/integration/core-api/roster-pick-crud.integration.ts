@@ -20,6 +20,11 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import type {
+  ContestEntryResponse,
+  ContestResponse,
+  LeagueContextResponse,
+} from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
@@ -50,7 +55,7 @@ describe('RosterPick CRUD integration', () => {
     });
 
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json().league.id;
+    leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
     const sport = await prisma.sport.create({
@@ -114,7 +119,7 @@ describe('RosterPick CRUD integration', () => {
     });
 
     expect(contestRes.statusCode).toBe(201);
-    contestId = contestRes.json().contest.id;
+    contestId = contestRes.json<ContestResponse>().contest.id;
 
     const entryRes = await getApp().inject({
       method: 'POST',
@@ -123,7 +128,7 @@ describe('RosterPick CRUD integration', () => {
     });
 
     expect([200, 201]).toContain(entryRes.statusCode);
-    entryId = entryRes.json().entry.id;
+    entryId = entryRes.json<ContestEntryResponse>().entry.id;
   });
 
   it('creates, reads, updates, rejects duplicates, and deletes a roster pick', async () => {

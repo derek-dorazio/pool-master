@@ -194,7 +194,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     });
     expect(dryRunResponse.statusCode).toBe(200);
     expect(ProviderEventCleanupResponseSchema.safeParse(dryRunResponse.json()).success).toBe(true);
-    expect(dryRunResponse.json().summary).toMatchObject({
+    expect(dryRunResponse.json<ProviderEventCleanupResponse>().summary).toMatchObject({
       inventoriedEventCount: 5,
       deletableEventCount: 3,
       blockedEventCount: 2,
@@ -204,7 +204,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       roundCount: 2,
       pickCount: 1,
     });
-    expect(dryRunResponse.json().events).toEqual(
+    expect(dryRunResponse.json<ProviderEventCleanupResponse>().events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           externalId: staleNonGolfEvent.externalId,
@@ -251,7 +251,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     });
     expect(executeResponse.statusCode).toBe(200);
     expect(ProviderEventCleanupResponseSchema.safeParse(executeResponse.json()).success).toBe(true);
-    expect(executeResponse.json().summary).toMatchObject({
+    expect(executeResponse.json<ProviderEventCleanupResponse>().summary).toMatchObject({
       inventoriedEventCount: 5,
       deletableEventCount: 3,
       blockedEventCount: 2,

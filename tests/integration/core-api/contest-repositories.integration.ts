@@ -15,6 +15,8 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { mockFn } from '../../support/mock-fn';
+import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -399,7 +401,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await prisma.contestEntry.create({
       data: { contestId: open.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha Entry' },
     });
-    const send = jest.fn().mockResolvedValue({ provider: 'smtp', messageId: 'mail' });
+    const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const lifecycle = createEventLifecycleService(prisma, {
       mailDelivery: { providerName: 'smtp', send },
       appBaseUrl: 'https://app.example.test',

@@ -2,6 +2,7 @@
  * Unit tests for the listProviderCatalogEvents handler (pool-master-753, plans/124
  * §3.4/§4.4/§5.1; moved to the ingestion module and given the provider-event shape by #205).
  */
+import { expect } from '@jest/globals';
 import { createIngestionHandlers } from '../../../packages/core-api/src/modules/ingestion/handler';
 import {
   EventScoreSourceError,

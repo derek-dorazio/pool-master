@@ -22,6 +22,8 @@ import {
   fakeUserRepo,
 } from '../../support/repo-fakes';
 import { fakeLogger } from '../../support/fake-logger';
+import { mockFn } from '../../support/mock-fn';
+import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -306,7 +308,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
       providerName: 'smtp' as const,
-      send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+      send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
     };
     const service = new EventLifecycleService(
       contests,

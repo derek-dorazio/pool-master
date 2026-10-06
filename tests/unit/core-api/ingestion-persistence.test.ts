@@ -1,3 +1,5 @@
+import { expect } from '@jest/globals';
+import type { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
@@ -645,7 +647,7 @@ describe('IngestionPersistence', () => {
     const prisma = {
       sportEvent: {
         findUnique: jest.fn().mockResolvedValue(linkedRow()),
-        update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        update: jest.fn<Promise<{ id: string }>, [Prisma.SportEventUpdateArgs]>().mockResolvedValue({ id: 'sport-event-1' }),
       },
     };
     const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
