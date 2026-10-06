@@ -7,22 +7,19 @@ allowed-tools: [Read, Grep, Glob, Bash]
 
 # Gates, and what a failure means
 
-`rules/workflow-rules.md` §3 *Required Local Validation Before Push* and
-`rules/testing-rules.md` §3 *Required Local Quality Gates* define the required set. Run
-them locally before pushing — CI is a backstop, not the first run.
-
-```
-npx turbo typecheck --force
-npm run lint                      # --max-warnings 0, no warn tier
-npx jest --config tests/jest.config.js --forceExit
-npm run test:service:functional-api
-npm run test:poolmaster:unit
-npm run rules:check
-```
+`rules/workflow-rules.md` §3 *Required Local Validation Before Push* is the one gate list.
+Run every command on it locally before pushing — CI is a backstop, not the first run. Read
+the list there each time rather than from memory or from a copy: this skill used to carry
+its own six-command version, and it had silently dropped four of them.
 
 Use `npm run lint` rather than a hand-written `eslint` glob. The glob has changed twice and
 a copied one goes stale silently — which is exactly how a rule ends up enforced over fewer
 files than anyone believes.
+
+In an agent session, reset the disposable test database with `npm run db:test:migrate`, not
+`db:test:reset` or a `:fresh` script — Prisma refuses `migrate reset` non-interactively.
+`rules/testing-rules.md` §3 *Required Local Quality Gates* has the rest of what a
+DB-backed failure means.
 
 ## When a gate fails
 

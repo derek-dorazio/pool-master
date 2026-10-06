@@ -4,16 +4,20 @@
 
 All agents working in this repo should:
 
-1. Read this file first.
-2. Treat the files in `rules/` as the detailed source of truth for architecture, implementation, testing, and workflow requirements.
+1. Read this file first. Claude Code loads it every session through the `@AGENTS.md` import
+   in `CLAUDE.md`; other agents read it directly.
+2. Treat the files in `rules/` as the detailed source of truth for architecture, implementation, testing, and workflow requirements. Each rule is stated in exactly one place; everywhere else cites it as `rules/<file>.md §N *Section Name*`.
 3. Use the task skills in `.claude/skills/` for the work they name. They sequence a task and point at the rule that governs each step; they do not restate rules.
-4. Keep `CLAUDE.md` as a thin pointer to this file rather than maintaining duplicate policy text elsewhere.
+4. `.claude/rules/` holds a few short, path-scoped reminders that Claude Code injects
+   automatically when it opens a matching file — the Non-Negotiables below, at the moment
+   they apply. They carry no policy of their own; each one cites the rule it summarises.
+5. Keep `CLAUDE.md` as a thin import of this file rather than maintaining duplicate policy text elsewhere.
 
 ## Non-Negotiables
 
 - **Never modify application code to make a test pass or fail predictably.** No mock data, fake data, fallback sample payloads, hardcoded API responses, synthetic defaults, "test mode" branches, swallowed errors, or test-only code paths in production source. Mocks/fakes/fixtures live exclusively in test code. See `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*. The `poolmaster/no-mocked-api` ESLint rule enforces the module-mocking half in CI.
 - **Defect-fix slices must include a failing test before the fix.** The slice must demonstrate that a test reproducing the defect fails on the broken code, then passes on the fixed code. See `rules/testing-rules.md` §3 *Defect Verification Protocol*.
-- **Every test references a use-case, business-rule, or defect ID.** Describe block, test name, or leading comment — see `rules/testing-rules.md` §1A *Test Self-Documentation*.
+- **Every test name states the behavior and its expected outcome**, specifically enough that a reader knows what breaking it would mean. No issue, use-case, or business-rule ID is required — that requirement was struck. See `rules/testing-rules.md` §1A *Test Self-Documentation*.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
 - Update the GitHub issue (status, comments) when working against an existing epic or slice. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1, `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`, and `docs/adr/0006-github-issues-as-live-task-tracker.md`).
@@ -21,7 +25,7 @@ All agents working in this repo should:
 
 ## Read the Rules Your Task Touches
 
-`rules/` is roughly 280KB. Reading it end to end before a slice is neither possible nor
+`rules/` is far too large to read end to end before a slice, and doing so is not
 useful — attention spent there is attention not spent on the change, and a directive nobody
 can follow is one that gets ignored wholesale. Read by task shape instead.
 
@@ -33,15 +37,16 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Changes the Prisma schema, a domain type, or an enum | `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
 | Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
-| Emits or consumes a domain event | `architecture-rules.md` §4 *Service Topology* (event-bus and idempotency discipline), `testing-rules.md` §8 |
+| Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (there is no event bus; modules call each other's services) |
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push* |
 | Is iOS or Android work | `swift-rules.md` / `android-rules.md` — both clients are planned, not built |
 | Is a review of someone else's diff | `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface |
 
-**Before any push**, `workflow-rules.md` §3 and `testing-rules.md` §3 define the required
-gate set. Those are not optional regardless of task shape.
+**Before any push**, `workflow-rules.md` §3 defines the required gate set, and
+`testing-rules.md` §3 says what a failing gate means for a test. Neither is optional
+regardless of task shape.
 
 **If your task isn't on this list**, route by the same principle: read the rules governing
 the layer you are changing, plus `testing-rules.md` for whatever you are testing. When a
@@ -110,17 +115,9 @@ Important:
 
 ## Quality Gates Before Commit
 
-Run and pass:
-
-- `npx turbo typecheck --force`
-- `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
-- `npx jest --config tests/jest.config.js --forceExit`
-- `npm run test:service:functional-api`
-- `npm run test:poolmaster:unit`
-
-CI-only follow-up signals:
-
-- image/publish workflows
+The gate list is `rules/workflow-rules.md` §3 *Required Local Validation Before Push* — run
+every command on it before pushing. It is deliberately not copied here: five copies of it
+once drifted apart. Image and publish workflows are CI-only follow-up signals.
 
 ## Repo Map
 
@@ -130,7 +127,8 @@ CI-only follow-up signals:
 - `requirements/`: product discovery inputs, overview artifacts, and refined product requirements
 - `tech-specs/`: technical specification artifacts for approved features
 - `plans/`: tracked implementation plans
-- `rules/`: detailed policy and architecture guidance
-- `docs/adr/`: Architecture Decision Records (durable decisions)
+- `rules/`: detailed policy and architecture guidance — the one canonical home per rule
+- `docs/`: operational reference (CI, logging, email, domain operations) and `docs/adr/`, the Architecture Decision Records
 - `.claude/skills/`: task skills — how this repo does a given kind of work
+- `.claude/rules/`: path-scoped Non-Negotiable reminders, auto-loaded by Claude Code
 - `infrastructure/`: deployment and environment assets

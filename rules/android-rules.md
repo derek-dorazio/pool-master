@@ -18,9 +18,10 @@ These rules govern the native Android client.
 
 ## No Mock Data in Application Code
 
-- Never ship mock data, fake API responses, or debug-only fallbacks in `main` source sets.
-- Repositories and ViewModels must call real APIs and surface real errors.
-- Mock data belongs only in test source sets and preview/test scaffolding.
+Stated once, for every runtime, in [`architecture-rules.md`](architecture-rules.md) §3
+*No Mock Data in Application Code*: never ship mock data, fake responses or debug-only
+fallbacks in app code. Repositories and ViewModels call real APIs and surface real errors. Mock data
+belongs only in test source sets and preview/test scaffolding.
 
 ## API Contract Rules
 

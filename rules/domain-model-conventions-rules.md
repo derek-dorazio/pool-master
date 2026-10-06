@@ -38,22 +38,13 @@ Specifically:
 
 The rules below are concrete applications of this principle.
 
----
-
-## 1. Purpose
-
-PoolMaster should use consistent domain-model patterns so that:
-
-- model-change recommendations are repeatable
-- backend and frontend interpret entity lifecycle the same way
-- DTOs remain aligned with domain semantics rather than drifting into ad hoc
-  per-feature patterns
-- future model changes can build on established conventions instead of
-  re-deciding basics every time
+Sections are numbered §1, §2, then §8 onward. §3–§7 were merged into §1 and §2 when this
+file was de-duplicated; the later numbers are kept because code comments, generated API
+descriptions and an applied migration cite them by number.
 
 ---
 
-## 2. Lifecycle Naming Conventions
+## 1. Lifecycle
 
 ### Active vs Inactive
 
@@ -129,9 +120,29 @@ still supporting richer lifecycle semantics later.
 Do not over-model reason enums preemptively when current product behavior only
 needs active vs inactive.
 
----
+### Start with the simplest lifecycle
 
-## 3. DTO Conventions
+When designing a new entity, start with the simplest lifecycle model that matches approved
+product behaviour, and move along this progression only when the product needs the next
+step:
+
+1. no lifecycle field, when the entity is always ephemeral or always hard-deleted
+2. `isActive`, when it needs a simple soft-delete / inactive state — `League` and `User`
+   are the reference cases
+3. `inactiveReason`, when *why* it is inactive genuinely matters
+4. `status`, when workflow or business-state tracking is required — invitation and contest
+   lifecycles are the reference cases
+
+### Filtering
+
+Default "active" product views filter on `isActive=true` when the entity uses this
+convention. When inactive records remain user-visible, say so explicitly in the contract and
+the UI plan, and make the difference clear in route docs and DTO field descriptions. Do not
+rely on tribal knowledge for whether inactive rows still appear. That `isActive` is a read
+filter and not a write lock is access rule A9 in
+[`docs/DOMAIN-OPERATIONS.md`](../docs/DOMAIN-OPERATIONS.md).
+
+### Lifecycle on the wire
 
 DTOs should preserve the same lifecycle semantics as the domain model.
 
@@ -141,7 +152,7 @@ DTOs should preserve the same lifecycle semantics as the domain model.
 - do not use DTO-only `status` values to represent soft delete when the domain
   model uses `isActive`
 - if a DTO intentionally differs from the domain model, document the boundary
-  reason explicitly in the active plan or code comments
+  reason in a code comment at the mapper, where the next reader will be standing
 
 Lifecycle wording should stay consistent across:
 
@@ -151,6 +162,21 @@ Lifecycle wording should stay consistent across:
 - service logic
 - route documentation
 - frontend UI copy where practical
+
+### Questions to ask of any proposed model change
+
+- Is the lifecycle concept soft delete, workflow state, or both?
+- Is `isActive` the right primary field, or is `status` being misused to stand in for
+  simple active/inactive semantics?
+- Will the DTOs stay semantically aligned with the proposed model?
+- Is a proposed extra field needed now, or should it be deferred?
+
+If a proposal breaks these conventions, say so before implementation begins. The process
+for making the change safely is [`model-change-rules.md`](./model-change-rules.md).
+
+---
+
+## 2. Closed Sets Are Enums
 
 When a field is intentionally constrained to a closed set of values, model it
 as an enum/union rather than a broad string.
@@ -189,71 +215,6 @@ that the values are:
 - closed
 - reviewed
 - actively used in product/API flows
-
----
-
-## 4. Filtering Conventions
-
-Default "active" product views should usually filter on `isActive=true` when
-the entity uses this convention.
-
-When inactive records remain user-visible:
-
-- document that explicitly in the contract and UI plan
-- make the difference between visible-but-inactive and active clear in route
-  docs and DTO field descriptions
-
-Do not rely on tribal knowledge for whether inactive rows should still appear.
-
----
-
-## 5. Future-State Guidance
-
-When designing new entities, start with the simplest lifecycle model that
-matches the approved product behavior.
-
-Preferred progression:
-
-1. no lifecycle field when the entity is always ephemeral or always hard-deleted
-2. `isActive` when the entity needs a simple soft-delete / inactive state
-3. add `inactiveReason` later if product meaning genuinely requires it
-4. add `status` only when workflow/business-state tracking is required
-
-Do not jump straight to enums or multi-state workflow models without real
-product need.
-
----
-
-## 6. Data-Modeler Responsibilities
-
-When reviewing a proposed model change, explicitly check:
-
-- whether the lifecycle concept is actually soft delete, workflow state, or
-  both
-- whether `isActive` is the correct primary field
-- whether `status` is being misused to stand in for simple active/inactive
-  semantics
-- whether DTOs will remain semantically aligned with the proposed model
-- whether a proposed extra field is truly needed now or should be deferred
-
-If the proposal breaks these conventions, call that out before backend
-implementation begins.
-
----
-
-## 7. Current PoolMaster Direction
-
-These conventions match the current intended direction for PoolMaster:
-
-- league and user lifecycle should use real persistent `isActive` fields when
-  active/inactive is a core lifecycle concept
-- user account lifecycle should use a real persistent activity field such as
-  `User.isActive`
-- `status` remains reserved for workflow/state-machine concepts such as
-  invitation and contest lifecycle
-
-As PoolMaster evolves, update this file when the domain conventions themselves
-change, not merely when a specific feature is being implemented.
 
 ---
 
@@ -327,7 +288,8 @@ second shape. Admin-only fields are annotated on the canonical DTO and left
 exposed — see §13.
 
 - ❌ `LeagueSummaryDto` for list view + `LeagueDetailDto` for detail page —
-  view convenience, drifts. **Both exist in the published contract today.**
+  view convenience, drifts. Both existed in the published contract until the
+  identity refactor deleted them; the comments recording why are in the DTO files.
 - ❌ `AdminTeamOwnerSummaryDto` — three fields of `SquadMembership`, described in
   its own docstring as a "thin owner summary row for root-admin surfaces".
 
@@ -496,6 +458,28 @@ written in the same operation as the league, any query over it was answerable fr
 `LeagueMembership` instead — including the two user-hard-delete guards that counted it.
 Do not reintroduce a creator column on an entity whose creator already holds a membership
 or ownership row; that row is the fact, and a parallel column is a second source for it.
+
+### Membership and squad membership are one unit
+
+**Every ACTIVE `LeagueMembership` has exactly one ACTIVE `SquadMembership` in that league,
+and no ACTIVE squad membership belongs to a non-member.** Both paths that create a league
+membership also create the squad membership, so the squad list *is* the member roster —
+expect it to be the member layer's UI rather than a separate roster screen.
+
+Every way a membership can end routes through the one unit that ends both. `removeOwner`
+once ended the squad membership and left the league membership, so a removed co-owner kept
+league access while vanishing from every surface that lists people. An integration suite
+asserts the invariant against the database after each way a membership can begin or end;
+a new path that creates or ends either edge must go through the same unit.
+
+### League and squad management never touches a user's account
+
+Ending a relationship must not mutate the object's lifecycle. Leaving a last league once
+deactivated the user and revoked their refresh tokens, which made recovery impossible:
+login refuses an inactive account, accepting an invitation needs a session, and only a root
+admin can re-enable. The unit that ends a membership takes no Prisma client, so the
+guarantee is structural — keep it that way. Account state belongs to the user
+(self-service disable) and to a root admin; see §13 *Operation Access Roles*.
 
 ---
 

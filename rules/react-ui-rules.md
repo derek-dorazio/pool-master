@@ -31,23 +31,17 @@ The PoolMaster web app is a React 18 + TypeScript application using:
 
 ## 2. No Mock Data in Application Code
 
-This is the top frontend rule.
+This is the top frontend rule, and it is stated once, in
+[`architecture-rules.md`](architecture-rules.md) §3 *No Mock Data in Application Code* —
+which names the banned shapes (`initialData: mockData`, `queryFn: async () => mockData`,
+`catch { return mockData }`, a development-only fake API branch) and applies to hooks, pages,
+components, stores and runtime utilities alike.
 
-Banned in hooks, pages, components, stores, and runtime utilities:
-
-- `queryFn: async () => mockData`
-- `initialData: mockData`
-- `catch { return mockData }`
-- local `MOCK_*` or sample arrays used as live app data
-- conditional development-only fake API branches
-
-Required behavior:
-
-- Call the real API.
-- Let errors propagate.
-- Render loading, error, or empty states honestly.
-
-If an endpoint is missing, that is a backend/contract problem to fix, not a reason to add fake frontend data.
+The frontend consequence worth repeating: **call the real API, let errors propagate, and
+render loading, error or empty states honestly.** A missing endpoint is a contract problem
+to fix in the backend, not a reason to add fake frontend data. The `poolmaster/no-mocked-api`
+ESLint rule enforces the module-mocking half; the rest needs a reader. Where test doubles
+belong is [`testing-rules.md`](testing-rules.md) §1B *Forbidden Application-Code Patterns*.
 
 ---
 
@@ -434,10 +428,12 @@ The shared generated client is part of the architecture, not an optional helper.
 
 ## 7. Testing Rules for React Apps
 
-- Use Vitest + React Testing Library.
-- Use MSW for tests that should exercise request construction and network behavior through the frontend layer.
-- Keep pure presentation tests simple and hook-free where possible.
-- Prefer behavior-oriented tests over implementation-detail tests.
+The runners, the layer table and the MSW rules are in
+[`testing-rules.md`](testing-rules.md) — §1 *Testing Tools*, §2 *Test Layers* and §5 *MSW
+Rules*. Two defaults that are easy to lose: keep pure presentation tests hook-free where
+possible, and prefer behaviour-oriented tests over implementation-detail ones.
+
+What follows is the part specific to this app.
 
 ### Required Frontend Test Layers
 
@@ -459,9 +455,11 @@ It is acceptable to remove or replace tests when they enforce old architecture, 
 
 ### Frontend Test Data Rule
 
-- Do not place mock data, fake records, sample contests, or fake API payloads in application runtime code.
-- Test fixtures belong in test files and test helpers only.
-- Frontend tests must use exported contract shapes from the generated SDK/types. Do not invent alternative test object shapes that the application never really receives.
+Fixtures belong in test files and test helpers only — §2 above, and
+[`testing-rules.md`](testing-rules.md) §1B for the exact paths. The frontend-specific
+requirement: **tests must use the exported contract shapes from the generated SDK and
+types.** Do not invent an alternative test object shape the application never really
+receives; a test that passes against a shape the API cannot send proves nothing.
 
 ---
 
