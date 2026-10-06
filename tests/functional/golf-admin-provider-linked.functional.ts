@@ -62,8 +62,8 @@ import {
 //     same gate end to end through listEventIdsForFeed.
 
 const MOCK_PROVIDER_ID = 'mock-contest-feed';
-// A fixed, dateable event from the static golf-major-2026 scenario — never the
-// wall-clock-relative generated scenario, so the catalog window is deterministic.
+// A fixed, dateable event from the static golf-major-2026 scenario, so the catalog
+// window is deterministic.
 const MOCK_EVENT_EXTERNAL_ID = 'golf-us-open-2026';
 const MOCK_EVENT_START = '2026-05-28T11:00:00.000Z';
 const MOCK_EVENT_END = '2026-05-31T22:00:00.000Z';
@@ -289,9 +289,6 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(usOpen!.providerId).toBe(MOCK_PROVIDER_ID);
     expect(usOpen!.sport).toBe('GOLF');
     expect(new Date(usOpen!.startDate).getUTCFullYear()).toBe(2026);
-    // Plain filtered list — the wall-clock-relative generated scenario is far
-    // outside this window, so it must not leak in.
-    expect(catalogEvents.every((e) => !e.externalId.startsWith('golf-relative-'))).toBe(true);
 
     // matchKeyword (from the linked SportLeague) narrows the same browse.
     const filtered = await listProviderCatalogEvents({

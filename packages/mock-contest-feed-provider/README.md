@@ -133,14 +133,10 @@ describes one named scenario with:
 - baseline odds/rankings/results snapshots
 - ordered update records for field changes, live updates, and corrections
 
-The current baseline scenarios cover:
-
-- golf
-- tennis
-- NCAA-style team tournament
-- one correction/tie edge case
-
-These files are intended to grow as future ingestion and manual-testing cases are added.
+PoolMaster only creates golf events, so the bundled scenarios are golf only:
+`golf-major-2026` (a fixed 2026 major-championship season), the tour seeds below, and the
+`golf-sandbox` scenario. Nothing is generated from today's date; scores move only when a
+live replay is started.
 
 ## Tour Seeds
 
@@ -177,15 +173,12 @@ For golf scenarios:
 - a golf event must include odds contestants or scenario validation fails
 - the bundled 2026 golf season uses a stable 80-player field so pick-6 tiered
   contests can be exercised against realistic field sizes
-- the generated `golf-relative-today` scenario includes a manual lifecycle
-  event plus two rolling Thursday-Sunday QA tournaments, anchored to the
-  provider clock, so root-admin sync testing always has future golf events for
-  commissioner contest creation
 - golf odds are generated deterministically per event from the stable player
   pool, so each tournament has different outright pricing while preserving
   repeatability
-- live score snapshots are generated deterministically from event seed, tick,
-  participant id, and participant odds, with scores clamped to `-20..20`
+- without a replay, live score snapshots are generated deterministically from
+  event seed, tick, participant id, and participant odds, with scores clamped
+  to `-20..20`
 
 The loader validates:
 

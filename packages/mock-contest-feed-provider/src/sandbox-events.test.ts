@@ -13,7 +13,7 @@ const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 const minuteMs = 60 * 1000;
 
 function storeAt(now: () => Date): ScenarioStore {
-  return new ScenarioStore(scenarioDir, undefined, { now, includeRelativeTodayGolfScenario: false });
+  return new ScenarioStore(scenarioDir, undefined, { now });
 }
 
 test('any sandbox- event id is answered with a scheduled golf event carrying the shared 80-golfer field', () => {

@@ -414,66 +414,6 @@ describe('MockContestFeedAdapter', () => {
     );
   });
 
-  it('pool-master-s4y: resolves historical relative manual-test event details after provider list rolls forward', async () => {
-    const historicalEventId = 'golf-relative-manual-test-20260426t214000z';
-    const relativeScenarioResponse = {
-      scenarios: [{ scenarioId: 'golf-relative-today', sport: 'GOLF' }],
-    };
-    const rolledEventListResponse = {
-      scenarioId: 'golf-relative-today',
-      events: [
-        {
-          eventId: 'golf-relative-manual-test-20260426t230500z',
-          name: 'Manual Test Golf Tournament for 2026-04-26T23:05:00.000Z',
-          status: 'field_announced',
-          startsAt: '2026-04-26T23:05:00.000Z',
-          endsAt: '2026-04-26T23:25:00.000Z',
-          releaseAt: '2026-04-26T22:20:00.000Z',
-          fieldLocksAt: '2026-04-26T22:45:00.000Z',
-          fieldStatus: 'announced',
-          contestantCount: 2,
-        },
-      ],
-    };
-    const historicalDetailResponse = {
-      ...eventDetailResponse,
-      scenarioId: 'golf-relative-today',
-      event: {
-        ...eventDetailResponse.event,
-        eventId: historicalEventId,
-        name: 'Manual Test Golf Tournament for 2026-04-26T21:40:00.000Z',
-        metadata: {
-          ...eventDetailResponse.event.metadata,
-          eventType: 'relative-manual-test',
-          externalEventId: historicalEventId,
-        },
-      },
-    };
-
-    global.fetch = jest.fn(async (input: string | URL) => {
-      const url = String(input);
-
-      if (url.endsWith('/v1/scenarios')) {
-        return okJson(relativeScenarioResponse);
-      }
-      if (url.endsWith('/v1/scenarios/golf-relative-today/events')) {
-        return okJson(rolledEventListResponse);
-      }
-      if (url.endsWith(`/v1/scenarios/golf-relative-today/events/${historicalEventId}/detail`)) {
-        return okJson(historicalDetailResponse);
-      }
-
-      throw new Error(`Unhandled fetch URL: ${url}`);
-    }) as typeof fetch;
-
-    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
-
-    const detail = await adapter.getEventDetails(historicalEventId);
-
-    expect(detail?.externalId).toBe(historicalEventId);
-    expect(detail?.participants).toHaveLength(2);
-  });
-
   it('pool-master-uvc: maps all 7 raw participantStatus values to {active, inactiveReason} per plans/124 §4.1', async () => {
     const statusDetailResponse = {
       ...eventDetailResponse,
@@ -692,9 +632,9 @@ describe('MockContestFeedAdapter', () => {
 
   it('pool-master-rop.78.13: filters TEAM_TOURNAMENT scenarios out of NCAA_BASKETBALL ingestion', async () => {
     // Regression for the SDK enum widening introduced by this slice.
-    // The mock provider ships `correction-and-tie-2026` with
-    // `sport: 'TEAM_TOURNAMENT'` (a generic showcase scenario), and the
-    // generated SDK now exposes that literal. Pre-fix, `toDomainSport`
+    // The mock's contract allows `sport: 'TEAM_TOURNAMENT'` (it once
+    // shipped a generic showcase scenario with it), and the
+    // generated SDK exposes that literal. Pre-fix, `toDomainSport`
     // mapped TEAM_TOURNAMENT → NCAA_BASKETBALL as a default fallthrough,
     // which would have routed the showcase event into NCAA basketball
     // ingestion. The fix returns null for unsupported sports so the
