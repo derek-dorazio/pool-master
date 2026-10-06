@@ -108,8 +108,18 @@ function roundOdds(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-export function buildMockGolfFieldContestants(): readonly ContestantRecord[] {
-  return GOLF_PLAYER_POOL.map((player) => ({
+export interface GolfPoolPlayerRecord {
+  readonly contestantId: string;
+  readonly name: string;
+  readonly countryCode?: string;
+  readonly teamName?: string;
+  readonly ranking: number;
+}
+
+export function buildMockGolfFieldContestants(
+  pool: readonly GolfPoolPlayerRecord[] = GOLF_PLAYER_POOL,
+): readonly ContestantRecord[] {
+  return pool.map((player) => ({
     contestantId: player.contestantId,
     name: player.name,
     teamName: player.teamName,
@@ -120,22 +130,27 @@ export function buildMockGolfFieldContestants(): readonly ContestantRecord[] {
   }));
 }
 
-export function buildMockGolfRankingContestants(): readonly ContestantDeltaRecord[] {
-  return GOLF_PLAYER_POOL.map((player) => ({
+export function buildMockGolfRankingContestants(
+  pool: readonly GolfPoolPlayerRecord[] = GOLF_PLAYER_POOL,
+): readonly ContestantDeltaRecord[] {
+  return pool.map((player) => ({
     contestantId: player.contestantId,
     ranking: player.ranking,
   }));
 }
 
-export function buildMockGolfOddsContestants(eventId: string): readonly ContestantDeltaRecord[] {
-  const ordered = [...GOLF_PLAYER_POOL]
+export function buildMockGolfOddsContestants(
+  eventId: string,
+  pool: readonly GolfPoolPlayerRecord[] = GOLF_PLAYER_POOL,
+): readonly ContestantDeltaRecord[] {
+  const ordered = [...pool]
     .map((player) => ({
       ...player,
       eventRankScore:
         player.ranking
         + ((hashUnit(`${eventId}:${player.contestantId}:form`) - 0.5) * 18)
         + ((hashUnit(`${eventId}:${player.contestantId}:course`) - 0.5) * 12)
-        + ((hashUnit(`${eventId}:${player.countryCode}:travel`) - 0.5) * 4),
+        + ((hashUnit(`${eventId}:${player.countryCode ?? ''}:travel`) - 0.5) * 4),
     }))
     .sort((left, right) => left.eventRankScore - right.eventRankScore);
 

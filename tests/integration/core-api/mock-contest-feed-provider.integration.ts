@@ -480,6 +480,11 @@ beforeAll(async () => {
     routes: {
       scenarioStoreOptions: {
         now: () => syncVerificationNow,
+        // Temporary opt-out: with the tour seeds (#383) on, the legacy PARTICIPANTRANKINGS sweep
+        // merges every golf scenario, so LPGA (Rolex) players land in the "OWGR" list with
+        // colliding rank numbers, and the sweep walks every seeded event. That feed retires in
+        // #125 and EVENTSCHEDULE in #126; drop this option when they do.
+        includeTourSeeds: false,
       },
     },
   });

@@ -1,0 +1,731 @@
+{
+  "tour": "PGA TOUR",
+  "tourId": "pga-tour",
+  "season": 2026,
+  "published": "published",
+  "notes": "45 official-money events (37 Jan-Aug incl. 4 opposite-field + 8 FedExCup Fall). Presidents Cup (Sep 24-27, Medinah) excluded as unofficial. The Sentry cancelled for 2026. Purse null where not confirmed.",
+  "events": [
+    {
+      "eventId": "pga-tour-2026-sony-open-in-hawaii",
+      "name": "Sony Open in Hawaii",
+      "startDate": "2026-01-15",
+      "endDate": "2026-01-18",
+      "rounds": 4,
+      "venue": {
+        "name": "Waialae Country Club",
+        "city": "Honolulu",
+        "region": "HI",
+        "countryCode": "US",
+        "timeZone": "Pacific/Honolulu"
+      },
+      "purse": 9100000.0,
+      "notes": [
+        "Season opener; The Sentry (Kapalua) not played in 2026 due to Maui drought"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-the-american-express",
+      "name": "The American Express",
+      "startDate": "2026-01-22",
+      "endDate": "2026-01-25",
+      "rounds": 4,
+      "venue": {
+        "name": "PGA West (Pete Dye Stadium Course) / La Quinta CC",
+        "city": "La Quinta",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 9200000.0,
+      "notes": [
+        "Multi-course pro-am rotation"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-farmers-insurance-open",
+      "name": "Farmers Insurance Open",
+      "startDate": "2026-01-29",
+      "endDate": "2026-02-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Torrey Pines Golf Course (South)",
+        "city": "San Diego",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 9600000.0
+    },
+    {
+      "eventId": "pga-tour-2026-wm-phoenix-open",
+      "name": "WM Phoenix Open",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-08",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Scottsdale (Stadium Course)",
+        "city": "Scottsdale",
+        "region": "AZ",
+        "countryCode": "US",
+        "timeZone": "America/Phoenix"
+      },
+      "purse": 9200000.0
+    },
+    {
+      "eventId": "pga-tour-2026-at-t-pebble-beach-pro-am",
+      "name": "AT&T Pebble Beach Pro-Am",
+      "startDate": "2026-02-12",
+      "endDate": "2026-02-15",
+      "rounds": 4,
+      "venue": {
+        "name": "Pebble Beach Golf Links",
+        "city": "Pebble Beach",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-the-genesis-invitational",
+      "name": "The Genesis Invitational",
+      "startDate": "2026-02-19",
+      "endDate": "2026-02-22",
+      "rounds": 4,
+      "venue": {
+        "name": "The Riviera Country Club",
+        "city": "Pacific Palisades",
+        "region": "CA",
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-cognizant-classic-in-the-palm-beaches",
+      "name": "Cognizant Classic in The Palm Beaches",
+      "startDate": "2026-02-26",
+      "endDate": "2026-03-01",
+      "rounds": 4,
+      "venue": {
+        "name": "PGA National Resort (Champion Course)",
+        "city": "Palm Beach Gardens",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 9200000.0
+    },
+    {
+      "eventId": "pga-tour-2026-arnold-palmer-invitational",
+      "name": "Arnold Palmer Invitational",
+      "startDate": "2026-03-05",
+      "endDate": "2026-03-08",
+      "rounds": 4,
+      "venue": {
+        "name": "Bay Hill Club & Lodge",
+        "city": "Orlando",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-puerto-rico-open",
+      "name": "Puerto Rico Open",
+      "startDate": "2026-03-05",
+      "endDate": "2026-03-08",
+      "rounds": 4,
+      "venue": {
+        "name": "Grand Reserve Golf Club",
+        "city": "Rio Grande",
+        "region": "PR",
+        "countryCode": "PR",
+        "timeZone": "America/Puerto_Rico"
+      },
+      "purse": 4000000,
+      "eventType": "opposite-field"
+    },
+    {
+      "eventId": "pga-tour-2026-the-players-championship",
+      "name": "THE PLAYERS Championship",
+      "startDate": "2026-03-12",
+      "endDate": "2026-03-15",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Sawgrass (Stadium Course)",
+        "city": "Ponte Vedra Beach",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 25000000,
+      "eventType": "flagship"
+    },
+    {
+      "eventId": "pga-tour-2026-valspar-championship",
+      "name": "Valspar Championship",
+      "startDate": "2026-03-19",
+      "endDate": "2026-03-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Innisbrook Resort (Copperhead Course)",
+        "city": "Palm Harbor",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-texas-children-s-houston-open",
+      "name": "Texas Children's Houston Open",
+      "startDate": "2026-03-26",
+      "endDate": "2026-03-29",
+      "rounds": 4,
+      "venue": {
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-valero-texas-open",
+      "name": "Valero Texas Open",
+      "startDate": "2026-04-02",
+      "endDate": "2026-04-05",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC San Antonio (Oaks Course)",
+        "city": "San Antonio",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-masters-tournament",
+      "name": "Masters Tournament",
+      "startDate": "2026-04-09",
+      "endDate": "2026-04-12",
+      "rounds": 4,
+      "venue": {
+        "name": "Augusta National Golf Club",
+        "city": "Augusta",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 21000000,
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2026-rbc-heritage",
+      "name": "RBC Heritage",
+      "startDate": "2026-04-16",
+      "endDate": "2026-04-19",
+      "rounds": 4,
+      "venue": {
+        "name": "Harbour Town Golf Links",
+        "city": "Hilton Head Island",
+        "region": "SC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-zurich-classic-of-new-orleans",
+      "name": "Zurich Classic of New Orleans",
+      "startDate": "2026-04-23",
+      "endDate": "2026-04-26",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Louisiana",
+        "city": "Avondale",
+        "region": "LA",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "team",
+      "notes": [
+        "Two-player team event (alternating fourball/foursomes)"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-cadillac-championship",
+      "name": "Cadillac Championship",
+      "startDate": "2026-04-30",
+      "endDate": "2026-05-03",
+      "rounds": 4,
+      "venue": {
+        "name": "Trump National Doral (Blue Monster)",
+        "city": "Doral",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature",
+      "notes": [
+        "New signature event in 2026"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-oneflight-myrtle-beach-classic",
+      "name": "ONEflight Myrtle Beach Classic",
+      "startDate": "2026-05-07",
+      "endDate": "2026-05-10",
+      "rounds": 4,
+      "venue": {
+        "name": "The Dunes Golf & Beach Club",
+        "city": "Myrtle Beach",
+        "region": "SC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "opposite-field"
+    },
+    {
+      "eventId": "pga-tour-2026-truist-championship",
+      "name": "Truist Championship",
+      "startDate": "2026-05-07",
+      "endDate": "2026-05-10",
+      "rounds": 4,
+      "venue": {
+        "name": "Quail Hollow Club",
+        "city": "Charlotte",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-pga-championship",
+      "name": "PGA Championship",
+      "startDate": "2026-05-14",
+      "endDate": "2026-05-17",
+      "rounds": 4,
+      "venue": {
+        "name": "Aronimink Golf Club",
+        "city": "Newtown Square",
+        "region": "PA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2026-the-cj-cup-byron-nelson",
+      "name": "THE CJ CUP Byron Nelson",
+      "startDate": "2026-05-21",
+      "endDate": "2026-05-24",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Craig Ranch",
+        "city": "McKinney",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-charles-schwab-challenge",
+      "name": "Charles Schwab Challenge",
+      "startDate": "2026-05-28",
+      "endDate": "2026-05-31",
+      "rounds": 4,
+      "venue": {
+        "name": "Colonial Country Club",
+        "city": "Fort Worth",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-the-memorial-tournament-presented-by-workday",
+      "name": "the Memorial Tournament presented by Workday",
+      "startDate": "2026-06-04",
+      "endDate": "2026-06-07",
+      "rounds": 4,
+      "venue": {
+        "name": "Muirfield Village Golf Club",
+        "city": "Dublin",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-rbc-canadian-open",
+      "name": "RBC Canadian Open",
+      "startDate": "2026-06-11",
+      "endDate": "2026-06-14",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Toronto at Osprey Valley (North Course)",
+        "city": "Caledon",
+        "region": "ON",
+        "countryCode": "CA",
+        "timeZone": "America/Toronto"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-u-s-open",
+      "name": "U.S. Open",
+      "startDate": "2026-06-18",
+      "endDate": "2026-06-21",
+      "rounds": 4,
+      "venue": {
+        "name": "Shinnecock Hills Golf Club",
+        "city": "Southampton",
+        "region": "NY",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "major"
+    },
+    {
+      "eventId": "pga-tour-2026-travelers-championship",
+      "name": "Travelers Championship",
+      "startDate": "2026-06-25",
+      "endDate": "2026-06-28",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC River Highlands",
+        "city": "Cromwell",
+        "region": "CT",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "purse": 20000000,
+      "eventType": "signature"
+    },
+    {
+      "eventId": "pga-tour-2026-john-deere-classic",
+      "name": "John Deere Classic",
+      "startDate": "2026-07-02",
+      "endDate": "2026-07-05",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Deere Run",
+        "city": "Silvis",
+        "region": "IL",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-genesis-scottish-open",
+      "name": "Genesis Scottish Open",
+      "startDate": "2026-07-09",
+      "endDate": "2026-07-12",
+      "rounds": 4,
+      "venue": {
+        "name": "The Renaissance Club",
+        "city": "North Berwick",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "notes": [
+        "Co-sanctioned with DP World Tour"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-isco-championship",
+      "name": "ISCO Championship",
+      "startDate": "2026-07-09",
+      "endDate": "2026-07-12",
+      "rounds": 4,
+      "venue": {
+        "name": "Hurstbourne Country Club",
+        "city": "Louisville",
+        "region": "KY",
+        "countryCode": "US",
+        "timeZone": "America/Kentucky/Louisville"
+      },
+      "eventType": "opposite-field",
+      "notes": [
+        "Co-sanctioned with DP World Tour"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-corales-puntacana-championship",
+      "name": "Corales Puntacana Championship",
+      "startDate": "2026-07-16",
+      "endDate": "2026-07-19",
+      "rounds": 4,
+      "venue": {
+        "name": "Puntacana Resort & Club (Corales Golf Course)",
+        "city": "Punta Cana",
+        "region": "La Altagracia",
+        "countryCode": "DO",
+        "timeZone": "America/Santo_Domingo"
+      },
+      "eventType": "opposite-field",
+      "notes": [
+        "Moved from spring to Open week in 2026 (replaced Barracuda slot); co-sanctioned with DP World Tour"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-the-open-championship",
+      "name": "The Open Championship",
+      "startDate": "2026-07-16",
+      "endDate": "2026-07-19",
+      "rounds": 4,
+      "venue": {
+        "name": "Royal Birkdale Golf Club",
+        "city": "Southport",
+        "region": "England",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "eventType": "major",
+      "notes": [
+        "154th Open"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-3m-open",
+      "name": "3M Open",
+      "startDate": "2026-07-23",
+      "endDate": "2026-07-26",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Twin Cities",
+        "city": "Blaine",
+        "region": "MN",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      }
+    },
+    {
+      "eventId": "pga-tour-2026-rocket-classic",
+      "name": "Rocket Classic",
+      "startDate": "2026-07-30",
+      "endDate": "2026-08-02",
+      "rounds": 4,
+      "venue": {
+        "name": "Detroit Golf Club",
+        "city": "Detroit",
+        "region": "MI",
+        "countryCode": "US",
+        "timeZone": "America/Detroit"
+      },
+      "notes": [
+        "Reported as final year at this slot; not on 2027 schedule found"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-wyndham-championship",
+      "name": "Wyndham Championship",
+      "startDate": "2026-08-06",
+      "endDate": "2026-08-09",
+      "rounds": 4,
+      "venue": {
+        "name": "Sedgefield Country Club",
+        "city": "Greensboro",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "notes": [
+        "Last regular-season event; becomes 'GO by Raymond James' in 2027"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-fedex-st-jude-championship",
+      "name": "FedEx St. Jude Championship",
+      "startDate": "2026-08-13",
+      "endDate": "2026-08-16",
+      "rounds": 4,
+      "venue": {
+        "name": "TPC Southwind",
+        "city": "Memphis",
+        "region": "TN",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "purse": 20000000,
+      "eventType": "playoff"
+    },
+    {
+      "eventId": "pga-tour-2026-bmw-championship",
+      "name": "BMW Championship",
+      "startDate": "2026-08-20",
+      "endDate": "2026-08-23",
+      "rounds": 4,
+      "venue": {
+        "name": "Bellerive Country Club",
+        "city": "Town and Country",
+        "region": "MO",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "purse": 20000000,
+      "eventType": "playoff"
+    },
+    {
+      "eventId": "pga-tour-2026-tour-championship",
+      "name": "TOUR Championship",
+      "startDate": "2026-08-27",
+      "endDate": "2026-08-30",
+      "rounds": 4,
+      "venue": {
+        "name": "East Lake Golf Club",
+        "city": "Atlanta",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "playoff"
+    },
+    {
+      "eventId": "pga-tour-2026-biltmore-championship-asheville",
+      "name": "Biltmore Championship Asheville",
+      "startDate": "2026-09-17",
+      "endDate": "2026-09-20",
+      "rounds": 4,
+      "venue": {
+        "name": "The Cliffs at Walnut Cove",
+        "city": "Arden (Asheville)",
+        "region": "NC",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "fall",
+      "notes": [
+        "New in 2026"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-bank-of-utah-championship",
+      "name": "Bank of Utah Championship",
+      "startDate": "2026-10-01",
+      "endDate": "2026-10-04",
+      "rounds": 4,
+      "venue": {
+        "name": "Black Desert Resort",
+        "city": "Ivins",
+        "region": "UT",
+        "countryCode": "US",
+        "timeZone": "America/Denver"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Won by Austin Smotherman"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-baycurrent-classic",
+      "name": "Baycurrent Classic",
+      "startDate": "2026-10-08",
+      "endDate": "2026-10-11",
+      "rounds": 4,
+      "venue": {
+        "name": "Yokohama Country Club",
+        "city": "Yokohama",
+        "region": "Kanagawa",
+        "countryCode": "JP",
+        "timeZone": "Asia/Tokyo"
+      },
+      "eventType": "fall"
+    },
+    {
+      "eventId": "pga-tour-2026-butterfield-bermuda-championship",
+      "name": "Butterfield Bermuda Championship",
+      "startDate": "2026-10-22",
+      "endDate": "2026-10-25",
+      "rounds": 4,
+      "venue": {
+        "name": "Port Royal Golf Course",
+        "city": "Southampton",
+        "region": "Southampton Parish",
+        "countryCode": "BM",
+        "timeZone": "Atlantic/Bermuda"
+      },
+      "eventType": "fall"
+    },
+    {
+      "eventId": "pga-tour-2026-vidantaworld-mexico-open",
+      "name": "VidantaWorld Mexico Open",
+      "startDate": "2026-10-29",
+      "endDate": "2026-11-01",
+      "rounds": 4,
+      "venue": {
+        "name": "Vidanta Vallarta",
+        "city": "Nuevo Vallarta",
+        "region": "Nayarit",
+        "countryCode": "MX",
+        "timeZone": "America/Bahia_Banderas"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Moved from February to the fall in 2026"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-world-wide-technology-championship",
+      "name": "World Wide Technology Championship",
+      "startDate": "2026-11-05",
+      "endDate": "2026-11-08",
+      "rounds": 4,
+      "venue": {
+        "name": "El Cardonal at Diamante",
+        "city": "Cabo San Lucas",
+        "region": "Baja California Sur",
+        "countryCode": "MX",
+        "timeZone": "America/Mazatlan"
+      },
+      "eventType": "fall"
+    },
+    {
+      "eventId": "pga-tour-2026-good-good-championship",
+      "name": "Good Good Championship",
+      "startDate": "2026-11-12",
+      "endDate": "2026-11-15",
+      "rounds": 4,
+      "venue": {
+        "name": "Omni Barton Creek Resort & Spa",
+        "city": "Austin",
+        "region": "TX",
+        "countryCode": "US",
+        "timeZone": "America/Chicago"
+      },
+      "eventType": "fall",
+      "notes": [
+        "New in 2026"
+      ]
+    },
+    {
+      "eventId": "pga-tour-2026-the-rsm-classic",
+      "name": "The RSM Classic",
+      "startDate": "2026-11-19",
+      "endDate": "2026-11-22",
+      "rounds": 4,
+      "venue": {
+        "name": "Sea Island Golf Club (Seaside / Plantation)",
+        "city": "St. Simons Island",
+        "region": "GA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "eventType": "fall",
+      "notes": [
+        "Two-course rotation first two rounds"
+      ]
+    }
+  ]
+}
