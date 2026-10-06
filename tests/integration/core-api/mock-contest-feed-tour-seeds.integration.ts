@@ -10,7 +10,7 @@ let mockProvider: RunningMockContestFeedProvider;
 
 beforeAll(async () => {
   mockProvider = await startMockContestFeedProvider({
-    routes: { scenarioStoreOptions: { includeRelativeTodayGolfScenario: false } },
+    routes: { scenarioStoreOptions: {} },
   });
 });
 
