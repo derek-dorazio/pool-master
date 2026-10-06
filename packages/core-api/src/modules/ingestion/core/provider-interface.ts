@@ -88,6 +88,36 @@ export function supportsMockEventStateControls(provider: SportDataProvider): boo
   return provider.providerId === 'mock-contest-feed';
 }
 
+export interface LiveSimulationOptions {
+  minutesPerRound?: number;
+}
+
+export type LiveSimulationPhase = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface LiveSimulationStatus {
+  startsAt: Date;
+  endsAt: Date;
+  minutesPerRound: number;
+  phase: LiveSimulationPhase;
+  currentRound: number | null;
+}
+
+/**
+ * A provider that can play an event's live scoring forward on its own clock, so a live
+ * contest's leaderboard can be exercised without a real tournament in progress (#382).
+ * Only the mock contest feed implements it.
+ */
+export interface ProviderLiveSimulationControls {
+  /** Resolves null when the provider has no event with that id. */
+  startLiveSimulation(externalEventId: string, options: LiveSimulationOptions): Promise<LiveSimulationStatus | null>;
+}
+
+export function supportsLiveSimulation(
+  provider: SportDataProvider,
+): provider is SportDataProvider & ProviderLiveSimulationControls {
+  return 'startLiveSimulation' in provider && typeof provider.startLiveSimulation === 'function';
+}
+
 /**
  * Raised by adapters whose live-score category typing hasn't landed yet
  * (e.g., openf1, espn). Per plans/117 §3.1, Phase 4 ships only

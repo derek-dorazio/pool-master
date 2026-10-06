@@ -16,7 +16,7 @@ import type {
 import { Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
-import { supportsMockEventStateControls } from './core/provider-interface';
+import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -51,6 +51,7 @@ export interface ProviderSummary {
   lastEventAt: Date | null;
   sportsCovered: Sport[];
   activeEventCount: number;
+  supportsLiveSimulation: boolean;
 }
 
 export interface ProviderManualSyncSubmissionResult {
@@ -391,6 +392,7 @@ export class IngestionService {
         lastEventAt: events?.lastChangedAt ?? health.lastSuccessfulPoll ?? null,
         sportsCovered: await this.getConfiguredSportsForProvider(provider),
         activeEventCount: events?.activeEventCount ?? 0,
+        supportsLiveSimulation: supportsLiveSimulation(provider),
       };
     }));
     return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));

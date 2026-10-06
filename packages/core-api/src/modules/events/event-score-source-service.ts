@@ -22,7 +22,13 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { MANUAL_ADMIN_PROVIDER_ID, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
-import type { DateRange, SportEvent as ProviderCatalogSportEvent } from '../ingestion/core/provider-interface';
+import {
+  supportsLiveSimulation,
+  type DateRange,
+  type LiveSimulationOptions,
+  type LiveSimulationStatus,
+  type SportEvent as ProviderCatalogSportEvent,
+} from '../ingestion/core/provider-interface';
 
 export class EventScoreSourceError extends Error {
   constructor(
@@ -181,6 +187,53 @@ export class EventScoreSourceService {
     });
 
     this.logger?.info({ sportEventId }, 'Unlinked sport event score source');
+  }
+
+  /**
+   * Asks the event's linked score source to play its live scoring forward on the
+   * provider's own clock (#382), so a live contest's leaderboard can be exercised without a
+   * real tournament in progress. Scores still arrive through the normal live-score sync.
+   * 409 EVENT_NOT_LINKED for an unlinked event; 422 LIVE_SIMULATION_UNSUPPORTED when the
+   * provider has no simulation (every real provider).
+   */
+  async startLiveSimulation(sportEventId: string, options: LiveSimulationOptions): Promise<LiveSimulationStatus> {
+    const existing = await this.requireSportEvent(sportEventId);
+    if (existing.syncScope === SportEventSyncScope.NONE) {
+      throw new EventScoreSourceError(`Sport event ${sportEventId} is not linked to a provider.`, 'EVENT_NOT_LINKED', 409);
+    }
+
+    const provider = this.providerRegistry.getProviderById(existing.providerId);
+    if (!provider) {
+      throw new EventScoreSourceError(`Provider ${existing.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+    if (!supportsLiveSimulation(provider)) {
+      throw new EventScoreSourceError(
+        `Provider ${existing.providerId} cannot simulate live scoring.`,
+        'LIVE_SIMULATION_UNSUPPORTED',
+        422,
+      );
+    }
+
+    const status = await provider.startLiveSimulation(existing.externalId, options);
+    if (!status) {
+      throw new EventScoreSourceError(
+        `Provider ${existing.providerId} has no event ${existing.externalId}.`,
+        'PROVIDER_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+
+    this.logger?.info(
+      {
+        sportEventId,
+        providerId: existing.providerId,
+        externalId: existing.externalId,
+        startsAt: status.startsAt.toISOString(),
+        minutesPerRound: status.minutesPerRound,
+      },
+      'Started provider live simulation',
+    );
+    return status;
   }
 
   private async requireSportEvent(sportEventId: string) {

@@ -2435,6 +2435,69 @@
         "additionalProperties": false,
         "description": "Links an event to a provider event for scores."
       },
+      "StartSportEventLiveSimulationRequest": {
+        "type": "object",
+        "properties": {
+          "minutesPerRound": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440,
+            "description": "How long each of the four simulated rounds lasts. Defaults to the provider's own default (20 on the mock feed)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Starts, or restarts from round 1, the score source's simulated live scoring for a linked event."
+      },
+      "SportEventLiveSimulationResponse": {
+        "type": "object",
+        "properties": {
+          "sportEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When simulated round 1 started."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When simulated round 4 finishes; scores stop changing after this."
+          },
+          "minutesPerRound": {
+            "type": "integer"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "Where the simulation is on its own clock."
+          },
+          "currentRound": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 4,
+            "description": "The round being played now; null before the start and after the finish."
+          }
+        },
+        "required": [
+          "sportEventId",
+          "startsAt",
+          "endsAt",
+          "minutesPerRound",
+          "phase",
+          "currentRound"
+        ],
+        "additionalProperties": false,
+        "description": "A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS."
+      },
       "SportEventRoundDto": {
         "type": "object",
         "properties": {
@@ -14869,6 +14932,10 @@
           "activeEventCount": {
             "type": "integer",
             "description": "The provider's events that are scheduled or in progress."
+          },
+          "supportsLiveSimulation": {
+            "type": "boolean",
+            "description": "True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can."
           }
         },
         "required": [
@@ -14879,7 +14946,8 @@
           "latencyMs",
           "lastEventAt",
           "sportsCovered",
-          "activeEventCount"
+          "activeEventCount",
+          "supportsLiveSimulation"
         ],
         "additionalProperties": false,
         "description": "A registered sports-data provider with its live health."
@@ -14951,6 +15019,10 @@
                 "activeEventCount": {
                   "type": "integer",
                   "description": "The provider's events that are scheduled or in progress."
+                },
+                "supportsLiveSimulation": {
+                  "type": "boolean",
+                  "description": "True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can."
                 }
               },
               "required": [
@@ -14961,7 +15033,8 @@
                 "latencyMs",
                 "lastEventAt",
                 "sportsCovered",
-                "activeEventCount"
+                "activeEventCount",
+                "supportsLiveSimulation"
               ],
               "additionalProperties": false,
               "description": "A registered sports-data provider with its live health."
@@ -30918,6 +30991,283 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/live-simulation": {
+      "post": {
+        "operationId": "startEventLiveSimulation",
+        "summary": "Start simulated live scoring from the event's score source",
+        "tags": [
+          "Events"
+        ],
+        "description": "Root admin only. For testing a live contest: asks the linked provider to play the event's four rounds forward on its own clock, hole by hole; calling again restarts from round 1. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. Only providers whose summary has supportsLiveSimulation (the QA mock feed) accept it.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSportEventLiveSimulationRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventLiveSimulationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

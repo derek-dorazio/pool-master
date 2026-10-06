@@ -205,6 +205,20 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     handler: handler.unlinkScoreSource,
   });
 
+  fastify.post('/:eventId/live-simulation', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Start simulated live scoring from the event\'s score source',
+      description: 'Root admin only. For testing a live contest: asks the linked provider to play the event\'s four rounds forward on its own clock, hole by hole; calling again restarts from round 1. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. Only providers whose summary has supportsLiveSimulation (the QA mock feed) accept it.',
+      operationId: 'startEventLiveSimulation',
+      params: EVENT_PARAMS,
+      body: schemaRef('StartSportEventLiveSimulationRequest'),
+      response: { 200: schemaRef('SportEventLiveSimulationResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+    },
+    handler: handler.startLiveSimulation,
+  });
+
   // --- Rounds --------------------------------------------------------------------------
 
   fastify.get('/:eventId/rounds', {

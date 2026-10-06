@@ -23,6 +23,7 @@ import {
   ParticipantResponseSchema,
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
+  SportEventLiveSimulationResponseSchema,
   SportEventResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
@@ -58,6 +59,7 @@ import type {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
+import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
@@ -267,6 +269,20 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
  * operations run against a provider the test controls. The auth guard is registered as the
  * application registers it: the sync handlers read the signed-in root admin from it.
  */
+/** A contract provider that, like the QA mock feed, can simulate live scoring (#382). */
+class SimulatingContractProvider extends OperationalContractProvider {
+  async startLiveSimulation(externalEventId: string, options: { minutesPerRound?: number }) {
+    if (!externalEventId.startsWith('live-sim-')) return null;
+    return {
+      startsAt: new Date('2026-04-05T12:00:00.000Z'),
+      endsAt: new Date('2026-04-05T12:00:00.000Z'),
+      minutesPerRound: options.minutesPerRound ?? 20,
+      phase: 'IN_PROGRESS' as const,
+      currentRound: 1,
+    };
+  }
+}
+
 async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
@@ -297,6 +313,7 @@ async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyIn
     providerRegistry: registry,
   });
   await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
+  await app.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry: registry });
   await app.ready();
 
   return app;
@@ -1389,6 +1406,112 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
       expect(unlinkRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
       expect(unlinkRes.json<SportEventResponse>().event.providerId).toBe('manual-admin');
+    } finally {
+      const prisma = getPrisma();
+      if (created.eventIds.length) {
+        await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
+      }
+      if (created.sportLeagueId) {
+        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
+        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
+      }
+      await app.close();
+    }
+  });
+  it('startEventLiveSimulation returns the simulation status for a linked event, and the provider list says which providers can simulate', async () => {
+    const app = await buildIngestionApp(new SimulatingContractProvider());
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Live Simulation Contract User',
+      isRootAdmin: true,
+    });
+    const stamp = Date.now().toString().slice(-8);
+    await getPrisma().sport.upsert({
+      where: { name: 'GOLF' },
+      create: {
+        name: 'GOLF',
+        participantType: 'INDIVIDUAL',
+        category: 'GOLF',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
+      },
+      update: {},
+    });
+    const created = { sportLeagueId: '', eventIds: [] as string[] };
+
+    try {
+      const providersRes = await app.inject({ method: 'GET', url: '/api/v1/ingestion/providers', headers: rootAdmin.headers });
+      expect(providersRes.statusCode).toBe(200);
+      expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
+      expect(providersRes.json<{ providers: Array<{ providerId: string; supportsLiveSimulation: boolean }> }>().providers)
+        .toContainEqual(expect.objectContaining({ providerId: 'contract-provider', supportsLiveSimulation: true }));
+
+      const leagueRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/sport-leagues',
+        headers: rootAdmin.headers,
+        payload: { sport: 'GOLF', name: `Live Sim Contract Tour ${stamp}`, matchKeyword: `LSIM${stamp}` },
+      });
+      expect(leagueRes.statusCode).toBe(201);
+      created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
+
+      const tournamentRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/events',
+        headers: rootAdmin.headers,
+        payload: {
+          name: `Live Sim Contract Open ${stamp}`,
+          startDate: '2084-06-16T08:00:00.000Z',
+          endDate: '2084-06-19T20:00:00.000Z',
+          rounds: 4,
+          releaseAt: '2084-06-01T00:00:00.000Z',
+          fieldLocksAt: '2084-06-15T00:00:00.000Z',
+          sportLeagueId: created.sportLeagueId,
+          eventYear: 2084,
+          autoLifecycleEnabled: false,
+        },
+      });
+      expect(tournamentRes.statusCode).toBe(201);
+      const eventId = tournamentRes.json<SportEventResponse>().event.id;
+      created.eventIds.push(eventId);
+
+      // --- startEventLiveSimulation (409) on an unlinked event -------------------
+      const unlinkedRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/live-simulation`,
+        headers: rootAdmin.headers,
+        payload: {},
+      });
+      expect(unlinkedRes.statusCode).toBe(409);
+      expect(ErrorEnvelopeSchema.safeParse(unlinkedRes.json()).success).toBe(true);
+
+      const linkRes = await app.inject({
+        method: 'PUT',
+        url: `/api/v1/events/${eventId}/score-source`,
+        headers: rootAdmin.headers,
+        payload: { providerId: 'contract-provider', externalId: `live-sim-${stamp}` },
+      });
+      expect(linkRes.statusCode).toBe(200);
+
+      // --- startEventLiveSimulation (200) ------------------------------------------
+      const simulationRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/live-simulation`,
+        headers: rootAdmin.headers,
+        payload: { minutesPerRound: 15 },
+      });
+      expect(simulationRes.statusCode).toBe(200);
+      expect(SportEventLiveSimulationResponseSchema.safeParse(simulationRes.json()).success).toBe(true);
+      expect(simulationRes.json()).toMatchObject({ sportEventId: eventId, minutesPerRound: 15, phase: 'IN_PROGRESS', currentRound: 1 });
+
+      // --- startEventLiveSimulation (400) on an out-of-range round length ----------
+      const invalidRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/live-simulation`,
+        headers: rootAdmin.headers,
+        payload: { minutesPerRound: 0 },
+      });
+      expect(invalidRes.statusCode).toBe(400);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
