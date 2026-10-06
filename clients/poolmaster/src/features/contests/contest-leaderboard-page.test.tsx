@@ -417,7 +417,7 @@ describe('ContestLeaderboardPage', () => {
       primeMocks({ contestStatus: 'ACTIVE' });
       getContestMock.mockResolvedValueOnce(contestResponse('LOCKED'));
       renderLeaderboard();
-      await screen.findByTestId('contest-leaderboard-position-entry-1');
+      await screen.findByText('Birdie Hunters Entry 1');
       const callsWhileLocked = getGolfContestLeaderboardMock.mock.calls.length;
 
       // One interval for the contest read to see ACTIVE, one more for the first live poll.
@@ -449,7 +449,7 @@ describe('ContestLeaderboardPage', () => {
       expect(await screen.findByText(/Scores appear once picks are revealed/)).toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(60_000);
-      expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toBeInTheDocument();
+      expect(await screen.findByText('Birdie Hunters Entry 1')).toBeInTheDocument();
       expect(screen.queryByText(/Scores appear once picks are revealed/)).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
@@ -463,11 +463,11 @@ describe('ContestLeaderboardPage', () => {
       primeMocks({ contestStatus: 'COMPLETED' });
       getContestMock.mockResolvedValueOnce(contestResponse('ACTIVE'));
       renderLeaderboard();
-      await screen.findByTestId('contest-leaderboard-position-entry-1');
-      expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
+      await screen.findByText('Birdie Hunters Entry 1');
+      expect(screen.queryByText(/Entry standings are frozen at settlement/)).not.toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(30_000);
-      expect(await screen.findByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
+      expect(await screen.findByText(/Entry standings are frozen at settlement/)).toBeInTheDocument();
 
       const leaderboardCallsOnceSettled = getGolfContestLeaderboardMock.mock.calls.length;
       const contestCallsOnceSettled = getContestMock.mock.calls.length;

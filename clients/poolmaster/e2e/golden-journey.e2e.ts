@@ -560,10 +560,10 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   // #362 — opened before play, as a member watching for the start would have it. The contest is
-  // still open, so the leaderboard read refuses it and the page says why.
+  // still open, so the leaderboard read refuses it and the page shows its error state.
   const leaderboardTab = await test.step('open the leaderboard page before the event starts', async () => {
     const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
-    await expect(tab.getByText(/Scores appear once picks are revealed/)).toBeVisible();
+    await expect(tab.getByTestId('contest-leaderboard-error')).toBeVisible();
     await page.bringToFront();
     return tab;
   });
@@ -586,6 +586,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await leaderboardTab.bringToFront();
     await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`))
       .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
+    await expect(leaderboardTab.getByTestId('contest-leaderboard-error')).toHaveCount(0);
     await leaderboardTab.close();
   });
 

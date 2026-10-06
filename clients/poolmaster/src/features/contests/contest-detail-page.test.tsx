@@ -522,7 +522,7 @@ describe('ContestDetailPage (Contest Board)', () => {
         },
       });
       renderContestBoard();
-      await screen.findByTestId('contest-board-total-count');
+      await screen.findByText(/Total Entries/);
       const entryCallsWhileLocked = listContestEntriesMock.mock.calls.length;
 
       // One interval for the contest read to see ACTIVE, one more for the first entry poll.

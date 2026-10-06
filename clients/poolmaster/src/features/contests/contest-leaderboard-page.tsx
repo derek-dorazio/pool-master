@@ -211,6 +211,7 @@ export function ContestLeaderboardPage() {
           codeMessages: LEADERBOARD_ERROR_MESSAGES,
           fallback: 'Try refreshing, or return to the contest board.',
         })}
+        testId="contest-leaderboard-error"
         title="We couldn't load this leaderboard."
       />
     );
