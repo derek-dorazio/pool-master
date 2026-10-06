@@ -53,48 +53,61 @@ type ContestantDelta = NonNullable<
   EventDetailResponse['event']['feeds']['odds']['contestants']
 >[number];
 
+/**
+ * #418 — the most response JSON, in characters, one sync run's capture keeps for its ledger
+ * row. A response that would take the capture past it is recorded by path and size only. The
+ * 2026/2027 tour slates made an unfiltered schedule or ranking sweep about 7.7 MB of detail
+ * JSON, and keeping all of it pushed QA's core-api past its 512 MB task limit.
+ */
+export const providerPayloadCaptureBudgetBytes = 1024 * 1024;
+
+/**
+ * #418 — how many event details a sweep fetches at once. Each detail is reduced to what the
+ * caller needs as it arrives, so only this many full detail bodies are in memory together.
+ */
+const eventDetailFetchConcurrency = 8;
+
+interface ProviderPayloadCaptureBuffer {
+  readonly entries: ProviderPayloadCapture[];
+  keptBytes: number;
+}
+
 export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics, ProviderLiveSimulationControls {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
-  private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCapture[]>();
-  // Legacy fallback for direct adapter calls outside a run-scoped capture session.
-  private providerPayloads: ProviderPayloadCapture[] = [];
+  private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCaptureBuffer>();
   private readonly scenarioIdByEventId = new Map<string, string>();
 
   constructor(private readonly baseUrl: string) {}
 
-  clearProviderPayloads(): void {
-    this.providerPayloads = [];
-  }
+  // Raw payloads are kept only inside a capture session (#418). Calls outside one, such as a
+  // catalog browse, keep nothing: nothing drains them, so keeping them grew the heap per call.
+  clearProviderPayloads(): void {}
 
   consumeProviderPayloads(): ProviderPayloadCapture[] {
-    const payloads = this.providerPayloads;
-    this.providerPayloads = [];
-    return payloads;
+    return [];
   }
 
   beginProviderPayloadCapture(): ProviderPayloadCaptureSession {
-    const providerPayloads: ProviderPayloadCapture[] = [];
+    const capture: ProviderPayloadCaptureBuffer = { entries: [], keptBytes: 0 };
     return {
       run: async <T>(work: () => Promise<T>): Promise<T> =>
-        this.providerPayloadCaptureStorage.run(providerPayloads, work),
+        this.providerPayloadCaptureStorage.run(capture, work),
       consumeProviderPayloads: (): ProviderPayloadCapture[] => {
-        const payloads = [...providerPayloads];
-        providerPayloads.length = 0;
+        const payloads = [...capture.entries];
+        capture.entries.length = 0;
+        capture.keptBytes = 0;
         return payloads;
       },
     };
   }
 
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange): Promise<SportEvent[]> {
-    const entries = await this.listScenarioEvents(sport, dateRange);
-    return entries
-      .map(({ scenarioId, detail }) => {
-        const fieldContestants = resolveParticipants(detail);
-        return toSportEvent(this.providerId, detail, fieldContestants.length, scenarioId);
-      })
-      .filter((event) => isEventWithinDateRange(event.startDate.toISOString(), dateRange));
+    const events = await this.mapScenarioEventDetails(sport, dateRange, (scenarioId, detail) =>
+      toSportEvent(this.providerId, detail, resolveParticipants(detail).length, scenarioId),
+    );
+    return events.filter((event) => isEventWithinDateRange(event.startDate.toISOString(), dateRange));
   }
 
   async getEventDetails(
@@ -123,15 +136,16 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   }
 
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
-    const entries = await this.listScenarioEvents(sport);
+    const eventParticipants = await this.mapScenarioEventDetails(sport, undefined, (_scenarioId, detail) =>
+      resolveParticipants(detail).map((contestant) =>
+        toProviderParticipant(this.providerId, detail.sport, contestant),
+      ),
+    );
     const seen = new Map<string, ProviderParticipant>();
 
-    for (const { detail } of entries) {
-      for (const contestant of resolveParticipants(detail)) {
-        seen.set(
-          contestant.contestantId,
-          toProviderParticipant(this.providerId, detail.sport, contestant),
-        );
+    for (const participants of eventParticipants) {
+      for (const participant of participants) {
+        seen.set(participant.externalId, participant);
       }
     }
 
@@ -139,23 +153,25 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   }
 
   async getRankings(sport: Sport, rankingType: string): Promise<ProviderRanking[]> {
-    const entries = await this.listScenarioEvents(sport);
+    const eventRankings = await this.mapScenarioEventDetails(sport, undefined, (_scenarioId, detail) => {
+      const asOfDate = new Date(detail.event.feeds.rankings.asOf);
+      return detail.event.feeds.rankings.contestants.flatMap((contestant): ProviderRanking[] =>
+        typeof contestant.ranking === 'number'
+          ? [{
+              providerId: this.providerId,
+              participantExternalId: contestant.contestantId,
+              rankingType,
+              rank: contestant.ranking,
+              asOfDate,
+            }]
+          : [],
+      );
+    });
     const rankings = new Map<string, ProviderRanking>();
 
-    for (const { detail } of entries) {
-      const asOfDate = new Date(detail.event.feeds.rankings.asOf);
-      for (const contestant of detail.event.feeds.rankings.contestants) {
-        if (typeof contestant.ranking !== 'number') {
-          continue;
-        }
-
-        rankings.set(contestant.contestantId, {
-          providerId: this.providerId,
-          participantExternalId: contestant.contestantId,
-          rankingType,
-          rank: contestant.ranking,
-          asOfDate,
-        });
+    for (const eventRanking of eventRankings) {
+      for (const ranking of eventRanking) {
+        rankings.set(ranking.participantExternalId, ranking);
       }
     }
 
@@ -207,13 +223,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     if (!response.ok) {
       throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
     }
-    const replay = (await response.json()) as GetMockContestFeedLiveReplayResponse;
-    this.recordProviderPayload({
-      operation: 'mock-contest-feed.request',
-      path,
-      capturedAt: new Date().toISOString(),
-      raw: replay,
-    });
+    const replay = await this.readJson<GetMockContestFeedLiveReplayResponse>(path, response);
     return toLiveSimulationStatus(replay);
   }
 
@@ -335,10 +345,17 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
   }
 
-  private async listScenarioEvents(
+  /**
+   * Fetches the detail of every event of the sport (within the date range, when given) and
+   * returns `project`'s result for each, in scenario and event order. Details are fetched a few
+   * at a time and dropped once projected (#418): a tour season's details together run to
+   * megabytes, and holding them all at once was most of a sweep's memory.
+   */
+  private async mapScenarioEventDetails<R>(
     sport: Sport,
-    dateRange?: DateRange,
-  ): Promise<Array<{ scenarioId: string; detail: EventDetailResponse }>> {
+    dateRange: DateRange | undefined,
+    project: (scenarioId: string, detail: EventDetailResponse) => R,
+  ): Promise<R[]> {
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
     const matchingScenarioIds = scenarios.scenarios
       .filter((scenario) => toDomainSport(scenario.sport) === sport)
@@ -354,20 +371,29 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       }),
     );
 
-    const details = await Promise.all(
-      eventLists.flatMap(({ scenarioId, events }) =>
-        events
-          .filter((event) => isEventWithinDateRange(event.startsAt, dateRange))
-          .map(async (event) => ({
-            scenarioId,
-            detail: await this.fetchJson<EventDetailResponse>(
-              `/v1/scenarios/${scenarioId}/events/${event.eventId}/detail`,
-            ),
-          })),
-      ),
+    const targets = eventLists.flatMap(({ scenarioId, events }) =>
+      events
+        .filter((event) => isEventWithinDateRange(event.startsAt, dateRange))
+        .map((event) => ({ scenarioId, eventId: event.eventId })),
+    );
+    const results: R[] = new Array<R>(targets.length);
+    let nextTarget = 0;
+    const fetchNext = async (): Promise<void> => {
+      while (nextTarget < targets.length) {
+        const index = nextTarget;
+        nextTarget += 1;
+        const { scenarioId, eventId } = targets[index];
+        const detail = await this.fetchJson<EventDetailResponse>(
+          `/v1/scenarios/${scenarioId}/events/${eventId}/detail`,
+        );
+        results[index] = project(scenarioId, detail);
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(eventDetailFetchConcurrency, targets.length) }, fetchNext),
     );
 
-    return details;
+    return results;
   }
 
   private async findEventById(
@@ -421,14 +447,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
     }
 
-    const raw = (await response.json()) as T;
-    this.recordProviderPayload({
-      operation: 'mock-contest-feed.request',
-      path,
-      capturedAt: new Date().toISOString(),
-      raw,
-    });
-    return raw;
+    return this.readJson<T>(path, response);
   }
 
   private async fetchJson<T>(path: string): Promise<T> {
@@ -437,24 +456,30 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
     }
 
-    const raw = (await response.json()) as T;
-    this.recordProviderPayload({
-      operation: 'mock-contest-feed.request',
-      path,
-      capturedAt: new Date().toISOString(),
-      raw,
-    });
+    return this.readJson<T>(path, response);
+  }
+
+  private async readJson<T>(path: string, response: Response): Promise<T> {
+    const body = await response.text();
+    const raw = JSON.parse(body) as T;
+    this.recordProviderPayload(path, body.length, raw);
     return raw;
   }
 
-  private recordProviderPayload(payload: ProviderPayloadCapture): void {
-    const activeCapture = this.providerPayloadCaptureStorage.getStore();
-    if (activeCapture) {
-      activeCapture.push(payload);
+  private recordProviderPayload(path: string, bytes: number, raw: unknown): void {
+    const capture = this.providerPayloadCaptureStorage.getStore();
+    if (!capture) {
       return;
     }
 
-    this.providerPayloads.push(payload);
+    const entry = { operation: 'mock-contest-feed.request', path, capturedAt: new Date().toISOString(), bytes };
+    if (capture.keptBytes + bytes > providerPayloadCaptureBudgetBytes) {
+      capture.entries.push({ ...entry, rawOmitted: true });
+      return;
+    }
+
+    capture.keptBytes += bytes;
+    capture.entries.push({ ...entry, raw });
   }
 }
 
@@ -542,7 +567,7 @@ function toProviderParticipant(
   const [firstName, ...lastParts] = contestant.name.split(/\s+/);
   const domainSport = toDomainSport(sport);
   if (!domainSport) {
-    // Unreachable in practice — listScenarioEvents filters unsupported
+    // Unreachable in practice — mapScenarioEventDetails filters unsupported
     // sports out before any participant projection runs. Throw here so a
     // future caller skipping the filter fails loudly instead of emitting
     // a participant with the wrong sport.

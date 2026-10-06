@@ -779,9 +779,59 @@ describe('MockContestFeedAdapter', () => {
 
     // The adapter must never have requested the TEAM_TOURNAMENT scenario's
     // event detail — which proves the filter rejected the scenario at
-    // listScenarioEvents rather than later in the projection pipeline.
+    // mapScenarioEventDetails rather than later in the projection pipeline.
     const fetchUrls = fetchSpy.mock.calls.map((call: [unknown, ...unknown[]]) => String(call[0]));
     expect(fetchUrls.some((u: string) => u.includes('correction-and-tie-2026/events/showcase-bracket-2026/detail'))).toBe(false);
+  });
+
+  it('keeps a sync run\'s raw provider JSON within the capture budget and records only the path and size of a response past it', async () => {
+    // #418: a tour slate's detail bodies run to megabytes. Holding every one for the sync run's
+    // ledger row put QA's core-api past its memory limit, so a large body is not retained.
+    const oversizedDetail = {
+      ...eventDetailResponse,
+      event: { ...eventDetailResponse.event, notes: 'x'.repeat(2 * 1024 * 1024) },
+    };
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail')) return okJson(oversizedDetail);
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    const capture = adapter.beginProviderPayloadCapture();
+    const events = await capture.run(async () => adapter.getUpcomingEvents(Sport.GOLF));
+    const captured = capture.consumeProviderPayloads();
+
+    expect(events.map((event) => event.externalId)).toEqual(['golf-masters-2026']);
+    expect(captured.map((entry) => entry.path)).toEqual([
+      '/v1/scenarios',
+      '/v1/scenarios/golf-major-2026/events',
+      '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
+    ]);
+    expect(captured[0]).toEqual(expect.objectContaining({ raw: scenarioResponse }));
+    expect(captured[2]).toEqual(expect.objectContaining({ rawOmitted: true }));
+    expect(captured[2]).not.toHaveProperty('raw');
+    expect(captured[2].bytes).toBeGreaterThan(2 * 1024 * 1024);
+  });
+
+  it('retains no raw provider JSON from calls made outside a sync run\'s capture session, such as a catalog browse', async () => {
+    // #418: these were appended to an array nothing ever drained, so every catalog browse
+    // grew core-api's heap for the life of the process.
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail')) return okJson(eventDetailResponse);
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    await adapter.getUpcomingEvents(Sport.GOLF);
+    await adapter.getUpcomingEvents(Sport.GOLF);
+
+    expect(adapter.consumeProviderPayloads()).toEqual([]);
   });
 });
 
@@ -791,5 +841,6 @@ function okJson(body: unknown): Response {
     status: 200,
     statusText: 'OK',
     json: async () => body,
+    text: async () => JSON.stringify(body),
   } as Response;
 }
