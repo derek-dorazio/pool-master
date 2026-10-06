@@ -6,13 +6,13 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
   const packageJson = JSON.parse(
-    fs.readFileSync(path.resolve(__dirname, './package.json'), 'utf8'),
+    fs.readFileSync(path.resolve(import.meta.dirname, './package.json'), 'utf8'),
   ) as { dependencies?: Record<string, string>; name: string; version: string };
   const sharedPackageJson = JSON.parse(
-    fs.readFileSync(path.resolve(__dirname, '../../packages/shared/package.json'), 'utf8'),
+    fs.readFileSync(path.resolve(import.meta.dirname, '../../packages/shared/package.json'), 'utf8'),
   ) as { name: string; version: string };
   const rootPackageJson = JSON.parse(
-    fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'),
+    fs.readFileSync(path.resolve(import.meta.dirname, '../../package.json'), 'utf8'),
   ) as { devDependencies?: Record<string, string> };
   const versionInfoFallback = {
     schemaVersion: 1,
@@ -68,31 +68,31 @@ export default defineConfig(() => {
       alias: [
         {
           find: '@',
-          replacement: path.resolve(__dirname, './src'),
+          replacement: path.resolve(import.meta.dirname, './src'),
         },
         {
           find: '@poolmaster/shared/generated/hey-api',
-          replacement: path.resolve(__dirname, '../../packages/shared/generated/hey-api'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/generated/hey-api'),
         },
         {
           find: '@poolmaster/shared/generated',
-          replacement: path.resolve(__dirname, '../../packages/shared/generated/api-types.ts'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/generated/api-types.ts'),
         },
         {
           find: '@poolmaster/shared/dto',
-          replacement: path.resolve(__dirname, '../../packages/shared/dto/index.ts'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/dto/index.ts'),
         },
         {
           find: '@poolmaster/shared/api-routes',
-          replacement: path.resolve(__dirname, '../../packages/shared/api-routes.ts'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/api-routes.ts'),
         },
         {
           find: '@poolmaster/shared/domain',
-          replacement: path.resolve(__dirname, '../../packages/shared/domain/index.ts'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/domain/index.ts'),
         },
         {
           find: '@poolmaster/shared',
-          replacement: path.resolve(__dirname, '../../packages/shared'),
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared'),
         },
       ],
     },
