@@ -24,6 +24,8 @@ import {
   type LiveGolfContestantRecord,
   type LiveGolfRoundRecord,
   type LiveGolfRoundStatusKind,
+  type LiveReplayRequest,
+  type LiveReplayResponse,
   type LiveScoresSnapshotResponse,
   type MockEventStateKind,
   type ScenarioSummary,
@@ -34,6 +36,13 @@ import {
   buildMockGolfOddsContestants,
   buildMockGolfRankingContestants,
 } from './golf-player-pool';
+import {
+  golfLiveTimelineEndsAt,
+  golfLiveTimelinePosition,
+  hashUnit,
+  simulateGolfLiveScores,
+  type GolfLiveTimeline,
+} from './golf-live-simulation';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -613,16 +622,6 @@ function resolveContestantsForFeed(
   }
 
   return event.field.contestants;
-}
-
-function hashUnit(seed: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  return (hash >>> 0) / 4294967295;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -1452,12 +1451,34 @@ const minuteMs = 60 * 1000;
 const manualTestPhaseMinutes = 20;
 const manualTestPhaseMs = manualTestPhaseMinutes * minuteMs;
 const manualTestEventType = 'relative-manual-test';
+const defaultReplayMinutesPerRound = 20;
 
 type ManualTestLifecyclePhase = 'open' | 'field_locked' | 'in_progress' | 'completed';
+
+/** No replay is running for the event; the replay routes answer 404 with it. */
+export class LiveReplayNotFoundError extends Error {
+  public readonly statusCode = 404;
+
+  public constructor(scenarioId: string, eventId: string) {
+    super(`No live replay is running for ${scenarioId}/${eventId}`);
+    this.name = 'LiveReplayNotFoundError';
+  }
+}
+
+/** A replay was asked for on a non-golf scenario; the replay routes answer 409 with it. */
+export class LiveReplayUnsupportedError extends Error {
+  public readonly statusCode = 409;
+
+  public constructor(scenarioId: string) {
+    super(`Live replay is only supported for GOLF scenarios: ${scenarioId}`);
+    this.name = 'LiveReplayUnsupportedError';
+  }
+}
 
 export class ScenarioStore {
   private readonly staticScenarios: readonly ContestFeedScenarioRecord[];
   private readonly liveScoreTicks = new Map<string, number>();
+  private readonly liveReplays = new Map<string, GolfLiveTimeline>();
 
   public constructor(
     scenarioDir: string,
@@ -1812,6 +1833,10 @@ export class ScenarioStore {
     const event = this.getEvent(scenarioId, eventId, mockEventState);
     const tickKey = `${scenarioId}:${eventId}`;
     const now = this.currentNow();
+    const replay = mockEventState === undefined ? this.liveReplays.get(tickKey) : undefined;
+    if (replay) {
+      return this.buildReplayLiveScores(scenario, event, replay, now);
+    }
     const manualLifecycle = summarizeManualLifecycle(event, now);
     const liveState = scenario.sport === 'GOLF' ? resolveGolfLiveState(event, mockEventState) : 'pre-live';
     const tick = explicitTick
@@ -1866,6 +1891,113 @@ export class ScenarioStore {
       'Built mock live score response payload',
     );
     return response;
+  }
+
+  /**
+   * Starts (or restarts) a time-driven live replay of a golf event (#382). Until it is
+   * stopped, every `/scores` request without a `mockEventState` token is answered from the
+   * replay clock instead of the fixed state machine. Held in memory only.
+   */
+  public startLiveReplay(scenarioId: string, eventId: string, request: LiveReplayRequest): LiveReplayResponse {
+    const scenario = this.getScenario(scenarioId);
+    if (scenario.sport !== 'GOLF') {
+      throw new LiveReplayUnsupportedError(scenarioId);
+    }
+    this.getEvent(scenarioId, eventId);
+
+    const startsAt = request.startsAt ? new Date(request.startsAt) : this.currentNow();
+    if (Number.isNaN(startsAt.getTime())) {
+      throw new Error(`Live replay startsAt is not a valid date-time: ${request.startsAt}`);
+    }
+    const timeline: GolfLiveTimeline = {
+      startsAt,
+      minutesPerRound: request.minutesPerRound ?? defaultReplayMinutesPerRound,
+      minutesBetweenRounds: request.minutesBetweenRounds ?? 0,
+    };
+    this.liveReplays.set(`${scenarioId}:${eventId}`, timeline);
+    this.logger?.info(
+      {
+        action: 'mockScenarioStore.startLiveReplay',
+        data: {
+          scenarioId,
+          eventId,
+          startsAt: timeline.startsAt.toISOString(),
+          minutesPerRound: timeline.minutesPerRound,
+          minutesBetweenRounds: timeline.minutesBetweenRounds,
+        },
+      },
+      'Started mock live replay',
+    );
+    return this.describeLiveReplay(scenarioId, eventId, timeline);
+  }
+
+  public getLiveReplay(scenarioId: string, eventId: string): LiveReplayResponse {
+    this.getEvent(scenarioId, eventId);
+    const timeline = this.liveReplays.get(`${scenarioId}:${eventId}`);
+    if (!timeline) {
+      throw new LiveReplayNotFoundError(scenarioId, eventId);
+    }
+    return this.describeLiveReplay(scenarioId, eventId, timeline);
+  }
+
+  public stopLiveReplay(scenarioId: string, eventId: string): void {
+    this.getEvent(scenarioId, eventId);
+    const stopped = this.liveReplays.delete(`${scenarioId}:${eventId}`);
+    this.logger?.info(
+      { action: 'mockScenarioStore.stopLiveReplay', data: { scenarioId, eventId, stopped } },
+      'Stopped mock live replay',
+    );
+  }
+
+  private describeLiveReplay(scenarioId: string, eventId: string, timeline: GolfLiveTimeline): LiveReplayResponse {
+    const position = golfLiveTimelinePosition(timeline, this.currentNow());
+    return {
+      scenarioId,
+      eventId,
+      startsAt: timeline.startsAt.toISOString(),
+      endsAt: golfLiveTimelineEndsAt(timeline).toISOString(),
+      minutesPerRound: timeline.minutesPerRound,
+      minutesBetweenRounds: timeline.minutesBetweenRounds,
+      phase: position.phase,
+      currentRound: position.currentRound,
+    };
+  }
+
+  private buildReplayLiveScores(
+    scenario: ContestFeedScenarioRecord,
+    event: ContestFeedEventRecord,
+    timeline: GolfLiveTimeline,
+    now: Date,
+  ): LiveScoresSnapshotResponse {
+    const position = golfLiveTimelinePosition(timeline, now);
+    const contestants = simulateGolfLiveScores({
+      eventSeed: event.metadata?.externalEventId ?? event.eventId,
+      contestants: resolveContestantsForFeed(scenario.sport, event),
+      timeline,
+      now,
+    });
+    this.logger?.info(
+      {
+        action: 'mockScenarioStore.getLiveScores.replay',
+        data: {
+          scenarioId: scenario.scenarioId,
+          eventId: event.eventId,
+          phase: position.phase,
+          currentRound: position.currentRound,
+          contestantCount: contestants.length,
+        },
+      },
+      'Built mock live replay score response',
+    );
+    return {
+      scenarioId: scenario.scenarioId,
+      eventId: event.eventId,
+      eventName: event.name,
+      feedKind: 'results',
+      asOf: now.toISOString(),
+      note: `Live replay ${position.phase}${position.currentRound ? ` round ${position.currentRound}` : ''}`,
+      contestants,
+    };
   }
 }
 

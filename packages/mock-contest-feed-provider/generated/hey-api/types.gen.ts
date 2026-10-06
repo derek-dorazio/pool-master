@@ -746,6 +746,107 @@ export type GetMockContestFeedScoresSnapshotResponses = {
 
 export type GetMockContestFeedScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponses[keyof GetMockContestFeedScoresSnapshotResponses];
 
+export type StopMockContestFeedLiveReplayData = {
+    body?: never;
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay';
+};
+
+export type StopMockContestFeedLiveReplayResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type StopMockContestFeedLiveReplayResponse = StopMockContestFeedLiveReplayResponses[keyof StopMockContestFeedLiveReplayResponses];
+
+export type GetMockContestFeedLiveReplayData = {
+    body?: never;
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay';
+};
+
+export type GetMockContestFeedLiveReplayErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        message?: string;
+    };
+};
+
+export type GetMockContestFeedLiveReplayError = GetMockContestFeedLiveReplayErrors[keyof GetMockContestFeedLiveReplayErrors];
+
+export type GetMockContestFeedLiveReplayResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        scenarioId: string;
+        eventId: string;
+        startsAt: string;
+        endsAt: string;
+        minutesPerRound: number;
+        minutesBetweenRounds: number;
+        phase: 'scheduled' | 'in_progress' | 'completed';
+        currentRound: null | number;
+    };
+};
+
+export type GetMockContestFeedLiveReplayResponse = GetMockContestFeedLiveReplayResponses[keyof GetMockContestFeedLiveReplayResponses];
+
+export type StartMockContestFeedLiveReplayData = {
+    body: {
+        startsAt?: string;
+        minutesPerRound?: number;
+        minutesBetweenRounds?: number;
+    };
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay';
+};
+
+export type StartMockContestFeedLiveReplayErrors = {
+    /**
+     * Default Response
+     */
+    409: {
+        message?: string;
+    };
+};
+
+export type StartMockContestFeedLiveReplayError = StartMockContestFeedLiveReplayErrors[keyof StartMockContestFeedLiveReplayErrors];
+
+export type StartMockContestFeedLiveReplayResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        scenarioId: string;
+        eventId: string;
+        startsAt: string;
+        endsAt: string;
+        minutesPerRound: number;
+        minutesBetweenRounds: number;
+        phase: 'scheduled' | 'in_progress' | 'completed';
+        currentRound: null | number;
+    };
+};
+
+export type StartMockContestFeedLiveReplayResponse = StartMockContestFeedLiveReplayResponses[keyof StartMockContestFeedLiveReplayResponses];
+
 export type GetMockContestFeedEventUpdatesData = {
     body?: never;
     path: {
