@@ -59,7 +59,15 @@ export interface ProviderPayloadCapture {
   operation: string;
   path?: string;
   capturedAt: string;
-  raw: unknown;
+  /** The response JSON. Absent when `rawOmitted` is set. */
+  raw?: unknown;
+  /** Size of the response body in characters, when the adapter measured it. */
+  bytes?: number;
+  /**
+   * The body was left out because it would have taken the run's capture past its size budget
+   * (#418): only the path and size are kept. The run's payload reports `rawTruncated`.
+   */
+  rawOmitted?: true;
 }
 
 export interface ProviderPayloadCaptureSession {

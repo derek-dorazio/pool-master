@@ -1176,7 +1176,7 @@ function buildProviderPayload(
     const payload: IngestionJobProviderPayload = {
       operation,
       rawCaptured: raw.length > 0,
-      rawTruncated: false,
+      rawTruncated: raw.some((entry) => entry.rawOmitted === true),
     };
     if (raw.length > 0) {
       payload.raw = raw;
@@ -1196,7 +1196,7 @@ function buildProviderPayload(
   const payload: IngestionJobProviderPayload = {
     operation,
     rawCaptured: raw.length > 0,
-    rawTruncated: false,
+    rawTruncated: raw.some((entry) => entry.rawOmitted === true),
   };
   if (raw.length > 0) {
     payload.raw = raw;

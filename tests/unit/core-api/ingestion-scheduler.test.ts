@@ -370,6 +370,37 @@ describe('IngestionScheduler', () => {
   });
 
   describe('runSportSync', () => {
+    it('marks a sync run\'s provider payload truncated when the capture left out a response past its size budget', async () => {
+      const capturedAt = '2026-05-30T12:00:00.000Z';
+      const captured: ProviderPayloadCapture[] = [
+        { operation: 'mock-contest-feed.request', path: '/v1/scenarios', capturedAt, raw: { scenarios: [] }, bytes: 16 },
+        { operation: 'mock-contest-feed.request', path: '/v1/scenarios/pga-tour-2026/events/e1/detail', capturedAt, rawOmitted: true, bytes: 5_000_000 },
+      ];
+      const provider: SportDataProvider & ProviderPayloadDiagnostics = Object.assign(fakeSportDataProvider(), {
+        clearProviderPayloads: () => undefined,
+        consumeProviderPayloads: () => [],
+        beginProviderPayloadCapture: () => ({
+          run: async <T>(work: () => Promise<T>): Promise<T> => work(),
+          consumeProviderPayloads: () => captured,
+        }),
+      });
+      const scheduler = new IngestionScheduler(createMockRegistry(provider), mockCallbacks);
+
+      const [job] = await scheduler.runSportSync({
+        sport: 'GOLF' as Sport,
+        feeds: ['EVENTSCHEDULE'],
+        from: new Date('2026-05-30T12:00:00.000Z'),
+        to: new Date('2026-06-29T12:00:00.000Z'),
+      });
+
+      expect(job.providerPayload).toEqual({
+        operation: 'EVENTSCHEDULE',
+        rawCaptured: true,
+        rawTruncated: true,
+        raw: captured,
+      });
+    });
+
     it('pool-master-rop.68.2.7 isolates provider payload diagnostics for overlapping sync runs', async () => {
       const provider = new DeferredPayloadCaptureProvider();
       const registry = createMockRegistry(provider);
