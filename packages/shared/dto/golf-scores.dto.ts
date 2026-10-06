@@ -16,9 +16,9 @@ export const GolfRoundScoreRowSchema = z.object({
   participantId: z.string().optional(),
   externalId: z.string().optional(),
   playerName: z.string().optional(),
-  strokes: z.number().int().nullable().describe('Null when only the score to par is known; such a row is not stored.'),
+  strokes: z.number().int().min(1).nullable().describe('Null when only the score to par is known; such a row is not stored.'),
   scoreToPar: z.number().int(),
-  thru: z.number().int().min(0).optional(),
+  thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. Playoff holes are not part of any round (#118).'),
   status: GolfRoundStatusDtoSchema,
   completedAt: z.string().datetime().optional(),
 }).describe('One golfer\'s result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event\'s field.');
@@ -62,9 +62,9 @@ export const GolfRoundScorePreviewResponseSchema = z.object({
 export type GolfRoundScorePreviewResponse = z.infer<typeof GolfRoundScorePreviewResponseSchema>;
 
 export const UpdateGolfRoundScoreRequestSchema = z.object({
-  strokes: z.number().int().optional(),
+  strokes: z.number().int().min(1).optional(),
   scoreToPar: z.number().int().optional(),
-  thru: z.number().int().min(0).optional(),
+  thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. Playoff holes are not part of any round (#118).'),
   status: GolfRoundStatusDtoSchema.optional(),
   completedAt: z.string().datetime().nullable().optional().describe('Null clears it.'),
 }).describe('A correction to one golfer\'s round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.');
