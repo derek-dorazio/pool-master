@@ -10,6 +10,7 @@ import {
 } from '../../../packages/core-api/src/modules/leagues/permissions';
 import { buildContest, buildMembership } from '../../factories';
 import { fakeContestRepo, fakeLeagueMembershipRepo } from '../../support/repo-fakes';
+import { fakeLogger } from '../../support/fake-logger';
 
 function createReply() {
   let statusCode = 200;
@@ -49,15 +50,6 @@ function expectReplyError(
   });
 }
 
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-}
-
 describe('league permissions', () => {
   it('allows any member through requireLeagueMembership', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
@@ -71,7 +63,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -90,7 +82,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'outsider', email: 'outsider@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -115,7 +107,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -132,7 +124,7 @@ describe('league permissions', () => {
       {
         headers: {},
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -149,7 +141,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: {},
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -171,7 +163,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -191,7 +183,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );
@@ -231,7 +223,7 @@ describe('contest-scoped league permissions (#193)', () => {
           ? { ...authUser, email: `${authUser.userId}@integration.test`, sessionId: null }
           : undefined,
         params: options.contestId === null ? {} : { contestId: options.contestId ?? 'contest-1' },
-        log: createLogger(),
+        log: fakeLogger(),
       } as never,
       reply as never,
     );

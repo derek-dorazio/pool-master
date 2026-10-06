@@ -5,16 +5,8 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
+import { fakeLogger } from '../../support/fake-logger';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function buildInProgressEvent(): SportEvent {
   return {
@@ -94,8 +86,8 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn(),
       },
     };
-    const logger = createLogger();
-    const persistence = new IngestionPersistence(prisma as any, logger as any);
+    const logger = fakeLogger();
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), logger);
     const events: SportEvent[] = [
       {
         externalId: 'golf-weekend-1',
@@ -186,7 +178,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
     const ranking: ProviderRanking = {
       providerId: 'mock-contest-feed',
       participantExternalId: 'golfer-01',
@@ -251,7 +243,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
     const rankings: ProviderRanking[] = [
       {
         providerId: 'mock-contest-feed',
@@ -318,7 +310,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-existing' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
     const result = await persistence.persistRankingsWithDiagnostics([
       {
@@ -373,7 +365,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -509,7 +501,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
     const result = await persistence.persistEventDetailWithDiagnostics(detail);
 
@@ -564,7 +556,7 @@ describe('IngestionPersistence', () => {
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -635,8 +627,8 @@ describe('IngestionPersistence', () => {
       applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
     };
     const persistence = new IngestionPersistence(
-      prisma as any,
-      createLogger() as any,
+      asPrismaClient(prisma),
+      fakeLogger(),
       eventLifecycleService,
     );
 
@@ -656,7 +648,7 @@ describe('IngestionPersistence', () => {
         update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
     };
-    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
 
     await persistence.persistEvents([buildInProgressEvent()]);
 

@@ -2,6 +2,10 @@ import {
   EventScoreSourceError,
   EventScoreSourceService,
 } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { Sport } from '@poolmaster/shared/domain';
+import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function buildProviderEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -18,12 +22,12 @@ function buildProviderEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildProvider(overrides: Record<string, unknown> = {}) {
-  return {
+function buildProvider(overrides: Partial<SportDataProvider> = {}): SportDataProvider {
+  return fakeSportDataProvider({
     providerId: 'mock-golf',
     getUpcomingEvents: jest.fn().mockResolvedValue([buildProviderEvent()]),
     ...overrides,
-  };
+  });
 }
 
 describe('EventScoreSourceService.listCandidateEvents', () => {
@@ -32,11 +36,11 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
   });
 
   it('pool-master-753 404s PROVIDER_NOT_FOUND when the providerId has no registered provider', async () => {
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(null) };
+    const providerRegistry = registryWith(null);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    await expect(service.listCandidateEvents('unknown', 'GOLF' as any)).rejects.toMatchObject({
+    await expect(service.listCandidateEvents('unknown', Sport.GOLF)).rejects.toMatchObject({
       code: 'PROVIDER_NOT_FOUND',
       statusCode: 404,
     });
@@ -45,11 +49,11 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
   it('pool-master-753 calls provider.getUpcomingEvents with a default now-3d..now+90d window when from/to are omitted', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2027-01-01T00:00:00.000Z'));
     const provider = buildProvider();
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    await service.listCandidateEvents('mock-golf', 'GOLF' as any);
+    await service.listCandidateEvents('mock-golf', Sport.GOLF);
 
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
       from: new Date('2026-12-29T00:00:00.000Z'),
@@ -59,13 +63,13 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
   it('pool-master-753 passes explicit from/to through unchanged', async () => {
     const provider = buildProvider();
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
     const from = new Date('2027-04-05T00:00:00.000Z');
     const to = new Date('2027-04-14T00:00:00.000Z');
 
-    await service.listCandidateEvents('mock-golf', 'GOLF' as any, { from, to });
+    await service.listCandidateEvents('mock-golf', Sport.GOLF, { from, to });
 
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', { from, to });
   });
@@ -75,11 +79,11 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([event]),
     });
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    const result = await service.listCandidateEvents('mock-golf', 'GOLF' as any);
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF);
 
     // #205 — the browse returns provider events; the DTO mapper owns the wire shape.
     expect(result).toEqual([event]);
@@ -92,13 +96,13 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
         buildProviderEvent({ externalId: 'ext-2', name: 'LIV Golf Miami' }),
       ]),
     });
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = {
       sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'PGA' }) },
     };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    const result = await service.listCandidateEvents('mock-golf', 'GOLF' as any, { sportLeagueId: 'league-1' });
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
 
     expect(prisma.sportLeague.findUnique).toHaveBeenCalledWith({ where: { id: 'league-1' } });
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
@@ -111,13 +115,13 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
         buildProviderEvent({ externalId: 'ext-2', name: 'LIV Golf Miami' }),
       ]),
     });
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = {
       sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: null }) },
     };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    const result = await service.listCandidateEvents('mock-golf', 'GOLF' as any, { sportLeagueId: 'league-1' });
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
 
     expect(result.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
   });
@@ -129,11 +133,11 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
         buildProviderEvent({ externalId: 'ext-2', name: 'US Open' }),
       ]),
     });
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const providerRegistry = registryWith(provider);
     const prisma = { sportLeague: { findUnique: jest.fn() } };
-    const service = new EventScoreSourceService(prisma as any, providerRegistry as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
 
-    const result = await service.listCandidateEvents('mock-golf', 'GOLF' as any, { search: 'masters' });
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { search: 'masters' });
 
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
   });
@@ -141,8 +145,8 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
 describe('EventScoreSourceService.getProviderEventDetail', () => {
   it('pool-master-5h3 404s PROVIDER_NOT_FOUND when the providerId has no registered provider', async () => {
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(null) };
-    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+    const providerRegistry = registryWith(null);
+    const service = new EventScoreSourceService(asPrismaClient({}), providerRegistry);
 
     await expect(service.getProviderEventDetail('unknown', 'ext-1')).rejects.toMatchObject({
       code: 'PROVIDER_NOT_FOUND',
@@ -151,9 +155,9 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
   });
 
   it('pool-master-5h3 404s PROVIDER_EVENT_NOT_FOUND when the provider returns no event detail', async () => {
-    const provider = { providerId: 'mock-golf', getEventDetails: jest.fn().mockResolvedValue(null) };
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
-    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+    const provider = buildProvider({ getEventDetails: jest.fn().mockResolvedValue(null) });
+    const providerRegistry = registryWith(provider);
+    const service = new EventScoreSourceService(asPrismaClient({}), providerRegistry);
 
     await expect(service.getProviderEventDetail('mock-golf', 'missing-ext')).rejects.toMatchObject({
       code: 'PROVIDER_EVENT_NOT_FOUND',
@@ -162,8 +166,7 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
   });
 
   it('pool-master-5h3 returns name/venue/dates from the provider event detail', async () => {
-    const provider = {
-      providerId: 'mock-golf',
+    const provider = buildProvider({
       getEventDetails: jest.fn().mockResolvedValue({
         name: 'The Masters',
         venue: 'Augusta National',
@@ -171,9 +174,9 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
         endDate: new Date('2027-04-11T00:00:00.000Z'),
         participants: [],
       }),
-    };
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
-    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+    });
+    const providerRegistry = registryWith(provider);
+    const service = new EventScoreSourceService(asPrismaClient({}), providerRegistry);
 
     const result = await service.getProviderEventDetail('mock-golf', 'ext-1');
 
@@ -187,16 +190,15 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
   });
 
   it('pool-master-5h3 defaults venue/endDate to null when the provider omits them', async () => {
-    const provider = {
-      providerId: 'mock-golf',
+    const provider = buildProvider({
       getEventDetails: jest.fn().mockResolvedValue({
         name: 'The Masters',
         startDate: new Date('2027-04-08T00:00:00.000Z'),
         participants: [],
       }),
-    };
-    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
-    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+    });
+    const providerRegistry = registryWith(provider);
+    const service = new EventScoreSourceService(asPrismaClient({}), providerRegistry);
 
     const result = await service.getProviderEventDetail('mock-golf', 'ext-1');
 
@@ -208,7 +210,7 @@ describe('EventScoreSourceService.getProviderEventDetail', () => {
 describe('EventScoreSourceService.linkScoreSource', () => {
   it('pool-master-753 404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
     const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue(null) } };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await expect(
       service.linkScoreSource('missing', { providerId: 'mock-golf', externalId: 'ext-1' }),
@@ -221,7 +223,7 @@ describe('EventScoreSourceService.linkScoreSource', () => {
         findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'FULL' }),
       },
     };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await expect(
       service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
@@ -236,7 +238,7 @@ describe('EventScoreSourceService.linkScoreSource', () => {
         update: jest.fn(),
       },
     };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await expect(
       service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' }),
@@ -255,7 +257,7 @@ describe('EventScoreSourceService.linkScoreSource', () => {
         update: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await service.linkScoreSource('event-1', { providerId: 'mock-golf', externalId: 'ext-1' });
 
@@ -269,7 +271,7 @@ describe('EventScoreSourceService.linkScoreSource', () => {
 describe('EventScoreSourceService.unlinkScoreSource', () => {
   it('pool-master-753 404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
     const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue(null) } };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await expect(service.unlinkScoreSource('missing')).rejects.toMatchObject({
       code: 'EVENT_NOT_FOUND',
@@ -283,7 +285,7 @@ describe('EventScoreSourceService.unlinkScoreSource', () => {
         findUnique: jest.fn().mockResolvedValue({ id: 'event-1', syncScope: 'FULL' }),
       },
     };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await expect(service.unlinkScoreSource('event-1')).rejects.toMatchObject({
       code: 'EVENT_NOT_ADMIN_MANAGED',
@@ -298,7 +300,7 @@ describe('EventScoreSourceService.unlinkScoreSource', () => {
         update: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new EventScoreSourceService(prisma as any);
+    const service = new EventScoreSourceService(asPrismaClient(prisma));
 
     await service.unlinkScoreSource('event-1');
 

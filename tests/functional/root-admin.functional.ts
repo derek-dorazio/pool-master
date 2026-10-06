@@ -553,16 +553,19 @@ describe('SDK Functional: Root Admin', () => {
     const email = createFunctionalEmail('register-root-admin');
     const username = `register-${Date.now().toString(36)}`;
 
+    // `isRootAdmin` is not a registration field. Built apart from the call so the excess
+    // property reaches the wire, as a hostile client would send it, without casting the body.
+    const body = {
+      username,
+      email,
+      password: 'FuncTest123!',
+      firstName: 'Registration',
+      lastName: 'Probe',
+      isRootAdmin: true,
+    };
     const response = await registerUser({
       client: getSdkClient(),
-      body: {
-        username,
-        email,
-        password: 'FuncTest123!',
-        firstName: 'Registration',
-        lastName: 'Probe',
-        isRootAdmin: true,
-      } as any,
+      body,
     });
 
     expect(response.data?.user.isRootAdmin).toBe(false);

@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import {
   buildRequestLogBindings,
   createFastifyLoggerOptions,
@@ -83,11 +83,14 @@ describe('core-api logging foundation', () => {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
       } as unknown as FastifyReply;
-      const missingLeagueError = Object.assign(new Error('League not found'), {
+      // A domain error carries no `code`; the handler reads an empty one as absent, which is
+      // how a plain `Error` satisfies the `FastifyError` it is declared to take.
+      const missingLeagueError: FastifyError = Object.assign(new Error('League not found'), {
         name: 'LeagueNotFoundError',
+        code: '',
       });
 
-      globalErrorHandler(missingLeagueError as any, request, reply);
+      globalErrorHandler(missingLeagueError, request, reply);
 
       expect(warn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -118,9 +121,9 @@ describe('core-api logging foundation', () => {
         status: jest.fn().mockReturnThis(),
         send: jest.fn(),
       } as unknown as FastifyReply;
-      const unexpectedError = new Error('Provider timed out');
+      const unexpectedError: FastifyError = Object.assign(new Error('Provider timed out'), { code: '' });
 
-      globalErrorHandler(unexpectedError as any, request, reply);
+      globalErrorHandler(unexpectedError, request, reply);
 
       expect(error).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -3,7 +3,16 @@
  * §3.4/§4.4/§5.1; moved to the ingestion module and given the provider-event shape by #205).
  */
 import { createIngestionHandlers } from '../../../packages/core-api/src/modules/ingestion/handler';
-import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import {
+  EventScoreSourceError,
+  EventScoreSourceService,
+} from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { asFastifyReply, asFastifyRequest } from '../../support/fastify-doubles';
+import { stubInstance } from '../../support/stub-instance';
+
+type Handlers = ReturnType<typeof createIngestionHandlers>;
+type CatalogEventsRequest = Parameters<Handlers['listProviderCatalogEvents']>[0];
 
 function buildReply() {
   return {
@@ -28,13 +37,12 @@ function buildCatalogEventRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildHandlers(eventScoreSourceOverrides: Record<string, unknown> = {}) {
-  const eventScoreSourceService = {
+function buildHandlers(eventScoreSourceOverrides: Partial<EventScoreSourceService> = {}) {
+  const eventScoreSourceService = stubInstance(EventScoreSourceService, {
     listCandidateEvents: jest.fn().mockResolvedValue([buildCatalogEventRow()]),
     ...eventScoreSourceOverrides,
-  };
-  const ingestionService = {} as any;
-  const handlers = createIngestionHandlers(ingestionService, eventScoreSourceService as any);
+  });
+  const handlers = createIngestionHandlers(stubInstance(IngestionService, {}), eventScoreSourceService);
   return { handlers, eventScoreSourceService };
 }
 
@@ -43,7 +51,7 @@ describe('pool-master-753 — listProviderCatalogEvents handler', () => {
     const { handlers, eventScoreSourceService } = buildHandlers();
     const reply = buildReply();
 
-    await handlers.listProviderCatalogEvents({
+    await handlers.listProviderCatalogEvents(asFastifyRequest<CatalogEventsRequest>({
       params: { providerId: 'mock-golf' },
       query: {
         sport: 'GOLF',
@@ -52,7 +60,7 @@ describe('pool-master-753 — listProviderCatalogEvents handler', () => {
         to: '2027-04-14T00:00:00.000Z',
         search: 'masters',
       },
-    } as any, reply as any);
+    }), asFastifyReply(reply));
 
     expect(eventScoreSourceService.listCandidateEvents).toHaveBeenCalledWith('mock-golf', 'GOLF', {
       sportLeagueId: 'league-1',
@@ -83,10 +91,10 @@ describe('pool-master-753 — listProviderCatalogEvents handler', () => {
     const { handlers, eventScoreSourceService } = buildHandlers();
     const reply = buildReply();
 
-    await handlers.listProviderCatalogEvents({
+    await handlers.listProviderCatalogEvents(asFastifyRequest<CatalogEventsRequest>({
       params: { providerId: 'mock-golf' },
       query: { sport: 'GOLF' },
-    } as any, reply as any);
+    }), asFastifyReply(reply));
 
     expect(eventScoreSourceService.listCandidateEvents).toHaveBeenCalledWith('mock-golf', 'GOLF', {
       sportLeagueId: undefined,
@@ -104,10 +112,10 @@ describe('pool-master-753 — listProviderCatalogEvents handler', () => {
     });
     const reply = buildReply();
 
-    await handlers.listProviderCatalogEvents({
+    await handlers.listProviderCatalogEvents(asFastifyRequest<CatalogEventsRequest>({
       params: { providerId: 'unknown' },
       query: { sport: 'GOLF' },
-    } as any, reply as any);
+    }), asFastifyReply(reply));
 
     expect(reply.status).toHaveBeenCalledWith(404);
     expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({

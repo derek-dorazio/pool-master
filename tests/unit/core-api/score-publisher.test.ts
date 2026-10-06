@@ -21,6 +21,8 @@ import {
   LiveScorePersistenceUnsupportedError,
 } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import { fakeLogger } from '../../support/fake-logger';
+import { asPrismaClient } from '../../support/prisma-double';
 
 function buildSportEventStub(internalId = 'evt-1') {
   return {
@@ -39,14 +41,16 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
       };
 
-      const malformed = {
+      // Type-correct, schema-invalid: an empty id, round 0 and negative strokes are what the
+      // type cannot express and the runtime schema exists to reject.
+      const malformed: LiveScoreResult = {
         category: 'GOLF',
         externalEventId: 'evt-ext-1',
-        rounds: [{ participantExternalId: '', round: 0, strokes: -1, scoreToPar: 0, status: 'BOGUS' }],
+        rounds: [{ participantExternalId: '', round: 0, strokes: -1, scoreToPar: 0, status: 'COMPLETED' }],
       };
 
       await expect(
-        publishLiveScoreUpdate(malformed as any, { prisma: prisma as never, providerId: 'mock' }),
+        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock' }),
       ).rejects.toBeInstanceOf(LiveScoreValidationError);
       expect(prisma.sportEventParticipantRound.upsert).not.toHaveBeenCalled();
     });
@@ -74,7 +78,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn(),
         },
         sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
-      } as any;
+      };
 
       const result: LiveScoreResult = {
         category: 'GOLF',
@@ -85,7 +89,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       const persisted = await publishLiveScoreUpdate(result, {
-        prisma,
+        prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
       });
 
@@ -113,8 +117,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEventParticipant: { findMany: jest.fn() },
         sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
         sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
-      } as any;
-      const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() } as any;
+      };
+      const logger = fakeLogger();
 
       const result: LiveScoreResult = {
         category: 'GOLF',
@@ -125,7 +129,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       const persisted = await publishLiveScoreUpdate(result, {
-        prisma,
+        prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
         logger,
       });
@@ -151,7 +155,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEventParticipant: { findMany: jest.fn() },
         sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
         sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
-      } as any;
+      };
 
       const result: LiveScoreResult = {
         category: 'BASKETBALL',
@@ -160,7 +164,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       await expect(
-        publishLiveScoreUpdate(result, { prisma, providerId: 'mock' }),
+        publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock' }),
       ).rejects.toBeInstanceOf(LiveScorePersistenceUnsupportedError);
     });
   });

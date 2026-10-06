@@ -8,16 +8,10 @@ import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingesti
 import { Sport } from '../../../packages/shared/domain';
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
-
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
+import { fakeLogger } from '../../support/fake-logger';
+import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import { stubInstance } from '../../support/stub-instance';
+import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
 async function flushMicrotasks(times = 5): Promise<void> {
   for (let index = 0; index < times; index += 1) {
@@ -47,13 +41,11 @@ function echoSyncRunCreate() {
 
 describe('IngestionService manual sync submission', () => {
   it('pool-master-r04 rejects manual sync for sports outside ingestion scheduledSports config', async () => {
-    const registry = {
-      getProvider: jest.fn().mockReturnValue({
-        providerId: 'mock-contest-feed',
-        providerName: 'Mock Contest Feed Provider',
-        sportsCovered: [Sport.GOLF, Sport.TENNIS],
-      }),
-    };
+    const registry = registryWith(fakeSportDataProvider({
+      providerId: 'mock-contest-feed',
+      providerName: 'Mock Contest Feed Provider',
+      sportsCovered: [Sport.GOLF, Sport.TENNIS],
+    }));
     const ingestionConfigReader = {
       getConfig: jest.fn().mockResolvedValue({
         scheduledSports: [Sport.GOLF],
@@ -69,9 +61,8 @@ describe('IngestionService manual sync submission', () => {
     };
     const service = new IngestionService({
       ...ports(),
-      registry: registry as any,
-      scheduler: {} as any,
-      logger: createLogger() as any,
+      registry,
+      logger: fakeLogger(),
       ingestionConfigReader,
     });
 
@@ -94,14 +85,12 @@ describe('IngestionService manual sync submission', () => {
       });
     const providerSyncRunCreate = echoSyncRunCreate();
     const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
-    const registry = {
-      getProvider: jest.fn().mockReturnValue({
-        providerId: 'mock-contest-feed',
-        providerName: 'Mock Contest Feed Provider',
-        sportsCovered: [Sport.GOLF],
-      }),
-    };
-    const scheduler = {
+    const registry = registryWith(fakeSportDataProvider({
+      providerId: 'mock-contest-feed',
+      providerName: 'Mock Contest Feed Provider',
+      sportsCovered: [Sport.GOLF],
+    }));
+    const scheduler = stubInstance(IngestionScheduler, {
       runSportSync: jest.fn().mockResolvedValue([{
         jobType: 'EVENT_SCHEDULE_SYNC',
         providerId: 'mock-contest-feed',
@@ -113,7 +102,7 @@ describe('IngestionService manual sync submission', () => {
         warnings: [],
         stats: { providerRecordsReturned: 1 },
       }]),
-    };
+    });
     const ingestionConfigReader = {
       getConfig: jest.fn().mockResolvedValue({
         scheduledSports: [Sport.GOLF],
@@ -138,9 +127,9 @@ describe('IngestionService manual sync submission', () => {
     };
     const service = new IngestionService({
       ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn() } }),
-      registry: registry as any,
-      scheduler: scheduler as any,
-      logger: createLogger() as any,
+      registry,
+      scheduler,
+      logger: fakeLogger(),
       ingestionConfigReader,
       syncOrchestrator: new SyncOrchestrator({ now: () => now }),
     });
@@ -204,16 +193,13 @@ describe('IngestionService manual sync submission', () => {
       });
     const providerSyncRunCreate = echoSyncRunCreate();
     const providerSyncRunUpdate = jest.fn().mockResolvedValue(undefined);
-    const registry = {
-      getProvider: jest.fn().mockReturnValue({
-        providerId: 'mock-contest-feed',
-        providerName: 'Mock Contest Feed Provider',
-        sportsCovered: [Sport.GOLF],
-        getEventDetails: jest.fn(),
-        setMockEventState: jest.fn(),
-      }),
-    };
-    const scheduler = {
+    const registry = registryWith(fakeSportDataProvider({
+      providerId: 'mock-contest-feed',
+      providerName: 'Mock Contest Feed Provider',
+      sportsCovered: [Sport.GOLF],
+      getEventDetails: jest.fn(),
+    }));
+    const scheduler = stubInstance(IngestionScheduler, {
       runEventSync: jest.fn().mockResolvedValue([{
         jobType: 'EVENT_LIVE_SCORES_SYNC',
         providerId: 'mock-contest-feed',
@@ -226,7 +212,7 @@ describe('IngestionService manual sync submission', () => {
         warnings: [],
         stats: { liveScoreUpdatesReturned: 1 },
       }]),
-    };
+    });
     const ingestionConfigReader = {
       getConfig: jest.fn().mockResolvedValue({
         scheduledSports: [Sport.GOLF],
@@ -244,9 +230,9 @@ describe('IngestionService manual sync submission', () => {
       // pool-master-cgb — no local SportEvent row exists yet for this
       // manual sync target, so the syncScope guard is a permissive no-op.
       ...ports({ syncRuns: { create: providerSyncRunCreate, update: providerSyncRunUpdate, findAll: jest.fn() } }),
-      registry: registry as any,
-      scheduler: scheduler as any,
-      logger: createLogger() as any,
+      registry,
+      scheduler,
+      logger: fakeLogger(),
       ingestionConfigReader,
       syncOrchestrator: new SyncOrchestrator({ now: () => now }),
     });
@@ -298,14 +284,12 @@ describe('IngestionService manual sync submission', () => {
 
   describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
     function buildManualSyncService(findByProviderRef: jest.Mock) {
-      const registry = {
-        getProvider: jest.fn().mockReturnValue({
-          providerId: 'mock-contest-feed',
-          providerName: 'Mock Contest Feed Provider',
-          sportsCovered: [Sport.GOLF],
-        }),
-      };
-      const scheduler = { runEventSync: jest.fn().mockResolvedValue([]) };
+      const registry = registryWith(fakeSportDataProvider({
+        providerId: 'mock-contest-feed',
+        providerName: 'Mock Contest Feed Provider',
+        sportsCovered: [Sport.GOLF],
+      }));
+      const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
       const ingestionConfigReader = {
         getConfig: jest.fn().mockResolvedValue({ scheduledSports: [Sport.GOLF] }),
         getPerSportConfig: jest.fn(),
@@ -319,10 +303,10 @@ describe('IngestionService manual sync submission', () => {
             findAll: jest.fn(),
           },
         }),
-        registry: registry as any,
-        scheduler: scheduler as any,
-        logger: createLogger() as any,
-        ingestionConfigReader: ingestionConfigReader as any,
+        registry,
+        scheduler,
+        logger: fakeLogger(),
+        ingestionConfigReader,
       });
     }
 

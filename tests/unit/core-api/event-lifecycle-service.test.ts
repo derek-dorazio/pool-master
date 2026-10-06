@@ -21,16 +21,7 @@ import {
   fakeSquadMembershipRepo,
   fakeUserRepo,
 } from '../../support/repo-fakes';
-
-function createLogger() {
-  return {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
-  };
-}
+import { fakeLogger } from '../../support/fake-logger';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -140,7 +131,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z allows a declared transition for a ROOT_ADMIN actor', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -156,7 +147,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z rejects an undeclared transition for a ROOT_ADMIN actor with 422 SPORT_EVENT_INVALID_TRANSITION', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     await expect(
       service.applySportEventStatusTransition({
@@ -174,10 +165,10 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-g1z applies an undeclared transition anyway for a PROVIDER actor, only logging it', async () => {
-    const logger = createLogger();
+    const logger = fakeLogger();
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, logger as any);
+    const service = new EventLifecycleService(contests, sportEvents, logger);
 
     await expect(
       service.applySportEventStatusTransition({
@@ -199,7 +190,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const service = new EventLifecycleService(
       contests,
       sportEvents,
-      createLogger() as any,
+      fakeLogger(),
       undefined,
       'http://localhost:5173',
       golfContestSettlement,
@@ -217,7 +208,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-g1z sets endDate on completion only when it is not already set', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -233,7 +224,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const existingEndDate = new Date('2026-05-31T22:00:00.000Z');
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.IN_PROGRESS, endDate: existingEndDate });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -248,7 +239,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('allows a declared transition for a SYSTEM actor, the lifecycle scheduler', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     const result = await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
@@ -263,7 +254,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   it('pool-master-k6q rejects an undeclared transition for a SYSTEM actor with 422 SPORT_EVENT_INVALID_TRANSITION, same as ROOT_ADMIN', async () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps();
-    const service = new EventLifecycleService(contests, sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger());
 
     await expect(
       service.applySportEventStatusTransition({
@@ -292,7 +283,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const service = new EventLifecycleService(
       contests,
       sportEvents,
-      createLogger() as any,
+      fakeLogger(),
       undefined,
       'http://localhost:5173',
       settlement,
@@ -320,7 +311,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const service = new EventLifecycleService(
       contests,
       sportEvents,
-      createLogger() as any,
+      fakeLogger(),
       mailDelivery,
       'https://app.primetimecommissioner.com',
     );
@@ -371,7 +362,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const service = new EventLifecycleService(
       contests,
       sportEvents,
-      createLogger() as any,
+      fakeLogger(),
       mailDelivery,
     );
 
@@ -385,7 +376,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   it('pool-master-9ya keeps the transition successful when contest-started email delivery fails', async () => {
-    const logger = createLogger();
+    const logger = fakeLogger();
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
     const mailDelivery = {
@@ -395,7 +386,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const service = new EventLifecycleService(
       contests,
       sportEvents,
-      logger as any,
+      logger,
       mailDelivery,
     );
 
@@ -421,7 +412,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 describe('EventLifecycleService on an unknown event', () => {
   it('refuses with 404 SPORT_EVENT_NOT_FOUND and changes nothing', async () => {
     const { sportEvents, storedEvent } = seededEvents();
-    const service = new EventLifecycleService(contestDeps(), sportEvents, createLogger() as any);
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger());
 
     await expect(
       service.applySportEventStatusTransition({
