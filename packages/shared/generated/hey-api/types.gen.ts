@@ -1394,6 +1394,173 @@ export type CloneSportEventYearRequest = {
 };
 
 /**
+ * Creates each of the provider's events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded.
+ */
+export type ImportSportEventYearFromProviderRequest = {
+    /**
+     * The tour. Its matchKeyword must equal the provider's tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.
+     */
+    sportLeagueId: string;
+    /**
+     * Provider events starting in this calendar year (UTC) are imported, as editions branded with it.
+     */
+    eventYear: number;
+    providerId: string;
+};
+
+/**
+ * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+ */
+export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'EDITION_EXISTS';
+
+/**
+ * What an event-year import created and skipped. Running it again creates nothing new.
+ */
+export type ImportSportEventYearFromProviderResponse = {
+    /**
+     * The events created, in provider order.
+     */
+    created: Array<{
+        /**
+         * Sport-event identifier.
+         */
+        id: string;
+        /**
+         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+         */
+        externalId: string;
+        /**
+         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
+         */
+        providerId: string;
+        /**
+         * Sport the event belongs to.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Event name shown in contest and event selectors.
+         */
+        name: string;
+        /**
+         * Venue name when known; null otherwise.
+         */
+        venue: string | null;
+        /**
+         * Human-readable location when known; null otherwise.
+         */
+        location: string | null;
+        /**
+         * Event lifecycle status.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Scheduled or actual start time.
+         */
+        startDate: string;
+        /**
+         * Scheduled or actual end time when known; null otherwise.
+         */
+        endDate: string | null;
+        /**
+         * Number of rounds when the format has them; null otherwise.
+         */
+        rounds: number | null;
+        /**
+         * Field size the provider reports, when it reports one; null otherwise.
+         */
+        participantCount: number | null;
+        /**
+         * Number of event participants currently persisted for the event.
+         */
+        loadedParticipantCount: number;
+        /**
+         * When the event becomes available for contest setup.
+         */
+        releaseAt: string;
+        /**
+         * After this time, field changes are no longer honored for new contest setup.
+         */
+        fieldLocksAt: string;
+        /**
+         * Whether the field is locked for contest setup now: the provider has locked it, or fieldLocksAt has passed.
+         */
+        fieldLocked: boolean;
+        /**
+         * Contest-setup readiness right now.
+         */
+        readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+        /**
+         * Why the event is or is not contest-eligible right now.
+         */
+        readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+        /**
+         * Whether a contest can be created or configured for the event right now.
+         */
+        contestEligible: boolean;
+        /**
+         * The recurring tournament (event series) this is one edition of — the event's only parent.
+         */
+        eventSeriesId: string;
+        /**
+         * The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.
+         */
+        eventYear: number;
+        /**
+         * The sport league the event's series belongs to. Read through the series, not stored on the event.
+         */
+        sportLeagueId: string;
+        /**
+         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+         */
+        syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+        /**
+         * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
+         */
+        autoLifecycleEnabled: boolean;
+        /**
+         * Pick tiers defined for the event. (Admin-only: operational detail no member surface reads.)
+         */
+        tierCount: number;
+        /**
+         * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
+         */
+        contestCount: number;
+        /**
+         * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
+         */
+        allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        /**
+         * Provider-emitted event metadata captured at field-load time. (Admin-only: operational detail no member surface reads.)
+         */
+        metadata: {
+            [key: string]: unknown;
+        };
+        /**
+         * When the event row was created.
+         */
+        createdAt: string;
+        /**
+         * When the event row was last updated.
+         */
+        updatedAt: string;
+    }>;
+    /**
+     * Provider events left alone because PoolMaster already has them.
+     */
+    skipped: Array<{
+        /**
+         * The provider event id.
+         */
+        externalId: string;
+        name: string;
+        /**
+         * ALREADY_LINKED: an event is already linked to this provider event. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
+         */
+        reason: 'ALREADY_LINKED' | 'EDITION_EXISTS';
+    }>;
+};
+
+/**
  * Changes to an admin-managed event; omitted fields are left alone.
  */
 export type UpdateSportEventRequest = {
@@ -6526,7 +6693,7 @@ export type SportLeagueDto = {
      */
     name: string;
     /**
-     * Substring a provider event name carries when it belongs to this sport league; null when none is set.
+     * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
      */
     matchKeyword: string | null;
     /**
@@ -6590,7 +6757,7 @@ export type SportLeagueListResponse = {
          */
         name: string;
         /**
-         * Substring a provider event name carries when it belongs to this sport league; null when none is set.
+         * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
          */
         matchKeyword: string | null;
         /**
@@ -6641,7 +6808,7 @@ export type SportLeagueResponse = {
          */
         name: string;
         /**
-         * Substring a provider event name carries when it belongs to this sport league; null when none is set.
+         * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
          */
         matchKeyword: string | null;
         /**
@@ -6684,7 +6851,7 @@ export type CreateSportLeagueRequest = {
      */
     name: string;
     /**
-     * Provider event-name keyword for this sport league.
+     * Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import.
      */
     matchKeyword?: string;
 };
@@ -15838,6 +16005,115 @@ export type CloneEventYearResponses = {
 };
 
 export type CloneEventYearResponse = CloneEventYearResponses[keyof CloneEventYearResponses];
+
+export type ImportEventYearFromProviderData = {
+    body: ImportSportEventYearFromProviderRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/events/import-year-from-provider';
+};
+
+export type ImportEventYearFromProviderErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ImportEventYearFromProviderError = ImportEventYearFromProviderErrors[keyof ImportEventYearFromProviderErrors];
+
+export type ImportEventYearFromProviderResponses = {
+    /**
+     * What an event-year import created and skipped. Running it again creates nothing new.
+     */
+    201: ImportSportEventYearFromProviderResponse;
+};
+
+export type ImportEventYearFromProviderResponse = ImportEventYearFromProviderResponses[keyof ImportEventYearFromProviderResponses];
 
 export type CreateEventFromProviderEventData = {
     body: CreateSportEventFromProviderEventRequest;

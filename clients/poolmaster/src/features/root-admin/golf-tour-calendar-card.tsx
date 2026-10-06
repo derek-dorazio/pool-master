@@ -3,6 +3,7 @@ import { FormField, LinkButton, Select, Tile } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
 import { GolfTourTournamentCalendar } from './golf-tour-tournament-calendar';
 import { GolfTourYearActions } from './golf-tour-year-actions';
+import { GolfTourYearImport } from './golf-tour-year-import';
 import { useGolfTourTournamentsQuery } from './use-golf-catalog';
 
 /**
@@ -60,6 +61,7 @@ export function GolfTourCalendarCard({ tour }: { tour: SportLeagueDto }) {
             onCloned={setSelectedYear}
             tour={tour}
           />
+          <GolfTourYearImport eventYear={eventYear} tour={tour} />
           <LinkButton
             data-testid="root-admin-golf-tour-calendar-new-tournament"
             size="sm"

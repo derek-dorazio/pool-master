@@ -8,6 +8,30 @@ import { throwApiError } from '@/lib/errors';
 export type GolfProviderCatalogEvent = ProviderEventDto;
 
 /**
+ * The golf provider's id, resolved from the provider list (first provider covering GOLF).
+ * Shared by the catalog browse below and the tour year import (#385).
+ */
+export function useGolfProviderId(enabled: boolean) {
+  const providersQuery = useQuery({
+    enabled,
+    queryKey: QueryKeys.rootAdmin.providers,
+    queryFn: async () => {
+      const response = await listProviders();
+      if (!response.data?.providers) {
+        throwApiError(response.error, 'Provider list response is missing data.');
+      }
+      return response.data.providers;
+    },
+    retry: false,
+  });
+  return {
+    providerId: resolveGolfProviderId(providersQuery.data),
+    isSuccess: providersQuery.isSuccess,
+    isError: providersQuery.isError,
+  };
+}
+
+/**
  * plans/124 §4.4 — one place that resolves "the" golf provider and browses its
  * live event catalog. Shared by the tournament-creation "Browse provider events"
  * mode and the Tournament Home score-source link picker so they can't drift.
@@ -24,20 +48,8 @@ export function useGolfProviderCatalog(params: {
   sportLeagueId?: string;
   to?: string;
 }) {
-  const providersQuery = useQuery({
-    enabled: params.enabled,
-    queryKey: QueryKeys.rootAdmin.providers,
-    queryFn: async () => {
-      const response = await listProviders();
-      if (!response.data?.providers) {
-        throwApiError(response.error, 'Provider list response is missing data.');
-      }
-      return response.data.providers;
-    },
-    retry: false,
-  });
-
-  const providerId = resolveGolfProviderId(providersQuery.data);
+  const providersQuery = useGolfProviderId(params.enabled);
+  const { providerId } = providersQuery;
   const trimmedSearch = params.search.trim();
 
   const catalogQuery = useQuery({

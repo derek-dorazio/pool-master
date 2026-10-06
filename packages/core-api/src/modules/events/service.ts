@@ -71,6 +71,12 @@ export interface ProviderEventDetail {
   endDate: Date | null;
 }
 
+/** What a provider event-year import (#385) created, and what it left alone and why. */
+export interface ProviderEventYearImport {
+  created: SportEventSummary[];
+  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' }>;
+}
+
 /** Shift a date to the same month/day in `date.year + years` (leap-year safe). */
 export function shiftYears(date: Date, years: number): Date {
   const shifted = new Date(date.getTime());
@@ -213,6 +219,51 @@ export class SportEventService {
       'Created sport event from provider event',
     );
     return this.requireSummary(event.id);
+  }
+
+  /**
+   * #385 — a tour's provider slate for one year, created in one action. Each event goes
+   * through `createEventFromProviderEvent`, so it is created and linked exactly as a single
+   * browse-and-create would be. Events PoolMaster already has are skipped rather than
+   * refused, so the import can be run again: one already linked to the provider event, or
+   * a series that already has an edition that year (an admin-authored one, say).
+   */
+  async importProviderEventYear(input: {
+    sportLeagueId: string;
+    eventYear: number;
+    providerId: string;
+    providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
+  }): Promise<ProviderEventYearImport> {
+    const created: SportEventSummary[] = [];
+    const skipped: ProviderEventYearImport['skipped'] = [];
+    for (const providerEvent of input.providerEvents) {
+      const { externalId, name } = providerEvent;
+      if (await this.deps.sportEvents.findByProviderRef(input.providerId, externalId)) {
+        skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
+        continue;
+      }
+      try {
+        created.push(await this.createEventFromProviderEvent({
+          sportLeagueId: input.sportLeagueId,
+          eventYear: input.eventYear,
+          providerId: input.providerId,
+          externalId,
+          providerEvent,
+        }));
+      } catch (error) {
+        if (error instanceof SportEventError && error.code === 'EVENT_EDITION_ALREADY_EXISTS') {
+          skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    this.deps.logger?.info(
+      { sportLeagueId: input.sportLeagueId, eventYear: input.eventYear, providerId: input.providerId, createdCount: created.length, skippedCount: skipped.length },
+      'Imported provider event year',
+    );
+    return { created, skipped };
   }
 
   /**

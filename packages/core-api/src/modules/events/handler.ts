@@ -7,6 +7,7 @@ import type {
   CloneSportEventYearRequest,
   CreateSportEventFromProviderEventRequest,
   CreateSportEventRequest,
+  ImportSportEventYearFromProviderRequest,
   LinkSportEventScoreSourceRequest,
   ReplaceSportEventTierAssignmentsRequest,
   ReplaceSportEventTiersRequest,
@@ -35,6 +36,7 @@ import { sendError } from '../../core/error-handler';
 import {
   mapGolfRoundScorePreviewToDto,
   mapLiveSimulationToResponse,
+  mapProviderEventYearImportToResponse,
   mapSportEventParticipantToDto,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
@@ -133,6 +135,16 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     cloneEventYear: async (request: FastifyRequest<{ Body: CloneSportEventYearRequest }>, reply: FastifyReply) => {
       const cloned = await sportEvents.cloneEventYear(request.body);
       return reply.status(201).send({ events: cloned.map(mapSportEventToDto) } satisfies SportEventListResponse);
+    },
+
+    importEventYearFromProvider: async (
+      request: FastifyRequest<{ Body: ImportSportEventYearFromProviderRequest }>,
+      reply: FastifyReply,
+    ) => {
+      const { sportLeagueId, eventYear, providerId } = request.body;
+      const providerEvents = await scoreSource.listTourEventsForYear(providerId, sportLeagueId, eventYear);
+      const result = await sportEvents.importProviderEventYear({ sportLeagueId, eventYear, providerId, providerEvents });
+      return reply.status(201).send(mapProviderEventYearImportToResponse(result));
     },
 
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {

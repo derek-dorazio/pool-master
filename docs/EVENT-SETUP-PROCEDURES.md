@@ -59,6 +59,12 @@ instead; that list shows only events that start inside the tournament's own date
 mock lists the 2026 and 2027 PGA TOUR and LPGA Tour schedules, and their fields are each
 tour's ranked players (about 150), not the 80-golfer field used below.
 
+To create a whole year of those listed events at once, open the tour's page (`/manage/golf/leagues/:leagueId`),
+pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
+event the mock lists for that tour and year is created and linked for scores; ones the tour
+already has are skipped, so it is safe to run again. The tour's match keyword must be the
+mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385).
+
 ## 3. Check the rounds
 
 The Workflow card's *Rounds* list should show R1 to R4. Scores for a round with no round

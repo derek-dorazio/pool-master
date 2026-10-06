@@ -94,6 +94,52 @@ export class EventScoreSourceService {
   }
 
   /**
+   * #385 — a tour's slate for one year, for the bulk import. A provider event belongs to the
+   * tour when its `metadata.tour` equals the sport league's matchKeyword, ignoring case, so
+   * "PGA TOUR" never picks up "LPGA Tour" the way a name substring would. The year is the
+   * event's UTC start date.
+   */
+  async listTourEventsForYear(
+    providerId: string,
+    sportLeagueId: string,
+    eventYear: number,
+  ): Promise<Array<ProviderEventDetailSummary & { externalId: string }>> {
+    const provider = this.providerRegistry.getProviderById(providerId);
+    if (!provider) {
+      throw new EventScoreSourceError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+    const sportLeague = await this.prisma.sportLeague.findUnique({
+      where: { id: sportLeagueId },
+      include: { sport: true },
+    });
+    if (!sportLeague) {
+      throw new EventScoreSourceError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    }
+    const tour = sportLeague.matchKeyword?.trim().toLowerCase();
+    if (!tour) {
+      throw new EventScoreSourceError(
+        `${sportLeague.name} has no match keyword, so no provider tour can be matched to it.`,
+        'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD',
+        422,
+      );
+    }
+
+    const events = await provider.getUpcomingEvents(sportLeague.sport.name as Sport, {
+      from: new Date(Date.UTC(eventYear, 0, 1)),
+      to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
+    });
+    return events
+      .filter((event) => typeof event.metadata.tour === 'string' && event.metadata.tour.trim().toLowerCase() === tour)
+      .map((event) => ({
+        externalId: event.externalId,
+        name: event.name,
+        venue: event.venue ?? null,
+        startDate: event.startDate,
+        endDate: event.endDate ?? null,
+      }));
+  }
+
+  /**
    * The single place `createEventFromProviderEvent` (plans/124
    * §4.4a) resolves a browsed provider event's name/venue/dates to prefill a
    * new tournament — the same provider-registry resolution
