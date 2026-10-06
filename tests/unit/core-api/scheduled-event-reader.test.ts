@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import type { Sport } from '@poolmaster/shared/domain';
 

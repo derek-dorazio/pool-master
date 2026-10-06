@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/platform/poll-config-service';
 import { fakeLogger } from '../../support/fake-logger';

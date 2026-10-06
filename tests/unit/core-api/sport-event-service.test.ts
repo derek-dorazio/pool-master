@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';

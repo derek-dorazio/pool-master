@@ -1,7 +1,11 @@
 import Fastify from 'fastify';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
-import { ErrorEnvelopeSchema, ProviderManualSyncSubmissionResponseSchema } from '@poolmaster/shared/dto';
+import {
+  ErrorEnvelopeSchema,
+  ProviderManualSyncSubmissionResponseSchema,
+  type ErrorEnvelope,
+} from '@poolmaster/shared/dto';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
@@ -86,7 +90,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
 
     expect(res.statusCode).toBe(403);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-    expect(res.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(res.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
     expect(providerService.prepareSportSync).not.toHaveBeenCalled();
 
     await app.close();
@@ -106,7 +110,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
 
     expect(res.statusCode).toBe(403);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-    expect(res.json().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
+    expect(res.json<ErrorEnvelope>().error.code).toBe('ROOT_ADMIN_ACCESS_REQUIRED');
     expect(providerService.syncEventData).not.toHaveBeenCalled();
 
     await app.close();
@@ -169,7 +173,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       },
     });
     expect(sportRes.statusCode).toBe(422);
-    expect(sportRes.json().error).toEqual({
+    expect(sportRes.json<ErrorEnvelope>().error).toEqual({
       code: 'SYNC_REQUEST_INVALID',
       message: 'Sync request window end must be greater than or equal to its start.',
       details: { validationCode: 'INVALID_SYNC_WINDOW' },
@@ -184,7 +188,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       },
     });
     expect(eventRes.statusCode).toBe(422);
-    expect(eventRes.json().error).toEqual({
+    expect(eventRes.json<ErrorEnvelope>().error).toEqual({
       code: 'SYNC_REQUEST_INVALID',
       message: 'Event-scoped sync requests require a non-empty provider event ID.',
       details: { validationCode: 'INVALID_EVENT_ID' },

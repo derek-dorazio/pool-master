@@ -17,6 +17,7 @@ import {
   fakeUserRepo,
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
+import { mockFn } from '../../support/mock-fn';
 import type { User } from '../../../packages/shared/domain';
 
 /**
@@ -709,7 +710,7 @@ describe('SquadService', () => {
     });
     const squadRepo = createSquadRepo({
       findById: findByIdMock,
-      update: jest.fn().mockImplementation(async (id, updates) => ({
+      update: mockFn<SquadRepository['update']>(async (id, updates) => ({
         id,
         leagueId: 'league-1',
         createdBy: 'user-1',
@@ -754,7 +755,7 @@ describe('SquadService', () => {
         .mockResolvedValueOnce([activeTeamMemberships[1]])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]),
-      update: jest.fn().mockImplementation(async (id, updates) => ({
+      update: mockFn<SquadMembershipRepository['update']>(async (id, updates) => ({
         id,
         squadId: 'squad-1',
         leagueId: 'league-1',

@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import {
   InvitationService,
   InvitationEmailDeliveryError,
@@ -28,6 +29,7 @@ import {
   fakeSquadRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { asPrismaClient } from '../../support/prisma-double';
 
 function createMockInvitationRepo(
@@ -160,7 +162,7 @@ describe('InvitationService', () => {
       const invitationRepo = createMockInvitationRepo();
       const mailDelivery = {
         providerName: 'smtp' as const,
-        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
       const service = new InvitationService(
         invitationRepo,
@@ -264,8 +266,7 @@ describe('InvitationService', () => {
         emails: ['ALICE@Example.COM'],
         invitedBy: 'owner-1',
       });
-      const createArg = (invitationRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.email).toBe('alice@example.com');
+      expect(invitationRepo.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ email: 'alice@example.com' }));
     });
   });
 
@@ -283,9 +284,7 @@ describe('InvitationService', () => {
         maxUses: 10,
       });
       expect(invitationRepo.create).toHaveBeenCalledTimes(1);
-      const createArg = (invitationRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.inviteType).toBe(InviteType.LINK);
-      expect(createArg.maxUses).toBe(10);
+      expect(invitationRepo.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ inviteType: InviteType.LINK, maxUses: 10 }));
     });
 
     it('sets unlimited uses when maxUses is not provided', async () => {
@@ -299,8 +298,7 @@ describe('InvitationService', () => {
         leagueId: 'league-1',
         invitedBy: 'owner-1',
       });
-      const createArg = (invitationRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.maxUses).toBe(0);
+      expect(invitationRepo.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ maxUses: 0 }));
     });
   });
 
@@ -374,9 +372,7 @@ describe('InvitationService', () => {
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
       expect(squadRepo.create).toHaveBeenCalledTimes(1);
       expect(squadMembershipRepo.create).toHaveBeenCalledTimes(1);
-      const createArg = (membershipRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createArg.role).toBe(LeagueRole.MEMBER);
-      expect(createArg.userId).toBe('new-user');
+      expect(membershipRepo.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ role: LeagueRole.MEMBER, userId: 'new-user' }));
       expect(invitationRepo.update).toHaveBeenCalled();
     });
 
@@ -394,7 +390,7 @@ describe('InvitationService', () => {
       const membershipRepo = createMockMembershipRepo();
       const mailDelivery = {
         providerName: 'smtp' as const,
-        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
       const service = new InvitationService(
         invitationRepo,

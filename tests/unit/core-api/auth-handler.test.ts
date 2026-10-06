@@ -31,8 +31,8 @@ describe('auth handlers', () => {
     await handlers.refresh(request as never, reply);
 
     expect(authService.refresh).not.toHaveBeenCalled();
-    expect((reply.status as jest.Mock).mock.calls[0][0]).toBe(401);
-    expect((reply.send as jest.Mock).mock.calls[0][0]).toEqual({
+    expect(reply.status).toHaveBeenNthCalledWith(1, 401);
+    expect(reply.send).toHaveBeenNthCalledWith(1, {
       error: {
         code: 'INVALID_REFRESH_TOKEN',
         message: 'Missing refresh token',
@@ -82,8 +82,8 @@ describe('auth handlers', () => {
 
     await handlers.login(request as never, reply);
 
-    expect((reply.status as jest.Mock).mock.calls[0][0]).toBe(401);
-    expect((reply.send as jest.Mock).mock.calls[0][0]).toEqual({
+    expect(reply.status).toHaveBeenNthCalledWith(1, 401);
+    expect(reply.send).toHaveBeenNthCalledWith(1, {
       error: {
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid username, email, or password',

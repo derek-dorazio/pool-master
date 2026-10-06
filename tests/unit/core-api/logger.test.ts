@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import {
   buildRequestLogBindings,
@@ -102,7 +103,7 @@ describe('core-api logging foundation', () => {
         'Request completed with expected error',
       );
       expect(error).not.toHaveBeenCalled();
-      expect((reply.status as jest.Mock).mock.calls[0][0]).toBe(404);
+      expect(reply.status).toHaveBeenNthCalledWith(1, 404);
     });
 
     it('logs unexpected 5xx paths at error', () => {
@@ -135,7 +136,7 @@ describe('core-api logging foundation', () => {
         'Unhandled request error',
       );
       expect(warn).not.toHaveBeenCalled();
-      expect((reply.status as jest.Mock).mock.calls[0][0]).toBe(500);
+      expect(reply.status).toHaveBeenNthCalledWith(1, 500);
     });
   });
 });

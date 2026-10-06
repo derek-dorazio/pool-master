@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import Fastify from 'fastify';
 import jwt from 'jsonwebtoken';
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';

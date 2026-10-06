@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import {
   cleanupTestData,
@@ -7,7 +8,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
+import { ContestLeaderboardResponseSchema, type ErrorEnvelope } from '@poolmaster/shared/dto';
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
 
@@ -281,7 +282,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       headers: owner.headers,
     });
     expect(noRuleResponse.statusCode).toBe(400);
-    expect(noRuleResponse.json().error.code).toBe('CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING');
+    expect(noRuleResponse.json<ErrorEnvelope>().error.code).toBe('CONTEST_GOLF_LEADERBOARD_SCORING_RULE_MISSING');
   });
 });
 
