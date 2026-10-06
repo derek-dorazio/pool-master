@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import { expect, test, type APIRequestContext, type Page, type Response } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   adminSignIn,
   logOut,
   readAdminCredentials,
   type AdminCredentials,
 } from './helpers/admin-session';
+import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
 
@@ -985,39 +986,6 @@ async function expectListPageLoaded(page: Page, path: string, landmark: string, 
   await expect(page.getByTestId(table)).toBeVisible();
   await expect(page.getByTestId('shared-error-state')).toHaveCount(0);
   await expect(page.getByTestId('shared-forbidden-state')).toHaveCount(0);
-}
-
-// The generated SDK sends collection routes with a trailing slash (`/api/v1/events/`), so
-// paths compare without one.
-const trimSlash = (path: string) => path.replace(/\/+$/, '');
-
-function isCall(response: Response, method: string, path: string): boolean {
-  return (
-    response.request().method() === method &&
-    trimSlash(new URL(response.url()).pathname) === trimSlash(path)
-  );
-}
-
-// A write that never answers fails its own step quickly instead of at the test timeout.
-const WRITE_TIMEOUT_MS = 20_000;
-
-/**
- * Clicks a submit and returns the body of the write it sent, failing on a non-2xx.
- *
- * Safe only for a submit whose follow-up routing is client-side. A `waitForResponse` handle does
- * not survive a document navigation: once one lands, Chromium has discarded the body and
- * `.json()` fails (see act 1's tiers step). Every submit this file passes here routes through the
- * SPA router; a submit that triggers a real navigation must read server state with
- * `page.request` instead.
- */
-async function submitAndRead<T = unknown>(page: Page, submitTestId: string, method: string, path: string): Promise<T> {
-  const responded = page.waitForResponse((response) => isCall(response, method, path), {
-    timeout: WRITE_TIMEOUT_MS,
-  });
-  await page.getByTestId(submitTestId).click();
-  const response = await responded;
-  expect(response.ok(), `${method} ${path} answered ${response.status()}`).toBe(true);
-  return (await response.json()) as T;
 }
 
 function addDays(date: Date, days: number): Date {

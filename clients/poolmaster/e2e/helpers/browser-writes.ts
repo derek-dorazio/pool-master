@@ -1,8 +1,8 @@
 import { expect, type Page, type Response } from '@playwright/test';
 
 /**
- * #363 — reading the body of the write a UI submit sends. Lifted from the golden journey's private
- * copy for the squad-management spec; moving the journey onto it, once #362 has landed, is #370.
+ * #363, #370 — reading the body of the write a UI submit sends, shared by the golden journey and
+ * the squad-management spec.
  */
 
 // The generated SDK sends collection routes with a trailing slash (`/api/v1/events/`), so
