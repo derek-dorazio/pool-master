@@ -1,7 +1,7 @@
 import type { ContestDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { ListCard } from '@/features/shared/ui';
-
+import { ContestStatusBadge } from './contest-status-badge';
 
 export function ContestListCard({
   contest,
@@ -21,7 +21,7 @@ export function ContestListCard({
       state={{ leagueCode }}
       trailing={
         <>
-          <div>{contest.status}</div>
+          <ContestStatusBadge status={contest.status} />
           <div>{contest.entryCount ?? 0} entries</div>
         </>
       }

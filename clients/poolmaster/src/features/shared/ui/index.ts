@@ -27,7 +27,7 @@ export {
   DropdownMenuTrigger,
   Selector,
 } from "./dropdown-menu";
-export { Chip, StatusBadge } from "./status-badge";
+export { Chip, StatusBadge, type StatusBadgeProps } from "./status-badge";
 export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
 export type {
   CheckboxProps,

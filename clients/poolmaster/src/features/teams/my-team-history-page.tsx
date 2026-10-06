@@ -10,7 +10,7 @@ import {
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
-import { isHistoricalContest } from '@/features/contests/contest-status';
+import { contestStatusLabel, isHistoricalContest } from '@/features/contests/contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
@@ -233,7 +233,7 @@ export function MyTeamHistoryPage() {
                   <div>
                     <div className="font-medium text-foreground">{contest.name}</div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {contest.selectionType} · {contest.scoringEngine} · {contest.status}
+                      {contest.selectionType} · {contest.scoringEngine} · {contestStatusLabel(contest.status)}
                     </div>
                   </div>
                   <Link

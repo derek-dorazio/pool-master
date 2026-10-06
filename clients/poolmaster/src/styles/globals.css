@@ -65,6 +65,10 @@
     --status-danger-surface: rgba(168, 32, 45, 0.1);
     --status-danger-border: rgba(168, 32, 45, 0.42);
     --status-danger-text: var(--color-red-400);
+    /* A settled contest: solid navy with a gold edge, so it reads apart from every tinted tone. */
+    --status-final-surface: var(--color-navy-600);
+    --status-final-border: var(--color-gold-400);
+    --status-final-text: var(--text-on-inverse);
     --status-info-surface: rgba(11, 30, 63, 0.06);
     --status-info-border: rgba(11, 30, 63, 0.2);
     --status-info-text: var(--color-navy-600);

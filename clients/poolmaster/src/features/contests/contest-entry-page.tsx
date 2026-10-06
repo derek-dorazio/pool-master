@@ -30,6 +30,7 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
+import { CONTEST_STATUS_TONES, contestStatusLabel } from './contest-status';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -41,21 +42,10 @@ const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 // The tiebreaker is a predicted winning score relative to par.
 const formatTiebreaker = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format;
 
+// The entry page says what an open contest means for this entry; every other status reads as it
+// does on every contest page.
 function getContestPhaseLabel(contest: ContestDto) {
-  switch (contest.status) {
-    case 'OPEN':
-      return 'Editable until contest lock';
-    case 'LOCKED':
-      return 'Locked';
-    case 'ACTIVE':
-      return 'Scoring live';
-    case 'COMPLETED':
-      return 'Final';
-    case 'CANCELLED':
-      return 'Cancelled';
-    default:
-      return contest.status;
-  }
+  return contest.status === 'OPEN' ? 'Editable until contest lock' : contestStatusLabel(contest.status);
 }
 
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
@@ -577,7 +567,7 @@ export function ContestEntryPage() {
       <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <StatusBadge tone={isEditable ? 'active' : 'locked'}>
+            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
               {getContestPhaseLabel(contest)}
             </StatusBadge>
             <div>
