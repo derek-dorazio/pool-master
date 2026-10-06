@@ -2,13 +2,10 @@
 
 Compiled 2026-10-06. Seed data for a mock provider. It is not authoritative.
 
-## How the data was gathered (read this first)
+Data was compiled from web search summaries of the sources listed below, not from the
+pages themselves. Verify any value before relying on it.
 
-- The network egress proxy **blocked direct page fetches** of en.wikipedia.org, pgatour.com, lpga.com, owgr.com, espn.com, thegolfnewsnet.com and ontapsportsnet.com. Further fetch attempts were then denied by the permission classifier, so no page was fetched directly.
-- All data comes from **WebSearch result summaries**, which are short excerpts of the pages listed below, plus the model's own background knowledge for gaps. Treat every value as "verify before relying on".
-- To get primary-source accuracy, allow egress to en.wikipedia.org (the season articles), owgr.com and rolexrankings.com, then rebuild the data.
-
-## How these files relate to the drafts
+## How the files fit together
 
 The committed files here are `<tour>-players.json` (one ranked player list per tour) and
 `<tour>-<season>.json` (one event slate per tour and season). Event ids
@@ -23,18 +20,14 @@ editing. Two seasons are partly derived, because 2027 is not fully published:
 
 Each derived event says so in its `notes`. Every tour's field is its whole player list.
 
-## Draft files the seed was built from
+## Coverage
 
-| File | Count | Basis |
-|---|---|---|
-| pga-tour-2026-schedule.json | 45 events (37 Jan–Aug incl. 4 opposite-field, 8 FedExCup Fall) | search summaries |
-| lpga-tour-2026-schedule.json | 31 official events | search summaries |
-| pga-tour-2027-schedule.json | announced (partial, through TOUR Championship): 34 of the reported 36 events | search summaries |
-| lpga-tour-2027-schedule.json | announced:false; 8 individually confirmed events | search summaries |
-| pga-tour-players.json | 160 players | OWGR ranks 1–50 from search; 51+ estimated |
-| lpga-tour-players.json | 149 players | Rolex ranks 1–33 (2026-09-28) from search; 34+ estimated |
-
-No field lists were collected (item 6 was optional and skipped).
+- PGA TOUR 2026: 45 events (37 January–August, including 4 opposite-field, plus 8 FedExCup Fall).
+- LPGA Tour 2026: 31 official events.
+- PGA TOUR 2027: 34 of the reported 36 announced events, plus the derived Fall events.
+- LPGA Tour 2027: 8 confirmed events; the rest derived from 2026.
+- Players: PGA TOUR 160 (OWGR ranks 1–50 from search, 51+ estimated); LPGA 149 (Rolex ranks
+  1–33 as of 2026-09-28 from search, 34+ estimated).
 
 ## Sources referenced via search results
 

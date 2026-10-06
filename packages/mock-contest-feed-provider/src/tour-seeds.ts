@@ -21,8 +21,8 @@ interface TourSeedPlayer {
   readonly playerId: string;
   readonly name: string;
   readonly countryCode?: string;
+  /** Order only. Players files also flag `rankingEstimated` for humans; the mock ignores it. */
   readonly ranking: number;
-  readonly rankingEstimated?: boolean;
 }
 
 interface TourSeedEvent {
