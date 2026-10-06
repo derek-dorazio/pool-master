@@ -35,7 +35,10 @@ export function DetailsActionsLayout({
         {actionsTitle ? (
           <h3 className="text-xl font-semibold">{actionsTitle}</h3>
         ) : null}
-        <div className={cn(actionsTitle ? "mt-5 space-y-3" : "space-y-3", actionsListClassName)}>
+        <div
+          className={cn(actionsTitle ? "mt-5 space-y-3" : "space-y-3", actionsListClassName)}
+          data-testid={actionsTestId ? `${actionsTestId}-list` : undefined}
+        >
           {actions}
         </div>
       </Tile>

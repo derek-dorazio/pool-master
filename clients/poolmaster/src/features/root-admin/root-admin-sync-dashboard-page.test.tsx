@@ -509,7 +509,7 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(await screen.findByText('UNCHANGED SportEventParticipant')).toBeInTheDocument();
     expect(screen.getByText(/"before": \{/)).toBeInTheDocument();
     expect(screen.getByText(/"after": \{/)).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-json-payload-modal').textContent).toContain('"oddsToWin": 32');
+    expect(screen.getByTestId('root-admin-sync-json-payload-modal')).toHaveTextContent(/"oddsToWin": 32/);
 
     await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
 

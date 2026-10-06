@@ -13,7 +13,9 @@ describe("pool-master-3lo.2 / pool-master-fo5.4: shared Tile primitive", () => {
     const tile = screen.getByTestId("tile");
 
     expect(tile).toHaveTextContent("Open contest");
-    expect(tile.className).toContain("--workflow-default-surface");
-    expect(tile.className).toContain("--workflow-default-hover-surface");
+    expect(tile).toHaveClass(
+      "bg-[var(--workflow-default-surface)]",
+      "hover:bg-[var(--workflow-default-hover-surface)]",
+    );
   });
 });

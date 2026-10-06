@@ -6,7 +6,7 @@ describe("pool-master-3lo.20: shared Disclosure and Accordion primitives", () =>
   it("rule: renders disclosure content behind native summary controls", () => {
     render(<Disclosure summary="Details">Hidden detail copy</Disclosure>);
 
-    const details = screen.getByText("Details").closest("details");
+    const details = screen.getByRole("group");
     expect(details).not.toHaveAttribute("open");
 
     fireEvent.click(screen.getByText("Details"));
@@ -29,8 +29,8 @@ describe("pool-master-3lo.20: shared Disclosure and Accordion primitives", () =>
     );
 
     expect(screen.getByText("First")).toBeInTheDocument();
-    expect(
-      screen.getByText("Second content").closest("details"),
-    ).toHaveAttribute("open");
+    const [first, second] = screen.getAllByRole("group");
+    expect(first).not.toHaveAttribute("open");
+    expect(second).toHaveAttribute("open");
   });
 });

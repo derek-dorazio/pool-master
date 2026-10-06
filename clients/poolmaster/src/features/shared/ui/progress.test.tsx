@@ -13,8 +13,8 @@ describe("pool-master-3lo.19: shared Skeleton and ProgressIndicator primitives",
     render(<ProgressIndicator label="Entry completion" max={12} value={18} />);
 
     expect(
-      screen.getByRole("progressbar", { name: "Entry completion" }),
-    ).toHaveAttribute("aria-valuenow", "12");
+      screen.getByRole("progressbar", { name: "Entry completion", value: { now: 12 } }),
+    ).toBeInTheDocument();
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
 });

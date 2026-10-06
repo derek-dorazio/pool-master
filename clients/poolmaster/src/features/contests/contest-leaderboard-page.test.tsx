@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -259,11 +259,11 @@ describe('ContestLeaderboardPage', () => {
     renderLeaderboard();
 
     const dropped = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-2');
-    expect(dropped.querySelector('.line-through')).not.toBeNull();
-    expect(dropped).toHaveTextContent('Scottie Scheffler');
+    expect(within(dropped).getByText('Scottie Scheffler')).toHaveClass('line-through');
 
     const counting = screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(counting.querySelector('.line-through')).toBeNull();
+    expect(within(counting).getByText('Rory McIlroy')).not.toHaveClass('line-through');
+    expect(within(counting).getByText('-5')).not.toHaveClass('line-through');
   });
 
   it('never renders entry-selection metadata, even though the payload carries it', async () => {

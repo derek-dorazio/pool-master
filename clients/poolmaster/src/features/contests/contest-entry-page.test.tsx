@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -105,7 +105,7 @@ function renderContestEntryPage() {
     },
   });
 
-  const renderResult = render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
         initialEntries={[
@@ -129,7 +129,7 @@ function renderContestEntryPage() {
   );
 
   return {
-    ...renderResult,
+    ...view,
     queryClient,
   };
 }
@@ -429,7 +429,7 @@ describe('ContestEntryPage', () => {
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
 
     const scottieButton = await screen.findByTestId('contest-entry-participant-sep-1');
-    expect(scottieButton.querySelector('input[type="checkbox"]')).toBeInTheDocument();
+    expect(within(scottieButton).getByRole('checkbox')).toBeInTheDocument();
     fireEvent.click(scottieButton);
 
     await waitFor(() =>
@@ -690,7 +690,7 @@ describe('ContestEntryPage', () => {
         },
       }),
     );
-    await waitFor(() => expect(screen.getByText('1/2 saved')).toBeInTheDocument());
+    expect(await screen.findByText('1/2 saved')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Select golfer');
   });
 
@@ -723,7 +723,7 @@ describe('ContestEntryPage', () => {
     fireEvent.click(scottieButton);
 
     await waitFor(() => {
-      expect(scottieButton.querySelector('input[type="checkbox"]')).toBeChecked();
+      expect(within(scottieButton).getByRole('checkbox')).toBeChecked();
       expect(scottieButton).toHaveTextContent('Selected');
     });
 
