@@ -16,7 +16,7 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
@@ -355,7 +355,7 @@ export class AuthService {
     userId: string,
     email: string,
     isRootAdmin: boolean,
-    sessionId: string = uuidv4(),
+    sessionId: string = randomUUID(),
   ): Promise<TokenPair> {
     this.logger?.debug({
       action: 'authService.issueTokens.start',
@@ -372,7 +372,7 @@ export class AuthService {
       this.jwtSecret,
     );
 
-    const refreshTokenValue = uuidv4();
+    const refreshTokenValue = randomUUID();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
     await this.prisma.refreshToken.create({
@@ -394,7 +394,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken: refreshTokenValue,
-      csrfToken: uuidv4(),
+      csrfToken: randomUUID(),
       expiresIn: ACCESS_TOKEN_EXPIRY,
       sessionId,
     };
