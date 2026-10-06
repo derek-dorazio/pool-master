@@ -17873,6 +17873,28 @@ export type PreviewEventGolfRoundScoresErrors = {
     /**
      * Standard API error envelope.
      */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
     401: {
         /**
          * Error payload object.
@@ -17982,6 +18004,28 @@ export type ApplyEventGolfRoundScoresData = {
 };
 
 export type ApplyEventGolfRoundScoresErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -18095,6 +18139,28 @@ export type UpdateEventParticipantGolfRoundScoreData = {
 };
 
 export type UpdateEventParticipantGolfRoundScoreErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */

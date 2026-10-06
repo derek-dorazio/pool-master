@@ -425,7 +425,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       operationId: 'previewEventGolfRoundScores',
       params: ROUND_PARAMS,
       body: schemaRef('GolfRoundScoreUploadRequest'),
-      response: { 200: schemaRef('GolfRoundScorePreviewResponse'), ...errors(401, 403, 404, 422) },
+      response: { 200: schemaRef('GolfRoundScorePreviewResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.previewGolfRoundScores,
   });
@@ -439,7 +439,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
       operationId: 'applyEventGolfRoundScores',
       params: ROUND_PARAMS,
       body: schemaRef('GolfRoundScoreUploadRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 422) },
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.applyGolfRoundScores,
   });
@@ -457,7 +457,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
         properties: { eventId: uuid, roundNumber: { type: 'integer', minimum: 1 }, sportEventParticipantId: uuid },
       },
       body: schemaRef('UpdateGolfRoundScoreRequest'),
-      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(401, 403, 404, 422) },
+      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.updateGolfRoundScore,
   });

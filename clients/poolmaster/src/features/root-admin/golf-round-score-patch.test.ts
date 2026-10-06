@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { GolfRoundScoreRow } from './golf-admin-utils';
-import { buildRoundScorePatch, isSignedInt, rowHasInvalid, toDateTimeInput } from './golf-round-score-patch';
+import {
+  buildRoundScorePatch,
+  isSignedInt,
+  isStrokes,
+  isThru,
+  rowHasInvalid,
+  toDateTimeInput,
+} from './golf-round-score-patch';
 
 function scoreRow(overrides: Partial<GolfRoundScoreRow> = {}): GolfRoundScoreRow {
   return {
@@ -55,6 +62,23 @@ describe('buildRoundScorePatch', () => {
     expect(buildRoundScorePatch(row, { strokes: 'x' })).toBeNull();
     expect(buildRoundScorePatch(row, { thru: '-1' })).toBeNull();
     expect(buildRoundScorePatch(row, { scoreToPar: '1.5' })).toBeNull();
+  });
+
+  it('never sends 0 strokes or a thru above 18, which the server would refuse with a 400, and marks the row invalid', () => {
+    expect(buildRoundScorePatch(row, { strokes: '0' })).toBeNull();
+    expect(buildRoundScorePatch(row, { thru: '19' })).toBeNull();
+    expect(rowHasInvalid({ strokes: '0' })).toBe(true);
+    expect(rowHasInvalid({ thru: '25' })).toBe(true);
+    expect(rowHasInvalid({ strokes: '1', thru: '0' })).toBe(false);
+  });
+});
+
+describe('isStrokes and isThru', () => {
+  it('accept strokes of 1 or more and thru from 0 to 18, and reject anything outside', () => {
+    expect(['1', '68', ' 72 '].map(isStrokes)).toEqual([true, true, true]);
+    expect(['0', '-1', '', '1.5'].map(isStrokes)).toEqual([false, false, false, false]);
+    expect(['0', '9', '18'].map(isThru)).toEqual([true, true, true]);
+    expect(['19', '25', '-1', ''].map(isThru)).toEqual([false, false, false, false]);
   });
 });
 

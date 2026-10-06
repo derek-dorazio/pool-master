@@ -14507,6 +14507,7 @@
                     "integer",
                     "null"
                   ],
+                  "minimum": 1,
                   "description": "Null when only the score to par is known; such a row is not stored."
                 },
                 "scoreToPar": {
@@ -14576,6 +14577,7 @@
                         "integer",
                         "null"
                       ],
+                      "minimum": 1,
                       "description": "Null when only the score to par is known; such a row is not stored."
                     },
                     "scoreToPar": {
@@ -14763,7 +14765,8 @@
         "type": "object",
         "properties": {
           "strokes": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 1
           },
           "scoreToPar": {
             "type": "integer"
@@ -33792,6 +33795,45 @@
               }
             }
           },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
           "401": {
             "description": "Standard API error envelope.",
             "content": {
@@ -33996,6 +34038,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
@@ -34213,6 +34294,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventParticipantResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }
