@@ -243,6 +243,19 @@ describe('ContestDetailPage (Contest Board)', () => {
     mockLogger.child.mockClear();
   });
 
+  it('shows a live contest as "Live" in the live colour, and its Status row reads "Live", never the raw enum', async () => {
+    primeMocks({ contestStatus: 'ACTIVE' });
+
+    renderContestBoard();
+
+    await screen.findByRole('heading', { name: 'Masters Pick 6' });
+    // The header badge comes first in the page, then the Status row in the rules section.
+    const [badge, statusRow] = screen.getAllByText('Live');
+    expect(badge).toHaveClass('shadow-[var(--shadow-red-pulse)]');
+    expect(statusRow).toBeInTheDocument();
+    expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
+  });
+
   // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').
   it('renders header counts for my entries and total entries', async () => {
     primeMocks({

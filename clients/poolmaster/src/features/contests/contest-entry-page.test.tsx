@@ -135,7 +135,7 @@ function renderContestEntryPage() {
 }
 
 function primeCommonMocks(overrides?: {
-  contestStatus?: 'OPEN' | 'LOCKED' | 'ACTIVE' | 'COMPLETED';
+  contestStatus?: 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED';
 }) {
   getContestMock.mockResolvedValue({
     data: {
@@ -600,6 +600,22 @@ describe('ContestEntryPage', () => {
     );
     expect(screen.queryByTestId('contest-entry-save-details')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    // The entry's own status row shows ACTIVE for the entry, so the live case checks the old
+    // page-only wording is gone instead.
+    ['DRAFTING', 'Drafting', 'DRAFTING'],
+    ['ACTIVE', 'Live', 'Scoring live'],
+  ] as const)('labels a %s contest "%s" in the badge and Contest phase row, as on every contest page', async (contestStatus, label, replaced) => {
+    primeCommonMocks({ contestStatus });
+    getDraftStateMock.mockResolvedValue({ data: buildDraftState([]) });
+
+    renderContestEntryPage();
+
+    await screen.findByTestId('contest-entry-heading');
+    expect(await screen.findAllByText(label)).toHaveLength(2);
+    expect(screen.queryByText(replaced)).not.toBeInTheDocument();
   });
 
   it('shows the entry load failure state when the draft-state query fails', async () => {

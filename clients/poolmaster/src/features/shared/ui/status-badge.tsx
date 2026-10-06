@@ -17,6 +17,8 @@ const statusBadgeVariants = cva(
           "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)]",
         inactive:
           "border-[color:var(--status-neutral-border)] bg-[var(--status-neutral-surface)] [color:var(--status-neutral-text)]",
+        final:
+          "border-[color:var(--status-final-border)] bg-[var(--status-final-surface)] [color:var(--status-final-text)]",
         info: "border-[color:var(--status-info-border)] bg-[var(--status-info-surface)] [color:var(--status-info-text)]",
         live: "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)] shadow-[var(--shadow-red-pulse)]",
         locked:
