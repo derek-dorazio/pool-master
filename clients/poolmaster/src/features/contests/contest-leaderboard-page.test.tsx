@@ -129,17 +129,15 @@ function participant(overrides: {
   };
 }
 
-function primeMocks(opts?: {
-  contestStatus?: 'ACTIVE' | 'COMPLETED' | 'LOCKED';
-  leaderboard?: Record<string, unknown>;
-  leaderboardError?: { code: string; message: string };
-}) {
-  getContestMock.mockResolvedValue({
+type ContestStatusFixture = 'ACTIVE' | 'COMPLETED' | 'LOCKED';
+
+function contestResponse(status: ContestStatusFixture) {
+  return {
     data: {
       contest: {
         id: 'contest-1',
         name: 'Masters Pick 6',
-        status: opts?.contestStatus ?? 'ACTIVE',
+        status,
         contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
@@ -149,7 +147,17 @@ function primeMocks(opts?: {
         endsAt: '2026-04-14T23:00:00.000Z',
       },
     },
-  });
+  };
+}
+
+function primeMocks(opts?: {
+  contestStatus?: ContestStatusFixture;
+  leaderboard?: Record<string, unknown>;
+  leaderboardError?: { code: string; message: string };
+}) {
+  getContestMock.mockReset();
+  getGolfContestLeaderboardMock.mockReset();
+  getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
 
   if (opts?.leaderboardError) {
     getGolfContestLeaderboardMock.mockResolvedValue({
@@ -396,6 +404,52 @@ describe('ContestLeaderboardPage', () => {
       const settledCallsBefore = getGolfContestLeaderboardMock.mock.calls.length;
       await vi.advanceTimersByTimeAsync(30_000);
       expect(getGolfContestLeaderboardMock.mock.calls.length).toBe(settledCallsBefore);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('starts polling the leaderboard without a reload when a locked contest goes live', async () => {
+    // #362 — the contest read itself refreshes while the contest is not terminal, so a page
+    // opened before play notices the event start and begins the live poll on its own.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'ACTIVE' });
+      getContestMock.mockResolvedValueOnce(contestResponse('LOCKED'));
+      renderLeaderboard();
+      await screen.findByTestId('contest-leaderboard-position-entry-1');
+      const callsWhileLocked = getGolfContestLeaderboardMock.mock.calls.length;
+
+      // One interval for the contest read to see ACTIVE, one more for the first live poll.
+      await vi.advanceTimersByTimeAsync(60_000);
+      const callsOnceLive = getGolfContestLeaderboardMock.mock.calls.length;
+      expect(callsOnceLive).toBeGreaterThan(callsWhileLocked);
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(getGolfContestLeaderboardMock.mock.calls.length).toBeGreaterThan(callsOnceLive);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows the settled note and stops polling without a reload when a live contest settles', async () => {
+    // #362 — the page left open through settlement picks up COMPLETED and freezes.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'COMPLETED' });
+      getContestMock.mockResolvedValueOnce(contestResponse('ACTIVE'));
+      renderLeaderboard();
+      await screen.findByTestId('contest-leaderboard-position-entry-1');
+      expect(screen.queryByTestId('contest-leaderboard-settled-note')).not.toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(await screen.findByTestId('contest-leaderboard-settled-note')).toBeInTheDocument();
+
+      const leaderboardCallsOnceSettled = getGolfContestLeaderboardMock.mock.calls.length;
+      const contestCallsOnceSettled = getContestMock.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(90_000);
+      expect(getGolfContestLeaderboardMock.mock.calls.length).toBe(leaderboardCallsOnceSettled);
+      expect(getContestMock.mock.calls.length).toBe(contestCallsOnceSettled);
     } finally {
       vi.useRealTimers();
     }
