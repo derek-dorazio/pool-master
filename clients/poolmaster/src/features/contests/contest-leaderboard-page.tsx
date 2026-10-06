@@ -22,7 +22,11 @@ import {
   formatDateTimeDisplay,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
-import { shouldPollContestEntries } from './contest-status';
+import {
+  CONTEST_POLL_INTERVAL_MS,
+  contestRefetchInterval,
+  shouldPollContestEntries,
+} from './contest-status';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
 
 /**
@@ -152,6 +156,7 @@ export function ContestLeaderboardPage() {
     },
     enabled: Boolean(contestId),
     retry: false,
+    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
   const leaderboardQuery = useQuery({
@@ -168,9 +173,9 @@ export function ContestLeaderboardPage() {
     enabled: Boolean(contestId),
     retry: false,
     // #112 — the same cadence the contest board polls entries on, driven by the same
-    // predicate. The backend's own live-scores sync runs every 30-60s, so a second constant
-    // here would only invent a number to keep in step with that one.
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? 30_000 : false,
+    // predicate. The contest read above refreshes until settlement (#362), so this starts
+    // when play starts and stops when the contest settles.
+    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
 
   useEffect(() => {

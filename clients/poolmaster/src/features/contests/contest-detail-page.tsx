@@ -30,7 +30,11 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { shouldPollContestEntries } from './contest-status';
+import {
+  CONTEST_POLL_INTERVAL_MS,
+  contestRefetchInterval,
+  shouldPollContestEntries,
+} from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -132,6 +136,7 @@ export function ContestDetailPage() {
     },
     enabled: Boolean(contestId),
     retry: false,
+    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
   const contestEntriesQuery = useQuery({
@@ -147,7 +152,7 @@ export function ContestDetailPage() {
     },
     enabled: Boolean(contestId),
     retry: false,
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? 30_000 : false,
+    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';
