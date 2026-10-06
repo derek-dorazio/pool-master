@@ -119,6 +119,23 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
   });
 
+  it('keeps an event whose provider tour name equals the matchKeyword, ignoring case, even when its name lacks the keyword, and still excludes the other tour', async () => {
+    const provider = buildProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'pga-1', name: 'Masters Tournament', metadata: { tour: 'PGA TOUR' } }),
+        buildProviderEvent({ externalId: 'lpga-1', name: 'Honda LPGA Thailand', metadata: { tour: 'LPGA Tour' } }),
+      ]),
+    });
+    const prisma = {
+      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'pga tour' }) },
+    };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+
+    expect(result.map((event) => event.externalId)).toEqual(['pga-1']);
+  });
+
   it('pool-master-753 applies no filter when the league has no matchKeyword set', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([

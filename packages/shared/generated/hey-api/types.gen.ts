@@ -6693,7 +6693,7 @@ export type SportLeagueDto = {
      */
     name: string;
     /**
-     * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
+     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
      */
     matchKeyword: string | null;
     /**
@@ -6757,7 +6757,7 @@ export type SportLeagueListResponse = {
          */
         name: string;
         /**
-         * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
          */
         matchKeyword: string | null;
         /**
@@ -6808,7 +6808,7 @@ export type SportLeagueResponse = {
          */
         name: string;
         /**
-         * Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set.
+         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
          */
         matchKeyword: string | null;
         /**
@@ -8594,7 +8594,7 @@ export type ProviderEventDto = {
 export type ProviderCatalogEventListQuery = {
     sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
     /**
-     * Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter.
+     * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
      */
     sportLeagueId?: string;
     /**
@@ -20662,7 +20662,7 @@ export type ListProviderCatalogEventsData = {
     query: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         /**
-         * Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter.
+         * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
          */
         sportLeagueId?: string;
         /**

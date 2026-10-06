@@ -139,7 +139,7 @@ export type CloneSportEventYearRequest = z.infer<typeof CloneSportEventYearReque
  */
 export const ImportSportEventYearFromProviderRequestSchema = z.object({
   sportLeagueId: z.string().uuid().describe('The tour. Its matchKeyword must equal the provider\'s tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.'),
-  eventYear: z.number().int().describe('Provider events starting in this calendar year (UTC) are imported, as editions branded with it.'),
+  eventYear: z.number().int().min(2000).max(2100).describe('Provider events starting in this calendar year (UTC) are imported, as editions branded with it.'),
   providerId: z.string().min(1),
 }).describe('Creates each of the provider\'s events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded.');
 export type ImportSportEventYearFromProviderRequest = z.infer<typeof ImportSportEventYearFromProviderRequestSchema>;

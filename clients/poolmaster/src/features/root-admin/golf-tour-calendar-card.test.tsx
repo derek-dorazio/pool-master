@@ -172,6 +172,20 @@ describe('plans/147 GolfTourCalendarCard', () => {
       .toHaveTextContent('Created 1 tournament; skipped 1 already here.');
   });
 
+  it('says the provider listed nothing for the tour, and to check its match keyword, when the import creates and skips nothing', async () => {
+    importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, matchKeyword: 'PGA' }));
+    await screen.findByTestId('root-admin-golf-tour-tournament-row-masters-2026');
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-golf-tour-calendar-import')).toBeEnabled());
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import'));
+    await userEvent.click(screen.getByTestId('root-admin-golf-tour-calendar-import-confirm'));
+
+    expect(await screen.findByTestId('root-admin-golf-tour-calendar-import-result')).toHaveTextContent(
+      'The provider lists no 2026 tournaments for the tour “PGA”. Check that PGA Tour’s match keyword is the provider’s tour name.',
+    );
+  });
+
   it('tells the admin to set the tour\'s match keyword when the import is refused for having none', async () => {
     importEventYearFromProviderMock.mockResolvedValue({
       error: { code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', message: 'no keyword' },

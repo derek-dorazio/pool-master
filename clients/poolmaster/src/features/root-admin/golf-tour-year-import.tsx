@@ -67,8 +67,9 @@ export function GolfTourYearImport({ eventYear, tour }: { eventYear: number; tou
       </Button>
       {result ? (
         <p className="w-full text-sm text-muted-foreground" data-testid="root-admin-golf-tour-calendar-import-result" role="status">
-          Created {result.created.length} tournament{result.created.length === 1 ? '' : 's'}; skipped{' '}
-          {result.skipped.length} already here.
+          {result.created.length === 0 && result.skipped.length === 0
+            ? `The provider lists no ${eventYear} tournaments for the tour “${tour.matchKeyword ?? ''}”. Check that ${tour.name}’s match keyword is the provider’s tour name.`
+            : `Created ${result.created.length} tournament${result.created.length === 1 ? '' : 's'}; skipped ${result.skipped.length} already here.`}
         </p>
       ) : null}
 

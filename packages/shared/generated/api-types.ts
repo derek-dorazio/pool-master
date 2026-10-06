@@ -7406,7 +7406,7 @@ export interface components {
             sportId: string;
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
-            /** @description Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set. */
+            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
             matchKeyword: string | null;
             /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
             currentEventYear: number | null;
@@ -7453,7 +7453,7 @@ export interface components {
                 sportId: string;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
@@ -7491,7 +7491,7 @@ export interface components {
                 sportId: string;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description Substring a provider event name carries when it belongs to this sport league (catalog browse), and the provider tour name it equals, ignoring case, for the event-year import (importEventYearFromProvider); null when none is set. */
+                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
                 matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
@@ -8801,7 +8801,7 @@ export interface components {
         ProviderCatalogEventListQuery: {
             /** @enum {string} */
             sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-            /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+            /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
             sportLeagueId?: string;
             /**
              * Format: date-time
@@ -19673,7 +19673,7 @@ export interface operations {
         parameters: {
             query: {
                 sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+                /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
                 from?: string;

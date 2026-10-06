@@ -52,6 +52,16 @@ export interface ProviderEventDetailSummary {
 const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
+/**
+ * #385 — whether a provider event belongs to the tour a sport league's matchKeyword names:
+ * its `metadata.tour` equals the keyword, ignoring case and surrounding space. Exact, so
+ * "PGA TOUR" never matches "LPGA Tour".
+ */
+function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
+  const tour = event.metadata.tour;
+  return typeof tour === 'string' && tour.trim().toLowerCase() === keyword.trim().toLowerCase();
+}
+
 export class EventScoreSourceService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -88,8 +98,11 @@ export class EventScoreSourceService {
       : null;
     const search = options.search?.trim().toLowerCase() || null;
 
+    // #385 — a league's keyword is either the provider's tour name or a name substring.
     return events
-      .filter((event) => !matchKeyword || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
+      .filter((event) => !matchKeyword
+        || isTourEvent(event, matchKeyword)
+        || event.name.toLowerCase().includes(matchKeyword.toLowerCase()))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 
@@ -115,7 +128,7 @@ export class EventScoreSourceService {
     if (!sportLeague) {
       throw new EventScoreSourceError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    const tour = sportLeague.matchKeyword?.trim().toLowerCase();
+    const tour = sportLeague.matchKeyword?.trim();
     if (!tour) {
       throw new EventScoreSourceError(
         `${sportLeague.name} has no match keyword, so no provider tour can be matched to it.`,
@@ -129,7 +142,7 @@ export class EventScoreSourceService {
       to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
     });
     return events
-      .filter((event) => typeof event.metadata.tour === 'string' && event.metadata.tour.trim().toLowerCase() === tour)
+      .filter((event) => isTourEvent(event, tour))
       .map((event) => ({
         externalId: event.externalId,
         name: event.name,
