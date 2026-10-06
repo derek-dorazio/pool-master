@@ -908,6 +908,7 @@ E2E tests must prove complete user journeys, not page loads. Each test walks the
 - Page landmarks: `data-testid` with domain-oriented kebab-case naming (e.g., `league-create-submit`, `contest-entry-list`)
 - Browser E2E must use machine-oriented selectors (`getByTestId`, stable `id`, or equivalent deterministic selectors) for workflow navigation and state assertions.
 - Do not use visible copy selectors such as `getByText`, `getByRole({ name })`, or link/button text as the primary locator strategy in browser E2E unless the explicit purpose of the test is to validate user-facing copy.
+- These rules are for Playwright only. Component tests query by role and label; see *React Testing Library Selector Rule* below.
 
 **Error detection:**
 - Every E2E test must assert no uncaught exceptions, no console errors (excluding known benign patterns), and no error boundary fallback UI.
@@ -915,9 +916,22 @@ E2E tests must prove complete user journeys, not page loads. Each test walks the
 
 ### React Testing Library Selector Rule
 
-- Do not use visible string literals as the default selector strategy for automation-critical UI.
-- Prefer `getByTestId`, stable field `id`s, and other machine-oriented selectors for controls that represent product workflow steps.
-- Use visible text assertions only when the test is intentionally validating copy, localization, or accessibility wording.
+Component and page tests find elements the way a user does. This is the opposite of the
+Playwright rule above, on purpose: a browser journey runs against a deployed app whose copy
+changes, so it anchors on machine selectors; a component test runs against a fixed render,
+where a query by role and accessible name is stable and also fails when the element stops
+being reachable (a missing label, an icon-only button with no name, a `div` with a click
+handler). `getByTestId` passes through all of those.
+
+- `getByRole` with an accessible name is the default.
+- `getByLabelText` for form fields.
+- Text queries (`getByText`) are fine.
+- `getByTestId` only where no accessible query reaches the element, and treat that as a
+  finding: an element no accessible query can reach is usually an accessibility defect.
+  Fix it in the component (a label, an accessible name) rather than reaching for the test ID.
+- Do not reach into the DOM (`querySelector`, `.closest`, `.parentElement`, `.children`
+  and the like). Query by role, label or text, scoping with `within()` when needed.
+- Existing tests are not swept. The rule applies to new tests and to tests a change touches.
 
 ---
 
