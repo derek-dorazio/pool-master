@@ -1,6 +1,9 @@
 import { expect } from '@jest/globals';
+import type { SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
   cleanupTestData,
+  createTestUser,
+  getApp,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -203,5 +206,56 @@ describe('Golf round scores — admin correction surface', () => {
       include: { golf: true },
     });
     expect(standing.golf).toMatchObject({ eventScoreToPar: -2, eventStrokes: 70 });
+  });
+
+  it('a PATCH correcting strokes and to par stores both as sent, and the standing and rank follow the corrected to par', async () => {
+    const { event, rory, jordan } = await createField('patch-route');
+    const service = createGolfScoreService(getPrisma());
+    await service.applyRoundScores(event.id, 1, [
+      row(rory.participant.id, { strokes: 68, scoreToPar: -4 }),
+      row(jordan.participant.id, { strokes: 70, scoreToPar: -2 }),
+    ]);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const res = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores/${rory.sep.id}`,
+      headers: admin.headers,
+      payload: { strokes: 73, scoreToPar: 1, completedAt: '2026-05-07T22:15:00.000Z' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const { participant } = res.json<SportEventParticipantResponse>();
+    expect(participant.rounds).toEqual([
+      expect.objectContaining({
+        roundNumber: 1,
+        status: 'COMPLETED',
+        completedAt: '2026-05-07T22:15:00.000Z',
+        golf: { strokes: 73, scoreToPar: 1, thru: 18 },
+      }),
+    ]);
+    expect(participant.standing).toMatchObject({ position: 2, golf: { eventStrokes: 73, eventScoreToPar: 1 } });
+    const jordanStanding = await getPrisma().sportEventParticipantStanding.findUniqueOrThrow({
+      where: { sportEventParticipantId: jordan.sep.id },
+    });
+    expect(jordanStanding.position).toBe(1);
+  });
+
+  it('a PATCH with completedAt null clears the stored completion time', async () => {
+    const { event, rory } = await createField('patch-clear');
+    await createGolfScoreService(getPrisma()).applyRoundScores(event.id, 1, [
+      row(rory.participant.id, { completedAt: '2026-05-07T22:15:00.000Z' }),
+    ]);
+    const admin = await createTestUser({ isRootAdmin: true });
+
+    const res = await getApp().inject({
+      method: 'PATCH',
+      url: `/api/v1/events/${event.id}/rounds/1/golf-scores/${rory.sep.id}`,
+      headers: admin.headers,
+      payload: { completedAt: null },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json<SportEventParticipantResponse>().participant.rounds[0]).toMatchObject({ completedAt: null, status: 'COMPLETED' });
   });
 });
