@@ -91,6 +91,10 @@ score-source card. That links it to `sandbox-<PoolMaster event id>`, which is un
 tournament. Then load the participant field, set ranks and tiers, and start the live
 simulation. Until a replay runs, a sandbox event's scores show nobody on the course.
 
+A replay is remembered by event id until the mock restarts. A tournament unlinked and
+linked again gets the same `sandbox-<id>`, so it picks up the earlier replay's scores at
+once. Use a fresh tournament for a fresh run.
+
 ## Run Locally
 
 ```bash

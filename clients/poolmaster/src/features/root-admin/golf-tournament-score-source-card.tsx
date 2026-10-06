@@ -30,7 +30,8 @@ type PickerCatalogEvent = GolfProviderCatalogEvent & { id: string };
 /**
  * #402 — a provider that can simulate live scoring (the QA mock feed) answers any event id
  * with this prefix as a golf event of its own, so a made-up tournament links to
- * `sandbox-<its id>` and never needs a real tournament's dates or id.
+ * `sandbox-<its id>` and never needs a real tournament's dates or id. The mock's
+ * scenario-store.ts and core-api's mock adapter hold the same prefix.
  */
 const simulatedEventIdPrefix = 'sandbox-';
 

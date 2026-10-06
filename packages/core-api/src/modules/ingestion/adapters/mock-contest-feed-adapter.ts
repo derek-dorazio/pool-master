@@ -379,6 +379,17 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
+
+    // #402 — the mock answers any `sandbox-<id>` in its sandbox scenario without listing it,
+    // so it is matched before listing every scenario's events, and cached like a listed one.
+    if (
+      eventId.startsWith(sandboxEventIdPrefix)
+      && scenarios.scenarios.some((scenario) => scenario.scenarioId === sandboxScenarioId)
+    ) {
+      this.scenarioIdByEventId.set(eventId, sandboxScenarioId);
+      return { scenarioId: sandboxScenarioId };
+    }
+
     const relativeTodayScenario = scenarios.scenarios.find(
       (scenario) => scenario.scenarioId === 'golf-relative-today',
     );
@@ -395,14 +406,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
     if (relativeTodayScenario && isRelativeManualTestEventId(eventId)) {
       return { scenarioId: relativeTodayScenario.scenarioId };
-    }
-
-    // #402 — the mock answers any `sandbox-<id>` in its sandbox scenario without listing it.
-    if (
-      eventId.startsWith(sandboxEventIdPrefix)
-      && scenarios.scenarios.some((scenario) => scenario.scenarioId === sandboxScenarioId)
-    ) {
-      return { scenarioId: sandboxScenarioId };
     }
 
     return null;
@@ -464,7 +467,10 @@ function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolea
   return startTime >= dateRange.from.getTime() && startTime <= dateRange.to.getTime();
 }
 
-/** The mock's sandbox scenario and event-id prefix (#402); mirrored from its scenario store. */
+/**
+ * The mock's sandbox scenario and event-id prefix (#402). Copies live in the mock's
+ * scenario-store.ts and the web app's golf-tournament-score-source-card.tsx; rename all three.
+ */
 const sandboxScenarioId = 'golf-sandbox';
 const sandboxEventIdPrefix = 'sandbox-';
 

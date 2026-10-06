@@ -343,7 +343,7 @@ describe('MockContestFeedAdapter', () => {
     await expect(adapter.getLiveSimulation('golf-masters-2026')).resolves.toBeNull();
   });
 
-  it('finds an unlisted sandbox- event in the mock\'s sandbox scenario, and nowhere when the mock has no sandbox', async () => {
+  it('finds an unlisted sandbox- event in the mock\'s sandbox scenario without listing any events, and nowhere when the mock has no sandbox', async () => {
     let scenarios = [...scenarioResponse.scenarios, { scenarioId: 'golf-sandbox', sport: 'GOLF' }];
     const fetchSpy = jest.fn(async (input: string | URL, init?: RequestInit) => {
       const url = String(input);
@@ -368,6 +368,7 @@ describe('MockContestFeedAdapter', () => {
 
     await expect(new MockContestFeedAdapter('http://mock.internal').startLiveSimulation('sandbox-tour-1', {}))
       .resolves.toMatchObject({ phase: 'IN_PROGRESS', currentRound: 1 });
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith('/events'))).toBe(false);
 
     scenarios = [...scenarioResponse.scenarios];
     await expect(new MockContestFeedAdapter('http://mock.internal').startLiveSimulation('sandbox-tour-2', {}))
