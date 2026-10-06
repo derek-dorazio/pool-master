@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
@@ -7,7 +7,7 @@ import {
   type ContestDto,
   type ContestLeaderboardResponse,
 } from '@/lib/api';
-import { extractErrorMessage, throwApiError } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -22,7 +22,12 @@ import {
   formatDateTimeDisplay,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
-import { shouldPollContestEntries } from './contest-status';
+import {
+  CONTEST_POLL_INTERVAL_MS,
+  contestRefetchInterval,
+  refreshOnContestStatusChange,
+  shouldPollContestEntries,
+} from './contest-status';
 import { buildLeaderboardView, type LeaderboardEntryRow } from './contest-leaderboard';
 
 /**
@@ -117,6 +122,7 @@ function EntryBlock({
               {pick.rounds.map((round, index) => (
                 <span
                   className="text-right text-muted-foreground"
+                  data-testid={`contest-leaderboard-pick-round-${entry.entryId}-${pick.pickId}-${roundNumbers[index]}`}
                   key={roundNumbers[index]}
                 >
                   {round ?? NO_SCORE}
@@ -139,6 +145,7 @@ export function ContestLeaderboardPage() {
   const location = useLocation();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
 
+  const queryClient = useQueryClient();
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
     queryFn: async (): Promise<ContestDto> => {
@@ -148,10 +155,17 @@ export function ContestLeaderboardPage() {
         throwApiError(response.error, 'Contest detail response is missing data.');
       }
 
+      refreshOnContestStatusChange(
+        queryClient,
+        QueryKeys.contests.detail(contestId),
+        response.data.contest.status,
+        QueryKeys.contests.leaderboard(contestId),
+      );
       return response.data.contest;
     },
     enabled: Boolean(contestId),
     retry: false,
+    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
   const leaderboardQuery = useQuery({
@@ -168,9 +182,10 @@ export function ContestLeaderboardPage() {
     enabled: Boolean(contestId),
     retry: false,
     // #112 — the same cadence the contest board polls entries on, driven by the same
-    // predicate. The backend's own live-scores sync runs every 30-60s, so a second constant
-    // here would only invent a number to keep in step with that one.
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? 30_000 : false,
+    // predicate. The contest read above refreshes until settlement (#362), so this starts
+    // when play starts and stops when the contest settles, and each status change it sees
+    // reads the leaderboard once more, which is how the final standings land.
+    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
 
   useEffect(() => {
@@ -203,6 +218,13 @@ export function ContestLeaderboardPage() {
           codeMessages: LEADERBOARD_ERROR_MESSAGES,
           fallback: 'Try refreshing, or return to the contest board.',
         })}
+        testId={
+          // The refusal's code is in the test id, so a browser test can tell picks-hidden from
+          // a membership refusal or a server failure.
+          leaderboardQuery.error instanceof ApiError && leaderboardQuery.error.code
+            ? `contest-leaderboard-error-${leaderboardQuery.error.code}`
+            : 'contest-leaderboard-error'
+        }
         title="We couldn't load this leaderboard."
       />
     );
@@ -264,7 +286,11 @@ export function ContestLeaderboardPage() {
           <span>Golfer</span>
           <span className="text-right">Total</span>
           {view.roundNumbers.map((roundNumber) => (
-            <span className="text-right" key={roundNumber}>
+            <span
+              className="text-right"
+              data-testid={`contest-leaderboard-round-header-${roundNumber}`}
+              key={roundNumber}
+            >
               R{roundNumber}
             </span>
           ))}

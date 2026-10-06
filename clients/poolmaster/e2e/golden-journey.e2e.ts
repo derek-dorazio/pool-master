@@ -13,12 +13,14 @@ import { registerFreshUser } from './helpers/user-session';
  * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite"): the root admin
  * builds a golf catalog (act 1), a brand-new commissioner runs a league and a contest on it
  * (act 2), a brand-new member joins by invite link and enters (act 3), the root admin scores the
- * event and reads every role's writes back (act 4), and further rounds of scores move the
- * contest leaderboard (act 5, #326).
+ * event and reads every role's writes back (act 4), further rounds of scores move the contest
+ * leaderboard (act 5, #326), and completing the event settles the contest (act 6). Acts 4-6 also
+ * keep the leaderboard page open across each change and assert it follows without a reload
+ * (#362).
  *
  * Shape: one `test()` per act in a serial file. Tags select tests, not steps (plans/130 §"What
  * act 1 found when it ran"), so acts 1-3, which run post-deploy, sit in a describe tagged
- * `@smoke`, and acts 4-5, which do not, sit outside it — a tag cannot be removed from a test
+ * `@smoke`, and acts 4-6, which do not, sit outside it — a tag cannot be removed from a test
  * inside a tagged block. Serial mode keeps every act in one worker, in order, so act 1's ids
  * reach the later acts through module state rather than by re-creating the catalog, and a failure
  * skips the acts after it. The HTML report names the failing act in the test title and the
@@ -524,7 +526,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 // journey, and one that activates the contest and mails its members. Whether it should also run
 // post-deploy is the owner's call (#280), not this file's.
 test('act 4: the root admin scores round 1, starts the event, and reads every role\'s writes back', async ({ page }) => {
-  test.setTimeout(120_000);
+  // The leaderboard page left open across the start waits out one of its own polls.
+  test.setTimeout(240_000);
   const state = requireJourney();
   const { run } = state;
   const credentials = readAdminCredentials();
@@ -556,6 +559,15 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     }
   });
 
+  // #362 — opened before play, as a member watching for the start would have it. The contest is
+  // still open, so the leaderboard read refuses it and the page shows its error state.
+  const leaderboardTab = await test.step('open the leaderboard page before the event starts', async () => {
+    const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
+    await expect(tab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN')).toBeVisible();
+    await page.bringToFront();
+    return tab;
+  });
+
   await test.step('move the tournament to in progress', async () => {
     await page.goto(`/manage/golf/tournaments/${state.eventId}`);
     await page.getByTestId('root-admin-golf-tournament-transition-IN_PROGRESS').click();
@@ -568,6 +580,17 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     expect(moved.event.status).toBe('IN_PROGRESS');
   });
 
+  await test.step('the leaderboard page opened before the start goes live without a reload', async () => {
+    // The browser reproduction of #362: before the fix this page kept the contest status it
+    // loaded with and never fetched the leaderboard again.
+    await leaderboardTab.bringToFront();
+    await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`))
+      .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
+    await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN'))
+      .toHaveCount(0);
+    await leaderboardTab.close();
+  });
+
   await test.step('the member\'s picks are revealed on the board and the leaderboard carries a score', async () => {
     await page.goto(`/league/${run.leagueCode}/contests/${state.contestId}`);
     await page.getByTestId(`contest-board-toggle-${state.entryId}`).click();
@@ -576,9 +599,8 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
         page.getByTestId(`contest-entry-pick-${state.entryId}-${playerId}`),
       ).toBeVisible();
     }
-    // The board shows picks and never scores (#111); #110's leaderboard page is where a scored
-    // pick is rendered, and this act still reads the endpoint rather than that page — a UI act
-    // over the leaderboard is deliberately not in #110's slice. Presence only — no arithmetic.
+    // The board shows picks and never scores (#111). The leaderboard page rendering the entry
+    // is asserted in the step above; this read checks every golfer has a round-1 score.
     const leaderboard = await page.request.get(`/api/v1/contests/${state.contestId}/golf/leaderboard`);
     expect(leaderboard.ok(), `GET the leaderboard answered ${leaderboard.status()}`).toBe(true);
     const { participants } = (await leaderboard.json()) as {
@@ -646,6 +668,14 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
     await adminSignIn(page, credentials);
   });
 
+  // #362 — left open for the whole act, so each round has to reach it by the page's own poll.
+  const leaderboardTab = await test.step('open the leaderboard page on the round-1 standings', async () => {
+    const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
+    await expect(tab.getByTestId(`contest-leaderboard-entry-${state.entryId}`)).toBeVisible();
+    await page.bringToFront();
+    return tab;
+  });
+
   const afterRound1 = await test.step('the round-1 leaderboard act 4 left behind is the baseline', async () => {
     const read = await readContestLeaderboard(page, state.contestId, state.entryId);
     // Best-N-of-M has to be live for the asymmetry this act ends on to mean anything: a contest
@@ -690,10 +720,15 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
       // first before and after. The ranks that do move are the field's, asserted through
       // `placedOrder` above. A second ranked entry needs a second squad and a second draft.
       expect(read.entry.position).toBe(1);
+
+      // The page that was open before this round landed shows it without a reload. Presence
+      // only: the arithmetic is asserted on the read above.
+      await expectLeaderboardPageShowsRound(leaderboardTab, state.entryId, read.entry.pickIds, plan.round);
       return read;
     });
   }
   const afterRound3 = previous;
+  await leaderboardTab.close();
 
   const afterPenalty = await test.step('a penalty on a pick that does not count moves that golfer and not the entry total', async () => {
     const dropped = worstOf(afterRound3, afterRound3.entry.droppedIds);
@@ -757,6 +792,15 @@ test('act 6: completing the event settles the contest and freezes its standing a
 
   await test.step('root admin signs in', async () => {
     await adminSignIn(page, credentials);
+  });
+
+  // #362 — left open across settlement, so the final result has to reach it by its own poll.
+  const leaderboardTab = await test.step('open the leaderboard page while the contest is live', async () => {
+    const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
+    await expect(tab.getByTestId(`contest-leaderboard-entry-${state.entryId}`)).toBeVisible();
+    await expect(tab.getByTestId('contest-leaderboard-settled-note')).toHaveCount(0);
+    await page.bringToFront();
+    return tab;
   });
 
   await test.step(`the card is short exactly round ${ACT_6_FINAL_ROUND}`, async () => {
@@ -828,6 +872,14 @@ test('act 6: completing the event settles the contest and freezes its standing a
     expect(moved.event.status).toBe('COMPLETED');
   });
 
+  await test.step('the leaderboard page left open shows the final result without a reload', async () => {
+    await leaderboardTab.bringToFront();
+    await expect(leaderboardTab.getByTestId('contest-leaderboard-settled-note'))
+      .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
+    await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`)).toBeVisible();
+    await leaderboardTab.close();
+  });
+
   const settled = await test.step('the contest is settled, and its frozen standing is that last live reading', async () => {
     const managed = await readManagedContest(page, state.leagueId, state.contestId);
     expect(managed.contest.status).toBe('COMPLETED');
@@ -894,6 +946,36 @@ test('act 6: completing the event settles the contest and freezes its standing a
     await logOut(page);
   });
 });
+
+/**
+ * #362 — how long a leaderboard page left open gets to catch up on its own: one 30-second poll,
+ * of the contest to see a status change (which reads the leaderboard straight away) or of the
+ * leaderboard to see a new round, with room to spare. Comfortably over one interval rather than
+ * a sleep.
+ */
+const LIVE_PAGE_TIMEOUT_MS = 75_000;
+
+/**
+ * Opens the contest's leaderboard page in a second tab of the same signed-in context, so the
+ * admin tab can drive the event while this one is left alone. Nothing here reloads it; the
+ * caller asserts what the page should show on arrival and brings the admin tab back.
+ */
+async function openLeaderboardTab(page: Page, leagueCode: string, contestId: string): Promise<Page> {
+  const tab = await page.context().newPage();
+  await tab.goto(`/league/${leagueCode}/contests/${contestId}/leaderboard`);
+  return tab;
+}
+
+/** The open leaderboard page has picked up `round`, and shows the entry with that round scored on each pick. */
+async function expectLeaderboardPageShowsRound(tab: Page, entryId: string, pickIds: string[], round: number) {
+  await tab.bringToFront();
+  await expect(tab.getByTestId(`contest-leaderboard-round-header-${round}`))
+    .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
+  await expect(tab.getByTestId(`contest-leaderboard-entry-${entryId}`)).toBeVisible();
+  for (const pickId of pickIds) {
+    await expect(tab.getByTestId(`contest-leaderboard-pick-round-${entryId}-${pickId}-${round}`)).not.toHaveText('—');
+  }
+}
 
 async function expectListPageLoaded(page: Page, path: string, landmark: string, table: string) {
   await page.goto(path);
@@ -970,7 +1052,7 @@ type GolfContestLeaderboardBody = {
     scoredPickCount: number;
     countingPickLimit: number;
     golf: { totalScoreToPar: number | null } | null;
-    picks: Array<{ sportEventParticipantId: string; isCounting: boolean; isDropped: boolean }>;
+    picks: Array<{ pickId: string; sportEventParticipantId: string; isCounting: boolean; isDropped: boolean }>;
   }>;
 };
 
@@ -989,6 +1071,8 @@ type LeaderboardRead = {
     countingIds: string[];
     /** Field-row ids of the picks that are scored but dropped, best first. */
     droppedIds: string[];
+    /** Every pick's own id, which the leaderboard page keys its rows by. */
+    pickIds: string[];
   };
   /** Every field row the leaderboard published, by field-row id. */
   golfers: Map<string, {
@@ -1044,6 +1128,7 @@ async function readContestLeaderboard(page: Page, contestId: string, entryId: st
       // come back in merit order without this file re-deriving one.
       countingIds: standing.picks.filter((pick) => pick.isCounting).map((pick) => pick.sportEventParticipantId),
       droppedIds: standing.picks.filter((pick) => pick.isDropped).map((pick) => pick.sportEventParticipantId),
+      pickIds: standing.picks.map((pick) => pick.pickId),
     },
     golfers,
     placedOrder: body.participants

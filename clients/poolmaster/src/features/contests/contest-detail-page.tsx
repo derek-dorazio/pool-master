@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -30,7 +30,12 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { shouldPollContestEntries } from './contest-status';
+import {
+  CONTEST_POLL_INTERVAL_MS,
+  contestRefetchInterval,
+  refreshOnContestStatusChange,
+  shouldPollContestEntries,
+} from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -119,6 +124,7 @@ export function ContestDetailPage() {
   const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
 
+  const queryClient = useQueryClient();
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
     queryFn: async (): Promise<ContestDto> => {
@@ -128,10 +134,17 @@ export function ContestDetailPage() {
         throwApiError(response.error, 'Contest detail response is missing data.');
       }
 
+      refreshOnContestStatusChange(
+        queryClient,
+        QueryKeys.contests.detail(contestId),
+        response.data.contest.status,
+        QueryKeys.contestEntries.byContest(contestId),
+      );
       return response.data.contest;
     },
     enabled: Boolean(contestId),
     retry: false,
+    refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
   const contestEntriesQuery = useQuery({
@@ -147,7 +160,7 @@ export function ContestDetailPage() {
     },
     enabled: Boolean(contestId),
     retry: false,
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? 30_000 : false,
+    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';

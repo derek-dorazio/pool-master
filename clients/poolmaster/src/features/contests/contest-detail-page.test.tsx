@@ -500,6 +500,39 @@ describe('ContestDetailPage (Contest Board)', () => {
     expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
   });
 
+  it('starts polling entries without a reload when a locked contest goes live', async () => {
+    // #362 — the contest read refreshes while the contest is not terminal, so the board
+    // notices the event start and the entry poll keyed on ACTIVE begins on its own.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'ACTIVE', entries: [] });
+      getContestMock.mockResolvedValueOnce({
+        data: {
+          contest: {
+            id: 'contest-1',
+            name: 'Masters Pick 6',
+            status: 'LOCKED',
+            contestType: 'ROSTER',
+            selectionType: 'TIERED',
+            scoringEngine: 'STROKE_PLAY',
+            leagueId: 'league-1',
+            sport: 'GOLF',
+            entryCount: 0,
+          },
+        },
+      });
+      renderContestBoard();
+      await screen.findByText(/Total Entries/);
+      const entryCallsWhileLocked = listContestEntriesMock.mock.calls.length;
+
+      // The contest read that sees ACTIVE reads the entries straight away, not one interval on.
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(listContestEntriesMock.mock.calls.length).toBeGreaterThan(entryCallsWhileLocked);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // pool-master-dxd.13 — inline rename for the requester's own entries while OPEN.
   it('lets the owner rename their own entry inline while contest is OPEN', async () => {
     primeMocks({
