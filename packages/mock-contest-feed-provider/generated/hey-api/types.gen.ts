@@ -20,7 +20,7 @@ export type MockContestFeedHealthResponses = {
         service: string;
         scenarioCount: number;
         eventCount: number;
-        feedKinds: Array<'field' | 'odds' | 'rankings' | 'results'>;
+        feedKinds: Array<'field' | 'odds' | 'results'>;
     };
 };
 
@@ -141,24 +141,6 @@ export type GetMockContestFeedScenarioResponses = {
                             note?: string;
                         }>;
                     };
-                    rankings: {
-                        asOf: string;
-                        note?: string;
-                        contestants: Array<{
-                            contestantId: string;
-                            name?: string;
-                            teamName?: string;
-                            countryCode?: string;
-                            seed?: number;
-                            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
-                            odds?: number;
-                            ranking?: number;
-                            strokes?: number;
-                            score?: number;
-                            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-                            note?: string;
-                        }>;
-                    };
                     results: {
                         asOf: string;
                         note?: string;
@@ -181,7 +163,7 @@ export type GetMockContestFeedScenarioResponses = {
                 updates?: Array<{
                     updateId: string;
                     asOf: string;
-                    feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                    feedKind: 'field' | 'odds' | 'results';
                     updateType: 'refresh' | 'correction' | 'live' | 'final';
                     note?: string;
                     contestants: Array<{
@@ -315,24 +297,6 @@ export type GetMockContestFeedScenarioEventResponses = {
                         note?: string;
                     }>;
                 };
-                rankings: {
-                    asOf: string;
-                    note?: string;
-                    contestants: Array<{
-                        contestantId: string;
-                        name?: string;
-                        teamName?: string;
-                        countryCode?: string;
-                        seed?: number;
-                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
-                        odds?: number;
-                        ranking?: number;
-                        strokes?: number;
-                        score?: number;
-                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-                        note?: string;
-                    }>;
-                };
                 results: {
                     asOf: string;
                     note?: string;
@@ -355,7 +319,7 @@ export type GetMockContestFeedScenarioEventResponses = {
             updates?: Array<{
                 updateId: string;
                 asOf: string;
-                feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                feedKind: 'field' | 'odds' | 'results';
                 updateType: 'refresh' | 'correction' | 'live' | 'final';
                 note?: string;
                 contestants: Array<{
@@ -469,24 +433,6 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                         note?: string;
                     }>;
                 };
-                rankings: {
-                    asOf: string;
-                    note?: string;
-                    contestants: Array<{
-                        contestantId: string;
-                        name?: string;
-                        teamName?: string;
-                        countryCode?: string;
-                        seed?: number;
-                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
-                        odds?: number;
-                        ranking?: number;
-                        strokes?: number;
-                        score?: number;
-                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-                        note?: string;
-                    }>;
-                };
                 results: {
                     asOf: string;
                     note?: string;
@@ -509,7 +455,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
             updates?: Array<{
                 updateId: string;
                 asOf: string;
-                feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                feedKind: 'field' | 'odds' | 'results';
                 updateType: 'refresh' | 'correction' | 'live' | 'final';
                 note?: string;
                 contestants: Array<{
@@ -553,7 +499,7 @@ export type GetMockContestFeedFieldSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
@@ -595,7 +541,7 @@ export type GetMockContestFeedOddsSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
@@ -617,48 +563,6 @@ export type GetMockContestFeedOddsSnapshotResponses = {
 
 export type GetMockContestFeedOddsSnapshotResponse = GetMockContestFeedOddsSnapshotResponses[keyof GetMockContestFeedOddsSnapshotResponses];
 
-export type GetMockContestFeedRankingsSnapshotData = {
-    body?: never;
-    path: {
-        scenarioId: string;
-        eventId: string;
-    };
-    query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
-    };
-    url: '/v1/scenarios/{scenarioId}/events/{eventId}/rankings';
-};
-
-export type GetMockContestFeedRankingsSnapshotResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        scenarioId: string;
-        eventId: string;
-        eventName: string;
-        feedKind: 'field' | 'odds' | 'rankings' | 'results';
-        asOf: string;
-        note?: string;
-        contestants: Array<{
-            contestantId: string;
-            name: string;
-            teamName?: string;
-            countryCode?: string;
-            seed?: number;
-            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
-            odds?: number;
-            ranking?: number;
-            strokes?: number;
-            score?: number;
-            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-            note?: string;
-        }>;
-    };
-};
-
-export type GetMockContestFeedRankingsSnapshotResponse = GetMockContestFeedRankingsSnapshotResponses[keyof GetMockContestFeedRankingsSnapshotResponses];
-
 export type GetMockContestFeedResultsSnapshotData = {
     body?: never;
     path: {
@@ -679,7 +583,7 @@ export type GetMockContestFeedResultsSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
@@ -868,7 +772,7 @@ export type GetMockContestFeedEventUpdatesResponses = {
         updates: Array<{
             updateId: string;
             asOf: string;
-            feedKind: 'field' | 'odds' | 'rankings' | 'results';
+            feedKind: 'field' | 'odds' | 'results';
             updateType: 'refresh' | 'correction' | 'live' | 'final';
             note?: string;
             contestants: Array<{

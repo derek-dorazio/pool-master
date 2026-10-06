@@ -3,7 +3,6 @@ import type { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
-  ProviderRanking,
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
@@ -172,179 +171,7 @@ describe('IngestionPersistence', () => {
     );
   });
 
-  it('pool-master-rop.68.1.3 persists provider-scoped participant ranking snapshots by provider mapping', async () => {
-    const prisma = {
-      participantProviderMapping: {
-        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-1' }),
-      },
-    };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
-    const ranking: ProviderRanking = {
-      providerId: 'mock-contest-feed',
-      participantExternalId: 'golfer-01',
-      rankingType: 'OWGR',
-      rank: 3,
-      points: 12.34,
-      asOfDate: new Date('2026-05-29T12:00:00.000Z'),
-    };
-
-    await expect(persistence.persistRankings([ranking])).resolves.toBe(1);
-
-    expect(prisma.participantProviderMapping.findUnique).toHaveBeenCalledWith({
-      where: {
-        providerId_externalId: {
-          providerId: 'mock-contest-feed',
-          externalId: 'golfer-01',
-        },
-      },
-    });
-    expect(prisma.participantRankingSnapshot.upsert).toHaveBeenCalledWith({
-      where: {
-        providerId_participantId_rankingType_asOfDate: {
-          providerId: 'mock-contest-feed',
-          participantId: 'participant-1',
-          rankingType: 'OWGR',
-          asOfDate: new Date('2026-05-29T12:00:00.000Z'),
-        },
-      },
-      create: {
-        providerId: 'mock-contest-feed',
-        participantId: 'participant-1',
-        rankingType: 'OWGR',
-        rank: 3,
-        points: 12.34,
-        asOfDate: new Date('2026-05-29T12:00:00.000Z'),
-      },
-      update: {
-        rank: 3,
-        points: 12.34,
-      },
-    });
-  });
-
-  it('pool-master-rop.68.1.4 reports created and updated ranking snapshot write diagnostics', async () => {
-    const asOfDate = new Date('2026-05-29T12:00:00.000Z');
-    const prisma = {
-      participantProviderMapping: {
-        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findUnique: jest.fn()
-          .mockResolvedValueOnce({
-            id: 'ranking-snapshot-existing',
-            providerId: 'mock-contest-feed',
-            participantId: 'participant-1',
-            rankingType: 'OWGR',
-            rank: 4,
-            points: 10.12,
-            asOfDate,
-          })
-          .mockResolvedValueOnce(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-1' }),
-      },
-    };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
-    const rankings: ProviderRanking[] = [
-      {
-        providerId: 'mock-contest-feed',
-        participantExternalId: 'golfer-01',
-        rankingType: 'OWGR',
-        rank: 3,
-        points: 12.34,
-        asOfDate,
-      },
-      {
-        providerId: 'mock-contest-feed',
-        participantExternalId: 'golfer-02',
-        rankingType: 'OWGR',
-        rank: 8,
-        points: 5.67,
-        asOfDate,
-      },
-    ];
-
-    await expect(persistence.persistRankingsWithDiagnostics(rankings)).resolves.toMatchObject({
-      count: 2,
-      value: 2,
-      writeDiagnostics: {
-        summary: {
-          total: 2,
-          unchanged: 0,
-          created: 1,
-          updated: 1,
-          deleted: 0,
-        },
-        rows: [
-          expect.objectContaining({
-            entityType: 'ParticipantRankingSnapshot',
-            disposition: 'UPDATED',
-            before: expect.objectContaining({ rank: 4, points: 10.12 }),
-            after: expect.objectContaining({ rank: 3, points: 12.34 }),
-          }),
-          expect.objectContaining({
-            entityType: 'ParticipantRankingSnapshot',
-            disposition: 'CREATED',
-            after: expect.objectContaining({ rank: 8, points: 5.67 }),
-          }),
-        ],
-      },
-    });
-  });
-
-  it('pool-master-rop.68.1.4 reports unchanged ranking snapshots for idempotent ranking reruns', async () => {
-    const asOfDate = new Date('2026-05-29T12:00:00.000Z');
-    const prisma = {
-      participantProviderMapping: {
-        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'ranking-snapshot-existing',
-          providerId: 'mock-contest-feed',
-          participantId: 'participant-1',
-          rankingType: 'OWGR',
-          rank: 3,
-          points: 12.34,
-          asOfDate,
-        }),
-        upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-existing' }),
-      },
-    };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
-
-    const result = await persistence.persistRankingsWithDiagnostics([
-      {
-        providerId: 'mock-contest-feed',
-        participantExternalId: 'golfer-01',
-        rankingType: 'OWGR',
-        rank: 3,
-        points: 12.34,
-        asOfDate,
-      },
-    ]);
-
-    expect(result.writeDiagnostics.summary).toEqual({
-      total: 1,
-      unchanged: 1,
-      created: 0,
-      updated: 0,
-      deleted: 0,
-    });
-    expect(result.writeDiagnostics.rows).toEqual([
-      expect.objectContaining({
-        entityType: 'ParticipantRankingSnapshot',
-        disposition: 'UNCHANGED',
-        before: expect.objectContaining({ rank: 3, points: 12.34 }),
-        after: expect.objectContaining({ rank: 3, points: 12.34 }),
-      }),
-    ]);
-  });
-
-  it('pool-master-rop.68.1.3 hydrates event participants with seed, event-scoped odds, and latest global rank', async () => {
+  it('pool-master-rop.68.1.3 hydrates event participants with seed, event-scoped odds, and the ranking the field carries', async () => {
     const prisma = {
       sportEvent: {
         update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
@@ -360,9 +187,6 @@ describe('IngestionPersistence', () => {
       },
       participant: {
         update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findFirst: jest.fn().mockResolvedValue({ rank: 7 }),
       },
       sportEventParticipant: {
         findUnique: jest.fn().mockResolvedValue(null),
@@ -381,6 +205,7 @@ describe('IngestionPersistence', () => {
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
           active: true,
+          ranking: 7,
           metadata: {
             seed: 1,
             odds: 8.5,
@@ -396,14 +221,6 @@ describe('IngestionPersistence', () => {
       sportEventParticipantsPersisted: 1,
     });
 
-    expect(prisma.participantRankingSnapshot.findFirst).toHaveBeenCalledWith({
-      where: {
-        providerId: 'mock-contest-feed',
-        participantId: 'participant-1',
-        rankingType: 'OWGR',
-      },
-      orderBy: { asOfDate: 'desc' },
-    });
     expect(prisma.sportEventParticipant.upsert).toHaveBeenCalledWith({
       where: {
         sportEventId_participantId: {
@@ -444,6 +261,7 @@ describe('IngestionPersistence', () => {
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
           active: true,
+          ranking: 7,
           metadata: {
             seed: 1,
             odds: 8.5,
@@ -484,9 +302,6 @@ describe('IngestionPersistence', () => {
       },
       participant: {
         update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findFirst: jest.fn().mockResolvedValue({ rank: 7 }),
       },
       sportEventParticipant: {
         findUnique: jest.fn().mockResolvedValue({
@@ -535,7 +350,7 @@ describe('IngestionPersistence', () => {
     ]);
   });
 
-  it('pool-master-rop.68.1.3 does not bleed mismatched event odds or absent global ranking onto event participants', async () => {
+  it('pool-master-rop.68.1.3 does not bleed mismatched event odds onto event participants, and leaves the ranking empty when the field carries none', async () => {
     const prisma = {
       sportEvent: {
         update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
@@ -551,9 +366,6 @@ describe('IngestionPersistence', () => {
       },
       participant: {
         update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
-      },
-      participantRankingSnapshot: {
-        findFirst: jest.fn().mockResolvedValue(null),
       },
       sportEventParticipant: {
         findUnique: jest.fn().mockResolvedValue(null),

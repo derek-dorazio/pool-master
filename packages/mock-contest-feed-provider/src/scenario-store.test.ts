@@ -283,10 +283,6 @@ test('ScenarioStore rejects new contestants in deltas unless they include a name
                 asOf: '2026-04-01T12:00:00.000Z',
                 contestants: [{ contestantId: 'golfer-02', odds: 11.5 }],
               },
-              rankings: {
-                asOf: '2026-04-01T12:00:00.000Z',
-                contestants: [],
-              },
               results: {
                 asOf: '2026-04-14T12:00:00.000Z',
                 contestants: [],
@@ -336,10 +332,6 @@ test('ScenarioStore rejects golf events that omit odds contestants', () => {
             },
             feeds: {
               odds: {
-                asOf: '2026-04-01T12:00:00.000Z',
-                contestants: [],
-              },
-              rankings: {
                 asOf: '2026-04-01T12:00:00.000Z',
                 contestants: [],
               },

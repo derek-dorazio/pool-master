@@ -117,7 +117,7 @@ describe('RootAdminSyncDashboardPage', () => {
       screen.queryByText(/Most recent runs are shown first/),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sync-workflow-sequence')).toHaveTextContent(
-      'ScheduleParticipantsWorld rankingsMock stateLive scores',
+      'ScheduleParticipantsMock stateLive scores',
     );
     expect(
       screen.getByTestId('root-admin-open-run-sport-sync-page'),

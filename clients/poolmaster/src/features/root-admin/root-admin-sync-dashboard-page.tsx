@@ -52,7 +52,6 @@ const evidenceColumnHelper = createColumnHelper<SyncRunEvidenceRow>();
 const WORKFLOW_STEPS = [
   'Schedule',
   'Participants',
-  'World rankings',
   'Mock state',
   'Live scores',
 ] as const;

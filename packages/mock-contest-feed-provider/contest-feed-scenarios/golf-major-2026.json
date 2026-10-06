@@ -72,22 +72,6 @@
             { "contestantId": "golfer-10", "odds": 35.0 }
           ]
         },
-        "rankings": {
-          "asOf": "2026-03-09T17:00:00.000Z",
-          "note": "Deterministic early-season world-order proxy.",
-          "contestants": [
-            { "contestantId": "golfer-01", "ranking": 1 },
-            { "contestantId": "golfer-02", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-04", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 5 },
-            { "contestantId": "golfer-06", "ranking": 6 },
-            { "contestantId": "golfer-07", "ranking": 7 },
-            { "contestantId": "golfer-08", "ranking": 8 },
-            { "contestantId": "golfer-09", "ranking": 9 },
-            { "contestantId": "golfer-10", "ranking": 10 }
-          ]
-        },
         "results": {
           "asOf": "2026-03-15T22:00:00.000Z",
           "note": "Completed flagship-event leaderboard for season calibration.",
@@ -175,20 +159,6 @@
             { "contestantId": "golfer-06", "odds": 38.0 },
             { "contestantId": "golfer-07", "odds": 45.0 },
             { "contestantId": "golfer-08", "odds": 55.0 }
-          ]
-        },
-        "rankings": {
-          "asOf": "2026-04-07T12:00:00.000Z",
-          "note": "World ranking snapshot used for tier ordering.",
-          "contestants": [
-            { "contestantId": "golfer-01", "ranking": 1 },
-            { "contestantId": "golfer-02", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-04", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 7 },
-            { "contestantId": "golfer-06", "ranking": 11 },
-            { "contestantId": "golfer-07", "ranking": 14 },
-            { "contestantId": "golfer-08", "ranking": 18 }
           ]
         },
         "results": {
@@ -330,22 +300,6 @@
             { "contestantId": "golfer-09", "odds": 30.0 }
           ]
         },
-        "rankings": {
-          "asOf": "2026-05-12T16:00:00.000Z",
-          "note": "Ranking-order proxy entering the second major.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-05", "ranking": 3 },
-            { "contestantId": "golfer-03", "ranking": 4 },
-            { "contestantId": "golfer-04", "ranking": 5 },
-            { "contestantId": "golfer-08", "ranking": 6 },
-            { "contestantId": "golfer-06", "ranking": 7 },
-            { "contestantId": "golfer-07", "ranking": 8 },
-            { "contestantId": "golfer-10", "ranking": 9 },
-            { "contestantId": "golfer-09", "ranking": 10 }
-          ]
-        },
         "results": {
           "asOf": "2026-05-17T22:00:00.000Z",
           "note": "Second-major results used for season progression testing.",
@@ -439,22 +393,6 @@
             { "contestantId": "golfer-07", "odds": 26.0 }
           ]
         },
-        "rankings": {
-          "asOf": "2026-06-02T16:00:00.000Z",
-          "note": "Projected order entering the Memorial.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-08", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 5 },
-            { "contestantId": "golfer-04", "ranking": 6 },
-            { "contestantId": "golfer-06", "ranking": 7 },
-            { "contestantId": "golfer-10", "ranking": 8 },
-            { "contestantId": "golfer-09", "ranking": 9 },
-            { "contestantId": "golfer-07", "ranking": 10 }
-          ]
-        },
         "results": {
           "asOf": "2026-06-02T16:00:00.000Z",
           "note": "Future event placeholder results remain pending until play begins.",
@@ -494,19 +432,6 @@
             { "contestantId": "golfer-02", "odds": 8.5 },
             { "contestantId": "golfer-08", "odds": 13.0 },
             { "contestantId": "golfer-10", "odds": 18.0 }
-          ]
-        },
-        {
-          "updateId": "golf-memorial-2026-rankings-1",
-          "asOf": "2026-06-03T15:00:00.000Z",
-          "feedKind": "rankings",
-          "updateType": "refresh",
-          "note": "Ranking order refresh after the second-major checkpoint settles.",
-          "contestants": [
-            { "contestantId": "golfer-01", "ranking": 1 },
-            { "contestantId": "golfer-02", "ranking": 2 },
-            { "contestantId": "golfer-08", "ranking": 3 },
-            { "contestantId": "golfer-03", "ranking": 4 }
           ]
         }
       ]
@@ -570,22 +495,6 @@
             { "contestantId": "golfer-07", "odds": 22.0 },
             { "contestantId": "golfer-09", "odds": 25.0 },
             { "contestantId": "golfer-10", "odds": 28.0 }
-          ]
-        },
-        "rankings": {
-          "asOf": "2026-06-09T16:00:00.000Z",
-          "note": "Projected order entering the Canadian Open.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-08", "ranking": 4 },
-            { "contestantId": "golfer-04", "ranking": 5 },
-            { "contestantId": "golfer-05", "ranking": 6 },
-            { "contestantId": "golfer-06", "ranking": 7 },
-            { "contestantId": "golfer-07", "ranking": 8 },
-            { "contestantId": "golfer-09", "ranking": 9 },
-            { "contestantId": "golfer-10", "ranking": 10 }
           ]
         },
         "results": {
@@ -702,22 +611,6 @@
             { "contestantId": "golfer-07", "odds": 24.0 }
           ]
         },
-        "rankings": {
-          "asOf": "2026-06-16T16:00:00.000Z",
-          "note": "Ranking order entering the U.S. Open.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-08", "ranking": 4 },
-            { "contestantId": "golfer-04", "ranking": 5 },
-            { "contestantId": "golfer-05", "ranking": 6 },
-            { "contestantId": "golfer-10", "ranking": 7 },
-            { "contestantId": "golfer-06", "ranking": 8 },
-            { "contestantId": "golfer-09", "ranking": 9 },
-            { "contestantId": "golfer-07", "ranking": 10 }
-          ]
-        },
         "results": {
           "asOf": "2026-06-16T16:00:00.000Z",
           "note": "Future event placeholder results remain pending.",
@@ -755,18 +648,6 @@
           "contestants": [
             { "contestantId": "golfer-10", "participantStatus": "withdrawn", "note": "Shoulder issue forces a pre-tournament withdrawal." },
             { "contestantId": "golfer-12", "name": "Min Woo Lee", "teamName": "Australia", "countryCode": "AU", "seed": 11, "participantStatus": "alternate", "odds": 30.0, "ranking": 12, "note": "Added from the alternate list before the U.S. Open lock." }
-          ]
-        },
-        {
-          "updateId": "golf-us-open-2026-rankings-1",
-          "asOf": "2026-06-17T15:15:00.000Z",
-          "feedKind": "rankings",
-          "updateType": "refresh",
-          "note": "Final ranking-order refresh after the alternate enters the field.",
-          "contestants": [
-            { "contestantId": "golfer-12", "ranking": 11 },
-            { "contestantId": "golfer-05", "ranking": 5 },
-            { "contestantId": "golfer-09", "ranking": 10 }
           ]
         }
       ]
@@ -832,22 +713,6 @@
             { "contestantId": "golfer-10", "odds": 28.0 }
           ]
         },
-        "rankings": {
-          "asOf": "2026-07-07T11:00:00.000Z",
-          "note": "Projected order entering the links swing.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-09", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 5 },
-            { "contestantId": "golfer-04", "ranking": 6 },
-            { "contestantId": "golfer-06", "ranking": 7 },
-            { "contestantId": "golfer-08", "ranking": 8 },
-            { "contestantId": "golfer-07", "ranking": 9 },
-            { "contestantId": "golfer-10", "ranking": 10 }
-          ]
-        },
         "results": {
           "asOf": "2026-07-07T11:00:00.000Z",
           "note": "Future event placeholder results remain pending.",
@@ -886,18 +751,6 @@
             { "contestantId": "golfer-09", "odds": 10.5 },
             { "contestantId": "golfer-05", "odds": 11.5 },
             { "contestantId": "golfer-02", "odds": 8.5 }
-          ]
-        },
-        {
-          "updateId": "golf-genesis-scottish-open-2026-rankings-1",
-          "asOf": "2026-07-08T09:45:00.000Z",
-          "feedKind": "rankings",
-          "updateType": "refresh",
-          "note": "Links-week ranking refresh gives Fleetwood a short-term bump.",
-          "contestants": [
-            { "contestantId": "golfer-09", "ranking": 3 },
-            { "contestantId": "golfer-03", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 5 }
           ]
         }
       ]
@@ -961,22 +814,6 @@
             { "contestantId": "golfer-08", "odds": 20.0 },
             { "contestantId": "golfer-07", "odds": 24.0 },
             { "contestantId": "golfer-10", "odds": 26.0 }
-          ]
-        },
-        "rankings": {
-          "asOf": "2026-07-14T10:00:00.000Z",
-          "note": "Projected order entering the final major of the QA season backbone.",
-          "contestants": [
-            { "contestantId": "golfer-02", "ranking": 1 },
-            { "contestantId": "golfer-01", "ranking": 2 },
-            { "contestantId": "golfer-03", "ranking": 3 },
-            { "contestantId": "golfer-09", "ranking": 4 },
-            { "contestantId": "golfer-05", "ranking": 5 },
-            { "contestantId": "golfer-04", "ranking": 6 },
-            { "contestantId": "golfer-06", "ranking": 7 },
-            { "contestantId": "golfer-08", "ranking": 8 },
-            { "contestantId": "golfer-07", "ranking": 9 },
-            { "contestantId": "golfer-10", "ranking": 10 }
           ]
         },
         "results": {

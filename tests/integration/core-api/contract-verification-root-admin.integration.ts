@@ -86,7 +86,6 @@ import type {
   ProviderParticipant,
   ProviderPayloadCapture,
   ProviderPayloadDiagnostics,
-  ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -203,19 +202,6 @@ class OperationalContractProvider implements SportDataProvider {
     ];
   }
 
-  async getRankings(): Promise<ProviderRanking[]> {
-    return [
-      {
-        providerId: this.providerId,
-        participantExternalId: 'golfer-1',
-        rankingType: 'OWGR',
-        rank: 1,
-        points: 15.2,
-        asOfDate: new Date('2026-04-08T00:00:00.000Z'),
-      },
-    ];
-  }
-
   async getLiveScores(): Promise<LiveScoreResult> {
     return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
   }
@@ -326,7 +312,6 @@ async function buildIngestionApp(provider: SportDataProvider): Promise<FastifyIn
   const scheduler = new IngestionScheduler(registry, {
     onEvents: async () => undefined,
     onEventDetail: async () => undefined,
-    onRankings: async () => undefined,
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
@@ -824,15 +809,26 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+          feeds: ['EVENTSCHEDULE'],
         },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
       expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
-      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS']);
+      expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTSCHEDULE']);
       expect(typeof prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
       expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(prepareSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
+
+      // #125 — PARTICIPANTRANKINGS is retired, not demoted: the sport sync contract refuses it.
+      const retiredFeedRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/ingestion/sports/GOLF/sync',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['PARTICIPANTRANKINGS'],
+        },
+      });
+      expect(retiredFeedRes.statusCode).toBe(400);
 
       const cleanupDryRunRes = await app.inject({
         method: 'POST',

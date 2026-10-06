@@ -62,7 +62,6 @@ export function RootAdminIngestionSchedulePage() {
           healthCheck: nextDraft.healthCheck,
           eventSchedule: nextDraft.eventSchedule,
           eventParticipants: nextDraft.eventParticipants,
-          participantRankings: nextDraft.participantRankings,
           eventLiveScores: nextDraft.eventLiveScores,
           eventResults: nextDraft.eventResults,
         },

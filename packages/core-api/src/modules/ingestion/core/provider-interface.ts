@@ -36,9 +36,6 @@ export interface SportDataProvider {
   /** Fetch participant list for a sport (athletes, drivers, teams). */
   getParticipants(sport: Sport): Promise<ProviderParticipant[]>;
 
-  /** Fetch current rankings for a sport. */
-  getRankings(sport: Sport, rankingType: string): Promise<ProviderRanking[]>;
-
   /**
    * Fetch live/current scores for an event. Returns a typed
    * `LiveScoreResult` discriminated by sport category. Throws
@@ -198,19 +195,11 @@ export interface ProviderParticipant {
   inactiveReason?: ParticipantInactiveReason;
   /**
    * The participant's ranking as the provider's field reports it (#384). When present, an
-   * event field load writes it onto the event participant, ahead of any ranking snapshot.
+   * event field load writes it onto the event participant; when absent, the participant keeps
+   * the ranking it already has.
    */
   ranking?: number;
   metadata: Record<string, unknown>;
-}
-
-export interface ProviderRanking {
-  providerId: string;
-  participantExternalId: string;
-  rankingType: string;
-  rank: number;
-  points?: number;
-  asOfDate: Date;
 }
 
 export interface ProviderEventResult {

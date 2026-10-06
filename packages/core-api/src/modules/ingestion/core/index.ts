@@ -4,7 +4,6 @@ export type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
-  ProviderRanking,
   ProviderEventResult,
   ProviderParticipantResult,
   ProviderHealthStatus,

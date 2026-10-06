@@ -87,9 +87,6 @@ export const IngestionScheduleConfigBodySchema = z.object({
   eventParticipants: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.',
   ),
-  participantRankings: IngestionFeedSchedulePolicySchema.describe(
-    'Scheduling policy for ranking refreshes.',
-  ),
   eventLiveScores: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for live score polling.',
   ),
@@ -104,7 +101,6 @@ export const IngestionScheduleConfigOverrideSchema = z.object({
   healthCheck: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventSchedule: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventParticipants: IngestionFeedSchedulePolicyPatchSchema.optional(),
-  participantRankings: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventLiveScores: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventResults: IngestionFeedSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {

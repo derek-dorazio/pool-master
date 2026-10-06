@@ -313,7 +313,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
+| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -509,7 +509,7 @@ link with `maxUses` / `currentUses`.
 Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `Participant`,
-`ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`.
+`ParticipantProviderMapping`, `ParticipantLeagueAffiliation`.
 The tree is `SportLeague → EventSeries → SportEvent`: an event is one edition of a series, in
 one event year, and the series is its only parent.
 
@@ -659,7 +659,7 @@ still the event's, by the ruling above. #93 does not get to re-key it on its own
 | Read one | `authenticated` | |
 | Create, update | `rootAdmin` | **A10** · 403 `ROOT_ADMIN_ACCESS_REQUIRED` from the claim. Before #235 any signed-in user could create or rename a catalog participant |
 
-### ParticipantProviderMapping, ParticipantRankingSnapshot
+### ParticipantProviderMapping
 
 Provider plumbing. Written by sync; read and repaired by `rootAdmin`. #236 adds one read,
 `listParticipantProviderMappings` (`authenticated`, like every catalog read), for the player
@@ -668,6 +668,11 @@ page — the mapping count the golf player list carried is gone. #205 adds the r
 a provider's identifier to the participant with `MANUAL` confidence, moving it if another
 participant held it; 404 `PROVIDER_NOT_FOUND` for a provider that is not registered. It
 replaced `adminMapParticipant`, which took both ids in the body under `/admin/providers`.
+
+`ParticipantRankingSnapshot` and the `PARTICIPANTRANKINGS` feed that wrote it were retired in
+#125. A golfer's current ranking is `ParticipantLeagueAffiliation.ranking`, owned by the root
+admin; an event participant's ranking comes from the provider's field (#384), and a field that
+carries none leaves the ranking already on the row.
 
 ## Contests and entries
 

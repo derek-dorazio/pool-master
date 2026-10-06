@@ -2,19 +2,17 @@
  * IngestionPersistence — persists ingested data to the database via Prisma.
  *
  * Called by ingestion callbacks to upsert sport events, participants,
- * and rankings received from data providers.
+ * and event fields received from data providers.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { getDefaultTournamentFormatForSport, SportEventSyncScope, type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport, SportEventSyncScope, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
-  ProviderRanking,
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
 } from '../core/provider-interface';
-import { resolveRankingType } from '../core/ranking-types';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import { resolveEventTiming } from '../../events/operational-timing';
@@ -336,14 +334,9 @@ export class IngestionPersistence {
           },
         },
       });
-      // #384 — the field's own ranking wins and the sport-level snapshot is only a fallback.
-      // When neither gives one, the rank already on the row stays rather than being blanked.
+      // #384 — the field's own ranking wins. When the field gives none, the rank already on
+      // the row stays rather than being blanked.
       const ranking = participant.ranking
-        ?? await this.findLatestRankingForEventParticipant({
-          providerId: participant.providerId,
-          participantId: mapping.participantId,
-          sport: detail.sport,
-        })
         ?? existingEventParticipant?.ranking
         ?? null;
       const before = existingEventParticipant
@@ -419,125 +412,6 @@ export class IngestionPersistence {
       value,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
     };
-  }
-
-  /**
-   * Persist global participant ranking snapshots by provider-scoped mapping.
-   *
-   * Rankings are not event-scoped source facts. They are provider-scoped
-   * snapshots keyed by ranking type + asOf; event participant hydration copies
-   * the latest applicable snapshot onto SportEventParticipant.ranking.
-   */
-  async persistRankings(rankings: ProviderRanking[]): Promise<number> {
-    return (await this.persistRankingsWithDiagnostics(rankings)).count;
-  }
-
-  async persistRankingsWithDiagnostics(
-    rankings: ProviderRanking[],
-  ): Promise<PersistenceDiagnosticsResult<number>> {
-    let count = 0;
-    const detailRows: SyncWriteDetailRow[] = [];
-    this.logger?.debug({
-      count: rankings.length,
-      rankings: rankings.slice(0, 10).map((ranking) => ({
-        providerId: ranking.providerId,
-        participantExternalId: ranking.participantExternalId,
-        rankingType: ranking.rankingType,
-        rank: ranking.rank,
-        asOfDate: ranking.asOfDate.toISOString(),
-      })),
-    }, 'Persisting participant ranking snapshots from ingestion');
-
-    for (const ranking of rankings) {
-      const mapping = await this.prisma.participantProviderMapping.findUnique({
-        where: {
-          providerId_externalId: {
-            providerId: ranking.providerId,
-            externalId: ranking.participantExternalId,
-          },
-        },
-      });
-
-      if (!mapping) {
-        this.logger?.warn({
-          providerId: ranking.providerId,
-          participantExternalId: ranking.participantExternalId,
-          rankingType: ranking.rankingType,
-        }, 'Skipped participant ranking because provider mapping was not found');
-        continue;
-      }
-      const existingRanking = await this.prisma.participantRankingSnapshot.findUnique({
-        where: {
-          providerId_participantId_rankingType_asOfDate: {
-            providerId: ranking.providerId,
-            participantId: mapping.participantId,
-            rankingType: ranking.rankingType,
-            asOfDate: ranking.asOfDate,
-          },
-        },
-      });
-      const before = existingRanking ? normalizeRankingSnapshotRow(existingRanking) : undefined;
-      const after = normalizeRankingSnapshotInput(ranking, mapping.participantId);
-
-      const persistedRanking = await this.prisma.participantRankingSnapshot.upsert({
-        where: {
-          providerId_participantId_rankingType_asOfDate: {
-            providerId: ranking.providerId,
-            participantId: mapping.participantId,
-            rankingType: ranking.rankingType,
-            asOfDate: ranking.asOfDate,
-          },
-        },
-        create: {
-          providerId: ranking.providerId,
-          participantId: mapping.participantId,
-          rankingType: ranking.rankingType,
-          rank: ranking.rank,
-          points: ranking.points ?? null,
-          asOfDate: ranking.asOfDate,
-        },
-        update: {
-          rank: ranking.rank,
-          points: ranking.points ?? null,
-        },
-      });
-      detailRows.push({
-        id: `participant-ranking:${ranking.providerId}:${mapping.participantId}:${ranking.rankingType}:${ranking.asOfDate.toISOString()}`,
-        entityType: 'ParticipantRankingSnapshot',
-        disposition: resolveDisposition(before, after),
-        providerId: ranking.providerId,
-        participantExternalId: ranking.participantExternalId,
-        internalId: persistedRanking.id,
-        name: ranking.participantExternalId,
-        ...(before ? { before } : {}),
-        after,
-      });
-      count++;
-    }
-
-    this.logger?.info({ count }, 'Persisted participant ranking snapshots from ingestion');
-    return {
-      count,
-      value: count,
-      writeDiagnostics: summarizeSyncWriteRows(detailRows),
-    };
-  }
-
-  private async findLatestRankingForEventParticipant(input: {
-    providerId: string;
-    participantId: string;
-    sport: Sport;
-  }): Promise<number | null> {
-    const snapshot = await this.prisma.participantRankingSnapshot.findFirst({
-      where: {
-        providerId: input.providerId,
-        participantId: input.participantId,
-        rankingType: resolveRankingType(input.sport),
-      },
-      orderBy: { asOfDate: 'desc' },
-    });
-
-    return snapshot?.rank ?? null;
   }
 }
 
@@ -656,38 +530,6 @@ function normalizeSportEventParticipantRow(row: {
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,
     metadata: jsonClone(row.metadata),
-  };
-}
-
-function normalizeRankingSnapshotInput(
-  ranking: ProviderRanking,
-  participantId: string,
-): Record<string, unknown> {
-  return {
-    providerId: ranking.providerId,
-    participantId,
-    rankingType: ranking.rankingType,
-    rank: ranking.rank,
-    points: ranking.points ?? null,
-    asOfDate: ranking.asOfDate.toISOString(),
-  };
-}
-
-function normalizeRankingSnapshotRow(row: {
-  providerId: string;
-  participantId: string;
-  rankingType: string;
-  rank: number;
-  points: Prisma.Decimal | number | null;
-  asOfDate: Date;
-}): Record<string, unknown> {
-  return {
-    providerId: row.providerId,
-    participantId: row.participantId,
-    rankingType: row.rankingType,
-    rank: row.rank,
-    points: decimalToNumber(row.points),
-    asOfDate: row.asOfDate.toISOString(),
   };
 }
 

@@ -1,5 +1,11 @@
 import { Sport } from '@poolmaster/shared/domain';
 import {
+  IngestionFeedTypeSchema,
+  SportSyncRequestSchema,
+  type IngestionFeedType,
+} from '@poolmaster/shared/dto/ingestion.dto';
+import {
+  SPORT_SYNC_FEEDS,
   SyncOrchestrator,
   SyncRequestValidationError,
   normalizeSyncRequest,
@@ -28,7 +34,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'SPORT',
         sport: Sport.GOLF,
-        feeds: ['EVENTSCHEDULE', 'EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+        feeds: ['EVENTSCHEDULE', 'EVENTSCHEDULE'],
         window: { from: requestedFrom },
       },
       workflowContext: { requestId: 'manual-123' },
@@ -41,7 +47,7 @@ describe('SyncOrchestrator request model', () => {
     expect(normalized.scope).toMatchObject({
       type: 'SPORT',
       sport: Sport.GOLF,
-      feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+      feeds: ['EVENTSCHEDULE'],
       requestedWindow: { from: requestedFrom },
       effectiveWindow: {
         from: requestedFrom,
@@ -130,35 +136,6 @@ describe('SyncOrchestrator request model', () => {
     expect(manual.scope).toEqual(scheduled.scope);
   });
 
-  it('pool-master-rop.68.2.5: leaves windowless sport feeds on the default sync window policy', () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const windowPolicy = resolveSportSyncWindowPolicy({
-      feeds: ['PARTICIPANTRANKINGS'],
-    });
-
-    const normalized = normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'SPORT',
-        sport: Sport.GOLF,
-        feeds: ['PARTICIPANTRANKINGS'],
-        windowPolicy,
-      },
-    }, { now: () => now });
-
-    expect(windowPolicy).toEqual({});
-    expect(normalized.scope).toMatchObject({
-      type: 'SPORT',
-      effectiveWindow: {
-        from: now,
-        to: new Date('2026-06-13T12:00:00.000Z'),
-        defaultedFrom: true,
-        defaultedTo: true,
-      },
-    });
-  });
-
   it('pool-master-rop.68.2.1: normalizes manual event sync mock override into provider options', () => {
     const normalized = normalizeSyncRequest({
       source: 'MANUAL',
@@ -235,6 +212,25 @@ describe('SyncOrchestrator request model', () => {
         feeds: ['EVENTSCHEDULE'],
       },
     }), 'INVALID_EVENT_FEED');
+  });
+
+  it('#125: PARTICIPANTRANKINGS is retired as a feed type — the contract, the sport sync request, and the orchestrator all refuse it', () => {
+    // @ts-expect-error -- PARTICIPANTRANKINGS is no longer a member of IngestionFeedType.
+    const retired: IngestionFeedType = 'PARTICIPANTRANKINGS';
+
+    expect(IngestionFeedTypeSchema.safeParse(retired).success).toBe(false);
+    expect(IngestionFeedTypeSchema.options).not.toContain('PARTICIPANTRANKINGS');
+    expect(SportSyncRequestSchema.safeParse({ feeds: ['PARTICIPANTRANKINGS'] }).success).toBe(false);
+    expect(SPORT_SYNC_FEEDS).toEqual(['EVENTSCHEDULE']);
+    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
+      source: 'MANUAL',
+      actor: rootAdminActor,
+      scope: {
+        type: 'SPORT',
+        sport: Sport.GOLF,
+        feeds: [retired],
+      },
+    }), 'INVALID_SPORT_FEED');
   });
 
   it('pool-master-rop.68.2.1: rejects invalid event IDs, windows, and scheduled mock overrides', () => {

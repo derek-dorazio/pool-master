@@ -388,15 +388,13 @@ export async function mockContestFeedRoutes(
   // `/v1/scenarios/.../events/.../...` surface. They were dropped in this
   // slice so the generated SDK is the single source of truth for callers.
 
-  for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
+  for (const feedKind of ['field', 'odds', 'results'] as const) {
     const operationId =
       feedKind === 'field'
         ? 'getMockContestFeedFieldSnapshot'
         : feedKind === 'odds'
         ? 'getMockContestFeedOddsSnapshot'
-        : feedKind === 'rankings'
-          ? 'getMockContestFeedRankingsSnapshot'
-          : 'getMockContestFeedResultsSnapshot';
+        : 'getMockContestFeedResultsSnapshot';
 
     fastify.get<{
       Params: { scenarioId: string; eventId: string };

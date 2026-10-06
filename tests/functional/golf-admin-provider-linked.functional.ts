@@ -204,7 +204,6 @@ async function cleanup(): Promise<void> {
     const pids = [...allParticipantIds];
     await db.participantLeagueAffiliation.deleteMany({ where: { participantId: { in: pids } } });
     await db.participantProviderMapping.deleteMany({ where: { participantId: { in: pids } } });
-    await db.participantRankingSnapshot.deleteMany({ where: { participantId: { in: pids } } });
     await db.participant.deleteMany({
       where: {
         id: { in: pids },

@@ -3,7 +3,7 @@ export const mockFeedProviderId = 'mock-contest-feed';
 export const supportedSports = ['GOLF', 'TENNIS', 'NCAA_BASKETBALL', 'TEAM_TOURNAMENT'] as const;
 export type SupportedSport = (typeof supportedSports)[number];
 
-export const feedKinds = ['field', 'odds', 'rankings', 'results'] as const;
+export const feedKinds = ['field', 'odds', 'results'] as const;
 export type FeedKind = (typeof feedKinds)[number];
 
 export const updateKinds = [...feedKinds] as const;
@@ -140,7 +140,6 @@ export interface FeedSnapshotRecord {
 
 export interface EventFeedsRecord {
   readonly odds: FeedSnapshotRecord;
-  readonly rankings: FeedSnapshotRecord;
   readonly results: FeedSnapshotRecord;
 }
 
@@ -399,10 +398,9 @@ export const feedSnapshotSchema = {
 export const eventFeedsSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['odds', 'rankings', 'results'],
+  required: ['odds', 'results'],
   properties: {
     odds: feedSnapshotSchema,
-    rankings: feedSnapshotSchema,
     results: feedSnapshotSchema,
   },
 } as const;

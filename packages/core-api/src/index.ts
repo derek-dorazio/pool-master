@@ -47,7 +47,7 @@ import { draftsModule } from './modules/drafts/routes';
 
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
-import type { IngestionCallbacks, ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
+import type { IngestionCallbacks, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
@@ -146,14 +146,6 @@ export function buildApp() {
       }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
-      return persisted.writeDiagnostics;
-    },
-    async onRankings(rankings: ProviderRanking[]) {
-      app.log.info({
-        count: rankings.length,
-      }, 'Ingested participant ranking snapshots');
-      const persisted = await ingestionPersistence.persistRankingsWithDiagnostics(rankings);
-      app.log.info({ persisted: persisted.count }, 'Persisted participant ranking snapshots');
       return persisted.writeDiagnostics;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
