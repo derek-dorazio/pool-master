@@ -64,6 +64,11 @@ event without a `mockEventState` token is computed from the replay clock
 - a few golfers withdraw mid-round (`DNF`)
 - four rounds only, never past hole 18
 
+Restarting a replay part-way through starts again from round 1, but PoolMaster keeps every
+round it has already stored. Rounds the new replay has not reached yet stay at their old
+values until the replay overwrites them, so a restarted event's leaderboard mixes the two runs.
+For a clean run, use a fresh PoolMaster event, or delete its stored scores first.
+
 `GET .../replay` reports the phase and current round; `DELETE .../replay` stops it. A
 `mockEventState` token still pins its fixed state while a replay runs. Replays are held in
 memory and do not survive a restart.

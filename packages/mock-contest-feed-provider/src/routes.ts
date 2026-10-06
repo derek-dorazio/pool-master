@@ -567,6 +567,10 @@ export async function mockContestFeedRoutes(
         params: replayParamsSchema,
         response: {
           200: liveReplayResponseSchema,
+          404: {
+            type: 'object',
+            properties: { message: { type: 'string' } },
+          },
         },
       },
     },

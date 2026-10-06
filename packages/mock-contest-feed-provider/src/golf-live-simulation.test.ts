@@ -141,7 +141,7 @@ test('a replay can only be started for a golf scenario', () => {
   assert.throws(() => store.startLiveReplay(tennis.scenarioId, tennisEvent.eventId, {}), /only supported for GOLF/);
 });
 
-test('replay routes start, report and stop a replay, and /scores follows it', async () => {
+test('replay routes start, report and stop a replay, /scores follows it, and a stopped replay reports 404', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
   const app = buildApp();
@@ -173,7 +173,7 @@ test('replay routes start, report and stop a replay, and /scores follows it', as
     const stopped = await app.inject({ method: 'DELETE', url: replayUrl });
     assert.equal(stopped.statusCode, 204);
     const afterStop = await app.inject({ method: 'GET', url: replayUrl });
-    assert.equal(afterStop.statusCode, 500);
+    assert.equal(afterStop.statusCode, 404);
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {

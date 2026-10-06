@@ -775,6 +775,17 @@ export type GetMockContestFeedLiveReplayData = {
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay';
 };
 
+export type GetMockContestFeedLiveReplayErrors = {
+    /**
+     * Default Response
+     */
+    404: {
+        message?: string;
+    };
+};
+
+export type GetMockContestFeedLiveReplayError = GetMockContestFeedLiveReplayErrors[keyof GetMockContestFeedLiveReplayErrors];
+
 export type GetMockContestFeedLiveReplayResponses = {
     /**
      * Default Response

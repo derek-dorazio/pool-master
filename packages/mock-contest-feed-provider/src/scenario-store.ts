@@ -1455,6 +1455,16 @@ const defaultReplayMinutesPerRound = 20;
 
 type ManualTestLifecyclePhase = 'open' | 'field_locked' | 'in_progress' | 'completed';
 
+/** No replay is running for the event; the replay routes answer 404 with it. */
+export class LiveReplayNotFoundError extends Error {
+  public readonly statusCode = 404;
+
+  public constructor(scenarioId: string, eventId: string) {
+    super(`No live replay is running for ${scenarioId}/${eventId}`);
+    this.name = 'LiveReplayNotFoundError';
+  }
+}
+
 export class ScenarioStore {
   private readonly staticScenarios: readonly ContestFeedScenarioRecord[];
   private readonly liveScoreTicks = new Map<string, number>();
@@ -1915,7 +1925,7 @@ export class ScenarioStore {
     this.getEvent(scenarioId, eventId);
     const timeline = this.liveReplays.get(`${scenarioId}:${eventId}`);
     if (!timeline) {
-      throw new Error(`No live replay is running for ${scenarioId}/${eventId}`);
+      throw new LiveReplayNotFoundError(scenarioId, eventId);
     }
     return this.describeLiveReplay(scenarioId, eventId, timeline);
   }
