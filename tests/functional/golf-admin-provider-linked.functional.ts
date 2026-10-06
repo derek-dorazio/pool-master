@@ -39,7 +39,8 @@ import {
 //      R1 scores land in SportEventParticipantGolfStanding via the sync path,
 //      never applyEventGolfRoundScores.
 //   4. Score-sync isolation: an EVENTLIVESCORES tick never mutates the field,
-//      and an EVENTPARTICIPANTS "details" sync never mutates SportEvent.status.
+//      and an EVENTPARTICIPANTS "details" sync never mutates SportEvent.status
+//      or a SCORES_ONLY event's admin-authored header and schedule (#118).
 //   5. A league contest against the linked tournament settles
 //      ContestEntryGolfStanding for the sync-driven scores.
 //   6. unlinkEventScoreSource — a later sync tick does not touch
@@ -66,6 +67,9 @@ const MOCK_PROVIDER_ID = 'mock-contest-feed';
 const MOCK_EVENT_EXTERNAL_ID = 'golf-us-open-2026';
 const MOCK_EVENT_START = '2026-05-28T11:00:00.000Z';
 const MOCK_EVENT_END = '2026-05-31T22:00:00.000Z';
+// The admin's own schedule for the linked tournament: deliberately not the provider's.
+const ADMIN_EVENT_START = '2026-05-28T13:30:00.000Z';
+const ADMIN_EVENT_END = '2026-05-31T23:30:00.000Z';
 const RUN = `cs8-${Date.now()}`;
 
 const created = {
@@ -240,17 +244,17 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const sportLeagueId = league.data!.sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
-    // --- Manual-admin tournament (starts unlinked: syncScope NONE). Dates
-    // match the provider event so the later details sync is a no-op for the
-    // schedule. ------------------------------------------------------------
+    // --- Manual-admin tournament (starts unlinked: syncScope NONE). Its name
+    // and dates differ from the provider event's, so the later details sync
+    // shows it leaves an admin-owned header alone (#118). ------------------
     const tournament = await createEvent({
       client: admin,
       body: {
         name: `The ${RUN} Championship`,
         venue: 'Provider National',
         location: 'Testshire',
-        startDate: MOCK_EVENT_START,
-        endDate: MOCK_EVENT_END,
+        startDate: ADMIN_EVENT_START,
+        endDate: ADMIN_EVENT_END,
         rounds: 4,
         releaseAt: '2026-05-20T00:00:00.000Z',
         fieldLocksAt: '2026-05-27T16:00:00.000Z',
@@ -361,10 +365,18 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(fieldSize).toBeGreaterThanOrEqual(10);
     const fieldSepIds = loadedField.data!.participants.map((e) => e.id).sort();
 
-    // The details sync never writes SportEvent.status (plans/124 §3.3).
+    // The details sync never writes SportEvent.status (plans/124 §3.3), and on a
+    // SCORES_ONLY event it leaves the admin's header and schedule as authored (#118).
     const afterRefresh = await getEvent({ client: admin, path: { eventId } });
     expect(afterRefresh.data!.event.status).toBe('SCHEDULED');
     expect(afterRefresh.data!.event.syncScope).toBe('SCORES_ONLY');
+    expect(afterRefresh.data!.event).toMatchObject({
+      name: `The ${RUN} Championship`,
+      venue: 'Provider National',
+      rounds: 4,
+    });
+    expect(new Date(afterRefresh.data!.event.startDate).toISOString()).toBe(ADMIN_EVENT_START);
+    expect(new Date(afterRefresh.data!.event.endDate!).toISOString()).toBe(ADMIN_EVENT_END);
 
     // --- Make the loaded field contest-selectable: 2 tiers + auto assign --
     expect(
@@ -453,15 +465,9 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // --- 5b. Drive to the finish, then COMPLETED -> settlement fires ---
     // The tournament was authored with 4 rounds and the details sync (§3a) left
-    // that untouched. The 'golf-completed' mock state, however, synthesizes a
-    // 2-player playoff as round 5, and golf-score-service.persistRoundUpdates
-    // auto-creates a SportEventRound for any incoming round number it can't
-    // resolve — so the score sync DOES add one round row beyond the authored
-    // schedule. That auto-create is a pre-existing golf-score-service behaviour
-    // (logged liveScore.golf.autoCreatedRoundSchedule) and the same
-    // "provider payload bleeds past a SCORES_ONLY link" class as the schedule
-    // overwrite tracked in pool-master-ce4 — asserted explicitly here so a
-    // future reader isn't surprised by the 4 -> 5 drift.
+    // that untouched. 'golf-completed' ends with the top two tied after 72 holes;
+    // a playoff is not a round, so the score sync must leave exactly the four
+    // authored rounds (#118).
     const roundsBeforeFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
     expect(roundsBeforeFinalSync).toBe(4);
 
@@ -474,7 +480,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     await waitForSyncRuns(finalSync.data!.syncRuns.map((r) => r.id));
 
     const roundsAfterFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
-    expect(roundsAfterFinalSync).toBe(5); // +1: the auto-created playoff round
+    expect(roundsAfterFinalSync).toBe(4);
 
     const toDone = await transitionEvent({
       client: admin,
