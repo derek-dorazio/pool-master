@@ -1,14 +1,15 @@
 # PoolMaster — Domain Operations by Role
 
-The operations each domain object supports, and who may call them.
+The operations each domain object supports, who may call them, and the access rules that
+decide it. This is **product truth** — what the model permits under any implementation —
+organised by aggregate. It deliberately does not list fields: `schema.prisma` and
+`packages/shared/domain` are the source for those, and a field table here would be a second
+copy that drifts.
 
-This is the **target model**, derived from `schema.prisma` and the access rules in
-[`rules/domain-model-conventions-rules.md`](../rules/domain-model-conventions-rules.md)
-§13 — not a description of the routes that exist today. Audits under #201 measure the
-current API against this document, not the reverse.
-
-Clusters are added as their slice reaches stage 1. Everything here has been reviewed and
-agreed with the repo owner.
+Section references (§N) without a file name are to
+[`rules/domain-model-conventions-rules.md`](../rules/domain-model-conventions-rules.md),
+whose §13 *Operation Access Roles* states the role model these tables apply. When the routes
+and this document disagree, the routes are the defect.
 
 ## Role vocabulary
 
@@ -391,10 +392,10 @@ a gate that keeps granting access to a league the user was removed from.
 
 ---
 
-## Slice 1 — Identity and membership
+## Identity and membership
 
 Cluster: `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`,
-`LeagueInvitation`, `SquadOwnerInvitation`. Tracked by #202.
+`LeagueInvitation`, `SquadOwnerInvitation`.
 
 ### User
 
@@ -503,16 +504,14 @@ link with `maxUses` / `currentUses`.
 | Accept | `authenticated` | Creates the `SquadMembership`. Subject to one-squad-per-league |
 | Revoke | `member:own`, `commissioner` | |
 
-## Slice 2 — Events and participants (the cross-sport core)
+## Events and participants (the cross-sport core)
 
 Cluster: `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `Participant`,
 `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `ParticipantRankingSnapshot`.
-Core tracked by #235, golf extensions and the admin operations by #236. Decisions: the
-stage-2 comment on #203. The tree `SportLeague → EventSeries → SportEvent` is plans/147 — deleted with its
-epic, retrieve via `git show 7e892f52:plans/147-event-series-and-the-season-collapse.md`: an
-event is one edition of a series, in one event year, and the series is its only parent.
+The tree is `SportLeague → EventSeries → SportEvent`: an event is one edition of a series, in
+one event year, and the series is its only parent.
 
 **Every object in this cluster is global (A11).** No row here belongs to a user, league or
 squad, so A1–A7 do not apply: reads are `authenticated`, writes are `rootAdmin`. The one
@@ -666,12 +665,10 @@ a provider's identifier to the participant with `MANUAL` confidence, moving it i
 participant held it; 404 `PROVIDER_NOT_FOUND` for a provider that is not registered. It
 replaced `adminMapParticipant`, which took both ids in the body under `/admin/providers`.
 
-## Slice 3 — Contests and entries
+## Contests and entries
 
 Cluster: `ContestConfigTemplate`, `Contest`, `ContestConfiguration`, `ContestEntry`,
-`ContestEntryPick` and the scoring and prize rules under a configuration. Tracked by #244–#248
-under #201; decisions: the stage-2 outcome in plans/145, retrieved via
-`git show 020de6bf:plans/145-one-object-one-operation-set.md`.
+`ContestEntryPick` and the scoring and prize rules under a configuration.
 
 **`ContestConfigTemplate` is global (A11); everything else here is tenant-scoped** — it
 belongs to a league through its contest.
@@ -720,11 +717,9 @@ design (#247), so no adapter or fake can become a second way in. The selection o
 themselves — including the tiered replace-on-full and toggle-off rules — are the draft room's,
 and move to #198's `SelectionEngine`.
 
-## Slice 4 — Platform and operations
+## Platform and operations
 
 Cluster: `ProviderSyncRun`, `PlatformRuntimeConfig`, and the provider registry they serve.
-Tracked by #205 under #201; decisions: the slice 4 outcomes in plans/145, retrieved via
-`git show 020de6bf:plans/145-one-object-one-operation-set.md`.
 
 **Every operation here is `rootAdmin`, reads included.** Neither object passes A11: a sync run
 can exist because a root admin submitted it (condition 3), and a runtime-config row names the
@@ -767,157 +762,68 @@ check, the one-off re-ingest (the event sync is the path), and the tables `plan_
 
 ---
 
-## What this document settles
+## One operation, two callers
 
-Several pairs modelled as separate admin and member operations were **one operation with
-two callers**. All of them are now collapsed; the table is kept as the record of what was
-split and what it became.
+**Scope and caller are parameters of an operation, never a reason for a second one.** Every
+pair below was once modelled as separate admin and member operations, and every pair had
+drifted — different guards, different response shapes, counts computed on one half only,
+filters that existed on one half though they described the query rather than the caller.
 
-| One operation | Was split as | Now |
-|---|---|---|
-| Disable a user | `inactivateAccount` + `adminDisableUser` | `POST /users/:userId/disable` |
-| Enable a user | `reactivateAccount` + `adminEnableUser` | `POST /users/:userId/enable` |
-| Delete a user | `deleteAccount` + `adminDeleteUser` | `DELETE /users/:userId` |
-| Revoke a user's sessions | logout + `adminForceLogout` | `POST /users/:userId/revoke-sessions` |
-| Read a user | `getCurrentUser` + `adminGetUserDetail` | `GET /users/:userId` (`me` resolves to the caller) |
-| List leagues | `listLeagues` + `adminListLeagues` | `GET /leagues?scope=mine\|all` |
-| Inactivate a league | `inactivateLeague` + `adminInactivateLeague` | `POST /leagues/:id/inactivate` |
-| Delete a league | `deleteLeague` + `adminDeleteLeague` | `DELETE /leagues/:id` |
-| List squads | `listLeagueSquads` + `adminListTeams` | `GET /leagues/:id/squads` (the admin half deleted, no caller) |
-| List contest templates | `listManagedContestTemplates` + `adminListContestConfigTemplates` | `GET /contest-config-templates` (#245) |
-| Create a contest | `createContest` + `createManagedContest` | `POST /leagues/:id/contests` (#245) |
+| One operation | Route |
+|---|---|
+| Disable / enable a user | `POST /users/:userId/disable`, `/enable` |
+| Delete a user | `DELETE /users/:userId` |
+| Revoke a user's sessions | `POST /users/:userId/revoke-sessions` |
+| Read a user | `GET /users/:userId` (`me` resolves to the caller) |
+| List leagues | `GET /leagues?scope=mine\|all` |
+| Inactivate / delete a league | `POST /leagues/:id/inactivate`, `DELETE /leagues/:id` |
+| List squads | `GET /leagues/:id/squads` |
+| List contest templates | `GET /contest-config-templates` |
+| Create a contest | `POST /leagues/:id/contests` |
 
-Scope is a **parameter of the operation** — exactly as the DAO already expresses it, where
-`LeagueRepository.findAll()` is the unscoped read and `findByUser` the scoped one.
+**A list takes an explicit scope; a path-addressed operation does not.** For an operation
+whose subject is named in the path, the caller's role decides only whether they may. A list
+is different: a root admin legitimately needs both their own leagues (for the selector) and
+every league (for management), and one request cannot mean both. So `GET /leagues` takes
+`scope`, and the role decides whether the requested scope is permitted — not which scope the
+caller gets.
 
-**Correction (2026-09-27, while implementing the league collapse).** This previously said
-scope is "resolved from the caller's role". That is right for the User operations, where the
-subject is named in the path and the role only decides whether you may. It is wrong for a
-list: a root admin legitimately needs **both** scopes — their own leagues for the league
-selector, every league for the management surface — and one request cannot mean both. So
-`GET /leagues` takes an explicit `scope`, and the caller's role decides whether the requested
-scope is permitted rather than which scope they get. Role-implicit scope is not a general
-rule; it is what a path-addressed operation happens to allow.
+## Soft and hard delete both exist, and hard delete is gated
 
-**What the league collapse found, recorded because it is the pattern.** As with the User
-pairs, the two halves disagreed about more than scope:
+Easy to misremember as "soft delete only":
 
-- **Counts.** The member-scoped list called the mapper with no counts, so every league it
-  returned reported `memberCount: 0` and `activeContestCount: 0`; only the root-admin list
-  computed them. Latent — no surface displayed the member list's counts — but it is two
-  answers to one question.
-- **Filters.** `search` and `isActive` existed only on the root-admin half, though they
-  describe the query rather than the caller.
-- **Audit.** Only the root-admin half wrote an audit entry. #202 settled it by keying the
-  entry on the actor, as `UserService` did; #255 then deleted the audit feature outright, so
-  neither half writes one.
-- **Nothing else.** `requireCommissioner` already granted root admins, so the `/admin/leagues/*`
-  routes were never the only way a root admin could act — they added the audit entry and
-  otherwise duplicated behaviour.
+- **Inactivate** sets `isActive = false`. This is the normal path.
+- **Delete permanently** is a real row removal, and it **throws unless the record is already
+  inactive**. For a squad it cascades to contest entries, picks and draft history; for a
+  league it also requires typing the `leagueCode` back. Permanent deletion is `commissioner`
+  only — a member inactivates their own squad but does not destroy contest history.
 
-## Settled during review
+The service methods say so in their names (`deleteInactiveSquad`, `deleteInactiveLeague`),
+and this is the "eligibility gating before a later hard delete" pattern of §1 *Lifecycle*.
+They are **two operations, not one**; collapsing them would hide the gate.
 
-**Viewer context moves out of the domain DTOs — see A8 above.** `leagueRelationship`,
-`memberType`, `teamRelationship`, `viewerAuthority` and the per-row `isRootAdmin` all come
-off `LeagueDto` and `SquadDto`. Settled 2026-09-26; A8 carries the reasoning and the
-evidence.
+## Deliberately absent
 
-**`League.createdBy` is dropped.** It was a bare `String @db.Uuid` with no relation — no
-referential integrity, no traversal.
+Each of these existed once, on one of two write paths, and was removed because a rule that
+only half the callers enforce is not a rule. Do not reintroduce them.
 
-**Correction (2026-09-26, while implementing).** This section previously said "nothing read
-it for a decision. Its only two readers passed it through." That was wrong. Four call sites
-*queried* it, and two of them gated a destructive operation: the user hard-delete dependency
-guards in `admin/user-service.ts` and `account/service.ts` both counted
-`league.createdBy = userId`, and the admin guard reported a `LEAGUE_CREATOR` dependency type
-from it.
+- **No self-demotion block on root admin.** The rule it reached for — the platform keeps at
+  least one root admin — is the last-root-admin count, which applies to every caller. With
+  two root admins one may step down; with one, the count refuses whoever asks.
+- **No dependency-detail payload on a blocked hard delete.** A typed 409
+  `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract. The blockers are visible in the league
+  and squad views A9 already governs; resolving one of possibly many into the error envelope
+  cost three queries, a payload shape and a client parser.
+- **No read-only lock on an inactive account.** `isActive` is a read filter, not a write lock
+  (A9), and the lock blocked the obvious recovery — correct your details, then reactivate.
+- **No creator column on `League`.** Who runs a league is the `COMMISSIONER` membership that
+  creation writes in the same operation — §12 *League creation establishes the first
+  commissioner*. `Squad.createdBy` is a real relation and is unaffected.
+- **No field-level redaction.** Admin-only fields are annotated on the canonical DTO and left
+  exposed (§13). This document assigns roles to *operations*, not to fields.
 
-Dropping it is still correct, for a better reason than "nothing reads it": **those counts are
-redundant.** Both guards already count the user's `LeagueMembership` rows, and `createLeague`
-writes the creator's `COMMISSIONER` membership in the same operation, so every creator is
-already caught by that count. The only case `createdBy` added was a user who created a league
-and was later removed from it — who under §12 has no remaining relationship to it. The
-`LEAGUE_CREATOR` dependency type is removed with the column.
-
-`Squad.createdBy` is unaffected. It is a real relation (`@relation("SquadCreatedBy")`) and
-stays, along with the `createdSquadCount` guard. The `TEAM_OWNER` dependency *type* is gone
-with the rest of the dependency-detail payload — see below.
-
-Creator provenance is not a concept this product needs. Who runs a league is the
-`LeagueMembership` with `role = COMMISSIONER`, which league creation already writes.
-
-Dropping it: remove the column (migration), the field from `League` in
-`packages/shared/domain/types.ts`, the mapping in `prisma-league-repository.ts`, and the
-DTO field emitted by `admin/league-service.ts`. `input.createdBy` **stays** as a parameter
-of the create operation — it is the userId that becomes the first commissioner.
-
-### Three guards dropped while implementing slice 1 (2026-09-26)
-
-Each existed in exactly one of the two User write paths, which is what made them worth
-looking at: a rule that only half the callers enforce is not a rule.
-
-**1. The self-demotion block on `setRootAdmin` is gone.** `admin/user-service.ts` rejected
-`isRootAdmin = false` when the subject was the caller, with a 400
-`SELF_ROOT_ADMIN_CHANGE`, *before* the last-root-admin count ran. The rule it was reaching
-for is "the platform must keep at least one root admin", and that is what the
-last-root-admin guard already enforces — for every caller, not just for the self case. With
-two root admins, one stepping down is a legitimate operation and the count permits it; with
-one, the count rejects it whoever asks. The self check added no protection, only a second
-error code the UI had to handle and a rule the account path did not have.
-
-**2. The dependency-detail payload on a blocked hard delete is gone.** `deleteUser` resolved
-the first blocking row into `{ dependencyType, team, league }` and shipped it in the error
-envelope, so the UI could render "still an owner of team X in league Y" with links. Three
-extra queries, a payload shape, a client-side parser and a discriminated type, to name one
-of possibly many blockers — and only on the admin path; self-delete returned the typed 409
-alone and always had. A typed 409 `ACCOUNT_DELETE_DEPENDENCIES_EXIST` is the contract; the
-blockers themselves are visible in the league and squad views that A9 already governs.
-
-**3. The read-only lock on inactive accounts is gone.** See A9: `isActive` is a read filter,
-not a write lock. `account/service.ts` rejected profile, username, preference and password
-writes to an inactive account with a 409 `ACCOUNT_INACTIVE_READ_ONLY`; the admin path
-imposed no such thing, and the lock blocked the obvious recovery — correct your details,
-then reactivate.
-
-## Open items
-
-None. The catalog above was reviewed and accepted.
-
-**Permanent deletion is `commissioner` only** — a member inactivates their own squad but
-does not destroy contest history. Low-stakes to revisit: A7 already gives the commissioner
-the operation, and a member always has inactivate.
-
-### Soft and hard delete both exist, and hard delete is gated
-
-Worth stating plainly, because it is easy to remember this as "soft delete only":
-
-- **Inactivate** sets `isActive = false`. This is the normal path and what the product
-  uses day to day.
-- **Delete permanently** is a real row removal, and it **throws unless the record is
-  already inactive**. For a squad it cascades to `contestEntry`, `contestEntryPick` and
-  `draftPickHistory`. For a league it additionally requires typing the `leagueCode` back.
-
-The service methods say so in their names — `deleteInactiveSquad`, `deleteInactiveLeague`
-— and this is exactly the pattern
-[`rules/domain-model-conventions-rules.md`](../rules/domain-model-conventions-rules.md) §2
-prescribes: `isActive` as "eligibility gating before a later hard delete".
-
-So these are **two operations, not one**, and the catalog lists them separately. Collapsing
-them would hide the gate.
-
-Resolved by the rules, recorded so they are not reopened:
-
-- **Password reset vs change** — A6 distinguishes them by *subject*, not just precondition:
-  changing your own password is `self` and requires the current one; resetting another
-  user's is `rootAdmin` and does not. Two operations.
-- **Commissioner authority inside a squad** — A7. A commissioner performs any member
-  operation on behalf of any member of their league.
-- **Embed or reference on edges** — edges embed the canonical `UserDto`. A member reads
-  peer users through the league join, and returns the full object per rule 3. See the note
-  under the access rules.
-
-Out of scope by design:
-
-- **Field-level redaction is not modelled.** Admin-only fields are annotated on the
-  canonical DTO and left exposed, per §13. This document assigns roles to *operations*,
-  not to fields.
+Also settled by the access rules, recorded so they are not reopened: password **change**
+(`self`, requires the current one) and **reset** (`rootAdmin`, does not) are two operations
+distinguished by subject (A6); a commissioner performs any member operation on behalf of any
+member of their league (A7); edges embed the canonical `UserDto`, and a member reads peers
+through the league join.

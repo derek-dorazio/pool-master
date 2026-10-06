@@ -13,13 +13,11 @@ See rules/workflow-rules.md §6.
 - **Parent epic:** #<EPIC>
 - **Slice issue:** Closes #<ISSUE>
 
-## Use-case / business-rule / defect IDs covered
+## Behaviour covered by new tests
 
-<!-- The specific IDs the new tests reference per rules/testing-rules.md §1A. -->
+<!-- Name the behaviour each new test proves, per rules/testing-rules.md §1A. No ID is required. -->
 
-- `UC-<ID>` — <one-line description>
-- `BR-<ID>` — <one-line description>
-- `#<DEFECT-ISSUE>` — <description>   <!-- defect-fix slices only -->
+- <behaviour and expected outcome>
 
 ## Defect-fix observation
 
@@ -34,15 +32,10 @@ on the broken code before the fix landed. Evidence: <commit SHA / referenced lin
 
 ## Gates run
 
-<!-- Required local gates per rules/testing-rules.md §3. Check each. -->
+<!-- The gate list lives once, in rules/workflow-rules.md §3. It is not copied here because copies drift. -->
 
-- [ ] `npx turbo typecheck --force`
-- [ ] `npm run lint` (runs eslint at `--max-warnings 0` plus the theme-token scanner)
-- [ ] `npx jest --config tests/jest.config.js --forceExit`
-- [ ] `npm run test:service:functional-api`
-- [ ] `npm run test:poolmaster:unit`
-- [ ] `npm run test:coverage:service:merged`
-- [ ] `npm run api:refresh` / `npm run api:validate` (if API schemas changed)
+- [ ] Every gate in `rules/workflow-rules.md` §3 *Required Local Validation Before Push* passed locally
+- [ ] Any gate not run is named below, with the reason
 
 ## Review triggers
 

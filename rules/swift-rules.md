@@ -11,9 +11,10 @@ These rules govern the native iOS client.
 
 ## No Mock Data in Application Code
 
-- Never ship mock data, fake responses, or debug-only sample payloads in app code.
-- View models must call real APIs and surface real errors.
-- Mock data belongs only in tests and previews.
+Stated once, for every runtime, in [`architecture-rules.md`](architecture-rules.md) §3
+*No Mock Data in Application Code*: never ship mock data, fake responses or debug-only
+fallbacks in app code. View models call real APIs and surface real errors. Mock data
+belongs only in tests and previews.
 
 ## API Contract Rules
 

@@ -39,8 +39,9 @@ documentation*; a wrong one is worse still.
 
 Where to look instead, in order of authority:
 
-- **`docs/LAYERS.md`** — what each layer of a module holds, which files belong in
-  `modules/<object>/`, and where the boundaries are still soft. Current and maintained.
+- **`rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*** — what each
+  layer holds, what it is forbidden to hold, which files belong in `modules/<object>/`, and
+  the suite that proves each boundary.
 - **The Fastify route registrations** — the only real truth about prefixes.
   `packages/shared/generated/openapi.json` is generated from them and `npm run api:check`
   fails if it drifts.
@@ -51,14 +52,12 @@ today, and did not count this file as one.
 
 ### Draft Module (`modules/drafts/`)
 
-One file: `routes.ts`. It publishes two operations, `getDraftState` and
-`submitContestSelection`, and holds everything behind them — route plumbing, actor and
-commissioner resolution, 13 direct `prisma.` calls, the selection rules and the response
-mapping. There is no service, handler, mapper or port layer here; this is the one module
-`plans/145` slice 3 did not reach (plan deleted with epic #201; retrieve via
-`git show 020de6bf:plans/145-one-object-one-operation-set.md`).
-**#198** tracks the extraction — #324 was closed as a duplicate of it — and
-`docs/LAYERS.md` §2.4 states the file set it should end up with.
+It publishes two operations, `getDraftState` and `submitContestSelection`. It was the last
+module holding route plumbing, actor resolution, direct `prisma.` calls, the selection rules
+and response mapping in a single `routes.ts`; #346 extracted the service layer, so the
+module now carries the ordinary layering. The file set each module should end up with is
+`rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*; `ls` the module
+for what it has today.
 
 This section previously described two "pure-function engines", `TieredPickEngine` and
 `BudgetPickEngine` (listed twice each). Neither was ever imported by `packages/core-api/src`,

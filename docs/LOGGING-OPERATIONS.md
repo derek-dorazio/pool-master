@@ -223,11 +223,3 @@ stats count(*) as occurrences by action, route, msg
   `providerId`, `sport`, or `entryId`.
 - Filter `data.source = "client"` when you want browser-originated events only;
   remove that filter when you need the joined browser + backend timeline.
-
-## Current Completion Status
-
-The runtime logging rollout is complete for:
-
-- backend runtime services
-- mock-provider runtime services
-- active PoolMaster webapp browser observability through the client-log transport
