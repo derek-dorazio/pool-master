@@ -141,7 +141,7 @@ test('a replay can only be started for a golf scenario', () => {
   assert.throws(() => store.startLiveReplay(tennis.scenarioId, tennisEvent.eventId, {}), /only supported for GOLF/);
 });
 
-test('replay routes start, report and stop a replay, /scores follows it, and a stopped replay reports 404', async () => {
+test('replay routes start, report and stop a replay, /scores follows it, a non-golf replay is refused with 409, and a stopped replay reports 404', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
   const app = buildApp();
@@ -169,6 +169,19 @@ test('replay routes start, report and stop a replay, /scores follows it, and a s
 
     const invalid = await app.inject({ method: 'PUT', url: replayUrl, payload: { minutesPerRound: 0 } });
     assert.equal(invalid.statusCode, 400);
+
+    const tennis = await app.inject({ method: 'GET', url: '/v1/scenarios' });
+    const tennisScenario = tennis.json<{ scenarios: Array<{ scenarioId: string; sport: string }> }>().scenarios
+      .find((scenario) => scenario.sport === 'TENNIS');
+    assert.ok(tennisScenario);
+    const tennisEvents = await app.inject({ method: 'GET', url: `/v1/scenarios/${tennisScenario.scenarioId}/events` });
+    const tennisEventId = tennisEvents.json<{ events: Array<{ eventId: string }> }>().events[0].eventId;
+    const nonGolf = await app.inject({
+      method: 'PUT',
+      url: `/v1/scenarios/${tennisScenario.scenarioId}/events/${tennisEventId}/replay`,
+      payload: {},
+    });
+    assert.equal(nonGolf.statusCode, 409);
 
     const stopped = await app.inject({ method: 'DELETE', url: replayUrl });
     assert.equal(stopped.statusCode, 204);

@@ -818,6 +818,17 @@ export type StartMockContestFeedLiveReplayData = {
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay';
 };
 
+export type StartMockContestFeedLiveReplayErrors = {
+    /**
+     * Default Response
+     */
+    409: {
+        message?: string;
+    };
+};
+
+export type StartMockContestFeedLiveReplayError = StartMockContestFeedLiveReplayErrors[keyof StartMockContestFeedLiveReplayErrors];
+
 export type StartMockContestFeedLiveReplayResponses = {
     /**
      * Default Response

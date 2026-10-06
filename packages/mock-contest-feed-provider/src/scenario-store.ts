@@ -1465,6 +1465,16 @@ export class LiveReplayNotFoundError extends Error {
   }
 }
 
+/** A replay was asked for on a non-golf scenario; the replay routes answer 409 with it. */
+export class LiveReplayUnsupportedError extends Error {
+  public readonly statusCode = 409;
+
+  public constructor(scenarioId: string) {
+    super(`Live replay is only supported for GOLF scenarios: ${scenarioId}`);
+    this.name = 'LiveReplayUnsupportedError';
+  }
+}
+
 export class ScenarioStore {
   private readonly staticScenarios: readonly ContestFeedScenarioRecord[];
   private readonly liveScoreTicks = new Map<string, number>();
@@ -1891,7 +1901,7 @@ export class ScenarioStore {
   public startLiveReplay(scenarioId: string, eventId: string, request: LiveReplayRequest): LiveReplayResponse {
     const scenario = this.getScenario(scenarioId);
     if (scenario.sport !== 'GOLF') {
-      throw new Error(`Live replay is only supported for GOLF scenarios: ${scenarioId}`);
+      throw new LiveReplayUnsupportedError(scenarioId);
     }
     this.getEvent(scenarioId, eventId);
 
