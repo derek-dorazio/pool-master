@@ -378,8 +378,8 @@ describe('golf-admin-utils: golfRoundScoreRows (issue 236)', () => {
     ];
 
     expect(golfRoundScoreRows(field, 2)).toEqual([
-      { sportEventParticipantId: 'sep-a', participantName: 'Adam', strokes: 69, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
-      { sportEventParticipantId: 'sep-z', participantName: 'Zach', strokes: 72, scoreToPar: 1, thru: 18, status: 'IN_PROGRESS' },
+      { sportEventParticipantId: 'sep-a', participantName: 'Adam', strokes: 69, scoreToPar: -2, thru: 18, status: 'COMPLETED', completedAt: null },
+      { sportEventParticipantId: 'sep-z', participantName: 'Zach', strokes: 72, scoreToPar: 1, thru: 18, status: 'IN_PROGRESS', completedAt: null },
     ]);
     expect(golfRoundScoreRows(field, 4)).toEqual([]);
   });

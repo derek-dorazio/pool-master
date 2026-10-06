@@ -67,7 +67,7 @@ export interface GolfScoreRowInput {
 }
 
 export type GolfScoreResolution = ParticipantRowResolution;
-export type GolfScoreChange = 'CREATE' | 'UPDATE' | 'UNCHANGED';
+export type GolfScoreChange = 'CREATE' | 'UPDATE' | 'UNCHANGED' | 'SKIPPED';
 
 export interface GolfRoundValues {
   strokes: number | null;
@@ -358,7 +358,10 @@ export class GolfScoreService {
       const before: GolfRoundValues | null = existing
         ? { strokes: existing.golf.strokes, scoreToPar: existing.golf.scoreToPar, thru: existing.golf.thru, status: existing.participantRound.status as GolfRoundStatus }
         : null;
-      const change: GolfScoreChange = !before ? 'CREATE' : golfRoundValuesEqual(before, after) ? 'UNCHANGED' : 'UPDATE';
+      // Apply stores nothing for a row with no strokes (strokes is NOT NULL in storage).
+      const change: GolfScoreChange = row.strokes === null
+        ? 'SKIPPED'
+        : !before ? 'CREATE' : golfRoundValuesEqual(before, after) ? 'UNCHANGED' : 'UPDATE';
       return {
         row,
         resolution: 'MATCHED' as const,

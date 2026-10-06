@@ -543,6 +543,7 @@ export type GolfRoundScoreRow = {
   scoreToPar: number;
   thru: number | null;
   status: string;
+  completedAt: string | null;
 };
 
 export function golfRoundScoreRows(
@@ -562,6 +563,7 @@ export function golfRoundScoreRows(
       scoreToPar: round.golf.scoreToPar,
       thru: round.golf.thru,
       status: round.status,
+      completedAt: round.completedAt,
     });
   }
   return rows.sort((left, right) => left.participantName.localeCompare(right.participantName));

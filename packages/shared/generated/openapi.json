@@ -14571,9 +14571,10 @@
                   "enum": [
                     "CREATE",
                     "UPDATE",
-                    "UNCHANGED"
+                    "UNCHANGED",
+                    "SKIPPED"
                   ],
-                  "description": "What applying the row would do to the golfer's stored round."
+                  "description": "What applying the row would do to the golfer's stored round. SKIPPED: the row has no strokes, so applying stores nothing for it."
                 },
                 "before": {
                   "type": [
@@ -14715,12 +14716,16 @@
             ]
           },
           "completedAt": {
-            "type": "string",
-            "format": "date-time"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Null clears it."
           }
         },
         "additionalProperties": false,
-        "description": "A correction to one golfer's round; omitted values keep what is stored."
+        "description": "A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored."
       },
       "SportSyncRequest": {
         "type": "object",
@@ -33579,7 +33584,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Omitted values keep what is stored. Refreshes the golfer's standing. Root admin only.",
+        "description": "Stores each value exactly as sent and derives none from another; omitted values keep what is stored. Refreshes standings. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
