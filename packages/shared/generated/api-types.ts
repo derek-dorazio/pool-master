@@ -1661,7 +1661,7 @@ export interface paths {
         put?: never;
         /**
          * Preview a round of golf scores
-         * @description Resolves each row against the event's field and reports what it would change. Writes nothing. Root admin only.
+         * @description Resolves each row against the event's field and reports what it would change. Writes nothing. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Root admin only.
          */
         post: operations["previewEventGolfRoundScores"];
         delete?: never;
@@ -1681,7 +1681,7 @@ export interface paths {
         put?: never;
         /**
          * Apply a round of golf scores
-         * @description All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. Refreshes standings. Returns the field. Root admin only.
+         * @description All or none; 422 ROUND_SCORE_ROWS_UNRESOLVED when any row does not resolve. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Refreshes standings. Returns the field. Root admin only.
          */
         post: operations["applyEventGolfRoundScores"];
         delete?: never;
@@ -1705,7 +1705,7 @@ export interface paths {
         head?: never;
         /**
          * Correct one golfer's round
-         * @description Stores each value exactly as sent and derives none from another; omitted values keep what is stored. Refreshes standings. Root admin only.
+         * @description Stores each value exactly as sent and derives none from another; omitted values keep what is stored. 422 ROUND_BEYOND_SCHEDULE when the round is beyond the event's scheduled rounds. Refreshes standings. Root admin only.
          */
         patch: operations["updateEventParticipantGolfRoundScore"];
         trace?: never;
@@ -7699,7 +7699,7 @@ export interface components {
                 /** @description Null when only the score to par is known; such a row is not stored. */
                 strokes: number | null;
                 scoreToPar: number;
-                /** @description Holes completed in the round. Playoff holes are not part of any round (#118). */
+                /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
                 thru?: number;
                 /** @enum {string} */
                 status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -7719,7 +7719,7 @@ export interface components {
                     /** @description Null when only the score to par is known; such a row is not stored. */
                     strokes: number | null;
                     scoreToPar: number;
-                    /** @description Holes completed in the round. Playoff holes are not part of any round (#118). */
+                    /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
                     thru?: number;
                     /** @enum {string} */
                     status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
@@ -7769,7 +7769,7 @@ export interface components {
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
-            /** @description Holes completed in the round. Playoff holes are not part of any round (#118). */
+            /** @description Holes completed in the round. A round is 18 holes; playoff holes are never scored. */
             thru?: number;
             /** @enum {string} */
             status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";

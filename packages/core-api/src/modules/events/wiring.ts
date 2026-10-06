@@ -49,6 +49,7 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
 
 export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBaseLogger): GolfScoreService {
   return new GolfScoreService({
+    events: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
