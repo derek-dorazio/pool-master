@@ -15,8 +15,9 @@ import {
 } from './golf-admin-utils';
 import {
   buildRoundScorePatch,
-  isNonNegInt,
   isSignedInt,
+  isStrokes,
+  isThru,
   rowHasInvalid,
   toDateTimeInput,
   type RowDraft,
@@ -53,7 +54,7 @@ const correctionColumns = [
       return (
         <div className="max-w-[6rem]">
           <Input
-            aria-invalid={raw.trim() !== '' && !isNonNegInt(raw) ? true : undefined}
+            aria-invalid={raw.trim() !== '' && !isStrokes(raw) ? true : undefined}
             aria-label={`Strokes for ${entry.participantName}`}
             className="h-8"
             data-testid={`root-admin-golf-scores-strokes-${entry.sportEventParticipantId}`}
@@ -118,7 +119,7 @@ const correctionColumns = [
       return (
         <div className="max-w-[5rem]">
           <Input
-            aria-invalid={raw.trim() !== '' && !isNonNegInt(raw) ? true : undefined}
+            aria-invalid={raw.trim() !== '' && !isThru(raw) ? true : undefined}
             aria-label={`Holes completed for ${entry.participantName}`}
             className="h-8"
             data-testid={`root-admin-golf-scores-thru-${entry.sportEventParticipantId}`}

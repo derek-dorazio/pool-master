@@ -5,7 +5,8 @@
  * `react-refresh/only-export-components` (#345 Phase 0, from #167): that module
  * exports the card component, so `buildRoundScorePatch` beside it broke Fast
  * Refresh. `isNonNegInt` and `rowHasInvalid` moved with it -- all three are the
- * same validation concern, and the card imports the ones it still uses.
+ * same validation concern. #374: `isStrokes` and `isThru` hold the server's bounds, and
+ * the grid checks each keystroke with them.
  *
  * #116: every value is the admin's. A row edits strokes, to par, thru, status and
  * completed at; each cell starts from what is stored and none is filled from another.
@@ -30,9 +31,19 @@ export type RowDraft = {
   completedAtIncomplete?: boolean;
 };
 
-/** A non-negative integer as typed; the grid also uses it per keystroke. */
+/** A non-negative integer as typed. */
 export function isNonNegInt(raw: string): boolean {
   return /^\d+$/.test(raw.trim());
+}
+
+/** Strokes as typed: a whole number of at least 1, the server's bound (#374). */
+export function isStrokes(raw: string): boolean {
+  return isNonNegInt(raw) && Number(raw) >= 1;
+}
+
+/** Holes completed as typed: 0 to 18, the server's bound; playoff holes are not part of any round (#374). */
+export function isThru(raw: string): boolean {
+  return isNonNegInt(raw) && Number(raw) <= 18;
 }
 
 /** A whole number with an optional sign, as a score to par is typed ("-3", "+2", "0"). */
@@ -63,14 +74,14 @@ export function buildRoundScorePatch(
   const patch: ScorePatch = {};
   if (
     draft.strokes !== undefined &&
-    isNonNegInt(draft.strokes) &&
+    isStrokes(draft.strokes) &&
     Number(draft.strokes) !== row.strokes
   ) {
     patch.strokes = Number(draft.strokes);
   }
   if (
     draft.thru !== undefined &&
-    isNonNegInt(draft.thru) &&
+    isThru(draft.thru) &&
     Number(draft.thru) !== row.thru
   ) {
     patch.thru = Number(draft.thru);
@@ -99,9 +110,9 @@ export function buildRoundScorePatch(
 export function rowHasInvalid(draft: RowDraft | undefined): boolean {
   if (!draft) return false;
   return (
-    (draft.strokes !== undefined && draft.strokes.trim() !== '' && !isNonNegInt(draft.strokes)) ||
+    (draft.strokes !== undefined && draft.strokes.trim() !== '' && !isStrokes(draft.strokes)) ||
     (draft.scoreToPar !== undefined && draft.scoreToPar.trim() !== '' && !isSignedInt(draft.scoreToPar)) ||
-    (draft.thru !== undefined && draft.thru.trim() !== '' && !isNonNegInt(draft.thru)) ||
+    (draft.thru !== undefined && draft.thru.trim() !== '' && !isThru(draft.thru)) ||
     Boolean(draft.completedAtIncomplete) ||
     (draft.completedAt !== undefined && !isDateTimeInput(draft.completedAt))
   );
