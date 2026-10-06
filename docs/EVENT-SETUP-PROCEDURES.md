@@ -103,10 +103,10 @@ As a commissioner of a test league (root admin is not needed):
 
 Do these two in this order.
 
-1. On the score-source card, *Start live simulation*. Right after you press it, the card
-   shows the round under way and the simulation's finish time. **Note the finish time.**
-   The card does not refresh it, and it is gone once you leave or reload the page. By
-   default each round takes 20 minutes, so a full tournament takes 80 minutes.
+1. On the score-source card, *Start live simulation*. The card shows the round under way
+   and when the simulation finishes, and it refreshes that every 30 seconds, including
+   after you leave and come back. By default each round takes 20 minutes, so a full
+   tournament takes 80 minutes.
 2. On the Workflow card, *Move to In Progress*. Open and locked contests on the tournament
    become active, and the live-score sync starts polling it.
 
@@ -129,7 +129,8 @@ no scores.
 
 ## 9. Finish
 
-After the finish time you noted in step 7, *Move to Completed* on the Workflow card.
+When the score-source card says "Simulation finished at …", *Move to Completed* on the
+Workflow card.
 Final standings are built from the scores PoolMaster has already received.
 
 ## Running it again
