@@ -188,6 +188,11 @@ export interface ProviderParticipant {
   active: boolean;
   /** Meaningful only when `active` is false; undefined covers "inactive, no more specific reason." */
   inactiveReason?: ParticipantInactiveReason;
+  /**
+   * The participant's ranking as the provider's field reports it (#384). When present, an
+   * event field load writes it onto the event participant, ahead of any ranking snapshot.
+   */
+  ranking?: number;
   metadata: Record<string, unknown>;
 }
 

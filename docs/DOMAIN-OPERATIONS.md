@@ -603,7 +603,7 @@ Carries `ranking` (the rank that applied at this event), `seedNumber`, `oddsToWi
 |---|---|---|
 | List for an event | `authenticated` | `listEventParticipants`. Embeds the canonical `Participant`, the valuation, the standing and each round, with their golf rows. One read serves the field grid, the tier board and the score corrections |
 | Add, edit, remove | `rootAdmin` | `addEventParticipants`, `updateEventParticipants` (price included), `removeEventParticipant` — 409 `EVENT_PARTICIPANT_HAS_PICKS` once a contest entry picked it |
-| Seed from the sport league, refresh from the provider | `rootAdmin` | `seedEventParticipants` (golf only for now); `refreshEventParticipants` queues a provider sync (202) |
+| Seed from the sport league, refresh from the provider | `rootAdmin` | `seedEventParticipants` (golf only for now); `refreshEventParticipants` queues a provider sync (202), which writes each golfer's ranking from the provider's field onto the event participant (#384) |
 
 **Golf surfaces render `ELIMINATED` as "Cut"** (decision 1). That is a display mapping, not
 a stored value: `formatParticipantStatusLabel` in the shared domain, used by every surface

@@ -196,6 +196,7 @@ describe('MockContestFeedAdapter', () => {
       odds: 6.5,
       oddsSourceEventId: 'golf-masters-2026',
     });
+    expect(detail?.participants.map((participant) => participant.ranking)).toEqual([1, 2]);
 
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.map((ranking) => ranking.rank)).toEqual([1, 2]);
