@@ -926,12 +926,17 @@ handler). `getByTestId` passes through all of those.
 - `getByRole` with an accessible name is the default.
 - `getByLabelText` for form fields.
 - Text queries (`getByText`) are fine.
-- `getByTestId` only where no accessible query reaches the element, and treat that as a
-  finding: an element no accessible query can reach is usually an accessibility defect.
-  Fix it in the component (a label, an accessible name) rather than reaching for the test ID.
+- `getByTestId` only where no accessible query reaches the element. Which case it is decides
+  what to do:
+  - An interactive or user-meaningful element (a control, a field, a status a user reads)
+    that no accessible query reaches is an accessibility defect. Fix the component (a label,
+    an accessible name) rather than reaching for the test ID.
+  - A purely structural element with no role (a layout wrapper, a list container) may use
+    `getByTestId`. Note it in the PR's review triggers.
 - Do not reach into the DOM (`querySelector`, `.closest`, `.parentElement`, `.children`
   and the like). Query by role, label or text, scoping with `within()` when needed.
-- Existing tests are not swept. The rule applies to new tests and to tests a change touches.
+- Existing tests are not swept. The rule applies to new tests and to the queries a change
+  adds or edits; touching a test does not oblige converting its other lookups.
 
 ---
 
