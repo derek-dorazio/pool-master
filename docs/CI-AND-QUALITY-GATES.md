@@ -436,9 +436,9 @@ in is its own decision, unrelated to #345 Phase 2.
 
 The parser is wired with `projectService: true` and
 `tsconfigRootDir: import.meta.dirname`, which requires Node ≥ 20.11 for
-`import.meta.dirname`. CI's `node-version: '20'` resolved to **v20.20.2** in run
-1228; the floating `'20'` only ever moves up within the major, so it satisfies
-the requirement without an explicit pin.
+`import.meta.dirname`. CI reads the Node version from `.nvmrc` (24.21.0, the
+Active LTS line, since #138) and the Dockerfiles pin the same version, which
+satisfies that requirement.
 
 On top of `typescript-eslint`'s `recommendedTypeChecked`, #345 Phase 0 adopted
 the eleven type-aware rules outside that preset which measure 0 findings at
