@@ -36,7 +36,37 @@ It does not use a database. Local JSON scenario files under [`contest-feed-scena
 - `GET /v1/pre-event/scenarios/:scenarioId/events/:eventId/rankings`
 - `GET /v1/live/scenarios/:scenarioId/events/:eventId/scores`
 - `GET /v1/live/scenarios/:scenarioId/events/:eventId/results`
+- `PUT /v1/scenarios/:scenarioId/events/:eventId/replay`
+- `GET /v1/scenarios/:scenarioId/events/:eventId/replay`
+- `DELETE /v1/scenarios/:scenarioId/events/:eventId/replay`
 - Swagger UI at `/docs`
+
+## Live Golf Replay
+
+Without a `mockEventState` token, `/scores` normally returns the same snapshot on every
+poll. A live replay makes it move, so a live contest's leaderboard can be tested:
+
+```bash
+curl -X PUT localhost:3105/v1/scenarios/golf-major-2026/events/golf-players-2026/replay \
+  -H 'content-type: application/json' -d '{"minutesPerRound": 20}'
+```
+
+The body is optional: `startsAt` (default now), `minutesPerRound` (default 20) and
+`minutesBetweenRounds` (default 0). While the replay runs, every `/scores` request for that
+event without a `mockEventState` token is computed from the replay clock
+(`src/golf-live-simulation.ts`):
+
+- golfers tee off across the first third of each round and play holes at a steady pace, so
+  `thru` and to-par change between polls; from round 3 the leaders tee off last
+- each hole is a seeded draw that favours better-ranked (lower `seed`) golfers, so the same
+  event and moment always give the same scores
+- the top 65 and ties after round 2 make the cut; the rest get `MISSED_CUT`
+- a few golfers withdraw mid-round (`DNF`)
+- four rounds only, never past hole 18
+
+`GET .../replay` reports the phase and current round; `DELETE .../replay` stops it. A
+`mockEventState` token still pins its fixed state while a replay runs. Replays are held in
+memory and do not survive a restart.
 
 ## Run Locally
 

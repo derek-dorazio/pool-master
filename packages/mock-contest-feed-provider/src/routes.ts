@@ -5,6 +5,8 @@ import {
   eventResponseSchema,
   eventSummarySchema,
   feedKinds,
+  liveReplayRequestSchema,
+  liveReplayResponseSchema,
   liveScoresSnapshotResponseSchema,
   mockEventStateKinds,
   mockFeedProviderId,
@@ -12,6 +14,7 @@ import {
   scenarioSummarySchema,
   snapshotResponseSchema,
   updatesResponseSchema,
+  type LiveReplayRequest,
   type MockEventStateKind,
 } from './contracts';
 import { ScenarioStore, type ScenarioStoreOptions } from './scenario-store';
@@ -518,6 +521,79 @@ export async function mockContestFeedRoutes(
         'Served mock contest-feed scores snapshot',
       );
       return payload;
+    },
+  );
+
+  // #382 — a time-driven live replay of a golf event. While one is running, `/scores`
+  // without a `mockEventState` token moves hole by hole on the replay clock, so a live
+  // contest's leaderboard changes between polls.
+  const replayParamsSchema = {
+    type: 'object',
+    required: ['scenarioId', 'eventId'],
+    properties: {
+      scenarioId: { type: 'string' },
+      eventId: { type: 'string' },
+    },
+  } as const;
+
+  fastify.put<{ Params: { scenarioId: string; eventId: string }; Body: LiveReplayRequest | undefined }>(
+    '/v1/scenarios/:scenarioId/events/:eventId/replay',
+    {
+      schema: {
+        tags: ['Live replay'],
+        summary: 'Start or restart a time-driven live scoring replay for a golf event',
+        operationId: 'startMockContestFeedLiveReplay',
+        params: replayParamsSchema,
+        body: liveReplayRequestSchema,
+        response: {
+          200: liveReplayResponseSchema,
+        },
+      },
+    },
+    async (request) => {
+      const payload = store.startLiveReplay(request.params.scenarioId, request.params.eventId, request.body ?? {});
+      logRoutePayload(fastify, 'mockFeedRoute.startLiveReplay', { ...request.params }, payload, 'Started mock live replay');
+      return payload;
+    },
+  );
+
+  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+    '/v1/scenarios/:scenarioId/events/:eventId/replay',
+    {
+      schema: {
+        tags: ['Live replay'],
+        summary: 'Get the running live replay for a golf event',
+        operationId: 'getMockContestFeedLiveReplay',
+        params: replayParamsSchema,
+        response: {
+          200: liveReplayResponseSchema,
+        },
+      },
+    },
+    async (request) => {
+      const payload = store.getLiveReplay(request.params.scenarioId, request.params.eventId);
+      logRoutePayload(fastify, 'mockFeedRoute.getLiveReplay', { ...request.params }, payload, 'Served mock live replay');
+      return payload;
+    },
+  );
+
+  fastify.delete<{ Params: { scenarioId: string; eventId: string } }>(
+    '/v1/scenarios/:scenarioId/events/:eventId/replay',
+    {
+      schema: {
+        tags: ['Live replay'],
+        summary: 'Stop the live replay for a golf event',
+        operationId: 'stopMockContestFeedLiveReplay',
+        params: replayParamsSchema,
+        response: {
+          204: { type: 'null' },
+        },
+      },
+    },
+    async (request, reply) => {
+      store.stopLiveReplay(request.params.scenarioId, request.params.eventId);
+      fastify.log.info({ action: 'mockFeedRoute.stopLiveReplay', data: { ...request.params } }, 'Stopped mock live replay');
+      return reply.code(204).send();
     },
   );
 

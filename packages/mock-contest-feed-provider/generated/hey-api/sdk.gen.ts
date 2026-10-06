@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { GetMockContestFeedEventUpdatesData, GetMockContestFeedEventUpdatesResponses, GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedRankingsSnapshotData, GetMockContestFeedRankingsSnapshotResponses, GetMockContestFeedResultsSnapshotData, GetMockContestFeedResultsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioEventResponses, GetMockContestFeedScenarioResponses, GetMockContestFeedScoresSnapshotData, GetMockContestFeedScoresSnapshotResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses } from './types.gen.js';
+import type { GetMockContestFeedEventUpdatesData, GetMockContestFeedEventUpdatesResponses, GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedLiveReplayData, GetMockContestFeedLiveReplayResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedRankingsSnapshotData, GetMockContestFeedRankingsSnapshotResponses, GetMockContestFeedResultsSnapshotData, GetMockContestFeedResultsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioEventResponses, GetMockContestFeedScenarioResponses, GetMockContestFeedScoresSnapshotData, GetMockContestFeedScoresSnapshotResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses, StartMockContestFeedLiveReplayData, StartMockContestFeedLiveReplayResponses, StopMockContestFeedLiveReplayData, StopMockContestFeedLiveReplayResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -72,6 +72,28 @@ export const getMockContestFeedResultsSnapshot = <ThrowOnError extends boolean =
  * Get live scoring snapshot for an event
  */
 export const getMockContestFeedScoresSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedScoresSnapshotData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedScoresSnapshotResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/scores', ...options });
+
+/**
+ * Stop the live replay for a golf event
+ */
+export const stopMockContestFeedLiveReplay = <ThrowOnError extends boolean = false>(options: Options<StopMockContestFeedLiveReplayData, ThrowOnError>) => (options.client ?? client).delete<StopMockContestFeedLiveReplayResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay', ...options });
+
+/**
+ * Get the running live replay for a golf event
+ */
+export const getMockContestFeedLiveReplay = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedLiveReplayData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedLiveReplayResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay', ...options });
+
+/**
+ * Start or restart a time-driven live scoring replay for a golf event
+ */
+export const startMockContestFeedLiveReplay = <ThrowOnError extends boolean = false>(options: Options<StartMockContestFeedLiveReplayData, ThrowOnError>) => (options.client ?? client).put<StartMockContestFeedLiveReplayResponses, unknown, ThrowOnError>({
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/replay',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Get live or correction updates for an event
