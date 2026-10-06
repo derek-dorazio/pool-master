@@ -77,7 +77,7 @@ export function LeagueContestsPage() {
     retry: false,
   });
 
-  const contests = contestsQuery.data ?? [];
+  const contests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
   const activeContests = useMemo(
     () => contests.filter((contest) => !isHistoricalContest(contest.status)),
     [contests],

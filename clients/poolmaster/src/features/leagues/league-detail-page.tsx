@@ -113,6 +113,9 @@ export function LeagueDetailPage() {
       id: league.id,
       name: league.name,
     };
+    // Keyed on description, id and name on purpose: a refetch must not rebuild the draft
+    // (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [league?.description, league?.id, league?.name]);
 
   useEffect(() => {
