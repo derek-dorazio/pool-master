@@ -378,9 +378,9 @@ export function CreateContestPage() {
     [customLockHours, customLockMinutes, lockPreset, selectedEvent?.startDate],
   );
 
-  function applyTemplateConfiguration(
+  const applyTemplateConfiguration = useCallback((
     configuration: ContestConfigTemplate['configuration'],
-  ) {
+  ) => {
     setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
     setContestFormValue(
       'maxEntriesPerTeam',
@@ -390,15 +390,15 @@ export function CreateContestPage() {
     );
     setContestFormValue('rosterSize', String(configuration.rosterSize));
     setContestFormValue('countedScores', String(configuration.countedScores));
-  }
+  }, [setContestFormValue]);
 
-  function selectTemplate(templateId: string) {
+  const selectTemplate = useCallback((templateId: string) => {
     setContestFormValue('selectedTemplateId', templateId);
     const template = templatesQuery.data?.find((entry) => entry.id === templateId);
     if (template) {
       applyTemplateConfiguration(template.configuration);
     }
-  }
+  }, [applyTemplateConfiguration, setContestFormValue, templatesQuery.data]);
 
   useEffect(() => {
     if (!managedContestQuery.data || isHydratedFromManagedContest) {
@@ -435,13 +435,13 @@ export function CreateContestPage() {
     }
 
     setIsHydratedFromManagedContest(true);
-  }, [eventsQuery.data, isHydratedFromManagedContest, managedContestQuery.data]);
+  }, [eventsQuery.data, isHydratedFromManagedContest, managedContestQuery.data, setContestFormValue]);
 
   useEffect(() => {
     if (!sportEventId && eligibleEvents.length) {
       setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
-  }, [eligibleEvents, sportEventId]);
+  }, [eligibleEvents, setContestFormValue, sportEventId]);
 
   useEffect(() => {
     if (sportEventId && eligibleEvents.some((event) => event.id === sportEventId)) {
@@ -451,7 +451,7 @@ export function CreateContestPage() {
     if (eligibleEvents.length) {
       setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
-  }, [eligibleEvents, sportEventId]);
+  }, [eligibleEvents, setContestFormValue, sportEventId]);
 
   useEffect(() => {
     if (isEditMode || selectedTemplateId || !visibleTemplates.length) {
@@ -465,7 +465,7 @@ export function CreateContestPage() {
     if (defaultTemplate) {
       selectTemplate(defaultTemplate.id);
     }
-  }, [isEditMode, selectedTemplateId, visibleTemplates]);
+  }, [isEditMode, selectTemplate, selectedTemplateId, visibleTemplates]);
 
   useEffect(() => {
     if (leagueQuery.isError) {

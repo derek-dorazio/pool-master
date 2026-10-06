@@ -190,7 +190,7 @@ export function RootAdminSyncDashboardPage() {
     retry: false,
   });
 
-  const recentRuns = syncRunsQuery.data ?? [];
+  const recentRuns = useMemo(() => syncRunsQuery.data ?? [], [syncRunsQuery.data]);
   const summary = useMemo(() => {
     const submitted = recentRuns.filter((run) => run.status === 'SUBMITTED').length;
     const running = recentRuns.filter((run) => run.status === 'IN_PROGRESS').length;

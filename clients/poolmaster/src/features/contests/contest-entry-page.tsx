@@ -211,6 +211,9 @@ export function ContestEntryPage() {
       name: draftStateQuery.data.selectedEntryName ?? '',
       tiebreakerValue: draftStateQuery.data.tiebreakerValue,
     };
+    // Keyed on selectedEntryName and tiebreakerValue on purpose: a refetch must not rebuild the draft
+    // (rules/react-ui-rules.md §5 Server Data Form-State Hazard).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftStateQuery.data?.selectedEntryName, draftStateQuery.data?.tiebreakerValue]);
   const selectableGroups = useMemo(
     () => draftStateQuery.data?.selectionGroups ?? [],
