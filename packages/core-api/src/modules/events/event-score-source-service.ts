@@ -255,6 +255,14 @@ export class EventScoreSourceService {
         422,
       );
     }
+    // The simulation plays golf rounds only; a simulating provider may cover other sports too.
+    if (existing.sport !== 'GOLF') {
+      throw new EventScoreSourceError(
+        `Live scoring can only be simulated for golf events, not ${existing.sport}.`,
+        'LIVE_SIMULATION_UNSUPPORTED',
+        422,
+      );
+    }
     return { existing, provider };
   }
 

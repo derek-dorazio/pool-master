@@ -455,7 +455,7 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
     it('shows the server\'s reason when the simulation is refused', async () => {
       seedLinked(true);
       startEventLiveSimulationMock.mockResolvedValue({
-        error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Provider mock-contest-feed has no event mock-weekend.' },
+        error: { error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Provider mock-contest-feed has no event mock-weekend.' } },
         response: { status: 404 },
       });
       renderPage();

@@ -46,7 +46,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
     queryKey: QueryKeys.rootAdmin.golf.liveSimulation(tournament.id),
     queryFn: async () => {
       const response = await getEventLiveSimulation({ path: { eventId: tournament.id } });
-      if (response.error?.error.code === 'LIVE_SIMULATION_NOT_RUNNING') {
+      if (response.error?.error?.code === 'LIVE_SIMULATION_NOT_RUNNING') {
         return null;
       }
       if (!response.data) {

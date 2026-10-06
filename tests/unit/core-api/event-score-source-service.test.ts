@@ -317,7 +317,7 @@ describe('EventScoreSourceService.unlinkScoreSource', () => {
 });
 
 describe('EventScoreSourceService.startLiveSimulation', () => {
-  const linkedEvent = { id: 'event-1', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
+  const linkedEvent = { id: 'event-1', sport: 'GOLF', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
   const simulationStatus = {
     startsAt: new Date('2026-10-06T12:00:00.000Z'),
     endsAt: new Date('2026-10-06T13:20:00.000Z'),
@@ -360,6 +360,18 @@ describe('EventScoreSourceService.startLiveSimulation', () => {
     });
   });
 
+  it('refuses a non-golf event linked to a simulating provider with 422 LIVE_SIMULATION_UNSUPPORTED and never calls it', async () => {
+    const startLiveSimulation = jest.fn();
+    const provider = Object.assign(buildProvider(), { startLiveSimulation, getLiveSimulation: jest.fn() });
+    const service = new EventScoreSourceService(prismaWith({ ...linkedEvent, sport: 'TENNIS' }), registryWith(provider));
+
+    await expect(service.startLiveSimulation('event-1', {})).rejects.toMatchObject({
+      code: 'LIVE_SIMULATION_UNSUPPORTED',
+      statusCode: 422,
+    });
+    expect(startLiveSimulation).not.toHaveBeenCalled();
+  });
+
   it('404s PROVIDER_EVENT_NOT_FOUND when the provider no longer has the linked event', async () => {
     const provider = Object.assign(buildProvider(), { startLiveSimulation: jest.fn().mockResolvedValue(null), getLiveSimulation: jest.fn() });
     const service = new EventScoreSourceService(prismaWith(linkedEvent), registryWith(provider));
@@ -378,7 +390,7 @@ describe('EventScoreSourceService.startLiveSimulation', () => {
 });
 
 describe('EventScoreSourceService.getLiveSimulation', () => {
-  const linkedEvent = { id: 'event-1', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
+  const linkedEvent = { id: 'event-1', sport: 'GOLF', providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' };
 
   function serviceWith(getLiveSimulation: jest.Mock) {
     const provider = Object.assign(buildProvider(), { startLiveSimulation: jest.fn(), getLiveSimulation });
