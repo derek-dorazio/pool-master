@@ -439,6 +439,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: { minPrice: 1, maxPrice: 2 } }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
+    expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
       body: { sportLeagueId: ANY_UUID, eventYear: 2030, name: 'x', startDate: '2030-01-01T00:00:00.000Z', releaseAt: '2030-01-01T00:00:00.000Z', fieldLocksAt: '2030-01-01T00:00:00.000Z' },

@@ -189,6 +189,7 @@ const correctionColumns = [
       const raw = draft[entry.sportEventParticipantId]?.completedAt ?? toDateTimeInput(entry.completedAt);
       return (
         <Input
+          aria-invalid={draft[entry.sportEventParticipantId]?.completedAtIncomplete ? true : undefined}
           aria-label={`Completed at for ${entry.participantName}`}
           className="h-8"
           data-testid={`root-admin-golf-scores-completed-at-${entry.sportEventParticipantId}`}
@@ -199,6 +200,7 @@ const correctionColumns = [
               [entry.sportEventParticipantId]: {
                 ...current[entry.sportEventParticipantId],
                 completedAt: event.target.value,
+                completedAtIncomplete: event.target.validity.badInput,
               },
             }))
           }

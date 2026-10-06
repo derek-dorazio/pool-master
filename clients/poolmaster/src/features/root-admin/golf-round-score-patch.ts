@@ -23,6 +23,11 @@ export type RowDraft = {
   status?: GolfRoundScoreStatus;
   /** As a `datetime-local` input holds it, in the browser's time zone; blank is none. */
   completedAt?: string;
+  /**
+   * The input holds a half-typed value (its `validity.badInput`). It then reports '',
+   * which must not read as "clear the stored time": the row is invalid until finished.
+   */
+  completedAtIncomplete?: boolean;
 };
 
 /** A non-negative integer as typed; the grid also uses it per keystroke. */
@@ -82,6 +87,7 @@ export function buildRoundScorePatch(
   }
   if (
     draft.completedAt !== undefined &&
+    !draft.completedAtIncomplete &&
     isDateTimeInput(draft.completedAt) &&
     draft.completedAt !== toDateTimeInput(row.completedAt)
   ) {
@@ -96,6 +102,7 @@ export function rowHasInvalid(draft: RowDraft | undefined): boolean {
     (draft.strokes !== undefined && draft.strokes.trim() !== '' && !isNonNegInt(draft.strokes)) ||
     (draft.scoreToPar !== undefined && draft.scoreToPar.trim() !== '' && !isSignedInt(draft.scoreToPar)) ||
     (draft.thru !== undefined && draft.thru.trim() !== '' && !isNonNegInt(draft.thru)) ||
+    Boolean(draft.completedAtIncomplete) ||
     (draft.completedAt !== undefined && !isDateTimeInput(draft.completedAt))
   );
 }

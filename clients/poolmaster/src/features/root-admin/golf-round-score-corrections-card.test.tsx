@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -132,6 +132,17 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     const toPar = screen.getByRole('textbox', { name: 'Score to par for Rory McIlroy' });
     await userEvent.clear(toPar);
     await userEvent.type(toPar, '-1.5');
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('keeps Save disabled while completed at is half typed, so a stored time is never cleared by accident', () => {
+    renderCard({ rows: [scoreRow({ completedAt: '2026-04-10T22:15:00.000Z' })] });
+    const completedAt = screen.getByLabelText('Completed at for Rory McIlroy');
+    // A datetime-local input with only the date typed reports value '' and validity.badInput.
+    Object.defineProperty(completedAt, 'validity', { value: { badInput: true } });
+    fireEvent.change(completedAt, { target: { value: '' } });
+
+    expect(completedAt).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 

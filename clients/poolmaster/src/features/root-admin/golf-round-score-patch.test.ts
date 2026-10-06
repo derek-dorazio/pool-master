@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GolfRoundScoreRow } from './golf-admin-utils';
-import { buildRoundScorePatch, isSignedInt, toDateTimeInput } from './golf-round-score-patch';
+import { buildRoundScorePatch, isSignedInt, rowHasInvalid, toDateTimeInput } from './golf-round-score-patch';
 
 function scoreRow(overrides: Partial<GolfRoundScoreRow> = {}): GolfRoundScoreRow {
   return {
@@ -42,6 +42,13 @@ describe('buildRoundScorePatch', () => {
     const completed = scoreRow({ completedAt: '2026-04-10T22:15:00.000Z' });
     expect(buildRoundScorePatch(completed, { completedAt: toDateTimeInput(completed.completedAt) })).toBeNull();
     expect(buildRoundScorePatch(completed, { completedAt: '' })).toEqual({ completedAt: null });
+  });
+
+  it('never clears a stored completed at from a half-typed value, and marks the row invalid', () => {
+    const completed = scoreRow({ completedAt: '2026-04-10T22:15:00.000Z' });
+    const draft = { completedAt: '', completedAtIncomplete: true };
+    expect(buildRoundScorePatch(completed, draft)).toBeNull();
+    expect(rowHasInvalid(draft)).toBe(true);
   });
 
   it('ignores an invalid numeric draft value', () => {
