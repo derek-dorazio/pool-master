@@ -29,8 +29,8 @@ export const GolfRoundScoreUploadRequestSchema = z.object({
 }).describe('A round of golf scores.');
 export type GolfRoundScoreUploadRequest = z.infer<typeof GolfRoundScoreUploadRequestSchema>;
 
-export const GolfRoundScoreChangeDtoSchema = z.enum(['CREATE', 'UPDATE', 'UNCHANGED'])
-  .describe('What applying the row would do to the golfer\'s stored round.');
+export const GolfRoundScoreChangeDtoSchema = z.enum(['CREATE', 'UPDATE', 'UNCHANGED', 'SKIPPED'])
+  .describe('What applying the row would do to the golfer\'s stored round. SKIPPED: the row has no strokes, so applying stores nothing for it.');
 
 export const GolfRoundScoreValuesDtoSchema = z.object({
   strokes: z.number().int().nullable(),
@@ -66,8 +66,8 @@ export const UpdateGolfRoundScoreRequestSchema = z.object({
   scoreToPar: z.number().int().optional(),
   thru: z.number().int().min(0).optional(),
   status: GolfRoundStatusDtoSchema.optional(),
-  completedAt: z.string().datetime().optional(),
-}).describe('A correction to one golfer\'s round; omitted values keep what is stored.');
+  completedAt: z.string().datetime().nullable().optional().describe('Null clears it.'),
+}).describe('A correction to one golfer\'s round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.');
 export type UpdateGolfRoundScoreRequest = z.infer<typeof UpdateGolfRoundScoreRequestSchema>;
 
 // --- Published contract (#192) -------------------------------------------------

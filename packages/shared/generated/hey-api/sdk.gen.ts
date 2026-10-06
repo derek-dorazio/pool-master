@@ -1305,7 +1305,7 @@ export const applyEventGolfRoundScores = <ThrowOnError extends boolean = false>(
 /**
  * Correct one golfer's round
  *
- * Omitted values keep what is stored. Refreshes the golfer's standing. Root admin only.
+ * Stores each value exactly as sent and derives none from another; omitted values keep what is stored. Refreshes standings. Root admin only.
  */
 export const updateEventParticipantGolfRoundScore = <ThrowOnError extends boolean = false>(options: Options<UpdateEventParticipantGolfRoundScoreData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventParticipantGolfRoundScoreResponses, UpdateEventParticipantGolfRoundScoreErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

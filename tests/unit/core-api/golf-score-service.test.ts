@@ -45,6 +45,20 @@ describe('GolfScoreService — preview', () => {
       ['UNRESOLVED', null, 'CREATE'],
     ]);
   });
+  it('a row with no strokes previews as SKIPPED, because apply never stores it', async () => {
+    const { service, event } = setup();
+    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }]);
+
+    const preview = await service.previewRoundScores(event.id, 1, [
+      { playerName: 'Ana Park', ...row({ strokes: null, scoreToPar: -3 }) },
+      { playerName: 'Ben Cole', ...row({ strokes: null }) },
+    ]);
+
+    expect(preview.map((entry) => [entry.resolution, entry.participantName, entry.change])).toEqual([
+      ['MATCHED', 'Ana Park', 'SKIPPED'],
+      ['MATCHED', 'Ben Cole', 'SKIPPED'],
+    ]);
+  });
 });
 
 describe('GolfScoreService — apply', () => {
@@ -82,14 +96,42 @@ describe('GolfScoreService — apply', () => {
 });
 
 describe('GolfScoreService — single-cell correction', () => {
-  it('changes only what is patched, keeping the rest of the stored round', async () => {
+  it('a correction that sends strokes and to par updates the round, the event to-par and the rank', async () => {
+    const { service, store, event, anaEntry, benEntry } = setup();
+    await service.applyRoundScores(event.id, 1, [
+      { playerName: 'Ana Park', ...row({ strokes: 70, scoreToPar: -2 }) },
+      { playerName: 'Ben Cole', ...row({ strokes: 71, scoreToPar: -1 }) },
+    ]);
+
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 73, scoreToPar: 1 });
+
+    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(round).toMatchObject({ participantRound: { status: 'COMPLETED' }, golf: { strokes: 73, scoreToPar: 1, thru: 18 } });
+    const standings = Object.fromEntries((await store.golfStandingRepo().findBySportEvent(event.id)).map((result) => [
+      result.standing.sportEventParticipantId,
+      { position: result.standing.position, eventStrokes: result.golf.eventStrokes, eventScoreToPar: result.golf.eventScoreToPar },
+    ]));
+    expect(standings).toEqual({
+      [benEntry.id]: { position: 1, eventStrokes: 71, eventScoreToPar: -1 },
+      [anaEntry.id]: { position: 2, eventStrokes: 73, eventScoreToPar: 1 },
+    });
+  });
+
+  it('a correction stores completedAt exactly as sent, and never derives it from the status', async () => {
     const { service, store, event, anaEntry } = setup();
-    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }]);
+    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row({ status: 'IN_PROGRESS', thru: 12 }) }]);
 
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 71 });
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'COMPLETED', thru: 18 });
+    let [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(round.participantRound).toMatchObject({ status: 'COMPLETED', completedAt: null });
 
-    const [result] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(result).toMatchObject({ participantRound: { status: 'COMPLETED' }, golf: { strokes: 71, scoreToPar: -2, thru: 18 } });
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { completedAt: '2026-04-10T22:15:00.000Z' });
+    [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(round.participantRound.completedAt?.toISOString()).toBe('2026-04-10T22:15:00.000Z');
+
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { completedAt: null });
+    [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
+    expect(round.participantRound.completedAt).toBeNull();
   });
 
   it('refuses a field row that is not on this event with 404 EVENT_PARTICIPANT_NOT_FOUND', async () => {

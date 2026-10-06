@@ -422,7 +422,7 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Correct one golfer\'s round',
-      description: 'Omitted values keep what is stored. Refreshes the golfer\'s standing. Root admin only.',
+      description: 'Stores each value exactly as sent and derives none from another; omitted values keep what is stored. Refreshes standings. Root admin only.',
       operationId: 'updateEventParticipantGolfRoundScore',
       params: {
         type: 'object',

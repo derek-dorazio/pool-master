@@ -16,7 +16,9 @@ import {
 import {
   buildRoundScorePatch,
   isNonNegInt,
+  isSignedInt,
   rowHasInvalid,
+  toDateTimeInput,
   type RowDraft,
 } from './golf-round-score-patch';
 
@@ -63,6 +65,38 @@ const correctionColumns = [
                 [entry.sportEventParticipantId]: {
                   ...current[entry.sportEventParticipantId],
                   strokes: event.target.value,
+                },
+              }))
+            }
+            value={raw}
+          />
+        </div>
+      );
+    },
+    enableColumnFilter: false,
+    enableSorting: false,
+  }),
+  columnHelper.display({
+    id: 'scoreToPar',
+    header: 'To par',
+    cell: ({ row, table }) => {
+      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const entry = row.original;
+      const raw = draft[entry.sportEventParticipantId]?.scoreToPar ?? String(entry.scoreToPar);
+      return (
+        <div className="max-w-[5rem]">
+          <Input
+            aria-invalid={raw.trim() !== '' && !isSignedInt(raw) ? true : undefined}
+            aria-label={`Score to par for ${entry.participantName}`}
+            className="h-8"
+            data-testid={`root-admin-golf-scores-to-par-${entry.sportEventParticipantId}`}
+            disabled={readOnly}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                [entry.sportEventParticipantId]: {
+                  ...current[entry.sportEventParticipantId],
+                  scoreToPar: event.target.value,
                 },
               }))
             }
@@ -147,6 +181,38 @@ const correctionColumns = [
     enableSorting: false,
   }),
   columnHelper.display({
+    id: 'completedAt',
+    header: 'Completed at',
+    cell: ({ row, table }) => {
+      const { draft, setDraft, readOnly } = table.options.meta as CorrectionsMeta;
+      const entry = row.original;
+      const raw = draft[entry.sportEventParticipantId]?.completedAt ?? toDateTimeInput(entry.completedAt);
+      return (
+        <Input
+          aria-invalid={draft[entry.sportEventParticipantId]?.completedAtIncomplete ? true : undefined}
+          aria-label={`Completed at for ${entry.participantName}`}
+          className="h-8"
+          data-testid={`root-admin-golf-scores-completed-at-${entry.sportEventParticipantId}`}
+          disabled={readOnly}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              [entry.sportEventParticipantId]: {
+                ...current[entry.sportEventParticipantId],
+                completedAt: event.target.value,
+                completedAtIncomplete: event.target.validity.badInput,
+              },
+            }))
+          }
+          type="datetime-local"
+          value={raw}
+        />
+      );
+    },
+    enableColumnFilter: false,
+    enableSorting: false,
+  }),
+  columnHelper.display({
     id: 'save',
     header: '',
     cell: ({ row, table }) => {
@@ -172,10 +238,13 @@ const correctionColumns = [
   }),
 ];
 
+const readOnlyColumns = correctionColumns.filter((column) => column.id !== 'save');
+
 /**
- * plans/124 §6.3 Round scores section 2 — inline strokes / thru / status
- * corrections for one round, saved one row at a time via
- * `updateEventParticipantGolfRoundScore`.
+ * plans/124 §6.3 Round scores section 2 — inline corrections for one round, saved
+ * one row at a time via `updateEventParticipantGolfRoundScore`. #116: a row edits
+ * every stored value (strokes, to par, thru, status, completed at) and one save sends
+ * the changed ones together; the server stores them as sent and derives none.
  */
 export function GolfRoundScoreCorrectionsCard({
   eventId,
@@ -264,7 +333,7 @@ export function GolfRoundScoreCorrectionsCard({
     <Tile>
       <h3 className="text-base font-semibold text-foreground">Corrections</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Fix one golfer&rsquo;s round result at a time.
+        Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>
 
       {rowsError ? (
@@ -283,7 +352,7 @@ export function GolfRoundScoreCorrectionsCard({
 
       <div className="mt-4">
         <DataGrid
-          columns={readOnly ? correctionColumns.slice(0, 4) : correctionColumns}
+          columns={readOnly ? readOnlyColumns : correctionColumns}
           data={rows}
           emptyMessage={
             rowsLoading
