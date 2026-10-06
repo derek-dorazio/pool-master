@@ -7,6 +7,7 @@
 import { SPORT_EVENT_STATUS_TRANSITIONS, type SportEventRound, type SportEventTier } from '@poolmaster/shared/domain';
 import type {
   EventReadinessReasonDto,
+  ImportSportEventYearFromProviderResponse,
   EventReadinessStatusDto,
   SportEventDto,
   SportEventLiveSimulationResponse,
@@ -15,7 +16,7 @@ import type {
 } from '@poolmaster/shared/dto/events.dto';
 import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
-import type { SportEventSummary } from '../modules/events/service';
+import type { ProviderEventYearImport, SportEventSummary } from '../modules/events/service';
 
 export function mapSportEventToDto({ event, loadedParticipantCount, tierCount, contestCount }: SportEventSummary): SportEventDto {
   const operationalState = evaluateEventOperationalState({
@@ -91,5 +92,12 @@ export function mapLiveSimulationToResponse(
     minutesPerRound: status.minutesPerRound,
     phase: status.phase,
     currentRound: status.currentRound,
+  };
+}
+
+export function mapProviderEventYearImportToResponse(result: ProviderEventYearImport): ImportSportEventYearFromProviderResponse {
+  return {
+    created: result.created.map(mapSportEventToDto),
+    skipped: result.skipped.map(({ externalId, name, reason }) => ({ externalId, name, reason })),
   };
 }

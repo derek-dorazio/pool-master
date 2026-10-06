@@ -132,6 +132,49 @@ describe('SportEventService.createEventFromProviderEvent', () => {
   });
 });
 
+// #385: a tour's provider slate for a year, imported in one action and safe to run again.
+describe('SportEventService.importProviderEventYear', () => {
+  const slate = [
+    { externalId: 'pga-2026-a', name: 'Alpha Open', venue: 'A Links', startDate: new Date('2026-03-05T12:00:00.000Z'), endDate: new Date('2026-03-08T23:00:00.000Z') },
+    { externalId: 'pga-2026-b', name: 'Bravo Classic', venue: null, startDate: new Date('2026-04-09T12:00:00.000Z'), endDate: new Date('2026-04-12T23:00:00.000Z') },
+    { externalId: 'pga-2026-c', name: 'Harbour Open', venue: null, startDate: new Date('2026-06-04T12:00:00.000Z'), endDate: new Date('2026-06-07T23:00:00.000Z') },
+  ];
+
+  it('creates every provider event the tour lacks, each linked to its provider event for scores with four rounds', async () => {
+    const { service, sportLeague } = setup();
+
+    const result = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: slate });
+
+    expect(result.skipped).toEqual([]);
+    expect(result.created.map(({ event }) => ({ externalId: event.externalId, syncScope: event.syncScope, eventYear: event.eventYear, rounds: event.rounds })))
+      .toEqual(slate.map(({ externalId }) => ({ externalId, syncScope: 'SCORES_ONLY', eventYear: 2026, rounds: 4 })));
+  });
+
+  it('skips an event already linked to the provider event and a series that already has an edition that year, creating only the rest', async () => {
+    const { store, service, sportLeague } = setup();
+    store.addEvent({ providerId: 'feed', externalId: 'pga-2026-a' });
+    await service.createEvent({ ...MANUAL_INPUT, sportLeagueId: sportLeague.id, eventYear: 2026 });
+
+    const result = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: slate });
+
+    expect(result.created.map(({ event }) => event.externalId)).toEqual(['pga-2026-b']);
+    expect(result.skipped).toEqual([
+      { externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' },
+      { externalId: 'pga-2026-c', name: 'Harbour Open', reason: 'EDITION_EXISTS' },
+    ]);
+  });
+
+  it('creates nothing on a second run, reporting every event as already linked', async () => {
+    const { service, sportLeague } = setup();
+    await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: slate });
+
+    const again = await service.importProviderEventYear({ sportLeagueId: sportLeague.id, eventYear: 2026, providerId: 'feed', providerEvents: slate });
+
+    expect(again.created).toEqual([]);
+    expect(again.skipped.map((row) => row.reason)).toEqual(['ALREADY_LINKED', 'ALREADY_LINKED', 'ALREADY_LINKED']);
+  });
+});
+
 // plans/124 §4.2a, reshaped by plans/147: cloning a season became cloning a sport league's
 // event year — the same calendar copy, keyed by (sport league, year) instead of a season row.
 describe('SportEventService.cloneEventYear', () => {

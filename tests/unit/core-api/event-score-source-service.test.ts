@@ -119,6 +119,23 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
   });
 
+  it('keeps an event whose provider tour name equals the matchKeyword, ignoring case, even when its name lacks the keyword, and still excludes the other tour', async () => {
+    const provider = buildProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'pga-1', name: 'Masters Tournament', metadata: { tour: 'PGA TOUR' } }),
+        buildProviderEvent({ externalId: 'lpga-1', name: 'Honda LPGA Thailand', metadata: { tour: 'LPGA Tour' } }),
+      ]),
+    });
+    const prisma = {
+      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'pga tour' }) },
+    };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+
+    expect(result.map((event) => event.externalId)).toEqual(['pga-1']);
+  });
+
   it('pool-master-753 applies no filter when the league has no matchKeyword set', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([
@@ -151,6 +168,65 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { search: 'masters' });
 
     expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
+  });
+});
+
+// #385: a tour's provider slate for one year, matched by the provider's tour name.
+describe('EventScoreSourceService.listTourEventsForYear', () => {
+  const pgaLeague = { id: 'pga', name: 'PGA TOUR', matchKeyword: 'PGA TOUR', sport: { name: 'GOLF' } };
+
+  it('returns only events whose provider tour equals the league\'s match keyword, ignoring case, so "PGA TOUR" does not pick up the LPGA', async () => {
+    const provider = buildProvider({
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'pga-1', name: 'Alpha Open', venue: 'A Links', metadata: { tour: 'pga tour' } }),
+        buildProviderEvent({ externalId: 'lpga-1', name: 'LPGA Alpha', metadata: { tour: 'LPGA Tour' } }),
+        buildProviderEvent({ externalId: 'none-1', name: 'PGA TOUR Exhibition', metadata: {} }),
+      ]),
+    });
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    const events = await service.listTourEventsForYear('mock-golf', 'pga', 2027);
+
+    expect(events).toEqual([{
+      externalId: 'pga-1',
+      name: 'Alpha Open',
+      venue: 'A Links',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: new Date('2027-04-11T00:00:00.000Z'),
+    }]);
+  });
+
+  it('asks the provider for the league\'s sport across that calendar year in UTC', async () => {
+    const provider = buildProvider();
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    await service.listTourEventsForYear('mock-golf', 'pga', 2027);
+
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
+      from: new Date('2027-01-01T00:00:00.000Z'),
+      to: new Date('2027-12-31T23:59:59.999Z'),
+    });
+  });
+
+  it('refuses a league with no match keyword with 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD and never calls the provider', async () => {
+    const provider = buildProvider();
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue({ ...pgaLeague, matchKeyword: null }) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+
+    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', statusCode: 422 });
+    expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
+  });
+
+  it('404s SPORT_LEAGUE_NOT_FOUND for an unknown league and PROVIDER_NOT_FOUND for an unknown provider', async () => {
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
+
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider())).listTourEventsForYear('mock-golf', 'nope', 2027))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(null)).listTourEventsForYear('unknown', 'pga', 2027))
+      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
   });
 });
 

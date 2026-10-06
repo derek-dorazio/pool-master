@@ -38,7 +38,7 @@ export const SportLeagueDtoSchema = z.object({
   id: z.string().uuid().describe('Sport league identifier.'),
   sportId: z.string().uuid().describe('The sport this sport league belongs to.'),
   name: z.string().describe('Sport league name, e.g. "PGA Tour".'),
-  matchKeyword: z.string().nullable().describe('Substring a provider event name carries when it belongs to this sport league; null when none is set.'),
+  matchKeyword: z.string().nullable().describe('The provider\'s tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.'),
   currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
@@ -68,7 +68,7 @@ export type SportLeagueResponse = z.infer<typeof SportLeagueResponseSchema>;
 export const CreateSportLeagueRequestSchema = z.object({
   sport: z.nativeEnum(Sport).describe('The sport the new sport league belongs to.'),
   name: z.string().min(1).describe('Unique within the sport.'),
-  matchKeyword: z.string().optional().describe('Provider event-name keyword for this sport league.'),
+  matchKeyword: z.string().optional().describe('Provider event-name keyword for this sport league; set it to the provider\'s tour name (e.g. "PGA TOUR") to use the event-year import.'),
 }).describe('A new sport league.');
 export type CreateSportLeagueRequest = z.infer<typeof CreateSportLeagueRequestSchema>;
 

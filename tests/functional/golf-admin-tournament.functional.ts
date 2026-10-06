@@ -10,6 +10,7 @@ import {
   createSportLeague,
   getEvent,
   getSportLeague,
+  importEventYearFromProvider,
   listEventParticipants,
   listEventRounds,
   listEvents,
@@ -423,6 +424,44 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(editions.data!.events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   });
 
+  // #385 — a tour's year imported from the FAPI daemon's real mock provider, whose tour seeds
+  // (#383) carry PGA TOUR and LPGA Tour slates. The match is the provider's tour name, so an
+  // "LPGA Tour" league gets only LPGA events, and a second run creates nothing.
+  it('imports a tour\'s year from the provider as linked events, only that tour\'s, and skips them all on a second run', async () => {
+    await ensureGolfSportRow();
+    const admin = await buildRegisteredUser({ displayName: 'Golf Admin Import' });
+    created.userIds.add(admin.userId);
+    await promoteToRootAdmin(admin);
+    const c = admin.client;
+    const league = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `Import Tour ${RUN}`, matchKeyword: 'LPGA Tour' } });
+    const sportLeagueId = league.data!.sportLeague.id;
+    created.sportLeagueIds.add(sportLeagueId);
+
+    const first = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
+    expect(first.response?.status).toBe(201);
+    const imported = first.data!.created;
+    imported.forEach((event) => created.sportEventIds.add(event.id));
+    expect(first.data!.skipped).toEqual([]);
+    expect(imported.length).toBeGreaterThan(20);
+    for (const event of imported) {
+      expect(event).toMatchObject({ sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed', syncScope: 'SCORES_ONLY', loadedParticipantCount: 0 });
+      expect(event.externalId.startsWith('lpga-tour-2027-')).toBe(true);
+    }
+
+    const again = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
+    expect(again.response?.status).toBe(201);
+    expect(again.data!.created).toEqual([]);
+    expect(again.data!.skipped).toHaveLength(imported.length);
+    expect(new Set(again.data!.skipped.map((row) => row.reason))).toEqual(new Set(['ALREADY_LINKED']));
+
+    const noKeyword = await createSportLeague({ client: c, body: { sport: 'GOLF', name: `No Keyword Tour ${RUN}` } });
+    created.sportLeagueIds.add(noKeyword.data!.sportLeague.id);
+    expectFunctionalError(
+      await importEventYearFromProvider({ client: c, body: { sportLeagueId: noKeyword.data!.sportLeague.id, eventYear: 2027, providerId: 'mock-contest-feed' } }),
+      { status: 422, code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD' },
+    );
+  }, 60_000);
+
   it('BR-GOLF-ADMIN-AUTHZ: every golf administration write rejects a non-root-admin caller with 403, before validating its input', async () => {
     const member = await buildRegisteredUser({ displayName: 'Golf Non Admin' });
     created.userIds.add(member.userId);
@@ -433,6 +472,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}` } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { currentEventYear: 2030 } }), deny);
     expectFunctionalError(await cloneEventYear({ client: c, body: { sportLeagueId: 'x', eventYear: 2030 } }), deny);
+    expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);
     expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: { source: 'ODDS' } }), deny);
