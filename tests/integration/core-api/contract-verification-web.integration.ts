@@ -30,7 +30,7 @@ import {
 import type {
   ContestConfigTemplateListResponse,
   ErrorEnvelope,
-  LeagueResponse,
+  LeagueContextResponse,
   SquadListResponse,
 } from '@poolmaster/shared/dto';
 import {
@@ -144,7 +144,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Dashboard League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const invitationRes = await getApp().inject({
       method: 'POST',
@@ -193,8 +193,8 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Lifecycle League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
-    const leagueCode = leagueRes.json<LeagueResponse>().league.leagueCode;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
+    const leagueCode = leagueRes.json<LeagueContextResponse>().league.leagueCode;
 
     const inactivateRes = await getApp().inject({
       method: 'POST',
@@ -385,7 +385,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Editable League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const updateRes = await getApp().inject({
       method: 'PUT',
@@ -410,7 +410,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Icon League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const updateRes = await getApp().inject({
       method: 'PUT',
@@ -434,7 +434,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Team League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const listRes = await getApp().inject({
       method: 'GET',
@@ -467,7 +467,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Contest League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
     await getPrisma().sport.upsert({
       where: {
         name: Sport.GOLF,
@@ -671,7 +671,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Draft League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     // #245 retired the event-less legacy create this contract once went through; the draft-state
     // contract does not depend on how the contest was made, so the row is a fixture.
@@ -726,7 +726,7 @@ describe('Contract verification (web)', () => {
       headers: owner.headers,
       payload: buildCreateLeaguePayload('Contract Error League'),
     });
-    const leagueId = leagueRes.json<LeagueResponse>().league.id;
+    const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const missingInviteRes = await getApp().inject({
       method: 'DELETE',

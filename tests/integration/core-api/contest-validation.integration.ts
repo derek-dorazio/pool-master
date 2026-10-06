@@ -8,7 +8,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import type { ContestListResponse, LeagueResponse } from '@poolmaster/shared/dto';
+import type { ContestListResponse, LeagueContextResponse } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   SelectionType,
@@ -37,7 +37,7 @@ describe('Contest Validation Integration', () => {
     });
 
     expect(leagueRes.statusCode).toBe(201);
-    leagueId = leagueRes.json<LeagueResponse>().league.id;
+    leagueId = leagueRes.json<LeagueContextResponse>().league.id;
   });
 
   // #245 — the one create validates its configuration against the typed tiered shape; an
