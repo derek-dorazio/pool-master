@@ -12,10 +12,12 @@ import { sportEventFixture, sportLeagueFixture } from './golf-test-fixtures';
 const {
   listSportLeaguesMock,
   getEventMock,
+  getEventLiveSimulationMock,
   listEventRoundsMock,
   linkEventScoreSourceMock,
   listProviderCatalogEventsMock,
   listProvidersMock,
+  startEventLiveSimulationMock,
   transitionEventMock,
   unlinkEventScoreSourceMock,
   updateEventMock,
@@ -34,10 +36,12 @@ const {
   return {
     listSportLeaguesMock: vi.fn(),
     getEventMock: vi.fn(),
+    getEventLiveSimulationMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     linkEventScoreSourceMock: vi.fn(),
     listProviderCatalogEventsMock: vi.fn(),
     listProvidersMock: vi.fn(),
+    startEventLiveSimulationMock: vi.fn(),
     transitionEventMock: vi.fn(),
     unlinkEventScoreSourceMock: vi.fn(),
     updateEventMock: vi.fn(),
@@ -49,10 +53,12 @@ const {
 bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
   getEvent: getEventMock,
+  getEventLiveSimulation: getEventLiveSimulationMock,
   listEventRounds: listEventRoundsMock,
   linkEventScoreSource: linkEventScoreSourceMock,
   listProviderCatalogEvents: listProviderCatalogEventsMock,
   listProviders: listProvidersMock,
+  startEventLiveSimulation: startEventLiveSimulationMock,
   transitionEvent: transitionEventMock,
   unlinkEventScoreSource: unlinkEventScoreSourceMock,
   updateEvent: updateEventMock,
@@ -374,5 +380,90 @@ describe('pool-master-3dg RootAdminGolfTournamentHomePage', () => {
         path: { eventId: 'tour-1' },
       }),
     );
+  });
+  describe('live simulation', () => {
+    function seedLinked(supportsLiveSimulation: boolean) {
+      seedDefaults();
+      getEventMock.mockResolvedValue({
+        data: {
+          event: tournament({ syncScope: 'SCORES_ONLY', providerId: 'mock-contest-feed', externalId: 'mock-weekend' }),
+        },
+      });
+      listProvidersMock.mockResolvedValue({
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], supportsLiveSimulation }] },
+      });
+      getEventLiveSimulationMock.mockResolvedValue(notRunning);
+    }
+
+    const notRunning = {
+      error: { error: { code: 'LIVE_SIMULATION_NOT_RUNNING', message: 'No live simulation is running for this event.' } },
+      response: { status: 404 },
+    };
+
+    function simulationStatus(currentRound: number) {
+      return {
+        data: {
+          sportEventId: 'tour-1',
+          startsAt: '2026-10-06T12:00:00.000Z',
+          endsAt: '2026-10-06T13:20:00.000Z',
+          minutesPerRound: 20,
+          phase: 'IN_PROGRESS',
+          currentRound,
+        },
+      };
+    }
+
+    it('starts the score source\'s live simulation and says which round is under way', async () => {
+      seedLinked(true);
+      startEventLiveSimulationMock.mockResolvedValue(simulationStatus(1));
+      renderPage();
+
+      const start = await screen.findByTestId('root-admin-golf-tournament-live-simulation-start');
+      await waitFor(() => expect(getEventLiveSimulationMock).toHaveBeenCalled());
+      expect(screen.queryByTestId('root-admin-golf-tournament-live-simulation-status')).not.toBeInTheDocument();
+      getEventLiveSimulationMock.mockResolvedValue(simulationStatus(1));
+      fireEvent.click(start);
+
+      await waitFor(() =>
+        expect(startEventLiveSimulationMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' }, body: {} })),
+      );
+      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
+        .toHaveTextContent('Round 1 of 4 is under way, 20 minutes per round');
+    });
+
+    it('shows a simulation that is already running when the page loads, without pressing start', async () => {
+      seedLinked(true);
+      getEventLiveSimulationMock.mockResolvedValue(simulationStatus(3));
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
+        .toHaveTextContent('Round 3 of 4 is under way');
+      expect(getEventLiveSimulationMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' } }));
+      expect(startEventLiveSimulationMock).not.toHaveBeenCalled();
+    });
+
+    it('offers no live simulation when the linked provider cannot simulate', async () => {
+      seedLinked(false);
+      renderPage();
+
+      expect(await screen.findByTestId('root-admin-golf-tournament-unlink-open')).toBeInTheDocument();
+      await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
+      expect(screen.queryByTestId('root-admin-golf-tournament-live-simulation-start')).not.toBeInTheDocument();
+      expect(getEventLiveSimulationMock).not.toHaveBeenCalled();
+    });
+
+    it('shows the server\'s reason when the simulation is refused', async () => {
+      seedLinked(true);
+      startEventLiveSimulationMock.mockResolvedValue({
+        error: { error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Provider mock-contest-feed has no event mock-weekend.' } },
+        response: { status: 404 },
+      });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-live-simulation-start'));
+
+      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-error'))
+        .toHaveTextContent('Provider mock-contest-feed has no event mock-weekend.');
+    });
   });
 });

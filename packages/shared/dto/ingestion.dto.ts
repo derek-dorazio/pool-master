@@ -72,6 +72,7 @@ export const ProviderSummaryDtoSchema = z.object({
   lastEventAt: DateTimeSchema.nullable().describe('When one of the provider\'s events last changed, else its last successful poll; null when neither is known.'),
   sportsCovered: z.array(SportDtoSchema).describe('Sports the provider covers that ingestion is scheduled for.'),
   activeEventCount: z.number().int().describe('The provider\'s events that are scheduled or in progress.'),
+  supportsLiveSimulation: z.boolean().describe('True when the provider can play a linked event\'s live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.'),
 }).describe('A registered sports-data provider with its live health.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
 
