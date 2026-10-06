@@ -2,8 +2,7 @@ import { expect, type Page, type Response } from '@playwright/test';
 
 /**
  * #363 — reading the body of the write a UI submit sends. Lifted from the golden journey's private
- * copy for the squad-management spec; the journey moves onto it once #362, which is editing that
- * file, has landed.
+ * copy for the squad-management spec; moving the journey onto it, once #362 has landed, is #370.
  */
 
 // The generated SDK sends collection routes with a trailing slash (`/api/v1/events/`), so

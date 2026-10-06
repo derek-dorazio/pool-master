@@ -79,7 +79,8 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
   const run: SquadManagementRun = {
     runId,
     commissioner: user('sc', 'Commissioner'),
-    member: user('sm', 'Owner'),
+    // Neither label contains the other, so a name check on one can never pass on the other.
+    member: user('sm', 'Founder'),
     // Brand new on purpose: an invitation to an address that already has an account is accepted
     // at once, with no invite code to follow.
     coOwner: user('so', 'CoOwner'),
@@ -268,7 +269,19 @@ test('an owner renames their squad, changes its icon and adds a co-owner by invi
         `/api/v1/leagues/${leagueId}/squads/${squadId}`,
       );
 
+      // Deleting returns the root admin to the league, and the squad list no longer shows it.
       // The squad is this run's own, so its absence is a fact about it and nothing else.
+      await expect(rootAdmin.getByTestId('league-home')).toBeVisible();
+      await rootAdmin.goto(`/league/${run.leagueCode}/teams`);
+      // A positive anchor first, so the absence is never read off a list that has not loaded:
+      // the list has settled once it shows either some team or its empty state.
+      await expect(
+        rootAdmin.getByTestId('teams-page-teams-empty')
+          .or(rootAdmin.locator('[data-testid^="league-team-home-link-"]'))
+          .first(),
+      ).toBeVisible();
+      await expect(rootAdmin.getByTestId(`league-team-home-link-${squadId}`)).toHaveCount(0);
+
       const reread = await rootAdmin.request.get(`/api/v1/leagues/${leagueId}/squads/${squadId}`);
       expect(reread.status(), 'the deleted squad re-read').toBe(404);
       const squads = await rootAdmin.request.get(`/api/v1/leagues/${leagueId}/squads/`);
