@@ -150,25 +150,10 @@ function contestResponse(status: ContestStatusFixture) {
   };
 }
 
-function primeMocks(opts?: {
-  contestStatus?: ContestStatusFixture;
-  leaderboard?: Record<string, unknown>;
-  leaderboardError?: { code: string; message: string };
-}) {
-  getContestMock.mockReset();
-  getGolfContestLeaderboardMock.mockReset();
-  getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
-
-  if (opts?.leaderboardError) {
-    getGolfContestLeaderboardMock.mockResolvedValue({
-      error: { error: opts.leaderboardError },
-      response: { status: 400 },
-    });
-    return;
-  }
-
-  getGolfContestLeaderboardMock.mockResolvedValue({
-    data: opts?.leaderboard ?? {
+/** The leaderboard read, with the entry's total as a parameter so two reads can differ. */
+function leaderboardResponse(entryTotalScoreToPar = -5) {
+  return {
+    data: {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
@@ -201,7 +186,7 @@ function primeMocks(opts?: {
         displayPosition: 'T1',
         countingPickLimit: 1,
         scoredPickCount: 2,
-        golf: { totalScoreToPar: -5 },
+        golf: { totalScoreToPar: entryTotalScoreToPar },
         picks: [
           {
             pickId: 'pick-1',
@@ -223,7 +208,29 @@ function primeMocks(opts?: {
       }],
       asOf: '2026-04-11T18:00:00.000Z',
     },
-  });
+  };
+}
+
+function primeMocks(opts?: {
+  contestStatus?: ContestStatusFixture;
+  leaderboard?: Record<string, unknown>;
+  leaderboardError?: { code: string; message: string };
+}) {
+  getContestMock.mockReset();
+  getGolfContestLeaderboardMock.mockReset();
+  getContestMock.mockResolvedValue(contestResponse(opts?.contestStatus ?? 'ACTIVE'));
+
+  if (opts?.leaderboardError) {
+    getGolfContestLeaderboardMock.mockResolvedValue({
+      error: { error: opts.leaderboardError },
+      response: { status: 400 },
+    });
+    return;
+  }
+
+  getGolfContestLeaderboardMock.mockResolvedValue(
+    opts?.leaderboard ? { data: opts.leaderboard } : leaderboardResponse(),
+  );
 }
 
 describe('ContestLeaderboardPage', () => {
@@ -420,8 +427,8 @@ describe('ContestLeaderboardPage', () => {
       await screen.findByText('Birdie Hunters Entry 1');
       const callsWhileLocked = getGolfContestLeaderboardMock.mock.calls.length;
 
-      // One interval for the contest read to see ACTIVE, one more for the first live poll.
-      await vi.advanceTimersByTimeAsync(60_000);
+      // The contest read that sees ACTIVE reads the leaderboard straight away, not one interval on.
+      await vi.advanceTimersByTimeAsync(30_000);
       const callsOnceLive = getGolfContestLeaderboardMock.mock.calls.length;
       expect(callsOnceLive).toBeGreaterThan(callsWhileLocked);
 
@@ -448,7 +455,7 @@ describe('ContestLeaderboardPage', () => {
       renderLeaderboard();
       expect(await screen.findByText(/Scores appear once picks are revealed/)).toBeInTheDocument();
 
-      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(30_000);
       expect(await screen.findByText('Birdie Hunters Entry 1')).toBeInTheDocument();
       expect(screen.queryByText(/Scores appear once picks are revealed/)).not.toBeInTheDocument();
     } finally {
@@ -474,6 +481,32 @@ describe('ContestLeaderboardPage', () => {
       await vi.advanceTimersByTimeAsync(90_000);
       expect(getGolfContestLeaderboardMock.mock.calls.length).toBe(leaderboardCallsOnceSettled);
       expect(getContestMock.mock.calls.length).toBe(contestCallsOnceSettled);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reads the final standings once at settlement, even when the last scores land between polls', async () => {
+    // #362 review — the contest and leaderboard polls run on their own clocks. The final round
+    // lands, and the contest settles, after one leaderboard poll and before the next contest read.
+    // Once that read sees COMPLETED the leaderboard poll stops, so the page has to read the
+    // leaderboard once more or the settled note sits over standings from before the last round.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      primeMocks({ contestStatus: 'ACTIVE' });
+      const settlesAt = Date.now() + 45_000;
+      getContestMock.mockImplementation(() =>
+        Promise.resolve(contestResponse(Date.now() >= settlesAt ? 'COMPLETED' : 'ACTIVE')));
+      getGolfContestLeaderboardMock.mockImplementation(() =>
+        Promise.resolve(leaderboardResponse(Date.now() >= settlesAt ? -12 : -4)));
+      renderLeaderboard();
+      expect(await screen.findByText('Birdie Hunters Entry 1')).toBeInTheDocument();
+      expect(screen.getByText('-4')).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(90_000);
+      expect(await screen.findByText(/Entry standings are frozen at settlement/)).toBeInTheDocument();
+      expect(await screen.findByText('-12')).toBeInTheDocument();
+      expect(screen.queryByText('-4')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatParticipantStatusLabel } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -33,6 +33,7 @@ import {
 import {
   CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
+  refreshOnContestStatusChange,
   shouldPollContestEntries,
 } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
@@ -123,6 +124,7 @@ export function ContestDetailPage() {
   const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
 
+  const queryClient = useQueryClient();
   const contestQuery = useQuery({
     queryKey: QueryKeys.contests.detail(contestId),
     queryFn: async (): Promise<ContestDto> => {
@@ -132,6 +134,12 @@ export function ContestDetailPage() {
         throwApiError(response.error, 'Contest detail response is missing data.');
       }
 
+      refreshOnContestStatusChange(
+        queryClient,
+        QueryKeys.contests.detail(contestId),
+        response.data.contest.status,
+        QueryKeys.contestEntries.byContest(contestId),
+      );
       return response.data.contest;
     },
     enabled: Boolean(contestId),

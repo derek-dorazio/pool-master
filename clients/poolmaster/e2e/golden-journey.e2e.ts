@@ -526,7 +526,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 // journey, and one that activates the contest and mails its members. Whether it should also run
 // post-deploy is the owner's call (#280), not this file's.
 test('act 4: the root admin scores round 1, starts the event, and reads every role\'s writes back', async ({ page }) => {
-  // The leaderboard page left open across the start waits out up to two of its own polls.
+  // The leaderboard page left open across the start waits out one of its own polls.
   test.setTimeout(240_000);
   const state = requireJourney();
   const { run } = state;
@@ -563,7 +563,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   // still open, so the leaderboard read refuses it and the page shows its error state.
   const leaderboardTab = await test.step('open the leaderboard page before the event starts', async () => {
     const tab = await openLeaderboardTab(page, run.leagueCode, state.contestId);
-    await expect(tab.getByTestId('contest-leaderboard-error')).toBeVisible();
+    await expect(tab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN')).toBeVisible();
     await page.bringToFront();
     return tab;
   });
@@ -586,7 +586,8 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
     await leaderboardTab.bringToFront();
     await expect(leaderboardTab.getByTestId(`contest-leaderboard-entry-${state.entryId}`))
       .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
-    await expect(leaderboardTab.getByTestId('contest-leaderboard-error')).toHaveCount(0);
+    await expect(leaderboardTab.getByTestId('contest-leaderboard-error-CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN'))
+      .toHaveCount(0);
     await leaderboardTab.close();
   });
 
@@ -947,9 +948,10 @@ test('act 6: completing the event settles the contest and freezes its standing a
 });
 
 /**
- * #362 — how long a leaderboard page left open gets to catch up on its own: one contest re-read
- * to see a status change, then one leaderboard poll, each on the page's 30-second cadence, with
- * room to spare. Comfortably over one interval rather than a sleep.
+ * #362 — how long a leaderboard page left open gets to catch up on its own: one 30-second poll,
+ * of the contest to see a status change (which reads the leaderboard straight away) or of the
+ * leaderboard to see a new round, with room to spare. Comfortably over one interval rather than
+ * a sleep.
  */
 const LIVE_PAGE_TIMEOUT_MS = 75_000;
 
@@ -964,14 +966,14 @@ async function openLeaderboardTab(page: Page, leagueCode: string, contestId: str
   return tab;
 }
 
-/** The open leaderboard page has picked up `round`, and shows the entry with a score on each pick. */
+/** The open leaderboard page has picked up `round`, and shows the entry with that round scored on each pick. */
 async function expectLeaderboardPageShowsRound(tab: Page, entryId: string, pickIds: string[], round: number) {
   await tab.bringToFront();
   await expect(tab.getByTestId(`contest-leaderboard-round-header-${round}`))
     .toBeVisible({ timeout: LIVE_PAGE_TIMEOUT_MS });
   await expect(tab.getByTestId(`contest-leaderboard-entry-${entryId}`)).toBeVisible();
   for (const pickId of pickIds) {
-    await expect(tab.getByTestId(`contest-leaderboard-pick-total-${entryId}-${pickId}`)).not.toHaveText('—');
+    await expect(tab.getByTestId(`contest-leaderboard-pick-round-${entryId}-${pickId}-${round}`)).not.toHaveText('—');
   }
 }
 

@@ -1,3 +1,4 @@
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
 
 /**
@@ -26,4 +27,22 @@ export function contestRefetchInterval(status: ContestStatus | null | undefined)
   }
 
   return CONTEST_POLL_INTERVAL_MS;
+}
+
+/**
+ * Call from a contest read with the status it just fetched (#362). When that status differs from
+ * the one already cached, the queries that depend on it are read again once, straight away: the
+ * leaderboard or entries poll keyed on the status would otherwise wait a further interval to
+ * start at go-live, and at settlement would stop without ever reading the final standings.
+ */
+export function refreshOnContestStatusChange(
+  queryClient: QueryClient,
+  contestKey: QueryKey,
+  nextStatus: ContestStatus,
+  dependentKey: QueryKey,
+) {
+  const previousStatus = queryClient.getQueryData<{ status: ContestStatus }>(contestKey)?.status;
+  if (previousStatus && previousStatus !== nextStatus) {
+    void queryClient.invalidateQueries({ queryKey: dependentKey });
+  }
 }

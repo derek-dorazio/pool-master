@@ -525,8 +525,8 @@ describe('ContestDetailPage (Contest Board)', () => {
       await screen.findByText(/Total Entries/);
       const entryCallsWhileLocked = listContestEntriesMock.mock.calls.length;
 
-      // One interval for the contest read to see ACTIVE, one more for the first entry poll.
-      await vi.advanceTimersByTimeAsync(60_000);
+      // The contest read that sees ACTIVE reads the entries straight away, not one interval on.
+      await vi.advanceTimersByTimeAsync(30_000);
       expect(listContestEntriesMock.mock.calls.length).toBeGreaterThan(entryCallsWhileLocked);
     } finally {
       vi.useRealTimers();
