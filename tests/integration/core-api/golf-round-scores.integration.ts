@@ -14,6 +14,7 @@ import {
   type GolfScoreRowInput,
 } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { freshEventEdition } from '../../support/event-edition';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
@@ -257,5 +258,50 @@ describe('Golf round scores — admin correction surface', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json<SportEventParticipantResponse>().participant.rounds[0]).toMatchObject({ completedAt: null, status: 'COMPLETED' });
+  });
+});
+
+// #375 — nothing is scored after the 18th hole of the event's last scheduled round, whatever
+// the sync scope: a playoff reported as a fifth round never becomes a round row or a score.
+describe('Golf round scores — bounded by the event\'s scheduled rounds', () => {
+  it('a FULL sync of a 4-round event skips round 5 and holes past 18, so the 72-hole score stands', async () => {
+    const { event, rory, jordan } = await createField('beyond-schedule-sync');
+    const prisma = getPrisma();
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'FULL' } });
+    await prisma.participantProviderMapping.createMany({
+      data: [
+        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id },
+        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id },
+      ],
+    });
+    const update = (participantExternalId: string, round: number, thru = 18) => ({
+      participantExternalId, round, strokes: 70, scoreToPar: -2, thru, status: 'COMPLETED' as const,
+    });
+
+    const result = await publishLiveScoreUpdate({
+      category: 'GOLF',
+      externalEventId: event.externalId,
+      rounds: [1, 2, 3, 4].map((round) => update('ext-rory', round)).concat(update('ext-rory', 5), update('ext-jordan', 1, 19)),
+    }, { prisma, providerId: 'integration-test' });
+
+    expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
+    const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
+    expect(roundNumbers).toEqual([1, 2, 3, 4]);
+    expect(await prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: jordan.sep.id } })).toBe(0);
+    const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({
+      where: { sportEventParticipantId: rory.sep.id },
+      include: { golf: true },
+    });
+    expect(standing.golf?.eventScoreToPar).toBe(-8);
+  });
+
+  it('refuses an admin upload for round 5 of a 4-round event with 422 ROUND_BEYOND_SCHEDULE, creating no round', async () => {
+    const { event, rory } = await createField('beyond-schedule-admin');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
+    const service = createGolfScoreService(getPrisma());
+
+    await expect(service.applyRoundScores(event.id, 5, [row(rory.participant.id)]))
+      .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
+    expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 5 } })).toBe(0);
   });
 });

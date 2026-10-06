@@ -7138,6 +7138,9 @@ export type GolfRoundScoreUploadRequest = {
          */
         strokes: number | null;
         scoreToPar: number;
+        /**
+         * Holes completed in the round. A round is 18 holes; playoff holes are never scored.
+         */
         thru?: number;
         status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
         completedAt?: string;
@@ -7164,6 +7167,9 @@ export type GolfRoundScorePreviewResponse = {
              */
             strokes: number | null;
             scoreToPar: number;
+            /**
+             * Holes completed in the round. A round is 18 holes; playoff holes are never scored.
+             */
             thru?: number;
             status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
             completedAt?: string;
@@ -7217,6 +7223,9 @@ export type GolfRoundScorePreviewResponse = {
 export type UpdateGolfRoundScoreRequest = {
     strokes?: number;
     scoreToPar?: number;
+    /**
+     * Holes completed in the round. A round is 18 holes; playoff holes are never scored.
+     */
     thru?: number;
     status?: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
     /**
