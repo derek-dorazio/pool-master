@@ -28,6 +28,7 @@ import type { ActiveTeamDialog } from './my-team-shared';
 import { useMyTeamDetails } from './use-my-team-details';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 import { useMyTeamOwners } from './use-my-team-owners';
+import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 /**
  * Team Home. Owns the league and squad queries, decides which squad is selected and what the
@@ -183,7 +184,7 @@ export function MyTeamPage() {
   }
 
   const isBusy = details.isPending || owners.isPending || lifecycle.isPending;
-  const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
+  const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === SquadMembershipStatus.ACTIVE);
   const currentIconKey = selectedTeam?.iconKey ?? details.iconDraftKey;
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
     (invitation) => invitation.squadId === selectedTeam?.id,

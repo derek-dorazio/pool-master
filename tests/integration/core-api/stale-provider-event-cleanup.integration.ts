@@ -150,8 +150,8 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
         leagueId: league.id,
         sportEventId: directContestGolfEvent.id,
         name: 'Cleanup Direct Contest',
-        selectionType: 'ROSTER',
-        scoringEngine: 'GOLF_ROSTER',
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
         contestFormat: PrismaContestFormat.ROSTER,
       },
     });
@@ -159,8 +159,8 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       data: {
         leagueId: league.id,
         name: 'Cleanup Pick Contest',
-        selectionType: 'ROSTER',
-        scoringEngine: 'GOLF_ROSTER',
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
         contestFormat: PrismaContestFormat.ROSTER,
       },
     });

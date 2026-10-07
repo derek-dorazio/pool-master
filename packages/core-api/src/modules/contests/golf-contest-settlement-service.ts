@@ -4,7 +4,7 @@ import type {
   ContestRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   buildContestEntryStanding,
   rankContestEntryStandings,
@@ -63,7 +63,7 @@ export class GolfContestSettlementService {
     input?: { completedAt?: Date },
   ): Promise<GolfContestSettlementSummary> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
-    if (!sportEvent || sportEvent.sport !== Sport.GOLF || sportEvent.status !== 'COMPLETED') {
+    if (!sportEvent || sportEvent.sport !== Sport.GOLF || sportEvent.status !== SportEventStatus.COMPLETED) {
       return {
         sportEventId,
         contestsSettled: 0,

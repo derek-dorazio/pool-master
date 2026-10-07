@@ -11,6 +11,7 @@ import type {
   SportEventParticipantDto,
   SportEventRoundDto,
 } from '@/lib/api';
+import { SportEventStatus, type ParticipantRoundStatus } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -132,7 +133,7 @@ export function describeGolfReleaseBlockers(
   tournament: Pick<SportEventDto, 'status' | 'startDate' | 'loadedParticipantCount' | 'untieredParticipantCount'>,
   now: Date = new Date(),
 ): string[] {
-  if (tournament.status !== 'DRAFT') {
+  if (tournament.status !== SportEventStatus.DRAFT) {
     return [];
   }
   const blockers: string[] = [];
@@ -200,12 +201,12 @@ export function deriveGolfAutoTransition(input: {
 
   const ordered = sortRoundsAscending(input.rounds);
 
-  if (input.status === 'SCHEDULED') {
+  if (input.status === SportEventStatus.SCHEDULED) {
     const at = firstNonEmpty(ordered[0]?.scheduledDate, input.startDate);
     return at ? { toStatus: 'IN_PROGRESS', at } : null;
   }
 
-  if (input.status === 'IN_PROGRESS') {
+  if (input.status === SportEventStatus.IN_PROGRESS) {
     const lastRound = ordered.at(-1);
     const at = firstNonEmpty(
       lastRound?.scheduledEndAt,
@@ -236,20 +237,20 @@ export function deriveGolfTournamentReadiness(
     'status' | 'loadedParticipantCount' | 'tierCount' | 'untieredParticipantCount'
   >,
 ): GolfTournamentReadiness {
-  if (tournament.status === 'COMPLETED') {
+  if (tournament.status === SportEventStatus.COMPLETED) {
     return { label: 'Completed', tone: 'completed', reasons: [] };
   }
-  if (tournament.status === 'IN_PROGRESS') {
+  if (tournament.status === SportEventStatus.IN_PROGRESS) {
     return { label: 'Live', tone: 'live', reasons: [] };
   }
-  if (tournament.status === 'CANCELLED' || tournament.status === 'POSTPONED') {
+  if (tournament.status === SportEventStatus.CANCELLED || tournament.status === SportEventStatus.POSTPONED) {
     return {
       label: formatSportEventStatus(tournament.status),
       tone: 'warning',
       reasons: [],
     };
   }
-  if (tournament.status !== 'DRAFT') {
+  if (tournament.status !== SportEventStatus.DRAFT) {
     return { label: 'Released', tone: 'success', reasons: [] };
   }
   if (tournament.loadedParticipantCount === 0) {
@@ -557,7 +558,7 @@ export type GolfRoundScoreRow = {
   strokes: number;
   scoreToPar: number;
   thru: number | null;
-  status: string;
+  status: ParticipantRoundStatus;
   completedAt: string | null;
 };
 

@@ -4672,7 +4672,14 @@
           },
           "status": {
             "type": "string",
-            "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "DNF",
+              "DSQ",
+              "MISSED_CUT"
+            ],
+            "description": "Progress through the round."
           },
           "completedAt": {
             "type": [
@@ -5100,7 +5107,14 @@
                 },
                 "status": {
                   "type": "string",
-                  "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                  "enum": [
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "DNF",
+                    "DSQ",
+                    "MISSED_CUT"
+                  ],
+                  "description": "Progress through the round."
                 },
                 "completedAt": {
                   "type": [
@@ -5570,7 +5584,14 @@
                       },
                       "status": {
                         "type": "string",
-                        "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                        "enum": [
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "DNF",
+                          "DSQ",
+                          "MISSED_CUT"
+                        ],
+                        "description": "Progress through the round."
                       },
                       "completedAt": {
                         "type": [
@@ -6190,7 +6211,14 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ],
+                      "description": "Progress through the round."
                     },
                     "completedAt": {
                       "type": [
@@ -6720,7 +6748,12 @@
             "type": "integer"
           },
           "autoPickPolicy": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "QUEUE_THEN_BEST",
+              "BEST_AVAILABLE",
+              "RANDOM"
+            ]
           },
           "tierConfig": {
             "type": "array",
@@ -8009,7 +8042,14 @@
                       },
                       "status": {
                         "type": "string",
-                        "description": "Progress through the round, e.g. IN_PROGRESS, COMPLETED, MISSED_CUT."
+                        "enum": [
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "DNF",
+                          "DSQ",
+                          "MISSED_CUT"
+                        ],
+                        "description": "Progress through the round."
                       },
                       "completedAt": {
                         "type": [
@@ -8276,7 +8316,12 @@
             "type": "integer"
           },
           "autoPickPolicy": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "QUEUE_THEN_BEST",
+              "BEST_AVAILABLE",
+              "RANDOM"
+            ]
           },
           "tierConfig": {
             "type": "array",
@@ -8534,7 +8579,12 @@
                 "type": "integer"
               },
               "autoPickPolicy": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "QUEUE_THEN_BEST",
+                  "BEST_AVAILABLE",
+                  "RANDOM"
+                ]
               },
               "tierConfig": {
                 "type": "array",
@@ -14820,7 +14870,14 @@
                       ]
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ]
                     }
                   },
                   "required": [
@@ -14854,7 +14911,14 @@
                       ]
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DNF",
+                        "DSQ",
+                        "MISSED_CUT"
+                      ]
                     }
                   },
                   "required": [
@@ -16730,6 +16794,14 @@
           },
           "status": {
             "type": "string",
+            "enum": [
+              "DRAFT",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "POSTPONED"
+            ],
             "description": "Current persisted event status."
           },
           "startDate": {
@@ -17033,6 +17105,14 @@
                 },
                 "status": {
                   "type": "string",
+                  "enum": [
+                    "DRAFT",
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED",
+                    "POSTPONED"
+                  ],
                   "description": "Current persisted event status."
                 },
                 "startDate": {

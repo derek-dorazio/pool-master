@@ -19,7 +19,7 @@ function roundFixture(
   return {
     id: `round-${overrides.roundNumber}`,
     sportEventRoundId: `event-round-${overrides.roundNumber}`,
-    status: 'PENDING',
+    status: 'IN_PROGRESS',
     completedAt: null,
     golf: null,
     ...overrides,
@@ -107,15 +107,6 @@ describe('resolveCurrentRound', () => {
     expect(resolveCurrentRound([participantFixture({ id: 'sep-1' })])).toBeNull();
   });
 
-  it('names no round while every round is still pending, rather than guessing round 1', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [roundFixture({ roundNumber: 1 }), roundFixture({ roundNumber: 2 })],
-      }),
-    ])).toBeNull();
-  });
-
   it('names the highest in-progress round', () => {
     expect(resolveCurrentRound([
       participantFixture({
@@ -150,17 +141,7 @@ describe('resolveCurrentRound', () => {
         rounds: [
           roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
           roundFixture({ roundNumber: 2, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 3 }),
         ],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: true });
-  });
-
-  it('counts both spellings of a finished round, since the column stores either', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [roundFixture({ roundNumber: 2, status: 'COMPLETE' })],
       }),
     ])).toEqual({ roundNumber: 2, isComplete: true });
   });
@@ -248,7 +229,8 @@ describe('buildLeaderboardView', () => {
   const unscored = participantFixture({
     id: 'sep-3',
     name: 'Ludvig Åberg',
-    rounds: [roundFixture({ roundNumber: 1 }), roundFixture({ roundNumber: 2 })],
+    // Nothing scored means no round rows: a row is only written with the status its scores came with.
+    rounds: [],
   });
 
   function entryFixture(overrides: Partial<ContestLeaderboardResponse['entries'][number]> = {}) {
@@ -303,8 +285,9 @@ describe('buildLeaderboardView', () => {
   });
 
   it('shows no total for an entry with nothing scored yet', () => {
+    // Rory's rounds give the field its round columns; the unscored pick has a gap in each.
     const view = buildLeaderboardView(responseFixture({
-      participants: [unscored],
+      participants: [rory, unscored],
       entries: [entryFixture({
         displayPosition: null,
         scoredPickCount: 0,
@@ -426,7 +409,7 @@ describe('formatThru', () => {
   function golferOnRound2(
     status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETE' | 'WITHDRAWN' | 'ELIMINATED',
     currentRoundThru: number | null,
-    round2Status: string,
+    round2Status: SportEventParticipantRoundDto['status'],
   ) {
     return participantFixture({
       id: 'sep-1',
@@ -459,8 +442,8 @@ describe('formatThru', () => {
   });
 
   it('shows a dash before the golfer tees off, whether thru is unset or zero', () => {
-    expect(formatThru(golferOnRound2('ACTIVE', null, 'PENDING'))).toBeNull();
-    expect(formatThru(golferOnRound2('ACTIVE', 0, 'PENDING'))).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', null, 'IN_PROGRESS'))).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', 0, 'IN_PROGRESS'))).toBeNull();
   });
 
   it('shows a dash for a golfer with no standing yet', () => {

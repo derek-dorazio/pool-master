@@ -13,7 +13,7 @@ import type {
   ProviderSyncRunRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { Sport, SportEventSyncScope, type ProviderSyncRun, type ProviderSyncRunStatus, type SportEventStatus } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
 import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
@@ -93,7 +93,7 @@ export interface ProviderEventCleanupRow {
   externalId: string;
   sport: string;
   name: string;
-  status: string;
+  status: SportEventStatus;
   startDate: Date;
   endDate: Date | null;
   staleReason: ProviderEventCleanupStaleReason;

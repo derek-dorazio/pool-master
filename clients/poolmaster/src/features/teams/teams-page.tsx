@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueRole, SquadMembershipStatus, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import { type SquadDto, type TeamOwnerInvitationDto, listLeagueSquads, listSquadOwnerInvitations } from '@/lib/api';
@@ -95,7 +95,7 @@ export function TeamsPage() {
   const pendingInvitationsByTeam = useMemo(() => {
     const grouped = new Map<string, TeamOwnerInvitationDto[]>();
     for (const invitation of ownerInvitationsQuery.data ?? []) {
-      if (invitation.status !== 'PENDING') {
+      if (invitation.status !== SquadOwnerInvitationStatus.PENDING) {
         continue;
       }
 
@@ -119,7 +119,7 @@ export function TeamsPage() {
           leagueCode: league.leagueCode,
           teamCount: teamsQuery.data.length,
           pendingInvitationCount: ownerInvitationsQuery.data?.filter(
-            (invitation) => invitation.status === 'PENDING',
+            (invitation) => invitation.status === SquadOwnerInvitationStatus.PENDING,
           ).length ?? 0,
         },
       },
@@ -216,7 +216,7 @@ export function TeamsPage() {
             teamsQuery.data.map((team) => {
               const icon = getTeamIconOption(team.iconKey);
               const activeOwners = (team.members ?? []).filter(
-                (member) => member.status === 'ACTIVE',
+                (member) => member.status === SquadMembershipStatus.ACTIVE,
               );
               const pendingInvitations = pendingInvitationsByTeam.get(team.id) ?? [];
 
