@@ -144,6 +144,23 @@ Rules:
   as disabled ingestion or a typed startup/configuration error, not fabricated
   data.
 
+### Provider data reaches only events an admin authored and linked
+
+Every event is created by an admin, and a provider feeds only events an admin has linked
+to a provider event. Sync-driven event creation, scheduled event lists, scheduled results
+and the rankings feed are **removed, not legacy**: do not re-add them, put them behind a
+flag, or keep them as a fallback. The decision and its alternatives are
+[ADR-0009](../docs/adr/0009-admin-authored-events-score-only-linking.md).
+
+- The only feed that runs on a schedule by default is live scores, for linked events.
+- A provider's field and odds are an on-demand complement an admin triggers for one linked
+  event. A provider that has no such feed for a sport or league is a normal empty state,
+  not an error.
+- Listing a provider's events is a lookup behind an admin action (browse, link, year
+  import). It never creates, updates or changes the status of an event by itself.
+- A new feed that would create events or write across events on a schedule needs a new ADR
+  first.
+
 ---
 
 ## 4. Service Topology
