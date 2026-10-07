@@ -32,7 +32,6 @@ import {
   ScoringEngine,
   SelectionType,
   Sport,
-  SportEventStatus,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { toGolfEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -59,16 +58,6 @@ export interface ContestCreateSportEventReader {
     sportEventId: string,
   ): Promise<ContestCreateSportEventState | null>;
 }
-
-/**
- * Event statuses at which the event has started, or is over: a draft contest on it can no
- * longer be opened (#117). POSTPONED is not here — a postponed event has not started.
- */
-const STARTED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
-  SportEventStatus.IN_PROGRESS,
-  SportEventStatus.COMPLETED,
-  SportEventStatus.CANCELLED,
-];
 
 function createNoopLogger(): LifecycleLogger {
   const noop = () => undefined;
