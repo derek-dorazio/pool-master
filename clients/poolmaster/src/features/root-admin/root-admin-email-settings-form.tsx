@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,9 +27,10 @@ function toFormValues(config: EmailConfig): EmailSettingsFormValues {
 /**
  * The EMAIL_CONFIG card's form (#450). The draft is taken from the group once, when the card
  * mounts, so a background refetch never overwrites an admin's edits; the save sends the
- * `updatedAt` the draft was taken from, and a 409 offers to load the newer value.
+ * `updatedAt` the draft was taken from, and a 409 offers to fetch and load the newer value.
  */
 export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
+  const queryClient = useQueryClient();
   const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
   const form = useForm<EmailSettingsFormValues>({
     resolver: zodResolver(EmailSettingsFormSchema),
@@ -59,9 +61,18 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
 
   const conflicted = saveMutation.error instanceof ApiError && saveMutation.error.code === 'SETTINGS_CONFLICT';
 
-  function loadLatest() {
-    setBaseUpdatedAt(group.updatedAt);
-    form.reset(toFormValues(group.value));
+  // A 409 refetches nothing (invalidation runs on success only), so the `group` prop is still
+  // the version that conflicted: fetch the settings again and start the draft from that.
+  async function loadLatest() {
+    await queryClient.refetchQueries({ queryKey: QueryKeys.rootAdmin.settings, exact: true });
+    const latest = queryClient
+      .getQueryData<SettingsGroup[]>(QueryKeys.rootAdmin.settings)
+      ?.find((candidate): candidate is EmailSettingsGroup => candidate.key === 'EMAIL_CONFIG');
+    if (!latest) {
+      return;
+    }
+    setBaseUpdatedAt(latest.updatedAt);
+    form.reset(toFormValues(latest.value));
     saveMutation.reset();
   }
 
@@ -102,7 +113,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
       {saveMutation.isError ? (
         <Alert
           action={conflicted ? (
-            <Button onClick={loadLatest} type="button" variant="secondary">
+            <Button onClick={() => void loadLatest()} type="button" variant="secondary">
               Load the latest settings
             </Button>
           ) : undefined}

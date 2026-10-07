@@ -204,10 +204,18 @@ describe('RootAdminSettingsPage email card', () => {
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
-  it('when another admin saved first, shows the conflict and offers to load the latest settings', async () => {
-    updateSettingsGroupMock.mockResolvedValue({
+  it('when another admin saved first, loads their newer settings on request and saves against that newer version', async () => {
+    const theirs: SettingsGroup = {
+      ...DEFAULT_EMAIL,
+      source: 'stored',
+      updatedAt: '2026-10-07T14:00:00.000Z',
+      updatedBy: ADMIN,
+      value: { ...EMAIL_DEFAULTS, replyTo: 'theirs@example.com' },
+    };
+    updateSettingsGroupMock.mockResolvedValueOnce({
       error: { error: { code: 'SETTINGS_CONFLICT', message: 'Settings group EMAIL_CONFIG was changed by someone else; reload and try again.' } },
     });
+    updateSettingsGroupMock.mockResolvedValueOnce({ data: theirs });
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-email-settings-enabled'));
@@ -215,8 +223,16 @@ describe('RootAdminSettingsPage email card', () => {
 
     const error = await screen.findByTestId('root-admin-email-settings-error');
     expect(error).toHaveTextContent('changed by someone else');
+    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [theirs] } });
     fireEvent.click(within(error).getByRole('button', { name: 'Load the latest settings' }));
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-email-settings-reply-to')).toHaveValue('theirs@example.com'));
     expect(screen.queryByTestId('root-admin-email-settings-error')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-email-settings-enabled')).toBeChecked();
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(2));
+    const [retry] = updateSettingsGroupMock.mock.calls[1] as [{ body: { expectedUpdatedAt: string | null } }];
+    expect(retry.body.expectedUpdatedAt).toBe('2026-10-07T14:00:00.000Z');
   });
 });
