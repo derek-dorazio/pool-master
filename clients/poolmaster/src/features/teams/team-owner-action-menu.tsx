@@ -270,7 +270,7 @@ export function TeamOwnerActionMenu({
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-promote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('COMMISSIONER')}
+              onClick={() => changeRoleMutation.mutate('COMMISSIONER')}
               type="button"
             >
               {changeRoleMutation.isPending ? 'Promoting...' : 'Promote'}
@@ -288,7 +288,7 @@ export function TeamOwnerActionMenu({
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-demote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
-              onClick={() => void changeRoleMutation.mutateAsync('MEMBER')}
+              onClick={() => changeRoleMutation.mutate('MEMBER')}
               type="button"
             >
               {changeRoleMutation.isPending ? 'Demoting...' : 'Demote'}
@@ -326,7 +326,7 @@ export function TeamOwnerActionMenu({
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
                   disabled={actionIsPending}
-                  onClick={() => void removeOwnerMutation.mutateAsync()}
+                  onClick={() => removeOwnerMutation.mutate()}
                   type="button"
                 >
                   {removeOwnerMutation.isPending ? 'Removing...' : 'Remove from team and league'}
